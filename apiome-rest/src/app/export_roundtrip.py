@@ -28,9 +28,15 @@ Studio result reconciles with the published matrix for corpus entries:
    **expected**; an unexplained difference (or an ``OK`` over-claim) is a fidelity
    bug the user should report.
 
+5. **re-emit (MFX-43.4)** — the re-imported model is emitted again to the same target with
+   the same options, and both texts come back as ``text_diff`` so the Studio can show, line
+   by line, what an artifact would look like if it were re-imported and exported again
+   (single-document artifacts only; a bundle, a binary artifact or one over
+   :data:`TEXT_DIFF_MAX_BYTES` says why in ``text_diff_reason``).
+
 The run is explicit and bounded: it happens only when a caller posts to the route,
-performs exactly one emit + one re-import, and persists nothing (read-only emit, no
-job row, no field-identity rows).
+performs exactly one emit + one re-import (+ one re-emit for the text diff), and persists
+nothing (read-only emits, no job row, no field-identity rows).
 """
 
 from __future__ import annotations
@@ -43,6 +49,7 @@ from . import __version__
 from .capability_registry import REGISTRY_VERSION
 from .emitter import EmitterTarget, describe_emit_targets, get_emitter
 from .export_dispatch import dispatch_from_source
+from .export_service import emit_canonical
 from .export_source import ExportSource
 from .import_source import (
     CanonicalDiffEntry,
@@ -59,13 +66,21 @@ from .roundtrip_matrix import (
     import_adapter_for_emit,
     reconcile,
     reimport_emitted,
+    serialize_emitted_text,
 )
 
 __all__ = [
     "ExportRoundtripRequest",
     "ExportRoundtripResponse",
+    "RoundtripTextDiff",
+    "TEXT_DIFF_MAX_BYTES",
+    "build_text_diff",
     "run_export_roundtrip",
 ]
+
+#: The largest emitted document (either side, UTF-8 bytes) the text diff carries (MFX-43.4). A
+#: larger artifact still gets the model diff; the text diff says it was too large to send.
+TEXT_DIFF_MAX_BYTES = 1_000_000
 
 #: The apiome-rest package version stamped into reproduction provenance
 #: (assignment style keeps the lowercase dunder import ruff-clean, matching
@@ -100,6 +115,23 @@ class ExportRoundtripRequest(BaseModel):
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
         "the round-trip verdict, the report, or the reconciliation.",
     )
+
+
+class RoundtripTextDiff(BaseModel):
+    """The emitted artifact beside the same format re-emitted after the re-import (MFX-43.4).
+
+    ``emitted`` is what the export produced; ``reemitted`` is what the same emitter writes for
+    the re-imported model — i.e. what the artifact would become after one more import + export
+    cycle. Identical texts mean the format round-trips byte-for-byte.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    filename: str = Field(description="The emitted document's path (e.g. ``schema.graphql``).")
+    media_type: Optional[str] = Field(default=None, description="The emitted document's media type.")
+    emitted: str = Field(description="The emitted artifact, as text.")
+    reemitted: str = Field(description="The same target re-emitted from the re-imported model.")
+    identical: bool = Field(description="True when the two texts are byte-identical.")
 
 
 class ExportRoundtripResponse(BaseModel):
@@ -185,6 +217,17 @@ class ExportRoundtripResponse(BaseModel):
     emitter_version: str = Field(description="The emitter implementation version.")
     apiome_version: str = Field(description="The apiome-rest package version that ran the loop.")
     registry_version: str = Field(description="The capability-registry snapshot version.")
+    text_diff: Optional[RoundtripTextDiff] = Field(
+        default=None,
+        description="The emitted artifact beside the same format re-emitted from the re-imported "
+        "model (MFX-43.4); null when the loop did not close or the artifact cannot be diffed as text "
+        "(see ``text_diff_reason``).",
+    )
+    text_diff_reason: Optional[str] = Field(
+        default=None,
+        description="Why ``text_diff`` is null when the loop closed: a multi-file bundle, a binary "
+        "artifact, one too large to send, or a re-emit that failed.",
+    )
 
 
 def _target_entry(target_format: str, emit_key: str) -> Optional[EmitterTarget]:
@@ -202,6 +245,60 @@ def _target_entry(target_format: str, emit_key: str) -> Optional[EmitterTarget]:
         if entry.descriptor.format == target_format or entry.descriptor.key == emit_key:
             return entry
     return None
+
+
+def build_text_diff(
+    emitted: Any,
+    reimported: Any,
+    target_format: str,
+    *,
+    multi_file: bool,
+    options: Optional[Dict[str, Any]] = None,
+) -> "tuple[Optional[RoundtripTextDiff], Optional[str]]":
+    """Re-emit the re-imported model and pair it with the emitted text (MFX-43.4).
+
+    Args:
+        emitted: The original :class:`~app.emitter.EmitResult`.
+        reimported: The re-imported :class:`~app.canonical_model.CanonicalApi`.
+        target_format: The resolved emit format key.
+        multi_file: Whether the target writes a bundle.
+        options: The same per-target emit options the export used.
+
+    Returns:
+        ``(text_diff, None)``, or ``(None, reason)`` when the artifact cannot be diffed as text.
+        Never raises: a failed re-emit is a reason, not an error — the model diff still stands.
+    """
+    if multi_file or len(emitted.files) != 1:
+        return None, (
+            "The artifact is a multi-file bundle; compare its files in the bundle explorer. "
+            "The model diff covers the whole bundle."
+        )
+    first = emitted.files[0]
+    if isinstance(first.content, (bytes, bytearray)):
+        return None, "The artifact is binary, so there is no text to compare."
+    try:
+        again = emit_canonical(reimported, target_format, opts=options)
+    except Exception as exc:  # noqa: BLE001 - any emitter failure is reported, not raised
+        return None, f"The re-imported model could not be emitted again: {exc}"
+    if len(again.files) != 1 or isinstance(again.files[0].content, (bytes, bytearray)):
+        return None, "The re-emitted artifact is not a single text document."
+    before = serialize_emitted_text(first.content)
+    after = serialize_emitted_text(again.files[0].content)
+    if max(len(before.encode("utf-8")), len(after.encode("utf-8"))) > TEXT_DIFF_MAX_BYTES:
+        return None, (
+            f"The artifact is larger than {TEXT_DIFF_MAX_BYTES // 1000} KB, too large to compare as text "
+            "here; download it to diff locally."
+        )
+    return (
+        RoundtripTextDiff(
+            filename=first.path,
+            media_type=first.media_type,
+            emitted=before,
+            reemitted=after,
+            identical=before == after,
+        ),
+        None,
+    )
 
 
 def run_export_roundtrip(
@@ -326,6 +423,9 @@ def run_export_roundtrip(
 
     diff = canonical_diff(source.api, reimported)
     reconciliation = reconcile(diff, report)
+    text_diff, text_diff_reason = build_text_diff(
+        dispatch.emit, reimported, dispatch.target, multi_file=descriptor.multi_file, options=options
+    )
 
     if reconciliation.ok:
         status = MatrixCellStatus.PASS
@@ -354,4 +454,6 @@ def run_export_roundtrip(
         unexplained=list(reconciliation.unexplained),
         overclaims=list(reconciliation.overclaims),
         reimported_fingerprint=canonical_fingerprint(reimported),
+        text_diff=text_diff,
+        text_diff_reason=text_diff_reason,
     )

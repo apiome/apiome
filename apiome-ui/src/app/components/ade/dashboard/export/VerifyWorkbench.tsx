@@ -7,6 +7,7 @@ import {
   DatabaseZap,
   Loader2,
   RefreshCw,
+  Repeat2,
   ShieldAlert,
   ShieldCheck,
   ShieldX,
@@ -94,6 +95,13 @@ export interface VerifyWorkbenchProps {
    * fetch-free — and places it outside the lens bodies so lens switches never remount it.
    */
   projectionPanel?: ReactNode;
+  /**
+   * The Fidelity lens's "See what a round-trip changes" action (MFX-43.4): the Studio runs the
+   * round-trip check and shows {@link roundtripPanel}. Omit to hide the action.
+   */
+  onSeeRoundtrip?: () => void;
+  /** The round-trip comparison, placed below the lenses once requested (MFX-43.4). */
+  roundtripPanel?: ReactNode;
 }
 
 /** The three lenses, in tab / accordion order. */
@@ -174,6 +182,8 @@ export function VerifyWorkbench({
   openableProblems,
   onOpenProblem,
   projectionPanel = null,
+  onSeeRoundtrip,
+  roundtripPanel = null,
 }: VerifyWorkbenchProps) {
   // Lead with the lens that most needs attention: the validator's detail for a blocked export,
   // else the fidelity lens (where the loss + acknowledgement live).
@@ -362,6 +372,7 @@ export function VerifyWorkbench({
             sourceLintReport={sourceLintReport}
             openableProblems={openableProblems}
             onOpenProblem={onOpenProblem}
+            onSeeRoundtrip={onSeeRoundtrip}
           />
         </div>
       </div>
@@ -394,6 +405,7 @@ export function VerifyWorkbench({
                 sourceLintReport={sourceLintReport}
                 openableProblems={openableProblems}
                 onOpenProblem={onOpenProblem}
+                onSeeRoundtrip={onSeeRoundtrip}
               />
             </div>
           </details>
@@ -404,6 +416,9 @@ export function VerifyWorkbench({
           level — not inside a lens body — so switching lenses (or the desktop/narrow layout
           swap) never remounts it and re-fetches the evidence pages. */}
       {projectionPanel}
+
+      {/* MFX-43.4: the round-trip comparison, once the Fidelity lens asked for it. */}
+      {roundtripPanel}
 
       <div className="flex justify-end">
         {/* An explicit re-run means "measure it again", so it bypasses the cached verdict for this
@@ -570,6 +585,7 @@ interface LensBodyProps {
   sourceLintReport: EmittedLintSourceReport | null;
   openableProblems?: LocatedProblem[];
   onOpenProblem?: (problem: LocatedProblem) => void;
+  onSeeRoundtrip?: () => void;
 }
 
 /** Dispatch a lens key to its body; shared by the desktop tab panel and the narrow accordion. */
@@ -585,9 +601,10 @@ function LensBody({
   sourceLintReport,
   openableProblems,
   onOpenProblem,
+  onSeeRoundtrip,
 }: LensBodyProps) {
   if (lens === 'fidelity') {
-    return (
+    const panel = (
       <FidelityWarningPanel
         targetLabel={targetLabel}
         targetDescription={targetDescription}
@@ -599,6 +616,23 @@ function LensBody({
         onAcknowledgedChange={onAcknowledgedChange}
         acknowledgementMode={fidelityAcknowledgementMode(verdict)}
       />
+    );
+    if (!onSeeRoundtrip) return panel;
+    return (
+      <div className="xstd-stack xstd-stack--tight">
+        {panel}
+        {/* MFX-43.4: check the prediction above empirically, from where it is made. */}
+        <div className="xstd-rt__entry">
+          <p className="xstd-note">
+            The report predicts what this export loses. A round trip shows what actually changes when
+            the artifact is re-imported.
+          </p>
+          <Button size="sm" variant="outline" onClick={onSeeRoundtrip} data-testid="verify-see-roundtrip">
+            <Repeat2 className="h-3.5 w-3.5" aria-hidden />
+            See what a round-trip changes
+          </Button>
+        </div>
+      </div>
     );
   }
   if (lens === 'validation') {

@@ -15,11 +15,13 @@ import {
   buildRoundtripIssueReport,
   changeKindTone,
   changeKindLabel,
+  correlateDrops,
   diffEntryLabel,
   ISSUE_BODY_MAX_LENGTH,
   ROUNDTRIP_ISSUE_BASE,
   roundtripStatusPresentation,
   summarizeRoundtrip,
+  textDiffSummary,
   type ExportRoundtripResponse,
   type RoundtripDiffEntry,
 } from '../src/app/components/ade/dashboard/export/exportRoundtrip';
@@ -227,5 +229,35 @@ describe('buildRoundtripIssueReport', () => {
     });
     expect(report.body.length).toBeLessThanOrEqual(ISSUE_BODY_MAX_LENGTH + 200);
     expect(report.body).toContain('clipped');
+  });
+});
+
+describe('correlateDrops / textDiffSummary (MFX-43.4)', () => {
+  const drop = (construct: string): LossItem => ({ construct, kind: 'drop', severity: 'warn', message: 'dropped' });
+
+  it('pairs each predicted drop with the differences it explains, in report order', () => {
+    const result = response({
+      matched: [
+        { entry: { entity: 'operation', key: 'GET /a', change: 'removed' }, finding: drop('GET /a') },
+        { entry: { entity: 'type', key: 'A', change: 'changed' }, finding: drop('GET /a') },
+        { entry: { entity: 'type', key: 'B', change: 'changed' }, finding: { ...drop('B'), kind: 'approx' } },
+      ],
+    });
+    const rows = correlateDrops([drop('GET /a'), { ...drop('B'), kind: 'approx' }, drop('C')], result);
+    expect(rows.map((r) => [r.finding.construct, r.observed.map((e) => e.key)])).toEqual([
+      ['GET /a', ['GET /a', 'A']],
+      ['C', []],
+    ]);
+  });
+
+  it('lists the predictions with nothing observed before a round trip, and nothing without a report', () => {
+    expect(correlateDrops([drop('X')], null)).toEqual([{ finding: drop('X'), observed: [] }]);
+    expect(correlateDrops(null, response())).toEqual([]);
+  });
+
+  it('words an identical and a changed text diff', () => {
+    const diff = { filename: 'a.graphql', emitted: 'x', reemitted: 'x', identical: true };
+    expect(textDiffSummary(diff)).toMatch(/a\.graphql comes back byte for byte/);
+    expect(textDiffSummary({ ...diff, reemitted: 'y', identical: false })).toMatch(/re-imported and exported again/);
   });
 });

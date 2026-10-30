@@ -1,0 +1,17 @@
+---
+slug: export-round-trip-diff
+title: See what a round trip changes, as a model diff or a text diff
+description: The round-trip check now shows a model diff, a text diff and predicted drops.
+authors: [apiome]
+---
+
+The Export Studio's round-trip check now shows its result two ways, and you can start it from the
+**Fidelity** tab of **Verify** with **“See what a round-trip changes”**.
+[How it works](/ship/export-studio#check-a-round-trip).
+
+{/* truncate */}
+
+- **Model diff.** What changed in the API itself, now headed by **Predicted drops**: every construct
+  the fidelity report says the export drops, and whether the round trip saw it go.
+- **Text diff.** The exported file beside the same file after it is read back and exported again,
+  side by side in the code viewer, so you see exactly what one more import and export changes.
