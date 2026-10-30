@@ -72,6 +72,19 @@ The import still runs. Each definition becomes its own property in the project's
 property instead, make the definitions match in the spec and import again. The warning follows your
 selection: unticking the schemas on one side clears it.
 
+### References that won't resolve
+
+The import keeps every reference (`$ref`) as written. When a schema you tick holds a reference that
+won't resolve in the project afterwards, the **Preview** step warns, schema by schema:
+
+- **Not defined in this document** — a reference such as `#/components/schemas/Customer` when the
+  spec defines no `Customer`. After import, it points at a schema the project doesn't have.
+- **Not fetched** — a reference to a URL (`https://…`). Apiome doesn't download it.
+
+The import still runs. To fix the references, add the missing schemas to the spec, or replace a URL
+with a schema defined in it, and import again. A reference to a schema you didn't tick can't happen:
+ticking a schema ticks every schema it uses.
+
 ### Import a new version of an existing project
 
 When the **Slug** on Preview matches a project you already have, the import adds a new version to
