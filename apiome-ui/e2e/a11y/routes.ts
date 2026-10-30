@@ -253,6 +253,9 @@ const ADDITIONAL: A11yRoute[] = [
   { id: 'command-palette', mockup: null, subject: { kind: 'route', path: '/design-system/command-palette' } },
   { id: 'page-header', mockup: null, subject: { kind: 'route', path: '/design-system/page-header' } },
   { id: 'shortcut-sheet', mockup: null, subject: { kind: 'route', path: '/design-system/shortcuts' } },
+  // #6274: the Hive Monaco theme, which no other gated page renders. A spec rather than a route,
+  // so axe runs only after Monaco has painted the code and the gutter.
+  { id: 'code-editor', mockup: null, subject: { kind: 'spec', file: 'hive-code-editor-a11y.spec.ts' } },
 ];
 
 /** The ledger. */

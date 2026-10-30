@@ -52,48 +52,59 @@ import * as React from 'react';
  * Deliberately small. An editor is a well with text in it: a surface, ink, a hairline, the
  * five syntax roles the mockup's `.c-*` classes name, and the three status hues its markers
  * use. Anything more would be a second design language living in this file.
+ *
+ * **Text takes ink, marks take hues** (#6274, `docs/mockups/DESIGN.md` §9). Everything Monaco
+ * draws as *text* — code, line numbers, every syntax role — reads a token the contrast gate
+ * holds at 4.5:1 on `--bg-inset` in every theme: `--fg`, `--fg-muted` and the `-fg` inks. The
+ * saturated hues (`--accent`, `--warn`, `--danger`) only paint marks: the cursor, the selection
+ * and find tints, squiggles and the overview ruler, which SC 1.4.11 holds at 3:1. Before #6274
+ * the syntax roles read the hues themselves, and in the light theme keys (`--warn`, 2.8:1),
+ * strings (`--ok`, 3.6:1) and the gutter (`--fg-faint`, 1.7:1) fell under the line.
  */
 export interface HiveEditorPalette {
   /** `--bg-inset` — the well the code sits in, as `.code` paints it. */
   background: string;
-  /** `--fg` — ordinary code ink. */
+  /** `--fg` — ordinary code ink, and the active line's number. */
   foreground: string;
-  /** `--fg-faint` — line numbers, which are chrome rather than text. */
-  lineNumber: string;
-  /** `--fg-muted` — the active line's number, and punctuation. */
+  /** `--fg-muted` — line numbers, punctuation and comments (`.c-c`, italic). */
   muted: string;
-  /** `--fg-subtle` — comments (`.c-c`), the one place §3.1 allows the faintest ink. */
-  subtle: string;
   /** `--border-strong` — the hairline around a floating widget. */
   border: string;
   /** `--bg-surface` — the ground of a suggestion or hover widget, which floats. */
   surface: string;
-  /** `--accent` — the cursor, the selection, and YAML anchors (`.c-n`). */
+  /** `--accent` — the cursor, the selection tints and the info marker (marks, not text). */
   accent: string;
-  /** `--warn` — a YAML key (`.c-k`), and a warning marker. */
+  /** `--warn` — the warning marker and the find-match tint (marks, not text). */
   warn: string;
-  /** `--ok` — a string value (`.c-s`). */
-  ok: string;
-  /** `--violet` — a number or a literal (`.c-p`). */
-  violet: string;
-  /** `--danger` — an error marker. */
+  /** `--danger` — the error marker (a mark, not text). */
   danger: string;
+  /** `--warn-fg` — a YAML key or JSON property (`.c-k`). */
+  keyInk: string;
+  /** `--ok-fg` — a string value (`.c-s`). */
+  stringInk: string;
+  /** `--violet-fg` — a number, a literal or a keyword (`.c-p`). */
+  literalInk: string;
+  /** `--accent-fg` — a tag, a variable or a YAML anchor (`.c-n`). */
+  nameInk: string;
+  /** `--danger-fg` — an invalid token. */
+  invalidInk: string;
 }
 
 /** Which `--token` each palette entry reads. */
 const PALETTE_TOKENS: Readonly<Record<keyof HiveEditorPalette, string>> = {
   background: '--bg-inset',
   foreground: '--fg',
-  lineNumber: '--fg-faint',
   muted: '--fg-muted',
-  subtle: '--fg-subtle',
   border: '--border-strong',
   surface: '--bg-surface',
   accent: '--accent',
   warn: '--warn',
-  ok: '--ok',
-  violet: '--violet',
   danger: '--danger',
+  keyInk: '--warn-fg',
+  stringInk: '--ok-fg',
+  literalInk: '--violet-fg',
+  nameInk: '--accent-fg',
+  invalidInk: '--danger-fg',
 };
 
 /**
@@ -109,16 +120,17 @@ const PALETTE_TOKENS: Readonly<Record<keyof HiveEditorPalette, string>> = {
 export const LIGHT_FALLBACK_PALETTE: Readonly<HiveEditorPalette> = {
   background: '#E9E8E3',
   foreground: '#1B1A17',
-  lineNumber: '#B8B4AC',
   muted: '#625F59',
-  subtle: '#6E6B65',
   border: 'rgba(28, 25, 20, 0.18)',
   surface: '#FFFFFF',
   accent: '#1B72C1',
   warn: '#C77700',
-  ok: '#0E8A5F',
-  violet: '#6D4FD6',
   danger: '#D43F3A',
+  keyInk: '#8A5300',
+  stringInk: '#0B6B4A',
+  literalInk: '#4F35A8',
+  nameInk: '#12539A',
+  invalidInk: '#A62F2A',
 };
 
 // ---------------------------------------------------------------------------------------
@@ -300,11 +312,12 @@ export interface MonacoThemeHost {
 /**
  * Build the theme object for one palette.
  *
- * The five syntax roles are the mockup's own, mapped one for one:
- * `.c-k` → `--warn` (a YAML key), `.c-s` → `--ok` (a string), `.c-n` → `--accent` (a name
- * or anchor), `.c-p` → `--violet` (a number or literal), `.c-c` → `--fg-subtle`, italic.
- * They are stated for the token names Monaco's YAML, JSON and JavaScript tokenizers emit,
- * so one theme covers the three languages the app's editors actually open.
+ * The five syntax roles are the mockup's own, each in the ink of its hue so it reads at 4.5:1
+ * on the well (#6274): `.c-k` → `--warn-fg` (a YAML key), `.c-s` → `--ok-fg` (a string),
+ * `.c-n` → `--accent-fg` (a name or anchor), `.c-p` → `--violet-fg` (a number or literal),
+ * `.c-c` → `--fg-muted`, italic. They are stated for the token names Monaco's YAML, JSON and
+ * JavaScript tokenizers emit, so one theme covers the three languages the app's editors
+ * actually open.
  *
  * @param palette The resolved tokens.
  * @returns The theme data, ready for `defineTheme`.
@@ -315,25 +328,25 @@ export function buildHiveMonacoTheme(palette: HiveEditorPalette) {
 
   const rules: ThemeRule[] = [
     { token: '', foreground: hex(palette.foreground) },
-    { token: 'comment', foreground: hex(palette.subtle), fontStyle: 'italic' },
-    { token: 'string', foreground: hex(palette.ok) },
-    { token: 'string.yaml', foreground: hex(palette.ok) },
-    { token: 'string.value.json', foreground: hex(palette.ok) },
-    { token: 'number', foreground: hex(palette.violet) },
-    { token: 'constant', foreground: hex(palette.violet) },
-    { token: 'keyword', foreground: hex(palette.violet) },
+    { token: 'comment', foreground: hex(palette.muted), fontStyle: 'italic' },
+    { token: 'string', foreground: hex(palette.stringInk) },
+    { token: 'string.yaml', foreground: hex(palette.stringInk) },
+    { token: 'string.value.json', foreground: hex(palette.stringInk) },
+    { token: 'number', foreground: hex(palette.literalInk) },
+    { token: 'constant', foreground: hex(palette.literalInk) },
+    { token: 'keyword', foreground: hex(palette.literalInk) },
     // A YAML mapping key, a JSON property and an XML attribute are the same thing to a
-    // reader — the name of the value beside it — so all three take `.c-k`'s honey.
-    { token: 'type', foreground: hex(palette.warn) },
-    { token: 'type.yaml', foreground: hex(palette.warn) },
-    { token: 'string.key.json', foreground: hex(palette.warn) },
-    { token: 'attribute.name', foreground: hex(palette.warn) },
-    { token: 'tag', foreground: hex(palette.accent) },
-    { token: 'variable', foreground: hex(palette.accent) },
+    // reader — the name of the value beside it — so all three take `.c-k`'s honey ink.
+    { token: 'type', foreground: hex(palette.keyInk) },
+    { token: 'type.yaml', foreground: hex(palette.keyInk) },
+    { token: 'string.key.json', foreground: hex(palette.keyInk) },
+    { token: 'attribute.name', foreground: hex(palette.keyInk) },
+    { token: 'tag', foreground: hex(palette.nameInk) },
+    { token: 'variable', foreground: hex(palette.nameInk) },
     { token: 'identifier', foreground: hex(palette.foreground) },
     { token: 'delimiter', foreground: hex(palette.muted) },
     { token: 'operators', foreground: hex(palette.muted) },
-    { token: 'invalid', foreground: hex(palette.danger) },
+    { token: 'invalid', foreground: hex(palette.invalidInk) },
   ];
 
   return {
@@ -346,8 +359,11 @@ export function buildHiveMonacoTheme(palette: HiveEditorPalette) {
     colors: {
       'editor.background': hex(palette.background),
       'editor.foreground': hex(palette.foreground),
-      'editorLineNumber.foreground': hex(palette.lineNumber),
-      'editorLineNumber.activeForeground': hex(palette.muted),
+      // Gutter numbers are text a reader uses to point at a line, so they take `--fg-muted`
+      // (4.5:1 on the well) rather than the decorative `--fg-faint`; the active line's number
+      // steps up to `--fg`.
+      'editorLineNumber.foreground': hex(palette.muted),
+      'editorLineNumber.activeForeground': hex(palette.foreground),
       'editorCursor.foreground': hex(palette.accent),
       'editor.selectionBackground': hex(palette.accent, 0.24),
       'editor.inactiveSelectionBackground': hex(palette.accent, 0.12),

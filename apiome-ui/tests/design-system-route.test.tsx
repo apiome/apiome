@@ -132,6 +132,7 @@ describe('/design-system', () => {
       '/design-system/page-header',
       '/design-system/command-palette',
       '/design-system/shortcuts',
+      '/design-system/code-editor',
       '/design-system/mcp',
     ]) {
       expect(document.querySelector(`a[href="${href}"]`)).not.toBeNull();
