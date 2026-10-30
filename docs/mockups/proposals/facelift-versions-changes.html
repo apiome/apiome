@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Versions — Changes, empty (facelift) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .crumb-switch { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 6px 0 8px; margin: -3px -6px; border-radius: var(--r-sm); color: var(--fg); font-weight: 500; font-size: var(--fs-xs); background: transparent; border: 0; cursor: pointer; }
+  .crumb-switch [data-lucide] { width: 12px; height: 12px; opacity: .7; }
+  .ident { display: flex; align-items: flex-start; gap: 14px; min-width: 0; }
+  .ident .avatar { margin-top: 20px; }
+  .pubs { display: flex; flex-direction: column; gap: 2px; }
+  .pub { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 36px; padding: 0 12px; border-radius: var(--r-md); font-family: var(--font-mono); font-size: var(--fs-sm); color: var(--fg); }
+  .pub:hover { background: var(--bg-subtle); }
+  .pub.is-active { background: var(--accent-soft); }
+  .pub .badge { font-family: var(--font-sans); }
+  .void { display: grid; place-items: center; min-height: 120px; font-size: var(--fs-sm); color: var(--fg-muted); }
+</style>
+</head>
+<body data-shell="app" data-nav="projects" data-page="proposals/facelift-versions-changes" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs" data-mood="identity" data-format="openapi">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="ident">
+          <span class="avatar avatar--lg" data-hex data-format="openapi" data-fx-only="hex">PA</span>
+          <div class="min-w-0">
+            <div class="crumbs"><a href="facelift-home.html">Home</a><i data-lucide="chevron-right"></i><span>Build</span><i data-lucide="chevron-right"></i><a href="#">Projects</a><i data-lucide="chevron-right"></i><button class="crumb-switch">Payments API<i data-lucide="chevrons-up-down"></i></button></div>
+            <h1 class="page-title">Payments API <span class="fmt fmt--openapi">OpenAPI</span><span class="badge badge--dot" data-status="draft">v2.4.0 draft</span><span class="badge badge--ok"><i data-lucide="shield-check"></i>B · 88</span></h1>
+            <p class="page-desc">Revisions and releases for this project · <a href="#">Sunset timeline (EOL schedule)</a></p>
+          </div>
+        </div>
+        <div class="page-actions">
+          <a class="btn" href="#"><i data-lucide="git-compare-arrows"></i>Compare</a>
+          <button class="btn"><i data-lucide="upload"></i>Import</button>
+          <button class="btn btn--icon" aria-label="More actions"><i data-lucide="ellipsis"></i></button>
+          <button class="btn btn--primary"><i data-lucide="git-fork"></i>New version</button>
+        </div>
+      </div>
+      <div class="tabs" role="tablist">
+        <a class="tab" href="facelift-versions.html" role="tab"><i data-lucide="scroll-text"></i>Timeline<span class="count">6</span></a>
+        <button class="tab is-active" role="tab"><i data-lucide="git-compare-arrows"></i>Changes<span class="count">4</span></button>
+        <button class="tab" role="tab" disabled style="opacity:.5"><i data-lucide="file-text"></i>Change report<span class="flag"><i data-lucide="flag"></i>gitlike</span></button>
+        <button class="tab" role="tab"><i data-lucide="flask-conical"></i>Test bench</button>
+        <button class="tab" role="tab"><i data-lucide="messages-square"></i>Discussion</button>
+        <button class="tab" role="tab"><i data-lucide="git-branch"></i>Repository</button>
+        <button class="tab" role="tab"><i data-lucide="folder-input"></i>Sources</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <section class="card" style="display:grid;grid-template-columns:300px minmax(0,1fr)">
+      <div style="padding:14px 12px;border-right:1px solid var(--border)">
+        <div class="card__title t-sm" style="padding:0 12px 10px"><i data-lucide="scroll-text"></i>Published versions</div>
+        <div class="pubs">
+          <a class="pub" href="#">v2.3.1<span class="badge badge--honey">Non-breaking</span></a>
+          <a class="pub is-active" href="#">v2.3.0<span class="badge badge--outline">Pending</span></a>
+          <a class="pub" href="#">v2.2.0<span class="badge badge--outline">Pending</span></a>
+          <a class="pub" href="#">v2.1.0<span class="badge badge--outline">Pending</span></a>
+        </div>
+      </div>
+
+      <!-- BEFORE (voids): one sentence in a sea of white -->
+      <div class="void" data-fx-before="voids">Changelog not available yet — classification runs right after publish.</div>
+
+      <!-- AFTER (voids): the empty state says what is happening and offers the next step -->
+      <div data-fx-after="voids" style="padding:28px 24px 24px">
+        <div class="empty" style="padding:12px 0 20px">
+          <div class="empty__art" data-format="openapi"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="git-compare-arrows"></i></div>
+          <div class="empty__title">No changelog for v2.3.0 yet</div>
+          <div class="empty__desc">Changes are classified right after a publish. This version was published before classification was turned on, so run it once — or compare it with its parent now.</div>
+          <div class="empty__actions"><button class="btn btn--primary"><i data-lucide="sparkles"></i>Classify v2.3.0</button><a class="btn" href="#"><i data-lucide="git-compare-arrows"></i>Compare v2.2.0 → v2.3.0</a></div>
+        </div>
+        <div class="fx-steps">
+          <div><span class="n">1</span><div><b>Publish a version</b>Every publish queues a classification against the previous published version.</div></div>
+          <div><span class="n">2</span><div><b>Changes are graded</b>Breaking, non-breaking and docs-only, with the rule that decided each.</div></div>
+          <div><span class="n">3</span><div><b>Review by class</b>Read them here, or open the full Change report (gitlike) when it is on.</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/versions?projectId=…&amp;tab=changes with a version whose changelog is not classified — facelift proposal</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>voids</b> — the shipped tab shows one sentence (“Changelog not available yet — classification runs right after publish.”) in a card that fills the viewport. The <code>.empty</code> state keeps the fact, names the version, explains why, and offers the next step (classify now, or compare with the parent) plus the three-step explainer of how the tab fills up. The art is the hex with the project’s format colour.</li>
+    <li><b>layers</b>, <b>type</b>, <b>hex</b>, <b>rail</b> as on Versions.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>The Published versions list with its classification badges; the tab set; the header.</li></ul>
+  <h4>States</h4>
+  <ul><li>Classified version selected → the change list as today, no empty state. Classification running → the same art with a spinner and “Classifying… about a minute”. Classification failed → <code>.banner--danger</code> with Retry in the same spot.</li></ul>
+  <h4>Rule (DESIGN.md §8 “Empty states”)</h4>
+  <ul><li>An empty pane never shows a bare sentence: it names the object, says why it is empty, and offers one primary and at most one secondary action.</li></ul>
+</template>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mock scenarios dialog — facelift · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) */
+  .stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; background: var(--bg-overlay); }
+  .stage .dialog { animation: none; }
+  .raw { display: flex; flex-direction: column; gap: 10px; }
+  .raw .box { border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--border) inset; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .raw .box--deep { background: var(--bg-subtle); }
+  .raw .rowl { display: flex; align-items: center; gap: 8px; }
+  .raw .rowl .t-caps { white-space: nowrap; }
+  .raw textarea { min-height: 54px; }
+  .raw .trash { margin-left: auto; }
+  .op { border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--border) inset; }
+  .op__head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .op__head .method { font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-xs); color: var(--ok-fg); background: var(--ok-soft); padding: 2px 6px; border-radius: var(--r-xs); }
+  .op__body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+  .resp-row { display: grid; grid-template-columns: 110px minmax(0,1fr) auto; gap: 10px; align-items: end; }
+  .seq-tag { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: var(--r-full); background: var(--accent-soft); color: var(--accent-fg); font-size: var(--fs-2xs); font-weight: 600; }
+  details.adv > summary { list-style: none; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); padding: 8px 0; }
+  details.adv > summary::-webkit-details-marker { display: none; }
+  details.adv > summary [data-lucide] { width: 14px; height: 14px; transition: transform var(--dur-base); }
+  details.adv[open] > summary [data-lucide] { transform: rotate(90deg); }
+</style>
+</head>
+<body data-shell="bare" data-page="proposals/facelift-mock-scenarios" data-root="../">
+<main class="page">
+  <div class="stage">
+    <div class="dialog dialog--lg" role="dialog" aria-labelledby="ms-title" style="max-width:900px">
+      <div class="dialog__header">
+        <span class="icon-tile icon-tile--accent" data-hex><i data-lucide="flask-conical"></i></span>
+        <div><div class="dialog__title" id="ms-title">Mock scenarios for v1.0.0</div><div class="dialog__desc">Curated situations consumers select per request with the <code>X-Mock-Scenario</code> header. Add several responses to one operation to build a per-call sequence; requests without the header keep the default mock behavior.</div></div>
+        <button class="btn btn--ghost btn--icon dialog__close" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+
+      <!-- ===== BEFORE (forms): unlabeled inputs, one after another, as shipped ===== -->
+      <div class="dialog__body raw" data-fx-before="forms">
+        <div class="box">
+          <div class="rowl"><input class="input" value="quota-exceeded" aria-label="Scenario name" /><button class="btn btn--ghost btn--icon trash" aria-label="Delete scenario"><i data-lucide="trash-2"></i></button></div>
+          <input class="input" value="Throttled." aria-label="Scenario description" />
+          <div class="box box--deep">
+            <div class="rowl"><input class="input input--mono" value="GET /pets" aria-label="Operation" /><button class="btn btn--ghost btn--icon trash" aria-label="Delete override"><i data-lucide="trash-2"></i></button></div>
+            <div class="box">
+              <div class="rowl"><span class="t-caps">Response</span><input class="input" style="width:90px" value="429" aria-label="Status" /><input class="input grow" placeholder="Media type (default application/json)" aria-label="Media type" /><label class="check t-sm"><input type="checkbox" /> Off-spec</label></div>
+              <textarea class="textarea" aria-label="Headers">{
+  "Retry-After": "60"
+}</textarea>
+              <textarea class="textarea" aria-label="Body">{
+  "error": "quota"
+}</textarea>
+              <div><button class="btn btn--sm"><i data-lucide="braces"></i>Insert token<i data-lucide="chevron-down"></i></button></div>
+            </div>
+            <div><button class="btn btn--sm"><i data-lucide="plus"></i>Add sequence step</button></div>
+            <div class="t-caps" style="white-space:normal">Match rules (advanced) — evaluated before the responses above; first match wins, responses above are the fallback</div>
+            <textarea class="textarea input--mono" placeholder='Rules as JSON, e.g. [{"when": {"query": {"limit": {"gt": 10}}}, "responses": [{"status": 429}]}] (optional)' aria-label="Match rules"></textarea>
+            <div><button class="btn btn--sm"><i data-lucide="braces"></i>Insert token<i data-lucide="chevron-down"></i></button></div>
+          </div>
+          <div class="row gap-2"><button class="btn btn--sm"><i data-lucide="plus"></i>Add operation override</button><button class="btn btn--sm"><i data-lucide="plus"></i>Add scenario chaos</button></div>
+        </div>
+        <div><button class="btn btn--sm"><i data-lucide="plus"></i>Add scenario</button></div>
+      </div>
+
+      <!-- ===== AFTER (forms): sections, labels, side-by-side fields, editors for JSON ===== -->
+      <div class="dialog__body" data-fx-after="forms">
+        <div class="form-section">
+          <div class="row-between"><div><div class="form-section__title">Scenario</div><div class="form-section__desc" style="margin-bottom:0">What a consumer selects with <code>X-Mock-Scenario: quota-exceeded</code>.</div></div><button class="btn btn--ghost btn--sm"><i data-lucide="trash-2"></i>Delete scenario</button></div>
+          <div class="form-grid mt-4">
+            <label class="field"><span class="label">Name</span><input class="input input--mono" value="quota-exceeded" /><span class="hint">Letters, digits and dashes; this is the header value.</span></label>
+            <label class="field"><span class="label">Description</span><input class="input" value="Throttled." /><span class="hint">Shown to consumers in the Try-it panel.</span></label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="row-between"><div><div class="form-section__title">Operation overrides <span class="badge">1</span></div><div class="form-section__desc" style="margin-bottom:0">Each override replaces the default mock for one operation. Several responses form a per-call sequence.</div></div><button class="btn btn--sm"><i data-lucide="plus"></i>Add operation</button></div>
+          <div class="op mt-4" data-well>
+            <div class="op__head"><span class="method">GET</span><span class="mono t-sm">/pets</span><span class="seq-tag"><i data-lucide="list-ordered"></i>1 step</span><span class="grow"></span><button class="btn btn--ghost btn--sm"><i data-lucide="plus"></i>Add sequence step</button><button class="btn btn--ghost btn--icon btn--sm" aria-label="Remove override"><i data-lucide="trash-2"></i></button></div>
+            <div class="op__body">
+              <div class="resp-row">
+                <label class="field"><span class="label">Status</span><select class="select"><option>429</option><option>200</option><option>404</option><option>500</option></select></label>
+                <label class="field"><span class="label">Media type</span><input class="input" placeholder="application/json (default)" /></label>
+                <label class="check t-sm" style="height:var(--control-h)"><input type="checkbox" /> Off-spec response</label>
+              </div>
+              <div class="grid grid-2">
+                <div class="fx-editor"><div class="fx-editor__bar"><i data-lucide="list" style="width:12px;height:12px"></i>Headers<span class="spacer"></span><button class="btn btn--ghost btn--sm"><i data-lucide="braces"></i>Insert token</button></div><pre class="code code--lines"><span>{</span><span>  <span class="c-s">"Retry-After"</span>: <span class="c-s">"60"</span></span><span>}</span></pre></div>
+                <div class="fx-editor"><div class="fx-editor__bar"><i data-lucide="file-json-2" style="width:12px;height:12px"></i>Body<span class="spacer"></span><button class="btn btn--ghost btn--sm"><i data-lucide="braces"></i>Insert token</button></div><pre class="code code--lines"><span>{</span><span>  <span class="c-s">"error"</span>: <span class="c-s">"quota"</span></span><span>}</span></pre></div>
+              </div>
+              <details class="adv">
+                <summary><i data-lucide="chevron-right"></i>Match rules <span class="t-xs t-subtle" style="font-weight:400">· evaluated before the responses above; first match wins, the responses are the fallback</span></summary>
+                <div class="fx-editor mt-2"><div class="fx-editor__bar"><i data-lucide="filter" style="width:12px;height:12px"></i>Rules (JSON)<span class="spacer"></span><button class="btn btn--ghost btn--sm"><i data-lucide="braces"></i>Insert token</button></div><pre class="code code--lines"><span class="c-c">[{ "when": { "query": { "limit": { "gt": 10 } } }, "responses": [{ "status": 429 }] }]</span></pre></div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="row-between"><div><div class="form-section__title">Chaos</div><div class="form-section__desc" style="margin-bottom:0">Latency, drops and corruption applied to every response in this scenario.</div></div><button class="btn btn--sm"><i data-lucide="plus"></i>Add chaos</button></div>
+        </div>
+      </div>
+
+      <div class="dialog__footer"><button class="btn btn--ghost left"><i data-lucide="plus"></i>Add scenario</button><button class="btn">Cancel</button><button class="btn btn--primary"><i data-lucide="check"></i>Save scenarios</button></div>
+    </div>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">Mock scenarios dialog on a version row (Versions → Mock → Scenarios) — facelift proposal</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>forms</b> — the shipped dialog is a column of unlabeled inputs nested in bordered boxes. The proposal keeps every field and groups them into three <code>.form-section</code>s (Scenario · Operation overrides · Chaos), labels each field with a hint, puts Status and Media type side by side, shows Headers and Body in two <code>.fx-editor</code> panes with line numbers and the Insert-token action in the editor bar, folds Match rules into a disclosure, and moves the dialog-wide actions (Add scenario · Cancel · Save) to the footer.</li>
+    <li><b>layers</b> — the operation override is an inset well; the editors are the only bordered things.</li>
+    <li><b>type</b> — display face for the dialog title.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Every field and action: scenario name and description, delete scenario, operation override with method + path, status, media type, Off-spec, headers, body, Insert token, Add sequence step, match rules, Add operation override, Add scenario chaos, Add scenario.</li></ul>
+  <h4>States</h4>
+  <ul><li>Invalid JSON → the editor bar turns <code>danger</code> with the parse error; Save is disabled with a title naming the field. No overrides → an inline empty state (“No overrides yet — the scenario answers like the default mock”) with Add operation. Several steps → the step number in the sequence tag and the steps stacked inside the well.</li></ul>
+  <h4>Rule (DESIGN.md §7 “Forms”)</h4>
+  <ul><li>Every input has a visible label; JSON is edited in an editor pane, never a bare textarea; a dialog’s actions live in its footer.</li></ul>
+</template>
+</body>
+</html>

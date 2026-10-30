@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Catalog — facelift · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) — the facts line comes from proposals/catalog-quiet.html */
+  .about-link { display: inline-flex; align-items: center; gap: 4px; color: var(--accent-fg); font-size: var(--fs-sm); background: none; border: 0; padding: 0; cursor: pointer; }
+  .about-link [data-lucide] { width: 13px; height: 13px; }
+  .facts { display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; font-size: var(--fs-sm); color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+  .facts b { color: var(--fg); font-weight: 600; }
+  .facts .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--fg-faint); }
+  .facts .fmt { height: 18px; font-size: var(--fs-2xs); }
+  .facts-toggle { margin-left: auto; }
+  .table .cell-sub, .table td.t-num { white-space: nowrap; }
+  .table td:nth-child(2) { min-width: 300px; }
+  .grade { width: 22px; height: 22px; border-radius: var(--r-full); display: inline-grid; place-items: center; font-size: var(--fs-2xs); font-weight: 700; color: #fff; }
+  .grade--a { background: var(--ok); } .grade--c { background: var(--orange); } .grade--d { background: var(--danger); } .grade--none { background: var(--bg-inset); color: var(--fg-subtle); }
+  .bulk { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: var(--fs-sm); border-bottom: 1px solid var(--border); background: var(--accent-soft); color: var(--accent-fg); }
+  .bulk .spacer { flex: 1; }
+</style>
+</head>
+<body data-shell="app" data-nav="catalog" data-page="proposals/facelift-catalog" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="facelift-home.html">Home</a><i data-lucide="chevron-right"></i><span>Bring in</span><i data-lucide="chevron-right"></i><span>Catalog</span></div>
+          <h1 class="page-title">Catalog</h1>
+          <p class="page-desc">Non-OpenAPI specs, stored as-is and converted only when you’re ready. <button class="about-link"><i data-lucide="circle-help"></i>How the catalog works</button></p>
+        </div>
+        <div class="page-actions">
+          <label class="row gap-2 t-sm t-muted" style="margin-right:6px"><button class="switch switch--sm is-on" role="switch" aria-checked="true"></button>Show deleted</label>
+          <button class="btn"><i data-lucide="bell-ring"></i>Drift alerts</button>
+          <button class="btn btn--primary"><i data-lucide="upload"></i>Import to catalog<span class="kbd">I</span></button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body" style="gap:var(--space-4)">
+
+    <!-- Facts line (HIVE-11.2, shipped) -->
+    <div class="facts">
+      <span><b>3</b> items</span><span class="sep"></span>
+      <span class="row gap-1"><b>3</b> formats <span class="fmt fmt--graphql">GraphQL</span><span class="fmt fmt--proto">Protobuf</span><span class="fmt fmt--asyncapi">AsyncAPI</span></span><span class="sep"></span>
+      <span>avg quality <b>B · 83</b></span><span class="sep"></span>
+      <span><b>1</b> converted to OpenAPI</span><span class="sep"></span>
+      <span class="t-subtle">2 active · 1 disabled · 1 deleted</span>
+      <button class="btn btn--ghost btn--sm facts-toggle"><i data-lucide="chart-no-axes-column"></i>Show stats</button>
+    </div>
+
+    <!-- One card: toolbar + views + table -->
+    <section class="table-wrap">
+      <div class="table-toolbar">
+        <div class="input-wrap" style="width:300px"><i data-lucide="search"></i><input class="input input--sm" placeholder="Search name, slug, format, protocol…  ( / )" aria-label="Search catalog" /></div>
+        <button class="btn btn--sm" aria-haspopup="menu"><i data-lucide="layers"></i>Format<i data-lucide="chevron-down"></i></button>
+        <select class="select select--sm" style="width:130px" aria-label="Protocol"><option>All protocols</option></select>
+        <select class="select select--sm" style="width:124px" aria-label="Source"><option>All sources</option></select>
+        <select class="select select--sm" style="width:110px" aria-label="Grade"><option>Any grade</option></select>
+        <select class="select select--sm" style="width:120px" aria-label="Domain"><option>All domains</option></select>
+        <select class="select select--sm" style="width:110px" aria-label="Tags"><option>All tags</option></select>
+        <span class="spacer"></span>
+        <div class="segmented segmented--sm" role="radiogroup" aria-label="View">
+          <button data-tip="Cards"><i data-lucide="layout-grid"></i>Cards</button>
+          <button class="is-active" data-tip="Table"><i data-lucide="rows-3"></i>Table</button>
+        </div>
+      </div>
+      <div class="table-toolbar" style="padding-top:6px">
+        <span class="chip is-active">All <span class="t-faint">4</span></span>
+        <span class="chip">Active <span class="t-faint">2</span></span>
+        <span class="chip"><i data-lucide="triangle-alert"></i>Needs attention <span class="t-faint">2</span></span>
+        <span class="chip">Deleted <span class="t-faint">1</span></span>
+        <span class="spacer"></span>
+        <button class="btn btn--sm btn--ghost"><i data-lucide="arrow-up-down"></i>Sorted by artifact ↑<i data-lucide="chevron-down"></i></button>
+      </div>
+      <div class="bulk" data-fx-only="color"><i data-lucide="check-square-2" style="width:14px;height:14px"></i><span><b>1</b> selected</span><span class="spacer"></span><button class="btn btn--sm">Convert</button><button class="btn btn--sm">Export</button><button class="btn btn--sm">Categorize</button><button class="btn btn--sm btn--ghost">Clear</button></div>
+      <div class="scroll-x">
+      <table class="table">
+        <thead><tr>
+          <th class="cell-check"><label class="check"><input type="checkbox" aria-label="Select all" /></label></th>
+          <th class="sortable is-sorted" aria-sort="ascending">Artifact <span class="sort"><i data-lucide="arrow-up"></i></span></th>
+          <th class="sortable">Format <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Protocol <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Source <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable t-right">Quality <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Grade <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Status <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+          <th class="sortable">Updated <span class="sort"><i data-lucide="arrow-up-down"></i></span></th>
+        </tr></thead>
+        <tbody>
+          <tr data-format="asyncapi">
+            <td class="cell-check"><label class="check"><input type="checkbox" aria-label="Select Events Bus" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a" data-hex data-format="asyncapi">EB</span><div><div class="cell-primary"><a href="facelift-catalog-item.html">Events Bus</a></div><div class="cell-sub mono">events-bus</div></div></div></td>
+            <td><span class="fmt fmt--asyncapi">AsyncAPI</span></td>
+            <td><span class="badge badge--violet"><i data-lucide="radio"></i>Event</span></td>
+            <td class="t-faint">—</td>
+            <td class="t-right t-num t-faint">—</td>
+            <td><span class="grade grade--none">–</span></td>
+            <td><span class="badge badge--dot" data-status="disabled">Disabled</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+          <tr data-format="graphql" class="is-selected">
+            <td class="cell-check"><label class="check"><input type="checkbox" checked aria-label="Select Ledger Graph" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a" data-hex data-format="graphql">LG</span><div><div class="cell-primary"><a href="facelift-catalog-item.html">Ledger Graph</a></div><div class="cell-sub mono">ledger-graph</div><div class="row gap-2 mt-1"><span class="badge badge--ok">Converted →</span><a class="t-xs" href="facelift-versions.html">Ledger Graph (OpenAPI)</a></div></div></div></td>
+            <td><span class="fmt fmt--graphql">GraphQL</span></td>
+            <td><span class="badge badge--rose"><i data-lucide="share-2"></i>Graph</span></td>
+            <td><span class="tag"><i data-lucide="upload" style="width:11px;height:11px"></i> ledger.graphql</span></td>
+            <td class="t-right t-num">91</td>
+            <td><span class="grade grade--a">A</span></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+          <tr data-format="graphql" style="opacity:.75">
+            <td class="cell-check"><label class="check"><input type="checkbox" aria-label="Select Legacy Graph" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a" data-hex data-format="graphql">LG</span><div><div class="cell-primary"><a href="#">Legacy Graph</a></div><div class="cell-sub mono">legacy-graph</div></div></div></td>
+            <td><span class="fmt fmt--graphql">GraphQL</span></td>
+            <td><span class="badge badge--rose"><i data-lucide="share-2"></i>Graph</span></td>
+            <td><span class="tag"><i data-lucide="upload" style="width:11px;height:11px"></i> ledger.graphql</span></td>
+            <td class="t-right t-num">58</td>
+            <td><span class="grade grade--d">D</span></td>
+            <td><span class="badge badge--dot" data-status="revoked">Deleted</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+          <tr data-format="proto">
+            <td class="cell-check"><label class="check"><input type="checkbox" aria-label="Select Orders RPC" /></label></td>
+            <td><div class="row gap-3"><span class="avatar avatar--sm avatar--a" data-hex data-format="proto">OR</span><div><div class="cell-primary"><a href="#">Orders RPC</a></div><div class="cell-sub mono">orders-rpc</div></div></div></td>
+            <td><span class="fmt fmt--proto">Protobuf</span></td>
+            <td><span class="badge badge--ok"><i data-lucide="cable"></i>RPC</span></td>
+            <td><span class="tag"><i data-lucide="link" style="width:11px;height:11px"></i> acme.io/orders.proto</span></td>
+            <td class="t-right t-num">74</td>
+            <td><span class="grade grade--c">C</span></td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-num t-muted">08/14/26 10:02 AM</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="table-foot"><span>4 items · sorted by artifact ↑</span></div>
+    </section>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/catalog — facelift proposal; builds on <code>proposals/catalog-quiet.html</code> (facts line, one card — shipped as HIVE-11.2)</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>hex</b> — the item avatar is a hex filled with the format colour (GraphQL rose, Protobuf azure, AsyncAPI violet…), so a row’s format reads before its pill does.</li>
+    <li><b>color</b> — a 3 px format rule on the left of every row; the selected row gets an azure rule and a 6 % azure fill (not grey); the bulk bar is azure-tinted; the active chip is navy.</li>
+    <li><b>layers</b> — the two toolbar rows sit on one tinted band inside the card; the header row has no fill; the footer is a lighter band. No hairline around the card, a soft shadow instead.</li>
+    <li><b>type</b> — display face for the title. <b>rail</b>, <b>motion</b>, <b>themes</b> as on Home.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Everything shipped: facts line + Show stats, every filter, Cards / Table, chips with counts, Show deleted, Drift alerts, bulk selection and actions, the Converted → link, all columns and sorts.</li></ul>
+  <h4>States</h4>
+  <ul><li>Cards view: the same hex avatar leads each card and the format rule becomes a 3 px top rule. Deleted rows stay at 75 % with a grey rule. Empty / loading / error as in <code>proposals/catalog-quiet.html</code>.</li></ul>
+  <h4>Budget</h4>
+  <ul><li>First row lands where it does today; the bulk bar only appears with a selection, as today.</li></ul>
+</template>
+</body>
+</html>

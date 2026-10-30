@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin console — facelift · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only. The "before" half reproduces the legacy console so it can be compared;
+     its palette is the old UI's and is scoped to .legacy only — it is what this proposal replaces. */
+  .legacy { --lg-indigo: #4F46E5; --lg-indigo-soft: #EEF2FF; --lg-fg: #111827; --lg-muted: #6B7280; --lg-line: #E5E7EB; --lg-rose-soft: #FEE2E2; --lg-rose: #EF4444; --lg-green: #22C55E; --lg-info-bg: #EFF6FF; --lg-info-bd: #BFDBFE; --lg-info: #1D4ED8;
+    display: grid; grid-template-columns: 264px minmax(0,1fr); min-height: 100vh; background: #fff; color: var(--lg-fg); font-family: "Inter", system-ui, sans-serif; }
+  .legacy aside { border-right: 1px solid var(--lg-line); display: flex; flex-direction: column; }
+  .legacy .lg-brand { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--lg-line); }
+  .legacy .lg-brand .ic { width: 28px; height: 28px; border-radius: 8px; background: var(--lg-indigo-soft); color: var(--lg-indigo); display: grid; place-items: center; }
+  .legacy .lg-brand .ic [data-lucide] { width: 15px; height: 15px; }
+  .legacy .lg-brand b { display: block; font-size: 14px; } .legacy .lg-brand small { color: var(--lg-muted); font-size: 11px; letter-spacing: .04em; }
+  .legacy nav { padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .legacy nav .lbl { font-size: 11px; font-weight: 600; letter-spacing: .06em; color: var(--lg-muted); padding: 14px 10px 6px; }
+  .legacy nav a { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: 8px; color: #374151; font-size: 14px; }
+  .legacy nav a [data-lucide] { width: 16px; height: 16px; color: var(--lg-muted); }
+  .legacy nav a.is-active { background: var(--lg-indigo-soft); color: var(--lg-indigo); box-shadow: inset 3px 0 0 var(--lg-indigo); }
+  .legacy nav a.is-active [data-lucide] { color: var(--lg-indigo); }
+  .legacy .lg-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--lg-line); font-size: 13px; color: #374151; }
+  .legacy .lg-foot .dens { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--lg-line); border-radius: 8px; }
+  .legacy .lg-foot .dens span { width: 24px; height: 22px; border-radius: 5px; display: grid; place-items: center; color: var(--lg-muted); } .legacy .lg-foot .dens span.on { background: var(--lg-indigo-soft); color: var(--lg-indigo); }
+  .legacy .lg-foot .dens [data-lucide] { width: 13px; height: 13px; }
+  .legacy header { height: 64px; display: flex; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--lg-line); font-size: 22px; font-weight: 700; }
+  .legacy .lg-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+  .legacy .lg-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .legacy .lg-stat { border: 1px solid var(--lg-line); border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 12px; position: relative; }
+  .legacy .lg-stat .ic { width: 40px; height: 40px; border-radius: 10px; background: var(--lg-rose-soft); color: var(--lg-rose); display: grid; place-items: center; }
+  .legacy .lg-stat .ic--g { background: #DCFCE7; color: var(--lg-green); }
+  .legacy .lg-stat .ic [data-lucide] { width: 18px; height: 18px; }
+  .legacy .lg-stat .delta { position: absolute; right: 22px; top: 22px; font-size: 13px; color: var(--lg-green); font-weight: 600; }
+  .legacy .lg-stat .t { font-size: 14px; color: var(--lg-muted); } .legacy .lg-stat .v { font-size: 22px; font-weight: 700; } .legacy .lg-stat .v.dash { color: var(--lg-muted); font-size: 18px; }
+  .legacy .lg-info { border: 1px solid var(--lg-info-bd); background: var(--lg-info-bg); border-radius: 12px; padding: 18px 22px; display: flex; gap: 12px; font-size: 14px; color: #374151; }
+  .legacy .lg-info [data-lucide] { width: 18px; height: 18px; color: var(--lg-info); flex-shrink: 0; }
+  .legacy .lg-info b { color: var(--lg-info); display: block; margin-bottom: 4px; }
+  .legacy .lg-center { text-align: center; font-size: 13px; color: var(--lg-muted); line-height: 1.6; }
+  /* after */
+  .status-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: var(--fs-sm); }
+  .status-row + .status-row { border-top: 1px solid var(--border); }
+  .status-row .mono { margin-left: auto; font-size: var(--fs-xs); color: var(--fg-subtle); }
+</style>
+</head>
+<body data-shell="bare" data-page="proposals/facelift-admin" data-root="../">
+
+<!-- ===== BEFORE (admin): the legacy console, as shipped today at /admin ===== -->
+<div class="legacy" data-fx-before="admin" aria-label="Legacy admin console">
+  <aside>
+    <div class="lg-brand"><span class="ic"><i data-lucide="shield"></i></span><div><b>Super Admin</b><small>Apiome Console</small></div></div>
+    <nav>
+      <a class="is-active" href="#"><i data-lucide="layout-grid"></i>Overview</a>
+      <div class="lbl">MANAGEMENT</div>
+      <a href="#"><i data-lucide="users"></i>Users</a>
+      <a href="#"><i data-lucide="building-2"></i>Tenants</a>
+      <a href="#"><i data-lucide="shield-check"></i>Licenses</a>
+      <a href="#"><i data-lucide="flag"></i>Feature Flags</a>
+      <a href="#"><i data-lucide="box"></i>Property Templates</a>
+      <a href="#"><i data-lucide="credit-card"></i>Payments</a>
+      <a href="#"><i data-lucide="database"></i>Database</a>
+      <a href="#"><i data-lucide="activity"></i>Monitoring</a>
+      <a href="#"><i data-lucide="settings"></i>System settings</a>
+    </nav>
+    <div class="lg-foot"><span class="dens"><span><i data-lucide="rows-4"></i></span><span class="on"><i data-lucide="rows-3"></i></span><span><i data-lucide="square"></i></span></span><span class="row gap-2"><i data-lucide="log-out" style="width:14px;height:14px"></i>Sign out</span></div>
+  </aside>
+  <div>
+    <header>Dashboard Overview</header>
+    <div class="lg-body">
+      <div class="lg-stats">
+        <div class="lg-stat"><span class="ic"><i data-lucide="users"></i></span><span class="delta">+12%</span><span class="t">Total Users</span><span class="v dash">—</span></div>
+        <div class="lg-stat"><span class="ic"><i data-lucide="user-check"></i></span><span class="delta">+8%</span><span class="t">Active Subscriptions</span><span class="v dash">—</span></div>
+        <div class="lg-stat"><span class="ic"><i data-lucide="dollar-sign"></i></span><span class="delta">+15%</span><span class="t">Revenue (MTD)</span><span class="v dash">—</span></div>
+        <div class="lg-stat"><span class="ic ic--g"><i data-lucide="activity"></i></span><span class="t">System Status</span><span class="v">Healthy</span></div>
+      </div>
+      <div class="lg-info"><i data-lucide="circle-alert"></i><div><b>Admin Portal - Initial Setup</b>This is the foundation for your super admin portal. Use the sidebar to navigate between different management sections. The Users section is now fully implemented with signup approval and user management features.</div></div>
+      <div class="lg-center">Super Admin Portal • Apiome Internal Use Only<br>Session expires after 8 hours of inactivity</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AFTER (admin): the console on the Hive shell, rose rail variant (admin/overview.html) ===== -->
+<div class="shell" data-fx-after="admin">
+  <aside class="rail rail--admin" aria-label="Primary">
+    <div class="rail__top">
+      <a class="rail__brand" href="../home/launcher.html" title="Apiome home"><span class="brand-mark"></span><span class="brand-text"><div class="brand-name">apiome</div><div class="brand-sub">Admin console</div></span></a>
+    </div>
+    <nav class="rail__nav">
+      <div class="nav-group"><div class="nav-group__items"><a class="nav-item is-active" href="#"><i data-lucide="layout-dashboard"></i><span>Overview</span></a></div></div>
+      <div class="nav-group"><div class="nav-group__label">Directory<i data-lucide="chevron-down"></i></div><div class="nav-group__items"><a class="nav-item" href="#"><i data-lucide="users"></i><span>Users</span><span class="badge badge--rose nav-pill">3</span></a><a class="nav-item" href="#"><i data-lucide="building-2"></i><span>Tenants</span></a></div></div>
+      <div class="nav-group"><div class="nav-group__label">Commercial<i data-lucide="chevron-down"></i></div><div class="nav-group__items"><a class="nav-item" href="#"><i data-lucide="badge-check"></i><span>Licenses</span></a><a class="nav-item" href="#"><i data-lucide="flag"></i><span>Feature flags</span></a></div></div>
+      <div class="nav-group"><div class="nav-group__label">Platform<i data-lucide="chevron-down"></i></div><div class="nav-group__items"><a class="nav-item" href="#"><i data-lucide="layout-template"></i><span>Property templates</span></a><a class="nav-item" href="#"><i data-lucide="key-square"></i><span>Auth providers</span></a><a class="nav-item" href="#"><i data-lucide="user-round-check"></i><span>Sign-up policy</span></a></div></div>
+    </nav>
+    <div class="rail__bottom">
+      <a class="nav-item" href="../home/launcher.html"><i data-lucide="arrow-left"></i><span>Back to app</span></a>
+      <a class="nav-item" href="#"><i data-lucide="settings-2"></i><span>Preferences</span><span class="kbd" style="margin-left:auto">⌘,</span></a>
+      <button class="rail__user"><span class="avatar avatar--sm avatar--e">SA</span><span class="grow min-w-0"><div class="u-name t-truncate">Admin session</div><div class="u-mail t-truncate">ends in 7 h 41 m</div></span><i data-lucide="log-out"></i></button>
+    </div>
+  </aside>
+  <main class="page">
+    <header class="page-header">
+      <div class="page-header__inner">
+        <div class="page-header__row">
+          <div><div class="crumbs"><span>Admin console</span><i data-lucide="chevron-right"></i><span>Overview</span></div><h1 class="page-title">Overview</h1><p class="page-desc">Platform-wide numbers and what needs your attention right now.</p></div>
+          <div class="page-actions"><button class="btn"><i data-lucide="refresh-cw"></i>Refresh</button><a class="btn btn--primary" href="#"><i data-lucide="user-check"></i>Review 3 signups</a></div>
+        </div>
+      </div>
+    </header>
+    <div class="page-body">
+      <section class="stat-grid stat-grid--4" aria-label="Platform stats">
+        <div class="stat"><div class="stat__label"><i data-lucide="users"></i>Total users</div><div class="stat__value" data-count="128">128</div><div class="stat__foot"><span>117 verified · 121 enabled</span><span class="stat__delta stat__delta--up"><i data-lucide="trending-up"></i>+9 · 30d</span></div></div>
+        <div class="stat"><div class="stat__label"><i data-lucide="badge-check"></i>Active licenses</div><div class="stat__value" data-count="41">41</div><div class="stat__foot"><span>paid + sponsor</span><span class="stat__delta stat__delta--up"><i data-lucide="trending-up"></i>+3 · 30d</span></div></div>
+        <div class="stat"><div class="stat__label"><i data-lucide="building-2"></i>Tenants</div><div class="stat__value" data-count="37">37</div><div class="stat__foot"><span>4 created this month</span></div></div>
+        <div class="stat"><div class="stat__label"><i data-lucide="activity"></i>System status</div><div class="stat__value" style="display:flex;align-items:center;gap:10px"><span class="dot dot--ok dot--pulse"></span>Healthy</div><div class="stat__foot"><span>REST 38 ms · pool 4/20</span></div></div>
+      </section>
+      <div class="grid grid-main-aside">
+        <div class="col gap-6">
+          <section class="card" data-attention="danger">
+            <div class="card__header"><div class="card__title"><i data-lucide="user-plus"></i>Pending approvals<span class="badge badge--rose">3</span></div><a href="#" class="t-sm">Open Users <i data-lucide="arrow-right" style="display:inline-block;width:12px;height:12px;vertical-align:-1px"></i></a></div>
+            <div>
+              <div class="list-row"><span class="avatar avatar--sm avatar--b">TB</span><div class="grow min-w-0"><div class="lr-title">Tim Berners-Lee <span class="t-subtle t-500">· tim@example.org</span></div><div class="lr-sub">Requested 3 days ago · GitHub</div></div><div class="row gap-1"><button class="btn btn--sm"><i data-lucide="check"></i>Create user</button><button class="btn btn--sm btn--ghost">Delete</button></div></div>
+              <div class="list-row"><span class="avatar avatar--sm avatar--c">BL</span><div class="grow min-w-0"><div class="lr-title">Barbara Liskov <span class="t-subtle t-500">· barbara@initech.com</span></div><div class="lr-sub">Requested yesterday · Google</div></div><div class="row gap-1"><button class="btn btn--sm"><i data-lucide="check"></i>Create user</button><button class="btn btn--sm btn--ghost">Delete</button></div></div>
+              <div class="list-row"><span class="avatar avatar--sm avatar--d">DR</span><div class="grow min-w-0"><div class="lr-title">Dennis Ritchie <span class="t-subtle t-500">· dmr@bell-labs.example</span></div><div class="lr-sub">Requested 2 hours ago · Email</div></div><div class="row gap-1"><button class="btn btn--sm"><i data-lucide="check"></i>Create user</button><button class="btn btn--sm btn--ghost">Delete</button></div></div>
+            </div>
+            <div class="card__footer"><span>3 signups waiting · oldest 3 days</span><span class="t-xs">Approving creates a verified, enabled account</span></div>
+          </section>
+          <section class="card">
+            <div class="card__header"><div class="card__title"><i data-lucide="calendar-days"></i>Recent signups<span class="t-xs t-subtle t-500">Last 7 days · 12</span></div></div>
+            <table class="table table--dense table--flush">
+              <thead><tr><th>User</th><th>Tenant</th><th>License</th><th>Source</th><th>Created</th></tr></thead>
+              <tbody>
+                <tr><td><div class="row gap-2"><span class="avatar avatar--xs avatar--a">AT</span><div><div class="cell-primary">Alan Turing</div><div class="cell-sub">alan@example.com</div></div></div></td><td>Acme Corp</td><td><span class="badge badge--ok">Team</span></td><td>GitHub</td><td class="t-num t-muted">Aug 15</td></tr>
+                <tr><td><div class="row gap-2"><span class="avatar avatar--xs avatar--e">KJ</span><div><div class="cell-primary">Katherine Johnson</div><div class="cell-sub">katherine@globex.io</div></div></div></td><td>Globex Labs</td><td><span class="badge badge--outline">Free</span></td><td>Google</td><td class="t-num t-muted">Aug 14</td></tr>
+                <tr><td><div class="row gap-2"><span class="avatar avatar--xs avatar--c">EH</span><div><div class="cell-primary">Edsger Dijkstra</div><div class="cell-sub">edsger@initech.com</div></div></div></td><td>Initech</td><td><span class="badge badge--ok">Team</span></td><td>Email</td><td class="t-num t-muted">Aug 13</td></tr>
+              </tbody>
+            </table>
+            <div class="table-foot"><span>Showing 3 of 12</span><a href="#">All users</a></div>
+          </section>
+        </div>
+        <aside class="col gap-6">
+          <section class="card card--pad" data-well>
+            <div class="row gap-3"><span class="icon-tile icon-tile--rose" data-hex data-tone="rose"><i data-lucide="shield-half"></i></span><div><div class="t-h4">Admin session</div><div class="t-xs t-muted">Shared password · no per-admin identity</div></div></div>
+            <dl class="kv mt-4"><dt>Started</dt><dd class="t-num">Aug 15, 2026, 09:12</dd><dt>Expires</dt><dd class="t-num">17:12 <span class="t-subtle">(8 h after sign-in)</span></dd></dl>
+            <div class="progress progress--thin mt-4" aria-label="Session elapsed"><span style="width:6%"></span></div>
+            <div class="row-between mt-3"><span class="t-xs t-subtle">Expires after 8 h of inactivity</span><a class="btn btn--sm" href="#"><i data-lucide="log-out"></i>Sign out</a></div>
+          </section>
+          <section class="card" data-well>
+            <div class="card__header"><div class="card__title"><i data-lucide="heart-pulse"></i>Health</div><span class="badge" data-status="healthy">healthy</span></div>
+            <div style="padding:4px var(--card-pad)">
+              <div class="status-row"><span class="dot dot--ok"></span>REST API<span class="mono">200 · 38 ms</span></div>
+              <div class="status-row"><span class="dot dot--ok"></span>Postgres<span class="mono">pool 4/20</span></div>
+              <div class="status-row"><span class="dot dot--ok"></span>Auth providers<span class="mono">4 configured</span></div>
+              <div class="status-row"><span class="dot dot--warn"></span>Async jobs<span class="mono">1 running</span></div>
+            </div>
+          </section>
+        </aside>
+      </div>
+      <p class="t-xs t-subtle t-center">Admin console · Apiome internal use only</p>
+    </div>
+  </main>
+</div>
+
+<template id="notes">
+  <p class="route">/admin/dashboard — facelift proposal; the “after” is <code>admin/overview.html</code> (HIVE-EPIC-9, #5272) with the facelift ideas applied</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>admin</b> — the shipped console is the pre-Hive UI: indigo sidebar, pink icon chips, placeholder stats (“Revenue +15%” over an em dash), an “Initial Setup” banner. The proposal is HIVE-9.2: the same shell as the app with the rose rail variant, real numbers (users, licenses, tenants, health) or no number at all, pending approvals and recent signups where the banner was, session and health in the aside. Revenue and the three dead links (Payments, Database, Monitoring) are not carried over.</li>
+    <li><b>rail</b> — the admin rail is the navy rail with a rose cast, so an operator still knows which console they are in.</li>
+    <li><b>hex</b>, <b>layers</b>, <b>type</b>, <b>color</b> as on Home (the approvals card gets the danger wash).</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Everything the legacy overview does that works: Overview, Users, Tenants, Licenses, Feature flags, Property templates, Auth providers, Sign out, the 8-hour session notice, the density switch (→ Preferences).</li></ul>
+  <h4>States</h4>
+  <ul><li>Stats fetch error → <code>.banner--danger</code> “Couldn’t load platform stats — Retry”. Session under 15 minutes → the rail user row turns warn. No pending signups → the card collapses to one line.</li></ul>
+</template>
+</body>
+</html>

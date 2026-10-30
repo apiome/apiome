@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Export studio — targets (facelift) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) — stepper from ship/export-studio.html */
+  .xsteps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .xstep { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--border) inset; font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); background: var(--bg-surface); }
+  .xstep .n { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: var(--fs-2xs); font-weight: 700; box-shadow: inset 0 0 0 1.5px var(--border-strong); flex-shrink: 0; }
+  .xstep.is-done .n { background: var(--ok); color: #fff; box-shadow: none; }
+  .xstep.is-current { box-shadow: 0 0 0 2px var(--accent) inset; color: var(--fg); } .xstep.is-current .n { background: var(--fg); color: var(--bg-surface); box-shadow: none; }
+  .fam { display: flex; align-items: center; gap: 8px; margin: 14px 0 8px; }
+  .fam:first-child { margin-top: 0; }
+  /* the shipped target card: a centred icon in a large bordered box, the fidelity pill in the corner */
+  .tgt-big { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 104px; padding: 16px; border-radius: var(--r-md); background: var(--bg-surface); box-shadow: 0 0 0 1px var(--border) inset; text-align: center; cursor: pointer; }
+  .tgt-big [data-lucide] { width: 20px; height: 20px; color: var(--fg-muted); }
+  .tgt-big .nm { font-size: var(--fs-sm); font-weight: 500; }
+  .tgt-big .sub { font-size: var(--fs-xs); color: var(--fg-subtle); }
+  .tgt-big .tier { position: absolute; top: 10px; right: 10px; }
+  .tgt-big[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent) inset; }
+  .tier { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: var(--r-full); font-size: 10px; font-weight: 700; letter-spacing: .02em; }
+  .tier--lossless { background: var(--ok-soft); color: var(--ok-fg); } .tier--lossy { background: var(--warn-soft); color: var(--warn-fg); } .tier--types { background: var(--rose-soft); color: var(--rose-fg); }
+  .band { display: inline-flex; align-items: center; gap: 4px; height: 18px; padding: 0 6px; border-radius: var(--r-full); font-size: 10px; font-weight: 600; }
+  .band--ready { background: var(--ok-soft); color: var(--ok-fg); } .band--caution { background: var(--warn-soft); color: var(--warn-fg); } .band--blocked { background: var(--rose-soft); color: var(--rose-fg); }
+</style>
+</head>
+<body data-shell="app" data-nav="export" data-page="proposals/facelift-export-studio" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="min-w-0">
+          <div class="crumbs"><a href="facelift-home.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Ship</span><i data-lucide="chevron-right"></i><span>Export studio</span></div>
+          <h1 class="page-title"><span class="icon-tile icon-tile--sm icon-tile--accent" data-hex data-fx-only="hex"><i data-lucide="package-open"></i></span>Export studio</h1>
+          <p class="page-desc">Verify a conversion before you generate it. Exporting <b>Pet Store API</b> (version 1.2.0).</p>
+        </div>
+        <div class="page-actions">
+          <a class="btn btn--ghost" href="facelift-versions.html"><i data-lucide="arrow-left"></i>Back to Versions</a>
+          <button class="btn"><i data-lucide="link"></i>Copy link</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+    <ol class="xsteps" aria-label="Export steps">
+      <li class="xstep is-done"><span class="n"><i data-lucide="check" style="width:12px;height:12px"></i></span>Source</li>
+      <li class="xstep is-current"><span class="n">2</span>Target</li>
+      <li class="xstep"><span class="n">3</span>Options</li>
+      <li class="xstep"><span class="n">4</span>Verify</li>
+      <li class="xstep"><span class="n">5</span>Review &amp; Generate</li>
+    </ol>
+
+    <section class="card card--pad col gap-4">
+      <label class="check t-sm"><input type="checkbox" /> Several targets — one archive with a folder per target, each with its default options</label>
+      <div class="card card--flat" style="padding:12px 14px;display:flex;align-items:center;gap:12px;box-shadow:0 0 0 1.5px var(--ok) inset" data-well>
+        <span class="icon-tile icon-tile--ok" data-hex data-tone="ok"><i data-lucide="file-down"></i></span>
+        <div class="grow"><div class="row gap-2"><span class="t-h4">Original source</span><span class="badge badge--outline">OPENAPI</span></div><div class="t-xs t-muted">This item was imported as openapi. Download it unchanged — lossless, no conversion. (Re-exporting to openapi is offered as the original, not a round-trip.)</div></div>
+        <button class="btn"><i data-lucide="download"></i>Download original</button>
+      </div>
+      <div><div class="t-h3">Choose a target format</div><div class="t-xs t-muted">Fidelity badges are computed for <b>this</b> source (version 1.2.0).</div></div>
+
+      <!-- ===== BEFORE (voids): one big box per target ===== -->
+      <div data-fx-before="voids">
+        <div class="fam"><span class="t-caps">REST &amp; HTTP</span><span class="t-xs t-faint">1</span></div>
+        <div class="grid grid-2"><button class="tgt-big" aria-pressed="false" style="grid-column:span 2"><span class="tier tier--lossy">lossy</span><i data-lucide="file-code-2"></i><span class="nm">RAML</span><span class="sub">rest</span></button></div>
+        <div class="fam"><span class="t-caps">API clients &amp; collections</span><span class="t-xs t-faint">2</span></div>
+        <div class="grid grid-2"><button class="tgt-big" aria-pressed="false"><span class="tier tier--lossy">lossy</span><i data-lucide="file-code-2"></i><span class="nm">Hoppscotch</span><span class="sub">rest</span></button><button class="tgt-big" aria-pressed="false"><span class="tier tier--lossy">lossy</span><i data-lucide="file-code-2"></i><span class="nm">Thunder Client</span><span class="sub">rest</span></button></div>
+        <div class="fam"><span class="t-caps">RPC</span><span class="t-xs t-faint">1</span></div>
+        <div class="grid grid-2"><button class="tgt-big" aria-pressed="true" style="grid-column:span 2"><span class="tier tier--lossy">lossy</span><i data-lucide="file-code-2"></i><span class="nm">Protocol Buffers (proto3)</span><span class="sub">rpc</span></button></div>
+        <div class="fam"><span class="t-caps">Events</span><span class="t-xs t-faint">1</span></div>
+        <div class="grid grid-2"><button class="tgt-big" aria-pressed="false" style="grid-column:span 2"><span class="tier tier--lossy">lossy</span><i data-lucide="file-code-2"></i><span class="nm">AsyncAPI 3.0</span><span class="sub">events</span></button></div>
+        <div class="fam"><span class="t-caps">Data schema</span><span class="t-xs t-faint">2</span></div>
+        <div class="grid grid-2"><button class="tgt-big" aria-pressed="false"><span class="tier tier--types">types only</span><i data-lucide="file-code-2"></i><span class="nm">JSON Schema</span><span class="sub">data</span></button><button class="tgt-big" aria-pressed="false"><span class="tier tier--types">types only</span><i data-lucide="file-code-2"></i><span class="nm">Avro</span><span class="sub">data</span></button></div>
+      </div>
+
+      <!-- ===== AFTER (voids): compact tiles, format colour, a fidelity meter you can read without the legend ===== -->
+      <div data-fx-after="voids">
+        <div class="fam"><span class="t-caps">REST &amp; HTTP</span><span class="t-xs t-faint">1</span></div>
+        <div class="grid grid-4">
+          <button class="xt xt--lossy" aria-pressed="false" data-format="raml"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:color-mix(in srgb,var(--fmtc) 16%,transparent);color:var(--fmtc)"><i data-lucide="file-code-2"></i></span><span><span class="xt__name">RAML 1.0</span><br><span class="xt__sub">rest</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · examples dropped</span></span></button>
+        </div>
+        <div class="fam"><span class="t-caps">API clients &amp; collections</span><span class="t-xs t-faint">4</span></div>
+        <div class="grid grid-4">
+          <button class="xt xt--lossy" aria-pressed="false" data-format="postman"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:var(--orange-soft);color:var(--orange-fg)"><i data-lucide="send"></i></span><span><span class="xt__name">Hoppscotch</span><br><span class="xt__sub">collection</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · no schemas</span></span></button>
+          <button class="xt xt--lossy" aria-pressed="false"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:var(--violet-soft);color:var(--violet-fg)"><i data-lucide="zap"></i></span><span><span class="xt__name">Thunder Client</span><br><span class="xt__sub">collection</span></span><span class="band band--caution xt__band">check first</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · auth flattened</span></span></button>
+          <button class="xt xt--lossy" aria-pressed="false"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:var(--orange-soft);color:var(--orange-fg)"><i data-lucide="rocket"></i></span><span><span class="xt__name">Postman v2.1</span><br><span class="xt__sub">collection</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · no schemas</span></span></button>
+          <button class="xt xt--lossy" aria-pressed="false"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:var(--violet-soft);color:var(--violet-fg)"><i data-lucide="moon"></i></span><span><span class="xt__name">Insomnia v4</span><br><span class="xt__sub">collection</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · no schemas</span></span></button>
+        </div>
+        <div class="fam"><span class="t-caps">RPC &amp; events</span><span class="t-xs t-faint">2</span></div>
+        <div class="grid grid-4">
+          <button class="xt xt--lossy" aria-pressed="true" data-format="proto"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:color-mix(in srgb,var(--fmtc) 16%,transparent);color:var(--fmtc)"><i data-lucide="cable"></i></span><span><span class="xt__name">Protocol Buffers</span><br><span class="xt__sub">proto3 · rpc</span></span><span class="band band--caution xt__band">check first</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · 3 oneOf flattened</span></span></button>
+          <button class="xt xt--lossy" aria-pressed="false" data-format="asyncapi"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:color-mix(in srgb,var(--fmtc) 16%,transparent);color:var(--fmtc)"><i data-lucide="radio"></i></span><span><span class="xt__name">AsyncAPI 3.0</span><br><span class="xt__sub">events</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Lossy · paths → channels</span></span></button>
+        </div>
+        <div class="fam"><span class="t-caps">Data schema</span><span class="t-xs t-faint">2</span></div>
+        <div class="grid grid-4">
+          <button class="xt xt--types" aria-pressed="false" data-format="jsonschema"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:color-mix(in srgb,var(--fmtc) 16%,transparent);color:var(--fmtc)"><i data-lucide="braces"></i></span><span><span class="xt__name">JSON Schema</span><br><span class="xt__sub">2020-12 · data</span></span><span class="band band--ready xt__band">ready</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Types only</span></span></button>
+          <button class="xt xt--types is-disabled" aria-pressed="false" disabled data-format="avro" title="Blocked: source grade B is below this workspace's min_grade A for Avro"><span class="xt__top"><span class="icon-tile icon-tile--sm" data-hex style="background:color-mix(in srgb,var(--fmtc) 16%,transparent);color:var(--fmtc)"><i data-lucide="database"></i></span><span><span class="xt__name">Avro</span><br><span class="xt__sub">data</span></span><span class="band band--blocked xt__band">blocked</span></span><span class="xt__fid"><span class="xt__meter"><span></span><span></span><span></span></span><span class="xt__fid-label">Types only</span></span></button>
+        </div>
+        <div class="row mt-3"><button class="btn btn--ghost btn--sm"><i data-lucide="chevrons-down"></i>Show all 36 targets</button><span class="t-xs t-subtle" style="margin-left:auto">Meter: <span class="xt--lossless" style="display:inline-flex;vertical-align:middle"><span class="xt__meter"><span></span><span></span><span></span></span></span> lossless · <span class="xt--lossy" style="display:inline-flex;vertical-align:middle"><span class="xt__meter"><span></span><span></span><span></span></span></span> lossy · <span class="xt--types" style="display:inline-flex;vertical-align:middle"><span class="xt__meter"><span></span><span></span><span></span></span></span> types only</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/export/studio, step 2 Target — facelift proposal; builds on <code>ship/export-studio.html</code></p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>voids</b> — the shipped step draws one large bordered box per target (a lone centred icon, a “lossy” pill in the corner, one box per row when a family has one target). Here every target is a compact 4-up tile: a format-coloured hex tile, the name and family, the readiness band, and a three-segment <b>fidelity meter</b> (3 = lossless, 2 = lossy, 1 = types only) with the one-line reason the Verify step already computes (“3 oneOf flattened”). Families with one target no longer take a full row.</li>
+    <li><b>hex</b> — the tiles’ leading icons are hexes; the page title gets one.</li>
+    <li><b>layers</b> — the Original source card is an inset well with its green rule; tiles are raised, not ringed.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>The five steps, “Several targets” archive option, Original source with Download original, the family grouping and order (ready → check first → blocked), readiness bands, lossless / lossy / types-only tiers, blocked targets with their reason in the tooltip, “Show all 36 targets”.</li></ul>
+  <h4>States</h4>
+  <ul><li>Fidelity not yet measured → meter segments grey with “Measuring…”. Blocked → tile at 50 % with the blocked band, not clickable, reason in the tooltip. Selected → azure ring.</li></ul>
+  <h4>Budget</h4>
+  <ul><li>Eight targets fit above the fold at 1440 × 900 (two rows of four); today four do.</li></ul>
+</template>
+</body>
+</html>

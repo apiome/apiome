@@ -408,6 +408,19 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   { mockup: 'home/overview.html', reason: 'no-page-fixture' },
   // Round-2 proposals (docs/mockups/PROPOSALS.md, 2026-10-07): each supersedes part of a shipped
   // page and is compared once its ticket lands and the page fixture is re-dumped.
+  // Round-3 facelift proposals (docs/mockups/PROPOSALS_FACELIFT.md): each screen renders both the
+  // shipped look (?fx=none) and the proposal (?fx=…); nothing is ticketed yet. The compare page
+  // is the viewer that loads them side by side, not a product screen.
+  { mockup: 'proposals/facelift-admin.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-catalog-item.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-catalog.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-compare.html', reason: 'other-shell' },
+  { mockup: 'proposals/facelift-export-studio.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-home.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-mock-scenarios.html', reason: 'overlay-not-page' },
+  { mockup: 'proposals/facelift-themes.html', reason: 'overlay-not-page' },
+  { mockup: 'proposals/facelift-versions-changes.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-versions.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/rail-compact.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/versions-status-strip.html', reason: 'awaiting-redesign' },

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Claims 837P — facelift · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex, no px type) — mirrors sources/catalog-item.html */
+  .orb-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .orb-btn .lbl { font-size: var(--fs-2xs); color: var(--fg-subtle); }
+  .tile { padding: 12px 14px; border-radius: var(--r-md); box-shadow: 0 0 0 1px var(--border) inset; }
+  .tile .tv { font-size: var(--fs-2xl); font-weight: 600; letter-spacing: var(--track-tight); font-variant-numeric: tabular-nums; }
+  .compbar { display: flex; height: 8px; border-radius: var(--r-full); overflow: hidden; background: var(--bg-inset); }
+  .compbar > span { display: block; height: 100%; }
+  .entity { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--r-sm); font-size: var(--fs-xs); }
+  .entity:hover { background: var(--bg-subtle); }
+  .entity .tag { min-width: 72px; justify-content: center; }
+  .ident { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+  .ident .avatar { margin-top: 22px; }
+  .snap { display: flex; flex-direction: column; gap: 8px; }
+  .snap .big { display: flex; align-items: baseline; gap: 6px; }
+  .snap .big .n { font-size: var(--fs-4xl); font-weight: 700; letter-spacing: var(--track-tight); line-height: 1; }
+  .snap .big small { color: var(--fg-subtle); font-family: var(--font-mono); }
+  .void-note { padding: 18px; border-radius: var(--r-md); border: 1.5px dashed var(--border-strong); color: var(--fg-faint); font-size: var(--fs-xs); text-align: center; }
+</style>
+</head>
+<body data-shell="app" data-nav="catalog" data-page="proposals/facelift-catalog-item" data-tenant="Acme Corp">
+<main class="page">
+  <header class="page-header page-header--with-tabs" data-mood="identity" data-format="x12">
+    <div class="page-header__inner">
+      <div class="page-header__row">
+        <div class="ident">
+          <span class="avatar avatar--xl avatar--a" data-hex data-format="x12">C8</span>
+          <div class="min-w-0">
+            <div class="crumbs"><a href="facelift-home.html">Home</a><i data-lucide="chevron-right"></i><span>Bring in</span><i data-lucide="chevron-right"></i><a href="facelift-catalog.html">Catalog</a><i data-lucide="chevron-right"></i><span>Claims 837P</span></div>
+            <h1 class="page-title"><span class="t-truncate" title="Claims 837P">Claims 837P</span><span class="badge badge--dot" data-status="active">Active</span></h1>
+            <p class="page-desc"><span class="mono t-xs">cat_c3a5e · claims-837p</span> — Professional healthcare claim interchange from the Contoso Health clearinghouse (005010X222A1).</p>
+            <div class="row wrap gap-2 mt-2">
+              <span class="fmt fmt--x12" data-tip="Format: EDI X12">EDI X12</span>
+              <span class="badge badge--outline"><i data-lucide="braces"></i>Data Schema</span>
+              <span class="badge"><i data-lucide="file-up"></i>claims-837p-sample.edi</span>
+              <span class="tag">Healthcare</span><span class="tag">claims</span><span class="tag">hipaa</span><span class="tag">x12</span>
+              <button class="btn btn--ghost btn--sm"><i data-lucide="tags"></i>Edit categories</button>
+            </div>
+          </div>
+        </div>
+        <div class="page-actions" style="align-items:flex-start">
+          <div class="row gap-4" style="margin-right:12px">
+            <button class="orb-btn"><span class="ring ring--lg" style="--p:84;--c:var(--accent)"><span>84</span></span><span class="lbl">Quality</span></button>
+            <button class="orb-btn"><span class="ring ring--lg" style="--p:84;--c:var(--accent)"><span>B</span></span><span class="lbl">Lint</span></button>
+          </div>
+          <button class="btn btn--primary"><i data-lucide="git-merge"></i>Re-convert to OpenAPI Project</button>
+          <a class="btn" href="facelift-export-studio.html"><i data-lucide="file-output"></i>Export</a>
+          <button class="btn"><i data-lucide="code-2"></i>View code</button>
+        </div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Catalog item detail sections">
+        <button class="tab is-active" role="tab"><i data-lucide="layout-dashboard"></i>Overview</button>
+        <button class="tab" role="tab"><i data-lucide="binary"></i>Format details</button>
+        <button class="tab" role="tab"><i data-lucide="code-2"></i>Source &amp; code</button>
+        <button class="tab" role="tab"><i data-lucide="route"></i>Provenance</button>
+        <button class="tab" role="tab"><i data-lucide="git-merge"></i>Conversions</button>
+        <button class="tab" role="tab"><i data-lucide="shield-check"></i>Lint &amp; score</button>
+        <button class="tab" role="tab"><i data-lucide="flask-conical"></i>Test bench</button>
+        <button class="tab" role="tab"><i data-lucide="git-branch"></i>Versions</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-body">
+
+    <!-- ===== BEFORE (voids): banner on the left, Related artifacts on the right — the band under the banner is empty ===== -->
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) 380px;gap:16px" data-fx-before="voids">
+      <div class="col gap-3">
+        <div class="banner banner--ok"><i data-lucide="git-merge"></i><div><span class="banner-title">Re-converted to OpenAPI project</span> <span class="banner-body">· <span class="mono">ver_5c0d21</span>: <a href="facelift-versions.html">Claims 837P (OpenAPI)</a></span></div><div class="banner-actions"><button class="btn btn--sm">View conversion history</button></div></div>
+        <div class="void-note" aria-hidden="true">(this band is empty on the shipped page — the right column is taller than the banner)</div>
+      </div>
+      <section class="card">
+        <div class="card__header" style="padding:10px 14px"><div class="card__title"><i data-lucide="link-2"></i>Related artifacts</div></div>
+        <div class="card__body t-sm t-muted" style="padding:14px">No linked artifacts yet. Link another format of this API to group representations together.</div>
+        <div class="card__footer"><button class="btn btn--sm"><i data-lucide="sparkles"></i>Suggest links</button></div>
+      </section>
+    </div>
+
+    <!-- ===== AFTER (voids): one slim strip; Related artifacts moves into the aside ===== -->
+    <div class="banner banner--ok" data-fx-after="voids"><i data-lucide="git-merge"></i><div><span class="banner-title">Re-converted to OpenAPI project</span> <span class="banner-body">· <span class="mono">ver_5c0d21</span>: <a href="facelift-versions.html">Claims 837P (OpenAPI)</a> — 2 conversions on record.</span></div><div class="banner-actions"><button class="btn btn--sm">View conversion history</button></div></div>
+
+    <div class="grid grid-main-aside">
+      <div class="col gap-6">
+        <div class="card">
+          <div class="card__header"><div class="card__title"><span class="icon-tile icon-tile--sm icon-tile--accent" data-hex data-fx-only="hex"><i data-lucide="layout-grid"></i></span><i data-lucide="layout-grid" data-fx-not="hex"></i>API surface</div><span class="t-xs t-subtle">29 normalized entities</span></div>
+          <div class="card__body">
+            <div class="grid grid-4">
+              <div class="tile"><div class="row gap-2 t-xs t-muted"><i data-lucide="server" style="color:var(--ok)"></i>Services</div><div class="tv">1</div><div class="t-2xs t-subtle">3% of surface</div></div>
+              <div class="tile"><div class="row gap-2 t-xs t-muted"><i data-lucide="zap" style="color:var(--accent)"></i>Operations</div><div class="tv">1</div><div class="t-2xs t-subtle">3% of surface</div></div>
+              <div class="tile"><div class="row gap-2 t-xs t-muted"><i data-lucide="braces" style="color:var(--violet)"></i>Types</div><div class="tv">27</div><div class="t-2xs t-subtle">93% of surface</div></div>
+              <div class="tile"><div class="row gap-2 t-xs t-muted"><i data-lucide="radio" style="color:var(--rose)"></i>Channels</div><div class="tv t-faint">—</div><div class="t-2xs t-subtle">Not captured</div></div>
+            </div>
+            <div class="compbar mt-3"><span style="width:3%;background:var(--ok)"></span><span style="width:3%;background:var(--accent)"></span><span style="width:94%;background:var(--violet)"></span></div>
+            <div class="row gap-2 t-xs t-muted mt-2"><i data-lucide="info" style="width:12px;height:12px"></i>1 object · 1 enum</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__header"><div class="card__title"><span class="icon-tile icon-tile--sm icon-tile--violet" data-hex data-tone="violet" data-fx-only="hex"><i data-lucide="box"></i></span><i data-lucide="box" data-fx-not="hex"></i>Types<span class="badge">2</span></div><span class="t-xs t-subtle">Loops and segments of the 837P transaction set</span></div>
+          <div class="table-toolbar"><div class="input-wrap" style="width:260px"><i data-lucide="filter"></i><input class="input input--sm" placeholder="Filter by name or tag…" /></div><span class="spacer"></span><button class="btn btn--sm btn--ghost"><i data-lucide="braces"></i>Raw model</button></div>
+          <div style="padding:8px">
+            <div class="entity"><i data-lucide="chevron-right" class="t-faint"></i><span class="tag">OBJECT</span><span class="mono">Loop2300_Claim</span><span class="t-subtle">CLM · HI · DTP</span><span class="t-subtle ml-auto">3 fields</span></div>
+            <div class="entity"><i data-lucide="chevron-right" class="t-faint"></i><span class="tag">ENUM</span><span class="mono">ClaimFrequencyCode</span><span class="t-subtle">CLM05-3</span><span class="t-subtle ml-auto">9 values</span></div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="col gap-6">
+        <section class="card card--pad snap" data-well>
+          <div class="row-between"><div class="t-h4">Quality snapshot</div><a class="t-xs" href="#">Open Lint &amp; score <i data-lucide="arrow-right" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i></a></div>
+          <div class="row gap-3"><span class="grade" style="width:28px;height:28px;background:var(--ok);display:inline-grid;place-items:center;border-radius:50%;color:#fff;font-weight:700;font-size:var(--fs-xs)">B</span><div class="big"><span class="n fx-num">84</span><small>/100</small></div></div>
+          <div class="t-xs t-muted">Good · 70–89</div>
+          <div class="progress progress--ok"><span style="width:84%"></span></div>
+          <div class="t-xs t-subtle">Minor improvements needed.</div>
+        </section>
+        <section class="card card--pad snap" data-well>
+          <div class="row-between"><div class="t-h4">Source snapshot</div><a class="t-xs" href="#">View source <i data-lucide="arrow-right" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i></a></div>
+          <div class="row gap-3"><span class="icon-tile icon-tile--accent" data-hex><i data-lucide="file-text"></i></span><div><div class="mono t-sm t-600">claims-837p-sample.edi</div><div class="t-xs t-subtle">File upload</div></div></div>
+          <div class="row gap-1 wrap"><span class="badge badge--ok">Content captured</span><span class="badge badge--accent">Downloadable</span></div>
+          <span class="tag" style="width:fit-content">upload://claims-837p-sample.edi</span>
+        </section>
+        <section class="card" data-fx-after="voids" data-well>
+          <div class="card__header" style="padding:10px 14px"><div class="card__title"><i data-lucide="link-2"></i>Related artifacts</div></div>
+          <div class="empty empty--inline" style="padding:10px 14px 14px"><div class="empty__art" data-format="x12"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="link-2"></i></div><div><div class="t-sm t-600">No linked artifacts yet</div><div class="t-xs t-muted">Link another format of this API to group its representations.</div><div class="row gap-2 mt-2"><button class="btn btn--sm"><i data-lucide="sparkles"></i>Suggest links</button><button class="btn btn--sm btn--ghost">Link…</button></div></div></div>
+        </section>
+        <section class="card card--pad snap" data-well>
+          <div class="row-between"><div class="t-h4">Model observability</div><span class="t-xs t-subtle">2 entities · 3 fields</span></div>
+          <div class="row-between t-xs"><span class="t-muted">Documented fields</span><span class="mono">2 / 3</span></div>
+          <div class="progress progress--warn"><span style="width:67%"></span></div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">/ade/dashboard/catalog/{id} — facelift proposal; builds on <code>sources/catalog-item.html</code> (header, tabs, Overview panes)</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>voids</b> — the shipped Overview puts the conversion banner in a left column beside a taller Related artifacts card, leaving ≈ 150 px of nothing under the banner. Here the banner is one full-width strip and Related artifacts joins the aside as an inset well, with an empty state that offers the two actions (Suggest links, Link…).</li>
+    <li><b>hex</b> — the item’s hex avatar fills with its format colour (EDI X12 orange); card titles lead with hex tiles.</li>
+    <li><b>color</b> — identity wash on the header in the format colour.</li>
+    <li><b>layers</b> — the four aside panels are inset wells; the API surface tiles lose their rings; the Types toolbar sits on its band.</li>
+    <li><b>type</b> — display face for the title, the quality number and section titles.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>Header facts, rings, the three actions, eight tabs, the conversion banner and its history link, API surface with its composition bar, Types with filter and Raw model, Quality / Source snapshots, Model observability, Related artifacts with Suggest links.</li></ul>
+  <h4>States</h4>
+  <ul><li>Not converted → no banner; the grid starts with API surface. Linked artifacts → the well lists them as <code>sources/catalog-item.html</code> does. Deleted item → Convert / Export hidden, the well read-only.</li></ul>
+</template>
+</body>
+</html>

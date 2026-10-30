@@ -420,3 +420,18 @@ measurements and four mockups are in **`PROPOSALS.md`** and `proposals/`:
 If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (default-collapsed
 groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
 and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.
+
+## 15. Round-3 proposals (2026-10-30) — the facelift, *proposed, not yet adopted*
+
+After the quiet pass (HIVE-11/12/13) the app reads as designed but **plain**: every page is
+the same shape, brand lives only on the launcher and login, every surface is a 1 px-bordered
+white rectangle, one typeface at two weights, and colour appears only in badges. The review,
+the twelve ideas and the way to compare them are in **`PROPOSALS_FACELIFT.md`**, with one
+mockup per screen under `proposals/facelift-*.html` and a before / after viewer at
+`proposals/facelift-compare.html`. Each idea is a token in `<html data-fx="…">`
+(`assets/facelift.css`), so a mockup renders the shipped look and the proposal from the same
+markup. Sections this would amend once adopted: §2 (honey as the Dark primary; hexagons for
+item avatars), §3.1 (a display face and the layered shadow tokens), §4 (the signature Dark;
+four themes shown, five folded), §5.2 (the navy rail), §7 (forms: labels, editor panes,
+footer actions), §8 (empty states always name the object and offer a next step; the Versions
+timeline pattern).

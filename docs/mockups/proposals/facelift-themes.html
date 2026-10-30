@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Preferences — themes (facelift) · Apiome mockup</title>
+<link rel="stylesheet" href="../assets/hive.css" />
+<link rel="stylesheet" href="../assets/facelift.css" />
+<script src="../assets/hive.js" defer></script>
+<script src="../assets/facelift.js" defer></script>
+<style>
+  /* page-local helpers only (tokens, no raw hex outside the theme swatches, which are the themes' own values) */
+  .stage { position: fixed; inset: 0; display: flex; justify-content: flex-end; background: var(--bg-overlay); }
+  .stage .drawer { animation: none; }
+  .theme-prev > div > span:first-child { width: 40%; } .theme-prev > div > span:last-child { width: 20%; }
+  .sig { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: stretch; }
+  .sig .why { font-size: var(--fs-xs); color: var(--fg-muted); display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+  .sig .why b { color: var(--fg); }
+  .sw { display: inline-flex; gap: 4px; vertical-align: middle; }
+  .sw span { width: 12px; height: 12px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+</style>
+</head>
+<body data-shell="bare" data-page="proposals/facelift-themes" data-root="../">
+<main class="page">
+  <div class="stage">
+    <div class="drawer" role="dialog" aria-labelledby="pf-title">
+      <div class="drawer__header">
+        <div><div class="drawer__title" id="pf-title">Preferences</div><div class="t-xs t-muted">Personal to you · applies to every workspace on this device</div></div>
+        <button class="btn btn--ghost btn--icon" style="margin-left:auto" aria-label="Close"><i data-lucide="x"></i></button>
+      </div>
+      <div class="tabs" style="padding:0 22px;border-bottom:1px solid var(--border)">
+        <a class="tab is-active" href="#"><i data-lucide="palette"></i>Appearance</a>
+        <a class="tab" href="#"><i data-lucide="circle-user"></i>Account</a>
+        <a class="tab" href="#"><i data-lucide="bell"></i>Notifications</a>
+        <a class="tab" href="#"><i data-lucide="keyboard"></i>Shortcuts</a>
+      </div>
+      <div class="drawer__body col gap-6">
+        <section>
+          <div class="t-h4">Theme</div>
+          <div class="t-xs t-muted mb-3">A theme is a token swap: surfaces, ink, accent. Layout and type never change.</div>
+
+          <!-- ===== BEFORE (themes): nine cards, seven of them neutrals-only ===== -->
+          <div class="theme-grid" role="radiogroup" aria-label="Theme" data-fx-before="themes">
+            <button class="theme-card is-active"><div class="theme-prev theme-prev--split"><div style="background:#F6F5F2"><span style="background:#1B1A17"></span><span style="background:#1E7FD6"></span></div><div style="background:#141311"><span style="background:#EDEBE6"></span><span style="background:#5AA6F2"></span></div></div><div class="theme-card__name">Follow system</div><div class="theme-card__desc">Currently: Light</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#F6F5F2"><div style="background:#FFFFFF"><span style="background:#16265C"></span><span style="background:#1E7FD6"></span></div></div><div class="theme-card__name">Light</div><div class="theme-card__desc">Warm paper, navy ink</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#141311"><div style="background:#1B1A18"><span style="background:#EDEBE6"></span><span style="background:#5AA6F2"></span></div></div><div class="theme-card__name">Dark</div><div class="theme-card__desc">Low-glare, warm blacks</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#000"><div style="background:#000;box-shadow:inset 0 0 0 1px #fff"><span style="background:#FFF"></span><span style="background:#6FB8FF"></span></div></div><div class="theme-card__name">High contrast</div><div class="theme-card__desc">Pure black, white lines, WCAG AAA</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#0C1E3A"><div style="background:#102645"><span style="background:#E3F2FD"></span><span style="background:#6FC1FF"></span></div></div><div class="theme-card__name">Blueprint</div><div class="theme-card__desc">Drafting-table blues</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#FAFAFA"><div style="background:#FFFFFF"><span style="background:#111827"></span><span style="background:#2563EB"></span></div></div><div class="theme-card__name">Whiteboard</div><div class="theme-card__desc">Neutral, cool light</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#002B36"><div style="background:#073642"><span style="background:#EEE8D5"></span><span style="background:#2AA198"></span></div></div><div class="theme-card__name">Solarized</div><div class="theme-card__desc">Ethan Schoonover’s palette</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#2E3440"><div style="background:#3B4252"><span style="background:#ECEFF4"></span><span style="background:#88C0D0"></span></div></div><div class="theme-card__name">Nord</div><div class="theme-card__desc">Arctic, bluish tones</div></button>
+            <button class="theme-card"><div class="theme-prev" style="background:#2B2B2B"><div style="background:#313335"><span style="background:#E8E8E8"></span><span style="background:#6897BB"></span></div></div><div class="theme-card__name">Darcula</div><div class="theme-card__desc">IDE-familiar darkness</div></button>
+          </div>
+
+          <!-- ===== AFTER (themes): four that matter, the rest folded; Dark becomes the signature ===== -->
+          <div data-fx-after="themes">
+            <div class="theme-grid" role="radiogroup" aria-label="Theme" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+              <button class="theme-card is-active"><div class="theme-prev theme-prev--split"><div style="background:#F6F5F2"><span style="background:#1B1A17"></span><span style="background:#1E7FD6"></span></div><div style="background:#0C0F1F"><span style="background:#EEF0FA"></span><span style="background:#F5B301"></span></div></div><div class="theme-card__name">Follow system</div><div class="theme-card__desc">Light by day, Dark by night · currently Light</div></button>
+              <button class="theme-card"><div class="theme-prev" style="background:#F6F5F2"><div style="background:#FFFFFF"><span style="background:#16265C"></span><span style="background:#1E7FD6"></span></div></div><div class="theme-card__name">Light</div><div class="theme-card__desc">Warm paper, navy ink, azure accent</div></button>
+              <button class="theme-card"><div class="theme-prev" style="background:#0C0F1F"><div style="background:#141931"><span style="background:#EEF0FA"></span><span style="background:#F5B301"></span></div></div><div class="theme-card__name">Dark <span class="badge badge--honey" style="margin-left:4px;vertical-align:middle">Hive</span></div><div class="theme-card__desc">Navy-black surfaces, honey primary, azure links</div></button>
+              <button class="theme-card"><div class="theme-prev" style="background:#000"><div style="background:#000;box-shadow:inset 0 0 0 1px #fff"><span style="background:#FFF"></span><span style="background:#6FB8FF"></span></div></div><div class="theme-card__name">High contrast</div><div class="theme-card__desc">Pure black, white lines, WCAG AAA</div></button>
+            </div>
+            <details class="fx-more-themes">
+              <summary><i data-lucide="chevron-down"></i>More themes <span class="t-xs t-subtle">· Blueprint, Whiteboard, Solarized, Nord, Darcula</span></summary>
+              <div class="theme-grid">
+                <button class="theme-card"><div class="theme-prev" style="background:#0C1E3A"><div style="background:#102645"><span style="background:#E3F2FD"></span><span style="background:#6FC1FF"></span></div></div><div class="theme-card__name">Blueprint</div><div class="theme-card__desc">Drafting-table blues</div></button>
+                <button class="theme-card"><div class="theme-prev" style="background:#FAFAFA"><div style="background:#FFFFFF"><span style="background:#111827"></span><span style="background:#2563EB"></span></div></div><div class="theme-card__name">Whiteboard</div><div class="theme-card__desc">Neutral, cool light</div></button>
+                <button class="theme-card"><div class="theme-prev" style="background:#002B36"><div style="background:#073642"><span style="background:#EEE8D5"></span><span style="background:#2AA198"></span></div></div><div class="theme-card__name">Solarized</div><div class="theme-card__desc">Ethan Schoonover’s palette</div></button>
+                <button class="theme-card"><div class="theme-prev" style="background:#2E3440"><div style="background:#3B4252"><span style="background:#ECEFF4"></span><span style="background:#88C0D0"></span></div></div><div class="theme-card__name">Nord</div><div class="theme-card__desc">Arctic, bluish tones</div></button>
+                <button class="theme-card"><div class="theme-prev" style="background:#2B2B2B"><div style="background:#313335"><span style="background:#E8E8E8"></span><span style="background:#6897BB"></span></div></div><div class="theme-card__name">Darcula</div><div class="theme-card__desc">IDE-familiar darkness</div></button>
+              </div>
+            </details>
+            <div class="card card--pad mt-4 sig" data-well>
+              <div class="fx-theme-preview" aria-label="Dark (Hive) preview" style="background:#0C0F1F;color:#EEF0FA">
+                <div class="pv-rail" style="background:#121B3E"><span style="background:#F5B301"></span><span style="background:#AAB1CF"></span><span class="is-active" style="background:#F5B301;width:70%"></span><span style="background:#AAB1CF"></span><span style="background:#AAB1CF"></span></div>
+                <div class="pv-page"><div class="pv-title" style="background:#EEF0FA"></div><div class="pv-card" style="background:#141931;box-shadow:0 0 0 1px rgba(176,190,255,.1)"><span style="width:30%;background:#AAB1CF"></span><span style="width:18%;background:#74B6FF"></span></div><div class="pv-btn" style="background:#F5B301"></div></div>
+              </div>
+              <div class="why"><b>Dark becomes the signature.</b><span>Navy-black surfaces carry the mark’s navy; the primary button is honey; links stay azure. Seven dark themes that differ only in neutrals dilute the brand — one memorable Dark does more than six familiar ones.</span><span>Swatches: <span class="sw"><span style="background:#0C0F1F"></span><span style="background:#141931"></span><span style="background:#EEF0FA"></span><span style="background:#F5B301"></span><span style="background:#74B6FF"></span></span></span></div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="row-between"><div><div class="t-h4">Font size</div><div class="t-xs t-muted">Scales the whole interface, not just body text.</div></div><span class="badge badge--outline t-num">Default · 16px</span></div>
+          <div class="row gap-3 mt-3"><span style="font-size:11px" class="t-subtle">A</span><input type="range" class="slider" min="0" max="5" value="2" aria-label="Font size" style="flex:1" /><span style="font-size:18px" class="t-subtle">A</span></div>
+          <div class="card card--soft mt-3" style="padding:12px 14px" data-well><div class="t-sm t-600">Preview</div><div class="t-sm t-muted">Orders Service · v1.9.2 · 14 paths, 32 schemas · Published 3 days ago</div><div class="mono t-xs mt-1">GET /orders/{orderId} → 200 Order</div></div>
+        </section>
+        <section>
+          <div class="t-h4">Density</div>
+          <div class="t-xs t-muted mb-3">Compact tightens rows, controls and page padding for large screens.</div>
+          <div class="segmented" role="radiogroup" aria-label="Density"><button class="is-active"><i data-lucide="rows-3"></i>Comfortable</button><button><i data-lucide="rows-4"></i>Compact</button></div>
+        </section>
+      </div>
+      <div class="drawer__footer"><span class="t-xs t-subtle" style="margin-right:auto">Saved automatically</span><button class="btn btn--primary">Done</button></div>
+    </div>
+  </div>
+</main>
+
+<template id="notes">
+  <p class="route">Preferences pane → Appearance → Theme (⌘,) — facelift proposal</p>
+  <h4>Ideas shown</h4>
+  <ul>
+    <li><b>themes</b> — nine theme cards become four (Follow system · Light · Dark · High contrast) with the other five under <b>More themes</b>. Dark is restyled as the signature theme: navy-black surfaces (<code>#0C0F1F</code> canvas, <code>#141931</code> surface), honey as <code>--ink</code> (primary buttons, the active rail marker), azure links. The token block lives in <code>assets/facelift.css</code> under <code>html[data-theme="dark"][data-fx~="themes"]</code>; switch the viewer to Dark on any screen to see it applied. Nothing is removed: every theme is still one click away, and a chosen extra theme stays chosen.</li>
+    <li><b>layers</b> — the preview cards are inset wells. <b>type</b> — the pane title in the display face.</li>
+  </ul>
+  <h4>Keeps (1:1)</h4>
+  <ul><li>All nine themes, Follow system, the font-size slider and its preview, density, reduce motion and the other switches below (not drawn here), “Saved automatically”.</li></ul>
+  <h4>States</h4>
+  <ul><li>An extra theme is active → the disclosure opens by default and that card is selected. High contrast ignores the signature tokens (it stays pure black / white).</li></ul>
+  <h4>DESIGN.md</h4>
+  <ul><li>Amends §4 (Themes): Dark’s palette; the theme grid shows four and folds the rest; §2 adds “honey may be the primary-button fill in Dark” (it is still never a warning).</li></ul>
+</template>
+</body>
+</html>

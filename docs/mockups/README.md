@@ -19,6 +19,12 @@ it is the top-level navigation page; every screen is one click away.
   review of the *shipped* redesign (density, header actions, rail fit, launcher focus, honey
   usage). Each proposal supersedes part of an existing mockup and says which; it does not
   replace the original until its ticket lands.
+* **`PROPOSALS_FACELIFT.md` + `proposals/facelift-*.html` + `assets/facelift.{css,js}`** —
+  round-3 proposals from the 2026-10-30 look & feel review (the app reads as plain). Twelve
+  ideas, each a token swap or a markup variant gated on `<html data-fx="…">`, so one mockup
+  renders both the shipped look (`?fx=none`) and the proposal (`?fx=all`, or a list). Open
+  **`proposals/facelift-compare.html`** to see any screen before / after under a slider and
+  switch the ideas on and off live.
 * **Out of scope:** the commercial suite apps (designer / paths workspaces) are
   owned by their own repositories. This set never designs or links to them — it
   only reserves the entitlement-gated slots the host injects at runtime.
