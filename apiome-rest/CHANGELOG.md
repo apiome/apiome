@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.545.0] - 2026-10-30
+
+### Added
+- **OpenRPC validate + round-trip (MFX-33.3, #4303).** New `app.openrpc_roundtrip`:
+  - `check_emitted_openrpc(emit_result)` — the vendored OpenRPC meta-schema with **one problem per violation** and its
+    JSON pointer (`openrpc.meta-schema`, first 20 then a count; `openrpc.json` for non-JSON), every `$ref` resolved
+    inside the document with `referencing` (`openrpc.unresolved-ref`, reusing `jsonschema_roundtrip.unresolved_references`),
+    then a parse + normalize re-import through `OpenRpcImportSource` (`openrpc.reimport`).
+  - `round_trip_openrpc(api, *, opts, emit_result)` — canonical diff + `reconcile` with the fidelity report for the
+    export's options; `status` `invalid` / `unparseable` / `lossy` / `lossless`.
+  - `openrpc_emitter.meta_schema_violations(document)` — every violation as `(pointer, message)`;
+    `meta_schema_errors` now wraps it.
+- **Round-trip fixture.** `tests/fixtures/openrpc_roundtrip/measurements.json` (`APIOME_REGEN_OPENRPC_ROUNDTRIP=1`).
+
+### Changed
+- **Export gate.** `openrpc` findings are one per violation with `path` and `keyword` (they were one joined message),
+  dangling references fail, and the document must import again, not only re-parse.
+
 ## [1.544.0] - 2026-10-30
 
 ### Added
