@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.545.1] - 2026-10-30
+
+### Documentation
+- **Toolchain runner reuse (MFX-8.3, #3865).** Recorded that export validation reuses the MFI-EPIC-5 toolchain runner
+  for every tool-backed target — `buf` (protobuf, MFX-12.4), `tsp` (typespec, MFX-15.1/15.3), `smithy` (MFX-20.3),
+  `amf` (raml, MFX-17.1/17.3), and drafter / thrift / capnp / flatc / fhir-validator / asyncapi-parser — with each
+  validator's fallback, in `docs/toolchain_packaging.md` ("Export validation reuses the runner"). No emitter needs a
+  tool to *write* its artifact, so none declares `Emitter.required_tools`. No code change.
+
 ## [1.545.0] - 2026-10-30
 
 ### Added
