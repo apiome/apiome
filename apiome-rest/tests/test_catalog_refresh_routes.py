@@ -134,7 +134,7 @@ def test_another_tenants_row_is_invisible(store):
 def test_an_item_without_a_setting_reads_as_off(store):
     body = client.get(_URL).json()
     assert body["configured"] is False and body["cadence"] == "off" and body["status"] == "never"
-    assert body["adapters"] == ["graphql", "grpc"]
+    assert body["adapters"] == ["fhir", "graphql", "grpc"]
     assert body["cadences"] == ["off", "manual", "hourly", "daily", "weekly"]
     assert body["tenantEnabled"] is True
 

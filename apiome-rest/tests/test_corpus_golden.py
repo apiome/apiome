@@ -105,7 +105,6 @@ _SMITHY_JSON_AST_REASON = (
 KNOWN_ORDER_SENSITIVE_FINGERPRINTS: Dict[str, str] = {
     "fhir/01-patient.json": _FHIR_REASON,
     "fhir/04-minimal-patient.json": _FHIR_REASON,
-    "fhir/06-capability-statement.json": _FHIR_REASON,
     "json-schema/01-simple-person.json": _JSON_SCHEMA_REASON,
     "json-schema/02-product-types.json": _JSON_SCHEMA_REASON,
     "json-schema/03-multiple-defs.json": _JSON_SCHEMA_REASON,

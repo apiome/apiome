@@ -292,8 +292,24 @@ def _grpc_runner(
     return pipeline_discovery_result("grpc", compiled.descriptor_set_bytes, "reflection.binpb", native=compiled)
 
 
+def _fhir_runner(
+    endpoint: str,
+    options: Mapping[str, Any],
+    auth_type: str,
+    auth_payload: Optional[Mapping[str, Any]],
+    timeout_seconds: float,
+) -> DiscoveryResult:
+    """Read a FHIR server's CapabilityStatement from ``/metadata`` and fingerprint it (MFI-20.1)."""
+    source = get_import_source("fhir")
+    document = source.discover(endpoint, timeout=timeout_seconds, **_auth(auth_type, auth_payload))
+    return pipeline_discovery_result(
+        "fhir", document.raw.encode("utf-8"), "CapabilityStatement.fhir.json", native=document
+    )
+
+
 register_discovery_runner("graphql", _graphql_runner)
 register_discovery_runner("grpc", _grpc_runner)
+register_discovery_runner("fhir", _fhir_runner)
 
 
 # ---------------------------------------------------------------------------------------

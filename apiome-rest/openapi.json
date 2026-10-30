@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.419.0",
+    "version": "1.420.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -117541,7 +117541,7 @@
             "maxLength": 64,
             "minLength": 1,
             "title": "Adapter",
-            "description": "The import adapter: `graphql` or `grpc`.",
+            "description": "The import adapter: `graphql`, `grpc` or `fhir`.",
             "example": "example"
           },
           "endpoint": {
@@ -117549,7 +117549,7 @@
             "maxLength": 2048,
             "minLength": 1,
             "title": "Endpoint",
-            "description": "An http(s) URL for GraphQL; a `host:port` target for gRPC.",
+            "description": "An http(s) URL for GraphQL; a `host:port` target for gRPC; a FHIR server's base URL (its `/metadata` is read).",
             "example": "example"
           },
           "options": {

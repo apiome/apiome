@@ -791,7 +791,19 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         default_write=None,
     ),
     "fhir": VersionCoverage(
-        reads=[FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL)],
+        # MFI-20.1 (#3985): the release a profile or CapabilityStatement declares (`fhirVersion`) is
+        # recorded on the model, so R5 and R6 documents read as themselves.
+        reads=[
+            FormatVersion(version="R4", format_key="fhir", support=VersionSupport.FULL),
+            FormatVersion(version="R5", format_key="fhir", support=VersionSupport.FULL),
+            FormatVersion(
+                version="R6",
+                format_key="fhir",
+                support=VersionSupport.PARTIAL,
+                note="R6 is still a ballot (6.0.0-ballot*): documents are read and labelled R6, but "
+                "nothing R6 adds beyond R5 is interpreted yet.",
+            ),
+        ],
         writes=[
             FormatVersion(
                 version="R4",

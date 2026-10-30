@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.419.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.420.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-refresh` · 6 operations
 
@@ -240,8 +240,8 @@ to replace it.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `cadence` | enum `"off"`, `"manual"`, `"hourly"`, `"daily"`, `"weekly"` | yes | off · manual · hourly · daily · weekly. |
-| `adapter` | string | yes | The import adapter: `graphql` or `grpc`. |
-| `endpoint` | string | yes | An http(s) URL for GraphQL; a `host:port` target for gRPC. |
+| `adapter` | string | yes | The import adapter: `graphql`, `grpc` or `fhir`. |
+| `endpoint` | string | yes | An http(s) URL for GraphQL; a `host:port` target for gRPC; a FHIR server's base URL (its `/metadata` is read). |
 | `options` | object | no | Adapter options; gRPC reads `secure` (TLS, default false). |
 | `credential` | `CatalogRefreshCredential` or null | no | Credential. |
 | `keepVersions` | integer or null | no | How many refresh-created versions to keep (MFI-31.5); older ones are pruned unless tagged, a conversion source, breaking drift or its baseline, locked, or the newest. Leave out to keep the stored value (50 for a new setting). |

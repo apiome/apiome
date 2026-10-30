@@ -1,0 +1,223 @@
+{
+  "adapter": "fhir",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "fhir_capability_statement": {
+        "baseUrl": "https://r6.example.org/fhir",
+        "formats": [
+          "application/fhir+json"
+        ],
+        "resources": [
+          {
+            "interactions": [
+              "read",
+              "search-type"
+            ],
+            "operations": [],
+            "profile": "http://hl7.org/fhir/StructureDefinition/Patient",
+            "searchParams": [
+              "family"
+            ],
+            "supportedProfiles": [],
+            "type": "Patient"
+          }
+        ],
+        "software": "Example R6 Preview",
+        "status": "draft",
+        "systemInteractions": [],
+        "url": null,
+        "version": null
+      },
+      "fhir_kind": "capability_statement",
+      "fhir_release": "R6",
+      "fhir_version": "6.0.0-ballot3"
+    },
+    "format": "fhir",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "R6PreviewServer",
+      "namespace": "R6PreviewServer"
+    },
+    "paradigm": "rest",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "R6PreviewServer.Patient",
+        "name": "Patient",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "search-type"
+            },
+            "http_method": "GET",
+            "http_path": "/Patient",
+            "key": "GET /Patient",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Patient#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "R6PreviewServer.Patient",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "searchPatient",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {
+                  "fhir_search_type": "string"
+                },
+                "key": "GET /Patient#query.family",
+                "location": "query",
+                "name": "family",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "fhir_interaction": "read"
+            },
+            "http_method": "GET",
+            "http_path": "/Patient/{id}",
+            "key": "GET /Patient/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/fhir+json"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "GET /Patient/{id}#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "R6PreviewServer.Patient",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "readPatient",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /Patient/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      }
+    ],
+    "title": "R6PreviewServer",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "fhir_kind": "resource",
+          "fhir_placeholder": true,
+          "fhir_profile": "http://hl7.org/fhir/StructureDefinition/Patient",
+          "fhir_supported_profiles": []
+        },
+        "fields": [],
+        "key": "R6PreviewServer.Patient",
+        "key_type": null,
+        "kind": "record",
+        "name": "Patient",
+        "namespace": "R6PreviewServer",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "fhir/10-capability-statement-r6-ballot.json",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 0,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.97,
+    "format": "fhir"
+  },
+  "fingerprint": "sha256:2550f84e18de1cce803aedc29e31721af2b810fc263e35f453a84f0cd2ac2843",
+  "lint": {
+    "findings": 6,
+    "grade": "B",
+    "report_fingerprint": "2fb7d6be8a80363c66bacf3a582e49c6a55787900ae5febdffd6908ec29909d7",
+    "score": 85,
+    "severity_counts": {
+      "error": 0,
+      "info": 3,
+      "warning": 3
+    }
+  },
+  "snapshot_version": 1
+}

@@ -2,7 +2,7 @@
 title: Keep a catalog item fresh
 description: Re-check a catalog item against its live endpoint, or re-upload an uploaded file.
 sidebar_position: 1.15
-tags: [catalog, refresh, graphql, grpc, upload]
+tags: [catalog, refresh, graphql, grpc, fhir, upload]
 ---
 
 <Route path="/ade/dashboard/catalog/[id]" />
@@ -13,12 +13,13 @@ the check adds a new version to the item, just as importing the new schema yours
 nothing changed, it adds nothing. A check that fails is reported on the item. It never changes the
 item or its versions.
 
-Live refresh works for two kinds of source:
+Live refresh works for three kinds of source:
 
 | Discover with | Endpoint | What the endpoint must allow |
 | --- | --- | --- |
 | **GraphQL introspection** | An `http://` or `https://` URL, such as `https://api.example.com/graphql` | Introspection queries |
 | **gRPC server reflection** | `host:port`, such as `grpc.example.com:443` | The server reflection service. Tick **Use TLS** for a TLS port |
+| **FHIR server /metadata** | The server's base URL, such as `https://fhir.example.com/r4` | `GET <base>/metadata` returns its CapabilityStatement ([Import FHIR](./fhir-import.md)) |
 
 Refresh is **off** for every item until you set it up.
 

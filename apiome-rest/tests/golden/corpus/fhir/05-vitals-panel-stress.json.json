@@ -5,6 +5,7 @@
     "description": null,
     "extras": {
       "fhir_kind": "structure_definition",
+      "fhir_release": "R4",
       "fhir_structure_definition": {
         "abstract": false,
         "baseDefinition": "http://hl7.org/fhir/StructureDefinition/Observation",
@@ -120,7 +121,8 @@
         "status": "active",
         "type": "Observation",
         "url": "http://example.com/fhir/StructureDefinition/VitalSignsPanel"
-      }
+      },
+      "fhir_version": "4.0.1"
     },
     "format": "fhir",
     "identity": {
@@ -573,7 +575,7 @@
     "confidence": 0.98,
     "format": "fhir"
   },
-  "fingerprint": "sha256:2f22af1443fd1ccd2b141e21d9454bd21505c40a86a171ebcf1c5bd7797c5898",
+  "fingerprint": "sha256:19bc3696bc249cca0bcc77f08fbd1995237bc63796b2361101a5cfa542525f94",
   "lint": {
     "findings": 13,
     "grade": "D",

@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1519 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1523 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -137,7 +137,7 @@ The corpus holds **1519 files** across **110 format directories**. Every file ha
 | `dicom/` | DICOM | data_schema | `DICM` magic at offset 128, or 8-hex-digit keys with `vr`/`Value` (DICOM JSON) | 15 |
 | `edi-x12/` | EDI ASC X12 | message | `ISA`/`GS`/`ST` envelopes | 12 |
 | `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 17 |
-| `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 11 |
+| `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 15 |
 | `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 12 |
 | `fix-orchestra/` | FIX Orchestra | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
@@ -919,6 +919,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-minimal-patient.json` | minimal | `fhir` ≥ 0.95 | valid | `patient`, `resource-instance` |
 | `05-vitals-panel-stress.json` | stress | `fhir` ≥ 0.95 | valid | `structure-definition`, `snapshot`, `choice-types`, `profiles-observation` |
 | `06-capability-statement.json` | real-world | `fhir` ≥ 0.95 | valid | `capability-statement`, `rest-capabilities`, `search-parameters` |
+| `07-capability-statement-r5.json` | composition | `fhir` ≥ 0.95 | valid | `capability-statement`, `fhir-r5`, `interactions`, `search-parameters`, `operations`, `lint-findings` |
+| `08-patient-profile-r4.json` | composition | `fhir` ≥ 0.95 | valid | `structure-definition`, `fhir-r4`, `differential`, `constraint` |
+| `09-patient-profile-r5.json` | composition | `fhir` ≥ 0.95 | valid | `structure-definition`, `fhir-r5`, `differential`, `constraint` |
+| `10-capability-statement-r6-ballot.json` | composition | `fhir` ≥ 0.95 | valid | `capability-statement`, `fhir-r6` |
 | `negative/01-syntactic-unclosed-brace.json` | — | `fhir` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-brace` |
 | `negative/02-semantic-structuredefinition-missing-type.json` | — | `fhir` (no guarantee) | invalid | `negative`, `semantic`, `structuredefinition-missing-type` |
 | `negative/03-truncated-structuredefinition.json` | — | `fhir` (no guarantee) | invalid | `negative`, `truncated`, `mid-token-cut` |
@@ -2823,7 +2827,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1519 | `Apache-2.0` |
+| `hand-authored` | 1523 | `Apache-2.0` |
 
 ## Trying an import
 

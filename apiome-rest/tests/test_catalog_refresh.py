@@ -79,8 +79,9 @@ def _check(store: FakeRefreshStore, row=None):
 # --- validation ------------------------------------------------------------------------
 
 
-def test_graphql_and_grpc_are_the_refreshable_adapters():
-    assert refreshable_adapters() == ["graphql", "grpc"]
+def test_graphql_grpc_and_fhir_are_the_refreshable_adapters():
+    # FHIR joined with MFI-20.1 (#3985): a server's CapabilityStatement from /metadata.
+    assert refreshable_adapters() == ["fhir", "graphql", "grpc"]
 
 
 def test_aliases_resolve_to_the_canonical_adapter():

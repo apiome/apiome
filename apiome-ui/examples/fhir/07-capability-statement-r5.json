@@ -1,0 +1,63 @@
+{
+  "_comment": "FHIR R5 example — hand-authored CapabilityStatement for a second, R5 server (a lab results service): different resources and interactions from 06, a patch/delete/history surface, a type-level $operation and a system-level $operation. No third-party text copied.",
+  "resourceType": "CapabilityStatement",
+  "id": "lab-results-server",
+  "url": "https://lab.example.org/fhir/CapabilityStatement/lab-results-server",
+  "version": "2.1.0",
+  "name": "LabResultsServer",
+  "title": "Lab Results FHIR Server",
+  "status": "active",
+  "date": "2026-09-14",
+  "publisher": "Example Labs",
+  "kind": "instance",
+  "software": { "name": "Example Lab FHIR", "version": "3.4.1" },
+  "implementation": { "description": "Example Labs R5 endpoint", "url": "https://lab.example.org/fhir" },
+  "fhirVersion": "5.0.0",
+  "format": ["application/fhir+json"],
+  "rest": [
+    {
+      "mode": "server",
+      "interaction": [{ "code": "transaction" }, { "code": "search-system" }],
+      "operation": [{ "name": "everything", "definition": "http://hl7.org/fhir/OperationDefinition/Patient-everything" }],
+      "resource": [
+        {
+          "type": "DiagnosticReport",
+          "profile": "https://lab.example.org/fhir/StructureDefinition/lab-report",
+          "documentation": "Finalised laboratory reports.",
+          "interaction": [
+            { "code": "read" },
+            { "code": "search-type" },
+            { "code": "history-instance" }
+          ],
+          "searchParam": [
+            { "name": "patient", "type": "reference" },
+            { "name": "status", "type": "token" },
+            { "name": "issued", "type": "date" }
+          ],
+          "operation": [{ "name": "summary", "definition": "https://lab.example.org/fhir/OperationDefinition/report-summary" }]
+        },
+        {
+          "type": "Observation",
+          "supportedProfile": ["http://hl7.org/fhir/StructureDefinition/vitalsigns"],
+          "interaction": [
+            { "code": "read" },
+            { "code": "create" },
+            { "code": "update" },
+            { "code": "patch" },
+            { "code": "delete" },
+            { "code": "search-type" }
+          ],
+          "searchParam": [
+            { "name": "subject", "type": "reference" },
+            { "name": "value-quantity", "type": "quantity" },
+            { "name": "component-value-quantity", "type": "number" }
+          ]
+        },
+        {
+          "type": "Specimen",
+          "interaction": [{ "code": "read" }, { "code": "search-type" }]
+        }
+      ]
+    }
+  ]
+}
