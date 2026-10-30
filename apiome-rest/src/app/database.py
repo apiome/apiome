@@ -14733,6 +14733,34 @@ class Database:
             "behind_sample": behind_sample if isinstance(behind_sample, list) else [],
         }
 
+    def list_version_labels_for_project(self, project_id: str, tenant_id: str) -> List[str]:
+        """Every live version label (``versions.version_id``) of a project, oldest first — #590.
+
+        The import wizard's Changes step uses it to tell whether the version an import would
+        create is already taken, and to suggest a free sub-version (``1.0.0b``) instead.
+
+        Args:
+            project_id: The project.
+            tenant_id: The acting tenant; a project of another tenant yields nothing.
+
+        Returns:
+            The labels of the project's non-deleted versions, in creation order, without repeats.
+        """
+        q = """
+            SELECT v.version_id
+            FROM apiome.versions v
+            JOIN apiome.projects p ON v.project_id = p.id
+            WHERE v.project_id = %s AND p.tenant_id = %s AND v.deleted_at IS NULL
+            ORDER BY v.created_at ASC
+        """
+        rows = self.execute_query(q, (project_id, tenant_id))
+        labels: List[str] = []
+        for row in rows:
+            label = str(row.get("version_id") or "")
+            if label and label not in labels:
+                labels.append(label)
+        return labels
+
     def get_latest_revision_id_for_project(
         self, project_id: str, tenant_id: str
     ) -> Optional[str]:

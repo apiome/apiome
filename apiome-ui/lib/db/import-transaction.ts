@@ -255,6 +255,22 @@ export async function getLatestVersionUuidForProjectTx(
   return row?.id ? (row.id as string) : null;
 }
 
+/**
+ * Every live version label (`versions.version_id`) of a project — #590.
+ *
+ * The importer checks the requested label against these before it inserts, and picks a free
+ * sub-version (`1.0.0b`) when the label is taken: a duplicate INSERT inside the import transaction
+ * would abort the whole transaction, so the label is resolved first rather than retried.
+ */
+export async function listVersionLabelsForProjectTx(client: PoolClient, projectId: string): Promise<string[]> {
+  const result = await client.query(
+    `SELECT version_id FROM apiome.versions
+     WHERE project_id = $1 AND deleted_at IS NULL`,
+    [projectId]
+  );
+  return result.rows.map((row: { version_id: string }) => String(row.version_id));
+}
+
 /** Existing revision row id (`versions.id`) for a catalog version line (`versions.version_id`). */
 export async function getVersionUuidForCatalogVersionLineTx(
   client: PoolClient,

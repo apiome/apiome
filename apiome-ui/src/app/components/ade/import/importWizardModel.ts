@@ -614,6 +614,7 @@ export const IMPORT_WIZARD_COPY = {
   changesSummaryTab: 'Summary',
   changesSideBySideTab: 'Side-by-side spec',
   changesLatestBadge: 'latest',
+  changesVersionTakenTitle: 'This version number is taken',
   changesBreakingTitle: 'This version has breaking changes',
   changesBreakingBody:
     'Consumers of the latest version may break. You can still import — the compatibility gate decides whether it can merge or publish.',

@@ -54,6 +54,7 @@ import {
 } from './mcp/mcpImportFlow';
 import { startImport, getImportStatus, rollbackImport } from '../../../../../lib/db/import-actions';
 import { fetchProjectDelta, type ProjectDeltaState } from '../../../utils/import-project-delta';
+import { planImportVersion } from '../../../utils/import-version-label';
 import { generateSlug } from '../../../utils/slug';
 import { appendProjectQualitySnapshot, buildQualitySnapshotReportExtras } from '../../../utils/project-quality-score-history';
 import {
@@ -573,6 +574,20 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     else void beginImport();
   };
 
+  /** The version label Preview asks for. */
+  const requestedVersionLabel = (): string =>
+    importOptions?.targetVersion || analysisResult?.document?.info?.version || '1.0.0';
+
+  /**
+   * The version the import will create, when it lands in an existing project (#590): the requested
+   * label, or the next free sub-version (`1.0.0b`) when the project already has it. `null` for a
+   * first-time import, or when the comparison could not say.
+   */
+  const versionPlan =
+    projectDelta.status === 'ready'
+      ? planImportVersion(requestedVersionLabel(), projectDelta.delta.existing_version_labels)
+      : null;
+
   const beginImport = async () => {
     if (!analysisResult || !importOptions) return;
 
@@ -601,7 +616,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         description: document?.info?.description || null
       },
       version: {
-        versionId: importOptions.targetVersion || (document?.info?.version || '1.0.0'),
+        versionId: versionPlan?.label ?? requestedVersionLabel(),
         description: 'Imported from OpenAPI specification'
       },
       options: {
@@ -618,7 +633,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         descriptionOverrides: importOptions.descriptionOverrides,
         generateExamples: importOptions.generateExamples ?? false,
         dryRun: importOptions.dryRun ?? false,
-        incrementalMode: importOptions.incrementalMode ?? false
+        incrementalMode: importOptions.incrementalMode ?? false,
+        // #590: an import the Changes step showed lands in an existing project; if its label is taken
+        // by the time it commits, the importer picks the next free sub-version rather than failing.
+        ...(versionPlan ? { onVersionConflict: 'create-version' as const } : {}),
       }
     });
 
@@ -845,7 +863,13 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
 
     if (currentStep === 'changes') {
-      return <ImportChangesPanel state={projectDelta} onRetry={() => void checkProjectDelta(false)} />;
+      return (
+        <ImportChangesPanel
+          state={projectDelta}
+          onRetry={() => void checkProjectDelta(false)}
+          versionPlan={versionPlan}
+        />
+      );
     }
 
     if (currentStep === 'import' && selectedSource === 'mcp' && mcpEndpointId && mcpJobId) {

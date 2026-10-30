@@ -45,6 +45,7 @@ import {
   type ProjectDeltaSeverity,
   type ProjectDeltaState,
 } from '../../../utils/import-project-delta';
+import type { ImportVersionPlan } from '../../../utils/import-version-label';
 import { IMPORT_WIZARD_COPY, noChangesTitle } from './importWizardModel';
 
 /** Badge tone for each grade; an ungraded change shows no badge. */
@@ -61,6 +62,8 @@ export interface ImportChangesPanelProps {
   onRetry: () => void;
   /** Page size override; tests pass a small value. */
   pageSize?: number;
+  /** The version label the import will create (#590); says so when the requested one is taken. */
+  versionPlan?: ImportVersionPlan | null;
 }
 
 /** One summary-bar count: symbol, number, word. */
@@ -74,7 +77,15 @@ function SummaryCount({ kind, count }: { kind: ProjectDeltaChangeKind; count: nu
 }
 
 /** The delta itself: header, summary bar, tabs. */
-function ChangesView({ delta, pageSize }: { delta: ProjectDelta; pageSize: number }) {
+function ChangesView({
+  delta,
+  pageSize,
+  versionPlan,
+}: {
+  delta: ProjectDelta;
+  pageSize: number;
+  versionPlan?: ImportVersionPlan | null;
+}) {
   const [tab, setTab] = useState('summary');
   const [filter, setFilter] = useState<ProjectDeltaFilter>('all');
   const [query, setQuery] = useState('');
@@ -107,6 +118,16 @@ function ChangesView({ delta, pageSize }: { delta: ProjectDelta; pageSize: numbe
           </span>
         ) : null}
       </div>
+
+      {versionPlan?.taken ? (
+        // #590: the requested label exists, so the import adds a sub-version instead of failing.
+        <Alert variant="info" data-testid="import-changes-version-taken">
+          <span className="font-semibold">{IMPORT_WIZARD_COPY.changesVersionTakenTitle}</span> — {delta.project_name}{' '}
+          already has version <code className="mono">{versionPlan.requested}</code>, so this import is added as{' '}
+          <code className="mono">{versionPlan.label}</code>, a new sub-version. Nothing existing changes. To use a
+          different number, go <span className="font-semibold">Back</span> and change <span className="font-semibold">Version</span> on Preview.
+        </Alert>
+      ) : null}
 
       {counts.breaking > 0 ? (
         <Alert variant="warn" data-testid="import-changes-breaking">
@@ -225,7 +246,12 @@ function ChangesView({ delta, pageSize }: { delta: ProjectDelta; pageSize: numbe
  * @param props See {@link ImportChangesPanelProps}.
  * @returns The loading, error or delta view; nothing for `idle` / `skip` (the step is not shown).
  */
-export function ImportChangesPanel({ state, onRetry, pageSize = PROJECT_DELTA_PAGE_SIZE }: ImportChangesPanelProps) {
+export function ImportChangesPanel({
+  state,
+  onRetry,
+  pageSize = PROJECT_DELTA_PAGE_SIZE,
+  versionPlan,
+}: ImportChangesPanelProps) {
   if (state.status === 'checking') {
     return <LoadingState message="Comparing with the latest version…" />;
   }
@@ -240,7 +266,7 @@ export function ImportChangesPanel({ state, onRetry, pageSize = PROJECT_DELTA_PA
     );
   }
   if (state.status === 'ready') {
-    return <ChangesView delta={state.delta} pageSize={pageSize} />;
+    return <ChangesView delta={state.delta} pageSize={pageSize} versionPlan={versionPlan} />;
   }
   return null;
 }

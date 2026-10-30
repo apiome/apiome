@@ -1,0 +1,18 @@
+---
+slug: import-sub-version
+title: Imports add a sub-version when the version is taken
+description: A taken version number no longer fails the import; it becomes 1.0.0b.
+authors: [apiome]
+---
+
+Importing into an existing project at a version it already has no longer fails. The import is added as
+the next free sub-version instead. [How it works](/bring-in/import-wizard#import-a-new-version-of-an-existing-project).
+
+{/* truncate */}
+
+- **The Changes step says so before you import.** For example: *Payments API already has version
+  2.5.0, so this import is added as 2.5.0b.* Nothing existing changes.
+- **Sub-versions take the next free letter**: `2.5.0b`, then `2.5.0c`, and so on.
+- **Prefer another number?** Go **Back** and change **Version** on Preview.
+- **Done** lists the sub-version and the number that was taken.
+- **REST:** the import project-delta response includes `existing_version_labels`.

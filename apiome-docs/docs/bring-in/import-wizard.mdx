@@ -109,6 +109,14 @@ first-time import and for anything that lands in the [Catalog](./catalog.mdx).
 5. **Click “Continue to import”.** **“← Back”** returns to Preview, where you can change the
    **Slug** to import into a different project.
 
+**When the version number is taken.** If the project already has the **Version** you set on
+Preview, the import doesn't fail: it adds the version as a new sub-version instead. The Changes step
+says which one, for example *Payments API already has version 2.5.0, so this import is added as
+2.5.0b*. Sub-versions take the next free letter: `2.5.0b`, then `2.5.0c` and so on. Importing `2.5.0b`
+again gives the next free one too. Nothing existing changes. To use a different number instead,
+**click “← Back”** and change **Version** on Preview. When an import was added as a sub-version, the
+**Done** step lists it under **Version** with the number that was taken.
+
 If nothing changed, the step says **No changes from v2.4.0** (with your version); importing still
 records a new version. If the comparison cannot be computed, **“Try again”** asks again, and
 **“Continue to import”** still works. The step appears for a **Dry run (preview only)** import too.
