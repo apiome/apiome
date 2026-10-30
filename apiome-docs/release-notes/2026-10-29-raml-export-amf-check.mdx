@@ -1,0 +1,16 @@
+---
+slug: raml-export-amf-check
+title: RAML exports are validated by AMF and re-imported
+description: A RAML export must pass AMF's RAML 1.0 checks and import again.
+authors: [apiome]
+---
+
+A **RAML** export is now validated by AMF and then imported again before you download it.
+[How RAML exports are checked](/ship/export-a-spec#raml-from-any-source).
+
+{/* truncate */}
+
+- **AMF.** A RAML 1.0 violation fails the export and names its rule, line and column. Warnings do not.
+  Without AMF on the server, the RAML importer reads the document instead.
+- **Re-imports.** A document that does not import again fails the export with `raml.reimport`.
+- **Round trip.** An item imported from RAML exports and re-imports unchanged.

@@ -1,0 +1,79 @@
+{
+  "status": "lossy",
+  "validator": "reader",
+  "diff": [
+    [
+      "operation",
+      "DELETE /pets/{petId}",
+      "changed"
+    ],
+    [
+      "operation",
+      "GET /pets",
+      "changed"
+    ],
+    [
+      "operation",
+      "GET /pets/{petId}",
+      "changed"
+    ],
+    [
+      "operation",
+      "POST /pets",
+      "changed"
+    ],
+    [
+      "operation",
+      "PUT /pets/{petId}",
+      "changed"
+    ],
+    [
+      "root",
+      "",
+      "changed"
+    ],
+    [
+      "service",
+      "Sample Pet Store API (OpenAPI 3.0)",
+      "added"
+    ],
+    [
+      "service",
+      "default",
+      "removed"
+    ],
+    [
+      "type",
+      "Category",
+      "changed"
+    ],
+    [
+      "type",
+      "Pet",
+      "changed"
+    ]
+  ],
+  "unexplained": [
+    [
+      "service",
+      "Sample Pet Store API (OpenAPI 3.0)",
+      "added"
+    ],
+    [
+      "service",
+      "default",
+      "removed"
+    ],
+    [
+      "type",
+      "Category",
+      "changed"
+    ]
+  ],
+  "overclaims": [
+    "Category",
+    "Pet"
+  ],
+  "predicted_losses": 15,
+  "diverges": true
+}

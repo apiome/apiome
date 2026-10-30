@@ -966,8 +966,15 @@ An item imported from RAML is written back as it was read. Its resource types an
 applied to each method when it is imported, so the export writes the methods in full, without `type:`
 or `is:`, and the report says so.
 
-Each export is validated before you download it: with AMF's RAML 1.0 checks when the server has the
-AMF toolchain, and otherwise by reading it back with the RAML importer.
+Each export is checked before you download it:
+
+1. **AMF** validates it against RAML 1.0 when the server has the AMF toolchain. A violation fails the
+   export and names its rule, line and column (`example-validation-error`); warnings do not. Without
+   AMF, the RAML importer reads the document instead, and a parse error fails the export.
+2. The document is then imported again. If it does not import, the export fails (`raml.reimport`).
+
+An item imported from RAML exports and re-imports unchanged. From any other source, the re-import
+shows what RAML could not keep; the fidelity report names those losses.
 
 An item imported from WADL is written back as it was read. Import now also reads a WADL root written
 as `<wadl:application>`, the query and header params a method's request declares, and — when you

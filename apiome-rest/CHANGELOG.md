@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.538.0] - 2026-10-30
+
+### Added
+- **RAML validate + round-trip (MFX-17.3, #3903).** New `app.raml_roundtrip`:
+  - `validate_emitted_raml(emit_result)` validates with AMF's RAML 1.0 profile when the toolchain is present
+    (`Violation` results only; warnings pass) and falls back to the RAML reader without it (or when AMF goes
+    missing mid-run); returns `(validator, violations)`.
+  - `round_trip_raml(api, *, emit_result)` validates, re-imports through `RamlImportSource`, takes the canonical
+    diff against the source and reconciles it with the fidelity report. `RamlRoundTripReport.status` is
+    `invalid` / `unparseable` / `lossy` / `lossless`, with `validator`, `violations`, `diff`, `unexplained`,
+    `overclaims`, `valid`, `explained` and `diverges`.
+  - `reimport_with_reader(emit_result)` re-imports through the pure-Python reader (malformed shapes become
+    `ImportSourceError` `INPUT_MALFORMED`).
+- **Export gate.** The `raml` validator now uses these helpers and also rejects a document that does not import again
+  (finding keyword `raml.reimport`). An AMF failure other than unavailability rejects with its message.
+- **Round-trip fixture.** `tests/fixtures/raml_roundtrip/openapi-petstore.json` pins the measured OpenAPI-petstore
+  round trip (`APIOME_REGEN_RAML_ROUNDTRIP=1` regenerates it); AMF paths replay the recorded `amf` 5.7.1 reports.
+
 ## [1.537.0] - 2026-10-30
 
 ### Added
