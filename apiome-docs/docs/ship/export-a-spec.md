@@ -418,8 +418,16 @@ OData query options such as `$top` and `$filter`), unions, maps, aliases and ren
 ### OpenRPC from any source
 
 Exporting to **OpenRPC** writes an `openrpc.json` document that is valid against the OpenRPC
-meta-schema. Each export is checked against that meta-schema before it is offered, then read back
-by the OpenRPC importer.
+meta-schema. Each export is checked before it is offered:
+
+1. It is validated against the OpenRPC meta-schema. Each violation is listed on its own, with the
+   JSON pointer where it is (`/methods/0/params`).
+2. Every `$ref` must name something in the document: a reference to a missing
+   `#/components/schemas/…` fails, though the meta-schema alone would accept it.
+3. It is imported again by the OpenRPC importer.
+
+A failed check names the rule (`openrpc.meta-schema`, `openrpc.unresolved-ref`, `openrpc.reimport`).
+An item imported from OpenRPC exports and re-imports unchanged.
 
 - **Document.** `info` carries the title, version and description. OpenRPC requires a version, so
   an item without one gets `0.0.0`, and the report says so. Servers keep their name, description

@@ -69,6 +69,7 @@ from .writer_loss_rulepack import WriterLossRulePack
 
 __all__ = [
     "OPENRPC_META_SCHEMA_PATH",
+    "meta_schema_violations",
     "OpenRpcEmitOptions",
     "OpenRpcEmitter",
     "OpenRpcFidelityRulePack",
@@ -715,8 +716,12 @@ def _meta_versions() -> Tuple[str, ...]:
     return tuple(_meta_schema()["properties"]["openrpc"]["enum"])
 
 
-def meta_schema_errors(document: Any, limit: int = 5) -> List[str]:
-    """The first ``limit`` OpenRPC meta-schema violations of ``document`` (``path: message``)."""
+def meta_schema_violations(document: Any) -> List[Tuple[str, str]]:
+    """Every OpenRPC meta-schema violation of ``document``, in path order (MFX-33.3).
+
+    Returns:
+        ``(JSON pointer, message)`` pairs — ``""`` for the root.
+    """
     from jsonschema import Draft7Validator
     from referencing import Registry, Resource
     from referencing.jsonschema import DRAFT7
@@ -724,8 +729,15 @@ def meta_schema_errors(document: Any, limit: int = 5) -> List[str]:
     draft7 = Draft7Validator.META_SCHEMA
     registry = Registry().with_resource("http://json-schema.org/draft-07/schema", Resource(draft7, DRAFT7))
     validator = Draft7Validator(_meta_schema(), registry=registry)
-    errors = sorted(validator.iter_errors(document), key=lambda e: list(e.absolute_path))
-    return [f"{'/'.join(str(p) for p in error.absolute_path) or '(root)'}: {error.message}" for error in errors[:limit]]
+    errors = sorted(validator.iter_errors(document), key=lambda e: [str(p) for p in e.absolute_path])
+    return [("".join(f"/{part}" for part in error.absolute_path), error.message) for error in errors]
+
+
+def meta_schema_errors(document: Any, limit: int = 5) -> List[str]:
+    """The first ``limit`` OpenRPC meta-schema violations of ``document`` (``path: message``)."""
+    return [
+        f"{path.lstrip('/') or '(root)'}: {message}" for path, message in meta_schema_violations(document)[:limit]
+    ]
 
 
 def validate_openrpc_document(text: str) -> None:

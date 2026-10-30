@@ -1,0 +1,17 @@
+---
+slug: openrpc-export-checks
+title: OpenRPC exports check every reference and re-import
+description: An OpenRPC export lists each meta-schema violation, resolves references and re-imports.
+authors: [apiome]
+---
+
+An **OpenRPC** export is now checked three ways before it is offered.
+[How OpenRPC exports are checked](/ship/export-a-spec#openrpc-from-any-source).
+
+{/* truncate */}
+
+- **Every violation.** Each break of the OpenRPC meta-schema is its own finding with its JSON
+  pointer. Before, the first five were run together in one message.
+- **References.** Every `$ref` must name a component in the document; a dangling one fails, though
+  the meta-schema alone accepts it.
+- **Re-imports.** The document is imported again, not only re-parsed.

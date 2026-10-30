@@ -1218,14 +1218,23 @@ async def _validate_flatbuffers(
 async def _validate_openrpc(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted OpenRPC document (MFX-33.1, #4301).
+    """Re-validate an emitted OpenRPC document (MFX-33.1, #4301; MFX-33.3, #4303).
 
-    The OpenRPC meta-schema (``@open-rpc/meta-schema`` 1.14.9, vendored, offline) and then a re-parse
-    through the OpenRPC reader the import uses (:func:`app.openrpc_emitter.validate_openrpc_document`).
+    The OpenRPC meta-schema (``@open-rpc/meta-schema`` 1.14.9, vendored, offline; one finding per violation
+    with its JSON pointer), every ``$ref`` resolving inside the document, then a re-import through the
+    OpenRPC import source (:func:`app.openrpc_roundtrip.check_emitted_openrpc`). Findings carry the rule
+    as ``keyword``.
     """
-    from .openrpc_emitter import validate_openrpc_document
+    from .openrpc_roundtrip import check_emitted_openrpc
 
-    return await _run_text_validator(target, emit_result, validate_openrpc_document)
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The OpenRPC export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_openrpc, emit_result)
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_postman(
