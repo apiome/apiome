@@ -554,6 +554,21 @@ class _WsdlWriter:
                     None if self._wsdl_source else "document/literal wrapped operation",
                 )
 
+    def _directions(self, operation: Operation) -> List[str]:
+        """The ``input`` / ``output`` a binding operation lists — the ones its port type operation has.
+
+        A wrapped operation always has both. A WSDL-sourced one-way (or notification) operation
+        has only one, and a binding that listed the other would name a message that does not exist.
+        """
+        if not self._wsdl_source:
+            return ["input", "output"]
+        roles = {message.role for message, _ in self._operation_messages(operation)}
+        return [
+            direction
+            for direction, role in (("input", MessageRole.REQUEST), ("output", MessageRole.RESPONSE))
+            if role in roles
+        ]
+
     def _fault_names(self, operation: Operation) -> List[str]:
         """The fault names an operation's binding lists, in the port type's order."""
         if not self._wsdl_source:
@@ -614,14 +629,17 @@ class _WsdlWriter:
             # MFI-13.5: the operation's recorded soapAction (empty when the source stated none),
             # and an `rpc` style when the source's binding used one, so a re-import grades alike.
             soap_operation = {"soapAction": str(operation.extras.get("wsdl_soap_action") or "")}
+            body = {"use": "literal"}
             if operation.extras.get("wsdl_soap_style") == "rpc":
                 soap_operation["style"] = "rpc"
+                # WS-I BP R2717: an rpc-literal body names the namespace of its wrapper element.
+                body["namespace"] = self._target_ns
             ET.SubElement(bind_op, ET.QName(soap_ns, "operation"), soap_operation)
-            for direction in ("input", "output"):
+            for direction in self._directions(operation):
                 ET.SubElement(
                     ET.SubElement(bind_op, ET.QName(_WSDL_NS, direction)),
                     ET.QName(soap_ns, "body"),
-                    {"use": "literal"},
+                    body,
                 )
             for fault in self._fault_names(operation):
                 fault_el = ET.SubElement(bind_op, ET.QName(_WSDL_NS, "fault"), {"name": fault})

@@ -683,6 +683,20 @@ To get one file with the types inline, set the **layout** option to `single`.
 An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
 versions and XSD details round-trip unchanged.
 
+Every WSDL export is checked before you can download it, the way it arrives once you unzip it:
+
+- **Packaged.** The bundle holds exactly one WSDL, and every `xsd:import`, `xsd:include` and
+  `wsdl:import` names a file inside the `.zip`. A link to a web address or outside the folder fails.
+- **WS-I.** The description passes the WS-I Basic Profile checks: literal use, one binding style,
+  document/literal parts, unique operation signatures and `soapAction`s.
+- **Valid.** The WSDL validates against the WSDL 1.1 schema, every XSD type and facet is legal, and
+  every message, part, port type, binding and port it names exists.
+- **Re-imports.** The bundle imports into Apiome as a WSDL.
+
+If a check fails, the export fails and lists each problem with its file and rule (`wsi.literal-use`,
+`wsdl.bundle-reference`, `wsdl.structure`). An item imported from WSDL keeps its own bindings, so a
+WS-I problem the original WSDL already had is not counted again; the item's lint report shows it.
+
 ### JSON Schema from any source
 
 Exporting to **JSON Schema** writes the item's data types as a standalone JSON Schema, whatever it

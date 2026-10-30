@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.536.0] - 2026-10-30
+
+### Added
+- **WSDL bundle packaging + validation (MFX-14.3, #3891).** The `wsdl` target now has an emitted-artifact
+  validator (`app.wsdl_bundle_validation.validate_wsdl_bundle`, wired as `export_validation._validate_wsdl`), so a
+  broken WSDL + XSD bundle fails the export job instead of being delivered. Checks, in order:
+  - `wsdl.bundle-root` — exactly one WSDL description; `wsdl.xml` — every member is safe, well-formed XML;
+  - `wsdl.bundle-reference` — every `wsdl:import`, `xs:import` / `xs:include` / `xs:redefine` location resolves,
+    relative to its member, to a file in the zip (URLs, absolute paths and `..` escapes fail);
+  - `wsi.*` — the WS-I Basic Profile checks (`app.wsdl_wsi.check_wsi`). For a WSDL source, rules the source
+    already broke (`extras["wsdl_wsi_issues"]`, `inherited_wsi_rules`) are inherited and not reported;
+  - `wsdl.structure` — the unpacked bundle (private temp folder, `allow="sandbox"`) is read by `xmlschema`'s
+    `Wsdl11Document`: WSDL 1.1 schema validation, every XSD built, every message / part / port type / binding /
+    port reference resolved. Descriptions with SOAP 1.2 or HTTP bindings are read with the SOAP 1.1 model off;
+  - `wsdl.reimport` — the bundle re-imports through `WsdlImportSource.parse_fileset`.
+  Findings carry `file`, `path` and the rule as `keyword`.
+
+### Fixed
+- **WSDL emitter bindings.** A WSDL-sourced one-way (or notification) operation's binding lists only the
+  directions its port type operation has (it wrote an `output` that named no message), and an rpc-style
+  `soap:body` carries `namespace` = the target namespace (WS-I R2717).
+
 ## [1.535.0] - 2026-10-30
 
 ### Added
