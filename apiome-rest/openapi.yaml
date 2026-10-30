@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.420.0
+  version: 1.422.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -101167,8 +101167,8 @@ components:
           - type: 'null'
             description: Response payload for export roundtrip.
           title: Adapter Key
-          description: 'The import-adapter registry key that re-imported the emitted
-            artifact; null when the comparison was skipped (``status: unsupported``).'
+          description: 'The import-adapter registry key that re-imported the emitted artifact;
+            null when the comparison was skipped (``status: unsupported``).'
         status:
           $ref: '#/components/schemas/MatrixCellStatus'
           description: The round-trip verdict (``pass`` / ``fail`` / ``unsupported``),
@@ -101180,9 +101180,9 @@ components:
           - type: 'null'
             description: Response payload for export roundtrip.
           title: Reason
-          description: 'Human-readable explanation for a non-``pass`` status: why
-            the comparison was skipped, what failed to re-import, or which differences
-            are unaccounted for.'
+          description: 'Human-readable explanation for a non-``pass`` status: why the
+            comparison was skipped, what failed to re-import, or which differences are
+            unaccounted for.'
         diff_count:
           type: integer
           title: Diff Count
@@ -101200,16 +101200,16 @@ components:
             $ref: '#/components/schemas/MatchedDiff'
           type: array
           title: Matched
-          description: Each explained difference paired with the fidelity finding
-            that explains it.
+          description: Each explained difference paired with the fidelity finding that
+            explains it.
           maxItems: 1000
         unexplained:
           items:
             $ref: '#/components/schemas/CanonicalDiffEntry'
           type: array
           title: Unexplained
-          description: Differences no fidelity finding accounts for — a fidelity bug
-            the user should report.
+          description: Differences no fidelity finding accounts for — a fidelity bug the
+            user should report.
           maxItems: 1000
         overclaims:
           items:
@@ -101273,6 +101273,23 @@ components:
           title: Registry Version
           description: The capability-registry snapshot version.
           example: 1.0.0
+        text_diff:
+          anyOf:
+          - $ref: '#/components/schemas/RoundtripTextDiff'
+          - type: 'null'
+            description: Response payload for export roundtrip.
+          description: The emitted artifact beside the same format re-emitted from the
+            re-imported model (MFX-43.4); null when the loop did not close or the artifact
+            cannot be diffed as text (see ``text_diff_reason``).
+        text_diff_reason:
+          anyOf:
+          - type: string
+            description: Response payload for export roundtrip.
+          - type: 'null'
+            description: Response payload for export roundtrip.
+          title: Text Diff Reason
+          description: 'Why ``text_diff`` is null when the loop closed: a multi-file bundle,
+            a binary artifact, one too large to send, or a re-emit that failed.'
       additionalProperties: false
       type: object
       required:
@@ -101287,20 +101304,68 @@ components:
       - registry_version
       title: ExportRoundtripResponse
       description: "The round-trip comparison result the Export Studio renders (IXH-4.4).\n\
-        \n``status`` speaks the IXH-1.7 matrix's vocabulary so a Studio run over a\
-        \ corpus\nentry reconciles with the published matrix cell:\n\n* ``pass`` —\
-        \ every empirical difference is explained by the fidelity report and\n  nothing\
-        \ over-claims preservation;\n* ``fail`` — at least one unexplained difference\
-        \ or over-claim (a fidelity bug\n  worth reporting), or the emitted artifact\
-        \ could not be re-imported at all;\n* ``unsupported`` — the comparison was\
-        \ **skipped with an explanation** (no import\n  adapter can re-ingest the\
-        \ emit format, or the emitter is unavailable here).\n\nThe three difference\
-        \ groups are exactly the reconciliation's: ``matched``\n(explained by the\
-        \ report — expected loss), ``unexplained`` (the report does not\naccount for\
-        \ them), and ``overclaims`` (the report claimed preservation reality\ncontradicts).\
-        \ The provenance fields (`emitter_version` / `apiome_version` /\n`registry_version`\
-        \ / fingerprints) give an unexplained difference's issue report\nits reproduction\
-        \ coordinates without shipping any source bytes."
+        \n``status`` speaks the IXH-1.7 matrix's vocabulary so a Studio run over a corpus\n\
+        entry reconciles with the published matrix cell:\n\n* ``pass`` — every empirical\
+        \ difference is explained by the fidelity report and\n  nothing over-claims preservation;\n\
+        * ``fail`` — at least one unexplained difference or over-claim (a fidelity bug\n\
+        \  worth reporting), or the emitted artifact could not be re-imported at all;\n\
+        * ``unsupported`` — the comparison was **skipped with an explanation** (no import\n\
+        \  adapter can re-ingest the emit format, or the emitter is unavailable here).\n\
+        \nThe three difference groups are exactly the reconciliation's: ``matched``\n\
+        (explained by the report — expected loss), ``unexplained`` (the report does not\n\
+        account for them), and ``overclaims`` (the report claimed preservation reality\n\
+        contradicts). The provenance fields (`emitter_version` / `apiome_version` /\n\
+        `registry_version` / fingerprints) give an unexplained difference's issue report\n\
+        its reproduction coordinates without shipping any source bytes."
+    RoundtripTextDiff:
+      properties:
+        filename:
+          type: string
+          title: Filename
+          description: The emitted document's path (e.g. ``schema.graphql``).
+          example: Example
+        media_type:
+          anyOf:
+          - type: string
+            description: Roundtrip Text Diff schema.
+          - type: 'null'
+            description: Roundtrip Text Diff schema.
+          title: Media Type
+          description: The emitted document's media type.
+        emitted:
+          type: string
+          title: Emitted
+          description: The emitted artifact, as text.
+          example: example
+        reemitted:
+          type: string
+          title: Reemitted
+          description: The same target re-emitted from the re-imported model.
+          example: example
+        identical:
+          type: boolean
+          title: Identical
+          description: True when the two texts are byte-identical.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - filename
+      - emitted
+      - reemitted
+      - identical
+      title: RoundtripTextDiff
+      description: 'The emitted artifact beside the same format re-emitted after the re-import
+        (MFX-43.4).
+
+
+        ``emitted`` is what the export produced; ``reemitted`` is what the same emitter
+        writes for
+
+        the re-imported model — i.e. what the artifact would become after one more import
+        + export
+
+        cycle. Identical texts mean the format round-trips byte-for-byte.'
     ExportTargetFidelity:
       properties:
         descriptor:

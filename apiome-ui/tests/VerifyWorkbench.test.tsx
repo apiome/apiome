@@ -371,3 +371,29 @@ describe('VerifyWorkbench — the docs fixture', () => {
     writeA11yFixture('export-verify', container.innerHTML);
   });
 });
+
+describe('VerifyWorkbench — round-trip entry from the Fidelity lens (MFX-43.4)', () => {
+  it('offers "See what a round-trip changes" on the Fidelity lens and calls back', () => {
+    const onSeeRoundtrip = jest.fn();
+    renderWorkbench({ hasRun: true, result: makeResult('lossy'), verdict: 'lossy', onSeeRoundtrip });
+    const panel = screen.getByTestId('verify-panel-fidelity');
+    fireEvent.click(within(panel).getByTestId('verify-see-roundtrip'));
+    expect(onSeeRoundtrip).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the action when the Studio does not wire it', () => {
+    renderWorkbench({ hasRun: true, result: makeResult('lossy'), verdict: 'lossy' });
+    expect(screen.queryByTestId('verify-see-roundtrip')).not.toBeInTheDocument();
+  });
+
+  it('places the round-trip panel below the lenses once given', () => {
+    renderWorkbench({
+      hasRun: true,
+      result: makeResult('clean'),
+      verdict: 'clean',
+      onSeeRoundtrip: jest.fn(),
+      roundtripPanel: <section data-testid="roundtrip-panel-stub" />,
+    });
+    expect(screen.getByTestId('roundtrip-panel-stub')).toBeInTheDocument();
+  });
+});

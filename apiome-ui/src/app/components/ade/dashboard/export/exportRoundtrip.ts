@@ -100,6 +100,74 @@ export interface ExportRoundtripResponse {
   apiome_version: string;
   /** The capability-registry snapshot version. */
   registry_version: string;
+  /**
+   * The emitted artifact beside the same target re-emitted from the re-imported model (MFX-43.4);
+   * null when the loop did not close or the artifact cannot be diffed as text.
+   */
+  text_diff?: RoundtripTextDiff | null;
+  /** Why {@link text_diff} is null when the loop closed (bundle, binary, too large, re-emit failed). */
+  text_diff_reason?: string | null;
+}
+
+/** The emitted artifact and its re-emitted twin (mirrors REST `RoundtripTextDiff`, MFX-43.4). */
+export interface RoundtripTextDiff {
+  /** The emitted document's path, e.g. `schema.graphql`. */
+  filename: string;
+  /** Its media type, when the emitter set one. */
+  media_type?: string | null;
+  /** What the export produced. */
+  emitted: string;
+  /** What the same emitter writes for the re-imported model — one more import + export later. */
+  reemitted: string;
+  /** True when the two texts are byte-identical. */
+  identical: boolean;
+}
+
+/** One predicted DROP from the fidelity report, and what the round trip actually saw of it. */
+export interface DropCorrelation {
+  /** The fidelity report's `drop` finding. */
+  finding: LossItem;
+  /** The round-trip differences this finding explains; empty when none was observed. */
+  observed: RoundtripDiffEntry[];
+}
+
+/**
+ * Pair every predicted DROP with the round-trip differences it explains (MFX-43.4).
+ *
+ * The fidelity report *predicts* what an export drops; the round trip *observes* what changed. A
+ * drop the round trip saw is confirmed; one it did not see is listed too, so a prediction that
+ * never shows up is as visible as a difference nothing predicted (those are in `unexplained`).
+ * Matching is by the finding's construct key, the same join the server's reconciliation uses.
+ *
+ * @param predicted The fidelity report's items (any kinds; only `drop` ones are kept).
+ * @param response The settled round-trip response, or null before one exists.
+ * @returns One row per predicted drop, in the report's order.
+ */
+export function correlateDrops(
+  predicted: readonly LossItem[] | null | undefined,
+  response: ExportRoundtripResponse | null,
+): DropCorrelation[] {
+  const observedBy = new Map<string, RoundtripDiffEntry[]>();
+  for (const pair of response?.matched ?? []) {
+    const list = observedBy.get(pair.finding.construct) ?? [];
+    list.push(pair.entry);
+    observedBy.set(pair.finding.construct, list);
+  }
+  return (predicted ?? [])
+    .filter((item) => item.kind === 'drop')
+    .map((finding) => ({ finding, observed: observedBy.get(finding.construct) ?? [] }));
+}
+
+/**
+ * The sentence under the text diff, saying what the comparison shows.
+ *
+ * @param diff The text diff.
+ * @returns A one-line explanation.
+ */
+export function textDiffSummary(diff: RoundtripTextDiff): string {
+  return diff.identical
+    ? `${diff.filename} comes back byte for byte: re-importing it and exporting again changes nothing.`
+    : `Left: ${diff.filename} as exported. Right: the same file after it is re-imported and exported again.`;
 }
 
 /** How a verdict is presented: the meaning in words and a glyph before any colour. */
