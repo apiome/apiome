@@ -273,7 +273,11 @@ def test_type_names_are_made_raml_safe_and_unique() -> None:
     subjects = _subjects(result)
     assert sorted(subjects["type-renamed"]) == ["Weird Name|x", "org.other.Order", "string"]
     assert sorted(subjects["namespace-dropped"]) == ["com.acme.Order", "org.other.Order"]
-    assert _verdicts(api)["string"] == [LossinessKind.APPROX]
+    verdicts = _verdicts(api)
+    # A type declared under another name: its key is dropped, the declared name is synthesized.
+    assert verdicts["string"] == [LossinessKind.DROP, LossinessKind.APPROX]
+    assert verdicts["string2"] == [LossinessKind.SYNTH]
+    assert verdicts["com.acme.Order"] == [LossinessKind.DROP]  # its namespace note is the key drop
 
 
 def test_a_reference_to_a_renamed_type_uses_the_new_name() -> None:
@@ -447,7 +451,10 @@ def test_a_clean_rest_model_reports_only_the_document() -> None:
     assert set(_subjects(result)) == {"services-merged"}
     verdicts = _verdicts(api)
     assert verdicts[""] == [LossinessKind.APPROX]
-    assert all(kinds == [LossinessKind.OK] for key, kinds in verdicts.items() if key)
+    # RAML has no services: the source's `default` service does not come back; the title's does.
+    assert verdicts["default"] == [LossinessKind.DROP]
+    assert verdicts["Pets"] == [LossinessKind.SYNTH]
+    assert all(kinds == [LossinessKind.OK] for key, kinds in verdicts.items() if key not in ("", "default", "Pets"))
 
 
 def test_dropped_operations_are_reported() -> None:

@@ -54,6 +54,7 @@ from .canonical_model import (
     OperationKind,
     Parameter,
     ParameterLocation,
+    Service,
     StreamingMode,
     Type,
     TypeKind,
@@ -74,11 +75,13 @@ from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import scalar_kind
 
-__all__ = ["RamlEmitOptions", "RamlEmitter", "RamlFidelityRulePack", "raml_scalar"]
+__all__ = ["REST_ONLY_WARNING", "RamlEmitOptions", "RamlEmitter", "RamlFidelityRulePack", "raml_scalar"]
 
 _RAML_HEADER = "#%RAML 1.0"
 _RAML_FORMAT = "raml"
 _DEFAULT_MEDIA_TYPE = "application/json"
+#: The advisory a source of another paradigm gets at the root of its fidelity report (MFX-17.2).
+REST_ONLY_WARNING = "RAML captures REST only"
 
 #: The HTTP methods RAML 1.0 declares, in the order a resource lists them.
 _METHODS = ("get", "put", "post", "patch", "delete", "head", "options")
@@ -269,7 +272,8 @@ class RamlNames:
 
     def __init__(self, api: CanonicalApi) -> None:
         self._api = api
-        self._raml_source = api.format == _RAML_FORMAT
+        #: Whether the model was read from RAML (its own spellings are written back).
+        self.raml_source = api.format == _RAML_FORMAT
         taken = set(_RAML_BUILTINS)
         #: Type key → the name the type is declared under.
         self.names: Dict[str, str] = {}
@@ -316,7 +320,7 @@ class RamlNames:
         notes: List[Note] = []
         out = _Expression(expr=self._expr(ref, fmt, notes), notes=notes)
         scalar = raml_scalar(_leaf(ref).name if ref is not None else None, fmt)
-        if self._raml_source and hint and _BUILTIN_EXPRESSION.match(hint.strip()):
+        if self.raml_source and hint and _BUILTIN_EXPRESSION.match(hint.strip()):
             # The source's own spelling; its width is whatever the source said (no format of ours).
             out.expr = hint.strip()
             scalar = raml_scalar(_strip_lists(out.expr), fmt)
@@ -504,6 +508,9 @@ def _operation_notes(
         if param.deprecated:
             notes.append(Note("deprecated-dropped", f"RAML has no deprecation flag; parameter {param.name!r} is not "
                               "marked deprecated"))
+        if not raml_source and param.extras:
+            notes.append(Note("parameter-details-dropped", f"source-specific details of parameter {param.name!r} "
+                              f"({', '.join(sorted(param.extras))}) are not written"))
         notes.extend(
             names.expression(param.type, constraints=param.constraints, hint=param.extras.get("raml_type")).notes
         )
@@ -570,6 +577,12 @@ def _type_notes(type_: Type, names: RamlNames) -> List[Note]:
         notes.append(Note("deprecated-dropped", "RAML has no deprecation flag; the type is not marked deprecated"))
     if type_.namespace or type_.key not in (written, type_.name):
         notes.append(Note("namespace-dropped", f"RAML has no namespaces; {type_.key!r} is declared as {written!r}"))
+    if type_.kind is TypeKind.RECORD and any(f.field_number is None for f in type_.fields):
+        notes.append(Note("field-numbers-positional", "RAML has no field numbers; the properties keep their order "
+                          "and read back numbered by position", dropped=False))
+    if not names.raml_source and type_.extras:
+        notes.append(Note("type-details-dropped",
+                          f"source-specific details ({', '.join(sorted(type_.extras))}) are not written"))
     if type_.kind is TypeKind.ENUM:
         positional = all(value.value in (None, index, value.name) for index, value in enumerate(type_.enum_values))
         if not positional:
@@ -682,14 +695,64 @@ def _verdict(notes: Sequence[Note], target_mapping: str) -> Optional[FidelityVer
     )
 
 
+def _rest_only_verdict(api: CanonicalApi, plan: _Plan) -> Optional[FidelityVerdict]:
+    """The root advisory of a source that is not a REST API: :data:`REST_ONLY_WARNING`, with counts.
+
+    Args:
+        api: The source model.
+        plan: Where its operations are written (:func:`_plan`).
+
+    Returns:
+        ``None`` for a REST source. Otherwise a ``DROP`` naming the operations and channels that are
+        not written (``critical`` when no operation is written at all), or an ``APPROX`` when every
+        operation has an HTTP binding and only the paradigm changes.
+    """
+    if api.paradigm is ApiParadigm.REST:
+        return None
+    paradigm = api.paradigm.value.replace("_", " ")
+    mapping = f"{api.paradigm.value} → REST"
+    lost = []
+    if plan.dropped:
+        lost.append(f"{len(plan.dropped)} operation(s) RAML cannot place on an HTTP resource")
+    if api.channels:
+        lost.append(f"{len(api.channels)} channel(s)")
+    if not lost:
+        return FidelityVerdict.approx(
+            message=f"RAML: {REST_ONLY_WARNING}; this {paradigm} API is written as HTTP resources and reads back as "
+            "a REST API",
+            target_mapping=mapping,
+        )
+    nothing_written = not plan.kept
+    return FidelityVerdict.drop(
+        message=f"RAML: {REST_ONLY_WARNING}; this {paradigm} API reads back as a REST API, and "
+        f"{' and '.join(lost)} are not written"
+        + ("; only its types are exported" if nothing_written else ""),
+        severity=LossinessSeverity.CRITICAL if nothing_written else LossinessSeverity.WARN,
+        target_mapping=mapping,
+    )
+
+
 class RamlFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for RAML export.
+    """Fidelity rules for RAML export — MFX-17.1 (#3901), non-REST losses and type coverage MFX-17.2 (#3902).
 
     On top of the capability rules, every verdict comes from the same helpers the writer reports
     its losses with: operations RAML cannot place (no HTTP binding, an unknown method, a second
     operation on one method and path), what a written operation, type or field loses, the document
     envelope (services, identity, extra servers), and field numbers that RAML's property order
     cannot keep.
+
+    **Non-REST sources** (MFX-17.2): a GraphQL, RPC, event, data-schema or agent source gets the
+    root advisory :data:`REST_ONLY_WARNING` — a ``DROP`` with the operations and channels that are not
+    written (``critical`` when nothing but types is exported); its operations without an HTTP
+    binding stay ``DROP`` each.
+
+    **What a re-import gives back** (MFX-17.2), so the round trip (:mod:`app.raml_roundtrip`) can
+    explain every structural change: RAML has no services, so each source service whose key is not
+    the title is a ``DROP`` and the one service a RAML reader names after the title is a ``SYNTH``; a
+    type declared under a name other than its key (a namespace or a rename) is a ``DROP`` under its
+    key and a ``SYNTH`` under the declared name; a record with unnumbered fields reads back numbered
+    by position, and a non-RAML type's source-specific details are not written (both ``APPROX``).
+    RAML-source resource types and traits are written merged into each method (``APPROX``).
     """
 
     target_label = "RAML"
@@ -710,8 +773,42 @@ class RamlFidelityRulePack(CapabilityRulePack):
             FidelityVerdict.synth(message=f"RAML: {n.message}", severity=LossinessSeverity.INFO,
                                   target_mapping="title") for n in synthesized
         ]
+        advisory = _rest_only_verdict(api, self._plan)
         rest = _verdict([n for n in notes if n not in synthesized], "document → RAML root")
-        return [*verdicts, *([rest] if rest else [])]
+        return [*([advisory] if advisory else []), *verdicts, *([rest] if rest else [])]
+
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """A service whose key is not the title does not survive: RAML has one API, named by its title."""
+        title = _title(self._api)
+        if service.key == title:
+            return []
+        return [FidelityVerdict.drop(
+            message=f"RAML: RAML has no services; the operations of {service.name!r} become resources of one API, "
+            f"read back as the service {title!r}",
+            severity=LossinessSeverity.INFO,
+            target_mapping=f"service → API {title}",
+        )]
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The service a RAML reader names after the title, and each type declared under a new name."""
+        title = _title(api)
+        out: List[Tuple[str, FidelityVerdict]] = []
+        if not any(service.key == title for service in api.services):
+            out.append((title, FidelityVerdict.synth(
+                message=f"RAML: a RAML document is one API; it reads back as the service {title!r}",
+                severity=LossinessSeverity.INFO,
+                target_mapping="title → service",
+            )))
+        source_keys = {type_.key for type_ in api.types}
+        for type_ in api.types:
+            written = self._names.names[type_.key]
+            if written != type_.key and written not in source_keys:
+                out.append((written, FidelityVerdict.synth(
+                    message=f"RAML: {type_.key!r} is declared as the type {written!r} and reads back under that name",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"type {written}",
+                )))
+        return out
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         verdict = super().operation_verdict(operation)
@@ -728,6 +825,27 @@ class RamlFidelityRulePack(CapabilityRulePack):
         if verdict.kind is not LossinessKind.OK:
             return verdict
         return _verdict(_type_notes(type_, self._names), f"{type_.kind.value} → RAML type") or verdict
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict, and a ``DROP`` of its key when it is declared under another name.
+
+        The key change replaces the type's namespace note; its other losses stay one ``APPROX``.
+        """
+        written = self._names.names[type_.key]
+        if written == type_.key:
+            return [self.type_verdict(type_)]
+        verdicts = [FidelityVerdict.drop(
+            message=f"RAML: RAML types are keyed by their name; {type_.key!r} is declared as {written!r} and "
+            "its key is not kept",
+            severity=LossinessSeverity.INFO,
+            target_mapping=f"type {written}",
+        )]
+        capability = super().type_verdict(type_)
+        if capability.kind is not LossinessKind.OK:
+            return [*verdicts, capability]
+        notes = [n for n in _type_notes(type_, self._names) if n.subject != "namespace-dropped"]
+        rest = _verdict(notes, f"{type_.kind.value} → RAML type")
+        return [*verdicts, *([rest] if rest else [])]
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
         verdicts = super().field_verdicts(field)
