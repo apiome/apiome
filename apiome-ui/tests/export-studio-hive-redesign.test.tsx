@@ -338,16 +338,16 @@ describe('the five-pill stepper', () => {
     await renderStudio();
     const stepper = screen.getByTestId('export-studio-stepper');
     expect(stepper).toHaveAttribute('aria-label', 'Export steps');
-    expect(within(stepper).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(stepper).getAllByRole('listitem')).toHaveLength(6);
     expect(screen.getByTestId('export-studio-step-source')).toHaveTextContent(
-      /current step, 1 of 5/i,
+      /current step, 1 of 6/i,
     );
     expect(screen.getByTestId('export-studio-step-review')).toHaveTextContent(/not started/i);
   });
 
   it('carries its whole treatment on one attribute the stylesheet paints', async () => {
     await renderStudio();
-    for (const key of ['source', 'target', 'options', 'verify', 'review']) {
+    for (const key of ['source', 'target', 'options', 'overlays', 'verify', 'review']) {
       const pill = screen.getByTestId(`export-studio-step-${key}`);
       expect(pill).toHaveClass('xstd-step');
       expect(pill.getAttribute('data-state')).toMatch(/^(done|current|upcoming)$/);
@@ -782,10 +782,42 @@ describe('the browser fixtures', () => {
     for (const key of ['openapi', 'graphql', 'proto']) {
       fireEvent.click(within(screen.getByTestId(`export-studio-multi-target-${key}`)).getByRole('checkbox'));
     }
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' })); // → overlays (GVM-4.2)
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' })); // → verify
     fireEvent.click(screen.getByTestId('multi-export-verify-start'));
     await screen.findByTestId('multi-export-outcomes');
     write('multi-verify', pageColumn().outerHTML);
+  });
+
+  it('renders the Overlays step with two overlays (the docs fixture, GVM-4.2)', async () => {
+    // The docs site's `export-studio-overlay` screenshot: a partner overlay applied after a public
+    // one, on a version whose target and options are already chosen.
+    withJob({});
+    render(<ExportStudio artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" workspaceName="Acme Corp" initialTarget="openapi" />);
+    await waitFor(() => expect(screen.getByText(/export targets available/)).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' })); // → options
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' })); // → overlays
+    const overlayFile = (name: string, title: string, actions: number) => {
+      const text = [
+        'overlay: 1.1.0',
+        'info:',
+        `  title: ${title}`,
+        '  version: 1.0.0',
+        'actions:',
+        ...Array.from({ length: actions }, (_, i) => `  - target: $.info\n    update:\n      x-step: ${i}`),
+      ].join('\n');
+      const f = new File([text], name, { type: 'application/yaml' });
+      Object.defineProperty(f, 'text', { value: () => Promise.resolve(text) });
+      return f;
+    };
+    fireEvent.change(screen.getByTestId('export-studio-overlay-input'), {
+      target: {
+        files: [overlayFile('public.yaml', 'Public descriptions', 3), overlayFile('partner-acme.yaml', 'Acme partner servers', 2)],
+      },
+    });
+    await screen.findByTestId('export-studio-overlay-1');
+    write('overlays', pageColumn().outerHTML);
   });
 
   it('renders the Catalog bulk Export… dialog after a run (the docs fixture, E1-3)', async () => {

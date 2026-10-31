@@ -1,5 +1,5 @@
 /**
- * Export studio's numbered stepper (MFX-41.1) and its five stops — shared by the studio
+ * Export studio's numbered stepper (MFX-41.1) and its six stops — shared by the studio
  * (`ExportStudio`) and the source picker the route draws without a source (E1-2, #6218).
  */
 
@@ -8,13 +8,15 @@ import { stepperStatus } from '../../../ui/Stepper';
 import type { ExportStudioStep } from './exportStudioUrlState';
 
 /**
- * The Studio's five stepper stops (MFX-41.1). The key list is owned by `exportStudioUrlState`
- * because the URL's `step` param is validated against it (MFX-41.4); the labels stay here.
+ * The Studio's six stepper stops (MFX-41.1; Overlays since GVM-4.2). The key list is owned by
+ * `exportStudioUrlState` because the URL's `step` param is validated against it (MFX-41.4); the
+ * labels stay here.
  */
 export const STUDIO_STEPS: { key: ExportStudioStep; label: string }[] = [
   { key: 'source', label: 'Source' },
   { key: 'target', label: 'Target' },
   { key: 'options', label: 'Options' },
+  { key: 'overlays', label: 'Overlays' },
   { key: 'verify', label: 'Verify' },
   { key: 'review', label: 'Review & Generate' },
 ];

@@ -12,7 +12,7 @@ Presentation and filesystem writes live in :mod:`apiome_cli.export_dispatch`.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import typer
@@ -119,8 +119,12 @@ def start_export_job(
     options: Mapping[str, Any] | None = None,
     confirm: bool = False,
     acknowledged_snapshot: str | None = None,
+    overlays: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Submit ``POST /v1/export/{tenant}/jobs`` and return the 202 acceptance payload."""
+    """Submit ``POST /v1/export/{tenant}/jobs`` and return the 202 acceptance payload.
+
+    ``overlays`` (GVM-4.2) is the inline ``[{name, document}]`` list, applied in order.
+    """
     body: dict[str, Any] = {"artifact": artifact, "target": target, "confirm": confirm}
     if version is not None:
         body["version"] = version
@@ -128,6 +132,8 @@ def start_export_job(
         body["options"] = dict(options)
     if acknowledged_snapshot:
         body["acknowledged_snapshot"] = acknowledged_snapshot
+    if overlays:
+        body["overlays"] = [dict(overlay) for overlay in overlays]
     response = client.post(api_paths.export_jobs(tenant_slug), json=body)
     payload = response.json()
     if not isinstance(payload, dict):

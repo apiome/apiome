@@ -28,6 +28,11 @@ export interface VerifyConfig {
   target: string | null;
   /** The non-default option overrides sent with the verification; null when all defaults. */
   options?: Record<string, unknown> | null;
+  /**
+   * The overlay chain sent with the verification (GVM-4.2); null/empty when none. Order is part of
+   * the key — the same overlays applied in another order can produce another document.
+   */
+  overlays?: readonly { name: string; document: Record<string, unknown> }[] | null;
 }
 
 /**
@@ -59,12 +64,15 @@ function stableStringify(value: unknown): string {
 export function verifyConfigKey(config: VerifyConfig): string | null {
   if (!config.artifact || !config.target) return null;
   const options = config.options && Object.keys(config.options).length > 0 ? config.options : null;
-  return stableStringify({
+  const key: Record<string, unknown> = {
     artifact: config.artifact,
     version: config.version ?? null,
     target: config.target,
     options,
-  });
+  };
+  // Only a non-empty chain joins the key, so every key minted before overlays existed is unchanged.
+  if (config.overlays && config.overlays.length > 0) key.overlays = config.overlays;
+  return stableStringify(key);
 }
 
 /** How many option overrides {@link describeVerifyConfig} names before it summarises the rest. */

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.560.0] - 2026-10-30
+
+### Added
+- **Overlays on export (GVM-4.2, #5877).** `POST /v1/export/{tenant}/jobs` and `POST /v1/export/{tenant}/verify` accept
+  `overlays: [{name, document}]` (1–10 Overlay 1.0/1.1/1.2 documents, each ≤ 1 MiB). New `app.export_overlay`
+  applies them in order to the source's OpenAPI document (`CanonicalApi.raw`) with `apply_overlays` and re-normalizes
+  the result through the source's own import adapter, so fidelity, the snapshot hash, the emitter, validation and the
+  delivery gate — whose lint grade is the IXH-2.3 export policy input recorded in `quality_rank_observations` with
+  scope `export` — all judge the post-overlay document. `result.overlay` (and the verify response's `overlay`) carries
+  `applied`, one `ledger` row per changed leaf (`pointer`, `kind`, `overlay`, `action_index`, `target`, `detail`;
+  500 rows, then a declared-truncation row), `changes`, `truncated` and `findings` (`overlay.*` pack rules, e.g.
+  `overlay.unmatched-target`, which leaves the document untouched). Jobs log `OVERLAYS_APPLIED` and one
+  `OVERLAY_FINDING` warning per finding. New delivery taxonomy codes `OVERLAY_SOURCE_UNSUPPORTED` (a version not built
+  from OpenAPI) and `OVERLAY_INVALID` (unreadable revision, no actions, or a resolved document that no longer
+  normalizes). Overlays are refused on a batch export (`versions` / `all_versions` / `items`). OpenAPI 1.424.0; the
+  regenerated `openapi.json` also picks up schema drift left by earlier merges (`RoundtripTextDiff`).
+
 ## [1.559.0] - 2026-10-30
 
 ### Added

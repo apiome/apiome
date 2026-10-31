@@ -181,6 +181,21 @@ DELIVERY_ERROR_TAXONOMY: Dict[str, DeliveryErrorDescriptor] = {
             "then try again.",
         ),
         _d(
+            "OVERLAY_SOURCE_UNSUPPORTED",
+            JobErrorCategory.CAPABILITY,
+            False,
+            "Overlays modify OpenAPI documents, and this version was not imported from one. "
+            "Export it without overlays, or choose a version imported from OpenAPI.",
+        ),
+        _d(
+            "OVERLAY_INVALID",
+            JobErrorCategory.INPUT,
+            False,
+            "An overlay could not be applied: it declares an Overlay version Apiome does not "
+            "read, has no actions, or leaves a document that no longer parses. Fix the overlay "
+            "and export again.",
+        ),
+        _d(
             "DELIVERY_FAILED",
             JobErrorCategory.TRANSPORT,
             True,

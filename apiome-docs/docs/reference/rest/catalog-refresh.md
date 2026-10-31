@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.423.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.424.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `catalog-refresh` · 6 operations
 
@@ -100,7 +100,7 @@ Operation id: `get_catalog_item_refresh_v1_catalog__tenant_slug___item_id__refre
 
 Create or replace an item's refresh setting (``projects:edit``).
 
-The adapter must support live discovery and have a refresh runner (``graphql``, ``grpc``);
+The adapter must support live discovery and have a refresh runner (``graphql``, ``grpc``, ``fhir``);
 the endpoint must pass the SSRF URL policy. Changing the adapter or endpoint resets the check
 history; saving always clears any failure backoff.
 

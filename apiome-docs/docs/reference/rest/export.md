@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.423.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.424.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export` · 11 operations
 
@@ -615,6 +615,7 @@ A one-call verify request: source revision + chosen target + options (MFX-42.5).
 | `target` | string | yes | Target emitter key (``openapi``) or format key (``openapi-3.1``). |
 | `options` | object or null | no | Per-target emit options (MFX-1.4); null or empty applies the target defaults. |
 | `include_content` | boolean | no | When true, return the emitted artifact inline (under the size cap) so the Monaco viewer (MFX-43.x) can render the preview from this same call; the bytes are still discarded server-side. |
+| `overlays` | array of `ExportOverlay` or null | no | Overlay documents applied, in order, to the source's OpenAPI document before the verify runs (GVM-4.2) — the same chain an export job's ``overlays`` applies, so a verify and the job it gates compute the same snapshot. |
 | `min_severity` | `LossinessSeverity` | no | Lowest loss severity that raises the advisory (MFX-2.4); does not affect the report or counts. |
 
 ### `ExportVerifyResponse` {#schema-exportverifyresponse}
@@ -637,6 +638,7 @@ The emit is read-only (no field-identity persistence), so a verify never mutates
 | `validation` | `EmittedValidationReport` | yes | The emitted-output validation gate + structured report (MFX-5.1/5.3). |
 | `lint` | `EmittedArtifactLint` or null | no | The emitted-artifact lint report (MFX-5.2): the artifact read back through its import adapter and linted with the MFI rule packs for its format. Advisory — it never changes the verdict. ``applicable: false`` (with a ``reason``) when no adapter reads the format back. |
 | `verdict` | `ExportVerifyVerdict` | yes | The overall go/no-go band the Generate gate reads (clean / lossy / invalid). |
+| `overlay` | `ExportOverlayReport` or null | no | What the request's ``overlays`` did (GVM-4.2): applied chain, per-leaf ledger rows and unapplied-action findings. Null without overlays. |
 | `files` | array of `ExportDispatchFile` | no | The emitted artifact inline (under the size cap); empty when the caller opted out (``include_content: false``) or the artifact exceeded the cap (`truncated`). |
 | `truncated` | boolean | no | True when the emitted artifact exceeded the inline size cap and was omitted from ``files``; the Monaco viewer should fetch it via the job/document surface instead. |
 

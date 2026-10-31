@@ -144,6 +144,7 @@ apiome export openapi [OPTIONS]
 | `--force` | flag |  |  | Write and exit 0 even when the export loses fidelity (lossy/types-only). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+| `--overlay` | text (repeatable) |  |  | Overlay file (JSON or YAML, Overlay 1.0–1.2) to apply to the version's OpenAPI document before it is exported. Repeatable; applied in the order given. Runs the export as a job and writes JSON. |
 
 ## apiome export preflight {#export-preflight}
 

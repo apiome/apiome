@@ -1488,6 +1488,55 @@ It exits **0** when every item completed, **7** when the archive was written but
 and **1** when every item failed. `--min-grade` and `--fail-on` gate a single export, so they are
 refused with these flags.
 
+### Apply overlays when you export
+
+An [OpenAPI Overlay](../bring-in/overlays.md) changes the exported document without changing the
+version: a partner's servers, public descriptions, `x-` extensions. Send the overlays with the job,
+in the order they should apply:
+
+```http
+POST /v1/export/{tenant_slug}/jobs
+{
+  "artifact": "<project-id>",
+  "version": "1.0.0",
+  "target": "openapi",
+  "overlays": [
+    { "name": "partner.yaml", "document": { "overlay": "1.0.0", "info": { "title": "Partner", "version": "1" },
+      "actions": [{ "target": "$.servers", "update": [{ "url": "https://partner.example.com" }] }] } }
+  ]
+}
+```
+
+- The overlays apply to the version's OpenAPI document **before** anything else runs. Fidelity, the
+  emitter, validation and the export quality policy all judge the overlaid document, and the
+  delivery grade recorded for the export is the overlaid document's.
+- `result.overlay` lists what changed: `applied` (the overlays, in order), `ledger` (one row per
+  changed value — `pointer`, `kind`, the `overlay` that changed it; at most 500 rows, then one row
+  saying how many more changed), `changes` and `findings`. An action whose target matches nothing is
+  an `overlay.unmatched-target` finding, and the document is left as it was. The job also logs an
+  `OVERLAYS_APPLIED` event and one `OVERLAY_FINDING` warning per finding.
+- Send the same `overlays` to `POST /v1/export/{tenant_slug}/verify`, so the verify snapshot you
+  acknowledge matches the job's.
+- At most 10 overlays, each at most 1 MiB. They work with one `target` or a `targets` list, but not
+  with a batch (`versions`, `all_versions` or `items`), because an overlay is written for one
+  document.
+- A version imported from another format fails with `OVERLAY_SOURCE_UNSUPPORTED`. An overlay with an
+  unsupported revision or no `actions` fails with `OVERLAY_INVALID`.
+
+From the CLI, add `--overlay FILE` (JSON or YAML), once per overlay:
+
+```bash
+# OpenAPI with a partner's servers and descriptions (runs as a job; writes JSON)
+apiome export openapi --project payments-api --version 1.0.0 -o partner.json \
+  --overlay base-public.yaml --overlay partner.yaml
+
+# Any other format, or several formats at once
+apiome export openapi-3.1 payments-api --out exports/ --targets avro --overlay partner.yaml
+```
+
+The command prints `Overlays: applied … — N value(s) changed` and one line per finding. `--overlay`
+cannot be combined with `--items`, or with `--yaml` on `export openapi`.
+
 ## Limits
 
 Every export job runs inside these limits. A request that hits one is refused with a message naming

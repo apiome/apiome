@@ -9,7 +9,8 @@ An **OpenAPI Overlay** is a small document that changes a base OpenAPI descripti
 it: add a production server, hide an internal path, rewrite descriptions for a public audience. Each
 overlay lists **actions**, and each action picks parts of the base with a JSONPath `target` and
 updates, copies or removes them. Apiome applies the overlays to the base before it reads the API,
-and records which overlay changed each value.
+and records which overlay changed each value. You can also apply overlays [when you export](#apply-overlays-on-export),
+so one version ships with partner-specific servers or descriptions without a fork.
 
 ## Supported revisions
 
@@ -63,6 +64,30 @@ them to an error:
 These replace the earlier `intake.overlay-unmatched-target` and `intake.overlay-action-invalid`
 rules. A style guide that set those ids should set the `overlay.*` ones instead.
 
+## Apply overlays on export
+
+Overlays also work on the way out: the version stays as it is, and the **exported** document gets
+the overlay's changes. Use this to publish the same API with a partner's servers, descriptions or
+`x-` extensions.
+
+- **Export studio:** the **Overlays** step. **Click “Add overlay files”**, pick one or more overlay
+  files, and set their order. See [Export studio](../ship/export-studio.mdx#4-overlays).
+- **CLI:** `apiome export openapi … --overlay partner.yaml` or
+  `apiome export <format> <item> --out … --overlay partner.yaml`. Repeat `--overlay` to apply
+  several, in the order given.
+- **REST:** `overlays: [{name, document}]` on `POST /v1/export/{tenant}/jobs` and on
+  `POST /v1/export/{tenant}/verify`.
+
+The overlays apply to the version's OpenAPI document **before** anything else runs. The fidelity
+report, the validation, the export quality policy and the file you download all describe the
+overlaid document. The export lists every value an overlay changed (see
+[Understand export fidelity](../ship/export-fidelity.md#overlay-rows)), and an action whose target
+matches nothing is an `overlay.unmatched-target` finding. It is never skipped silently.
+
+Overlays modify OpenAPI documents, so a version imported from another format (GraphQL, Protobuf,
+…) is refused with `OVERLAY_SOURCE_UNSUPPORTED`. An overlay Apiome cannot read (for example
+`overlay: 1.3.0`) is refused with `OVERLAY_INVALID`.
+
 ## Lint an overlay on its own
 
 You can check an overlay without its base:
@@ -82,5 +107,6 @@ as passed. See the [Lint reference](../reference/rest/lint.md).
 ## Where next
 
 - [Import a specification](./import-a-spec.md): the import wizard and pre-flight
+- [Export studio](../ship/export-studio.mdx): apply overlays when you export
 - [Supported formats](./supported-formats.md#version-coverage): the Overlay row in the version table
 - [Built-in lint rules](../build/lint-rules.md): every rule, including the overlay pack

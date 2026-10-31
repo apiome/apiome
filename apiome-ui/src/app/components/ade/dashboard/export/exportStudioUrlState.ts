@@ -26,7 +26,14 @@
  */
 
 /** The Studio's stepper stops, in order — the canonical list the URL's `step` is validated against. */
-export const EXPORT_STUDIO_STEP_ORDER = ['source', 'target', 'options', 'verify', 'review'] as const;
+export const EXPORT_STUDIO_STEP_ORDER = [
+  'source',
+  'target',
+  'options',
+  'overlays',
+  'verify',
+  'review',
+] as const;
 
 /** One stepper stop of the Export Studio. */
 export type ExportStudioStep = (typeof EXPORT_STUDIO_STEP_ORDER)[number];
@@ -358,6 +365,9 @@ export function resolveResumableStep(
   if (!requested || requested === 'source') return 'source';
   if (requested === 'target' || !reachability.hasTarget) return 'target';
   if (requested === 'options' || !reachability.optionsValid) return 'options';
+  // Overlays are uploaded files, never encoded in a link (GVM-4.2): `overlays` resumes on the step
+  // so the recipient can add theirs, and a later step resumes without any.
+  if (requested === 'overlays') return 'overlays';
   // `verify` and `review` both resume at Verify: the verdict that gates Generate is never encoded.
   return 'verify';
 }

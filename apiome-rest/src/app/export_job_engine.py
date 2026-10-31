@@ -97,6 +97,14 @@ from .export_delivery_gate import (
 from .export_fidelity import ExportFidelity, build_export_fidelity
 from .export_fidelity_rollup import ExportFidelityRollup, build_fidelity_rollup
 from .export_job_health import export_job_health
+from .export_overlay import (
+    MAX_EXPORT_OVERLAYS,
+    ExportOverlay,
+    ExportOverlayError,
+    ExportOverlayReport,
+    apply_export_overlays,
+    overlay_events,
+)
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
@@ -350,6 +358,17 @@ class ExportJobStartRequest(BaseModel):
         f"failing the batch. At most {MAX_BATCH_ITEMS} item × target pairs. Replaces ``artifact``; "
         "mutually exclusive with ``version``, ``versions`` and ``all_versions``.",
     )
+    overlays: Optional[List[ExportOverlay]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_EXPORT_OVERLAYS,
+        description="Overlay 1.0 / 1.1 / 1.2 documents applied, in this order, to the source's "
+        "OpenAPI document before anything else runs (GVM-4.2): fidelity, the emitter, validation "
+        "and the export quality policy all judge the post-overlay document. "
+        f"1–{MAX_EXPORT_OVERLAYS} entries; the result's ``overlay`` lists every changed leaf and "
+        "every action that could not be applied. A source not built from OpenAPI fails with "
+        "`OVERLAY_SOURCE_UNSUPPORTED`. Not combinable with a batch export.",
+    )
     all_versions: bool = Field(
         default=False,
         description="When true, a batch export over every version of the artifact (MFX-39.2), "
@@ -464,6 +483,24 @@ class ExportJobStartRequest(BaseModel):
                     f"A batch export runs at most {MAX_BATCH_ITEMS} version × target items; "
                     f"this request names {items}."
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _overlay_shape(self) -> "ExportJobStartRequest":
+        """Keep overlays to one source (GVM-4.2).
+
+        Returns:
+            The validated request.
+
+        Raises:
+            ValueError: When ``overlays`` accompanies a batch export (``versions`` /
+                ``all_versions`` / ``items``) — an overlay is written against one document.
+        """
+        if self.overlays is not None and self.is_batch:
+            raise ValueError(
+                "'overlays' are written against one source document; they cannot be combined "
+                "with a batch export ('versions', 'all_versions' or 'items')."
+            )
         return self
 
     @property
@@ -670,6 +707,12 @@ class ExportJobResult(BaseModel):
     batch: Optional["ExportBatchSummary"] = Field(
         default=None,
         description="Per-item outcomes of a batch export (MFX-39.2); null for any other job.",
+    )
+    overlay: Optional[ExportOverlayReport] = Field(
+        default=None,
+        description="What the request's ``overlays`` did (GVM-4.2): the applied chain, one ledger "
+        "row per changed leaf (plus a truncation row at the 500-row cap) and one finding per action "
+        "that could not be applied (``overlay.unmatched-target``, …). Null without overlays.",
     )
 
 
@@ -2163,6 +2206,45 @@ def _record_terminal_export_metrics(job_id: str) -> None:
         logger.debug("Failed to record terminal export metrics", exc_info=True)
 
 
+async def _load_job_source(
+    job_id: str, request: ExportJobStartRequest, tenant_id: str
+) -> Optional[Tuple[ExportSource, Optional[ExportOverlayReport]]]:
+    """Load a single-source job's canonical model and apply its overlays (GVM-4.2).
+
+    Both blocking steps run off-thread. A failure fails the job (``SOURCE_LOAD_FAILED``, or the
+    overlay error's own code) and returns ``None``.
+
+    Args:
+        job_id: The job being driven.
+        request: Its submitted request (``artifact`` / ``version`` / ``overlays``).
+        tenant_id: The authenticated tenant id.
+
+    Returns:
+        ``(source, overlay_report)`` — the post-overlay source and what the overlays did (``None``
+        without overlays) — or ``None`` when the job was failed.
+    """
+    try:
+        source: ExportSource = await asyncio.to_thread(
+            load_export_source, tenant_id, request.artifact, request.version
+        )
+    except ExportSourceError as exc:
+        await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc), _source_error_context(exc))
+        return None
+    try:
+        return await asyncio.to_thread(apply_export_overlays, source, request.overlays)
+    except ExportOverlayError as exc:
+        await _fail(job_id, exc.code, str(exc), {"status_code": exc.status_code})
+        return None
+
+
+async def _publish_overlay_events(job_id: str, report: Optional[ExportOverlayReport]) -> bool:
+    """Publish the overlay summary and one warning per overlay finding; False once canceled."""
+    for event in overlay_events(report):
+        if not await _publish(job_id, event=event):
+            return False
+    return True
+
+
 async def _drive_export_job_inner(job_id: str) -> None:
     """Run one export job through the pipeline, publishing progress after each stage.
 
@@ -2195,15 +2277,11 @@ async def _drive_export_job_inner(job_id: str) -> None:
         ):
             return
 
-        # --- Stage 1: load the source canonical model (DB-bound) -------------------
-        try:
-            source: ExportSource = await asyncio.to_thread(
-                load_export_source, tenant_id, request.artifact, request.version
-            )
-        except ExportSourceError as exc:
-            await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc),
-                        _source_error_context(exc))
+        # --- Stage 1: load the source canonical model (DB-bound), then its overlays --
+        loaded = await _load_job_source(job_id, request, tenant_id)
+        if loaded is None:
             return
+        source, overlay_report = loaded
 
         if not await _publish(
             job_id,
@@ -2218,6 +2296,8 @@ async def _drive_export_job_inner(job_id: str) -> None:
                  "version_label": source.version_label},
             ),
         ):
+            return
+        if not await _publish_overlay_events(job_id, overlay_report):
             return
 
         # --- Stage 2: fidelity envelope (pure CPU; same builder as /export/preview) -
@@ -2287,6 +2367,7 @@ async def _drive_export_job_inner(job_id: str) -> None:
         if request.dry_run:
             result = ExportJobResult(
                 artifact=source.artifact_id,
+                overlay=overlay_report,
                 version_record_id=source.version_record_id,
                 version_label=source.version_label,
                 target=target_format,
@@ -2446,6 +2527,7 @@ async def _drive_export_job_inner(job_id: str) -> None:
 
         result = ExportJobResult(
             artifact=source.artifact_id,
+            overlay=overlay_report,
             version_record_id=source.version_record_id,
             version_label=source.version_label,
             target=target_format,
@@ -2575,14 +2657,10 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
         ):
             return
 
-        try:
-            source: ExportSource = await asyncio.to_thread(
-                load_export_source, tenant_id, request.artifact, request.version
-            )
-        except ExportSourceError as exc:
-            await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc),
-                        _source_error_context(exc))
+        loaded = await _load_job_source(job_id, request, tenant_id)
+        if loaded is None:
             return
+        source, overlay_report = loaded
 
         if not await _publish(
             job_id,
@@ -2595,6 +2673,8 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
                  "version_label": source.version_label},
             ),
         ):
+            return
+        if not await _publish_overlay_events(job_id, overlay_report):
             return
 
         # --- Pass 1: plan every target (fidelity, stale check, guard) ---------------
@@ -2682,6 +2762,7 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
                 percent=100,
                 result=ExportJobResult(
                     artifact=source.artifact_id,
+                    overlay=overlay_report,
                     version_record_id=source.version_record_id,
                     version_label=source.version_label,
                     dry_run=True,
@@ -2860,6 +2941,7 @@ async def _drive_multi_target_job_inner(job_id: str) -> None:
 
         result = ExportJobResult(
             artifact=source.artifact_id,
+            overlay=overlay_report,
             version_record_id=source.version_record_id,
             version_label=source.version_label,
             dry_run=False,

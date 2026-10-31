@@ -47,6 +47,7 @@ from apiome_cli.config import require_api_key
 from apiome_cli.exit_codes import EXIT_ERROR, EXIT_EXPORT_PARTIAL, EXIT_USAGE
 from apiome_cli.export_dispatch import refuse_unavailable_target, write_export_artifact
 from apiome_cli.export_output import enforce_export_fidelity_gate
+from apiome_cli.export_overlays import format_overlay_summary, load_overlay_files
 from apiome_cli.output import emit_json, emit_list_table
 
 __all__ = [
@@ -187,6 +188,7 @@ def run_multi_export(
     confirm: bool,
     poll_interval: float,
     export_timeout_override: float | None,
+    overlay_paths: Sequence[str] = (),
 ) -> None:
     """Run a multi-target (``ARTIFACT`` + ``--targets``) or batch (``--items``) export job.
 
@@ -204,6 +206,8 @@ def run_multi_export(
         confirm: Proceed with severe conversions.
         poll_interval: Seconds between status polls.
         export_timeout_override: ``--export-timeout``.
+        overlay_paths: ``--overlay`` files (GVM-4.2), applied to the artifact's OpenAPI document
+            for every target. Refused with ``--items``: an overlay is written against one source.
 
     Raises:
         typer.Exit: :data:`EXIT_USAGE` for an inconsistent request, :data:`EXIT_EXPORT_PARTIAL`
@@ -217,6 +221,10 @@ def run_multi_export(
     if refs is not None and version is not None:
         typer.echo("--version does not apply with --items; pin one with ITEM@VERSION.", err=True)
         raise typer.Exit(EXIT_USAGE)
+    if refs is not None and overlay_paths:
+        typer.echo("--overlay applies to one ARTIFACT; it cannot be combined with --items.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    overlays = load_overlay_files(overlay_paths)
     names = [target_format, *[n for n in parse_target_list(targets_raw) if n != target_format]]
     if refs is not None and len(refs) * len(names) > MAX_EXPORT_PAIRS:
         typer.echo(
@@ -246,6 +254,8 @@ def run_multi_export(
         {"target": key, **({"options": dict(options)} if options and index == 0 else {})}
         for index, key in enumerate(keys)
     ]
+    if overlays:
+        body["overlays"] = overlays
 
     accepted = client.post(api_paths.export_jobs(tenant_slug), json=body).json()
     job_id = accepted.get("job_id") if isinstance(accepted, dict) else None
@@ -281,6 +291,8 @@ def run_multi_export(
         emit_json({"job_id": job_id, "output": effective_out, "result": result})
     else:
         emit_list_table(outcome_rows(result), _OUTCOME_COLUMNS, min_width=160)
+        for line in format_overlay_summary(result.get("overlay")):
+            typer.echo(line, err=True)
         typer.echo(f"Wrote {effective_out}", err=True)
 
     batch = result.get("batch")

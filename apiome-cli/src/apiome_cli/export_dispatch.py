@@ -47,6 +47,7 @@ from apiome_cli.export_output import (
     enforce_export_fidelity_gate,
     format_export_fidelity_summary,
 )
+from apiome_cli.export_overlays import format_overlay_summary, load_overlay_files
 from apiome_cli.preflight_runner import gate_export_before_job
 from apiome_cli.spec_output import SpecExportMetadata, emit_download_metadata, write_document_bytes
 
@@ -192,12 +193,19 @@ def run_generic_export(
     export_timeout_override: float | None,
     min_grade: str | None = None,
     fail_on: str | None = None,
+    overlay_paths: Sequence[str] = (),
+    tenant_override: str | None = None,
 ) -> None:
     """Resolve ``target_format``, run the async export job, and write the artifact.
 
     When ``--min-grade`` / ``--fail-on`` are supplied the export is pre-flighted first
     (IXH-2.6) and a blocking verdict stops the run **before** the job is submitted, so a
     gated pipeline never leaves a half-finished export job behind.
+
+    ``overlay_paths`` (``--overlay``, GVM-4.2) are applied by the job, in order, to the version's
+    OpenAPI document before it is exported. The pre-submit preview cannot see them, so an
+    overlaid job is not pinned to that preview's snapshot; the job's own snapshot is reported.
+    ``tenant_override`` is ``--tenant`` where the calling command has one (``export openapi``).
     """
     settings = settings_from_context(ctx)
     require_api_key(settings)
@@ -212,7 +220,7 @@ def run_generic_export(
         timeout=timeout_from_context(ctx),
         verify=not insecure_from_context(ctx),
     )
-    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=None)
+    tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant_override)
 
     project_id = resolve_project_uuid(client, tenant_slug, artifact)
     targets_response = fetch_export_targets(
@@ -244,6 +252,7 @@ def run_generic_export(
     )
 
     options = parse_export_options(option_values)
+    overlays = load_overlay_files(overlay_paths)
     export_timeout = (
         export_timeout_override
         if export_timeout_override is not None
@@ -258,7 +267,9 @@ def run_generic_export(
         target=target_key,
         options=options or None,
     )
-    acknowledged_snapshot = projection_snapshot_hash(preview)
+    # The preview describes the version without overlays; acknowledging it would make an
+    # overlaid job fail STALE_PREVIEW, so only an overlay-free job is pinned to it.
+    acknowledged_snapshot = None if overlays else projection_snapshot_hash(preview)
 
     accepted = start_export_job(
         client,
@@ -269,6 +280,7 @@ def run_generic_export(
         options=options or None,
         confirm=confirm,
         acknowledged_snapshot=acknowledged_snapshot,
+        overlays=overlays,
     )
     job_id = accepted.get("job_id")
     if not isinstance(job_id, str) or not job_id:
@@ -328,6 +340,8 @@ def run_generic_export(
 
     if not json_mode:
         for line in format_export_fidelity_summary(fidelity, target=target_key):
+            typer.echo(line, err=True)
+        for line in format_overlay_summary(result.get("overlay")):
             typer.echo(line, err=True)
 
     enforce_export_fidelity_gate(

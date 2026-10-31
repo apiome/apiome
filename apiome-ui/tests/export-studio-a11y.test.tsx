@@ -637,7 +637,7 @@ describe('MFX-41.5 — stepper semantics and focus management', () => {
     );
     const current = screen.getByTestId('export-studio-step-source');
     expect(current).toHaveAttribute('aria-current', 'step');
-    expect(current).toHaveTextContent(/current step, 1 of 5/i);
+    expect(current).toHaveTextContent(/current step, 1 of 6/i);
     expect(screen.getByTestId('export-studio-step-target')).toHaveTextContent(/not started/i);
   });
 
@@ -665,6 +665,6 @@ describe('MFX-41.5 — stepper semantics and focus management', () => {
 
     const panel = screen.getByTestId('export-studio-body');
     await waitFor(() => expect(panel).toHaveFocus());
-    expect(panel).toHaveAttribute('aria-label', 'Step 2 of 5: Target');
+    expect(panel).toHaveAttribute('aria-label', 'Step 2 of 6: Target');
   });
 });
