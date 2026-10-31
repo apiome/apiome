@@ -1741,8 +1741,30 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "in the capability registry's `unsupported_constructs`, not here.",
             ),
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="PostgreSQL DDL",
+                format_key="sql-ddl",
+                support=VersionSupport.UNGATED,
+                note="Written with `dialect='postgres'` (MFX-35.1, the default): enum types, native "
+                "arrays and JSONB. Like the read side, a script carries no version; it is parsed with "
+                "sqlglot in its dialect before delivery.",
+            ),
+            FormatVersion(
+                version="MySQL DDL",
+                format_key="sql-ddl",
+                support=VersionSupport.UNGATED,
+                note="Written with `dialect='mysql'`: inline `ENUM`, JSON for lists and nested objects.",
+            ),
+            FormatVersion(
+                version="ANSI SQL DDL",
+                format_key="sql-ddl",
+                support=VersionSupport.UNGATED,
+                note="Written with `dialect='ansi'`: standard types and `CHECK … IN` for enums; no "
+                "regular-expression check.",
+            ),
+        ],
+        default_write="PostgreSQL DDL",
     ),
     "cue": VersionCoverage(
         reads=[
