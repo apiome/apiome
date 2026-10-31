@@ -163,7 +163,7 @@ jobs:
           node-version: 24
 
       - name: Install the corpus toolchain (buf, the required Node tools and the CUE/Pkl/Dhall evaluators)
-        run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser typescript-types-extractor zod-schema-extractor cue pkl dhall
+        run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser typescript-types-extractor zod-schema-extractor dbml-validator prisma-validator cue pkl dhall
         working-directory: apiome-rest
 
       - name: Ruff lint

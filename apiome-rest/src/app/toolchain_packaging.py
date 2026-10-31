@@ -17,7 +17,8 @@ What lives here:
   tool's stdout is JSON.
 * :data:`BUNDLED_TOOLS` — the pinned set: ``buf``, ``tsp``, ``smithy``, ``drafter``,
   ``amf``, ``asyncapi``, ``asyncapi-parser``, ``typescript-types-extractor``,
-  ``zod-schema-extractor``, ``cue``, ``pkl``, ``dhall``, ``asyncapi-diff``, ``rover``,
+  ``zod-schema-extractor``, ``dbml-validator``, ``prisma-validator``, ``cue``, ``pkl``, ``dhall``,
+  ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
   ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
@@ -249,6 +250,24 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         "routers) in a permission-locked, time-bounded sandbox → JSON Schema "
         "(`zod`, FMT-8.2; `@trpc/server`, FMT-8.3).",
         env_override_key="APIOME_ZOD_SCHEMA_EXTRACTOR_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="dbml-validator",
+        executable="dbml-validate",
+        version="10.3.1",
+        description="DBML parse check for the SQL DDL export's DBML output (@dbml/core's dbmlv2 "
+        "parser, MFX-35.2).",
+        env_override_key="APIOME_DBML_VALIDATOR_BIN",
+        runtime="node",
+    ),
+    BundledTool(
+        key="prisma-validator",
+        executable="prisma-validate",
+        version="7.10.1",
+        description="`prisma validate` for the SQL DDL export's Prisma schema output (the Prisma "
+        "CLI's WebAssembly schema engine, MFX-35.2).",
+        env_override_key="APIOME_PRISMA_VALIDATOR_BIN",
         runtime="node",
     ),
     BundledTool(

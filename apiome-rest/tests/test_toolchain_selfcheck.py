@@ -154,6 +154,13 @@ def test_typescript_types_extractor_is_a_hard_dependency():
     assert REQUIRED_NPM_PACKAGES["typescript-types-extractor"] == "typescript"
 
 
+def test_dbml_and_prisma_validators_are_hard_dependencies():
+    """MFX-35.2 (#4312): the SQL DDL export's DBML and Prisma outputs are checked by their own tools."""
+    assert REQUIRED_NPM_PACKAGES["dbml-validator"] == "@dbml/core"
+    assert REQUIRED_NPM_PACKAGES["prisma-validator"] == "prisma"
+    assert {"dbml-validator", "prisma-validator"} <= set(REQUIRED_TOOL_KEYS)
+
+
 def test_toolchain_manifest_exists_and_pins_every_required_npm_package():
     """``toolchain/package.json`` is what the image and CI install from."""
     assert TOOLCHAIN_MANIFEST_PATH.is_file(), TOOLCHAIN_MANIFEST_PATH
@@ -194,12 +201,15 @@ def test_dockerfile_installs_the_hard_dependency_from_the_manifest():
     assert '"typescript@' not in dockerfile
     assert "ARG ZOD_VERSION" not in dockerfile
     assert '"zod@' not in dockerfile
+    assert '"@dbml/core@' not in dockerfile
+    assert '"prisma@' not in dockerfile
 
 
 def test_dockerfile_smoke_tests_every_required_node_tool():
     """A hard dependency is proven at build time, not on the first import in production."""
     dockerfile = (_REST_ROOT / "Dockerfile").read_text(encoding="utf-8")
-    for executable in ("asyncapi-parser", "typescript-types-extract", "zod-extract"):
+    for executable in ("asyncapi-parser", "typescript-types-extract", "zod-extract", "dbml-validate",
+                       "prisma-validate"):
         assert f"${{TOOLS_PREFIX}}/bin/{executable} --version" in dockerfile, executable
         assert f"| ${{TOOLS_PREFIX}}/bin/{executable} >" in dockerfile, executable
     # The image ships the toolchain, so it enforces it.

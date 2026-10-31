@@ -230,7 +230,8 @@ RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSI
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently
-# `@asyncapi/parser`, `typescript`, `zod` and `@trpc/server`) alongside the optional CLIs.
+# `@asyncapi/parser`, `typescript`, `zod`, `@trpc/server`, `@dbml/core` and `prisma`) alongside the
+# optional CLIs.
 # Vendoring them this way is what makes AsyncAPI, TypeScript types and Zod formats the image
 # cannot ship without: the build smoke-tests all three a few lines down, and
 # app.toolchain_selfcheck refuses to start without them.
@@ -271,16 +272,24 @@ COPY apiome-rest/toolchain/typescript-types-extract.mjs ${TOOLS_PREFIX}/lib/node
 # Zod schema extractor (FMT-8.2, #5463): evaluates user modules, so it re-executes itself under
 # Node's permission model with read access to this directory only (see the script's header).
 COPY apiome-rest/toolchain/zod-extract.mjs ${TOOLS_PREFIX}/lib/node/zod-extract.mjs
+# DBML and Prisma validators (MFX-35.2, #4312): check the SQL DDL export's DBML and Prisma outputs
+# with the manifest's `@dbml/core` and `prisma`, resolved from the node_modules beside them.
+COPY apiome-rest/toolchain/dbml-validate.mjs ${TOOLS_PREFIX}/lib/node/dbml-validate.mjs
+COPY apiome-rest/toolchain/prisma-validate.mjs ${TOOLS_PREFIX}/lib/node/prisma-validate.mjs
 RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi-parser \
     && printf '#!/bin/sh\nexec node %s/lib/node/typescript-types-extract.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/typescript-types-extract \
     && printf '#!/bin/sh\nexec node %s/lib/node/zod-extract.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/zod-extract \
     && printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-diff.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/asyncapi-diff \
     && printf '#!/bin/sh\nexec node %s/lib/node/graphql-inspector-diff.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/graphql-inspector-diff \
+    && printf '#!/bin/sh\nexec node %s/lib/node/dbml-validate.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/dbml-validate \
+    && printf '#!/bin/sh\nexec node %s/lib/node/prisma-validate.mjs "$@"\n' "${TOOLS_PREFIX}" > ${TOOLS_PREFIX}/bin/prisma-validate \
     && chmod +x ${TOOLS_PREFIX}/bin/asyncapi-parser ${TOOLS_PREFIX}/lib/node/asyncapi-parse.mjs \
        ${TOOLS_PREFIX}/bin/typescript-types-extract ${TOOLS_PREFIX}/lib/node/typescript-types-extract.mjs \
        ${TOOLS_PREFIX}/bin/zod-extract ${TOOLS_PREFIX}/lib/node/zod-extract.mjs \
        ${TOOLS_PREFIX}/bin/asyncapi-diff ${TOOLS_PREFIX}/lib/node/asyncapi-diff.mjs \
-       ${TOOLS_PREFIX}/bin/graphql-inspector-diff ${TOOLS_PREFIX}/lib/node/graphql-inspector-diff.mjs
+       ${TOOLS_PREFIX}/bin/graphql-inspector-diff ${TOOLS_PREFIX}/lib/node/graphql-inspector-diff.mjs \
+       ${TOOLS_PREFIX}/bin/dbml-validate ${TOOLS_PREFIX}/lib/node/dbml-validate.mjs \
+       ${TOOLS_PREFIX}/bin/prisma-validate ${TOOLS_PREFIX}/lib/node/prisma-validate.mjs
 
 # Hard-dependency smoke test (FMT-1.3, #5414). The AsyncAPI, TypeScript-types and Zod adapters
 # have no fallback reader, so a broken or missing `asyncapi-parser`, `typescript-types-extract`
@@ -307,7 +316,16 @@ RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"files":{"r.ts":"import { initTRPC } from \"@trpc/server\"; import { z } from \"zod\"; const t = initTRPC.create(); export const appRouter = t.router({ ping: t.procedure.input(z.string()).query(() => 1) });"},"root":"r.ts","routers":true}' \
        | ${TOOLS_PREFIX}/bin/zod-extract > /tmp/trpc-smoke.json \
     && grep -q '"path":"ping"' /tmp/trpc-smoke.json \
-    && rm -f /tmp/zod-smoke.json /tmp/trpc-smoke.json
+    && rm -f /tmp/zod-smoke.json /tmp/trpc-smoke.json \
+    && ${TOOLS_PREFIX}/bin/dbml-validate --version \
+    && printf 'Table smoke {\n  id int [pk]\n}\n' \
+       | ${TOOLS_PREFIX}/bin/dbml-validate > /tmp/dbml-smoke.json \
+    && grep -q '"ok":true' /tmp/dbml-smoke.json \
+    && ${TOOLS_PREFIX}/bin/prisma-validate --version \
+    && printf 'datasource db {\n  provider = "postgresql"\n}\nmodel Smoke {\n  id Int @id\n}\n' \
+       | ${TOOLS_PREFIX}/bin/prisma-validate > /tmp/prisma-smoke.json \
+    && grep -q '"ok":true' /tmp/prisma-smoke.json \
+    && rm -f /tmp/dbml-smoke.json /tmp/prisma-smoke.json
 
 # Typed configuration smoke test (FMT-8.5, #5466): each evaluator runs and evaluates a one-line
 # schema, so a broken download fails the build instead of the first CUE, Pkl or Dhall import.

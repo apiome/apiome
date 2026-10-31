@@ -638,20 +638,62 @@ async def _validate_x12_guide(
 async def _validate_sql_ddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted SQL DDL script (MFX-35.1, #4311).
+    """Re-validate an emitted SQL DDL script, DBML document or Prisma schema (MFX-35.1, #4311; MFX-35.2, #4312).
 
-    The emitter has already parsed the script with sqlglot in its dialect; this reads it back through
-    Apiome's own SQL DDL reader (FMT-5.6), which must find at least one table.
+    * A ``.sql`` script — already parsed with sqlglot by the emitter — is read back through Apiome's own
+      SQL DDL reader (FMT-5.6), which must find at least one table (``sql.reimport``).
+    * A ``.dbml`` document is parsed by ``@dbml/core`` (``dbml.parse``) and a ``schema.prisma`` is run
+      through ``prisma validate`` (``prisma.validate``), both through the bundled toolchain
+      (:mod:`app.db_schema_validation`); each error the tool reports is one finding, with its line.
+
+    The two tools are hard dependencies, so an enforcing deployment always has them; a runtime without
+    one (a bare development checkout) reports the check as skipped rather than passing it.
     """
+    from .db_schema_validation import (
+        DBML_VALIDATOR_TOOL_KEY,
+        PRISMA_VALIDATOR_TOOL_KEY,
+        db_schema_validator_available,
+        validate_dbml,
+        validate_prisma,
+    )
     from .sql_ddl_import_source import SqlDdlImportSource
+    from .toolchain_runner import ToolchainError
 
-    def _check(content: str) -> None:
+    def _reimport(content: str) -> None:
         source = SqlDdlImportSource()
         model = source.normalize(source.parse(content))
         if not any(t.kind.value == "record" for t in model.types):
             raise ValueError("The emitted SQL DDL declares no table that reads back.")
 
-    return await _run_text_validator(target, emit_result, _check)
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The SQL DDL export wrote no file.")])
+    findings: List[ValidationFinding] = []
+    for emitted in emit_result.files:
+        text = str(emitted.content)
+        if emitted.path.endswith(".dbml") or emitted.path.endswith(".prisma"):
+            dbml = emitted.path.endswith(".dbml")
+            tool_key, check, keyword = (
+                (DBML_VALIDATOR_TOOL_KEY, validate_dbml, "dbml.parse") if dbml
+                else (PRISMA_VALIDATOR_TOOL_KEY, validate_prisma, "prisma.validate")
+            )
+            if not db_schema_validator_available(tool_key):
+                return _skipped(target, f"the bundled {tool_key} is not installed in this runtime, so "
+                                f"{emitted.path} was not checked")
+            try:
+                diagnostics = await check(text)
+            except ToolchainError as exc:
+                findings.append(ValidationFinding(message=f"{tool_key} failed: {exc}", file=emitted.path,
+                                                  keyword=keyword))
+                continue
+            findings.extend(
+                ValidationFinding(message=str(d), file=emitted.path, keyword=keyword) for d in diagnostics
+            )
+            continue
+        try:
+            await asyncio.to_thread(_reimport, text)
+        except Exception as exc:  # noqa: BLE001 — any reader failure means "not valid", never a crash
+            findings.append(ValidationFinding(message=str(exc), file=emitted.path, keyword="sql.reimport"))
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_oncrpc(

@@ -82,6 +82,10 @@ __all__ = [
 #: ``zod-schema-extractor`` likewise (FMT-8.2, #5463): a Zod schema is a value, and only Zod itself,
 #: running the module, can produce it.
 #:
+#: ``dbml-validator`` and ``prisma-validator`` likewise (MFX-35.2, #4312): the SQL DDL export's DBML
+#: and Prisma outputs are checked by ``@dbml/core`` and ``prisma validate`` themselves — no Python
+#: reader of either language exists to check them instead.
+#:
 #: ``cue``, ``pkl`` and ``dhall`` likewise (FMT-8.5, #5466): each typed configuration language is
 #: read by its own evaluator — unification, late binding and import resolution exist nowhere
 #: else — so CUE, Pkl and Dhall import have no fallback reader either. They are native binaries
@@ -93,6 +97,8 @@ REQUIRED_TOOL_KEYS: Tuple[str, ...] = (
     "asyncapi-parser",
     "typescript-types-extractor",
     "zod-schema-extractor",
+    "dbml-validator",
+    "prisma-validator",
     "cue",
     "pkl",
     "dhall",
@@ -104,6 +110,8 @@ REQUIRED_NPM_PACKAGES: Dict[str, str] = {
     "asyncapi-parser": "@asyncapi/parser",
     "typescript-types-extractor": "typescript",
     "zod-schema-extractor": "zod",
+    "dbml-validator": "@dbml/core",
+    "prisma-validator": "prisma",
 }
 
 #: The toolchain manifest: ``apiome-rest/toolchain/package.json``, which pins the exact version
