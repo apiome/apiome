@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.561.0] - 2026-10-30
+
+### Changed
+- **RAML fidelity pack: non-REST losses and type coverage (MFX-17.2, #3902).** `RamlFidelityRulePack` now:
+  - leads the report of a non-REST source (GraphQL, RPC, event, data schema, agent) with the root advisory
+    `REST_ONLY_WARNING` ("RAML captures REST only"): a `DROP` naming the operations RAML cannot place on an HTTP
+    resource and the channels (warn; critical when no operation is written, only types), or an `APPROX` when every
+    operation has an HTTP binding (target mapping `<paradigm> → REST`);
+  - reports what a re-import gives back, so the round trip explains every structural change: each service whose key
+    is not the title is a `DROP` and the one service a RAML reader names after the title is a `SYNTH`; a type declared
+    under a name other than its key (a namespace, a rename) is a `DROP` under its key and a `SYNTH` under the declared
+    name (replacing its namespace note); a record with unnumbered fields reads back numbered by position
+    (`field-numbers-positional`); a non-RAML type's or parameter's source-specific details are not written
+    (`type-details-dropped`, `parameter-details-dropped`). The writer records the same losses.
+- `FidelityRulePack` gains two drive-loop hooks, both `[]` by default: `service_verdicts(service)` (recorded under the
+  service key) and `synthesized_verdicts(api)` (`(key, verdict)` pairs for constructs the target creates).
+- Round-trip fixture `tests/fixtures/raml_roundtrip/openapi-petstore.json`: no unexplained differences or overclaims
+  (was 3 and 2), 17 predicted losses. Every cross-format corpus source round-trips explained except one WADL operation
+  name (the RAML reader does not read `displayName`). OpenAPI 1.425.0.
+
 ## [1.560.0] - 2026-10-30
 
 ### Added

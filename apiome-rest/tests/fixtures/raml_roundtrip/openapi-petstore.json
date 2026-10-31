@@ -53,27 +53,8 @@
       "changed"
     ]
   ],
-  "unexplained": [
-    [
-      "service",
-      "Sample Pet Store API (OpenAPI 3.0)",
-      "added"
-    ],
-    [
-      "service",
-      "default",
-      "removed"
-    ],
-    [
-      "type",
-      "Category",
-      "changed"
-    ]
-  ],
-  "overclaims": [
-    "Category",
-    "Pet"
-  ],
-  "predicted_losses": 15,
-  "diverges": true
+  "unexplained": [],
+  "overclaims": [],
+  "predicted_losses": 17,
+  "diverges": false
 }

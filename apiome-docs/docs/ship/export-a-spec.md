@@ -1100,6 +1100,11 @@ line that RAML tools require.
   source names it), its description, query parameters, headers and body, and its responses by status
   code with their description, headers and body.
 
+RAML describes REST APIs only. An item from GraphQL, gRPC, an event or data-schema format, or an agent
+descriptor gets a warning at the top of its fidelity report: **RAML captures REST only**. The warning
+counts the operations and channels that are not written. It is critical when no operation can be
+written and only the item's types are exported.
+
 The fidelity report lists what RAML cannot carry:
 
 - operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), a `TRACE` or `CONNECT`
@@ -1108,9 +1113,15 @@ The fidelity report lists what RAML cannot carry:
 - every server but the first, and the grouping into services;
 - exclusive bounds, string formats RAML has no type for (`email`, `uuid`), and a facet the type does
   not allow;
-- deprecation flags, tags, and source details such as gateway routes;
+- deprecation flags, tags, and source details such as gateway routes — on the document, an
+  operation, a parameter or a type;
 - renamed types: RAML type names cannot contain dots or spaces, so `com.acme.Order` is written
-  `Order` (or `Order2` when the name is taken).
+  `Order` (or `Order2` when the name is taken). The report drops the type under its old key and adds
+  it under the new name, which is how it reads back;
+- services: a RAML document is one API, so the item's services are dropped and it reads back as one
+  service named after the title;
+- field numbers: RAML keeps the order of an object's properties but not their numbers, so the
+  properties read back numbered by position.
 
 An item imported from RAML is written back as it was read. Its resource types and traits are already
 applied to each method when it is imported, so the export writes the methods in full, without `type:`
@@ -1124,7 +1135,9 @@ Each export is checked before you download it:
 2. The document is then imported again. If it does not import, the export fails (`raml.reimport`).
 
 An item imported from RAML exports and re-imports unchanged. From any other source, the re-import
-shows what RAML could not keep; the fidelity report names those losses.
+shows what RAML could not keep, and the fidelity report names each of those changes. One change is not
+in the report: Apiome's RAML reader does not read `displayName`, so an operation's name reads back as
+its method and path (`DELETE /reindex`).
 
 An item imported from WADL is written back as it was read. Import now also reads a WADL root written
 as `<wadl:application>`, the query and header params a method's request declares, and — when you

@@ -1,0 +1,22 @@
+---
+slug: raml-fidelity-report
+title: RAML fidelity report names every change
+description: RAML exports warn non-REST sources and report what reads back differently.
+authors: [apiome]
+---
+
+The **RAML** fidelity report now warns an item that is not a REST API, and names each change a RAML
+export makes. [What the RAML report lists](/ship/export-a-spec#raml-from-any-source).
+
+{/* truncate */}
+
+- **RAML captures REST only.** An item from GraphQL, gRPC, an event or data-schema format gets this
+  warning at the top of its report, with the operations and channels that are not written. It is
+  critical when only the item's types are exported.
+- **What reads back differently is in the report:**
+  - the item's services, which become one API named after the title;
+  - types written under a new name, under their old key and their new name;
+  - object properties, which read back numbered by position;
+  - source details on a type or a parameter, which are not written.
+- **Round trip.** Exporting an OpenAPI, GraphQL, gRPC or WSDL item to RAML and reading it back now
+  shows no change the report did not predict.

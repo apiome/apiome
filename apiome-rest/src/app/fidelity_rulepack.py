@@ -51,7 +51,7 @@ on build) is insensitive to the order the walk visits constructs.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Mapping, Optional
+from typing import Any, List, Mapping, Optional, Tuple
 
 from pydantic import BaseModel, ConfigDict
 
@@ -62,6 +62,7 @@ from .canonical_model import (
     Constraints,
     Operation,
     OperationKind,
+    Service,
     Type,
     TypeKind,
 )
@@ -415,15 +416,42 @@ class FidelityRulePack(ABC):
         """
         return [self.type_verdict(type_)]
 
+    def service_verdicts(self, service: Service) -> List[FidelityVerdict]:
+        """Return every loss one service incurs (possibly none): ``[]`` by default — MFX-17.2 (#3902).
+
+        A service is the container of its operations; most targets keep it, so the drive loop
+        records nothing for it unless a pack says otherwise. A target with no services of its own
+        (RAML describes one API) overrides this to say the service does not survive, under the
+        service's key — the key a :func:`~app.import_source.canonical_diff` reports it under.
+        """
+        return []
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """Return the constructs the target creates that the source does not have: ``[]`` by default.
+
+        Each pair is the key a re-import of the export gives the construct and the verdict (a
+        ``SYNTH``) that explains it — a service a reader names after the title, a type declared
+        under a name other than its source key — MFX-17.2 (#3902). The keys are new: they belong to
+        no construct of ``api``.
+
+        Args:
+            api: The source canonical model to be exported. Never mutated.
+
+        Returns:
+            ``(construct key, verdict)`` pairs.
+        """
+        return []
+
     # --- drive loop ---------------------------------------------------------
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Walk ``api`` construct by construct and assemble its fidelity report.
 
         The concrete drive loop shared by every pack: it visits the artifact root,
-        then operations, then channels, then named types (descending into each
-        record's fields), records one :class:`~app.lossiness.LossItem` per verdict
-        keyed by the construct's own canonical ``key``, and returns the finished
+        then services, operations, channels and named types (descending into each
+        record's fields), then the constructs the target synthesizes; it records one
+        :class:`~app.lossiness.LossItem` per verdict keyed by the construct's own
+        canonical ``key``, and returns the finished
         report. The report sorts its items into a stable canonical order on build,
         so this walk order does not affect the output.
 
@@ -435,6 +463,8 @@ class FidelityRulePack(ABC):
         """
         builder = LossinessReportBuilder()
         self._record(builder, ROOT_CONSTRUCT_KEY, self.root_verdicts(api))
+        for service in api.services:
+            self._record(builder, service.key, self.service_verdicts(service))
         for operation in api.operations():
             self._record(builder, operation.key, self.operation_verdicts(operation))
         for channel in api.channels:
@@ -444,6 +474,8 @@ class FidelityRulePack(ABC):
             if type_.kind is TypeKind.RECORD:
                 for field in type_.fields:
                     self._record(builder, field.key, self.field_verdicts(field))
+        for key, verdict in self.synthesized_verdicts(api):
+            self._record(builder, key, [verdict])
         return builder.build()
 
     @staticmethod
