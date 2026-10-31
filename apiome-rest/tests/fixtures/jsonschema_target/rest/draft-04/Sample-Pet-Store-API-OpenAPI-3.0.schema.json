@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Sample Pet Store API (OpenAPI 3.0)",
+  "description": "A sample API to test OpenAPI 3.0 import functionality",
+  "definitions": {
+    "Category": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "Pet": {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "integer",
+          "description": "Age of the pet (must be positive)",
+          "minimum": 0.0,
+          "exclusiveMinimum": true
+        },
+        "category": {
+          "$ref": "#/definitions/Category"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "description": "Unique identifier for the pet"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the pet"
+        },
+        "tag": {
+          "type": "string",
+          "description": "Optional tag for categorization"
+        },
+        "weight": {
+          "type": "number",
+          "description": "Weight in kilograms (must be less than 500)",
+          "maximum": 500.0,
+          "exclusiveMaximum": true
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    }
+  }
+}

@@ -1,0 +1,21 @@
+---
+slug: json-schema-target-card
+title: JSON Schema card shows the right tier
+description: JSON Schema exports badge lossless for schema items; CLI gains export jsonschema.
+authors: [apiome]
+---
+
+The **JSON Schema** export card now shows the tier this item really gets, and the CLI exports it by name.
+[Export to JSON Schema](/ship/export-a-spec#json-schema-from-any-source).
+
+{/* truncate */}
+
+- **The right badge.** A JSON Schema item exported with the default options badges **lossless**. It used
+  to badge **types-only**, because the report counted a "synthesized field number" on every field,
+  though JSON Schema has no field numbers. An item with operations or channels (a REST API, a gRPC
+  service) still badges **types-only**, as those are left out.
+- **`apiome export jsonschema`.** The CLI exports the target as `jsonschema` or `json-schema`. Pass
+  `--option draft=draft-07`, `--option packaging=per-type` (unpacked into the `--out` folder) or
+  `--option mode=jtd`, and add `--json` for the file written and its tier as JSON.
+- **Browse.** A public item's **Export** dialog offers JSON Schema too, and downloads a `per-type`
+  export as a `.zip`.

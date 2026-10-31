@@ -1,0 +1,150 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "json-schema",
+        "format": "json-schema",
+        "label": "JSON Schema",
+        "description": "Export as JSON Schema (2020-12, draft-07 or draft-04): one bundle or one file per type.",
+        "icon": "braces",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`JsonSchemaEmitter`.",
+        "properties": {
+          "draft": {
+            "default": "2020-12",
+            "description": "JSON Schema draft: `2020-12` (default), or a downgrade to `draft-07` or `draft-04` (keywords the older draft lacks are rewritten or dropped, and reported).",
+            "enum": [
+              "2020-12",
+              "draft-07",
+              "draft-04"
+            ],
+            "title": "Draft",
+            "type": "string"
+          },
+          "packaging": {
+            "default": "bundle",
+            "description": "`bundle` writes one document with every type in `$defs`; `per-type` writes one `<Type>.schema.json` per type (a zip with a manifest).",
+            "enum": [
+              "bundle",
+              "per-type"
+            ],
+            "title": "Packaging",
+            "type": "string"
+          },
+          "id_base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Base URI for `$id` (for example `https://example.com/schemas`): each document's `$id` is `<id_base>/<file name>`.",
+            "title": "Id Base"
+          },
+          "mode": {
+            "default": "json-schema",
+            "description": "`json-schema` (default) writes JSON Schema; `jtd` writes one JSON Type Definition (RFC 8927) document, `<Item>.jtd.json` \u2014 what JTD cannot express (patterns, bounds, unions across shapes, 64-bit integers\u2026) is listed in the fidelity report. `jtd` takes no `draft`, `packaging` or `id_base`.",
+            "enum": [
+              "json-schema",
+              "jtd"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "pretty_print": {
+            "default": true,
+            "description": "Pretty-print the generated JSON Schema document.",
+            "title": "Pretty Print",
+            "type": "boolean"
+          }
+        },
+        "title": "JsonSchemaEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "draft": "2020-12",
+        "packaging": "bundle",
+        "id_base": null,
+        "mode": "json-schema",
+        "pretty_print": true
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 18,
+        "total": 11,
+        "preserved": 2,
+        "dropped": 6,
+        "approximated": 3,
+        "synthesized": 0
+      }
+    },
+    {
+      "descriptor": {
+        "key": "jtd",
+        "format": "jtd",
+        "label": "JSON Type Definition",
+        "description": "Export as a JSON Type Definition (RFC 8927) document (.jtd.json).",
+        "icon": "braces",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`JtdEmitter`.",
+        "properties": {
+          "pretty_print": {
+            "default": true,
+            "description": "Pretty-print the generated JTD document.",
+            "title": "Pretty Print",
+            "type": "boolean"
+          }
+        },
+        "title": "JtdEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "pretty_print": true
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 10,
+        "total": 20,
+        "preserved": 2,
+        "dropped": 5,
+        "approximated": 4,
+        "synthesized": 9
+      }
+    }
+  ]
+}

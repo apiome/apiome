@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pet",
+  "type": "object",
+  "properties": {
+    "age": {
+      "type": "integer",
+      "exclusiveMinimum": 0.0,
+      "description": "Age of the pet (must be positive)"
+    },
+    "category": {
+      "$ref": "Category.schema.json"
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Unique identifier for the pet"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the pet"
+    },
+    "tag": {
+      "type": "string",
+      "description": "Optional tag for categorization"
+    },
+    "weight": {
+      "type": "number",
+      "exclusiveMaximum": 500.0,
+      "description": "Weight in kilograms (must be less than 500)"
+    }
+  },
+  "required": [
+    "id",
+    "name"
+  ]
+}

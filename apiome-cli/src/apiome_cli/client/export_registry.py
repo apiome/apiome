@@ -170,9 +170,12 @@ def fetch_projection_evidence(
     return client.post(api_paths.export_projection_evidence(tenant_slug), json=body).json()
 
 
-# User-facing target aliases that differ from the emitter registry key.
+# User-facing target aliases that differ from the emitter registry key. ``jsonschema`` is the
+# hyphen-free spelling of the ``json-schema`` target (MFX-21.5): ``apiome export jsonschema``.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",
+    "jsonschema": "json-schema",
+    "json_schema": "json-schema",
 }
 
 

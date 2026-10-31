@@ -317,8 +317,48 @@
       ],
       [
         "type",
+        "Address",
+        "changed"
+      ],
+      [
+        "type",
         "Advanced Composition - oneOf Polymorphism Example",
         "added"
+      ],
+      [
+        "type",
+        "BankTransferPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CreditCardPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "CryptocurrencyPayment",
+        "changed"
+      ],
+      [
+        "type",
+        "PushNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "RetryPolicy",
+        "changed"
+      ],
+      [
+        "type",
+        "SMSNotification",
+        "changed"
+      ],
+      [
+        "type",
+        "TextDocument",
+        "changed"
       ]
     ],
     "overclaims": [
@@ -494,36 +534,6 @@
       ],
       [
         "type",
-        "example.catalog.v1.CreateProductRequest",
-        "removed"
-      ],
-      [
-        "type",
-        "example.catalog.v1.Dimensions",
-        "removed"
-      ],
-      [
-        "type",
-        "example.catalog.v1.GetProductRequest",
-        "removed"
-      ],
-      [
-        "type",
-        "example.catalog.v1.ListProductsRequest",
-        "removed"
-      ],
-      [
-        "type",
-        "example.catalog.v1.ListProductsResponse",
-        "removed"
-      ],
-      [
-        "type",
-        "example.catalog.v1.Product",
-        "removed"
-      ],
-      [
-        "type",
         "example.catalog.v1.Product.AttributesEntry",
         "removed"
       ]
@@ -573,11 +583,6 @@
       [
         "type",
         "com.example.user.Status",
-        "removed"
-      ],
-      [
-        "type",
-        "com.example.user.User",
         "removed"
       ]
     ],
@@ -700,12 +705,62 @@
       ],
       [
         "type",
+        "BankAccount",
+        "changed"
+      ],
+      [
+        "type",
+        "Category",
+        "changed"
+      ],
+      [
+        "type",
+        "CommentEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "CreditCard",
+        "changed"
+      ],
+      [
+        "type",
+        "Crypto",
+        "changed"
+      ],
+      [
+        "type",
+        "FollowEvent",
+        "changed"
+      ],
+      [
+        "type",
         "GraphQL Schema",
         "added"
       ],
       [
         "type",
+        "LikeEvent",
+        "changed"
+      ],
+      [
+        "type",
+        "PayPal",
+        "changed"
+      ],
+      [
+        "type",
         "PaymentMethod",
+        "changed"
+      ],
+      [
+        "type",
+        "Post",
+        "changed"
+      ],
+      [
+        "type",
+        "PostEvent",
         "changed"
       ],
       [
@@ -716,6 +771,11 @@
       [
         "type",
         "TimelineItem",
+        "changed"
+      ],
+      [
+        "type",
+        "User",
         "changed"
       ]
     ],

@@ -18,6 +18,8 @@
  *     badge, and downloads it on demand as the single file or a client-built `.zip` (MFX-6.3).
  *  9. The API-client collection cards (MFX-31.5): Postman, Insomnia and Bruno each with its
  *     per-source tier, Bruno marked multi-file, and Postman's `flavor` offered as an option.
+ * 10. The JSON Schema card (MFX-21.5): `types-only` for a REST source, `lossless` for a JSON Schema
+ *     item, with its `draft`, `packaging` and `mode` options — from the recorded live registry.
  */
 
 import React from 'react';
@@ -50,6 +52,7 @@ import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportD
 import {
   EXPORT_DIALOG_COLLECTION_TARGETS as COLLECTION_TARGETS,
   EXPORT_DIALOG_TARGETS as TARGETS,
+  jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
 } from './helpers/export-dialog-fixture';
 
@@ -949,5 +952,41 @@ describe('ExportDialog — API-client collection targets (MFX-31.5)', () => {
 
     fireEvent.click(screen.getByTestId('export-target-bruno'));
     expect(screen.getByTestId('export-fidelity-headline')).toHaveTextContent('66% preserved');
+  });
+});
+
+
+describe('ExportDialog — JSON Schema target card (MFX-21.5)', () => {
+  it('badges a REST source types-only, because its operations are dropped', async () => {
+    await renderAtTargetStep(mockFetch(jsonSchemaTargets('rest')));
+
+    const card = screen.getByTestId('export-target-json-schema');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('JSON Schema')).toBeInTheDocument();
+    expect(within(card).getByText('types-only')).toBeInTheDocument();
+    // One bundle by default: the card is not a multi-file target.
+    expect(within(card).queryByText(/multi-file/)).toBeNull();
+  });
+
+  it('badges a JSON Schema item lossless', async () => {
+    await renderAtTargetStep(mockFetch(jsonSchemaTargets('json-schema')));
+
+    const card = screen.getByTestId('export-target-json-schema');
+    expect(within(card).getByText('lossless')).toBeInTheDocument();
+    fireEvent.click(card);
+    expect(screen.getByTestId('export-fidelity-headline')).toHaveTextContent('100% preserved');
+  });
+
+  it('offers the draft, packaging and output mode as options', async () => {
+    await renderAtTargetStep(mockFetch(jsonSchemaTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-json-schema'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const choices = (name: string) =>
+      within(screen.getByRole('radiogroup', { name })).getAllByRole('radio').map((option) => option.textContent);
+    expect(choices('Draft')).toEqual(['2020-12', 'draft-07', 'draft-04']);
+    expect(choices('Packaging')).toEqual(['bundle', 'per-type']);
+    expect(choices('Mode')).toEqual(['json-schema', 'jtd']);
+    expect(within(screen.getByRole('radiogroup', { name: 'Draft' })).getByRole('radio', { name: '2020-12' })).toBeChecked();
   });
 });

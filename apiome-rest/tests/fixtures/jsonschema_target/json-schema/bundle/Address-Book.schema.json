@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/address-book.json",
+  "title": "Address Book",
+  "description": "Schema with multiple definitions using $defs",
+  "type": "object",
+  "properties": {
+    "contacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Contact"
+      }
+    }
+  },
+  "$defs": {
+    "Contact": {
+      "type": "object",
+      "description": "A contact in the address book",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "$ref": "#/$defs/PersonName"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        },
+        "phones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PhoneNumber"
+          }
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "PersonName": {
+      "type": "object",
+      "description": "A person's name",
+      "properties": {
+        "first": {
+          "type": "string",
+          "minLength": 1
+        },
+        "middle": {
+          "type": "string"
+        },
+        "last": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prefix": {
+          "type": "string",
+          "enum": [
+            "Mr.",
+            "Mrs.",
+            "Ms.",
+            "Dr.",
+            "Prof."
+          ]
+        },
+        "suffix": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "first",
+        "last"
+      ]
+    },
+    "Address": {
+      "type": "object",
+      "description": "A postal address",
+      "properties": {
+        "street1": {
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string",
+          "pattern": "^[0-9]{5}(-[0-9]{4})?$"
+        },
+        "country": {
+          "type": "string",
+          "default": "US"
+        }
+      },
+      "required": [
+        "street1",
+        "city",
+        "state",
+        "postalCode"
+      ]
+    },
+    "PhoneNumber": {
+      "type": "object",
+      "description": "A phone number with type",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "home",
+            "work",
+            "mobile",
+            "fax"
+          ]
+        },
+        "number": {
+          "type": "string",
+          "pattern": "^\\+?[0-9\\-\\s\\(\\)]+$"
+        }
+      },
+      "required": [
+        "type",
+        "number"
+      ]
+    }
+  }
+}

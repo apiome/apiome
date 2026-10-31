@@ -101,6 +101,11 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'hl7v3').key).toBe('data');
   });
 
+  it('files the JSON Schema and JTD targets under Data schema & graph by paradigm (MFX-21.5)', () => {
+    expect(familyForTarget('data_schema', 'json-schema').label).toBe('Data schema & graph');
+    expect(familyForTarget('data_schema', 'jtd').key).toBe('data');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });
