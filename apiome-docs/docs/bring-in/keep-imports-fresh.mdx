@@ -1,0 +1,66 @@
+---
+title: Keep imports up to date
+description: How each import source stays current, and what you do when it cannot.
+sidebar_position: 1.14
+tags: [refresh, repositories, url-import, catalog, upload, webhook]
+---
+
+An import is a snapshot. Apiome can keep it current by checking the source again and adding a new
+version when the source changed. How it does that depends on where the import came from. This page
+explains each source and links to the page with the steps.
+
+## What refreshes, and how
+
+| Imported from | How it stays current | Turned on | Steps |
+| --- | --- | --- | --- |
+| A **Git repository** | Apiome re-checks each imported file on the repository's **Scan cadence**. A push webhook from GitHub or GitLab refreshes the changed file within seconds; **“Refresh now”** on the **Specs** tab re-reads them at once | With **Auto-refresh** under **Scan cadence** on the repository's **Settings** tab | [Refresh on push](./repositories.mdx#refresh-on-push) |
+| A **URL** (**URL Import**) | Apiome asks the URL every five minutes whether the document changed, using its `ETag` and `Last-Modified` | Automatically, for a URL with no credentials | [Keep a URL import up to date](./import-wizard.mdx#keep-a-url-import-up-to-date) |
+| A **live endpoint** in the catalog (GraphQL introspection, gRPC server reflection, FHIR `/metadata`) | **Live refresh** re-discovers the API on the cadence you choose | When you set it up on the item's **Provenance** tab | [Keep a catalog item fresh](./catalog-refresh.mdx#set-up-refresh) |
+| An **uploaded file** | Nothing can re-check it. Apiome flags the item once its upload is old enough to be stale, and you **re-upload** the current file | Always (the flag) | [Uploaded files](./catalog-refresh.mdx#uploaded-files) |
+| **Pasted text** | Never refreshed: there is no source to check | — | Import it again |
+
+## Rules the refreshing sources share
+
+- **A version is added only when the source changed.** When nothing changed, nothing is added. A
+  new version is labelled with the date and time, such as `2026-10-30T14:03Z`.
+- **Your edits are not silently overwritten.** If you changed the latest version in Apiome, a
+  repository refresh follows the repository's conflict setting (**Hold for review**, **Overwrite** or
+  **New branch**), and a URL import's refresh is held until you import the URL again.
+- **An older document never replaces a newer one.** A repository file or URL whose document is older
+  than what you imported is ignored.
+- **A failed check changes nothing.** It is reported and retried later, waiting longer after each
+  failure in a row.
+- **Credentials.** A URL imported with a token, key or password is not refreshed, because Apiome
+  never stores those credentials. Catalog live refresh encrypts the credential you give it for that
+  item and never shows it again.
+
+## Turn refresh off
+
+- **One repository:** turn off **Auto-refresh** under **Scan cadence** on its **Settings** tab
+  ([Repositories](./repositories.mdx)).
+- **One URL import:** `PATCH …/url-imports/{id}` with the REST API
+  ([URL Import](./import-wizard.mdx#keep-a-url-import-up-to-date)).
+- **One catalog item:** set **Cadence** to **Off** to pause, or **click “Turn off”** on its **Live
+  refresh** card to remove the setting ([Change or stop refresh](./catalog-refresh.mdx#change-or-stop-refresh)).
+- **The whole workspace:** an administrator can pause catalog live refresh with
+  `apiome catalog refresh-policy set --disabled`
+  ([Switch refresh off for the workspace](./catalog-refresh.mdx#switch-refresh-off-for-the-workspace)).
+- **The whole deployment:** an operator stops every repository and URL refresh with
+  `APIOME_REFRESH_ENABLED=false`, and every catalog live refresh with
+  `APIOME_CATALOG_REFRESH_ENABLED=false`.
+
+## Not yet available
+
+These are planned and not in the product yet:
+
+- **Per-branch refresh policy** for Git repositories: a different cadence and target version for
+  each branch.
+- **Workspace refresh defaults:** one default cadence and conflict policy applied to every
+  repository, URL and catalog source.
+- **URL-sourced catalog items** refreshed the same way as URL imports.
+
+## Where next
+
+- [Repositories](./repositories.mdx): add a repository and turn on **Auto-refresh**.
+- [Import a spec](./import-wizard.mdx): URL Import and the other import sources.
+- [Keep a catalog item fresh](./catalog-refresh.mdx): live refresh, drift and uploaded files.

@@ -1,0 +1,19 @@
+---
+slug: keep-imports-up-to-date
+title: One page for keeping imports up to date
+description: A new guide explains how each import source stays current.
+authors: [apiome]
+---
+
+The docs now have one page on how imports stay current, whatever they were imported from.
+[Keep imports up to date](/bring-in/keep-imports-fresh).
+
+{/* truncate */}
+
+- **Every source in one table:** Git repositories (scan cadence and push webhooks), URL imports
+  (checked every five minutes with `ETag` and `Last-Modified`), catalog live refresh, uploaded files
+  (flagged when stale, then re-uploaded) and pasted text (never refreshed).
+- **The rules they share**, and how to turn refresh off for one import, a workspace or a whole
+  deployment.
+- **What is planned:** per-branch refresh policy, workspace refresh defaults and URL-sourced catalog
+  items.
