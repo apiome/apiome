@@ -138,6 +138,22 @@ it. From the CLI, run `apiome export openapi-3.1 <item> --out openapi.json --opt
 Webhooks, callbacks and the full set of 3.2 security-scheme fields are not written yet, in any
 version.
 
+### AsyncAPI 3.1, 3.0 and 2.6
+
+Exporting to **AsyncAPI** writes AsyncAPI **3.1** by default. Set **asyncapi_version** to `3.0` or `2.6`
+for consumers on an older version; the badge then reads `3.0 · downgrade` or `2.6 · downgrade`.
+
+- **3.0** has the same structure as 3.1 but not what 3.1 added. A `ros2` server or operation binding
+  is dropped. A message example whose `headers` is not a map loses its headers. A schema format that
+  names AsyncAPI `3.1.0` is written as `3.0.0`.
+- **2.6** is the AsyncAPI 2 structure: each channel carries its own `publish` / `subscribe` operation,
+  and a server has one `url`. It first drops what 3.0 drops, then everything else 2.x cannot express.
+
+The fidelity report is computed for the version you pick. Each thing the older version cannot hold
+is listed with where it was (`/servers/robot/bindings/ros2`), as dropped or approximated. Every
+version is checked with the AsyncAPI parser before you download it. From the CLI, run
+`apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
+
 ### Protobuf and Thrift from an OpenAPI source
 
 An OpenAPI schema's `type` and `format` become the target's own scalar types:

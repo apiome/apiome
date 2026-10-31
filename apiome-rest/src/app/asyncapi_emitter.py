@@ -52,8 +52,9 @@ so :func:`app.emitter.get_emitter` resolves it. The acceptance-criterion validat
 document back through :func:`app.asyncapi_parser.parse_asyncapi` (the bundled
 ``@asyncapi/parser`` toolchain), which the round-trip ticket (MFX-11.4) automates.
 
-The ``asyncapi_version`` emit option (FMT-3.2) additionally lets a caller target
-**AsyncAPI 2.6** through :mod:`app.asyncapi_downgrade`. The normalizer reads 2.x and
+The ``asyncapi_version`` emit option (FMT-3.2, MFX-11.3) additionally lets a caller target
+**AsyncAPI 3.0** or **AsyncAPI 2.6** through :mod:`app.asyncapi_downgrade`. 3.0 shares 3.1's
+object model and loses only what 3.1 added (``ros2`` bindings, non-map example headers). The normalizer reads 2.x and
 3.x, so without it a customer could bring a 2.6 document in and never get one back —
 the asymmetry the OpenAPI emitter avoids by offering 3.1/3.0/2.0. 2.x is a different
 object model rather than an older dialect (channels-with-operations instead of a
@@ -65,11 +66,16 @@ recorded on the result's :attr:`~app.emitter.EmitResult.losses` with a named rea
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
-from .asyncapi_downgrade import ASYNCAPI_26_VERSION, downgrade_to_asyncapi_2
+from .asyncapi_downgrade import (
+    ASYNCAPI_26_VERSION,
+    ASYNCAPI_30_VERSION,
+    downgrade_to_asyncapi_2,
+    downgrade_to_asyncapi_30,
+)
 from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
@@ -88,6 +94,7 @@ from .emitter import (
     EmitOptions,
     EmitResult,
     Emitter,
+    Loss,
     LossKind,
     LossTracker,
     Provenance,
@@ -96,6 +103,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .inference_provenance import without_provenance_stamp
+from .lossiness import LossinessReport, LossinessSeverity
 
 __all__ = ["AsyncApiEmitOptions", "AsyncApiEmitter", "AsyncApiFidelityRulePack"]
 
@@ -132,11 +140,13 @@ _UNSAFE_NAME_RE = re.compile(r"[^\w.\-]")
 class AsyncApiEmitOptions(EmitOptions):
     """Per-target options for :class:`AsyncApiEmitter` (MFX-1.4)."""
 
-    asyncapi_version: Literal["3.1", "2.6"] = Field(
+    asyncapi_version: Literal["3.1", "3.0", "2.6"] = Field(
         default="3.1",
         description=(
             "AsyncAPI version to emit. ``3.1`` (default) is the native, lossless "
-            "target; ``2.6`` is a downgrade for consumers still on AsyncAPI 2.x, "
+            "target; ``3.0`` drops what AsyncAPI 3.1 added (``ros2`` bindings, non-map "
+            "example headers) and renames 3.1.0 schema formats (MFX-11.3); ``2.6`` is a "
+            "downgrade for consumers still on AsyncAPI 2.x, "
             "projected onto the 2.x object model (channels carrying their own "
             "publish/subscribe operations) with every 3.x-only construct recorded as "
             "a fidelity loss (FMT-3.2)."
@@ -188,6 +198,53 @@ class AsyncApiFidelityRulePack(CapabilityRulePack):
     _EVENT_OPERATION_KINDS = frozenset(
         {OperationKind.PUBLISH, OperationKind.SUBSCRIBE}
     )
+
+    #: Loss subjects the version downgrades record (MFX-11.3): the 3.1 → 3.0 projection and the 2.6 one.
+    _DOWNGRADE_SUBJECT_PREFIXES = ("asyncapi30-", "asyncapi2-")
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for the chosen ``asyncapi_version`` — MFX-11.3 (#3876).
+
+        Invalid options fall back to the defaults (the native 3.1, which downgrades nothing).
+        """
+        try:
+            self._options = AsyncApiEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = AsyncApiEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Emit once for a downgraded version, keep its downgrade losses, then walk the model.
+
+        3.1 downgrades nothing, so it is not emitted here. For 3.0 or 2.6 the emitter's own
+        downgrade losses (:mod:`app.asyncapi_downgrade`) become the report's root verdicts, so the
+        preview and the export job report exactly what the chosen version loses.
+        """
+        options = getattr(self, "_options", None) or AsyncApiEmitOptions()
+        self._downgrades: List[Loss] = []
+        if options.asyncapi_version != "3.1":
+            result = AsyncApiEmitter().emit(api, opts=options)
+            seen = set()
+            for loss in result.losses:
+                if loss.subject.startswith(self._DOWNGRADE_SUBJECT_PREFIXES) and loss.detail not in seen:
+                    seen.add(loss.detail)
+                    self._downgrades.append(loss)
+        return super().evaluate(api)
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """Each loss of the chosen version downgrade, filed at the root (its pointer is in the message).
+
+        A construct the older version has no field for is a ``DROP`` (warning); one the downgrade had
+        to invent or rename (a channel keyed by its name, a renamed schema format) an ``APPROX``.
+        """
+        verdicts = list(super().root_verdicts(api))
+        for loss in getattr(self, "_downgrades", []):
+            if loss.kind is LossKind.NA:
+                verdicts.append(FidelityVerdict.drop(message=loss.detail, severity=LossinessSeverity.WARN,
+                                                     target_mapping=loss.subject))
+            else:
+                verdicts.append(FidelityVerdict.approx(message=loss.detail, severity=LossinessSeverity.INFO,
+                                                       target_mapping=loss.subject))
+        return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """Correct the capability default's ``DROP`` for a reframed non-event operation.
@@ -398,8 +455,9 @@ class AsyncApiEmitter(Emitter, register=True):
     ) -> Dict[str, Any]:
         """Project the 3.1 ``document`` onto ``version`` and record its provenance.
 
-        The native ``3.1`` target passes the document through unchanged. ``2.6`` runs
-        the :func:`app.asyncapi_downgrade.downgrade_to_asyncapi_2` projection, which
+        The native ``3.1`` target passes the document through unchanged. ``3.0`` runs
+        :func:`app.asyncapi_downgrade.downgrade_to_asyncapi_30` (MFX-11.3). ``2.6`` runs that
+        first, then the :func:`app.asyncapi_downgrade.downgrade_to_asyncapi_2` projection, which
         records every 3.x-only construct it cannot carry on ``losses`` — the
         acceptance-criterion "3.x-only constructs are reported as losses with named
         reasons".
@@ -416,6 +474,16 @@ class AsyncApiEmitter(Emitter, register=True):
         Returns:
             The document in the requested AsyncAPI version.
         """
+        if version in ("3.0", "2.6"):
+            # 3.1 → 3.0 first: what 3.1 added is reported once, and 2.6 starts from what 3.0 keeps.
+            document = downgrade_to_asyncapi_30(document, losses)
+        if version == "3.0":
+            tracker.record(
+                "/asyncapi",
+                Provenance.DEFAULT,
+                f"downgraded from AsyncAPI {self.ASYNCAPI_VERSION} to AsyncAPI {ASYNCAPI_30_VERSION}",
+            )
+            return document
         if version == "2.6":
             document = downgrade_to_asyncapi_2(
                 document,

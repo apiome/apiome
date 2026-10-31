@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.571.0] - 2026-10-31
+
+### Added
+- **AsyncAPI multi-version output (MFX-11.3, #3876).** `AsyncApiEmitOptions.asyncapi_version` takes `3.0` beside `3.1`
+  (default) and `2.6`. New `asyncapi_downgrade.downgrade_to_asyncapi_30` projects 3.1 onto 3.0.0, the three places
+  the bundled 3.0.0 / 3.1.0 schemas differ, each recorded with its pointer:
+  - `ros2` server / operation bindings are dropped (`asyncapi30-binding`), and an emptied Bindings Object is left out;
+  - non-map message-example `headers` are dropped (`asyncapi30-example-headers`);
+  - `schemaFormat` `…version=3.1.0` is renamed to `3.0.0` (`asyncapi30-schema-format`).
+
+  `2.6` now runs the 3.0 projection first.
+- `AsyncApiFidelityRulePack.apply_options` computes the report for the chosen version: for 3.0 / 2.6 each downgrade
+  loss becomes a root verdict (`DROP` for a dropped construct, `APPROX` for a renamed or invented one), so the
+  preview tier follows the version.
+- Version coverage: AsyncAPI writes `3.0.0` (partial).
+- Fixture `tests/fixtures/asyncapi_versions/robot-telemetry-3.1.yaml`, tests `tests/test_asyncapi_versions.py`.
+- OpenAPI 1.435.0.
+
 ## [1.570.0] - 2026-10-31
 
 ### Added

@@ -1,0 +1,18 @@
+---
+slug: asyncapi-30-output
+title: Export AsyncAPI 3.0
+description: AsyncAPI exports can write 3.0 beside 3.1 and 2.6, listing what each drops.
+authors: [apiome]
+---
+
+The **AsyncAPI** export can now write **AsyncAPI 3.0**, beside 3.1 and 2.6.
+[AsyncAPI versions](/ship/export-a-spec#asyncapi-31-30-and-26).
+
+{/* truncate */}
+
+- **Pick 3.0.** Set **asyncapi_version** to `3.0`. What 3.1 added is left out and reported: a `ros2`
+  binding, a message example whose headers are not a map, and a schema format naming 3.1.0 (written
+  as 3.0.0).
+- **The report follows the version.** The fidelity report for 3.0 or 2.6 now lists each thing the
+  older version drops, with where it was, so the badge and the preview match the file you get.
+- From the CLI: `apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
