@@ -1,0 +1,50 @@
+# AsyncAPI 3.1 document using what 3.1 added over 3.0 (MFX-11.3, #3876): ros2 server and
+# operation bindings, and a payload whose schemaFormat names AsyncAPI 3.1.0.
+asyncapi: 3.1.0
+info:
+  title: Robot telemetry
+  version: 1.0.0
+servers:
+  robot:
+    host: robot.local
+    protocol: ros2
+    bindings:
+      ros2:
+        rmwImplementation: rmw_fastrtps_cpp
+        domainId: 0
+channels:
+  telemetry:
+    address: /telemetry
+    messages:
+      Reading:
+        name: Reading
+        contentType: application/json
+        payload:
+          schemaFormat: application/vnd.aai.asyncapi+json;version=3.1.0
+          schema:
+            $ref: '#/components/schemas/Reading'
+        examples:
+          - name: lidar
+            payload:
+              sensor: lidar
+              value: 1.5
+operations:
+  publishReading:
+    action: send
+    channel:
+      $ref: '#/channels/telemetry'
+    messages:
+      - $ref: '#/channels/telemetry/messages/Reading'
+    bindings:
+      ros2:
+        role: publisher
+        node: /robot/telemetry
+components:
+  schemas:
+    Reading:
+      type: object
+      properties:
+        sensor:
+          type: string
+        value:
+          type: number

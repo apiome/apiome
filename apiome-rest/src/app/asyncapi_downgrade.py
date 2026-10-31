@@ -64,8 +64,23 @@ from .emitter import LossKind, LossTracker
 
 __all__ = [
     "ASYNCAPI_26_VERSION",
+    "ASYNCAPI_30_VERSION",
     "downgrade_to_asyncapi_2",
+    "downgrade_to_asyncapi_30",
 ]
+
+#: The AsyncAPI version string emitted by :func:`downgrade_to_asyncapi_30` (MFX-11.3).
+ASYNCAPI_30_VERSION = "3.0.0"
+
+#: Binding protocols AsyncAPI 3.1 added (its Server and Operation Bindings Objects list ``ros2``;
+#: 3.0's do not). Read from the bundled ``@asyncapi/specs`` 3.0.0 / 3.1.0 JSON Schemas.
+_V31_ONLY_BINDINGS: FrozenSet[str] = frozenset({"ros2"})
+#: The AsyncAPI schema-format media types whose ``version=3.1.0`` a 3.0 document cannot name.
+_V31_SCHEMA_FORMATS: Tuple[str, ...] = (
+    "application/vnd.aai.asyncapi;version=3.1.0",
+    "application/vnd.aai.asyncapi+json;version=3.1.0",
+    "application/vnd.aai.asyncapi+yaml;version=3.1.0",
+)
 
 #: The AsyncAPI 2.x version string emitted by :func:`downgrade_to_asyncapi_2`. 2.6 is
 #: the last (and most capable) 2.x minor, so it is the only downgrade target offered:
@@ -654,3 +669,130 @@ def _downgrade_components(components: Any, losses: LossTracker) -> Dict[str, Any
                 pointer=f"/components/{key}",
             )
     return result
+
+
+# ===========================================================================
+# 3.1 → 3.0 (MFX-11.3)
+# ===========================================================================
+
+
+def downgrade_to_asyncapi_30(document: Dict[str, Any], losses: LossTracker) -> Dict[str, Any]:
+    """Project an AsyncAPI 3.1 document onto AsyncAPI 3.0.0 — MFX-11.3 (#3876).
+
+    3.0 and 3.1 share one object model; the bundled 3.0.0 / 3.1.0 JSON Schemas differ in three
+    places, each handled here and recorded on ``losses`` with its pointer:
+
+    * **ros2 bindings** — 3.1 added ``ros2`` to the Server and Operation Bindings Objects. A 3.0
+      document cannot carry them: each is dropped (``asyncapi30-binding``, ``NA``), on servers,
+      operations and their ``components`` entries;
+    * **example headers** — 3.1 lets a Message Example's ``headers`` be any value; 3.0 requires a
+      map. A non-map value is dropped from the example (``asyncapi30-example-headers``, ``NA``);
+    * **schema format** — a Multi Format Schema whose ``schemaFormat`` names AsyncAPI ``3.1.0`` is
+      renamed to ``3.0.0``, the same schema dialect under the version 3.0 can name
+      (``asyncapi30-schema-format``, ``INFERRED``).
+
+    Everything else is copied unchanged.
+
+    Args:
+        document: The emitted AsyncAPI 3.1 document (not modified).
+        losses: Loss tracker the projection records onto.
+
+    Returns:
+        A new document declaring ``asyncapi: 3.0.0``.
+    """
+    result = copy.deepcopy(document)
+    result["asyncapi"] = ASYNCAPI_30_VERSION
+    servers = result.get("servers")
+    operations = result.get("operations")
+    components = result.get("components") if isinstance(result.get("components"), dict) else {}
+    for owner, entries in (("servers", servers), ("operations", operations)):
+        if isinstance(entries, dict):
+            for name, entry in entries.items():
+                if isinstance(entry, dict):
+                    _drop_v31_bindings(entry.get("bindings"), f"/{owner}/{name}/bindings", losses)
+                    if entry.get("bindings") == {}:
+                        # A Bindings Object left empty says nothing: leave it out.
+                        del entry["bindings"]
+    for section in ("serverBindings", "operationBindings"):
+        entries = components.get(section)
+        if isinstance(entries, dict):
+            for name, bindings in entries.items():
+                _drop_v31_bindings(bindings, f"/components/{section}/{name}", losses)
+    for pointer, message in _messages(result):
+        _drop_non_map_example_headers(message, pointer, losses)
+    _rename_v31_schema_formats(result, "", losses)
+    return result
+
+
+def _drop_v31_bindings(bindings: Any, pointer: str, losses: LossTracker) -> None:
+    """Remove each 3.1-only protocol from one Bindings Object, recording the loss."""
+    if not isinstance(bindings, dict):
+        return
+    for protocol in sorted(_V31_ONLY_BINDINGS & set(bindings)):
+        del bindings[protocol]
+        losses.record(
+            LossKind.NA,
+            "asyncapi30-binding",
+            f"the {protocol!r} binding at {pointer} was added in AsyncAPI 3.1; AsyncAPI 3.0 has no "
+            f"{protocol} binding, so it is dropped",
+            pointer=f"{pointer}/{protocol}",
+        )
+
+
+def _messages(document: Dict[str, Any]) -> List[Tuple[str, Dict[str, Any]]]:
+    """Every Message and Message Trait object in the document, with its JSON Pointer."""
+    found: List[Tuple[str, Dict[str, Any]]] = []
+    channels = document.get("channels")
+    if isinstance(channels, dict):
+        for channel_name, channel in channels.items():
+            messages = channel.get("messages") if isinstance(channel, dict) else None
+            if isinstance(messages, dict):
+                found += [(f"/channels/{channel_name}/messages/{name}", message)
+                          for name, message in messages.items() if isinstance(message, dict)]
+    components = document.get("components")
+    if isinstance(components, dict):
+        for section in ("messages", "messageTraits"):
+            entries = components.get(section)
+            if isinstance(entries, dict):
+                found += [(f"/components/{section}/{name}", message)
+                          for name, message in entries.items() if isinstance(message, dict)]
+    return found
+
+
+def _drop_non_map_example_headers(message: Dict[str, Any], pointer: str, losses: LossTracker) -> None:
+    """Drop a Message Example's ``headers`` that is not a map (3.0 requires one)."""
+    examples = message.get("examples")
+    if not isinstance(examples, list):
+        return
+    for index, example in enumerate(examples):
+        if isinstance(example, dict) and "headers" in example and not isinstance(example["headers"], dict):
+            del example["headers"]
+            losses.record(
+                LossKind.NA,
+                "asyncapi30-example-headers",
+                f"example {index} of {pointer} has headers that are not a map; AsyncAPI 3.0 requires a "
+                "map of header values, so they are dropped from the example",
+                pointer=f"{pointer}/examples/{index}/headers",
+            )
+
+
+def _rename_v31_schema_formats(node: Any, pointer: str, losses: LossTracker) -> None:
+    """Rename every ``schemaFormat`` that names AsyncAPI 3.1.0 to 3.0.0, recording each."""
+    if isinstance(node, list):
+        for index, item in enumerate(node):
+            _rename_v31_schema_formats(item, f"{pointer}/{index}", losses)
+        return
+    if not isinstance(node, dict):
+        return
+    for key, value in node.items():
+        if key == "schemaFormat" and isinstance(value, str) and value in _V31_SCHEMA_FORMATS:
+            node[key] = value.replace("version=3.1.0", "version=3.0.0")
+            losses.record(
+                LossKind.INFERRED,
+                "asyncapi30-schema-format",
+                f"the schemaFormat at {pointer} names AsyncAPI 3.1.0; it is written as 3.0.0, the same "
+                "schema dialect under the version AsyncAPI 3.0 can name",
+                pointer=f"{pointer}/schemaFormat",
+            )
+        else:
+            _rename_v31_schema_formats(value, f"{pointer}/{key}", losses)

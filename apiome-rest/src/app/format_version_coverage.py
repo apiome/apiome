@@ -288,6 +288,14 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[
             FormatVersion(version="3.1.0", format_key="asyncapi-3", support=VersionSupport.FULL),
             FormatVersion(
+                version="3.0.0",
+                format_key="asyncapi-3",
+                support=VersionSupport.PARTIAL,
+                note="Written with `asyncapi_version='3.0'` (MFX-11.3): the 3.1 document without what 3.1 "
+                "added — `ros2` bindings and non-map example headers are dropped and 3.1.0 schema formats "
+                "renamed, each reported as a loss.",
+            ),
+            FormatVersion(
                 version="2.6.0",
                 format_key="asyncapi-3",
                 support=VersionSupport.PARTIAL,

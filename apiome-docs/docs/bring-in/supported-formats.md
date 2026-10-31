@@ -189,7 +189,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | Apigee proxy bundle | `apigee` | Apigee X / hybrid proxy bundle (apiproxy/ zip), Loose ProxyEndpoint / TargetEndpoint / SharedFlow XML | Apigee API proxy bundle (apiproxy/) | Apigee API proxy bundle (apiproxy/) |
 | Arazzo | `arazzo` | 1.1.x, 1.0.x | 1.1.0*, 1.0.1 | 1.0.1 |
 | ASN.1 | `asn1` | X.680 module syntax* | X.680 module syntax* | X.680 module syntax |
-| AsyncAPI | `asyncapi` | 3.1.0, 3.0.0, 2.6.0 | 3.1.0, 2.6.0* | 3.1.0 |
+| AsyncAPI | `asyncapi` | 3.1.0, 3.0.0, 2.6.0 | 3.1.0, 3.0.0*, 2.6.0* | 3.1.0 |
 | Avro | `avro` | Avro schema declaration (.avsc)*, Avro IDL (.avdl)* | Avro schema declaration (.avsc)* | Avro schema declaration (.avsc) |
 | AWS API Gateway | `aws-apigateway` | REST API export (GetExport, OpenAPI 3.0 or Swagger 2.0, extensions=apigateway), HTTP API export (ExportApi, OpenAPI 3.0, includeExtensions=true) | OpenAPI 3.0 with x-amazon-apigateway-* extensions (REST API import) | OpenAPI 3.0 with x-amazon-apigateway-* extensions (REST API import) |
 | Azure API Management | `azure-apim` | APIM policy XML (inbound/backend/outbound/on-error), ARM template (Microsoft.ApiManagement/service resources), APIM-exported OpenAPI definition with its policy documents | APIM OpenAPI 3.0 definition with policy XML | APIM OpenAPI 3.0 definition with policy XML |
@@ -315,6 +315,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 
 **AsyncAPI**
 
+- Writes **3.0.0** (partial) — Written with `asyncapi_version='3.0'` (MFX-11.3): the 3.1 document without what 3.1 added — `ros2` bindings and non-map example headers are dropped and 3.1.0 schema formats renamed, each reported as a loss.
 - Writes **2.6.0** (partial) — Written by downgrading the 3.1 document (`asyncapi_version='2.6'`); 2.6 is the last and most capable 2.x minor, so it is the only 2.x target offered.
 
 **Avro**
