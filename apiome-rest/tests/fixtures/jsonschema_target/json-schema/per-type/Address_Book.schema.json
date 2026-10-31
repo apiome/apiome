@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Address_Book",
+  "type": "object",
+  "properties": {
+    "contacts": {
+      "type": "array",
+      "items": {
+        "$ref": "Contact.schema.json"
+      }
+    }
+  },
+  "description": "Schema with multiple definitions using $defs"
+}

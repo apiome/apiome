@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.429.0
+  version: 1.430.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -3546,8 +3546,10 @@ paths:
       description: 'Emit the published public version to one ``target`` through the
         Emitter SPI and return the document itself — JSON by default, YAML when ``Accept:
         application/yaml`` is sent — as a download. The anonymous counterpart of ``POST
-        /v1/export/{tenant_slug}/document``. Strictly read-only: no field-identity
-        state is persisted for anonymous exports.'
+        /v1/export/{tenant_slug}/document``. A target that writes more than one file
+        (Bruno, Hoppscotch, Thunder Client) returns every file as an ``application/zip``
+        bundle with a ``manifest.json``. Strictly read-only: no field-identity state
+        is persisted for anonymous exports.'
       operationId: emit_public_export_document_v1_browse_tenants__tenant_slug__projects__project_slug__versions__version_slug__export_document_post
       parameters:
       - name: tenant_slug
@@ -3597,8 +3599,11 @@ paths:
           version (no auth).
       responses:
         '200':
-          description: Successful response for emit the export document for a published
-            public version (no auth).
+          description: The emitted document, or the zip bundle of a multi-file target.
+          content:
+            application/json: {}
+            application/x-yaml: {}
+            application/zip: {}
         '404':
           description: No published public version matches the slugs (private, draft,
             and unknown versions are indistinguishable).
@@ -25294,7 +25299,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-31T02:33:48Z'
+                        example: '2026-10-31T16:28:07Z'
                       method:
                         type: string
                         example: GET
@@ -88076,7 +88081,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         completed_at:
           anyOf:
           - type: string
@@ -89294,7 +89299,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
       type: object
       required:
       - api_key
@@ -89337,7 +89342,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -89798,7 +89803,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -89971,7 +89976,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -90576,13 +90581,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -93101,7 +93106,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: d231ad01-f646-441e-acdf-d4d81fa73a7d
+          example: d239a165-78f1-4eff-8d49-1541e03e1f86
         method:
           type: string
           title: Method
@@ -95244,7 +95249,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         envelope:
           additionalProperties: true
           type: object
@@ -96735,7 +96740,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         browse_url:
           anyOf:
           - type: string
@@ -134170,7 +134175,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
       additionalProperties: false
       type: object
       required:
@@ -143814,12 +143819,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
       additionalProperties: false
       type: object
       required:
@@ -144948,7 +144953,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         detected_by:
           anyOf:
           - type: string
@@ -151624,13 +151629,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-31T02:33:48Z'
+          example: '2026-10-31T16:28:07Z'
         outcome:
           anyOf:
           - type: string

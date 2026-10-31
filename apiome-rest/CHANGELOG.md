@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.566.0] - 2026-10-31
+
+### Fixed
+- **JSON Schema card tier (MFX-21.5, #4130).** The `json-schema` capability profile no longer claims field identity:
+  JSON Schema names its properties and has no field numbers, so the fidelity report stops listing a "synthesized
+  field number" on every field. A JSON Schema item exported with the default options now badges `lossless` (it badged
+  `types-only`), and an operation-bearing source (REST, RPC) stays `types-only`. A source's field numbers (Protobuf,
+  Thrift) are reported dropped (info). Export conformance matrix: `json-schema -> json-schema` is now `ok`.
+
+### Added
+- `tests/test_jsonschema_target_card.py` with fixtures under `tests/fixtures/jsonschema_target/` (regenerate with
+  `APIOME_REGEN_JSONSCHEMA_TARGET=1`): the card tier per source kind, the files written by the bundle, per-type,
+  draft-07 and draft-04 modes (each valid and importing again), the browse zip for per-type, and the CLI / UI
+  registry fixtures kept equal to the live registry. OpenAPI 1.430.0.
+
 ## [1.565.0] - 2026-10-30
 
 ### Changed

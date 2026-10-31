@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PersonName",
+  "type": "object",
+  "properties": {
+    "first": {
+      "type": "string"
+    },
+    "middle": {
+      "type": "string"
+    },
+    "last": {
+      "type": "string"
+    },
+    "prefix": {
+      "type": "string"
+    },
+    "suffix": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "first",
+    "last"
+  ],
+  "description": "A person's name"
+}

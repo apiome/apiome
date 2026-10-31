@@ -338,7 +338,10 @@ class JsonSchemaEmitter(Emitter, register=True):
             unions=True,
             nullability=True,
             constraints=True,
-            field_identity=True,
+            # JSON Schema names properties; it has no field numbers to keep or synthesize. With
+            # `True` every field read as a synthesized number, so a JSON Schema item re-exported
+            # unchanged badged `types-only` instead of `lossless` (MFX-21.5, #4130).
+            field_identity=False,
         )
 
     @classmethod

@@ -945,6 +945,16 @@ updates it. It lists:
 
 Each downgrade is listed on the type or field it happened in.
 
+**Where to find it.** In the **Export** dialog, the **JSON Schema** card is under **Data schema &
+graph** on the **Target** step. Its badge is computed for the item: **types-only** for an item with
+operations or channels (a REST API, a gRPC service), which the export leaves out, and **lossless** for
+a JSON Schema item exported with the default options. Pick the card to set **Draft**, **Packaging**
+and **Mode**. From the CLI, run `apiome export jsonschema <item> --out <file>` (`json-schema` works
+too); add `--option draft=draft-07`, `--option packaging=per-type --out <folder>` (the files are
+unpacked into the folder) or `--option mode=jtd`. A types-only export exits non-zero unless you add
+`--force`, and `--json` prints the file written and its fidelity tier as JSON. A public item's
+**Export** dialog on Browse offers the same target and downloads a `per-type` export as a `.zip`.
+
 #### JSON Type Definition (JTD) mode
 
 Set **mode** to `jtd` to get the same types as one [JSON Type Definition](https://www.rfc-editor.org/rfc/rfc8927)

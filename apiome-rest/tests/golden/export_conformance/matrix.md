@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 35 |
-| lossy | 3824 |
+| ok | 36 |
+| lossy | 3823 |
 | refused | 1996 |
 | silent-loss | 193 |
 | crash | 0 |
@@ -64,7 +64,7 @@ Every corpus source family exported to every production target through the catal
 | iso20022 | L | R | L | L | L | L | R | R | R | L | S | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | L | R | R | L | S | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | iso8583 | L | R | L | L | L | L | R | R | R | L | S | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | L | R | L | S | L | L | R | L | L | L | L | L | L | R | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | istio | L | L | L | L | L | R | L | L | L | L | L | L | R | S | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | R | L | L | L | R | L | S | L | L | S | L | L | L | L | L | L | L | L | L | R | R | L | R |
-| json-schema | L | R | L | L | ok | L | R | R | R | L | L | S | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | L | L | S | S | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | S | L | L | R | L | R |
+| json-schema | L | R | L | L | ok | L | R | R | R | L | L | S | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | ok | L | S | S | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | S | L | L | R | L | R |
 | jsonld | L | R | L | L | ok | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | jtd | L | R | L | L | ok | L | R | R | R | L | L | S | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | L | L | S | L | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | S | L | L | R | L | R |
 | k8s-crd | L | R | L | L | S | L | R | R | R | L | L | S | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | L | L | ok | S | R | L | L | L | L | S | L | R | L | L | L | L | R | R | L | L | S | L | L | R | L | R |

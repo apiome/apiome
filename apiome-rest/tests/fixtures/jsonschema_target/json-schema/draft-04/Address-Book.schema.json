@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Address Book",
+  "description": "Schema with multiple definitions using $defs",
+  "definitions": {
+    "Contact": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "$ref": "#/definitions/PersonName"
+        },
+        "address": {
+          "$ref": "#/definitions/Address"
+        },
+        "phones": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PhoneNumber"
+          }
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "description": "A contact in the address book"
+    },
+    "PersonName": {
+      "type": "object",
+      "properties": {
+        "first": {
+          "type": "string"
+        },
+        "middle": {
+          "type": "string"
+        },
+        "last": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "suffix": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "first",
+        "last"
+      ],
+      "description": "A person's name"
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "street1": {
+          "type": "string"
+        },
+        "street2": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "street1",
+        "city",
+        "state",
+        "postalCode"
+      ],
+      "description": "A postal address"
+    },
+    "PhoneNumber": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "number"
+      ],
+      "description": "A phone number with type"
+    },
+    "Address_Book": {
+      "type": "object",
+      "properties": {
+        "contacts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Contact"
+          }
+        }
+      },
+      "description": "Schema with multiple definitions using $defs"
+    }
+  },
+  "id": "https://example.com/address-book.json",
+  "allOf": [
+    {
+      "$ref": "#/definitions/Address_Book"
+    }
+  ]
+}

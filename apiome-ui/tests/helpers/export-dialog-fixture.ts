@@ -6,6 +6,8 @@ import { jest } from '@jest/globals';
 
 import type { ExportTargetsResponse } from '../../src/app/components/ade/dashboard/export/exportTargetCatalog';
 import type { ExportFidelityEnvelope } from '../../src/app/components/ade/dashboard/export/exportFidelityPreview';
+import jsonSchemaTargetsForRest from '../fixtures/export-targets-json-schema-rest.json';
+import jsonSchemaTargetsForJsonSchema from '../fixtures/export-targets-json-schema-json-schema.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -207,6 +209,23 @@ export const EXPORT_DIALOG_COLLECTION_TARGETS: ExportTargetsResponse = {
     ),
   ],
 };
+
+/**
+ * The JSON Schema family (`json-schema` + `jtd`) as the registry lists it (MFX-21.5, #4130), for a
+ * REST source and for a JSON Schema item. Both JSON files are recorded from the live REST registry by
+ * `apiome-rest/tests/test_jsonschema_target_card.py`, which fails when they drift.
+ *
+ * @param source `rest` (the Petstore OpenAPI: its operations are dropped, so `types-only`) or
+ *   `json-schema` (a JSON Schema item exported again: `lossless`).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function jsonSchemaTargets(source: 'rest' | 'json-schema'): ExportTargetsResponse {
+  const recorded = source === 'rest' ? jsonSchemaTargetsForRest : jsonSchemaTargetsForJsonSchema;
+  return {
+    ...EXPORT_DIALOG_TARGETS,
+    targets: recorded.targets as unknown as ExportTargetsResponse['targets'],
+  };
+}
 
 /** The MFX-6.2 dry-run previews (advisory + per-construct report) per selectable target. */
 export const EXPORT_DIALOG_PREVIEWS: Record<string, ExportFidelityEnvelope> = {

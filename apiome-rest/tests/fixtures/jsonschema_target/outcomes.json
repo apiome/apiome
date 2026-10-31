@@ -1,0 +1,117 @@
+{
+  "json-schema": {
+    "card": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "modes": {
+      "bundle": {
+        "files": [
+          "Address-Book.schema.json"
+        ],
+        "loss_subjects": [],
+        "problems": [],
+        "tier": "lossless",
+        "valid": true
+      },
+      "draft-04": {
+        "files": [
+          "Address-Book.schema.json"
+        ],
+        "loss_subjects": [
+          "rebuilt-from-canonical"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      },
+      "draft-07": {
+        "files": [
+          "Address-Book.schema.json"
+        ],
+        "loss_subjects": [
+          "rebuilt-from-canonical"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      },
+      "per-type": {
+        "files": [
+          "Contact.schema.json",
+          "PersonName.schema.json",
+          "Address.schema.json",
+          "PhoneNumber.schema.json",
+          "Address_Book.schema.json"
+        ],
+        "loss_subjects": [
+          "rebuilt-from-canonical"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      }
+    }
+  },
+  "rest": {
+    "card": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "modes": {
+      "bundle": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.schema.json"
+        ],
+        "loss_subjects": [
+          "services-dropped"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      },
+      "draft-04": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.schema.json"
+        ],
+        "loss_subjects": [
+          "exclusive-bound-boolean",
+          "services-dropped"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      },
+      "draft-07": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.schema.json"
+        ],
+        "loss_subjects": [
+          "services-dropped"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      },
+      "per-type": {
+        "files": [
+          "Category.schema.json",
+          "Pet.schema.json"
+        ],
+        "loss_subjects": [
+          "services-dropped"
+        ],
+        "problems": [],
+        "tier": "types-only",
+        "valid": true
+      }
+    }
+  },
+  "rpc": {
+    "card": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "modes": {}
+  }
+}
