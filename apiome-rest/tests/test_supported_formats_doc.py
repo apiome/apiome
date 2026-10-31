@@ -258,11 +258,12 @@ def test_a_round_tripping_format_says_so(rows: List[FormatRow]) -> None:
 
 
 def test_an_import_only_format_says_so(rows: List[FormatRow]) -> None:
-    # `mcp` reads a Model Context Protocol server description; there is no MCP emitter.
-    mcp = next(r for r in rows if r.key == "mcp")
-    assert mcp.can_import is True
-    assert mcp.can_export is False
-    assert mcp.direction == "Import only"
+    # `consul` reads Consul service definitions; there is no Consul emitter. (`mcp` was the example
+    # until MFX-32.1 gave MCP an emitter.)
+    consul = next(r for r in rows if r.key == "consul")
+    assert consul.can_import is True
+    assert consul.can_export is False
+    assert consul.direction == "Import only"
 
 
 @pytest.mark.parametrize("key", ["kong", "gateway-api"])

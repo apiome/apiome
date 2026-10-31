@@ -1,0 +1,19 @@
+---
+slug: sql-ddl-export
+title: Export types as SQL tables
+description: SQL DDL export writes CREATE TABLE for PostgreSQL, MySQL or standard SQL.
+authors: [apiome]
+---
+
+The **Export** dialog can now write an item's types as **SQL DDL**: `CREATE TABLE` statements for
+PostgreSQL, MySQL or standard SQL. [SQL DDL from any source](/ship/export-a-spec#sql-ddl-from-any-source).
+
+{/* truncate */}
+
+- **Typed columns and rules.** Required fields are `NOT NULL`; bounds, lengths, enums and patterns
+  become `CHECK` clauses; enums become PostgreSQL enum types or MySQL `ENUM`s.
+- **Nested objects your way.** Keep them as JSON columns (the default), or set **nested** to `tables`
+  for foreign keys, junction tables and child tables.
+- **Nothing made up silently.** Generated keys, junction tables and renamed columns are listed as
+  synthesized in the fidelity report, and the same model always gives the same script.
+- **Checked.** Every script is parsed with sqlglot in its dialect before you download it.

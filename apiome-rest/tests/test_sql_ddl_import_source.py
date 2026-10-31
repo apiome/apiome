@@ -1019,11 +1019,13 @@ def test_the_declared_limits_render_as_partially_mapped_ledger_rows() -> None:
         assert row.document_scoped is True
 
 
-def test_version_coverage_declares_an_ungated_read_and_no_write() -> None:
+def test_version_coverage_declares_an_ungated_read_and_one_write_per_dialect() -> None:
     coverage = version_coverage_for("sql-ddl")
     assert coverage.declared is True
     assert [read.support for read in coverage.reads] == [VersionSupport.UNGATED]
-    assert coverage.writes == ()
+    # MFX-35.1 (#4311): the emitter writes PostgreSQL (default), MySQL and ANSI DDL.
+    assert [write.version for write in coverage.writes] == ["PostgreSQL DDL", "MySQL DDL", "ANSI SQL DDL"]
+    assert coverage.default_write == "PostgreSQL DDL"
     assert coverage.reads[0].format_key in _adapter().descriptor().formats
 
 

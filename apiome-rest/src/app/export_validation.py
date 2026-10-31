@@ -635,6 +635,25 @@ async def _validate_x12_guide(
     return verdict
 
 
+async def _validate_sql_ddl(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted SQL DDL script (MFX-35.1, #4311).
+
+    The emitter has already parsed the script with sqlglot in its dialect; this reads it back through
+    Apiome's own SQL DDL reader (FMT-5.6), which must find at least one table.
+    """
+    from .sql_ddl_import_source import SqlDdlImportSource
+
+    def _check(content: str) -> None:
+        source = SqlDdlImportSource()
+        model = source.normalize(source.parse(content))
+        if not any(t.kind.value == "record" for t in model.types):
+            raise ValueError("The emitted SQL DDL declares no table that reads back.")
+
+    return await _run_text_validator(target, emit_result, _check)
+
+
 async def _validate_oncrpc(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1536,6 +1555,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "smithy": _validate_smithy,
     # MFX-22.5 (#4136)
     "xsd": _validate_xsd,
+    # MFX-35.1 (#4311)
+    "sql-ddl": _validate_sql_ddl,
 }
 
 

@@ -814,6 +814,7 @@ def load_builtin_emitters() -> None:
     from . import raml_emitter as _raml  # noqa: F401
     from . import sample_emitter as _sample  # noqa: F401
     from . import smithy_emitter as _smithy  # noqa: F401
+    from . import sql_ddl_emitter as _sql_ddl_emitter  # noqa: F401
     from . import thrift_emitter as _thrift  # noqa: F401
     from . import thunder_client_emitter as _thunder_client_emitter  # noqa: F401
     from . import traefik_emitter as _traefik_emitter  # noqa: F401
