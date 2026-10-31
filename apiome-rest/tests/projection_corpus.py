@@ -168,6 +168,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "raml": GENERIC,
     "sample-noop": GENERIC,
     "smithy": GENERIC,
+    "sql-ddl": GENERIC,
     "thrift": GENERIC,
     "thunder-client": GENERIC,
     "traefik": GENERIC,

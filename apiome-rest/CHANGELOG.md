@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.573.0] - 2026-10-31
+
+### Added
+- **SQL DDL emitter (MFX-35.1, #4311).** New `app.sql_ddl_emitter` (key / format `sql-ddl`, the SQL DDL importer's
+  key) writes a relational projection of the model's types as one script.
+  - Every record type becomes a table and scalar fields become typed columns: `nullable=False` → `NOT NULL`;
+    constraints → `CHECK`; `maxLength` → `VARCHAR(n)`; enums → `CREATE TYPE … AS ENUM` (PostgreSQL), inline `ENUM`
+    (MySQL) or `CHECK … IN` (ANSI).
+  - Nested objects, unions and maps become JSON columns (`nested=json`, default), or foreign keys plus junction and
+    child tables (`nested=tables`, keys declared, inferred from a required `id`, or synthesized).
+  - Identifiers are mangled deterministically (snake_case, prefixed, hash-capped, deduplicated, reserved words
+    quoted).
+  - Options: `dialect` (`postgres` / `mysql` / `ansi`), `nested`, `schema_name`.
+  - An imported SQL item keeps its keys and foreign keys, and in its own dialect its column types, defaults and
+    checks.
+  - Every script is parsed with **sqlglot** in its dialect inside `emit()`. The export gate (`sql-ddl` in
+    `export_validation`) reads it back through the SQL DDL reader.
+  - `SqlDdlFidelityRulePack` reports projection decisions (keys, junction/child tables, renames, precision) as
+    `SYNTH`. Renames are DROP under the old key and SYNTH under the re-import key; JSON columns and dialect
+    approximations are `APPROX`; dropped constraints and dialect clauses are `DROP`.
+- New dependency: `sqlglot==30.23.0` (pyproject, requirements.txt).
+- Tests: `tests/test_sql_ddl_emitter.py`.
+  - Goldens: `tests/fixtures/sql_ddl_output/`, regenerate with `APIOME_REGEN_SQL_DDL_OUTPUT=1`.
+  - Every corpus source parses in all 3 dialects × 2 modes.
+  - Every PostgreSQL script is applied to the local database in a rolled-back transaction.
+- Registry fallout:
+  - format counts, supported formats, version coverage (writes PostgreSQL / MySQL / ANSI DDL);
+  - RC6 target list, target-tier table;
+  - round-trip matrix: 108 cells, 89 pass, 19 xfail;
+  - export conformance column (92 lossy, 16 refused, no silent loss);
+  - corpus parity report.
+- OpenAPI 1.437.0.
+
 ## [1.572.0] - 2026-10-31
 
 ### Added

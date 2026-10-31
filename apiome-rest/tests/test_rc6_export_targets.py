@@ -95,6 +95,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "protobuf",
     "raml",
     "smithy",
+    "sql-ddl",
     "thrift",
     "thunder-client",
     "traefik",

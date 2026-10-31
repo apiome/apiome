@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**57<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**58<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -54,7 +54,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **57<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **58<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -192,6 +192,52 @@ Every tool is checked against the MCP Tool schema of the chosen revision before 
 descriptor describes the tools; it is not a running server. From the CLI, run
 `apiome export mcp <item> --out petstore.mcp.json`, or
 `apiome export mcp <item> --out <folder> --option grouping=per-service` for one file per service.
+
+### SQL DDL from any source
+
+Exporting to **SQL DDL** writes the item's types as `CREATE TABLE` statements, `<Name>.sql`, for a
+database that stores what the API describes. Each object type becomes a table.
+
+- **Columns.** Each field is a typed column: text is `TEXT` (or `VARCHAR(n)` when it has a
+  `maxLength`), integers `SMALLINT` / `INTEGER` / `BIGINT`, a decimal `NUMERIC(38, s)` with the scale
+  from `multipleOf`, a timestamp `TIMESTAMPTZ`, a UUID `UUID`, and so on. A required field is
+  `NOT NULL`, and a field's default is its `DEFAULT`.
+- **Rules.** `minimum` / `maximum` (and the exclusive bounds), `minLength`, an `enum` and a `pattern`
+  become `CHECK` clauses on the column.
+- **Enumerations.** PostgreSQL gets `CREATE TYPE … AS ENUM`, MySQL an inline `ENUM(…)`, and standard
+  SQL a `VARCHAR` with `CHECK (… IN (…))`.
+- **Names.** Tables and columns are written in `snake_case` (`OrderLine` → `order_line`,
+  `placedAt` → `placed_at`). A name that starts with a digit gets a prefix, one that is too long is cut
+  with a short hash, two that end up the same get `_2`, and a reserved word such as `user` or `order`
+  is quoted.
+
+Options:
+
+- **dialect** — `postgres` (default), `mysql` or `ansi` (standard SQL).
+- **nested** — what happens to a field that holds an object, a union, a map or a list:
+  - `json` (default): one `JSONB` (PostgreSQL) or `JSON` column. A list of plain values is a native
+    array on PostgreSQL (`TEXT[]`) and JSON elsewhere.
+  - `tables`: an object becomes a foreign key to its table, and a list becomes its own table — a
+    junction table for a list of objects (`order_lines`), or a child table of
+    `(owner_id, position, value)` for a list of values (`order_tags`). Every table needs a key for
+    this. It uses the table's declared key, else a required `id` field, else a generated `id` column.
+- **schema_name** — create the tables in this schema (`CREATE SCHEMA` first, every name qualified).
+
+Foreign keys come last, as `ALTER TABLE … ADD CONSTRAINT`, so the tables can be created in any order.
+
+Every decision the projection makes up is listed in the fidelity report as **synthesized**: a
+generated key, a junction or child table, a renamed table or column, a decimal precision Apiome had to
+choose. The same model always gives the same script. What a dialect cannot hold is listed too: a
+pattern in standard SQL (no regular-expression check), a UUID in MySQL (`CHAR(36)`), a time zone on a
+MySQL `DATETIME`. Operations and channels are left out: a schema describes data only.
+
+An item imported from SQL keeps its primary, unique and foreign keys. Written in the dialect it was
+read in, it also keeps its column types, defaults and checks exactly. In another dialect, a default
+or check expression written for the original dialect is dropped and listed.
+
+**Checked before you download it.** Every script is parsed with sqlglot in its dialect, and read back
+by Apiome's SQL reader. From the CLI, run `apiome export sql-ddl <item> --out schema.sql --option
+dialect=mysql --option nested=tables`.
 
 ### Protobuf and Thrift from an OpenAPI source
 
@@ -1450,6 +1496,7 @@ re-import shows what API Blueprint could not keep; the fidelity report names tho
 | RAML | REST | Any source |
 | SAP IDoc | Data schema | A source imported as SAP IDoc |
 | Smithy | RPC | Any source |
+| SQL DDL | Data schema | Any source with a record type |
 | Thunder Client | REST | Any source |
 | Traefik dynamic configuration | REST | Any source |
 | TypeSpec | REST | Any source |
