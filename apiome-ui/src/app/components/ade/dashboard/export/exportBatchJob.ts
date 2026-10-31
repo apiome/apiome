@@ -13,6 +13,7 @@
  */
 
 import type { ExportJobStatus } from './exportJob';
+import type { ExportStudioOverlay } from './exportOverlays';
 import { downloadBlob, filenameFromDisposition } from './exportDownload';
 
 /** The REST cap on item × target pairs in one batch export job. */
@@ -40,6 +41,8 @@ export interface MultiExportJobBody {
   targets: ExportJobTargetSpec[];
   dry_run?: boolean;
   confirm?: boolean;
+  /** Overlays applied, in order, to the source before every target (GVM-4.2). */
+  overlays?: ExportStudioOverlay[];
 }
 
 /**
@@ -49,6 +52,7 @@ export interface MultiExportJobBody {
  * @param version The revision (UUID or label), or null for the latest.
  * @param targetKeys The target keys, in the order chosen; duplicates are dropped.
  * @param dryRun True to stop after the fidelity report (Verify).
+ * @param overlays The Overlays step's chain (GVM-4.2); null or empty sends none.
  * @returns The request body.
  */
 export function multiTargetJobBody(
@@ -56,12 +60,14 @@ export function multiTargetJobBody(
   version: string | null,
   targetKeys: readonly string[],
   dryRun = false,
+  overlays: readonly ExportStudioOverlay[] | null = null,
 ): MultiExportJobBody {
   return {
     artifact,
     ...(version ? { version } : {}),
     targets: [...new Set(targetKeys)].map((target) => ({ target })),
     ...(dryRun ? { dry_run: true } : {}),
+    ...(overlays && overlays.length > 0 ? { overlays: [...overlays] } : {}),
   };
 }
 

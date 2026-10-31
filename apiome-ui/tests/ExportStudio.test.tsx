@@ -725,6 +725,7 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     if (target === 'proto') {
       fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
     }
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
   }
 
@@ -815,8 +816,10 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
 
     // Change an option: the prior verdict no longer describes what Generate would produce, so the
     // gate re-locks and the run action returns (auto re-verify is MFX-42.6).
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → options
     fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.other' } });
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     expect(screen.queryByTestId('verify-verdict')).not.toBeInTheDocument();
     expect(screen.getByTestId('verify-run')).toBeInTheDocument();
@@ -847,6 +850,7 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
     fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     await runVerification();
     fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
@@ -887,6 +891,7 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     await renderStudio(fetchMock, { initialTarget: 'openapi', onGenerated });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     await runVerification();
     fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
@@ -1085,6 +1090,7 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
     fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: packageValue } });
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     fireEvent.click(screen.getByTestId('verify-run'));
     await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
@@ -1097,12 +1103,24 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
 
   /** Step back to the Options form from the Verify step. */
   function backToOptions() {
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → overlays (GVM-4.2)
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → options
+  }
+
+  /** One Back click (Options → Target). */
+  function backOne() {
     fireEvent.click(screen.getByRole('button', { name: /^back$/i }));
   }
 
-  /** Step forward from the Options form to the Verify step. */
-  function forwardToVerify() {
+  /** One Continue click (Target → Options). */
+  function continueOne() {
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+  }
+
+  /** Step forward from the Options form to the Verify step (through Overlays, GVM-4.2). */
+  function forwardToVerify() {
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
   }
 
   it('re-locks Generate when an option changes, with no stale verdict left on screen', async () => {
@@ -1129,9 +1147,9 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
 
     // Back to Target and pick a different one: its conversion has not been verified.
     backToOptions();
-    backToOptions();
+    backOne(); // → target
     fireEvent.click(screen.getByTestId('export-target-openapi'));
-    forwardToVerify(); // → options
+    continueOne(); // → options
     forwardToVerify(); // → verify
     expect(screen.queryByTestId('verify-verdict')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
@@ -1180,7 +1198,7 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
     const fetchMock = mockFetch();
     await renderStudio(fetchMock, { initialTarget: 'openapi' });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
-    forwardToVerify(); // → options
+    continueOne(); // → options
     forwardToVerify(); // → verify
     expect(screen.getByTestId('verify-run')).toBeInTheDocument();
 
@@ -1195,7 +1213,7 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
     const fetchMock = mockFetch();
     await renderStudio(fetchMock, { initialTarget: 'openapi' });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
-    forwardToVerify(); // → options
+    continueOne(); // → options
     forwardToVerify(); // → verify
     fireEvent.click(screen.getByTestId('verify-auto-toggle'));
     await waitFor(() => expect(verifyCalls(fetchMock)).toBe(1), { timeout: 4000 });
@@ -1203,13 +1221,13 @@ describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () 
     // Back to the grid and try another card: a dry-run is a real emit, so browsing must not fire
     // one per card even with the opt-in on.
     backToOptions();
-    backToOptions();
+    backOne(); // → target
     fireEvent.click(screen.getByTestId('export-target-proto'));
     await new Promise((resolve) => setTimeout(resolve, 1_000));
     expect(verifyCalls(fetchMock)).toBe(1);
 
     // Arriving at Verify is when the verdict is needed — and when it runs itself.
-    forwardToVerify(); // → options
+    continueOne(); // → options
     fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
     forwardToVerify(); // → verify
     await waitFor(() => expect(verifyCalls(fetchMock)).toBe(2), { timeout: 4000 });
@@ -1229,6 +1247,7 @@ describe('ExportStudio — job progress & failure recovery (MFX-46.2)', () => {
     if (target === 'proto') {
       fireEvent.change(screen.getByLabelText(/Package/i), { target: { value: 'com.example' } });
     }
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     fireEvent.click(screen.getByTestId('verify-run'));
     await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
@@ -1337,6 +1356,7 @@ describe('ExportStudio — job progress & failure recovery (MFX-46.2)', () => {
     const utils = await renderStudio(fetchMock, { initialTarget: 'openapi' });
     fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
     fireEvent.click(screen.getByTestId('verify-run'));
     await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
@@ -1447,6 +1467,7 @@ describe('ExportStudio — deep links & resumable state (MFX-41.4)', () => {
       initialStep: 'verify',
     });
     await waitFor(() => expect(screen.getByTestId('verify-run')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → overlays (GVM-4.2)
     fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → options
     expect(screen.getByLabelText(/Package/i)).toHaveValue('com.example');
   });
@@ -1636,7 +1657,9 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
     await user.keyboard('{Enter}');
     expect(card).toHaveAttribute('aria-pressed', 'true');
 
-    // Target → Options → Verify.
+    // Target → Options → Overlays → Verify.
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
     await tabTo(user, footer(/^continue$/i));
     await user.keyboard('{Enter}');
     await tabTo(user, footer(/^continue$/i));
@@ -1672,6 +1695,9 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
     expect(screen.getByLabelText(/Package/i)).toHaveValue('com.example');
     await tabTo(user, footer(/^continue$/i));
     await user.keyboard('{Enter}');
+    // Options → Overlays (GVM-4.2) → Verify.
+    await tabTo(user, footer(/^continue$/i));
+    await user.keyboard('{Enter}');
 
     await tabTo(user, screen.getByTestId('verify-run'));
     await user.keyboard('{Enter}');
@@ -1694,11 +1720,11 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
     await renderStudio(mockFetch(), { initialTarget: 'openapi' });
     await tabTo(user, footer(/choose target/i));
     await user.keyboard('{Enter}');
-    expect(document.activeElement).toHaveAccessibleName('Step 2 of 5: Target');
+    expect(document.activeElement).toHaveAccessibleName('Step 2 of 6: Target');
 
     await tabTo(user, footer(/^back$/i));
     await user.keyboard('{Enter}');
-    expect(document.activeElement).toHaveAccessibleName('Step 1 of 5: Source');
+    expect(document.activeElement).toHaveAccessibleName('Step 1 of 6: Source');
   });
 
   /**
@@ -1744,7 +1770,8 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
 
     it('dumps the Verify step with its three lenses and the acknowledgement', async () => {
       await toVerify();
-      fireEvent.click(footer(/^continue$/i));
+      fireEvent.click(footer(/^continue$/i)); // → overlays (GVM-4.2)
+      fireEvent.click(footer(/^continue$/i)); // → verify
       fireEvent.click(screen.getByTestId('verify-run'));
       await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
       await waitFor(() => expect(screen.getByTestId('projection-table')).toBeInTheDocument());
@@ -1753,7 +1780,8 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
 
     it('dumps the Review step after Generate', async () => {
       await toVerify();
-      fireEvent.click(footer(/^continue$/i));
+      fireEvent.click(footer(/^continue$/i)); // → overlays (GVM-4.2)
+      fireEvent.click(footer(/^continue$/i)); // → verify
       fireEvent.click(screen.getByTestId('verify-run'));
       await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
       fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
@@ -1762,5 +1790,123 @@ describe('ExportStudio — keyboard-only export and the a11y gate fixtures (X3)'
       await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
       await checkAndDump('export-studio-review');
     });
+  });
+});
+
+describe('ExportStudio — overlays on export (GVM-4.2)', () => {
+  const PARTNER = `overlay: 1.0.0
+info:
+  title: Partner edition
+  version: 1.0.0
+actions:
+  - target: $.info
+    update:
+      title: Pets for Partners
+`;
+  const REPORT = {
+    applied: ['partner.yaml'],
+    ledger: [
+      {
+        pointer: '/info/title',
+        kind: 'replaced',
+        overlay: 'partner.yaml',
+        action_index: 0,
+        target: '$.info',
+        detail: "The value at /info/title was replaced by overlay 'partner.yaml'.",
+      },
+    ],
+    findings: [],
+    changes: 1,
+    truncated: false,
+  };
+
+  /** The Studio backend, echoing an overlay report on a verify or job that carried overlays. */
+  function overlayFetch(): jest.Mock {
+    const base = mockFetch();
+    let jobHadOverlays = false;
+    return jest.fn(async (input: unknown, init?: { method?: string; body?: string }) => {
+      const url = String(input);
+      const response = (await base(input, init)) as { ok: boolean; json: () => Promise<unknown> };
+      const body = init?.body ? JSON.parse(init.body) : {};
+      if (url.endsWith('/api/export/jobs') && init?.method === 'POST') jobHadOverlays = Boolean(body.overlays);
+      const verifyWithOverlays = url.includes('/api/export/verify') && Boolean(body.overlays);
+      const jobPoll = url.includes('/api/export/jobs/') && !url.endsWith('/download') && jobHadOverlays;
+      if (!verifyWithOverlays && !jobPoll) return response;
+      const data = (await response.json()) as Record<string, unknown>;
+      const json = verifyWithOverlays
+        ? { ...data, overlay: REPORT }
+        : { ...data, result: { ...(data.result as object), overlay: REPORT } };
+      return { ...response, json: () => Promise.resolve(json) };
+    });
+  }
+
+  function requestBody(fetchMock: jest.Mock, match: (url: string, method?: string) => boolean) {
+    const call = fetchMock.mock.calls.find(([url, init]) =>
+      match(String(url), (init as { method?: string } | undefined)?.method),
+    );
+    return call ? JSON.parse(String((call[1] as { body?: string }).body)) : null;
+  }
+
+  async function uploadPartner() {
+    const partner = new File([PARTNER], 'partner.yaml', { type: 'application/yaml' });
+    Object.defineProperty(partner, 'text', { value: () => Promise.resolve(PARTNER) });
+    fireEvent.change(screen.getByTestId('export-studio-overlay-input'), { target: { files: [partner] } });
+    await waitFor(() => expect(screen.getByTestId('export-studio-overlay-0')).toHaveTextContent('partner.yaml'));
+  }
+
+  it('sends the chain on Verify and Generate and shows what it changed on both steps', async () => {
+    const fetchMock = overlayFetch();
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    expect(screen.getByTestId('export-studio-step-overlays')).toHaveAttribute('data-state', 'current');
+    await uploadPartner();
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+    const verifyBody = requestBody(fetchMock, (url) => url.includes('/api/export/verify'));
+    expect(verifyBody.overlays).toEqual([
+      { name: 'partner.yaml', document: expect.objectContaining({ overlay: '1.0.0' }) },
+    ]);
+    expect(screen.getByTestId('export-overlay-summary')).toHaveTextContent('1 overlay changed 1 value');
+
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await waitFor(() => expect(screen.getByTestId('export-artifact-preview')).toBeInTheDocument());
+    const jobBody = requestBody(fetchMock, (url, method) => url.endsWith('/api/export/jobs') && method === 'POST');
+    expect(jobBody.overlays[0].name).toBe('partner.yaml');
+    expect(screen.getByTestId('export-overlay-ledger')).toHaveTextContent('/info/title');
+  });
+
+  it('sends nothing extra when no overlay was added', async () => {
+    const fetchMock = overlayFetch();
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByTestId('verify-verdict')).toBeInTheDocument());
+    expect(requestBody(fetchMock, (url) => url.includes('/api/export/verify'))).not.toHaveProperty('overlays');
+    expect(screen.queryByTestId('export-overlay-report')).toBeNull();
+  });
+
+  it('re-locks Generate when the chain changes after a verdict', async () => {
+    const fetchMock = overlayFetch();
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    fireEvent.click(screen.getByTestId('verify-run'));
+    await waitFor(() => expect(screen.getByRole('button', { name: /continue to review/i })).toBeEnabled());
+
+    fireEvent.click(screen.getByRole('button', { name: /^back$/i })); // → overlays
+    await uploadPartner();
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    expect(screen.queryByTestId('verify-verdict')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue to review/i })).toBeDisabled();
   });
 });

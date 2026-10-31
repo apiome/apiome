@@ -19,6 +19,7 @@
  * `./exportJobTracker.ts`; the stepper/failure rendering in `./GenerateProgress.tsx`.
  */
 
+import type { ExportOverlayReport } from './exportOverlays';
 import type { EmittedValidationReport } from './exportVerify';
 import type { ExportFidelityEnvelope } from './exportFidelityPreview';
 
@@ -204,6 +205,8 @@ export interface ExportJobResult {
   download_path?: string | null;
   /** Epoch-ms deadline after which the retained artifact is dropped (MFX-4.3). */
   download_expires_at?: number | null;
+  /** What the job's overlays changed (GVM-4.2); null when it had none. */
+  overlay?: ExportOverlayReport | null;
 }
 
 /**

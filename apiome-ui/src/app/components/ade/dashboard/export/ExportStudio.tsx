@@ -34,6 +34,9 @@ import { MultiExportRun } from './MultiExportRun';
 import { ExportStudioTitle, exportStudioBreadcrumb } from './ExportStudioHeaderParts';
 import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import { MultiTargetChecklist } from './MultiTargetChecklist';
+import { ExportOverlaysStep } from './ExportOverlaysStep';
+import { OverlayReportPanel } from './OverlayReportPanel';
+import { overlaysRequestField, type ExportStudioOverlay } from './exportOverlays';
 import { multiTargetJobBody } from './exportBatchJob';
 import type { ExportJobStatus } from './exportJob';
 import { useCatalogSourceContext } from './useCatalogSourceContext';
@@ -262,6 +265,12 @@ export function ExportStudio({
   const [multiMode, setMultiMode] = useState(false);
   const [multiKeys, setMultiKeys] = useState<string[]>([]);
   const [multiVerified, setMultiVerified] = useState(false);
+  /**
+   * The Overlays step's chain (GVM-4.2), in application order. Sent on Verify and on Generate so
+   * both describe the overlaid document; an empty chain sends nothing.
+   */
+  const [overlays, setOverlays] = useState<ExportStudioOverlay[]>([]);
+  const overlayField = useMemo(() => overlaysRequestField(overlays), [overlays]);
   // Drop the redundant same-format target (e.g. GraphQL→GraphQL); the "Original source" option
   // replaces it when the source's format is known.
   const cards = useMemo(
@@ -323,6 +332,7 @@ export function ExportStudio({
     reset: resetVerify,
     fromCache: verifyFromCache,
   } = useExportVerify(artifact, version, selectedKey, changedOpts, {
+    overlays: overlayField,
     // Only while the Verify step is showing: a dry-run is a real emit, so browsing the target grid
     // with the opt-in on must not fire one per card the user tries. A change made on an earlier
     // step verifies itself the moment the user arrives at Verify, which is when it is needed.
@@ -575,8 +585,8 @@ export function ExportStudio({
   }, []);
 
   const multiBody = useMemo(
-    () => multiTargetJobBody(artifact, version, multiKeys),
-    [artifact, version, multiKeys],
+    () => multiTargetJobBody(artifact, version, multiKeys, false, overlayField),
+    [artifact, version, multiKeys, overlayField],
   );
   const targetLabels = useMemo(
     () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
@@ -631,8 +641,9 @@ export function ExportStudio({
       // (MFX-3.3) does not fail a severe-but-acknowledged job.
       confirm: acknowledged,
       acknowledgedSnapshot: acceptedSnapshot,
+      overlays: overlayField,
     });
-  }, [selected, optionValues, acknowledged, displayVerifyResult, start]);
+  }, [selected, optionValues, acknowledged, displayVerifyResult, start, overlayField]);
 
   /**
    * Run verification, dropping any validation-gate override so the fresh result shows.
@@ -976,6 +987,9 @@ export function ExportStudio({
         return multiMode ? multiKeys.length >= 2 : Boolean(selected);
       case 'options':
         return Boolean(selected) && validation.valid;
+      case 'overlays':
+        // Overlays are optional: an empty chain exports the version as it is.
+        return true;
       case 'verify':
         if (multiMode) return multiVerified;
         // Generate is gated on the verdict (MFX-42.1): clean proceeds, lossy needs the
@@ -1050,7 +1064,7 @@ export function ExportStudio({
   }, [stepIndex, multiMode]);
   const goNext = useCallback(() => {
     const next = STEP_ORDER[Math.min(STEP_ORDER.length - 1, stepIndex + 1)];
-    setStep(multiMode && next === 'options' ? 'verify' : next);
+    setStep(multiMode && next === 'options' ? 'overlays' : next);
   }, [stepIndex, multiMode]);
 
   // Stepping is a content swap in place, so a keyboard/screen-reader user gets no signal that the
@@ -1251,6 +1265,17 @@ export function ExportStudio({
             </div>
           )}
 
+          {step === 'overlays' && (
+            <ExportOverlaysStep
+              overlays={overlays}
+              onChange={(next) => {
+                // A different chain is a different document: any multi-target verify is moot.
+                setMultiVerified(false);
+                setOverlays(next);
+              }}
+            />
+          )}
+
           {step === 'verify' && multiMode && (
             <MultiExportRun
               mode="verify"
@@ -1323,6 +1348,8 @@ export function ExportStudio({
                   ) : null
                 }
               />
+              {/* GVM-4.2: what the overlays changed in the document this verdict describes. */}
+              {displayVerifyResult?.overlay && <OverlayReportPanel report={displayVerifyResult.overlay} />}
             </>
           )}
 
@@ -1331,6 +1358,10 @@ export function ExportStudio({
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
               {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
+              {/* GVM-4.2: the generated artifact's overlay ledger, from the job itself. */}
+              {jobCompleted && jobStatus?.result?.overlay && (
+                <OverlayReportPanel report={jobStatus.result.overlay} />
+              )}
               {bundle && isMultiFileBundle(bundle) ? (
                 <div className="xstd-stack xstd-stack--tight">
                   <p className="xstd-notice" data-tone="ok">
@@ -1489,7 +1520,7 @@ export function ExportStudio({
                 Choose target
               </Button>
             )}
-            {(step === 'target' || step === 'options') && (
+            {(step === 'target' || step === 'options' || step === 'overlays') && (
               <Button onClick={goNext} disabled={!canAdvance}>
                 Continue
               </Button>

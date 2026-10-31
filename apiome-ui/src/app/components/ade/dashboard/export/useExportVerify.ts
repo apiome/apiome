@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ExportStudioOverlay } from './exportOverlays';
 import type { ExportVerifyResponse } from './exportVerify';
 import {
   sessionVerifyCache,
@@ -46,6 +47,11 @@ export interface UseExportVerifyOptions {
   debounceMs?: number;
   /** The result cache to use; defaults to the per-session one. Injected by tests. */
   cache?: VerifyResultCache<ExportVerifyResponse>;
+  /**
+   * The Overlays step's chain (GVM-4.2), sent with the verify and folded into the configuration
+   * key — a different chain is a different document, so its verdict is a different one.
+   */
+  overlays?: ExportStudioOverlay[] | null;
 }
 
 /** What a settled run left behind, and the configuration it describes. */
@@ -107,6 +113,7 @@ export function useExportVerify(
     auto = false,
     debounceMs = VERIFY_AUTO_DEBOUNCE_MS,
     cache = sessionVerifyCache,
+    overlays = null,
   } = settings;
 
   const [settled, setSettled] = useState<SettledVerify | null>(null);
@@ -115,8 +122,8 @@ export function useExportVerify(
   const runToken = useRef(0);
 
   const configKey = useMemo(
-    () => verifyConfigKey({ artifact, version, target, options }),
-    [artifact, version, target, options],
+    () => verifyConfigKey({ artifact, version, target, options, overlays }),
+    [artifact, version, target, options, overlays],
   );
 
   // What to display: the settled run when it describes the current configuration, else a cached
@@ -159,7 +166,13 @@ export function useExportVerify(
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ artifact, version: version || null, target, options: options ?? null }),
+          body: JSON.stringify({
+            artifact,
+            version: version || null,
+            target,
+            options: options ?? null,
+            ...(overlays && overlays.length > 0 ? { overlays } : {}),
+          }),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data?.success === false) {
@@ -184,7 +197,7 @@ export function useExportVerify(
         if (token === runToken.current) setRunningKey(null);
       }
     },
-    [artifact, version, target, options, configKey, cache],
+    [artifact, version, target, options, overlays, configKey, cache],
   );
 
   const reset = useCallback(() => {

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.423.0
+  version: 1.424.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -11047,11 +11047,12 @@ paths:
       summary: Put Catalog Item Refresh
       description: "Create or replace an item's refresh setting (``projects:edit``).\n\
         \nThe adapter must support live discovery and have a refresh runner (``graphql``,\
-        \ ``grpc``);\nthe endpoint must pass the SSRF URL policy. Changing the adapter\
-        \ or endpoint resets the check\nhistory; saving always clears any failure\
-        \ backoff.\n\nRaises:\n    HTTPException: 404 for an unknown item; 422 ``adapter-not-refreshable``\
-        \ /\n        ``invalid-endpoint`` / ``invalid-credential``; 503 when credential\
-        \ encryption is not\n        configured and a credential is supplied."
+        \ ``grpc``, ``fhir``);\nthe endpoint must pass the SSRF URL policy. Changing\
+        \ the adapter or endpoint resets the check\nhistory; saving always clears\
+        \ any failure backoff.\n\nRaises:\n    HTTPException: 404 for an unknown item;\
+        \ 422 ``adapter-not-refreshable`` /\n        ``invalid-endpoint`` / ``invalid-credential``;\
+        \ 503 when credential encryption is not\n        configured and a credential\
+        \ is supplied."
       operationId: put_catalog_item_refresh_v1_catalog__tenant_slug___item_id__refresh_put
       parameters:
       - name: tenant_slug
@@ -11279,8 +11280,8 @@ paths:
             description: Get Catalog Upload Policyauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11335,8 +11336,8 @@ paths:
             description: Set Catalog Upload Policyauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11377,8 +11378,8 @@ paths:
       tags:
       - catalog-upload
       summary: Get Catalog Item Upload
-      description: Whether the item came from an upload, how old it is and whether it
-        may be stale (``projects:view``).
+      description: Whether the item came from an upload, how old it is and whether
+        it may be stale (``projects:view``).
       operationId: get_catalog_item_upload_v1_catalog__tenant_slug___item_id__upload_get
       parameters:
       - name: tenant_slug
@@ -11408,8 +11409,8 @@ paths:
             description: Get Catalog Item Uploadauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11443,15 +11444,16 @@ paths:
       - catalog-upload
       summary: Reupload Catalog Item
       description: "Re-import a new copy of the item's uploaded file with the import\
-        \ spec it recorded.\n\nThe file goes through the import pipeline with the importer\
-        \ and options of the original upload,\nand the tenant's import quality gate,\
-        \ exactly as an upload would. A file identical to the\ncurrent version writes\
-        \ nothing (``unchanged``); a changed one adds a date/time-labelled version\n\
-        with a change report against the version it supersedes (``changed``).\n\nRaises:\n\
-        \    HTTPException: 404 when the item is not a catalog item in the tenant; 409\
-        \ ``not-an-upload``\n        when its newest version did not come from an upload;\
-        \ 409 ``QUALITY_POLICY_BLOCKED``;\n        413 when the file is over the intake\
-        \ limit; 422 when the file is not valid base64 or\n        cannot be imported."
+        \ spec it recorded.\n\nThe file goes through the import pipeline with the\
+        \ importer and options of the original upload,\nand the tenant's import quality\
+        \ gate, exactly as an upload would. A file identical to the\ncurrent version\
+        \ writes nothing (``unchanged``); a changed one adds a date/time-labelled\
+        \ version\nwith a change report against the version it supersedes (``changed``).\n\
+        \nRaises:\n    HTTPException: 404 when the item is not a catalog item in the\
+        \ tenant; 409 ``not-an-upload``\n        when its newest version did not come\
+        \ from an upload; 409 ``QUALITY_POLICY_BLOCKED``;\n        413 when the file\
+        \ is over the intake limit; 422 when the file is not valid base64 or\n   \
+        \     cannot be imported."
       operationId: reupload_catalog_item_v1_catalog__tenant_slug___item_id__reupload_post
       parameters:
       - name: tenant_slug
@@ -11481,8 +11483,8 @@ paths:
             description: Reupload Catalog Itemauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11797,12 +11799,12 @@ paths:
       description: "Record a URL import that just succeeded, so the URL refresh sweep\
         \ keeps it up to date.\n\nREST fetches the URL once (SSRF-guarded) to store\
         \ the ``ETag``, ``Last-Modified`` and SHA-256\na refresh compares with. When\
-        \ that fetch fails the lineage is still recorded, with the error,\nand the first\
-        \ check anchors on what the URL serves then. Recording the same URL for the\
-        \ same\nproject again replaces the stored spec and anchors and keeps the refresh\
-        \ settings.\n\nRaises:\n    HTTPException: 404 when the project is not the tenant's;\
-        \ 422 for a URL that is not\n        http/https or carries credentials, or a\
-        \ version that is not the project's."
+        \ that fetch fails the lineage is still recorded, with the error,\nand the\
+        \ first check anchors on what the URL serves then. Recording the same URL\
+        \ for the same\nproject again replaces the stored spec and anchors and keeps\
+        \ the refresh settings.\n\nRaises:\n    HTTPException: 404 when the project\
+        \ is not the tenant's; 422 for a URL that is not\n        http/https or carries\
+        \ credentials, or a version that is not the project's."
       operationId: record_url_import_route_v1_tenants__tenant_slug__url_imports_post
       parameters:
       - name: tenant_slug
@@ -11824,8 +11826,8 @@ paths:
             description: Recorda Urlimportforautorefreshauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11865,8 +11867,8 @@ paths:
       tags:
       - url-imports
       summary: List URL imports and their refresh state
-      description: List the tenant's URL imports, newest first, with when each was last
-        checked and refreshed.
+      description: List the tenant's URL imports, newest first, with when each was
+        last checked and refreshed.
       operationId: list_url_imports_v1_tenants__tenant_slug__url_imports_get
       parameters:
       - name: tenant_slug
@@ -11900,8 +11902,8 @@ paths:
             description: List Urlimportsandtheirrefreshstateauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -11916,7 +11918,8 @@ paths:
         description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
       responses:
         '200':
-          description: Successful response for list url imports and their refresh state.
+          description: Successful response for list url imports and their refresh
+            state.
           content:
             application/json:
               schema:
@@ -11966,8 +11969,8 @@ paths:
             description: Turna Urlimportsrefreshonorofforsetitscadauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -25291,7 +25294,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-28T04:12:51Z'
+                        example: '2026-10-31T02:33:48Z'
                       method:
                         type: string
                         example: GET
@@ -31227,8 +31230,8 @@ paths:
             description: Lint Overlayauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -61572,10 +61575,10 @@ paths:
       tags:
       - import-sources
       summary: Convert a Postman collection to OpenAPI
-      description: Read a Postman Collection v2.0 or v2.1 with the Postman import adapter
-        — schemas inferred from example bodies, credentials scrubbed — and return it
-        as an OpenAPI 3.1 document, with a warning for each thing the conversion leaves
-        out. Nothing is stored. Requires ``imports:create``.
+      description: Read a Postman Collection v2.0 or v2.1 with the Postman import
+        adapter — schemas inferred from example bodies, credentials scrubbed — and
+        return it as an OpenAPI 3.1 document, with a warning for each thing the conversion
+        leaves out. Nothing is stored. Requires ``imports:create``.
       operationId: postman_to_openapi_v1_import__tenant_slug__postman_openapi_post
       parameters:
       - name: tenant_slug
@@ -61597,8 +61600,8 @@ paths:
             description: Converta Postmancollectionto Open Apiauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -62598,6 +62601,19 @@ paths:
         names each item''s ``artifact``. ``items`` cannot be combined with ``version``,
         ``versions`` or ``all_versions``; entries must be distinct; at most 100 item
         × target pairs.
+
+
+        **Overlays (GVM-4.2):** send ``overlays`` (a list of ``{name, document}``,
+        1–10 Overlay 1.0 / 1.1 / 1.2 documents, each at most 1 MiB) to apply them,
+        in order, to the source''s OpenAPI document before the export runs: fidelity,
+        the emitter, validation and the export quality policy all judge the post-overlay
+        document. ``result.overlay`` lists every changed leaf with the overlay that
+        changed it (500 rows, then a truncation row) and every action that could not
+        be applied — an action whose target matches nothing is an ``overlay.unmatched-target``
+        finding and changes nothing. A version not imported from OpenAPI fails with
+        ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with ``OVERLAY_INVALID``.
+        Overlays apply to one source, so they cannot be combined with a batch. Send
+        the same ``overlays`` to ``POST …/verify`` so its snapshot matches the job''s.
 
 
         **Limits (X5):** each refusal names the limit it hit. A tenant runs at most
@@ -85571,9 +85587,9 @@ components:
         emailEnabled:
           type: boolean
           title: Emailenabled
-          description: 'Also email drift to the item''s owner team: each alert right away, or
-            one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY /
-            EMAIL_FROM).'
+          description: 'Also email drift to the item''s owner team: each alert right
+            away, or one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY
+            / EMAIL_FROM).'
           default: false
           example: false
       additionalProperties: false
@@ -85619,9 +85635,9 @@ components:
         emailEnabled:
           type: boolean
           title: Emailenabled
-          description: 'Also email drift to the item''s owner team: each alert right away, or
-            one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY /
-            EMAIL_FROM).'
+          description: 'Also email drift to the item''s owner team: each alert right
+            away, or one email per digest. A no-op when the server has no mailer (SENDGRID_API_KEY
+            / EMAIL_FROM).'
           default: false
           example: false
         configured:
@@ -87082,8 +87098,8 @@ components:
           maxLength: 2048
           minLength: 1
           title: Endpoint
-          description: An http(s) URL for GraphQL; a `host:port` target for gRPC; a FHIR server's
-            base URL (its `/metadata` is read).
+          description: An http(s) URL for GraphQL; a `host:port` target for gRPC;
+            a FHIR server's base URL (its `/metadata` is read).
           example: example
         options:
           additionalProperties: true
@@ -87137,8 +87153,8 @@ components:
         specReplayed:
           type: boolean
           title: Specreplayed
-          description: True when the stored import spec was replayed; false for an upload
-            from before spec capture, which ran with default options.
+          description: True when the stored import spec was replayed; false for an
+            upload from before spec capture, which ran with default options.
           example: false
         versionId:
           anyOf:
@@ -87178,7 +87194,8 @@ components:
         documentBase64:
           type: string
           title: Documentbase64
-          description: 'Standard base64 (RFC 4648) of the file bytes; no data: URL prefix.'
+          description: 'Standard base64 (RFC 4648) of the file bytes; no data: URL
+            prefix.'
           example: example
         contentType:
           anyOf:
@@ -87269,8 +87286,8 @@ components:
         eligible:
           type: boolean
           title: Eligible
-          description: True when the item's newest version came from a file upload, so
-            it can be re-uploaded.
+          description: True when the item's newest version came from a file upload,
+            so it can be re-uploaded.
           example: false
         stale:
           type: boolean
@@ -87327,8 +87344,8 @@ components:
           - $ref: '#/components/schemas/CatalogUploadSpec'
           - type: 'null'
             description: Response payload for catalog upload.
-          description: The stored import spec; null for an upload from before spec capture,
-            whose re-upload runs with default options.
+          description: The stored import spec; null for an upload from before spec
+            capture, whose re-upload runs with default options.
       type: object
       required:
       - itemId
@@ -87336,8 +87353,8 @@ components:
       - stale
       - staleAfterDays
       title: CatalogUploadOut
-      description: Whether an item's current version came from an upload and whether it
-        may be stale.
+      description: Whether an item's current version came from an upload and whether
+        it may be stale.
     CatalogUploadPolicy:
       properties:
         staleAfterDays:
@@ -87345,8 +87362,8 @@ components:
           maximum: 3650.0
           minimum: 1.0
           title: Staleafterdays
-          description: An uploaded item's newest version this many days old or older may
-            be stale (default 90).
+          description: An uploaded item's newest version this many days old or older
+            may be stale (default 90).
           example: 1
       additionalProperties: false
       type: object
@@ -88059,7 +88076,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         completed_at:
           anyOf:
           - type: string
@@ -89277,7 +89294,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
       type: object
       required:
       - api_key
@@ -89320,7 +89337,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -89781,7 +89798,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -89954,7 +89971,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -90559,13 +90576,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -93084,7 +93101,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 87eaa267-d650-47f1-8a4e-5cfdc25475de
+          example: d231ad01-f646-441e-acdf-d4d81fa73a7d
         method:
           type: string
           title: Method
@@ -95227,7 +95244,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         envelope:
           additionalProperties: true
           type: object
@@ -96718,7 +96735,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         browse_url:
           anyOf:
           - type: string
@@ -99355,6 +99372,15 @@ components:
             description: Export Job schema.
           description: Per-item outcomes of a batch export (MFX-39.2); null for any
             other job.
+        overlay:
+          anyOf:
+          - $ref: '#/components/schemas/ExportOverlayReport'
+          - type: 'null'
+            description: Export Job schema.
+          description: 'What the request''s ``overlays`` did (GVM-4.2): the applied
+            chain, one ledger row per changed leaf (plus a truncation row at the 500-row
+            cap) and one finding per action that could not be applied (``overlay.unmatched-target``,
+            …). Null without overlays.'
       additionalProperties: false
       type: object
       required:
@@ -99507,6 +99533,24 @@ components:
             an item that fails is reported on its own without failing the batch. At
             most 100 item × target pairs. Replaces ``artifact``; mutually exclusive
             with ``version``, ``versions`` and ``all_versions``.'
+        overlays:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ExportOverlay'
+            type: array
+            maxItems: 10
+            minItems: 1
+            description: Request body for export job start.
+          - type: 'null'
+            description: Request body for export job start.
+          title: Overlays
+          description: 'Overlay 1.0 / 1.1 / 1.2 documents applied, in this order,
+            to the source''s OpenAPI document before anything else runs (GVM-4.2):
+            fidelity, the emitter, validation and the export quality policy all judge
+            the post-overlay document. 1–10 entries; the result''s ``overlay`` lists
+            every changed leaf and every action that could not be applied. A source
+            not built from OpenAPI fails with `OVERLAY_SOURCE_UNSUPPORTED`. Not combinable
+            with a batch export.'
         all_versions:
           type: boolean
           title: All Versions
@@ -100172,6 +100216,171 @@ components:
       - truncated
       title: ExportMockRequestLogResponse
       description: The retained request log for one mock instance, newest first.
+    ExportOverlay:
+      properties:
+        name:
+          type: string
+          maxLength: 200
+          minLength: 1
+          title: Name
+          description: The overlay's label — usually its file name. Ledger rows and
+            findings name it.
+          example: Pet
+        document:
+          additionalProperties: true
+          type: object
+          title: Document
+          description: The parsed Overlay 1.0 / 1.1 / 1.2 document (`overlay`, `info`,
+            `actions`), at most 1 MiB serialized.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - document
+      title: ExportOverlay
+      description: 'One inline overlay of an export request: a label and the parsed
+        Overlay document.'
+    ExportOverlayFinding:
+      properties:
+        rule:
+          type: string
+          title: Rule
+          description: The `overlay` pack rule id (e.g. `overlay.unmatched-target`).
+          example: documentation.schema-missing-description
+        severity:
+          type: string
+          title: Severity
+          description: The rule's default severity (`warning` / `error`).
+          example: warning
+        overlay:
+          type: string
+          title: Overlay
+          description: The overlay the action came from.
+          example: example
+        action_index:
+          type: integer
+          title: Action Index
+          description: 0-based index of the action; -1 for a finding about the overlay
+            document itself.
+          example: 1
+        target:
+          type: string
+          title: Target
+          description: The action's `target` expression (empty when it had none).
+          default: ''
+          example: example
+        message:
+          type: string
+          title: Message
+          description: What was wrong.
+          example: Example validation message.
+      additionalProperties: false
+      type: object
+      required:
+      - rule
+      - severity
+      - overlay
+      - action_index
+      - message
+      title: ExportOverlayFinding
+      description: One overlay action that could not be applied, as an ``overlay``
+        pack finding.
+    ExportOverlayLedgerRow:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: JSON Pointer (RFC 6901) of the changed value in the source
+            document; `(truncated)` on the declared-truncation row.
+          example: example
+        kind:
+          type: string
+          title: Kind
+          description: '`set`, `replaced`, `appended` or `removed`; `truncated` on
+            the truncation row.'
+          example: example
+        overlay:
+          anyOf:
+          - type: string
+            description: Export Overlay Ledger Row schema.
+          - type: 'null'
+            description: Export Overlay Ledger Row schema.
+          title: Overlay
+          description: The overlay that made the change; null on the truncation row.
+        action_index:
+          anyOf:
+          - type: integer
+            description: Export Overlay Ledger Row schema.
+          - type: 'null'
+            description: Export Overlay Ledger Row schema.
+          title: Action Index
+          description: 0-based index of the action in that overlay's `actions`.
+        target:
+          anyOf:
+          - type: string
+            description: Export Overlay Ledger Row schema.
+          - type: 'null'
+            description: Export Overlay Ledger Row schema.
+          title: Target
+          description: The action's JSONPath `target`, verbatim.
+        detail:
+          type: string
+          title: Detail
+          description: 'One readable sentence: what happened to the value and why.'
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - pointer
+      - kind
+      - detail
+      title: ExportOverlayLedgerRow
+      description: 'One fidelity-ledger row for an overlay: a changed leaf, or the
+        declared truncation.'
+    ExportOverlayReport:
+      properties:
+        applied:
+          items:
+            type: string
+          type: array
+          title: Applied
+          description: Overlay names, in the order they were applied.
+          maxItems: 1000
+        ledger:
+          items:
+            $ref: '#/components/schemas/ExportOverlayLedgerRow'
+          type: array
+          title: Ledger
+          description: One row per changed leaf (capped at 500), plus a declared-truncation
+            row when the cap was reached.
+          maxItems: 1000
+        findings:
+          items:
+            $ref: '#/components/schemas/ExportOverlayFinding'
+          type: array
+          title: Findings
+          description: Actions that could not be applied — never silently skipped.
+          maxItems: 1000
+        changes:
+          type: integer
+          title: Changes
+          description: Total values the overlays changed, including any beyond the
+            cap.
+          example: 1
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when `ledger` itemizes only the first 500 changes.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - applied
+      - changes
+      - truncated
+      title: ExportOverlayReport
+      description: 'What the overlays of one export did: applied chain, per-leaf ledger
+        rows, findings.'
     ExportPreflightCapability:
       properties:
         verdict:
@@ -101227,8 +101436,8 @@ components:
           - type: 'null'
             description: Response payload for export roundtrip.
           title: Adapter Key
-          description: 'The import-adapter registry key that re-imported the emitted artifact;
-            null when the comparison was skipped (``status: unsupported``).'
+          description: 'The import-adapter registry key that re-imported the emitted
+            artifact; null when the comparison was skipped (``status: unsupported``).'
         status:
           $ref: '#/components/schemas/MatrixCellStatus'
           description: The round-trip verdict (``pass`` / ``fail`` / ``unsupported``),
@@ -101240,9 +101449,9 @@ components:
           - type: 'null'
             description: Response payload for export roundtrip.
           title: Reason
-          description: 'Human-readable explanation for a non-``pass`` status: why the
-            comparison was skipped, what failed to re-import, or which differences are
-            unaccounted for.'
+          description: 'Human-readable explanation for a non-``pass`` status: why
+            the comparison was skipped, what failed to re-import, or which differences
+            are unaccounted for.'
         diff_count:
           type: integer
           title: Diff Count
@@ -101260,16 +101469,16 @@ components:
             $ref: '#/components/schemas/MatchedDiff'
           type: array
           title: Matched
-          description: Each explained difference paired with the fidelity finding that
-            explains it.
+          description: Each explained difference paired with the fidelity finding
+            that explains it.
           maxItems: 1000
         unexplained:
           items:
             $ref: '#/components/schemas/CanonicalDiffEntry'
           type: array
           title: Unexplained
-          description: Differences no fidelity finding accounts for — a fidelity bug the
-            user should report.
+          description: Differences no fidelity finding accounts for — a fidelity bug
+            the user should report.
           maxItems: 1000
         overclaims:
           items:
@@ -101338,9 +101547,9 @@ components:
           - $ref: '#/components/schemas/RoundtripTextDiff'
           - type: 'null'
             description: Response payload for export roundtrip.
-          description: The emitted artifact beside the same format re-emitted from the
-            re-imported model (MFX-43.4); null when the loop did not close or the artifact
-            cannot be diffed as text (see ``text_diff_reason``).
+          description: The emitted artifact beside the same format re-emitted from
+            the re-imported model (MFX-43.4); null when the loop did not close or
+            the artifact cannot be diffed as text (see ``text_diff_reason``).
         text_diff_reason:
           anyOf:
           - type: string
@@ -101348,8 +101557,8 @@ components:
           - type: 'null'
             description: Response payload for export roundtrip.
           title: Text Diff Reason
-          description: 'Why ``text_diff`` is null when the loop closed: a multi-file bundle,
-            a binary artifact, one too large to send, or a re-emit that failed.'
+          description: 'Why ``text_diff`` is null when the loop closed: a multi-file
+            bundle, a binary artifact, one too large to send, or a re-emit that failed.'
       additionalProperties: false
       type: object
       required:
@@ -101364,68 +101573,20 @@ components:
       - registry_version
       title: ExportRoundtripResponse
       description: "The round-trip comparison result the Export Studio renders (IXH-4.4).\n\
-        \n``status`` speaks the IXH-1.7 matrix's vocabulary so a Studio run over a corpus\n\
-        entry reconciles with the published matrix cell:\n\n* ``pass`` — every empirical\
-        \ difference is explained by the fidelity report and\n  nothing over-claims preservation;\n\
-        * ``fail`` — at least one unexplained difference or over-claim (a fidelity bug\n\
-        \  worth reporting), or the emitted artifact could not be re-imported at all;\n\
-        * ``unsupported`` — the comparison was **skipped with an explanation** (no import\n\
-        \  adapter can re-ingest the emit format, or the emitter is unavailable here).\n\
-        \nThe three difference groups are exactly the reconciliation's: ``matched``\n\
-        (explained by the report — expected loss), ``unexplained`` (the report does not\n\
-        account for them), and ``overclaims`` (the report claimed preservation reality\n\
-        contradicts). The provenance fields (`emitter_version` / `apiome_version` /\n\
-        `registry_version` / fingerprints) give an unexplained difference's issue report\n\
-        its reproduction coordinates without shipping any source bytes."
-    RoundtripTextDiff:
-      properties:
-        filename:
-          type: string
-          title: Filename
-          description: The emitted document's path (e.g. ``schema.graphql``).
-          example: Example
-        media_type:
-          anyOf:
-          - type: string
-            description: Roundtrip Text Diff schema.
-          - type: 'null'
-            description: Roundtrip Text Diff schema.
-          title: Media Type
-          description: The emitted document's media type.
-        emitted:
-          type: string
-          title: Emitted
-          description: The emitted artifact, as text.
-          example: example
-        reemitted:
-          type: string
-          title: Reemitted
-          description: The same target re-emitted from the re-imported model.
-          example: example
-        identical:
-          type: boolean
-          title: Identical
-          description: True when the two texts are byte-identical.
-          example: false
-      additionalProperties: false
-      type: object
-      required:
-      - filename
-      - emitted
-      - reemitted
-      - identical
-      title: RoundtripTextDiff
-      description: 'The emitted artifact beside the same format re-emitted after the re-import
-        (MFX-43.4).
-
-
-        ``emitted`` is what the export produced; ``reemitted`` is what the same emitter
-        writes for
-
-        the re-imported model — i.e. what the artifact would become after one more import
-        + export
-
-        cycle. Identical texts mean the format round-trips byte-for-byte.'
+        \n``status`` speaks the IXH-1.7 matrix's vocabulary so a Studio run over a\
+        \ corpus\nentry reconciles with the published matrix cell:\n\n* ``pass`` —\
+        \ every empirical difference is explained by the fidelity report and\n  nothing\
+        \ over-claims preservation;\n* ``fail`` — at least one unexplained difference\
+        \ or over-claim (a fidelity bug\n  worth reporting), or the emitted artifact\
+        \ could not be re-imported at all;\n* ``unsupported`` — the comparison was\
+        \ **skipped with an explanation** (no import\n  adapter can re-ingest the\
+        \ emit format, or the emitter is unavailable here).\n\nThe three difference\
+        \ groups are exactly the reconciliation's: ``matched``\n(explained by the\
+        \ report — expected loss), ``unexplained`` (the report does not\naccount for\
+        \ them), and ``overclaims`` (the report claimed preservation reality\ncontradicts).\
+        \ The provenance fields (`emitter_version` / `apiome_version` /\n`registry_version`\
+        \ / fingerprints) give an unexplained difference's issue report\nits reproduction\
+        \ coordinates without shipping any source bytes."
     ExportTargetFidelity:
       properties:
         descriptor:
@@ -101554,6 +101715,21 @@ components:
             same call; the bytes are still discarded server-side.
           default: true
           example: false
+        overlays:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ExportOverlay'
+            type: array
+            maxItems: 10
+            minItems: 1
+            description: Request body for export verify.
+          - type: 'null'
+            description: Request body for export verify.
+          title: Overlays
+          description: Overlay documents applied, in order, to the source's OpenAPI
+            document before the verify runs (GVM-4.2) — the same chain an export job's
+            ``overlays`` applies, so a verify and the job it gates compute the same
+            snapshot.
         min_severity:
           $ref: '#/components/schemas/LossinessSeverity'
           description: Lowest loss severity that raises the advisory (MFX-2.4); does
@@ -101624,6 +101800,13 @@ components:
           $ref: '#/components/schemas/ExportVerifyVerdict'
           description: The overall go/no-go band the Generate gate reads (clean /
             lossy / invalid).
+        overlay:
+          anyOf:
+          - $ref: '#/components/schemas/ExportOverlayReport'
+          - type: 'null'
+            description: Response payload for export verify.
+          description: 'What the request''s ``overlays`` did (GVM-4.2): applied chain,
+            per-leaf ledger rows and unapplied-action findings. Null without overlays.'
         files:
           items:
             $ref: '#/components/schemas/ExportDispatchFile'
@@ -122857,7 +123040,8 @@ components:
           - type: 'null'
             description: Response payload for overlay lint.
           title: Revision
-          description: The supported revision it selects (`1.0`, `1.1`, `1.2`), or null.
+          description: The supported revision it selects (`1.0`, `1.1`, `1.2`), or
+            null.
         findings:
           items:
             $ref: '#/components/schemas/OverlayLintFindingOut'
@@ -123856,8 +124040,8 @@ components:
           - type: 'null'
             description: Request body for postman to open api.
           title: Base Url
-          description: When given, the OpenAPI document's only server (replaces the collection's
-            `baseUrl`).
+          description: When given, the OpenAPI document's only server (replaces the
+            collection's `baseUrl`).
       type: object
       required:
       - document
@@ -125930,7 +126114,9 @@ components:
             type: string
           type: array
           title: Existing Version Labels
-          description: Every live version label of the project, oldest first (#590). The wizard checks whether the import's version is already taken and, if so, offers a free sub-version (`1.0.0b`, `1.0.0c` …).
+          description: Every live version label of the project, oldest first (#590).
+            The wizard checks whether the import's version is already taken and, if
+            so, offers a free sub-version (`1.0.0b`, `1.0.0c` …).
           maxItems: 1000
         overall:
           type: string
@@ -133984,7 +134170,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
       additionalProperties: false
       type: object
       required:
@@ -134702,6 +134888,55 @@ components:
       title: RoleWriteRequest
       description: Create/update payload for a role (name, description, full permission
         grid).
+    RoundtripTextDiff:
+      properties:
+        filename:
+          type: string
+          title: Filename
+          description: The emitted document's path (e.g. ``schema.graphql``).
+          example: Example
+        media_type:
+          anyOf:
+          - type: string
+            description: Roundtrip Text Diff schema.
+          - type: 'null'
+            description: Roundtrip Text Diff schema.
+          title: Media Type
+          description: The emitted document's media type.
+        emitted:
+          type: string
+          title: Emitted
+          description: The emitted artifact, as text.
+          example: example
+        reemitted:
+          type: string
+          title: Reemitted
+          description: The same target re-emitted from the re-imported model.
+          example: example
+        identical:
+          type: boolean
+          title: Identical
+          description: True when the two texts are byte-identical.
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - filename
+      - emitted
+      - reemitted
+      - identical
+      title: RoundtripTextDiff
+      description: 'The emitted artifact beside the same format re-emitted after the
+        re-import (MFX-43.4).
+
+
+        ``emitted`` is what the export produced; ``reemitted`` is what the same emitter
+        writes for
+
+        the re-imported model — i.e. what the artifact would become after one more
+        import + export
+
+        cycle. Identical texts mean the format round-trips byte-for-byte.'
     RoutedEvent:
       properties:
         type:
@@ -143579,12 +143814,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
       additionalProperties: false
       type: object
       required:
@@ -144713,7 +144948,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         detected_by:
           anyOf:
           - type: string
@@ -149929,8 +150164,8 @@ components:
           - type: 'null'
             description: Request body for url import record.
           title: Versionid
-          description: The version the import produced (versions.id); its content is the
-            manual-edit baseline.
+          description: The version the import produced (versions.id); its content
+            is the manual-edit baseline.
         sourceKind:
           type: string
           maxLength: 128
@@ -149964,8 +150199,8 @@ components:
         authenticated:
           type: boolean
           title: Authenticated
-          description: The import was fetched with credentials. Recorded but never refreshed;
-            credentials are not sent.
+          description: The import was fetched with credentials. Recorded but never
+            refreshed; credentials are not sent.
           default: false
           example: false
       additionalProperties: false
@@ -149993,8 +150228,8 @@ components:
           - type: 'null'
             description: URL Import Settings Patch schema.
           title: Refreshintervalseconds
-          description: Seconds between checks (raised to the deployment floor). Omit to
-            keep it.
+          description: Seconds between checks (raised to the deployment floor). Omit
+            to keep it.
         useDefaultInterval:
           type: boolean
           title: Usedefaultinterval
@@ -150004,7 +150239,8 @@ components:
       additionalProperties: false
       type: object
       title: UrlImportSettingsPatch
-      description: Change a URL lineage's refresh; an omitted field is left as it is.
+      description: Change a URL lineage's refresh; an omitted field is left as it
+        is.
     UsageIngestRejection:
       properties:
         index:
@@ -151388,13 +151624,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-28T04:12:51Z'
+          example: '2026-10-31T02:33:48Z'
         outcome:
           anyOf:
           - type: string

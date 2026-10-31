@@ -1596,6 +1596,16 @@
       ]
     },
     {
+      "id": "export-studio-overlay",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/overlays.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportOverlaysStep.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/exportOverlays.ts"
+      ]
+    },
+    {
       "id": "catalog-bulk-export",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",

@@ -256,7 +256,9 @@ describe('Export studio — Several targets', () => {
     expect(continueButton).toBeEnabled();
 
     fireEvent.click(continueButton);
-    // Options is skipped: the next step is Verify.
+    // Options is skipped: the next step is Overlays (GVM-4.2), then Verify.
+    expect(screen.getByTestId('export-studio-overlays')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(screen.getByTestId('multi-export-verify')).toBeInTheDocument();
     const toReview = screen.getByRole('button', { name: 'Continue to review' });
     expect(toReview).toBeDisabled();
@@ -273,9 +275,11 @@ describe('Export studio — Several targets', () => {
     expect(screen.getByTestId('multi-export-generate')).toBeInTheDocument();
     expect(screen.queryByTestId('export-studio-generate')).toBeNull();
 
-    // Back from Verify returns to Target, not Options.
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    // Back from Verify passes Overlays and returns to Target, not Options.
+    fireEvent.click(screen.getByRole('button', { name: 'Back' })); // → verify
+    fireEvent.click(screen.getByRole('button', { name: 'Back' })); // → overlays
+    expect(screen.getByTestId('export-studio-overlays')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' })); // → target
     expect(screen.getByTestId('export-studio-multi-targets')).toBeInTheDocument();
   });
 });
@@ -342,6 +346,9 @@ describe('several targets and bulk export with the keyboard alone (X3)', () => {
       await tabTo(user, within(screen.getByTestId(`export-studio-multi-target-${key}`)).getByRole('checkbox'));
       await user.keyboard(' ');
     }
+    await tabTo(user, screen.getByRole('button', { name: 'Continue' }));
+    await user.keyboard('{Enter}');
+    // Overlays (GVM-4.2) → Verify.
     await tabTo(user, screen.getByRole('button', { name: 'Continue' }));
     await user.keyboard('{Enter}');
 

@@ -8,9 +8,9 @@ tags: [export]
 <Route path="/ade/dashboard/export/studio" />
 
 The **Export studio** converts one version — or one catalog item — into another format, and shows
-you what the conversion keeps and loses **before** you generate it. Five steps run across the top:
-**Source**, **Target**, **Options**, **Verify** and **Review & Generate**. **Back** and the step's
-main button at the foot move between them.
+you what the conversion keeps and loses **before** you generate it. Six steps run across the top:
+**Source**, **Target**, **Options**, **Overlays**, **Verify** and **Review & Generate**. **Back** and
+the step's main button at the foot move between them.
 
 <Screenshot id="export-studio" alt="Export studio on the Target step: target cards grouped by family, each with its fidelity tier" />
 
@@ -91,14 +91,15 @@ The cards become a checklist, each with its tier for this source.
 
 1. **Tick two or more targets.** **“Continue”** stays disabled until you have.
 2. **Click “Continue”.** The studio skips **3. Options**: every target exports with its default
-   options.
-3. On **4. Verify**, **click “Verify all targets”**. One dry run measures every target; a table lists
+   options. On **4. Overlays**, add any overlays (they apply to every target), then **click
+   “Continue”**.
+3. On **5. Verify**, **click “Verify all targets”**. One dry run measures every target; a table lists
    each target's tier and **% preserved**, and the line above it names the lowest fidelity. Nothing
    is generated yet. **Click “Continue to review”.**
 
    <Screenshot id="export-studio-multi-verify" alt="Verify with several targets: OpenAPI 3.1 lossless, GraphQL SDL and Protocol Buffers lossy, lowest fidelity 64% preserved" />
 
-4. On **5. Review & Generate**, **click “Generate”**, then **“Download .zip”**. The archive has a
+4. On **6. Review & Generate**, **click “Generate”**, then **“Download .zip”**. The archive has a
    folder per target and a `manifest.json`.
 
 Ticking or unticking a target clears the verification, so run it again. Untick **Several targets**
@@ -116,7 +117,30 @@ See [Export to an API gateway](./export-to-a-gateway.md) for what each one write
 The target's options: checkboxes, a row of choices, or text fields. Errors appear under the field,
 for example *… is required.* A target with no options says so. **Click “Continue”.**
 
-## 4. Verify
+## 4. Overlays
+
+Optional. An [OpenAPI Overlay](../bring-in/overlays.md) changes the exported document without
+changing the version: a partner's servers, public descriptions, `x-` extensions. With no overlays,
+the step says *No overlays — the version exports as it is.* **Click “Continue”.**
+
+To add overlays:
+
+1. **Click “Add overlay files”** and pick one or more overlay files (`.yaml`, `.yml` or `.json`).
+   Each one is listed with its title and number of actions.
+2. Put them in order. They apply from the top down, so the last one wins a conflict. Use the
+   **up** and **down** arrows to move one, and **×** to remove it.
+3. **Click “Continue”.**
+
+<Screenshot id="export-studio-overlay" alt="Overlays step: two overlay files listed in the order they apply, with move and remove buttons" />
+
+A file that is not an overlay, does not parse, or is larger than 1 MB is listed under the button
+and not added. An export applies at most 10 overlays. Uploading a file with the same name again
+replaces it and keeps its place.
+
+Overlays apply only to versions imported from OpenAPI. For any other version, Verify reports
+`OVERLAY_SOURCE_UNSUPPORTED`; remove the overlays to continue.
+
+## 5. Verify
 
 **Click “Run verification”** (or turn on **Verify automatically**). Fidelity, validation and lint run
 in one pass; nothing is generated or stored yet.
@@ -134,8 +158,14 @@ The banner gives the verdict:
 
 The **Fidelity**, **Validation** and **Lint** tabs carry counts. **Fidelity** shows the % preserved
 and what was dropped, approximated or synthesized; **Show per-construct report** opens the
-projection map, where each construct links to its reason. Changing the target or an option clears
-the verdict and the acknowledgement — run it again.
+projection map, where each construct links to its reason. Changing the target, an option or the
+overlays clears the verdict and the acknowledgement — run it again.
+
+With overlays, an **Overlays** panel under the tabs says how many values they changed. It lists any
+action that could not be applied (for example `overlay.unmatched-target`, an action whose target
+matches nothing), then one row per changed value: the value's path, the change (**Added**,
+**Replaced**, **Appended** or **Removed**) and the overlay that made it. The verdict, the lint grade
+and the fidelity all describe the overlaid document.
 
 **Lint** lints the *emitted* file, not the source. Apiome reads the file back and runs the same lint
 rules an import of that format runs, so a GraphQL export is checked by the GraphQL rules and a
@@ -147,10 +177,12 @@ and why.
 At the bottom of **Fidelity**, **click “See what a round-trip changes”** to check the prediction
 against reality: the [round-trip comparison](#check-a-round-trip) opens under the tabs and runs.
 
-## 5. Review & Generate
+## 6. Review & Generate
 
 The summary lists the **Source**, the **Target** (tier and % preserved) and the **Options** you
-changed. **Click “Generate”.**
+changed. **Click “Generate”.** With overlays, the
+generated file has their changes, and the **Overlays** panel shows the job's own list of changes.
+The round-trip check and the mock server test drive still use the version without overlays.
 
 <Screenshot id="export-studio-job" alt="Generating Protocol Buffers: running at 62%, the Emit stage active, a warning and Cancel" />
 

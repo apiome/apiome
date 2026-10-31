@@ -50,6 +50,7 @@ from apiome_cli.export_output import (
     format_projection_snapshot_lines,
     target_rows,
 )
+from apiome_cli.export_overlays import OVERLAY_HELP
 from apiome_cli.client.preflight import fetch_export_preflight
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
 from apiome_cli.help_util import group_callback_without_subcommand
@@ -174,6 +175,13 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         "@VERSION) instead of ARTIFACT: one batch job, one archive with a folder per item × "
         "target, at most 100 pairs. Prints each item's outcome; exits 7 when some failed.",
     )
+    @click.option(
+        "--overlay",
+        "overlay_paths",
+        multiple=True,
+        metavar="FILE",
+        help=OVERLAY_HELP,
+    )
     def _generic(
         artifact: str | None,
         version: str | None,
@@ -187,6 +195,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         fail_on: str | None,
         targets_raw: str | None,
         items_raw: str | None,
+        overlay_paths: tuple[str, ...],
     ) -> None:
         ctx = click.get_current_context()
         if (artifact is None) == (items_raw is None):
@@ -210,6 +219,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
                 confirm=confirm,
                 poll_interval=poll_interval,
                 export_timeout_override=export_timeout,
+                overlay_paths=overlay_paths,
             )
             return
         run_generic_export(
@@ -225,6 +235,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             export_timeout_override=export_timeout,
             min_grade=min_grade,
             fail_on=fail_on,
+            overlay_paths=overlay_paths,
         )
 
     return _generic
@@ -323,6 +334,12 @@ def export_openapi(
     ),
     min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
     fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+    overlay: list[str] = typer.Option(
+        [],
+        "--overlay",
+        metavar="FILE",
+        help=OVERLAY_HELP + " Runs the export as a job and writes JSON.",
+    ),
 ) -> None:
     """Export a version as OpenAPI and surface the emitter registry's fidelity report."""
     output = output.strip()
@@ -331,6 +348,28 @@ def export_openapi(
         raise typer.Exit(EXIT_USAGE)
 
     serialization = _parse_serialization(yaml_flag=yaml_serialization, accept=accept)
+    if overlay:
+        # GVM-4.2: overlays are applied by the export job, not the browse reconstruction.
+        if serialization != "json":
+            typer.echo("--overlay exports through the job pipeline, which writes JSON; drop --yaml.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        run_generic_export(
+            ctx,
+            target_format=_OPENAPI_TARGET,
+            artifact=project,
+            version=version,
+            out=output,
+            option_values=(),
+            force=force,
+            confirm=False,
+            poll_interval=DEFAULT_POLL_INTERVAL,
+            export_timeout_override=None,
+            min_grade=min_grade,
+            fail_on=fail_on,
+            overlay_paths=overlay,
+            tenant_override=tenant,
+        )
+        return
     settings = settings_from_context(ctx)
     require_api_key(settings)
     client = _export_client(ctx)

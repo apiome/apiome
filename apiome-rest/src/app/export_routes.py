@@ -77,6 +77,13 @@ from .export_fidelity import (
     build_target_fidelity,
 )
 from .export_job_engine import serialize_file_content
+from .export_overlay import (
+    MAX_EXPORT_OVERLAYS,
+    ExportOverlay,
+    ExportOverlayError,
+    ExportOverlayReport,
+    apply_export_overlays,
+)
 from .export_preflight import (
     ExportPreflightReport,
     ExportPreflightRequest,
@@ -459,6 +466,14 @@ class ExportVerifyRequest(BaseModel):
         "Monaco viewer (MFX-43.x) can render the preview from this same call; the bytes are "
         "still discarded server-side.",
     )
+    overlays: Optional[List[ExportOverlay]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_EXPORT_OVERLAYS,
+        description="Overlay documents applied, in order, to the source's OpenAPI document before "
+        "the verify runs (GVM-4.2) — the same chain an export job's ``overlays`` applies, so a "
+        "verify and the job it gates compute the same snapshot.",
+    )
     min_severity: LossinessSeverity = Field(
         default=LossinessSeverity.INFO,
         description="Lowest loss severity that raises the advisory (MFX-2.4); does not affect "
@@ -503,6 +518,11 @@ class ExportVerifyResponse(BaseModel):
     )
     verdict: ExportVerifyVerdict = Field(
         description="The overall go/no-go band the Generate gate reads (clean / lossy / invalid).",
+    )
+    overlay: Optional[ExportOverlayReport] = Field(
+        default=None,
+        description="What the request's ``overlays`` did (GVM-4.2): applied chain, per-leaf ledger "
+        "rows and unapplied-action findings. Null without overlays.",
     )
     files: List[ExportDispatchFile] = Field(
         default_factory=list,
@@ -1652,12 +1672,18 @@ async def verify_export(
     Raises:
         HTTPException: 404 when the artifact/version is unknown; 422 when the revision has no
             reconstructable source or the emitter produced no document; 400 when the target or
-            source format is unsupported; 422 when the emit options are invalid for the target.
+            source format is unsupported; 422 when the emit options are invalid for the target, or the
+            ``overlays`` cannot be applied (``{code, message}``: ``OVERLAY_SOURCE_UNSUPPORTED`` /
+            ``OVERLAY_INVALID``).
     """
     tenant_id = auth_data["tenant_id"]
     try:
         source = load_export_source(tenant_id, request.artifact, request.version)
     except ExportSourceError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
+    try:
+        source, overlay_report = apply_export_overlays(source, request.overlays)
+    except ExportOverlayError as exc:
         raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
 
     try:
@@ -1711,6 +1737,7 @@ async def verify_export(
         validation=validation_report,
         lint=lint,
         verdict=verdict,
+        overlay=overlay_report,
         files=files,
         truncated=truncated,
     )

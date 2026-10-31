@@ -31305,9 +31305,17 @@ tr:focus-within .pub-url__glyph {
    what "done" means. */
 .xstd-steps {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--space-2);
   list-style: none;
+}
+
+/* Six pills (Overlays joined in GVM-4.2) stay on one row down to a laptop width,
+   then fold to two rows of three before "Review & Generate" would clip. */
+@media (max-width: 75rem) {
+  .xstd-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 56.25rem) {
@@ -31701,6 +31709,66 @@ tr:focus-within .pub-url__glyph {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--fg);
+}
+
+/* ---- Step 4 · Overlays (GVM-4.2) ------------------------------------------ */
+/* The overlay chain: one row per uploaded overlay, numbered in the order it
+   applies, with move/remove controls. Neutral surface and ink only — the
+   chain carries no verdict, so it takes no tone. */
+.xstd-overlay__list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xstd-overlay__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
+.xstd-overlay__order {
+  display: inline-grid;
+  place-items: center;
+  inline-size: var(--icon-rail);
+  block-size: var(--icon-rail);
+  flex: none;
+  border-radius: var(--r-sm);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+}
+
+.xstd-overlay__main {
+  display: grid;
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.xstd-overlay__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+/* The ledger can run to 500 rows; it scrolls inside the panel instead of
+   stretching the step. */
+.xstd-overlay__ledger {
+  max-block-size: 24rem;
+  overflow: auto;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 /* ---- Step 2 · Target ----------------------------------------------------- */

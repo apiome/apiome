@@ -15,6 +15,7 @@
  * verdict those lenses hang under.
  */
 
+import type { ExportOverlayReport } from './exportOverlays';
 import {
   requiresExportAcknowledgement,
   type AcknowledgementMode,
@@ -197,6 +198,8 @@ export interface ExportVerifyResponse {
    * this; when absent it derives the same band from the lenses via {@link deriveVerifyVerdict}.
    */
   verdict?: ExportVerifyVerdict | null;
+  /** What the verify's overlays changed (GVM-4.2); null when it had none. */
+  overlay?: ExportOverlayReport | null;
 }
 
 /**

@@ -195,6 +195,23 @@ bound to the snapshot hash, not to the moment in time:
   snapshot hash is recorded on `result.batch.items[]`. See
   [Export a whole project or several versions in one job](./export-a-spec.md#export-a-whole-project-or-several-versions-in-one-job).
 
+## Overlay rows
+
+An export with [overlays](../bring-in/overlays.md#apply-overlays-on-export) adds one row to its
+ledger for every value an overlay changed: the value's JSON Pointer, what happened to it (`set`,
+`replaced`, `appended` or `removed`) and the overlay that did it. The Export studio shows them in
+the **Overlays** panel on Verify and on Review, and the job returns them as `result.overlay.ledger`.
+
+- Overlays apply in order, so a value two overlays changed has two rows, and the later one won.
+- After 500 rows a last row says how many changes there were in all. The ledger never claims to
+  be complete when it is not.
+- An action that could not be applied is listed as a finding (such as `overlay.unmatched-target`),
+  not as a row.
+
+Overlays change the document before the fidelity report is computed, so the report, the snapshot
+hash and the quality grade all describe the overlaid document. The same overlays give the same
+snapshot, so a verify with overlays can be acknowledged by a job with the same overlays.
+
 ## From the CLI
 
 ```bash
@@ -314,6 +331,7 @@ An export that crashes fails the check. The current grid is in the repository at
 | Multi-format export job: one zip, per-format fidelity + a rollup (`targets` list) | `POST /v1/export/{tenant}/jobs` |
 | Batch export job: several versions × formats, one zip, per-item status (`versions` / `all_versions`) | `POST /v1/export/{tenant}/jobs` |
 | Batch export job over several items, each at a version or its latest (`items`) | `POST /v1/export/{tenant}/jobs` |
+| Export (or verify) with overlays applied first; per-value ledger in `overlay` (`overlays` list) | `POST /v1/export/{tenant}/jobs`, `POST /v1/export/{tenant}/verify` |
 
 All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 
