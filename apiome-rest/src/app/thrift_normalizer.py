@@ -38,7 +38,7 @@ from .canonical_model import (
 from .normalizer import Keys, Normalizer, normalize_ordering
 from .thrift_parser import ThriftDocument, ThriftField
 
-__all__ = ["ThriftNormalizer"]
+__all__ = ["ThriftNormalizer", "primary_namespace"]
 
 _FORMAT_KEY = "thrift"
 
@@ -56,14 +56,28 @@ _THRIFT_BASE_TO_CANONICAL: Dict[str, str] = {
 }
 
 
-def _primary_namespace(document: ThriftDocument) -> Optional[str]:
-    if not document.namespaces:
+def primary_namespace(namespaces: Dict[str, str]) -> Optional[str]:
+    """The namespace a file's definitions are keyed under, from its ``namespace <lang> <name>`` lines.
+
+    A stable language key wins (``java``, ``py``, ``go``, ``cpp``, ``rb``, in that order), else the first
+    declared. The Thrift fidelity pack predicts re-import keys with it (MFX-25.3).
+
+    Args:
+        namespaces: Language → namespace, in declaration order.
+
+    Returns:
+        The namespace, or ``None`` when the file declares none.
+    """
+    if not namespaces:
         return None
-    # Prefer a stable language key when present.
     for lang in ("java", "py", "go", "cpp", "rb"):
-        if lang in document.namespaces:
-            return document.namespaces[lang]
-    return next(iter(document.namespaces.values()))
+        if lang in namespaces:
+            return namespaces[lang]
+    return next(iter(namespaces.values()))
+
+
+def _primary_namespace(document: ThriftDocument) -> Optional[str]:
+    return primary_namespace(document.namespaces)
 
 
 def _type_key(name: str, namespace: Optional[str]) -> str:

@@ -17,7 +17,7 @@ recorded as :class:`~app.emitter.Loss` entries rather than silently dropped.
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from pydantic import Field
 
@@ -35,6 +35,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .constraint_text import constraint_comment
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -46,10 +47,11 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .field_identity_store import FieldNumberAllocator
-from .lossiness import LossinessKind, LossinessReport
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import THRIFT_SCALAR_FOR_KIND, target_scalar
+from .thrift_normalizer import primary_namespace
 
 __all__ = ["THRIFT_RESERVED", "ThriftEmitOptions", "ThriftEmitter", "ThriftFidelityRulePack", "thrift_identifier"]
 
@@ -67,69 +69,275 @@ _THRIFT_BASE_FROM_CANONICAL: Dict[str, str] = {
 
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
+#: Type extras in which an importer records the parent types a record extends (TypeScript and
+#: Pydantic ``extends``, PostgreSQL table ``INHERITS``). Their fields are already merged into the
+#: record, which is how a Thrift ``struct`` (no inheritance) writes them — MFX-25.3.
+_INHERITANCE_EXTRAS = ("typescript_extends", "sql_inherits")
+
+
+def inherited_parents(type_: Type) -> List[str]:
+    """The parent types ``type_`` extends, as its importer recorded them (empty when none).
+
+    Args:
+        type_: A canonical type.
+
+    Returns:
+        The parent type names, in the order recorded.
+    """
+    parents: List[str] = []
+    for key in _INHERITANCE_EXTRAS:
+        value = type_.extras.get(key)
+        if isinstance(value, str) and value:
+            parents.append(value)
+        elif isinstance(value, list):
+            parents.extend(str(item) for item in value if item)
+    return parents
+
+
+def is_http_operation(operation: Operation) -> bool:
+    """Whether ``operation`` has an HTTP binding (a method or a path) that Thrift has no place for."""
+    return bool(operation.http_method or operation.http_path)
+
 
 class ThriftFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for Thrift export (MFX-14.2)."""
+    """Fidelity rules for Thrift export — MFX-14.2, enumerated losses MFX-25.3 (#4153).
+
+    The pack lays the model out with the Thrift writer (default options) and reads the names it chose,
+    so what it predicts is what the export writes and what a re-import gives back:
+
+    * **constraints** (pattern, bounds, lengths, format …) are written as a ``// constraints: …``
+      comment above the field, parameter or typedef — ``APPROX``: kept for readers, not enforced;
+    * **nullability** — Thrift has no null, so a nullable field is written ``optional`` — ``APPROX``;
+    * **HTTP bindings** — an HTTP operation becomes an RPC method (``APPROX``) and its method, path,
+      status codes and parameter locations are not written (``DROP``);
+    * **events** — event operations and channels have no Thrift form (``DROP``);
+    * **inheritance** — a record that extends others is written as one struct holding the inherited
+      fields (``APPROX``);
+    * **field ids** — a field with no source id gets one (``SYNTH``, the capability rule);
+    * **keys a re-import gives back** — a type, service or method declared under another name (a
+      namespace, a rename, Thrift's ``<service>.<method>`` keys) is a ``DROP`` under its key and a
+      ``SYNTH`` under the new one, and each ``<Method>Request`` struct the writer synthesizes for an
+      operation's parameters is a ``SYNTH``;
+    * the **document** — a non-Thrift source's title, version, description and servers have no place
+      in an IDL file (``DROP``), and a record or enum from another format is re-read as a Thrift
+      declaration (``APPROX``).
+
+    A Thrift source is written back as it was read and reports none of these.
+    """
 
     target_label = "Thrift"
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Note whether the model came from Thrift (its names are already Thrift identifiers)."""
+        """Lay the model out with the writer, then walk it."""
         self._thrift_source = api.format == "thrift"
+        self._api_services = api.services
+        writer = _ThriftWriter(api, ThriftEmitOptions())
+        writer.render()
+        self._writer = writer
+        self._namespace = primary_namespace(writer.written_namespaces())
+        self._source_keys = (
+            {t.key for t in api.types} | {s.key for s in api.services} | {o.key for o in api.operations()}
+        )
+        self._used_types = _referenced_type_names(api)
         return super().evaluate(api)
 
-    def _renamed(self, name: Optional[str]) -> bool:
-        """Whether the writer renames ``name`` (MFX-25.1): not for a Thrift source, whose names are valid."""
-        return not getattr(self, "_thrift_source", True) and thrift_identifier(name) != (name or "")
+    # -- keys a re-import gives back -----------------------------------------
+
+    def _key(self, name: str) -> str:
+        """The key the Thrift reader gives a top-level declaration named ``name``."""
+        return f"{self._namespace}.{name}" if self._namespace else name
+
+    def _type_key(self, type_: Type) -> Optional[str]:
+        """The key a re-import gives a declared type (``None`` for a map, which is written inline)."""
+        written = self._writer.type_names.get(type_.key)
+        return self._key(written) if written and type_.kind is not TypeKind.MAP else None
+
+    def _service_key(self, service_key: str) -> Optional[str]:
+        written = self._writer.service_names.get(service_key)
+        return self._key(written) if written else None
+
+    def _operation_key(self, operation: Operation) -> Optional[str]:
+        method = self._writer.method_names.get(operation.key)
+        service = next((s.key for s in self._api_services if any(o is operation for o in s.operations)), None)
+        service_key = self._service_key(service) if service else None
+        return f"{service_key}.{method}" if method and service_key else None
+
+    def _map_key(self, type_: Type) -> Optional[str]:
+        """The type key the Thrift reader gives a map written inline (``ns.map_string_i32_``), if it is used.
+
+        A ``MAP`` type has no Thrift declaration: every use is written ``map<K, V>``, and the reader makes
+        one type per map it meets, named after its key and value types. An unused map comes back as nothing.
+        """
+        if type_.kind is not TypeKind.MAP or type_.key not in self._used_types:
+            return None
+        key_expr = self._writer._render_type_ref(type_.key_type or TypeRef(name="string"))
+        value_expr = self._writer._render_type_ref(type_.value_type or TypeRef(name="string"))
+        spelled = f"map<{key_expr},{value_expr}>".replace(" ", "")
+        return self._key(spelled.replace("<", "_").replace(">", "_").replace(",", "_"))
+
+    def _rekeyed(self, old: str, new: Optional[str], noun: str) -> Optional[FidelityVerdict]:
+        """A ``DROP`` under ``old`` when a re-import keys the construct as ``new`` (``None`` when unchanged)."""
+        if self._thrift_source or new is None or new == old:
+            return None
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} keys a {noun} by its declared name; {old!r} reads back as {new!r}",
+            severity=LossinessSeverity.INFO,
+            target_mapping=f"{noun} → {new}",
+        )
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The keys a re-import creates: renamed types, services and methods, and synthesized request structs."""
+        if self._thrift_source:
+            return []
+        out: List[Tuple[str, FidelityVerdict]] = []
+
+        def add(key: Optional[str], message: str, mapping: str) -> None:
+            if key and key not in self._source_keys and all(key != k for k, _ in out):
+                out.append((key, FidelityVerdict.synth(
+                    message=f"{self.target_label}: {message}", severity=LossinessSeverity.INFO,
+                    target_mapping=mapping,
+                )))
+
+        for type_ in api.types:
+            if self._type_key(type_):
+                add(self._type_key(type_), f"{type_.key!r} is declared as {self._writer.type_names[type_.key]!r}",
+                    "type")
+            add(self._map_key(type_), f"the map {type_.key!r} is written inline and read back as a map type",
+                "map → inline map<K, V>")
+        for service in api.services:
+            add(self._service_key(service.key), f"service {service.name!r} is declared under its Thrift name",
+                "service")
+            for operation in service.operations:
+                add(self._operation_key(operation), f"{operation.key!r} is the RPC method of its service", "method")
+        for op_key, struct in self._writer.request_struct_names.items():
+            add(self._key(struct), f"the parameters of {op_key!r} are the synthesized struct {struct!r}",
+                "parameters → request struct")
+        return out
+
+    # -- root and services ------------------------------------------------------
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """Agent descriptors have no Thrift form."""
-        if not api.agents:
-            return []
-        return [FidelityVerdict.drop(
-            message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
-            target_mapping="agents → dropped",
-        )]
+        """Agent descriptors, and a non-Thrift source's document envelope."""
+        verdicts: List[FidelityVerdict] = []
+        if api.agents:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
+                target_mapping="agents → dropped",
+            ))
+        if not self._thrift_source:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} IDL has no document title, version, description or servers; the "
+                f"API is written as {'namespace ' + repr(self._namespace) if self._namespace else 'an IDL file'} "
+                "and reads back as an RPC API",
+                severity=LossinessSeverity.INFO,
+                target_mapping="document → IDL file",
+            ))
+        return verdicts
 
-    def type_verdict(self, type_: Type) -> FidelityVerdict:
-        verdict = super().type_verdict(type_)
-        if verdict.kind is LossinessKind.OK and self._renamed(type_.name):
-            return FidelityVerdict.approx(
-                message=f"{self.target_label} type names are identifiers; {type_.name!r} is written as "
-                f"{thrift_identifier(type_.name)!r}",
-                target_mapping="type → renamed",
-            )
-        return verdict
+    def service_verdicts(self, service: Any) -> List[FidelityVerdict]:
+        rekeyed = self._rekeyed(service.key, self._service_key(service.key), "service")
+        return [rekeyed] if rekeyed else []
 
-    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
-        if (
-            operation.kind not in _EVENT_OPERATION_KINDS
-            and not (operation.http_method or operation.http_path)
-            and self._renamed(operation.name)
-        ):
-            return FidelityVerdict.approx(
-                message=f"{self.target_label} method names are identifiers; {operation.name!r} is written as "
-                f"{thrift_identifier(operation.name)!r}",
-                target_mapping="method → renamed",
-            )
+    # -- operations ---------------------------------------------------------------
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The method an operation becomes, its HTTP binding, streaming, and its key."""
         if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.drop(
+            return [FidelityVerdict.drop(
                 message=f"{self.target_label} has no event vocabulary; "
                 f"{operation.kind.value} operation {operation.key!r} is dropped",
                 target_mapping="event operation → dropped",
-            )
-        if operation.http_method or operation.http_path:
+            )]
+        verdicts = [self.operation_verdict(operation)]
+        if is_http_operation(operation) and not self._thrift_source:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no HTTP binding; the method, path, status codes and parameter "
+                f"locations of {operation.key!r} are not written",
+                target_mapping="HTTP binding → dropped",
+            ))
+        if operation.streaming is not StreamingMode.NONE:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no streaming; {operation.key!r} is written as one call",
+                target_mapping="stream → single call",
+            ))
+        rekeyed = self._rekeyed(operation.key, self._operation_key(operation), "method")
+        return verdicts + ([rekeyed] if rekeyed else [])
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        name = self._writer.method_names.get(operation.key)
+        if is_http_operation(operation):
             return FidelityVerdict.approx(
-                message=f"{self.target_label} has no HTTP binding; reframing "
-                f"{operation.key!r} as an RPC method",
+                message=f"{self.target_label} has no HTTP binding; {operation.key!r} is written as the RPC "
+                f"method {name or operation.name!r}",
                 target_mapping="HTTP operation → RPC method",
             )
-        return super().operation_verdict(operation)
+        if name and name != operation.name and not self._thrift_source:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} method names are identifiers; {operation.name!r} is written as {name!r}",
+                target_mapping="method → renamed",
+            )
+        verdict = super().operation_verdict(operation)
+        if verdict.kind is LossinessKind.OK and name and not self._thrift_source:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label}: {operation.key!r} is written as a Thrift method — one argument, the "
+                "first success response as its return type, and only exception types thrown",
+                severity=LossinessSeverity.INFO,
+                target_mapping="operation → Thrift method",
+            )
+        return verdict
+
+    # -- types and fields ---------------------------------------------------------
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict, its inheritance, and its key."""
+        verdicts = [self.type_verdict(type_)]
+        parents = inherited_parents(type_) if type_.kind is TypeKind.RECORD else []
+        if parents and not self._thrift_source:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"{self.target_label} structs have no inheritance; {type_.key!r} is written with the "
+                f"fields it inherits from {', '.join(parents)}",
+                target_mapping="inheritance → flattened struct",
+            ))
+        if type_.kind is TypeKind.MAP and not self._thrift_source:
+            verdicts = [FidelityVerdict.drop(
+                message=f"{self.target_label} maps are written inline as map<K, V>; the declaration "
+                f"{type_.key!r} is not kept",
+                severity=LossinessSeverity.INFO,
+                target_mapping="map → inline map<K, V>",
+            )]
+        rekeyed = self._rekeyed(type_.key, self._type_key(type_), "type")
+        return verdicts + ([rekeyed] if rekeyed else [])
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        verdict = super().type_verdict(type_)
+        if verdict.kind is not LossinessKind.OK:
+            return verdict
+        written = self._writer.type_names.get(type_.key)
+        if written and written != type_.name and not self._thrift_source:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} type names are identifiers; {type_.name!r} is written as {written!r}",
+                target_mapping="type → renamed",
+            )
+        if not self._thrift_source and type_.kind in (TypeKind.RECORD, TypeKind.UNION, TypeKind.ENUM):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label}: {type_.key!r} is written as a Thrift {_thrift_keyword(type_)} — "
+                "fields get ids, required or optional and Thrift base types, and descriptions are not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{type_.kind.value} → {_thrift_keyword(type_)}",
+            )
+        return verdict
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        """The capability verdicts, plus an ``APPROX`` when the writer renames the field (MFX-25.1)."""
+        """The capability verdicts (field ids), constraints as a comment, nullability, and renames."""
         verdicts = super().field_verdicts(field)
-        if self._renamed(field.name):
+        if field.type.nullable and not self._thrift_source:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"{self.target_label} has no null; the nullable field {field.key!r} is written optional "
+                "(absent, not null)",
+                severity=LossinessSeverity.INFO,
+                target_mapping="nullable → optional",
+            ))
+        if field.name and thrift_identifier(field.name) != field.name and not self._thrift_source:
             verdicts.append(FidelityVerdict.approx(
                 message=f"{self.target_label} field names are identifiers; {field.name!r} is written as "
                 f"{thrift_identifier(field.name)!r}",
@@ -137,14 +345,48 @@ class ThriftFidelityRulePack(CapabilityRulePack):
             ))
         return verdicts
 
-    def field_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
-        if _has_any_constraint(field.constraints):
-            return FidelityVerdict.approx(
-                message=f"{self.target_label} cannot enforce validation constraints; "
-                f"{field.key!r} is approximated without facets",
-                target_mapping="constraints → dropped",
-            )
-        return super().field_verdict(field)
+    def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Constraints are written as a ``// constraints: …`` comment, not enforced."""
+        comment = constraint_comment(field.constraints)
+        if comment is None:
+            return None
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} has no validation; the constraints of {field.key!r} are written as a "
+            f"comment ({comment}), not enforced",
+            target_mapping="constraints → comment",
+        )
+
+
+def _referenced_type_names(api: CanonicalApi) -> set:
+    """Every type name a field, parameter or message payload refers to (list items included)."""
+    names: set = set()
+
+    def visit(ref: Optional[TypeRef]) -> None:
+        while ref is not None:
+            if ref.name:
+                names.add(ref.name)
+            ref = ref.item
+
+    for type_ in api.types:
+        for field in type_.fields:
+            visit(field.type)
+        visit(type_.aliased)
+        visit(type_.value_type)
+    for operation in api.operations():
+        for param in operation.parameters:
+            visit(param.type)
+        for message in operation.messages:
+            visit(message.payload)
+    return names
+
+
+def _thrift_keyword(type_: Type) -> str:
+    """The Thrift declaration keyword a type is written as (``struct``, ``union``, ``enum``)."""
+    if type_.kind is TypeKind.ENUM:
+        return "enum"
+    if type_.kind is TypeKind.UNION:
+        return "union"
+    return "struct"
 
 
 class ThriftEmitOptions(EmitOptions):
@@ -320,6 +562,24 @@ class _ThriftWriter:
         self._service_names = {svc.key: self._top.claim(svc.name, "Service") for svc in api.services}
         self._exceptions = self._exception_types()
         self._request_structs: List[List[str]] = []
+        #: Operation key → the method name written (MFX-25.3: the fidelity pack predicts re-import keys).
+        self.method_names: Dict[str, str] = {}
+        #: Operation key → the ``<Method>Request`` struct synthesized for its parameters.
+        self.request_struct_names: Dict[str, str] = {}
+
+    @property
+    def type_names(self) -> Dict[str, str]:
+        """Type key → the name the type is declared under (maps, written inline, are absent)."""
+        return dict(self._names)
+
+    @property
+    def service_names(self) -> Dict[str, str]:
+        """Service key → the name the service is declared under."""
+        return dict(self._service_names)
+
+    def written_namespaces(self) -> Dict[str, str]:
+        """Language → namespace, as the ``namespace`` lines are written."""
+        return dict(self._namespaces())
 
     # ------------------------------------------------------------------
     # Document
@@ -362,6 +622,13 @@ class _ThriftWriter:
                 lines.append("")
 
         services = [self._render_service(service) for service in self._api.services]
+        for channel in self._api.channels:
+            self.losses.record(
+                LossKind.NA,
+                "channel-dropped",
+                f"Thrift has no event channels; {channel.key!r} is not written.",
+                pointer=channel.key,
+            )
         for struct in self._request_structs:
             lines.extend(struct)
             lines.append("")
@@ -445,6 +712,15 @@ class _ThriftWriter:
                 )
             return self._render_struct(type_, keyword="exception")
         if type_.kind is TypeKind.RECORD:
+            parents = inherited_parents(type_)
+            if parents and not self._thrift_source:
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "inheritance-flattened",
+                    f"Thrift structs have no inheritance; {type_.key!r} is written with the fields it inherits "
+                    f"from {', '.join(parents)}.",
+                    pointer=type_.key,
+                )
             return self._render_struct(type_, keyword="struct")
         if type_.kind in (TypeKind.ALIAS, TypeKind.SCALAR):
             return self._render_typedef(type_)
@@ -472,7 +748,9 @@ class _ThriftWriter:
                     pointer=type_.key,
                 )
         self.tracker.record(type_.key, Provenance.SOURCE)
-        return [f"typedef {expr} {self._names[type_.key]}"]
+        return self._constraint_lines(type_.constraints, type_.key, "") + [
+            f"typedef {expr} {self._names[type_.key]}"
+        ]
 
     def _render_enum(self, type_: Type) -> List[str]:
         lines = [f"enum {self._names[type_.key]} {{"]
@@ -517,6 +795,7 @@ class _ThriftWriter:
             numbered.append((number, field))
         scope = _Scope()
         for number, field in sorted(numbered, key=lambda pair: pair[0]):
+            lines.extend(self._constraint_lines(field.constraints, field.key, "  "))
             lines.append(f"  {self._render_field(field, number, scope, in_union=keyword == 'union')},")
         self.field_identity_assignments.update(allocator.new_assignments)
         lines.append("}")
@@ -555,6 +834,13 @@ class _ThriftWriter:
         required = field.extras.get("thrift_required")
         if required is None:
             required = not field.type.nullable and not in_union
+            if field.type.nullable and not in_union and not self._thrift_source:
+                self.losses.record(
+                    LossKind.INFERRED,
+                    "nullable-as-optional",
+                    f"Thrift has no null; the nullable field {field.key!r} is written optional (absent, not null).",
+                    pointer=field.key,
+                )
         modifier = "required " if required else "optional "
         fmt = field.constraints.format if field.constraints is not None else None
         type_expr = self._render_type_ref(field.type, fmt)
@@ -573,6 +859,28 @@ class _ThriftWriter:
         else:
             self.tracker.record(field.key, Provenance.SOURCE)
         return f"{number}: {modifier}{type_expr} {name}{default_suffix}"
+
+    def _constraint_lines(self, constraints: Any, pointer: str, indent: str) -> List[str]:
+        """A ``// constraints: …`` line for what Thrift cannot enforce (MFX-25.3), recorded as a loss.
+
+        Args:
+            constraints: The field's, parameter's or type's :class:`~app.canonical_model.Constraints`.
+            pointer: The construct key the loss is recorded against.
+            indent: The indentation of the line it precedes.
+
+        Returns:
+            The comment line, or nothing when there is no constraint (or only a width ``format``).
+        """
+        comment = constraint_comment(constraints)
+        if comment is None:
+            return []
+        self.losses.record(
+            LossKind.INFERRED,
+            "constraints-as-comment",
+            f"Thrift has no validation; the constraints of {pointer!r} are written as a comment ({comment}).",
+            pointer=pointer,
+        )
+        return [f"{indent}// {comment}"]
 
     def _render_type_ref(self, ref: TypeRef, fmt: Optional[str] = None) -> str:
         """Render a type reference as a Thrift type expression.
@@ -634,6 +942,12 @@ class _ThriftWriter:
         scope = _Scope()
         for operation in service.operations:
             if operation.kind in _EVENT_OPERATION_KINDS:
+                self.losses.record(
+                    LossKind.NA,
+                    "event-operation-dropped",
+                    f"Thrift has no events; the {operation.kind.value} operation {operation.key!r} is not written.",
+                    pointer=operation.key,
+                )
                 continue
             rendered = self._render_method(operation, scope)
             if rendered:
@@ -644,6 +958,15 @@ class _ThriftWriter:
 
     def _render_method(self, operation: Operation, scope: _Scope) -> str:
         name = scope.claim(operation.name, "call")
+        self.method_names[operation.key] = name
+        if is_http_operation(operation) and not self._thrift_source:
+            self.losses.record(
+                LossKind.NA,
+                "http-binding-dropped",
+                f"Thrift has no HTTP binding; the method, path, status codes and parameter locations of "
+                f"{operation.key!r} are not written (it is the RPC method {name!r}).",
+                pointer=operation.key,
+            )
         if name != operation.name and not self._thrift_source:
             self.losses.record(
                 LossKind.INFERRED,
@@ -698,6 +1021,7 @@ class _ThriftWriter:
         for number, param in enumerate(operation.parameters, start=1):
             modifier = "required " if param.required else "optional "
             fmt = param.constraints.format if param.constraints is not None else None
+            lines.extend(self._constraint_lines(param.constraints, param.key, "  "))
             lines.append(f"  {number}: {modifier}{self._render_type_ref(param.type, fmt)} "
                          f"{scope.claim(param.name, 'param')},")
         if request is not None and request.payload is not None:
@@ -705,6 +1029,7 @@ class _ThriftWriter:
                          f"{scope.claim('body')},")
         lines.append("}")
         self._request_structs.append(lines)
+        self.request_struct_names[operation.key] = struct_name
         self.losses.record(
             LossKind.INFERRED,
             "request-struct-synthesized",

@@ -76,21 +76,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation 409bca25-9ae3-4fdf-a04b-5c1f1a658aa6; changed roo',
+        'added channel com.example.product; added operation 43df6329-226e-4677-ad73-f50348e0bc54; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation 6521d798-2692-44e5-a0c4-4aed28197872; changed root; ',
+        'added channel com.example.user; added operation 11f3b00e-1be6-4186-a851-ae878d78fa8a; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation 28ed5236-1c29-4800-8676-2d5517be627e; changed ',
+        'added channel com.example.cronwidget; added operation 6f3fafe9-4bc3-4b43-a5ee-be48629571f3; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 76e4b4bb-487a-479d-af78-b3e5a1d8a191; changed root',
+        'added channel com.example.orders; added operation d17c965c-60e7-401d-8343-428bd364e755; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation 7f79a76f-c45c-4d5f-9943-7431ab7d7089; c',
+        'added channel com.example.commerce.ontology; added operation c6afc2a8-981d-44d4-8a30-b89b0859527e; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 918dfb0c-bc58-4129-96ca-57d4e5267546',
+        'added channel com.example.typicalsensormessage; added operation eb6104ea-af13-4eba-b373-fd4d66a05ece',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation d784c0c3-9de9-4418-b772-c8',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation c7249215-eb39-4824-b0ba-2d',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation 6337af43-2863-4988-9430-d5111c42fb4a; changed r',
+        'added channel com.example.orderline; added operation 436737fc-62c4-4107-833c-f068b14e1ef9; changed r',
     # --- connectrpc (15) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
@@ -368,49 +368,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
     ('tyk', 'protobuf'):
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
-    # --- thrift (21) ---
-    ('arazzo', 'thrift'):
-        'removed operation checkout#addItem; removed operation checkout#createCart; removed operation checkou',
-    ('avro-idl', 'thrift'):
-        'changed operation com.example.orders.OrderService.cancelOrder; changed operation com.example.orders.',
-    ('capnproto', 'thrift'):
-        'changed operation Directory.add; changed operation Directory.lookup; changed root; changed type Addr',
-    ('connectrpc', 'thrift'):
-        'changed operation tasks.v1.TaskService.CompleteTask; changed operation tasks.v1.TaskService.CreateTa',
-    ('corbaidl', 'thrift'):
-        'changed operation Banking.Bank.deposit; changed operation Banking.Bank.getAccount; changed operation',
-    ('edix12', 'thrift'):
-        'changed root; removed type X12-850.PO1; removed type X12-850.TransactionSet850; added type X12_850.P',
-    ('fix', 'thrift'):
-        'changed root; removed type FIX.4.4.Message8; added type FIX._4._4.Message8',
-    ('flatbuffers', 'thrift'):
-        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
-    ('idoc', 'thrift'):
-        'changed root; removed type IDOC-ORDERS05.E1EDK01; removed type IDOC-ORDERS05.E1EDK03; removed type I',
-    ('iso20022', 'thrift'):
-        'changed root; removed type pain.001.001.09.Amt; removed type pain.001.001.09.CdtTrfTxInf; removed ty',
-    ('iso8583', 'thrift'):
-        'changed root; removed type 0100.DE11; removed type 0100.DE12; removed type 0100.DE13; removed type 0',
-    ('kafka-connect', 'thrift'):
-        'changed root; changed type com.example.orders.Order',
-    ('lwm2m', 'thrift'):
-        'removed operation TemperatureService.ResetMinAndMaxMeasuredValues; added operation urn_oma_lwm2m_ext',
-    ('matter', 'thrift'):
-        'changed operation OnOffService.Off; changed operation OnOffService.OffWithEffect; changed operation ',
-    ('nacha', 'thrift'):
-        'changed root; removed type NACHA-ACH.AchFile; removed type NACHA-ACH.Batch; removed type NACHA-ACH.B',
-    ('ncpdp', 'thrift'):
-        'changed root; removed type NCPDP-SCRIPT.Address; removed type NCPDP-SCRIPT.Body; removed type NCPDP-',
-    ('protobuf', 'thrift'):
-        'changed operation example.catalog.v1.ProductService.CreateProduct; changed operation example.catalog',
-    ('protobuf-editions', 'thrift'):
-        'changed operation example.orders.v1.OrderService.GetOrder; changed operation example.orders.v1.Order',
-    ('sepa', 'thrift'):
-        'changed root; removed type pain.001.001.09.Amt; removed type pain.001.001.09.CdtTrfTxInf; removed ty',
-    ('wsdl', 'thrift'):
-        'removed operation http://example.com/orders.OrderPort.CancelOrder; removed operation http://example.',
-    ('wsdl2', 'thrift'):
-        'removed operation http://example.com/orders.OrderInterface.cancelOrder; removed operation http://exa',
     # --- wit (12) ---
     ('acp', 'wit'):
         'removed agent research-assistant; added operation apiome:research-assistant.research-assistant.cite-',

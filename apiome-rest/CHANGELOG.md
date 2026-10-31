@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.564.0] - 2026-10-30
+
+### Changed
+- **Thrift fidelity pack: every loss enumerated (MFX-25.3, #4153).** `ThriftFidelityRulePack` lays the model out with
+  the Thrift writer and reports, on the construct each concerns:
+  - constraints (pattern, bounds, lengths, format) as an `APPROX` "written as a comment, not enforced" — and the
+    writer now **writes** them: a `// constraints: …` line (`app.constraint_text.constraint_comment`) above each
+    struct field, request-struct parameter and typedef (writer loss `constraints-as-comment`);
+  - a nullable field written `optional` (`APPROX`, `nullable-as-optional`);
+  - an HTTP operation: the RPC method (`APPROX`) **and** a `DROP` of its method, path, status codes and parameter
+    locations (`http-binding-dropped`);
+  - event operations and channels as `DROP` (the writer skipped them without a loss; now `event-operation-dropped`,
+    `channel-dropped`); streaming as `DROP`;
+  - a record that extends others (`typescript_extends`, `sql_inherits`; `inherited_parents`) as a flattened struct
+    (`APPROX`, `inheritance-flattened`);
+  - field ids with no source id as `SYNTH` (capability rule);
+  - a map type as a `DROP` (written inline as `map<K, V>`);
+  - for a non-Thrift source: the document (title, version, description, servers) as a root `DROP`, records / unions
+    / enums re-read as Thrift declarations and RPC operations re-read as Thrift methods (`APPROX`, info), and every
+    key a re-import gives back — a renamed type / service / method (`<service>.<method>`), the `<Method>Request`
+    struct, the reader's `map_K_V_` types — as a `DROP` under the old key and a `SYNTH` under the new one
+    (`service_verdicts` / `synthesized_verdicts`, MFX-17.2).
+- `app.thrift_normalizer.primary_namespace(namespaces)` is public (the pack predicts re-import keys with it). The
+  writer exposes `type_names`, `service_names`, `method_names`, `request_struct_names` and `written_namespaces()`.
+- Goldens: `tests/fixtures/thrift_roundtrip/measurements.json` — every cross-format source (OpenAPI ×2, gRPC,
+  GraphQL, Avro, WSDL) now round-trips with 0 unexplained differences and 0 overclaims (were 75 and 52); 89 `→ thrift`
+  round-trip xfails now pass (entries removed, matrix regenerated). OpenAPI 1.428.0.
+
 ## [1.563.0] - 2026-10-30
 
 ### Changed
