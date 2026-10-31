@@ -1,0 +1,19 @@
+---
+slug: x12-guide-validation
+title: X12 guides are checked before download
+description: Every X12 implementation-guide export is validated; a broken guide fails with detail.
+authors: [apiome]
+---
+
+**X12 implementation guide** exports are now machine-checked before you get them.
+[What the check rejects](/ship/export-a-spec#x12-implementation-guide-from-any-source).
+
+{/* truncate */}
+
+- **Every problem, with where it is.** A broken guide fails the export and lists each problem with its
+  file, its place in the guide and its rule: the guide's JSON format, segment and element references,
+  code lists, and the CSV and Markdown files agreeing with the JSON.
+- **Checked against the X12 dictionary.** When the server has pyx12, the `ST` / `SE` envelope and the
+  segments carried from an imported X12 item are compared with the standard segment definitions.
+- **Two fixes the checks found.** A `004010` guide no longer has an `ST03` element, which that version
+  does not define, and a guide with more than 98 segments keeps four-digit positions.

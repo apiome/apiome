@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.568.0] - 2026-10-31
+
+### Added
+- **X12 implementation-guide validation (MFX-24.4, #4148).** New `app.x12_guide_validation`, registered for the
+  `x12-guide` target in the MFX-5.1 export validator seam (`export_validation._validate_x12_guide`), so a broken
+  guide fails the export job (`EMITTED_ARTIFACT_INVALID`). Every problem is a finding with its rule (`keyword`), file
+  and JSON Pointer:
+  - `x12-guide.schema`: the JSON guide against `GUIDE_SCHEMA`;
+  - segment / element / usage / length / type rules;
+  - `x12-guide.codes`: code-set consistency;
+  - referential integrity (`undefined-segment`, `unused-segment`, `loop`, `position`, `max-use`, `envelope`);
+  - `x12-guide.files`: the CSV and Markdown files match the JSON;
+  - `x12-guide.dictionary`: a pyx12 spot-check of the `ST` / `SE` envelope and of segments carried from X12
+    against the standard segment dictionary, skipped (reason in `detail`) without pyx12 or maps for the version.
+- `validate_x12_guide` now reports through the same rules (first problem raised).
+- Fixtures `tests/fixtures/x12_guide_validation/` (regenerate with `APIOME_REGEN_X12_GUIDE_VALIDATION=1`).
+
+### Fixed
+- An X12 guide for a version before `004020` no longer writes `ST03`, which those versions do not define.
+- A guide with more than 98 segment uses keeps four-digit positions (they reached `10000`).
+- OpenAPI 1.432.0.
+
 ## [1.567.0] - 2026-10-31
 
 ### Added
