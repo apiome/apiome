@@ -119,7 +119,7 @@ server is greyed out in the app with the missing tool named, whatever its tier.
 
 {/* export-target-tiers:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_export_target_tiers_doc.py */}
 
-Each of the 56 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
+Each of the 57 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
 
 | Target | Kind | From a REST API | From an RPC service | From an event API | From types only |
 | --- | --- | --- | --- | --- | --- |
@@ -159,6 +159,7 @@ Each of the 56 targets, measured against four small sources: **From a REST API**
 | Kong Declarative Config | REST | `lossy` | not offered | not offered | not offered |
 | Kubernetes CRD | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | LLM Tool Definitions | Agent tools | `lossy` | `lossy` | `lossy` | `lossy` |
+| MCP Tool Definitions | Agent tools | `lossy` | `lossy` | not offered | not offered |
 | OData | REST | `lossy` | `lossy` | `lossy` | `lossy` |
 | ODCS Data Contract | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | ONC RPC | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
@@ -198,6 +199,7 @@ Why a target is not offered for a source:
 - **ISO 8583** — Only a source imported as ISO 8583 can be exported to ISO 8583.
 - **Istio VirtualService** — Istio VirtualService export needs at least one HTTP operation (a method and a path); this source has none.
 - **Kong Declarative Config** — Kong Declarative Config export needs at least one HTTP operation (a method and a path); this source has none.
+- **MCP Tool Definitions** — MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.
 - **Postman** — Postman export needs at least one HTTP operation (a method and a path); this source has none.
 - **SAP IDoc** — Only a source imported as SAP IDoc can be exported to SAP IDoc.
 - **Thunder Client** — Thunder Client export needs at least one HTTP operation (a method and a path); this source has none.

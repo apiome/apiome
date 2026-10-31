@@ -297,6 +297,27 @@ def _has_record_type(api: CanonicalApi) -> bool:
     return any(type_.kind is TypeKind.RECORD for type_ in api.types)
 
 
+#: The capability kinds of an imported MCP manifest that are not tools (``Service.extras["mcp_kind"]``).
+_NON_TOOL_MCP_KINDS = frozenset({"resource", "prompt"})
+
+
+def _has_tool_operation(api: CanonicalApi) -> bool:
+    """Whether ``api`` has an operation an MCP tool can be made of (MFX-32.1).
+
+    A request/response operation that is neither an event flow nor streaming, and is not a resource
+    or prompt of an imported MCP manifest — the operations :mod:`app.tool_projection` selects.
+    """
+    from .tool_projection import selectable_operations  # noqa: PLC0415 - tool_projection imports this module
+
+    non_tool = {
+        op.key
+        for service in api.services
+        if (service.extras or {}).get("mcp_kind") in _NON_TOOL_MCP_KINDS
+        for op in service.operations
+    }
+    return any(op.key not in non_tool for _service, op in selectable_operations(api, include_deprecated=True))
+
+
 #: The source requirements an emitter may declare in ``requires_source``: each maps to a test
 #: and the reader-facing sentence that names what is missing.
 SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
@@ -312,6 +333,11 @@ SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
     "callable": (
         lambda api: any(True for _ in api.operations()) or _has_record_type(api),
         "{label} export needs at least one operation or record type; this source has neither.",
+    ),
+    "tool-operation": (
+        _has_tool_operation,
+        "{label} export needs at least one operation an agent can call (not an event, a stream, an "
+        "MCP resource or a prompt); this source has none.",
     ),    "http-operation-or-type": (
         lambda api: _has_http_operation(api) or bool(api.types),
         "{label} export needs at least one HTTP operation or one type; this source has neither.",
@@ -777,6 +803,7 @@ def load_builtin_emitters() -> None:
     from . import kafka_connect_emitter as _kafka_connect_emitter  # noqa: F401
     from . import kong_emitter as _kong_emitter  # noqa: F401
     from . import llm_tools_emitter as _llm_tools_emitter  # noqa: F401
+    from . import mcp_emitter as _mcp_emitter  # noqa: F401
     from . import odata_emitter as _odata  # noqa: F401
     from . import odcs_emitter as _odcs_emitter  # noqa: F401
     from . import oncrpc_emitter as _oncrpc  # noqa: F401

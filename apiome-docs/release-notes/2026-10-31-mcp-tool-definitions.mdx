@@ -1,0 +1,22 @@
+---
+slug: mcp-tool-definitions
+title: Export an API as MCP tool definitions
+description: Turn a cataloged API into an MCP server descriptor that agents can use.
+authors: [apiome]
+---
+
+The **Export** dialog can now turn an API into **MCP tool definitions**: the fastest path from an API
+in the catalog to an API an agent can call.
+[MCP tool definitions](/ship/export-a-spec#mcp-tool-definitions).
+
+{/* truncate */}
+
+- **One tool per operation.** Each tool has a unique name (from the operationId, or made from it and
+  listed as synthesized in the fidelity report), a description, and an `inputSchema` built from the
+  parameters and request body.
+- **Output schemas.** On MCP 2025-06-18 a tool also gets an `outputSchema` when its success response
+  is an object. Turn it off with **output_schema** if your server does not return `structuredContent`.
+- **Large APIs.** **grouping** `per-service` writes one descriptor per service.
+- **Checked and importable.** Every tool is checked against the MCP Tool schema, and the descriptor
+  imports back through **Import to catalog**.
+- From the CLI: `apiome export mcp <item> --out petstore.mcp.json`.

@@ -2835,9 +2835,16 @@
       "golden_directories": [
         "mcp"
       ],
-      "emit_key": null,
+      "emit_key": "mcp",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "mcp",
+          "emit_key": "mcp",
+          "status": "xfail",
+          "has_reason": true
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",

@@ -71,7 +71,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `llm-tools` | LLM Tools | agent | 8 | 5 | 0 | 0 | 13 | 5/6 (+1 waived) | 8 | `llm-tools` |
 | `lwm2m` | LwM2M / IPSO objects | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `matter` | Matter clusters and device types | rpc | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
-| `mcp` | MCP Server Manifest | agent | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | — |
+| `mcp` | MCP Server Manifest | agent | 7 | 5 | 0 | 0 | 12 | 6/6 | 6 | `mcp` |
 | `nacha` | NACHA ACH | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `natural-ddm` | Natural / ADABAS DDM | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `ncpdp` | NCPDP SCRIPT / Telecom | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |

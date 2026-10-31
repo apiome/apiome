@@ -304,6 +304,12 @@
     },
     {
       "family": "a2a",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "a2a",
       "loss_counts": {
         "approx": 13,
         "drop": 4,
@@ -810,6 +816,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "acp",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -1326,6 +1344,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "agents-manifest",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -1927,6 +1957,18 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
         "approx": 6,
         "drop": 8,
         "synth": 1
@@ -2535,6 +2577,18 @@
     {
       "family": "apigee",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "apigee",
+      "loss_counts": {
         "approx": 4,
         "drop": 3,
         "synth": 0
@@ -3053,6 +3107,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "arazzo",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -3601,6 +3667,12 @@
     },
     {
       "family": "arrow",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "arrow",
       "loss_counts": {
         "approx": 1,
         "drop": 9,
@@ -4135,6 +4207,12 @@
     },
     {
       "family": "asn1",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "asn1",
       "loss_counts": {
         "approx": 2,
         "drop": 14,
@@ -4637,6 +4715,12 @@
       "reason": "LLM tool-array export requires at least one callable: a tool array describes what an agent may invoke, and this model declares no operation (and no record type) that survives the emit filter.",
       "status": "refused",
       "target": "llm-tools"
+    },
+    {
+      "family": "asyncapi",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "asyncapi",
@@ -5153,6 +5237,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "avro",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "avro",
@@ -5692,6 +5782,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -6308,6 +6410,18 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
+        "approx": 3,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
         "approx": 7,
         "drop": 4,
         "synth": 2
@@ -6913,6 +7027,18 @@
     {
       "family": "azure-apim",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "azure-apim",
+      "loss_counts": {
         "approx": 5,
         "drop": 5,
         "synth": 0
@@ -7525,6 +7651,18 @@
     {
       "family": "bruno",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
         "approx": 3,
         "drop": 3,
         "synth": 1
@@ -8073,6 +8211,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -8627,6 +8777,12 @@
     },
     {
       "family": "cddl",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "cddl",
       "loss_counts": {
         "approx": 11,
         "drop": 20,
@@ -9167,6 +9323,12 @@
     },
     {
       "family": "cics-bms",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "cics-bms",
       "loss_counts": {
         "approx": 1,
         "drop": 7,
@@ -9692,6 +9854,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "cloudevents",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "cloudevents",
@@ -10224,6 +10392,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "cobolcopybook",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "cobolcopybook",
@@ -10763,6 +10937,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 15,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -11358,6 +11544,18 @@
     {
       "family": "consul",
       "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "consul",
+      "loss_counts": {
         "approx": 3,
         "drop": 1,
         "synth": 0
@@ -11893,6 +12091,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -12448,6 +12658,12 @@
     },
     {
       "family": "cue",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "cue",
       "loss_counts": {
         "approx": 2,
         "drop": 2,
@@ -12985,6 +13201,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "dbt",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "dbt",
@@ -13531,6 +13753,12 @@
     },
     {
       "family": "dhall",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "dhall",
       "loss_counts": {
         "approx": 2,
         "drop": 1,
@@ -14069,6 +14297,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "dicom",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "dicom",
@@ -14679,6 +14913,18 @@
     {
       "family": "discovery",
       "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
         "approx": 12,
         "drop": 3,
         "synth": 3
@@ -15238,6 +15484,12 @@
     },
     {
       "family": "dtd",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "dtd",
       "loss_counts": {
         "approx": 13,
         "drop": 16,
@@ -15779,6 +16031,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "edifact",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "edifact",
@@ -16328,6 +16586,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "edix12",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "edix12",
@@ -16911,6 +17175,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -17524,6 +17800,18 @@
     {
       "family": "fhir",
       "loss_counts": {
+        "approx": 2,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
         "approx": 6,
         "drop": 10,
         "synth": 0
@@ -18086,6 +18374,12 @@
     },
     {
       "family": "fix",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "fix",
       "loss_counts": {
         "approx": 1,
         "drop": 22,
@@ -18626,6 +18920,12 @@
     },
     {
       "family": "fix-orchestra",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "fix-orchestra",
       "loss_counts": {
         "approx": 10,
         "drop": 15,
@@ -19161,6 +19461,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "flatbuffers",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "flatbuffers",
@@ -19749,6 +20055,18 @@
     {
       "family": "gateway-api",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "gateway-api",
+      "loss_counts": {
         "approx": 7,
         "drop": 2,
         "synth": 0
@@ -20291,6 +20609,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -20885,6 +21215,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "haproxy",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -21498,6 +21840,18 @@
     {
       "family": "har",
       "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
         "approx": 14,
         "drop": 7,
         "synth": 3
@@ -22066,6 +22420,12 @@
     },
     {
       "family": "hl7v2",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "hl7v2",
       "loss_counts": {
         "approx": 50,
         "drop": 50,
@@ -22603,6 +22963,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "hl7v3",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "hl7v3",
@@ -23208,6 +23574,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -23839,6 +24217,18 @@
     {
       "family": "http-file",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
         "approx": 4,
         "drop": 3,
         "synth": 1
@@ -24408,6 +24798,12 @@
     },
     {
       "family": "idoc",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "idoc",
       "loss_counts": {
         "approx": 1,
         "drop": 35,
@@ -24945,6 +25341,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "ims",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "ims",
@@ -25555,6 +25957,18 @@
     {
       "family": "insomnia",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
         "approx": 11,
         "drop": 6,
         "synth": 1
@@ -26124,6 +26538,12 @@
     },
     {
       "family": "iso20022",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "iso20022",
       "loss_counts": {
         "approx": 1,
         "drop": 37,
@@ -26671,6 +27091,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "iso8583",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "iso8583",
@@ -27265,6 +27691,18 @@
     {
       "family": "istio",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "istio",
+      "loss_counts": {
         "approx": 11,
         "drop": 2,
         "synth": 0
@@ -27585,7 +28023,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation ba7025c6-b9b0-497c-bf76-d292d7de8f08",
+        "added operation 367b0075-629b-43ea-9e4c-7e1cc0e0d9b1",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -27796,6 +28234,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "json-schema",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "json-schema",
@@ -28330,6 +28774,12 @@
     },
     {
       "family": "jsonld",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "jsonld",
       "loss_counts": {
         "approx": 2,
         "drop": 4,
@@ -28643,7 +29093,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation b29f846b-7954-41a2-94d4-ec2fe6d3f6e8",
+        "added operation 63615046-d14e-444f-9723-f2d982696bc1",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -28867,6 +29317,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "jtd",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "jtd",
@@ -29189,7 +29645,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation fd582fb3-5a2e-4476-8eae-47f70137ffb4",
+        "added operation 3f033b55-5870-4bd4-9569-1b27fac317f8",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -29404,6 +29860,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "k8s-crd",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "k8s-crd",
@@ -29941,6 +30403,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "kafka-connect",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "kafka-connect",
@@ -30535,6 +31003,18 @@
     {
       "family": "kong",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "kong",
+      "loss_counts": {
         "approx": 11,
         "drop": 2,
         "synth": 0
@@ -31080,6 +31560,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -31633,6 +32125,18 @@
     {
       "family": "lwm2m",
       "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
         "approx": 2,
         "drop": 8,
         "synth": 0
@@ -32181,6 +32685,18 @@
     {
       "family": "matter",
       "loss_counts": {
+        "approx": 5,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
         "approx": 10,
         "drop": 11,
         "synth": 0
@@ -32724,6 +33240,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -33280,6 +33808,12 @@
     },
     {
       "family": "nacha",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "nacha",
       "loss_counts": {
         "approx": 1,
         "drop": 63,
@@ -33817,6 +34351,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "natural-ddm",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "natural-ddm",
@@ -34361,6 +34901,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "ncpdp",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "ncpdp",
@@ -34944,6 +35490,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "nginx",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -35552,6 +36110,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -36181,6 +36751,18 @@
     {
       "family": "odata-v2",
       "loss_counts": {
+        "approx": 3,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
         "approx": 2,
         "drop": 12,
         "synth": 0
@@ -36510,7 +37092,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 6b11e662-7926-4ce1-97c1-3dcb473713b0",
+        "added operation fca0c6ea-bdb9-4fe1-826e-0b8725314178",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -36728,6 +37310,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "odcs",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "odcs",
@@ -37264,6 +37852,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -37810,6 +38410,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -38360,6 +38972,12 @@
     },
     {
       "family": "openapi",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "openapi",
       "loss_counts": {
         "approx": 2,
         "drop": 3,
@@ -38895,6 +39513,18 @@
     {
       "family": "openrpc",
       "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
         "approx": 3,
         "drop": 3,
         "synth": 0
@@ -39209,7 +39839,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 6bab800c-2842-457a-b552-2b46d7e60d95",
+        "added operation 94d3a26b-0b3f-4eab-abc1-bc9162e0e257",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -39427,6 +40057,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "owl",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "owl",
@@ -39972,6 +40608,12 @@
     },
     {
       "family": "pkl",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "pkl",
       "loss_counts": {
         "approx": 1,
         "drop": 2,
@@ -40510,6 +41152,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "pli",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "pli",
@@ -41115,6 +41763,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -41740,6 +42400,18 @@
     {
       "family": "postman-v2",
       "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
         "approx": 8,
         "drop": 2,
         "synth": 2
@@ -42300,6 +42972,18 @@
     {
       "family": "protobuf",
       "loss_counts": {
+        "approx": 7,
+        "drop": 15,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
         "approx": 5,
         "drop": 15,
         "synth": 0
@@ -42843,6 +43527,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 10,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -43395,6 +44091,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "pydantic",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "pydantic",
@@ -44006,6 +44708,18 @@
     {
       "family": "raml",
       "loss_counts": {
+        "approx": 2,
+        "drop": 9,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
         "approx": 6,
         "drop": 11,
         "synth": 1
@@ -44557,6 +45271,12 @@
     },
     {
       "family": "relaxng",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "relaxng",
       "loss_counts": {
         "approx": 1,
         "drop": 11,
@@ -44869,7 +45589,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation ecae0ac0-d192-44fd-94f2-abee676c6158",
+        "added operation c0f43ec3-5fa4-479c-9029-4c67cd2dca27",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -45091,6 +45811,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "ros2",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "ros2",
@@ -45644,6 +46370,12 @@
     },
     {
       "family": "sepa",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "sepa",
       "loss_counts": {
         "approx": 7,
         "drop": 60,
@@ -46176,6 +46908,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "shacl",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "shacl",
@@ -46716,6 +47454,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -47331,6 +48081,18 @@
     {
       "family": "soapui",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
         "approx": 9,
         "drop": 3,
         "synth": 1
@@ -47663,7 +48425,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 3fe8356f-aa86-4154-808d-218fc7bc6d50",
+        "added operation 8e6c63ec-6f1f-48e2-a6f7-5d661ea99f8b",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -47883,6 +48645,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "sparkplug",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "sparkplug",
@@ -48419,6 +49187,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "sql-ddl",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "sql-ddl",
@@ -49026,6 +49800,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -49653,6 +50439,18 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
         "approx": 6,
         "drop": 5,
         "synth": 2
@@ -50211,6 +51009,12 @@
     },
     {
       "family": "swift-mt",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "swift-mt",
       "loss_counts": {
         "approx": 14,
         "drop": 37,
@@ -50747,6 +51551,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -51360,6 +52176,18 @@
     {
       "family": "thunder-client",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
         "approx": 9,
         "drop": 6,
         "synth": 1
@@ -51919,6 +52747,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "tradacoms",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "tradacoms",
@@ -52507,6 +53341,18 @@
     {
       "family": "traefik",
       "loss_counts": {
+        "approx": 0,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "traefik",
+      "loss_counts": {
         "approx": 7,
         "drop": 2,
         "synth": 0
@@ -53044,6 +53890,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -53647,6 +54505,18 @@
     {
       "family": "tyk",
       "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "tyk",
+      "loss_counts": {
         "approx": 9,
         "drop": 1,
         "synth": 0
@@ -53977,7 +54847,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 6ec5480a-6865-4d32-9100-ce996cfc20f9",
+        "added operation a1200858-7e37-441e-a946-e26f48d8aeca",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -54201,6 +55071,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "typescript-types",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "typescript-types",
@@ -54815,6 +55691,18 @@
     {
       "family": "typespec",
       "loss_counts": {
+        "approx": 3,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
         "approx": 5,
         "drop": 8,
         "synth": 1
@@ -55363,6 +56251,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "vsam-idcams",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "vsam-idcams",
@@ -55973,6 +56867,18 @@
     {
       "family": "wadl",
       "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
         "approx": 5,
         "drop": 5,
         "synth": 0
@@ -56531,6 +57437,18 @@
     {
       "family": "wit",
       "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
         "approx": 5,
         "drop": 2,
         "synth": 0
@@ -57068,6 +57986,18 @@
       "reason": null,
       "status": "lossy",
       "target": "llm-tools",
+      "tier": "lossy"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 19,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
       "tier": "lossy"
     },
     {
@@ -57624,6 +58554,18 @@
       "family": "wsdl2",
       "loss_counts": {
         "approx": 7,
+        "drop": 16,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 7,
         "drop": 18,
         "synth": 0
       },
@@ -58173,6 +59115,18 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "xmlrpc",
+      "loss_counts": {
         "approx": 3,
         "drop": 3,
         "synth": 0
@@ -58703,6 +59657,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "xregistry",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "xregistry",
@@ -59246,6 +60206,12 @@
     },
     {
       "family": "xsd",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
+    },
+    {
+      "family": "xsd",
       "loss_counts": {
         "approx": 1,
         "drop": 15,
@@ -59780,6 +60746,12 @@
       "status": "lossy",
       "target": "llm-tools",
       "tier": "lossy"
+    },
+    {
+      "family": "zod",
+      "reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+      "status": "refused",
+      "target": "mcp"
     },
     {
       "family": "zod",
@@ -60391,6 +61363,18 @@
     {
       "family": "zosconnect",
       "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "mcp",
+      "tier": "lossy"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
         "approx": 9,
         "drop": 5,
         "synth": 4
@@ -60619,9 +61603,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3829,
+    "lossy": 3885,
     "ok": 36,
-    "refused": 1996,
+    "refused": 2048,
     "silent-loss": 187,
     "skipped": 0
   },
@@ -60773,6 +61757,7 @@
     "kafka-connect",
     "kong",
     "llm-tools",
+    "mcp",
     "odata",
     "odcs",
     "oncrpc",

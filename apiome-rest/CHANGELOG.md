@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.572.0] - 2026-10-31
+
+### Added
+- **MCP tool-definition emitter (MFX-32.1, #4295).** New `app.mcp_emitter` (key / format `mcp`, the MCP importer's key)
+  writes an MCP **server descriptor** (`mcpVersion`, `server`, `capabilities.tools`, `tools`), the static-manifest
+  shape `app.mcp_import_source` reads, so it imports back.
+  - Tools come from `app.mcp_tool_mapping.compile_mcp_tools` (AGX-1.1): name from the operationId, sanitized and
+    deduplicated; description; `inputSchema` from parameters + body.
+  - `outputSchema` is written for an object 2xx response on 2025-06-18 (on by default; `output_schema=false` turns it
+    off). An array / scalar response stays in the description (`mcp-output-not-object`).
+  - Options: `protocol_version` (`2025-06-18` / `2025-03-26`), `grouping` (`single` / `per-service`),
+    `output_schema`, `include_deprecated`.
+  - An imported MCP manifest's resources and prompts are not tools (`mcp-capability-not-a-tool`).
+  - Every tool is checked against the vendored MCP Tool schema (`data/mcp_tool_schema.json`) and the compiler's
+    contract.
+  - `McpFidelityRulePack`: a synthesized tool name is `SYNTH` (and an `mcp-tool-name-synthesized` loss, `INFERRED`
+    name provenance); non-callable operations, channels and servers `DROP`; named types `APPROX` (inlined).
+- `McpToolDefinition` carries `name_provenance` / `source_name` (not serialized: toolset goldens unchanged).
+- New source requirement `tool-operation`: the card is offered greyed out, with the reason, for a source with no
+  operation an agent can call.
+- Registry fallout:
+  - format counts 56 → 57 exportable, 55 → 56 round-trip; MCP is Import + export;
+  - version coverage writes 2025-06-18 / 2025-03-26;
+  - RC6 target list;
+  - round-trip matrix: 108 `mcp` cells, all xfail (structural re-keying, as llm-tools);
+  - export conformance column (56 lossy, 52 refused, no silent loss);
+  - corpus parity report; target-tier table.
+- OpenAPI 1.436.0.
+
 ## [1.571.0] - 2026-10-31
 
 ### Added

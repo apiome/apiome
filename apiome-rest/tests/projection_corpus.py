@@ -159,6 +159,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "kafka-connect": GENERIC,
     "kong": GENERIC,
     "llm-tools": GENERIC,
+    "mcp": GENERIC,
     "odata": GENERIC,
     "odcs": GENERIC,
     "oncrpc": GENERIC,

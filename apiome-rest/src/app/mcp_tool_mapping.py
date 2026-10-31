@@ -58,7 +58,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 from .canonical_model import CanonicalApi, Message, MessageRole, Operation, TypeRef
-from .emitter import Loss, LossKind, LossTracker, ProvenanceTracker
+from .emitter import Loss, LossKind, LossTracker, Provenance, ProvenanceTracker
 from .normalizer import normalize_ordering
 from .tool_projection import (
     DEPRECATION_PREFIX,
@@ -267,6 +267,11 @@ class McpToolDefinition:
         output: What a successful call returns, or ``None`` without a success response.
         operation: Canonical key of the operation the tool invokes (``GET /pets/{id}``) —
             the reference curation (AGX-1.2) and invocation (AGX-2.1) resolve it by.
+        name_provenance: ``SOURCE`` when the operation's own identity survived as the name,
+            ``INFERRED`` when the name was synthesized (sanitized, deduplicated or made from the
+            method and path) — the MCP emitter's SYNTH flag (MFX-32.1). Not serialized, so it
+            never changes a golden.
+        source_name: The identity the name was derived from, before sanitization.
     """
 
     name: str
@@ -274,6 +279,8 @@ class McpToolDefinition:
     input_schema: Dict[str, Any]
     output: Optional[McpToolOutput]
     operation: str
+    name_provenance: Provenance = Provenance.SOURCE
+    source_name: str = ""
 
     def to_mcp(self) -> Dict[str, Any]:
         """Return the MCP ``tools/list`` entry: ``{name, description?, inputSchema}``."""
@@ -1050,6 +1057,8 @@ def _compile_tool(
         input_schema=input_schema,
         output=output,
         operation=operation.key,
+        name_provenance=definition.name_provenance,
+        source_name=definition.source_name,
     )
 
 

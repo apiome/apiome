@@ -3,9 +3,9 @@
   "capability_registry_version": "39",
   "total": 101,
   "importable": 100,
-  "exportable": 56,
-  "round_trip": 55,
-  "import_only": 45,
+  "exportable": 57,
+  "round_trip": 56,
+  "import_only": 44,
   "export_only": 1,
   "live_discovery": 12,
   "publishable": 1,
@@ -52,7 +52,7 @@
       "label": "Agent",
       "total": 5,
       "importable": 5,
-      "exportable": 1
+      "exportable": 2
     }
   ]
 }

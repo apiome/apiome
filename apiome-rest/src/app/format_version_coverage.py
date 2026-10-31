@@ -1387,6 +1387,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "specification revision its rules were written against.",
             )
         ],
+        writes=[
+            FormatVersion(version="2025-06-18", format_key="mcp", support=VersionSupport.FULL),
+            FormatVersion(
+                version="2025-03-26",
+                format_key="mcp",
+                support=VersionSupport.PARTIAL,
+                note="Written with `protocol_version='2025-03-26'` (MFX-32.1): that revision has no tool "
+                "`outputSchema` or server `title`, so what a tool returns stays in its description.",
+            ),
+        ],
+        default_write="2025-06-18",
     ),
     "acp": VersionCoverage(
         reads=[
