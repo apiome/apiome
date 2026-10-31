@@ -1,0 +1,199 @@
+{
+  "guide": "X12 implementation guide",
+  "standard": "X12",
+  "version": "005010",
+  "transactionSet": {
+    "id": "850",
+    "name": "Sample Pet Store API (OpenAPI 3.0)"
+  },
+  "generatedFrom": {
+    "name": "Sample Pet Store API (OpenAPI 3.0)",
+    "format": "openapi-3.0"
+  },
+  "segments": [
+    {
+      "id": "ST",
+      "name": "Transaction Set Header",
+      "elements": [
+        {
+          "ref": "ST01",
+          "name": "Transaction Set Identifier Code",
+          "type": "ID",
+          "minLength": 3,
+          "maxLength": 3,
+          "usage": "M",
+          "codes": [
+            "850"
+          ]
+        },
+        {
+          "ref": "ST02",
+          "name": "Transaction Set Control Number",
+          "type": "AN",
+          "minLength": 4,
+          "maxLength": 9,
+          "usage": "M"
+        },
+        {
+          "ref": "ST03",
+          "name": "Implementation Convention Reference",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 35,
+          "usage": "O"
+        }
+      ]
+    },
+    {
+      "id": "PET",
+      "name": "Pet",
+      "source": "Pet",
+      "elements": [
+        {
+          "ref": "PET01",
+          "name": "age",
+          "type": "N0",
+          "minLength": 1,
+          "maxLength": 18,
+          "usage": "O",
+          "notes": [
+            "exclusive minimum: 0"
+          ],
+          "source": "Pet.age"
+        },
+        {
+          "ref": "PET02",
+          "name": "id",
+          "type": "N0",
+          "minLength": 1,
+          "maxLength": 18,
+          "usage": "M",
+          "notes": [
+            "format: int64"
+          ],
+          "source": "Pet.id"
+        },
+        {
+          "ref": "PET03",
+          "name": "name",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "Pet.name"
+        },
+        {
+          "ref": "PET04",
+          "name": "tag",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "O",
+          "source": "Pet.tag"
+        },
+        {
+          "ref": "PET05",
+          "name": "weight",
+          "type": "R",
+          "minLength": 1,
+          "maxLength": 15,
+          "usage": "O",
+          "notes": [
+            "exclusive maximum: 500"
+          ],
+          "source": "Pet.weight"
+        }
+      ]
+    },
+    {
+      "id": "CAT",
+      "name": "Category",
+      "source": "Category",
+      "elements": [
+        {
+          "ref": "CAT01",
+          "name": "description",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "O",
+          "source": "Category.description"
+        },
+        {
+          "ref": "CAT02",
+          "name": "id",
+          "type": "N0",
+          "minLength": 1,
+          "maxLength": 18,
+          "usage": "O",
+          "notes": [
+            "format: int64"
+          ],
+          "source": "Category.id"
+        },
+        {
+          "ref": "CAT03",
+          "name": "name",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "O",
+          "source": "Category.name"
+        }
+      ]
+    },
+    {
+      "id": "SE",
+      "name": "Transaction Set Trailer",
+      "elements": [
+        {
+          "ref": "SE01",
+          "name": "Number of Included Segments",
+          "type": "N0",
+          "minLength": 1,
+          "maxLength": 10,
+          "usage": "M"
+        },
+        {
+          "ref": "SE02",
+          "name": "Transaction Set Control Number",
+          "type": "AN",
+          "minLength": 4,
+          "maxLength": 9,
+          "usage": "M"
+        }
+      ]
+    }
+  ],
+  "structure": [
+    {
+      "type": "segment",
+      "position": "0100",
+      "segment": "ST",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0200",
+      "segment": "PET",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0300",
+      "segment": "CAT",
+      "usage": "O",
+      "maxUse": 1,
+      "source": "Pet.category"
+    },
+    {
+      "type": "segment",
+      "position": "0400",
+      "segment": "SE",
+      "usage": "M",
+      "maxUse": 1
+    }
+  ]
+}

@@ -1,0 +1,702 @@
+{
+  "guide": "X12 implementation guide",
+  "standard": "X12",
+  "version": "005010",
+  "transactionSet": {
+    "id": "834",
+    "name": "X12 834"
+  },
+  "generatedFrom": {
+    "name": "X12 834",
+    "format": "edix12"
+  },
+  "segments": [
+    {
+      "id": "ST",
+      "name": "Transaction Set Header",
+      "elements": [
+        {
+          "ref": "ST01",
+          "name": "Transaction Set Identifier Code",
+          "type": "ID",
+          "minLength": 3,
+          "maxLength": 3,
+          "usage": "M",
+          "codes": [
+            "834"
+          ]
+        },
+        {
+          "ref": "ST02",
+          "name": "Transaction Set Control Number",
+          "type": "AN",
+          "minLength": 4,
+          "maxLength": 9,
+          "usage": "M"
+        },
+        {
+          "ref": "ST03",
+          "name": "Implementation Convention Reference",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 35,
+          "usage": "O"
+        }
+      ]
+    },
+    {
+      "id": "BGN",
+      "name": "BGN",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "BGN01",
+          "name": "BGN01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.BGN01"
+        },
+        {
+          "ref": "BGN02",
+          "name": "BGN02",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.BGN02"
+        },
+        {
+          "ref": "BGN03",
+          "name": "BGN03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.BGN03"
+        },
+        {
+          "ref": "BGN04",
+          "name": "BGN04",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.BGN04"
+        },
+        {
+          "ref": "BGN05",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "BGN06",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "BGN07",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "BGN08",
+          "name": "BGN08",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.BGN08"
+        }
+      ]
+    },
+    {
+      "id": "INS",
+      "name": "INS",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "INS01",
+          "name": "INS01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS01"
+        },
+        {
+          "ref": "INS02",
+          "name": "INS02",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS02"
+        },
+        {
+          "ref": "INS03",
+          "name": "INS03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS03"
+        },
+        {
+          "ref": "INS04",
+          "name": "INS04",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS04"
+        },
+        {
+          "ref": "INS05",
+          "name": "INS05",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS05"
+        },
+        {
+          "ref": "INS06",
+          "name": "INS06",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS06"
+        },
+        {
+          "ref": "INS07",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "INS08",
+          "name": "INS08",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.INS08"
+        }
+      ]
+    },
+    {
+      "id": "NM1",
+      "name": "NM1",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "NM101",
+          "name": "NM101",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM101"
+        },
+        {
+          "ref": "NM102",
+          "name": "NM102",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM102"
+        },
+        {
+          "ref": "NM103",
+          "name": "NM103",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM103"
+        },
+        {
+          "ref": "NM104",
+          "name": "NM104",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM104"
+        },
+        {
+          "ref": "NM105",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "NM106",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "NM107",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "NM108",
+          "name": "NM108",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM108"
+        },
+        {
+          "ref": "NM109",
+          "name": "NM109",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.NM109"
+        }
+      ]
+    },
+    {
+      "id": "PER",
+      "name": "PER",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "PER01",
+          "name": "PER01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.PER01"
+        },
+        {
+          "ref": "PER02",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "PER03",
+          "name": "PER03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.PER03"
+        },
+        {
+          "ref": "PER04",
+          "name": "PER04",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.PER04"
+        }
+      ]
+    },
+    {
+      "id": "N3",
+      "name": "N3",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "N301",
+          "name": "N301",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.N301"
+        }
+      ]
+    },
+    {
+      "id": "N4",
+      "name": "N4",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "N401",
+          "name": "N401",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.N401"
+        },
+        {
+          "ref": "N402",
+          "name": "N402",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.N402"
+        },
+        {
+          "ref": "N403",
+          "name": "N403",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.N403"
+        }
+      ]
+    },
+    {
+      "id": "DMG",
+      "name": "DMG",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "DMG01",
+          "name": "DMG01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.DMG01"
+        },
+        {
+          "ref": "DMG02",
+          "name": "DMG02",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.DMG02"
+        },
+        {
+          "ref": "DMG03",
+          "name": "DMG03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.DMG03"
+        }
+      ]
+    },
+    {
+      "id": "HD",
+      "name": "HD",
+      "source": "X12-834.TransactionSet834",
+      "elements": [
+        {
+          "ref": "HD01",
+          "name": "HD01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.HD01"
+        },
+        {
+          "ref": "HD02",
+          "name": "Not used",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 1,
+          "usage": "X"
+        },
+        {
+          "ref": "HD03",
+          "name": "HD03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.HD03"
+        },
+        {
+          "ref": "HD04",
+          "name": "HD04",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.TransactionSet834.HD04"
+        }
+      ]
+    },
+    {
+      "id": "REF",
+      "name": "REF",
+      "source": "X12-834.REF",
+      "elements": [
+        {
+          "ref": "REF01",
+          "name": "REF01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.REF.REF01"
+        },
+        {
+          "ref": "REF02",
+          "name": "REF02",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.REF.REF02"
+        }
+      ]
+    },
+    {
+      "id": "DTP",
+      "name": "DTP",
+      "source": "X12-834.DTP",
+      "elements": [
+        {
+          "ref": "DTP01",
+          "name": "DTP01",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.DTP.DTP01"
+        },
+        {
+          "ref": "DTP02",
+          "name": "DTP02",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.DTP.DTP02"
+        },
+        {
+          "ref": "DTP03",
+          "name": "DTP03",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.DTP.DTP03"
+        }
+      ]
+    },
+    {
+      "id": "N1",
+      "name": "N1",
+      "source": "X12-834.N1",
+      "elements": [
+        {
+          "ref": "N101",
+          "name": "N101",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.N1.N101"
+        },
+        {
+          "ref": "N102",
+          "name": "N102",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.N1.N102"
+        },
+        {
+          "ref": "N103",
+          "name": "N103",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.N1.N103"
+        },
+        {
+          "ref": "N104",
+          "name": "N104",
+          "type": "AN",
+          "minLength": 1,
+          "maxLength": 80,
+          "usage": "M",
+          "source": "X12-834.N1.N104"
+        }
+      ]
+    },
+    {
+      "id": "SE",
+      "name": "Transaction Set Trailer",
+      "elements": [
+        {
+          "ref": "SE01",
+          "name": "Number of Included Segments",
+          "type": "N0",
+          "minLength": 1,
+          "maxLength": 10,
+          "usage": "M"
+        },
+        {
+          "ref": "SE02",
+          "name": "Transaction Set Control Number",
+          "type": "AN",
+          "minLength": 4,
+          "maxLength": 9,
+          "usage": "M"
+        }
+      ]
+    }
+  ],
+  "structure": [
+    {
+      "type": "segment",
+      "position": "0100",
+      "segment": "ST",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0200",
+      "segment": "BGN",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "loop",
+      "loopId": "REF",
+      "name": "REF",
+      "usage": "M",
+      "maxUse": ">1",
+      "source": "X12-834.TransactionSet834.REF",
+      "children": [
+        {
+          "type": "segment",
+          "position": "0300",
+          "segment": "REF",
+          "usage": "M",
+          "maxUse": 1
+        }
+      ]
+    },
+    {
+      "type": "loop",
+      "loopId": "DTP",
+      "name": "DTP",
+      "usage": "M",
+      "maxUse": ">1",
+      "source": "X12-834.TransactionSet834.DTP",
+      "children": [
+        {
+          "type": "segment",
+          "position": "0400",
+          "segment": "DTP",
+          "usage": "M",
+          "maxUse": 1
+        }
+      ]
+    },
+    {
+      "type": "loop",
+      "loopId": "N1",
+      "name": "N1",
+      "usage": "M",
+      "maxUse": ">1",
+      "source": "X12-834.TransactionSet834.N1",
+      "children": [
+        {
+          "type": "segment",
+          "position": "0500",
+          "segment": "N1",
+          "usage": "M",
+          "maxUse": 1
+        }
+      ]
+    },
+    {
+      "type": "segment",
+      "position": "0600",
+      "segment": "INS",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0700",
+      "segment": "NM1",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0800",
+      "segment": "PER",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "0900",
+      "segment": "N3",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "1000",
+      "segment": "N4",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "1100",
+      "segment": "DMG",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "1200",
+      "segment": "HD",
+      "usage": "M",
+      "maxUse": 1
+    },
+    {
+      "type": "segment",
+      "position": "1300",
+      "segment": "SE",
+      "usage": "M",
+      "maxUse": 1
+    }
+  ]
+}

@@ -93,6 +93,7 @@ way the last column says.
 | CORBA IDL | `omniidl` (`corba` profile) or `idlc` (`dds` profile) | Read back by Apiome's CORBA IDL reader |
 | FHIR | The HL7 FHIR validator | Checked by Apiome's structural FHIR rules |
 | COBOL copybook | cb2xml parses the copybook, and the layout it reads must match the one Apiome planned | Read back by Apiome's copybook reader |
+| X12 implementation guide | pyx12's segment dictionary, for the envelope and segments carried from X12 | Checked by Apiome's guide rules only |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 
 The sections below say what each check rejects.
@@ -784,7 +785,8 @@ How the types are laid out:
 - **Loops.** An object inside another object follows it as a child segment. A list of objects is a loop
   that repeats up to `maxItems` (`>1` when there is no limit), and a list of plain values is a segment of
   one element, repeated. The item's top-level objects sit directly in the transaction set, between the
-  `ST` header and the `SE` trailer, and positions number the whole structure `0100`, `0200` …
+  `ST` header and the `SE` trailer, and positions number the whole structure `0100`, `0200` … (closer
+  together when a guide has more than 98 segments, so a position always has four digits)
 - **Usage.** A required field is mandatory (`M`), any other optional (`O`).
 - **Notes.** A rule an element type cannot enforce — a `pattern`, a `format` such as `email`, a minimum or
   maximum, a set of allowed values — is written as a note on the element (in the JSON, the CSV and the
@@ -840,6 +842,32 @@ outright, the export is a *severe* conversion: the Export dialog, `POST …/disp
 ask you to confirm before they run, and the warning names each construct and why (in the guard's
 `reasons`, and in full in `critical_details`). An item with operations is warned that only its schemas
 export, and still lists those constructs.
+
+**Checked before you download it.** A guide cannot be imported back, so every export is checked
+instead. The export fails, and lists every problem with its file, its place in the guide (a JSON
+pointer such as `/segments/2/elements/0`) and its rule, when:
+
+1. **The JSON guide is not the guide format** (`x12-guide.schema`): a missing `transactionSet`,
+   `version`, `segments` or `structure`, or a value of the wrong type.
+2. **A segment or element is wrong**: a segment ID that is not 2–3 letters or digits, or is defined
+   twice; element references that are not `<ID>01` upward with no gap; an unknown element type; lengths
+   where `minLength` is above `maxLength`; usage other than `M`, `O` or `X`.
+3. **The structure and the segments disagree**: the structure uses a segment that is not defined, or a
+   segment is defined and never used; a loop does not start with its own segment; positions are not four
+   digits in increasing order; the guide does not start with `ST` and end with `SE`.
+4. **A code list is wrong**: an `ID` element with no codes, a code longer or shorter than the element,
+   a code listed twice, codes on an element that is not `ID`, or `ST01` not listing the transaction set.
+5. **The files disagree** (`x12-guide.files`): the `.csv` or `.md` file does not list exactly what the
+   JSON guide says, or one of the three files is missing.
+6. **The X12 dictionary disagrees** (`x12-guide.dictionary`): when the server has pyx12 and pyx12 has
+   segment definitions for the guide's version (`005010`, `004010`), the `ST` and `SE` elements must
+   have the standard types and lengths, and a segment carried from an imported X12 item must not have
+   more elements than the standard segment. A segment Apiome made from a type is not compared with a
+   standard segment that happens to share its ID. Without pyx12, or for another version, this check is
+   skipped and the export says so; the other checks still run.
+
+A `004010` guide's `ST` has two elements: `ST03` (implementation convention reference) exists from
+`004020`.
 
 ### WSDL and XSD from any source
 

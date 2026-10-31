@@ -608,6 +608,33 @@ async def _validate_edix12(
     return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
 
 
+async def _validate_x12_guide(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Machine-check an emitted X12 implementation guide (MFX-24.4, #4148).
+
+    A guide has no importer to read it back, so :func:`app.x12_guide_validation.check_guide_files`
+    checks it instead: the JSON guide's schema, its segment / element referential integrity and code
+    sets, that the CSV and Markdown files say what the JSON says, and — when ``pyx12`` ships a segment
+    dictionary for the guide's version — a spot-check of the envelope and standard segments against it.
+    Every problem is a finding with its rule (``keyword``), file and JSON Pointer. A guide that passes
+    while the dictionary spot-check could not run carries the reason in ``detail``.
+    """
+    from .x12_guide_validation import check_guide_files
+
+    files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    check = await asyncio.to_thread(check_guide_files, files)
+    if check.problems:
+        return _rejected(target, [
+            ValidationFinding(message=problem.message, path=problem.path, file=problem.file, keyword=problem.rule)
+            for problem in check.problems
+        ])
+    verdict = _passed(target)
+    if not check.dictionary_checked and check.skipped_reason:
+        verdict.detail = f"The X12 segment-dictionary spot-check did not run: {check.skipped_reason}."
+    return verdict
+
+
 async def _validate_oncrpc(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1452,6 +1479,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "capnproto": _validate_capnproto,
     "asn1": _validate_asn1,
     "edix12": _validate_edix12,
+    # MFX-24.4 (#4148)
+    "x12-guide": _validate_x12_guide,
     "idoc": _validate_idoc,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,

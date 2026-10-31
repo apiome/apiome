@@ -1,0 +1,14 @@
+segment,segment_name,ref,element,type,min_length,max_length,usage,codes,notes,source
+ST,Transaction Set Header,ST01,Transaction Set Identifier Code,ID,3,3,M,850,,
+ST,Transaction Set Header,ST02,Transaction Set Control Number,AN,4,9,M,,,
+ST,Transaction Set Header,ST03,Implementation Convention Reference,AN,1,35,O,,,
+PET,Pet,PET01,age,N0,1,18,O,,exclusive minimum: 0,Pet.age
+PET,Pet,PET02,id,N0,1,18,M,,format: int64,Pet.id
+PET,Pet,PET03,name,AN,1,80,M,,,Pet.name
+PET,Pet,PET04,tag,AN,1,80,O,,,Pet.tag
+PET,Pet,PET05,weight,R,1,15,O,,exclusive maximum: 500,Pet.weight
+CAT,Category,CAT01,description,AN,1,80,O,,,Category.description
+CAT,Category,CAT02,id,N0,1,18,O,,format: int64,Category.id
+CAT,Category,CAT03,name,AN,1,80,O,,,Category.name
+SE,Transaction Set Trailer,SE01,Number of Included Segments,N0,1,10,M,,,
+SE,Transaction Set Trailer,SE02,Transaction Set Control Number,AN,4,9,M,,,

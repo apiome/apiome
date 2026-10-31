@@ -63,7 +63,6 @@ __all__ = [
 _ENVELOPE_IDS = frozenset({"ISA", "IEA", "GS", "GE", "ST", "SE", "TA1"})
 #: The element types a guide may use: ``AN``, ``ID``, ``N0``-``N9``, ``R``, ``DT``, ``TM``.
 X12_ELEMENT_TYPES = frozenset({"AN", "ID", "R", "DT", "TM", *(f"N{d}" for d in range(10))})
-_SEGMENT_ID_RE = re.compile(r"^[A-Z][A-Z0-9]{1,2}$")
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 
@@ -287,6 +286,8 @@ class _X12GuideWriter:
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
         self._position = 0
+        #: The gap between positions: 100 (``0100``, ``0200`` …), smaller when that would pass ``9999``.
+        self._position_step = 100
 
     def guide(self) -> Dict[str, Any]:
         """The guide as a JSON-ready document."""
@@ -306,7 +307,9 @@ class _X12GuideWriter:
         for type_ in self._api.types:
             self.tracker.record(type_.key, Provenance.SOURCE)
 
-        segments = [_st_segment(set_id), *(_segment_json(s) for s in plan.segments.values()), _se_segment()]
+        segments = [_st_segment(set_id, version), *(_segment_json(s) for s in plan.segments.values()), _se_segment()]
+        # X12 positions are four digits: a guide with more than 98 segment uses numbers them closer together.
+        self._position_step = min(100, 9999 // (_segment_uses(plan.structure) + 2))
         structure = [self._use(SegmentUse("ST", "M", 1)), *(self._node(n) for n in plan.structure),
                      self._use(SegmentUse("SE", "M", 1))]
         return {
@@ -320,7 +323,7 @@ class _X12GuideWriter:
         }
 
     def _next_position(self) -> str:
-        self._position += 100
+        self._position += self._position_step
         return f"{self._position:04d}"
 
     def _use(self, use: SegmentUse) -> Dict[str, Any]:
@@ -337,6 +340,11 @@ class _X12GuideWriter:
                 "maxUse": _max_use(node.max_use), "source": node.source}
         loop["children"] = [self._node(child) for child in node.children]
         return loop
+
+
+def _segment_uses(nodes: List[Union[SegmentUse, GuideLoop]]) -> int:
+    """How many segment uses ``nodes`` hold, loops included (each one takes a position)."""
+    return sum(_segment_uses(node.children) if isinstance(node, GuideLoop) else 1 for node in nodes)
 
 
 def _imported(api: CanonicalApi, key: str, pattern: str) -> Optional[str]:
@@ -387,15 +395,22 @@ def _element_json(element: GuideElement) -> Dict[str, Any]:
     return out
 
 
-def _st_segment(set_id: str) -> Dict[str, Any]:
-    return {"id": "ST", "name": "Transaction Set Header", "elements": [
+def _st_segment(set_id: str, version: str) -> Dict[str, Any]:
+    """The ``ST`` transaction set header for ``set_id`` in X12 ``version``.
+
+    ``ST03`` (implementation convention reference) exists from release 004020; an older version's ``ST``
+    has two elements (MFX-24.4: the pyx12 4010 dictionary spot-check).
+    """
+    elements = [
         {"ref": "ST01", "name": "Transaction Set Identifier Code", "type": "ID", "minLength": 3, "maxLength": 3,
          "usage": "M", "codes": [set_id]},
         {"ref": "ST02", "name": "Transaction Set Control Number", "type": "AN", "minLength": 4, "maxLength": 9,
          "usage": "M"},
-        {"ref": "ST03", "name": "Implementation Convention Reference", "type": "AN", "minLength": 1, "maxLength": 35,
-         "usage": "O"},
-    ]}
+    ]
+    if version >= "004020":
+        elements.append({"ref": "ST03", "name": "Implementation Convention Reference", "type": "AN", "minLength": 1,
+                         "maxLength": 35, "usage": "O"})
+    return {"id": "ST", "name": "Transaction Set Header", "elements": elements}
 
 
 def _se_segment() -> Dict[str, Any]:
@@ -493,81 +508,22 @@ def _base_name(api: CanonicalApi) -> str:
 def validate_x12_guide(guide: Dict[str, Any]) -> None:
     """Check that a guide document is structurally valid.
 
-    Rules: a 3-digit transaction set and 6-digit version; unique segment IDs (a letter, then 1-2 letters
-    or digits); each segment's element refs ``<id>01`` upward with no gap; known element types;
-    ``1 <= minLength <= maxLength``; usage ``M``/``O``/``X``; an ``ID`` element has codes, each within its
-    lengths, and no other element has codes; the structure starts with ``ST``, ends with ``SE``, uses only
-    defined segments, and every loop starts with a segment; a maximum use is a positive count or ``">1"``.
+    Rules (MFX-24.4, :func:`app.x12_guide_validation.guide_problems`): the guide's JSON shape; a 3-digit
+    transaction set and 6-digit version; unique segment IDs (a letter, then 1-2 letters or digits); each
+    segment's element refs ``<id>01`` upward with no gap; known element types; ``1 <= minLength <=
+    maxLength``; usage ``M``/``O``/``X``; an ``ID`` element has codes, each within its lengths, and no other
+    element has codes; ``ST01`` lists the transaction set; the structure starts with ``ST``, ends with
+    ``SE``, uses every defined segment and only those, positions increase, and every loop starts with a
+    segment; a maximum use is a positive count or ``">1"``.
 
     Raises:
         ValueError: The first rule broken, naming where.
     """
-    tset = guide.get("transactionSet") or {}
-    if not re.fullmatch(r"\d{3}", str(tset.get("id", ""))):
-        raise ValueError("transactionSet.id must be a 3-digit X12 transaction set ID")
-    if not re.fullmatch(r"\d{6}", str(guide.get("version", ""))):
-        raise ValueError("version must be a 6-digit X12 version")
-    defined: Dict[str, Dict[str, Any]] = {}
-    for segment in guide.get("segments") or []:
-        seg_id = segment.get("id", "")
-        if not _SEGMENT_ID_RE.match(seg_id):
-            raise ValueError(f"segment ID {seg_id!r} is not 2-3 letters or digits starting with a letter")
-        if seg_id in defined:
-            raise ValueError(f"segment {seg_id} is defined twice")
-        defined[seg_id] = segment
-        elements = segment.get("elements") or []
-        if not elements or len(elements) > 99:
-            raise ValueError(f"segment {seg_id} must have 1 to 99 elements")
-        for position, element in enumerate(elements, start=1):
-            _check_element(seg_id, position, element)
-    structure = guide.get("structure") or []
-    if not structure or structure[0].get("segment") != "ST" or structure[-1].get("segment") != "SE":
-        raise ValueError("the structure must start with the ST segment and end with the SE segment")
-    _check_nodes(structure, defined)
+    from .x12_guide_validation import guide_problems  # noqa: PLC0415 - that module imports this one
 
-
-def _check_element(seg_id: str, position: int, element: Dict[str, Any]) -> None:
-    ref = f"{seg_id}{position:02d}"
-    if element.get("ref") != ref:
-        raise ValueError(f"segment {seg_id}: element {position} must be {ref}, not {element.get('ref')!r}")
-    if element.get("type") not in X12_ELEMENT_TYPES:
-        raise ValueError(f"{ref}: type {element.get('type')!r} is not an X12 element type")
-    low, high = element.get("minLength"), element.get("maxLength")
-    if not (isinstance(low, int) and isinstance(high, int) and 1 <= low <= high):
-        raise ValueError(f"{ref}: lengths must satisfy 1 <= minLength <= maxLength")
-    if element.get("usage") not in ("M", "O", "X"):
-        raise ValueError(f"{ref}: usage must be M, O or X")
-    codes = element.get("codes")
-    if element["type"] == "ID":
-        if not codes:
-            raise ValueError(f"{ref}: an ID element needs a code list")
-        for code in codes:
-            if not (low <= len(str(code)) <= high):
-                raise ValueError(f"{ref}: code {code!r} is not {low}-{high} characters")
-    elif codes:
-        raise ValueError(f"{ref}: only an ID element has codes")
-    unknown = set(element.get("codeValues") or {}) - set(codes or [])
-    if unknown:
-        raise ValueError(f"{ref}: codeValues names codes the element does not have: {sorted(unknown)}")
-    notes = element.get("notes")
-    if notes is not None and not (isinstance(notes, list) and all(isinstance(n, str) and n for n in notes)):
-        raise ValueError(f"{ref}: notes must be a list of text")
-
-
-def _check_nodes(nodes: List[Dict[str, Any]], defined: Dict[str, Dict[str, Any]]) -> None:
-    for node in nodes:
-        max_use = node.get("maxUse")
-        if not (max_use == ">1" or (isinstance(max_use, int) and max_use >= 1)):
-            raise ValueError(f"maxUse {max_use!r} must be a positive count or '>1'")
-        if node.get("usage") not in ("M", "O"):
-            raise ValueError(f"usage {node.get('usage')!r} must be M or O")
-        if node.get("type") == "loop":
-            children = node.get("children") or []
-            if not children or children[0].get("type") != "segment" or children[0].get("segment") != node.get("loopId"):
-                raise ValueError(f"loop {node.get('loopId')!r} must start with its own segment")
-            _check_nodes(children, defined)
-        elif node.get("segment") not in defined:
-            raise ValueError(f"the structure uses segment {node.get('segment')!r}, which is not defined")
+    problems = guide_problems(guide)
+    if problems:
+        raise ValueError(problems[0].message)
 
 
 def validate_x12_guide_document(content: str) -> None:
