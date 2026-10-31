@@ -52,8 +52,46 @@ from apiome_cli.preflight_runner import gate_export_before_job
 from apiome_cli.spec_output import SpecExportMetadata, emit_download_metadata, write_document_bytes
 
 
-def parse_export_options(option_values: Sequence[str]) -> dict[str, Any]:
-    """Parse repeatable ``--option key=value`` flags into an options bag."""
+def _text_option_keys(options_schema: Mapping[str, Any] | None) -> set[str]:
+    """The options a target's schema types as text only (``string``, optionally ``null``).
+
+    ``--option transaction_set=810`` would parse as the number ``810``; for an option the target types as
+    a string, the text the user typed is what must be sent (MFX-24.5: the X12 guide's ``transaction_set``).
+
+    Parameters
+    ----------
+    options_schema:
+        The target's ``options_schema`` from ``GET …/export/targets``, or ``None``.
+
+    Returns
+    -------
+    set[str]
+        The option keys whose every allowed type is ``string`` or ``null``.
+    """
+    properties = (options_schema or {}).get("properties")
+    if not isinstance(properties, Mapping):
+        return set()
+    keys: set[str] = set()
+    for key, node in properties.items():
+        if not isinstance(node, Mapping):
+            continue
+        variants = node.get("anyOf") if isinstance(node.get("anyOf"), list) else [node]
+        types = {variant.get("type") for variant in variants if isinstance(variant, Mapping)}
+        if "string" in types and types <= {"string", "null"}:
+            keys.add(key)
+    return keys
+
+
+def parse_export_options(
+    option_values: Sequence[str], *, options_schema: Mapping[str, Any] | None = None
+) -> dict[str, Any]:
+    """Parse repeatable ``--option key=value`` flags into an options bag.
+
+    Each value is parsed as JSON when it is valid JSON (``true``, ``25``, ``["a"]``), else kept as text.
+    With the target's ``options_schema``, an option it types as text only keeps the typed text even when
+    it looks like JSON (``transaction_set=810`` is ``"810"``, not ``810``).
+    """
+    text_keys = _text_option_keys(options_schema)
     options: dict[str, Any] = {}
     for raw in option_values:
         entry = raw.strip()
@@ -69,6 +107,9 @@ def parse_export_options(option_values: Sequence[str]) -> dict[str, Any]:
             typer.echo(f"Invalid --option {raw!r}; key cannot be empty.", err=True)
             raise typer.Exit(EXIT_USAGE)
         value = value.strip()
+        if key in text_keys:
+            options[key] = value
+            continue
         try:
             options[key] = json.loads(value)
         except json.JSONDecodeError:
@@ -275,7 +316,16 @@ def run_generic_export(
         fail_on=fail_on,
     )
 
-    options = parse_export_options(option_values)
+    target_entry = next(
+        (entry for entry in targets
+         if isinstance(entry, Mapping) and isinstance(entry.get("descriptor"), Mapping)
+         and entry["descriptor"].get("key") == target_key),
+        None,
+    )
+    options = parse_export_options(
+        option_values,
+        options_schema=target_entry.get("options_schema") if target_entry else None,
+    )
     overlays = load_overlay_files(overlay_paths)
     export_timeout = (
         export_timeout_override

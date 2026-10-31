@@ -1,0 +1,22 @@
+---
+slug: x12-guide-target-card
+title: X12 guide in the Export dialog and CLI
+description: Pick an X12 transaction set in the Export dialog, or run apiome export x12.
+authors: [apiome]
+---
+
+The **X12 implementation guide** is now on every export surface, with a transaction-set picker.
+[Where to find it](/ship/export-a-spec#x12-implementation-guide-from-any-source).
+
+{/* truncate */}
+
+- **The card.** It is under **Data schema & graph** on the **Target** step, marked multi-file, and badged
+  **types-only**: a guide invents the lengths, codes and segment IDs an interchange does not state. Type
+  the **Transaction Set** (`850`, `810`, `837` …) and **Version** (`005010`, `004010` …), or leave them
+  empty for the item's own.
+- **`apiome export x12`.** The CLI writes the guide's three files into `--out`. Pass
+  `--option transaction_set=810` and `--option version=004010`; a set like `810` is now sent as text, as
+  the target expects. The X12 interchange stays `apiome export edix12`.
+- **Browse.** A public item's **Export** dialog offers the guide as a `.zip`.
+
+The UN/EDIFACT message guide will follow when its emitter ships.

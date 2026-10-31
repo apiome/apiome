@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.569.0] - 2026-10-31
+
+### Added
+- **X12 implementation-guide target card fixtures (MFX-24.5, #4149).** `tests/test_x12_guide_target_card.py`,
+  pinned in `tests/fixtures/x12_guide_target/outcomes.json` (regenerate with `APIOME_REGEN_X12_GUIDE_TARGET=1`):
+  - the `x12-guide` card tier per source kind (REST, RPC, JSON Schema, X12 and EDIFACT items: all `types-only`);
+  - the transaction-set picker (`850` default, `810`, `837` on `004010`) writing guides that pass the MFX-24.4
+    checks;
+  - the browse zip of the three files;
+  - the CLI / UI registry fixtures kept equal to the live registry.
+- No API change. OpenAPI 1.433.0.
+
 ## [1.568.0] - 2026-10-31
 
 ### Added

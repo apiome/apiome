@@ -22,6 +22,8 @@
  *     item, with its `draft`, `packaging` and `mode` options — from the recorded live registry.
  * 11. The COBOL copybook card (MFX-23.5): `types-only` for a REST source, `lossless` for a copybook
  *     item, with its layout options — from the recorded live registry.
+ * 12. The X12 implementation-guide card (MFX-24.5): `types-only` for every source, multi-file, with the
+ *     transaction-set and version picker — from the recorded live registry.
  */
 
 import React from 'react';
@@ -57,6 +59,7 @@ import {
   copybookTargets,
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
+  x12GuideTargets,
 } from './helpers/export-dialog-fixture';
 
 
@@ -1029,5 +1032,33 @@ describe('ExportDialog — COBOL copybook target card (MFX-23.5)', () => {
     // The integer layout defaults (string length, occurs, decimal scale) have no generic form
     // control, so they stay at their server defaults here and are set with the CLI's --option.
     expect(screen.queryByText('Default Occurs')).toBeNull();
+  });
+});
+
+
+describe('ExportDialog — X12 implementation guide target card (MFX-24.5)', () => {
+  it.each(['rest', 'x12'] as const)('badges a %s source types-only and marks the guide multi-file', async (source) => {
+    await renderAtTargetStep(mockFetch(x12GuideTargets(source)));
+
+    const card = screen.getByTestId('export-target-x12-guide');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('X12 implementation guide')).toBeInTheDocument();
+    expect(within(card).getByText('types-only')).toBeInTheDocument();
+    // The JSON guide, the segment CSV and the Markdown guide come as one download.
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+  });
+
+  it('offers the transaction set and version as the picker', async () => {
+    await renderAtTargetStep(mockFetch(x12GuideTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-x12-guide'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const transactionSet = screen.getByLabelText('Transaction Set');
+    const version = screen.getByLabelText('Version');
+    // Empty means the server default: an imported X12 item's own set and release, else 850 / 005010.
+    expect(transactionSet).toHaveValue('');
+    expect(version).toHaveValue('');
+    fireEvent.change(transactionSet, { target: { value: '810' } });
+    expect(transactionSet).toHaveValue('810');
   });
 });

@@ -1,0 +1,54 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "x12-guide",
+    "dry_run": false,
+    "fidelity": {
+      "summary": {
+        "tier": "types-only",
+        "preserved_percent": 8,
+        "total": 24,
+        "preserved": 2,
+        "dropped": 6,
+        "approximated": 10,
+        "synthesized": 6
+      },
+      "target": {
+        "key": "x12-guide",
+        "format": "x12-guide",
+        "label": "X12 implementation guide"
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "message": "Exporting to X12 implementation guide may lose some fidelity. The destination format can't represent everything in this API, so 22 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      }
+    },
+    "files": [
+      {
+        "path": "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.json",
+        "media_type": "application/json",
+        "size_bytes": 4237
+      },
+      {
+        "path": "Sample-Pet-Store-API-OpenAPI-3.0.x12-segments.csv",
+        "media_type": "text/csv",
+        "size_bytes": 888
+      },
+      {
+        "path": "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.md",
+        "media_type": "text/markdown",
+        "size_bytes": 1765
+      }
+    ],
+    "media_type": "application/zip",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

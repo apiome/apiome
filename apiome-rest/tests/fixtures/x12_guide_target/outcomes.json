@@ -1,0 +1,140 @@
+{
+  "cards": {
+    "edifact": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "x12": {
+      "available": true,
+      "tier": "types-only"
+    }
+  },
+  "picks": {
+    "rest": {
+      "claim-837-004010": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "837"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02"
+        ],
+        "tier": "types-only",
+        "transaction_set": "837",
+        "version": "004010"
+      },
+      "default": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "850"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02",
+          "ST03"
+        ],
+        "tier": "types-only",
+        "transaction_set": "850",
+        "version": "005010"
+      },
+      "invoice-810": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "810"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02",
+          "ST03"
+        ],
+        "tier": "types-only",
+        "transaction_set": "810",
+        "version": "005010"
+      }
+    },
+    "x12": {
+      "claim-837-004010": {
+        "files": [
+          "X12-850.x12-guide.json",
+          "X12-850.x12-segments.csv",
+          "X12-850.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "837"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02"
+        ],
+        "tier": "types-only",
+        "transaction_set": "837",
+        "version": "004010"
+      },
+      "default": {
+        "files": [
+          "X12-850.x12-guide.json",
+          "X12-850.x12-segments.csv",
+          "X12-850.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "850"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02"
+        ],
+        "tier": "types-only",
+        "transaction_set": "850",
+        "version": "004010"
+      },
+      "invoice-810": {
+        "files": [
+          "X12-850.x12-guide.json",
+          "X12-850.x12-segments.csv",
+          "X12-850.x12-guide.md"
+        ],
+        "problems": [],
+        "st01_codes": [
+          "810"
+        ],
+        "st_elements": [
+          "ST01",
+          "ST02"
+        ],
+        "tier": "types-only",
+        "transaction_set": "810",
+        "version": "004010"
+      }
+    }
+  }
+}
