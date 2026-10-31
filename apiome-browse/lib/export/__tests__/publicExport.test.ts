@@ -10,6 +10,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   exportFallbackFilename,
+  isZipContentType,
   fidelityWarningMessage,
   filenameFromContentDisposition,
   publicExportDocumentUrl,
@@ -223,5 +224,23 @@ describe('download filenames', () => {
       'widgets-1.0.0-asyncapi.yaml'
     );
     expect(exportFallbackFilename(COORDS, 'openapi', 'json')).toBe('widgets-1.0.0-openapi.json');
+  });
+
+  it('names a multi-file bundle download .zip, whatever the serialization (MFX-31.5)', () => {
+    expect(exportFallbackFilename(COORDS, 'bruno', 'json', 'application/zip')).toBe('widgets-1.0.0-bruno.zip');
+    expect(exportFallbackFilename(COORDS, 'hoppscotch', 'yaml', 'application/zip; charset=binary')).toBe(
+      'widgets-1.0.0-hoppscotch.zip'
+    );
+    expect(exportFallbackFilename(COORDS, 'insomnia', 'json', 'application/json')).toBe('widgets-1.0.0-insomnia.json');
+    expect(exportFallbackFilename(COORDS, 'insomnia', 'json', null)).toBe('widgets-1.0.0-insomnia.json');
+  });
+});
+
+describe('isZipContentType', () => {
+  it('recognises application/zip only', () => {
+    expect(isZipContentType('application/zip')).toBe(true);
+    expect(isZipContentType('Application/Zip; foo=bar')).toBe(true);
+    expect(isZipContentType('application/json')).toBe(false);
+    expect(isZipContentType(undefined)).toBe(false);
   });
 });

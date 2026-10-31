@@ -16,6 +16,8 @@
  *     a lossless target exports without one.
  *  8. The Export step previews the emitted document with the "valid · round-trip OK" status
  *     badge, and downloads it on demand as the single file or a client-built `.zip` (MFX-6.3).
+ *  9. The API-client collection cards (MFX-31.5): Postman, Insomnia and Bruno each with its
+ *     per-source tier, Bruno marked multi-file, and Postman's `flavor` offered as an option.
  */
 
 import React from 'react';
@@ -45,7 +47,11 @@ jest.mock('next/navigation', () => ({
 }));
 
 import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportDialog';
-import { EXPORT_DIALOG_TARGETS as TARGETS, mockExportDialogFetch as mockFetch } from './helpers/export-dialog-fixture';
+import {
+  EXPORT_DIALOG_COLLECTION_TARGETS as COLLECTION_TARGETS,
+  EXPORT_DIALOG_TARGETS as TARGETS,
+  mockExportDialogFetch as mockFetch,
+} from './helpers/export-dialog-fixture';
 
 
 /** Open the dialog and advance past the Source step once targets have loaded. */
@@ -896,5 +902,52 @@ describe('ExportDialog — no path into the held-back Export studio (RC6-H4, #62
     fireEvent.click(screen.getByTestId('export-dialog-export'));
     await screen.findByTestId('export-dialog-emitted');
     assertNoStudio();
+  });
+});
+
+
+describe('ExportDialog — API-client collection targets (MFX-31.5)', () => {
+  it('renders the Postman, Insomnia and Bruno cards, each with its per-source tier', async () => {
+    await renderAtTargetStep(mockFetch(COLLECTION_TARGETS));
+
+    for (const [key, label] of [
+      ['postman', 'Postman'],
+      ['insomnia', 'Insomnia'],
+      ['bruno', 'Bruno'],
+    ] as const) {
+      const card = screen.getByTestId(`export-target-${key}`);
+      expect(card).toBeEnabled();
+      expect(within(card).getByText(label)).toBeInTheDocument();
+      expect(within(card).getByText(/lossy/i)).toBeInTheDocument();
+    }
+    // Bruno is a folder of files: its card says the export is several files.
+    expect(within(screen.getByTestId('export-target-bruno')).getByText(/multi-file/)).toBeInTheDocument();
+    expect(within(screen.getByTestId('export-target-insomnia')).queryByText(/multi-file/)).toBeNull();
+  });
+
+  it('offers the Postman flavor as a choice between the three collection formats', async () => {
+    await renderAtTargetStep(mockFetch(COLLECTION_TARGETS));
+
+    fireEvent.click(screen.getByTestId('export-target-postman'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const flavor = screen.getByRole('radiogroup', { name: 'Flavor' });
+    expect(within(flavor).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'postman',
+      'insomnia',
+      'bruno',
+    ]);
+    expect(within(flavor).getByRole('radio', { name: 'postman' })).toBeChecked();
+
+    // Insomnia and Bruno carry their folder and example options, but no flavor of their own.
+    fireEvent.click(screen.getByTestId('export-target-bruno'));
+    expect(screen.queryByRole('radiogroup', { name: 'Flavor' })).toBeNull();
+    expect(screen.getByRole('radiogroup', { name: 'Folder Strategy' })).toBeInTheDocument();
+  });
+
+  it('updates the fidelity headline for the picked collection card', async () => {
+    await renderAtTargetStep(mockFetch(COLLECTION_TARGETS));
+
+    fireEvent.click(screen.getByTestId('export-target-bruno'));
+    expect(screen.getByTestId('export-fidelity-headline')).toHaveTextContent('66% preserved');
   });
 });

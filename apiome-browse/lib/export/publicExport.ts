@@ -257,12 +257,26 @@ export function filenameFromContentDisposition(header: string | null, fallback: 
  * @param coords - The exported version's slug coordinates.
  * @param targetKey - The chosen target's registry key (e.g. `asyncapi`).
  * @param serialization - The chosen serialization (drives the extension).
+ * @param contentType - The response's `Content-Type`: a multi-file target (Bruno, Hoppscotch,
+ *   Thunder Client) downloads as an `application/zip` bundle, so it is named `.zip` (MFX-31.5).
  * @returns A stable, human-readable filename like `widgets-1.0.0-asyncapi.yaml`.
  */
 export function exportFallbackFilename(
   coords: PublicExportCoordinates,
   targetKey: string,
-  serialization: ExportSerialization
+  serialization: ExportSerialization,
+  contentType?: string | null
 ): string {
-  return `${coords.projectSlug}-${coords.versionSlug}-${targetKey}.${serialization}`;
+  const extension = isZipContentType(contentType) ? 'zip' : serialization;
+  return `${coords.projectSlug}-${coords.versionSlug}-${targetKey}.${extension}`;
+}
+
+/**
+ * Whether a download response is a zip bundle (a multi-file target's every file).
+ *
+ * @param contentType - The response's `Content-Type` header, if any.
+ * @returns `true` for `application/zip` (any parameters ignored).
+ */
+export function isZipContentType(contentType: string | null | undefined): boolean {
+  return (contentType ?? '').split(';', 1)[0].trim().toLowerCase() === 'application/zip';
 }

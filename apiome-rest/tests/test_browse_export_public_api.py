@@ -272,3 +272,72 @@ def test_public_document_413_when_over_download_size_cap(monkeypatch):
         response = client.post(f"{_BASE}/document", json={"target": "asyncapi"})
     assert response.status_code == 413
     assert "download limit" in response.json()["detail"].lower()
+
+
+# ---------------------------------------------------------------------------
+# Collection targets — MFX-31.5 (#4293)
+# ---------------------------------------------------------------------------
+def _http_source() -> ExportSource:
+    """A public source with one HTTP operation, so the API-client collection targets can emit."""
+    op = Operation(
+        key="GET /widgets",
+        name="listWidgets",
+        kind=OperationKind.REQUEST_RESPONSE,
+        http_method="GET",
+        http_path="/widgets",
+    )
+    api = CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        identity=ApiIdentity(name="widgets"),
+        title="Widgets",
+        services=[Service(key="widgets", name="widgets", operations=[op])],
+    )
+    return ExportSource(api=api, artifact_id="artifact-1", version_record_id="rev-uuid-1", version_label="1.0.0")
+
+
+def _zip_names(body: bytes) -> set:
+    import io
+    import zipfile
+
+    with zipfile.ZipFile(io.BytesIO(body)) as bundle:
+        return set(bundle.namelist())
+
+
+def test_public_targets_list_the_collection_targets_with_a_tier():
+    """Postman, Insomnia and Bruno appear for a public REST version, each with its fidelity badge."""
+    with patch(_LOADER, return_value=_http_source()):
+        response = client.get(f"{_BASE}/targets")
+    targets = {entry["descriptor"]["key"]: entry for entry in response.json()["targets"]}
+    for key in ("postman", "insomnia", "bruno"):
+        assert targets[key]["descriptor"]["available"] is True
+        assert targets[key]["fidelity"]["tier"] == "lossy"
+    assert targets["bruno"]["descriptor"]["multi_file"] is True
+    assert set(targets["postman"]["options_schema"]["properties"]["flavor"]["enum"]) == {"postman", "insomnia", "bruno"}
+
+
+def test_public_document_bundles_a_multi_file_target_as_a_zip():
+    """A Bruno export is every file of the collection, as the MFX-4.2 zip — not bruno.json alone."""
+    with patch(_LOADER, return_value=_http_source()):
+        response = client.post(f"{_BASE}/document", json={"target": "bruno"})
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/zip"
+    assert 'filename="widgets-bruno.zip"' in response.headers["content-disposition"]
+    names = _zip_names(response.content)
+    assert {"bruno.json", "listWidgets.bru", "environments/Default.bru", "manifest.json"} <= names
+
+
+def test_public_document_keeps_a_single_file_target_a_file():
+    """Insomnia is one file, so it downloads as that file."""
+    with patch(_LOADER, return_value=_http_source()):
+        response = client.post(f"{_BASE}/document", json={"target": "insomnia"})
+    assert response.status_code == 200
+    assert response.json()["__export_format"] == 4
+
+
+def test_public_document_bundles_the_postman_bruno_flavor():
+    """The Postman target's `flavor` option writes Bruno's files, and they download as a zip too."""
+    with patch(_LOADER, return_value=_http_source()):
+        response = client.post(f"{_BASE}/document", json={"target": "postman", "options": {"flavor": "bruno"}})
+    assert response.headers["content-type"] == "application/zip"
+    assert "bruno.json" in _zip_names(response.content)

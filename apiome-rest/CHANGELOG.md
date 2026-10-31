@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.563.0] - 2026-10-30
+
+### Changed
+- **Public export of multi-file targets downloads every file (MFX-31.5, #4293).**
+  `POST /v1/browse/tenants/{tenant}/projects/{project}/versions/{version}/export/document` now returns a target that
+  writes more than one file — Bruno, Hoppscotch, Thunder Client, and the Postman target's `bruno` flavor — as the
+  MFX-4.2 `application/zip` bundle (every file plus `manifest.json`, named `<source>-<target>.zip`) instead of its
+  first file alone (a Bruno export used to download as `bruno.json` only). `render_emitted_document` gains
+  `bundle_multi_file` for it; the authenticated `/v1/export/{tenant}/document` is unchanged (the dialog previews the
+  primary file and downloads bundles through the export job). OpenAPI 1.427.0.
+
+### Added
+- **Cross-paradigm collection fixtures (MFX-31.5).** `tests/fixtures/collection_targets/cross_paradigm.json` pins what
+  the Postman, Insomnia and Bruno targets do with a REST, RPC, GraphQL, event and types-only source: the REST API
+  exports to all three (`lossy`) and re-imports to its operations; the others are offered greyed out and refused
+  (no HTTP operation). Regenerate with `APIOME_REGEN_COLLECTION_TARGETS=1`.
+
 ## [1.562.0] - 2026-10-30
 
 ### Added

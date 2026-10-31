@@ -173,7 +173,7 @@ export function PublicExportDialog({
       const blob = await response.blob();
       const filename = filenameFromContentDisposition(
         response.headers.get('Content-Disposition'),
-        exportFallbackFilename(coords, selected.descriptor.key, serialization)
+        exportFallbackFilename(coords, selected.descriptor.key, serialization, response.headers.get('Content-Type'))
       );
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

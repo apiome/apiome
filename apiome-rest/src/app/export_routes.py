@@ -42,6 +42,7 @@ import asyncio
 import base64
 import hashlib
 import json
+import re
 import time
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
@@ -76,7 +77,7 @@ from .export_fidelity import (
     build_export_fidelity,
     build_target_fidelity,
 )
-from .export_job_engine import serialize_file_content
+from .export_job_engine import BUNDLE_MEDIA_TYPE, build_export_zip, serialize_file_content
 from .export_overlay import (
     MAX_EXPORT_OVERLAYS,
     ExportOverlay,
@@ -1278,6 +1279,13 @@ def _attestation_headers(decision: DeliveryGateReport) -> Dict[str, str]:
     return headers
 
 
+def _bundle_stem(api: Any) -> str:
+    """A filesystem-safe stem for a bundle download, from the source's name (``Pet_Store``)."""
+    identity = getattr(api, "identity", None)
+    base = getattr(identity, "name", None) or getattr(api, "title", None) or "export"
+    return re.sub(r"[^A-Za-z0-9_]+", "_", str(base)).strip("_") or "export"
+
+
 def render_emitted_document(
     api: Any,
     target: str,
@@ -1285,6 +1293,7 @@ def render_emitted_document(
     accept: Optional[str],
     *,
     persistence: Optional[ExportPersistenceContext] = None,
+    bundle_multi_file: bool = False,
 ) -> Response:
     """Emit ``api`` to ``target`` and wrap the primary file as an HTTP download response.
 
@@ -1300,6 +1309,11 @@ def render_emitted_document(
         accept: The request's ``Accept`` header, for JSON/YAML content negotiation.
         persistence: Optional field-identity persistence context; ``None`` keeps the emit
             fully read-only (the public path must never write).
+        bundle_multi_file: When the target writes more than one file (a Bruno collection, a
+            Hoppscotch collection + environment), return every file as the MFX-4.2 zip bundle
+            instead of the primary file alone — the public browse download, which has no export
+            job to fetch a bundle from (MFX-31.5). The authenticated dialog keeps the primary file
+            (its preview) and downloads bundles through the job.
 
     Returns:
         The emitted document as a download :class:`~fastapi.Response`.
@@ -1320,6 +1334,12 @@ def render_emitted_document(
         )
 
     primary = result.files[0]
+    if bundle_multi_file and len(result.files) > 1:
+        return Response(
+            content=build_export_zip(result, target),
+            media_type=BUNDLE_MEDIA_TYPE,
+            headers=attachment_headers(f"{_bundle_stem(api)}-{target}.zip", "export"),
+        )
     content = primary.content
     yaml_serialization = _wants_yaml(accept)
     filename = _document_filename(primary.path, yaml_serialization=yaml_serialization)
