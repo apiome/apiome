@@ -63,7 +63,7 @@ jobs:
           node-version: 24
 
       - name: Install the required Node toolchain (AsyncAPI, TypeScript types, Zod)
-        run: ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor
+        run: ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor dbml-validator prisma-validator
 
       - name: Install the required typed-configuration evaluators (CUE, Pkl, Dhall)
         run: ./scripts/install_dev_toolchain.sh cue pkl dhall

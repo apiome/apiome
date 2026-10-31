@@ -222,6 +222,8 @@ Options:
     `(owner_id, position, value)` for a list of values (`order_tags`). Every table needs a key for
     this. It uses the table's declared key, else a required `id` field, else a generated `id` column.
 - **schema_name** — create the tables in this schema (`CREATE SCHEMA` first, every name qualified).
+- **output** — `ddl` (default) writes the SQL script; `dbml` and `prisma` write the same tables in
+  another schema language (see [DBML and Prisma](#dbml-and-prisma) below).
 
 Foreign keys come last, as `ALTER TABLE … ADD CONSTRAINT`, so the tables can be created in any order.
 
@@ -238,6 +240,29 @@ or check expression written for the original dialect is dropped and listed.
 **Checked before you download it.** Every script is parsed with sqlglot in its dialect, and read back
 by Apiome's SQL reader. From the CLI, run `apiome export sql-ddl <item> --out schema.sql --option
 dialect=mysql --option nested=tables`.
+
+#### DBML and Prisma
+
+Set **output** to write the same tables, columns, keys, enums and foreign keys in another language.
+The **dialect**, **nested** and **schema_name** options still apply.
+
+- **`dbml`** writes `<Name>.dbml` for [dbdiagram.io](https://dbdiagram.io) and dbdocs: one `Table` per
+  table with the dialect's column types, an `Enum` for each enumeration (in every dialect), the
+  `pk`, `not null`, `unique`, `default` and `check` settings, `indexes` for composite keys, and a
+  `Ref` for each foreign key.
+- **`prisma`** writes `schema.prisma`: one `model` per table, named in PascalCase and mapped back to
+  its table with `@@map`. Columns get Prisma types with `@db.*` native types (`String @db.VarChar(40)`,
+  `Decimal @db.Decimal(38, 2)`), and each foreign key becomes a named `@relation` on both models.
+  Every model needs a key, so each table gets one as with **nested** `tables`. Prisma supports
+  `postgres` and `mysql` only, and **schema_name** on PostgreSQL only (`@@schema`).
+
+What the language cannot hold is listed in the fidelity report. Prisma has no `CHECK` constraint, no
+interval type and no nullable list. It also cannot relate a foreign key that references a column that
+is neither a primary nor a unique key, so that one stays as plain columns.
+
+**Checked before you download it.** A DBML file is parsed by `@dbml/core`, and a Prisma schema must
+pass `prisma validate`. From the CLI, run `apiome export sql-ddl <item> --out schema.prisma --option
+output=prisma`.
 
 ### Protobuf and Thrift from an OpenAPI source
 

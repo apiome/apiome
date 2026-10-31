@@ -16,8 +16,9 @@ instead of a crash.
 which tools ship and at what version. The Dockerfile installs exactly these versions via
 build args (`BUF_VERSION`, `TSP_VERSION`, …) — **bump both together**.
 
-Six tools are different. `asyncapi-parser` (FMT-1.3, #5414), `typescript-types-extractor`
-(FMT-8.1, #5462) and `zod-schema-extractor` (FMT-8.2, #5463) are **hard dependencies** whose
+Eight tools are different. `asyncapi-parser` (FMT-1.3, #5414), `typescript-types-extractor`
+(FMT-8.1, #5462), `zod-schema-extractor` (FMT-8.2, #5463), `dbml-validator` and `prisma-validator`
+(MFX-35.2, #4312) are **hard dependencies** whose
 exact pins live in the toolchain manifest
 `apiome-rest/toolchain/package.json`, which the container build installs from and CI installs
 from, and they have no build arg — so no build can quietly ship a reader the runtime never
@@ -38,6 +39,8 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `asyncapi-parser` **(required)** | AsyncAPI parse·validate·dereference → canonical JSON (`@asyncapi/parser`, MFI-8.1) | `3.6.0` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/asyncapi-parse.mjs`) |
 | `typescript-types-extractor` **(required)** | TypeScript `interface` / `type` / `enum` declarations → neutral JSON AST (the `typescript` compiler API, FMT-8.1) | `6.0.3` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/typescript-types-extract.mjs`) |
 | `zod-schema-extractor` **(required)** | Evaluates a module's exported Zod schemas → JSON Schema (`zod`, FMT-8.2), and in `routers` mode its tRPC routers' procedures (`@trpc/server` 11.19.0, FMT-8.3) — permission-locked, network-free, time-bounded | `3.25.76` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/zod-extract.mjs`) |
+| `dbml-validator` **(required)** | Parses the SQL DDL export's DBML output with `@dbml/core`'s `dbmlv2` parser (MFX-35.2, `app.db_schema_validation`) | `10.3.1` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/dbml-validate.mjs`) |
+| `prisma-validator` **(required)** | Runs `prisma validate` on the SQL DDL export's Prisma schema output — the CLI's WebAssembly schema engine, no network or database (MFX-35.2, `app.db_schema_validation`) | `7.10.1` — pinned in `toolchain/package.json` | node | npm from the toolchain manifest + Node wrapper (`toolchain/prisma-validate.mjs`) |
 | `cue` **(required)** | CUE evaluator: `cue export` validates a package and its JSON Schema generator projects the definitions (FMT-8.5) | `0.17.1` | native | GitHub release tarball |
 | `pkl` **(required)** | Pkl evaluator: `pkl eval` runs the reflection program over a module (FMT-8.5) | `0.32.2` | native | GitHub release binary |
 | `dhall` **(required)** | Dhall interpreter: resolve, type-check, normalize and `encode --json` (FMT-8.5) | `1.42.2` | native | dhall-haskell release tarball — **x86_64 only**, so an arm64 image build fails at this step |
@@ -84,11 +87,12 @@ plus the JRE the AMF wrapper needs — smithy ships its own runtime, so no extra
 | `fhir-validator` jar + R4 / R5 core package cache | ~300 MB |
 | `cb2xml` jar | ~1 MB |
 | `tsp` + `asyncapi` + `@asyncapi/parser` + `@asyncapi/diff` + `@graphql-inspector/core` + spectral + redocly (node_modules) | ~180 MB |
+| `@dbml/core` + `prisma` with their dependencies (node_modules; MFX-35.2's DBML / Prisma validators) | ~250 MB |
 | `buf` | ~30 MB |
 | `vacuum` | ~25 MB |
 | `rover` | ~30 MB |
 | `drafter` | ~5 MB |
-| **Total added** | **~780 MB** |
+| **Total added** | **~1,030 MB** |
 
 The build-time `tools` stage also pulls `cmake`/`build-essential`/`git` to compile drafter,
 but that toolchain stays in the builder stage and is **not** copied into the runtime image.
@@ -100,13 +104,14 @@ sidecar mount, or omit a tool entirely and accept its format degrading to "unava
 ## Required tools & the startup self-check
 
 `REQUIRED_TOOL_KEYS` in `src/app/toolchain_selfcheck.py` names the tools this runtime treats as
-**hard dependencies**. Today that is six:
+**hard dependencies**. Today that is eight:
 
 | Key | Why it cannot be optional |
 |-----|---------------------------|
 | `asyncapi-parser` | The AsyncAPI adapter has no fallback parser — there is no pure-Python AsyncAPI 2.x/3.x parser behind it — and AsyncAPI is a shipped, documented, fixture-covered format. Losing it is losing a product surface. |
 | `typescript-types-extractor` | TypeScript type declarations are read by the TypeScript compiler itself (FMT-8.1); there is no Python reader of the language to fall back on, and the FMT-1.3 rule forbids a runtime `available: false` for a shipped format. |
 | `zod-schema-extractor` | A Zod schema — and a tRPC router — is a value, and only running the module can produce it (FMT-8.2, FMT-8.3). |
+| `dbml-validator`, `prisma-validator` | The SQL DDL export's DBML and Prisma outputs are checked by `@dbml/core` and `prisma validate` themselves (MFX-35.2); no Python reader of either language exists to check them instead. |
 | `cue`, `pkl`, `dhall` | Each typed configuration language is read by its own evaluator — CUE's unification, Pkl's reflection and late binding, Dhall's import resolution and normalization exist nowhere else (FMT-8.5). |
 
 At startup `app.main` calls `enforce_toolchain_selfcheck()`, which:
@@ -133,8 +138,9 @@ uv run python -m app.toolchain_selfcheck        # exits 1 when a required tool i
 
 The build proves the same thing before the image is finished: the Dockerfile pipes a tiny
 AsyncAPI document through `asyncapi-parser`, a one-line TypeScript module through
-`typescript-types-extract` and a one-line Zod module through `zod-extract`, and fails the build
-unless all three come back `ok`. It then evaluates a one-line schema with each of `cue`, `pkl` and
+`typescript-types-extract`, a one-line Zod module through `zod-extract`, a one-table DBML document
+through `dbml-validate` and a one-model Prisma schema through `prisma-validate`, and fails the build
+unless all five come back `ok`. It then evaluates a one-line schema with each of `cue`, `pkl` and
 `dhall`.
 
 ### The tools that evaluate user code

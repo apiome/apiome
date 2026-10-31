@@ -44,6 +44,8 @@ _EXPECTED_KEYS = {
     "asyncapi-parser",
     "typescript-types-extractor",
     "zod-schema-extractor",
+    "dbml-validator",
+    "prisma-validator",
     "cue",
     "pkl",
     "dhall",

@@ -1,7 +1,18 @@
-"""SQL DDL emitter: canonical types → ``CREATE TABLE`` (ANSI, PostgreSQL, MySQL) — MFX-35.1 (#4311).
+"""SQL DDL emitter: canonical types → ``CREATE TABLE`` (ANSI, PostgreSQL, MySQL) — MFX-35.1 (#4311),
+DBML and Prisma outputs — MFX-35.2 (#4312).
 
 The inverse of :class:`app.sql_ddl_import_source.SqlDdlImportSource` (FMT-5.6): a **relational
-projection** of the model's types into one SQL script, ``<Name>.sql``.
+projection** of the model's types, written by one of three serializers (option ``output``):
+
+* ``ddl`` (default) — one SQL script, ``<Name>.sql`` (this module);
+* ``dbml`` — the same tables, keys, enums and references as DBML, ``<Name>.dbml``
+  (:func:`app.sql_ddl_serializers.render_dbml`);
+* ``prisma`` — the same tables as Prisma models with relations and enums, ``schema.prisma``
+  (:func:`app.sql_ddl_serializers.render_prisma`). Prisma needs a key on every model, so this output
+  always gives each table one, as ``nested=tables`` does.
+
+The projection — tables, columns, keys, enums, foreign keys and every decision it makes up — is the
+same for all three; only the text differs.
 
 Projection
 ----------
@@ -29,7 +40,8 @@ An item imported **from SQL** keeps its declared primary keys, unique keys and f
 when written in the dialect it was read in — its column types, defaults and checks verbatim.
 
 Every script is parsed back with **sqlglot** in the target dialect before it is returned, so a
-script that does not parse cannot ship.
+script that does not parse cannot ship. A DBML or Prisma output is checked by its reference tool
+(``@dbml/core``, ``prisma validate``) in the export validation step (:mod:`app.db_schema_validation`).
 """
 
 from __future__ import annotations
@@ -71,6 +83,11 @@ __all__ = [
 #: Registry key and format — the SQL DDL importer's key, so the round-trip matrix pairs them.
 SQL_DDL_FORMAT_KEY = "sql-ddl"
 OUTPUT_MEDIA_TYPE = "application/sql"
+#: Media types of the DBML and Prisma outputs (neither language has a registered type).
+DBML_MEDIA_TYPE = "text/plain"
+PRISMA_MEDIA_TYPE = "text/plain"
+#: The serializers the projection can be written by.
+Output = Literal["ddl", "dbml", "prisma"]
 
 #: The dialects the emitter writes (the importer's :class:`app.sql_ddl_dialects.SqlDialect` spellings).
 Dialect = Literal["postgres", "mysql", "ansi"]
@@ -93,13 +110,16 @@ LOSS_UNKNOWN_SCALAR = "sql-unknown-scalar"
 LOSS_CYCLE = "sql-alias-cycle"
 LOSS_DIALECT_CLAUSE = "sql-dialect-clause-dropped"
 LOSS_SERVICES = "services-dropped"
+#: What a DBML or Prisma serializer cannot write (MFX-35.2): reported ``DROP`` or ``APPROX``.
+LOSS_SERIALIZER_DROPPED = "schema-language-dropped"
+LOSS_SERIALIZER_APPROX = "schema-language-approximated"
 #: Subjects that are a decision the projection made up (``SYNTH``), not a degradation.
 SYNTH_SUBJECTS = frozenset({
     LOSS_KEY_SYNTHESIZED, LOSS_KEY_INFERRED, LOSS_JUNCTION_TABLE, LOSS_CHILD_TABLE,
     LOSS_IDENTIFIER_RENAMED, LOSS_PRECISION,
 })
 #: Subjects that lose a rule or a value outright (``DROP``); the rest are ``APPROX``.
-DROP_SUBJECTS = frozenset({LOSS_CONSTRAINT_DROPPED, LOSS_DIALECT_CLAUSE, LOSS_CYCLE})
+DROP_SUBJECTS = frozenset({LOSS_CONSTRAINT_DROPPED, LOSS_DIALECT_CLAUSE, LOSS_CYCLE, LOSS_SERIALIZER_DROPPED})
 
 #: Canonical scalar name (lower-cased) → its SQL family. Spellings follow
 #: :data:`app.canonical_json_schema.CANONICAL_SCALAR_SCHEMAS` (the names the normalizers emit).
@@ -193,11 +213,21 @@ class SqlDdlEmitOptions(EmitOptions):
         default=None,
         description="Qualify every table with this schema and create it first (`CREATE SCHEMA`).",
     )
+    output: Output = Field(
+        default="ddl",
+        description="`ddl` (default) writes a SQL script; `dbml` writes the same tables as DBML; `prisma` "
+        "writes them as a Prisma schema (`schema.prisma`, PostgreSQL or MySQL only).",
+    )
 
     def model_post_init(self, __context: Any) -> None:  # noqa: D401 - pydantic hook
-        """Reject a schema name that is not a plain SQL identifier."""
+        """Reject a schema name that is not a plain SQL identifier, and Prisma options it cannot write."""
         if self.schema_name is not None and not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,62}", self.schema_name):
             raise ValueError("schema_name must be a plain identifier (letters, digits, _)")
+        if self.output == "prisma" and self.dialect == "ansi":
+            raise ValueError("Prisma has no standard-SQL provider; use dialect postgres or mysql with output prisma")
+        if self.output == "prisma" and self.schema_name and self.dialect != "postgres":
+            raise ValueError("Prisma writes a schema name (`@@schema`) for PostgreSQL only; drop schema_name "
+                             "or use dialect postgres")
 
 
 def parse_sql_script(script: str, dialect: str) -> List[Any]:
@@ -263,7 +293,13 @@ class _Namer:
 
 @dataclass
 class _Column:
-    """One column of a table being written."""
+    """One column of a table being written.
+
+    ``sql_type``, ``default`` and ``checks`` are the dialect's SQL text. The rest is what the DBML and
+    Prisma serializers need besides it: the column's SQL family (:data:`_SCALAR_FAMILIES`), the enum
+    type it holds, whether it is a native array, the field it came from, and its default as a value or
+    an imported expression.
+    """
 
     name: str
     sql_type: str
@@ -272,6 +308,12 @@ class _Column:
     checks: List[str] = field(default_factory=list)
     primary: bool = False
     identity: bool = False
+    family: Optional[str] = None
+    enum_key: Optional[str] = None
+    is_list: bool = False
+    pointer: str = ""
+    default_value: Any = None
+    default_expression: Optional[str] = None
 
 
 @dataclass
@@ -288,7 +330,11 @@ class _Table:
 
 
 class _SqlDdlWriter:
-    """Builds one SQL script from a canonical model (single use)."""
+    """The relational projection of one canonical model, and its SQL serializer (single use).
+
+    :meth:`project` lays the model out as tables (:attr:`tables`); :meth:`render` writes them in the
+    ``output`` the options name — SQL here, DBML or Prisma through :mod:`app.sql_ddl_serializers`.
+    """
 
     def __init__(self, api: CanonicalApi, options: SqlDdlEmitOptions) -> None:
         self._api = api
@@ -305,6 +351,53 @@ class _SqlDdlWriter:
         self._keys: Dict[str, Tuple[str, str]] = {}  # record key → (key column, its SQL type)
         source = (api.extras or {}).get("sql_ddl") or {}
         self._same_dialect = api.format == SQL_DDL_FORMAT_KEY and source.get("dialect") == self._dialect
+        self._projected = False
+
+    # -- what the serializers read -------------------------------------------
+
+    @property
+    def api(self) -> CanonicalApi:
+        """The model being projected."""
+        return self._api
+
+    @property
+    def options(self) -> SqlDdlEmitOptions:
+        """The emit options."""
+        return self._options
+
+    @property
+    def dialect(self) -> str:
+        """``postgres``, ``mysql`` or ``ansi``."""
+        return self._dialect
+
+    @property
+    def tables(self) -> List[_Table]:
+        """Every table, in output order (each record's junction / child tables just before its own table)."""
+        return self._tables
+
+    @property
+    def title(self) -> str:
+        """The name the output's header comment gives the model."""
+        return self._api.title or self._api.identity.name or "schema"
+
+    def record_loss(self, kind: LossKind, subject: str, detail: str, pointer: str) -> None:
+        """Record a loss a serializer makes (filed by the fidelity pack like the projection's)."""
+        self._loss(kind, subject, detail, pointer)
+
+    def enum_type(self, enum_key: str) -> Type:
+        """The canonical enum type ``enum_key`` names."""
+        return self._types[enum_key]
+
+    def enum_labels(self, enum_key: str) -> List[str]:
+        """The values a row of enum ``enum_key`` stores (see :meth:`_enum_values`)."""
+        return self._enum_values(self._types[enum_key])
+
+    def enum_name(self, enum_key: str) -> str:
+        """The unqualified type name of enum ``enum_key`` — PostgreSQL's ``CREATE TYPE`` name, or (for a
+        dialect with no enum type) the name a DBML or Prisma ``enum`` takes, allocated on first use."""
+        if enum_key not in self._enum_types:
+            self._enum_types[enum_key] = self._table_namer.name(self._types[enum_key].name)
+        return self._enum_types[enum_key]
 
     # -- helpers ------------------------------------------------------------
 
@@ -333,8 +426,15 @@ class _SqlDdlWriter:
 
     # -- the script ---------------------------------------------------------
 
-    def render(self) -> str:
-        """The whole script, ending in a newline."""
+    def project(self) -> None:
+        """Lay the model out as tables (idempotent).
+
+        Raises:
+            EmitPreconditionError: The model has no record type.
+        """
+        if self._projected:
+            return
+        self._projected = True
         if not self._records:
             raise EmitPreconditionError(
                 "SQL DDL export lays out record types as tables, and this model has none (only enums, "
@@ -355,14 +455,33 @@ class _SqlDdlWriter:
         self._plan_keys()
         for record in self._records:
             self._tables.append(self._table(record))
+
+    def render(self) -> str:
+        """The whole output in the options' ``output`` language, ending in a newline.
+
+        Raises:
+            EmitPreconditionError: The model has no record type.
+            ValueError: A SQL script does not parse in its dialect (an internal invariant).
+        """
+        self.project()
+        if self._options.output == "dbml":
+            from .sql_ddl_serializers import render_dbml
+
+            return render_dbml(self)
+        if self._options.output == "prisma":
+            from .sql_ddl_serializers import render_prisma
+
+            return render_prisma(self)
+        return self._render_sql()
+
+    def _render_sql(self) -> str:
         statements: List[str] = []
         if self._options.schema_name:
             statements.append(f"CREATE SCHEMA {self._q(self._options.schema_name)};")
         statements += self._enum_statements()
         statements += [self._create_table(table) for table in self._tables]
         statements += self._foreign_key_statements()
-        title = self._api.title or self._api.identity.name or "schema"
-        header = f"-- {title}: SQL DDL ({self._dialect}), generated by Apiome.\n"
+        header = f"-- {self.title}: SQL DDL ({self._dialect}), generated by Apiome.\n"
         script = header + "\n\n".join(statements) + "\n"
         parse_sql_script(script, self._dialect)
         return script
@@ -370,10 +489,13 @@ class _SqlDdlWriter:
     # -- keys ---------------------------------------------------------------
 
     def _plan_keys(self) -> None:
-        """Choose each table's key column — needed only to point foreign keys at it (``nested=tables``)."""
-        if self._options.nested != "tables":
-            return
+        """Choose each table's key column — to point foreign keys at it (``nested=tables``), because every
+        Prisma model needs one (``output=prisma``), or because a DBML table needs a column (``output=dbml``,
+        a record with no fields)."""
+        every = self._options.nested == "tables" or self._options.output == "prisma"
         for record in self._records:
+            if not every and not (self._options.output == "dbml" and not record.fields):
+                continue
             declared = ((record.extras or {}).get("sql_key") or {}).get("primary_key") or {}
             columns = declared.get("columns") or []
             names = self._column_names(record)
@@ -431,7 +553,8 @@ class _SqlDdlWriter:
         synthesized_key = key is not None and key[0] not in {snake_case(f.name) for f in record.fields}
         if synthesized_key:
             namer.name(key[0])
-            table.columns.append(_Column(name=key[0], sql_type="BIGINT", not_null=True, identity=True))
+            table.columns.append(_Column(name=key[0], sql_type="BIGINT", not_null=True, identity=True,
+                                         family="int64", pointer=record.key))
             table.primary_key = [key[0]]
         self._field_columns: List[str] = []
         for member in record.fields:
@@ -439,11 +562,27 @@ class _SqlDdlWriter:
         self._apply_declared_keys(table, record)
         if key is not None and not table.primary_key:
             table.primary_key = [key[0]]
+        if synthesized_key and table.primary_key != [key[0]]:
+            # A declared composite primary key wins; the generated key stays unique, so foreign keys can
+            # reference it and MySQL (which only increments an indexed column) can generate it.
+            table.unique.append([key[0]])
+        if self._dialect == "mysql":
+            self._index_text_keys(table)
         if self._same_dialect:
             for check in (record.extras or {}).get("sql_checks") or []:
                 if isinstance(check, Mapping) and check.get("expression"):
                     table.checks.append(str(check["expression"]))
         return table
+
+    def _index_text_keys(self, table: _Table) -> None:
+        """MySQL cannot index a ``TEXT`` column: one in a primary or unique key is written ``VARCHAR(255)``."""
+        keyed = set(table.primary_key).union(*(set(u) for u in table.unique))
+        for column in table.columns:
+            if column.name in keyed and column.sql_type == "TEXT":
+                column.sql_type = "VARCHAR(255)"
+                self._loss(LossKind.INFERRED, LOSS_TYPE_APPROX,
+                           f"{column.pointer!r}: MySQL cannot key a TEXT column; written VARCHAR(255)",
+                           column.pointer)
 
     def _apply_declared_keys(self, table: _Table, record: Type) -> None:
         """An imported SQL table's primary and unique keys (column names mangled the same way)."""
@@ -477,7 +616,7 @@ class _SqlDdlWriter:
                        f"{member.key!r} ({target.kind.value} {target.name!r}) is written as one JSON column",
                        member.key)
             table.columns.append(_Column(name=column_name, sql_type=_FAMILY_TYPES[self._dialect]["json"],
-                                         not_null=not_null))
+                                         not_null=not_null, family="json", pointer=member.key))
             return
         if target is not None and target.kind is TypeKind.ENUM:
             table.columns.append(self._enum_column(member, column_name, target, not_null))
@@ -485,8 +624,9 @@ class _SqlDdlWriter:
         sql_type, checks = self._scalar_type(member, ref.name or "string", pointer=member.key)
         if self._same_dialect and isinstance((member.extras or {}).get("sql_data_type"), str):
             sql_type = member.extras["sql_data_type"]
-        column = _Column(name=column_name, sql_type=sql_type, not_null=not_null, checks=checks)
-        column.default = self._default(member)
+        column = _Column(name=column_name, sql_type=sql_type, not_null=not_null, checks=checks,
+                         family=_family_of(ref.name or "string"), pointer=member.key)
+        self._attach_default(column, member)
         if self._same_dialect:
             column.checks += [str(c) for c in (member.extras or {}).get("sql_checks") or [] if isinstance(c, str)]
         table.columns.append(column)
@@ -517,7 +657,7 @@ class _SqlDdlWriter:
         if name != column_name and name in taken:
             # A field already takes `<field>_id`: keep the reference distinct, deterministically.
             name = f"{column_name}_ref_id"
-        table.columns.append(_Column(name=name, sql_type=key_type, not_null=not_null))
+        table.columns.append(_Column(name=name, sql_type=key_type, not_null=not_null, pointer=member.key))
         table.foreign_keys.append(([name], self._table_names[target.key], [key_column]))
         self._loss(LossKind.INFERRED, LOSS_KEY_SYNTHESIZED,
                    f"{member.key!r} is written as the foreign key {name!r} to {self._table_names[target.key]!r}",
@@ -538,12 +678,15 @@ class _SqlDdlWriter:
                 base = self._enum_type_name(target)
             else:
                 base, _ = self._scalar_type(member, item.name or "string", pointer=member.key, constraints=False)
-            table.columns.append(_Column(name=column_name, sql_type=f"{base}[]", not_null=not_null))
+            table.columns.append(_Column(
+                name=column_name, sql_type=f"{base}[]", not_null=not_null, is_list=True, pointer=member.key,
+                enum_key=target.key if target is not None else None,
+                family=None if target is not None else _family_of(item.name or "string")))
             self._drop_item_constraints(member)
             return
         self._loss(LossKind.NA, LOSS_AS_JSON, f"the list {member.key!r} is written as one JSON column", member.key)
         table.columns.append(_Column(name=column_name, sql_type=_FAMILY_TYPES[self._dialect]["json"],
-                                     not_null=not_null))
+                                     not_null=not_null, family="json", pointer=member.key))
 
     def _child_table(self, record: Type, member: CanonicalField, item: TypeRef, target: Optional[Type]) -> None:
         """A list as its own table: a junction to the item's table, or ``(owner_id, position, value)``."""
@@ -552,28 +695,31 @@ class _SqlDdlWriter:
         name = self._table_namer.name(f"{owner}_{snake_case(member.name)}")
         child = _Table(key=f"{member.key}#table", name=name)
         owner_column = f"{owner}_id"
-        child.columns.append(_Column(name=owner_column, sql_type=owner_type, not_null=True))
+        child.columns.append(_Column(name=owner_column, sql_type=owner_type, not_null=True, pointer=member.key))
         child.foreign_keys.append(([owner_column], owner, [owner_key]))
         if target is not None:
             item_key, item_type = self._keys[target.key]
             item_table = self._table_names[target.key]
             item_column = f"{item_table}_id" if item_table != owner else f"{item_table}_ref_id"
-            child.columns.append(_Column(name=item_column, sql_type=item_type, not_null=True))
-            child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True))
+            child.columns.append(_Column(name=item_column, sql_type=item_type, not_null=True, pointer=member.key))
+            child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True, family="int32",
+                                         pointer=member.key))
             child.foreign_keys.append(([item_column], item_table, [item_key]))
             child.primary_key = [owner_column, "position"]
             self._loss(LossKind.INFERRED, LOSS_JUNCTION_TABLE,
                        f"the list {member.key!r} of {target.name!r} is written as the junction table {name!r}",
                        member.key)
         else:
-            child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True))
+            child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True, family="int32",
+                                         pointer=member.key))
             enum = self._types.get(item.name or "")
             if enum is not None and enum.kind is TypeKind.ENUM:
                 value = self._enum_column(member, "value", enum, True)
             else:
                 sql_type, checks = self._scalar_type(member, item.name or "string", pointer=member.key,
                                                      constraints=False)
-                value = _Column(name="value", sql_type=sql_type, not_null=item.nullable is False, checks=checks)
+                value = _Column(name="value", sql_type=sql_type, not_null=item.nullable is False, checks=checks,
+                                family=_family_of(item.name or "string"), pointer=member.key)
             child.columns.append(value)
             child.primary_key = [owner_column, "position"]
             self._loss(LossKind.INFERRED, LOSS_CHILD_TABLE,
@@ -607,13 +753,17 @@ class _SqlDdlWriter:
         values = self._enum_values(enum)
         literal = ", ".join(_literal(v) for v in values)
         if self._dialect == "postgres":
-            return _Column(name=name, sql_type=self._enum_type_name(enum), not_null=not_null,
-                           default=self._default(member))
-        if self._dialect == "mysql":
-            return _Column(name=name, sql_type=f"ENUM({literal})", not_null=not_null, default=self._default(member))
-        width = max([len(v) for v in values] or [1])
-        return _Column(name=name, sql_type=f"VARCHAR({width})", not_null=not_null,
-                       checks=[f"{self._q(name)} IN ({literal})"], default=self._default(member))
+            column = _Column(name=name, sql_type=self._enum_type_name(enum), not_null=not_null)
+        elif self._dialect == "mysql":
+            column = _Column(name=name, sql_type=f"ENUM({literal})", not_null=not_null)
+        else:
+            width = max([len(v) for v in values] or [1])
+            column = _Column(name=name, sql_type=f"VARCHAR({width})", not_null=not_null,
+                             checks=[f"{self._q(name)} IN ({literal})"])
+        column.enum_key = enum.key
+        column.pointer = member.key
+        self._attach_default(column, member)
+        return column
 
     def _enum_statements(self) -> List[str]:
         """``CREATE TYPE … AS ENUM`` for every enum a PostgreSQL column uses."""
@@ -689,6 +839,17 @@ class _SqlDdlWriter:
                        f"the multipleOf of {member.key!r} has no SQL column rule", member.key)
         return checks
 
+    def _attach_default(self, column: _Column, member: CanonicalField) -> None:
+        """Set ``column``'s SQL default, and keep it as a value or an expression for the serializers."""
+        column.default = self._default(member)
+        if column.default is None:
+            return
+        expression = (member.extras or {}).get("sql_default_expression")
+        if isinstance(expression, str) and expression:
+            column.default_expression = expression
+        else:
+            column.default_value = member.default
+
     def _default(self, member: CanonicalField) -> Optional[str]:
         """A literal default (portable), or the imported expression in its own dialect."""
         expression = (member.extras or {}).get("sql_default_expression")
@@ -743,6 +904,11 @@ class _SqlDdlWriter:
                     f"({', '.join(self._q(c) for c in target_columns)});"
                 )
         return statements
+
+
+def _family_of(scalar: str) -> str:
+    """The SQL family of canonical scalar ``scalar`` (``text`` for one :data:`_SCALAR_FAMILIES` lacks)."""
+    return _SCALAR_FAMILIES.get(scalar.lower(), "text")
 
 
 def _literal(value: Any) -> str:
@@ -933,7 +1099,8 @@ class SqlDdlEmitter(Emitter, register=True):
     label = "SQL DDL"
     description = (
         "Export the types as SQL CREATE TABLE statements for PostgreSQL, MySQL or standard SQL: typed "
-        "columns, NOT NULL and CHECK constraints, enums, and nested objects as JSON columns or tables."
+        "columns, NOT NULL and CHECK constraints, enums, and nested objects as JSON columns or tables. "
+        "The same tables can be written as DBML or as a Prisma schema."
     )
     icon = "database"
     paradigm = ApiParadigm.DATA_SCHEMA
@@ -961,7 +1128,7 @@ class SqlDdlEmitter(Emitter, register=True):
         *,
         opts: Optional[Union[SqlDdlEmitOptions, EmitOptions]] = None,
     ) -> EmitResult:
-        """Emit ``api`` as one SQL script, parsed back with sqlglot before it is returned.
+        """Emit ``api`` as one SQL script (parsed back with sqlglot), DBML document or ``schema.prisma``.
 
         Raises:
             EmitOptionsError: When ``opts`` is invalid.
@@ -975,9 +1142,14 @@ class SqlDdlEmitter(Emitter, register=True):
             writer.tracker.record(f"/{table.name}", Provenance.SOURCE if not table.key.endswith("#table")
                                   else Provenance.INFERRED)
         base = re.sub(r"[^A-Za-z0-9_.-]+", "-", api.title or api.identity.name or "schema").strip("-") or "schema"
+        path, media_type = {
+            "ddl": (f"{base}.sql", OUTPUT_MEDIA_TYPE),
+            "dbml": (f"{base}.dbml", DBML_MEDIA_TYPE),
+            "prisma": ("schema.prisma", PRISMA_MEDIA_TYPE),
+        }[options.output]
         return EmitResult(
-            files=[EmittedFile(path=f"{base}.sql", content=script, media_type=OUTPUT_MEDIA_TYPE)],
-            media_type=OUTPUT_MEDIA_TYPE,
+            files=[EmittedFile(path=path, content=script, media_type=media_type)],
+            media_type=media_type,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
         )

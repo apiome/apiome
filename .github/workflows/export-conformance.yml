@@ -76,7 +76,7 @@ jobs:
       # TypeScript types, Zod, CUE/Pkl/Dhall, buf) run here instead of skipping.
       - name: Install the export toolchain
         run: |
-          ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor
+          ./scripts/install_dev_toolchain.sh asyncapi-parser typescript-types-extractor zod-schema-extractor dbml-validator prisma-validator
           ./scripts/install_dev_toolchain.sh cue pkl dhall
           ./scripts/install_dev_toolchain.sh buf
 

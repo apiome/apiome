@@ -5,6 +5,43 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.574.0] - 2026-10-31
+
+### Added
+- **DBML and Prisma outputs for the SQL DDL export (MFX-35.2, #4312).** New `output` option on `sql-ddl`: `ddl`
+  (default), `dbml` (`<Name>.dbml`) or `prisma` (`schema.prisma`). It is one projection with three serializers:
+  `_SqlDdlWriter.project()` builds the tables, and `render()` hands them to the SQL writer or to the new
+  `app.sql_ddl_serializers` (`render_dbml`, `render_prisma`).
+  - DBML: `Table`, an `Enum` per enum type (every dialect), `pk` / `increment` / `not null` / `unique` / `default` /
+    `check` settings, `indexes` for composite keys, a `checks` block, and a `Ref` per foreign key.
+  - Prisma: a PascalCase `model` per table with `@@map` back to it, Prisma scalars with `@db.*` native types, `@id` /
+    `@@id`, `@unique` / `@@unique`, `@default` (with `autoincrement()` and `dbgenerated()`), an `enum` per enum type
+    (`@map` for labels that are not identifiers), and both sides of each foreign key as a named `@relation`.
+    - Every model gets a key (keys are planned as with `nested=tables`).
+    - Options rejected: `output=prisma` with `dialect=ansi`, and `schema_name` outside PostgreSQL.
+  - What a language cannot hold is a loss (`schema-language-dropped` → DROP, `schema-language-approximated` →
+    APPROX): Prisma's missing `CHECK`, interval and nullable list; a foreign key Prisma cannot relate; a backtick in
+    a DBML expression.
+  - DBML gives a record with no fields a generated key (DBML has no empty table).
+- **Validation.** The `sql-ddl` export gate parses `.dbml` with `@dbml/core` (`dbml.parse`) and runs `prisma validate`
+  on `schema.prisma` (`prisma.validate`), through the new `app.db_schema_validation`. A runtime without the tools
+  reports the check as skipped.
+- **Toolchain.** New hard dependencies `dbml-validator` (`@dbml/core` 10.3.1, `toolchain/dbml-validate.mjs`) and
+  `prisma-validator` (`prisma` 7.10.1, `toolchain/prisma-validate.mjs`): `toolchain/package.json`, `BUNDLED_TOOLS`,
+  `REQUIRED_TOOL_KEYS`, the Dockerfile (copy, shims, build smoke test), `scripts/install_dev_toolchain.sh` and the
+  CI installs. They add about 250 MB to the image.
+- Tests: `tests/test_sql_ddl_serializers.py`.
+  - Goldens: `tests/fixtures/sql_ddl_output/shop-*.dbml|prisma`.
+  - Every corpus source passes `@dbml/core` and `prisma validate` (PostgreSQL + tables + schema, MySQL + JSON).
+  - The export gate, the tool wrappers, and the option rules.
+
+### Fixed
+- SQL DDL projection on MySQL (found by `prisma validate`, and invalid in MySQL itself):
+  - a `TEXT` column in a primary or unique key is written `VARCHAR(255)` (MySQL cannot index `TEXT`);
+  - a generated key beside a declared composite primary key is `UNIQUE`, so `AUTO_INCREMENT` is indexed and
+    foreign keys can reference it.
+- OpenAPI 1.438.0.
+
 ## [1.573.0] - 2026-10-31
 
 ### Added

@@ -1,0 +1,21 @@
+---
+slug: dbml-prisma-export
+title: Export tables as DBML or Prisma
+description: SQL DDL export can now write its tables as DBML or a Prisma schema.
+authors: [apiome]
+---
+
+The **SQL DDL** export can now write the same tables as **DBML** or as a Prisma `schema.prisma`: set
+**output** to `dbml` or `prisma`. [DBML and Prisma](/ship/export-a-spec#dbml-and-prisma).
+
+{/* truncate */}
+
+- **One layout, three languages.** The SQL script, the DBML file and the Prisma schema carry the same
+  tables, columns, keys, enums and foreign keys, so you can pick whichever your tools read.
+- **DBML for diagrams.** Paste the `.dbml` into dbdiagram.io or dbdocs: tables, enums, `check`
+  rules, composite keys and a `Ref` for every foreign key.
+- **Prisma, ready to use.** One `model` per table mapped back with `@@map`, Prisma types with `@db.*`
+  native types, and both sides of every relation, for PostgreSQL or MySQL.
+- **Checked.** DBML is parsed by `@dbml/core` and a Prisma schema must pass `prisma validate` before
+  you download it. What a language cannot hold, such as Prisma's missing `CHECK` constraint, is listed
+  in the fidelity report.

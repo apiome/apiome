@@ -19,6 +19,9 @@
 #                    REQUIRED (FMT-8.2, #5463; FMT-8.3, #5464) — evaluates a module's Zod schemas
 #                    and tRPC routers with the pinned `zod` and `@trpc/server` (and transpiles
 #                    with the pinned `typescript`).
+#   dbml-validator, prisma-validator
+#                    REQUIRED (MFX-35.2, #4312) — `@dbml/core` and the `prisma` CLI check the SQL DDL
+#                    export's DBML and Prisma outputs; both are pinned in the same manifest.
 #   cue, pkl, dhall  REQUIRED (FMT-8.5, #5466) — the CUE, Pkl and Dhall evaluators. Native release
 #                    binaries pinned in BUNDLED_TOOLS (src/app/toolchain_packaging.py); dhall-haskell
 #                    publishes Linux x86_64 and macOS x86_64 builds only.
@@ -27,7 +30,8 @@
 #   ./scripts/install_dev_toolchain.sh [--force] [tool ...]
 #
 # With no tool named, everything above is installed. Name one or more (`buf`,
-# `asyncapi-parser`, `typescript-types-extractor`, `zod-schema-extractor`, `cue`, `pkl`, `dhall`) to
+# `asyncapi-parser`, `typescript-types-extractor`, `zod-schema-extractor`, `dbml-validator`,
+# `prisma-validator`, `cue`, `pkl`, `dhall`) to
 # install just those — CI uses that to add
 # the required Node tools without re-downloading buf.
 
@@ -55,12 +59,14 @@ Run from the apiome-rest directory (or via ./run.sh / yarn dev).
 
   --force   Re-install even when a working tool is already present.
   tool      Install only the named tool(s): buf, asyncapi-parser,
-            typescript-types-extractor, zod-schema-extractor, cue, pkl, dhall.
+            typescript-types-extractor, zod-schema-extractor, dbml-validator,
+            prisma-validator, cue, pkl, dhall.
             Default: all.
 EOF
       exit 0
       ;;
-    buf|asyncapi-parser|typescript-types-extractor|zod-schema-extractor|cue|pkl|dhall) SELECTED+=("$arg") ;;
+    buf|asyncapi-parser|typescript-types-extractor|zod-schema-extractor|dbml-validator|prisma-validator|cue|pkl|dhall)
+      SELECTED+=("$arg") ;;
     *)
       echo "install_dev_toolchain: unknown argument '${arg}' (try --help)" >&2
       exit 1
@@ -419,6 +425,54 @@ install_native() {
   echo "install_dev_toolchain: installed ${TOOLS_BIN}/${tool} (${version})"
 }
 
+# ---------------------------------------------------------------------------------------
+# dbml-validator, prisma-validator — REQUIRED (MFX-35.2, #4312)
+# ---------------------------------------------------------------------------------------
+#
+# One Node wrapper per validator (`toolchain/dbml-validate.mjs`, `toolchain/prisma-validate.mjs`),
+# copied beside the shared node_modules like the other wrappers, with the manifest's exact pin of
+# the npm package it runs.
+#
+#   install_node_validator <executable> <npm package> <wrapper script>
+install_node_validator() {
+  local executable="$1" package="$2" wrapper="$3" pin bin escaped
+  bin="${TOOLS_BIN}/${executable}"
+  escaped="${package//\//\\/}"
+  pin="$(grep -E "\"${package}\"" toolchain/package.json \
+    | sed -E "s/.*\"${escaped}\"[[:space:]]*:[[:space:]]*\"([^\"]+)\".*/\\1/")"
+  if [[ -z "$pin" ]]; then
+    echo "install_dev_toolchain: could not read the ${package} pin from toolchain/package.json" >&2
+    exit 1
+  fi
+
+  if [[ -x "$bin" && "$FORCE" -eq 0 ]] && "$bin" --version 2>/dev/null | grep -qF " ${pin}"; then
+    cp "${ROOT}/toolchain/${wrapper}" "${NODE_PREFIX}/${wrapper}"
+    echo "install_dev_toolchain: ${executable} already installed at ${bin} ($("$bin" --version 2>/dev/null | head -1))"
+    return 0
+  fi
+
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "install_dev_toolchain: npm is required to install ${package}@${pin}." >&2
+    echo "install_dev_toolchain: ${executable} is a REQUIRED tool — without it the service" >&2
+    echo "install_dev_toolchain: refuses to start when APIOME_REQUIRE_TOOLCHAIN is on." >&2
+    exit 1
+  fi
+
+  echo "install_dev_toolchain: installing ${package}@${pin} into ${NODE_PREFIX}"
+  mkdir -p "$NODE_PREFIX"
+  npm install --prefix "$NODE_PREFIX" --no-audit --no-fund --silent "${package}@${pin}"
+  cp "${ROOT}/toolchain/${wrapper}" "${NODE_PREFIX}/${wrapper}"
+  chmod +x "${NODE_PREFIX}/${wrapper}"
+  printf '#!/bin/sh\nexec node %s/%s "$@"\n' "$NODE_PREFIX" "$wrapper" > "$bin"
+  chmod +x "$bin"
+
+  if ! "$bin" --version 2>/dev/null | grep -qF " ${pin}"; then
+    echo "install_dev_toolchain: install finished but '${bin} --version' does not report ${pin}" >&2
+    exit 1
+  fi
+  echo "install_dev_toolchain: installed ${bin} ($("$bin" --version 2>/dev/null | head -1))"
+}
+
 if wanted buf; then
   install_buf
 fi
@@ -430,6 +484,12 @@ if wanted typescript-types-extractor; then
 fi
 if wanted zod-schema-extractor; then
   install_zod_schema_extractor
+fi
+if wanted dbml-validator; then
+  install_node_validator dbml-validate @dbml/core dbml-validate.mjs
+fi
+if wanted prisma-validator; then
+  install_node_validator prisma-validate prisma prisma-validate.mjs
 fi
 if wanted cue; then
   install_native cue version
