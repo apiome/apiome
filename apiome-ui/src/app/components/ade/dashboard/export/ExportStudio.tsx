@@ -337,6 +337,22 @@ export function ExportStudio({
   // changed option drops the comparison on its own and re-entering a configuration measured
   // earlier in the session restores it instantly.
   const roundtrip = useExportRoundtrip(artifact, version, selectedKey, changedOpts);
+  /**
+   * Whether the Fidelity lens asked to see the round trip (MFX-43.4): the comparison panel then
+   * also renders on the Verify step, under the lenses. A different target starts unasked again.
+   */
+  const [roundtripOnVerify, setRoundtripOnVerify] = useState(false);
+  useEffect(() => {
+    setRoundtripOnVerify(false);
+  }, [selectedKey]);
+  const runRoundtrip = roundtrip.run;
+  const roundtripHasRun = roundtrip.hasRun;
+  const roundtripRunning = roundtrip.running;
+  /** The Fidelity lens's "See what a round-trip changes": show the panel and run it once. */
+  const seeRoundtrip = useCallback(() => {
+    setRoundtripOnVerify(true);
+    if (!roundtripHasRun && !roundtripRunning) runRoundtrip();
+  }, [runRoundtrip, roundtripHasRun, roundtripRunning]);
 
   // The mock-server test drive (MFX-44.5): serve the emitted artifact as a live API for a few
   // minutes and send it real requests. Enabled only once Review is actually showing a generated
@@ -931,6 +947,9 @@ export function ExportStudio({
       onRun={roundtrip.run}
       targetLabel={selected.entry.descriptor.label}
       options={changedOpts}
+      // MFX-43.4: the predicted drops are listed beside what the round trip observed.
+      predictedItems={verifyResult?.fidelity?.report?.items ?? null}
+      targetKey={selected.key}
     />
   ) : null;
 
@@ -1260,6 +1279,8 @@ export function ExportStudio({
                 </Alert>
               )}
               <VerifyWorkbench
+                onSeeRoundtrip={seeRoundtrip}
+                roundtripPanel={roundtripOnVerify ? roundtripPanel : null}
                 targetLabel={selected.entry.descriptor.label}
                 targetDescription={selected.entry.descriptor.description}
                 fidelitySummary={fidelity}

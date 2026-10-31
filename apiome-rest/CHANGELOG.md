@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unchanged. Corpus sets `openapi/36-overlay-1-1-set` and `37-overlay-1-2-set`; golden provenance in
   `tests/golden/overlay/`. OpenAPI 1.423.0.
 
+## [1.558.0] - 2026-10-30
+
+### Added
+- **Round-trip text diff (MFX-43.4, #4364; implements MFX-6.4, #3858).** `POST /v1/export/{tenant}/roundtrip` now
+  re-emits the re-imported model to the same target with the same options and returns both texts as `text_diff`
+  (`{filename, media_type, emitted, reemitted, identical}`): exactly what one more import + export cycle changes in the
+  file. Single-document artifacts only; a multi-file bundle, a binary artifact, one over 1 MB per side, or a re-emit
+  that fails gives `text_diff: null` with a `text_diff_reason` (never an error — the model diff stands). New
+  `RoundtripTextDiff` schema and `app.export_roundtrip.build_text_diff`. OpenAPI 1.422.0.
+
 ## [1.557.0] - 2026-10-30
 
 ### Fixed
@@ -34,7 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the built-in "Apiome Recommended" style guide, which discards findings of unseeded rules. Migration V341 re-seeds
   every tenant with them. The two blocking rules (`fhir.profile-url`, `fhir.profile-base`) gain transparency entries
   and scanner-evaluation fixtures, and the lint-rules reference lists all eight. OpenAPI 1.421.0 (version only).
-
 ## [1.556.0] - 2026-10-30
 
 ### Added

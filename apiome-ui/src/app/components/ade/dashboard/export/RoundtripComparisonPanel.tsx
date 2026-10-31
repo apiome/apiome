@@ -21,20 +21,32 @@
  *
  * Verdicts are stated in words + glyph before colour (the Studio's house rule), and a
  * transport failure degrades to a quiet notice that never gates the export.
+ *
+ * **Two views of one run (MFX-43.4, #4364).** **Model diff** is the structured change list above,
+ * plus every DROP the fidelity report predicted beside what the round trip observed of it — so a
+ * prediction is visibly confirmed (or not). **Text diff** is a side-by-side Monaco diff of the
+ * emitted artifact against the same format re-emitted from the re-imported model: exactly what an
+ * export → re-import → export cycle changes in the file. A bundle, a binary artifact or one too
+ * large to send says why it has no text diff; the model diff always covers it.
  */
 
 import { AlertTriangle, Bug, ExternalLink, Loader2, RefreshCcw, Repeat2 } from 'lucide-react';
 import { cn } from '@lib/utils';
 import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';
-import { kindGlyph, kindLabel, kindTone } from './exportFidelityPreview';
+import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from '../../../ui/Tabs';
+import { JsonDiffViewer } from '../../../ui/code/JsonDiffViewer';
+import { monacoLanguageForExportTarget } from '@/app/utils/export-target-language';
+import { kindGlyph, kindLabel, kindTone, type LossItem } from './exportFidelityPreview';
 import {
   buildRoundtripIssueReport,
   changeKindTone,
   changeKindLabel,
+  correlateDrops,
   diffEntryLabel,
   roundtripStatusPresentation,
   summarizeRoundtrip,
+  textDiffSummary,
   type ExportRoundtripResponse,
 } from './exportRoundtrip';
 
@@ -55,6 +67,13 @@ export interface RoundtripComparisonPanelProps {
   targetLabel: string;
   /** The non-default option overrides of the current configuration (for the issue report). */
   options?: Record<string, unknown> | null;
+  /**
+   * The fidelity report's items for the same configuration (MFX-43.4): its `drop` findings are
+   * listed beside what the round trip observed. Omitted (or empty) hides the list.
+   */
+  predictedItems?: readonly LossItem[] | null;
+  /** The target's format key, for the text diff's syntax highlighting. */
+  targetKey?: string | null;
   className?: string;
 }
 
@@ -77,6 +96,8 @@ export function RoundtripComparisonPanel({
   onRun,
   targetLabel,
   options = null,
+  predictedItems = null,
+  targetKey = null,
   className,
 }: RoundtripComparisonPanelProps) {
   // Unrun (and not running): the explicit, bounded entry point. The explanation states the
@@ -144,6 +165,8 @@ export function RoundtripComparisonPanel({
   const issue = failing
     ? buildRoundtripIssueReport({ response: result, targetLabel, options })
     : null;
+  const drops = correlateDrops(predictedItems, result);
+  const observedDrops = drops.filter((row) => row.observed.length > 0).length;
 
   return (
     <section className={cn('space-y-3', className)} data-testid="roundtrip-panel">
@@ -184,99 +207,167 @@ export function RoundtripComparisonPanel({
         </span>
       </div>
 
-      {/* Expected differences — the fidelity report explains each one. */}
-      {result.matched.length > 0 && (
-        <div data-testid="roundtrip-explained">
-          <h4 className="xstd-caps">
-            Expected differences · explained by the fidelity report ({result.matched.length})
-          </h4>
-          <ul className="mt-1 space-y-1">
-            {result.matched.map((pair, index) => (
-              <li
-                key={`${pair.entry.entity}:${pair.entry.key}:${index}`}
-                className="xstd-rt__diff"
-              >
-                <Badge variant={changeKindTone(pair.entry.change)} className="mr-1.5">
-                  {changeKindLabel(pair.entry.change)}
-                </Badge>
-                <span className="xstd-mono text-2xs">
-                  {diffEntryLabel(pair.entry)}
-                </span>
-                <span className="xstd-note ml-2">
-                  <Badge variant={kindTone(pair.finding.kind)} className="mr-1">
-                    {kindGlyph(pair.finding.kind)} {kindLabel(pair.finding.kind)}
-                  </Badge>
-                  {pair.finding.message}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Unexplained differences — a fidelity bug worth reporting, with the one-click path. */}
-      {(result.unexplained.length > 0 || result.overclaims.length > 0) && (
-        <div data-testid="roundtrip-unexplained">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="xstd-rt__unexplained-title">
-              Unexplained differences ({result.unexplained.length + result.overclaims.length})
+      <Tabs defaultValue="model" data-testid="roundtrip-modes">
+        <TabsList aria-label="Round-trip comparison view">
+          <TabsTrigger value="model" size="sm" data-testid="roundtrip-mode-model">
+            Model diff
+            <TabsCount>{result.diff_count}</TabsCount>
+          </TabsTrigger>
+          <TabsTrigger value="text" size="sm" data-testid="roundtrip-mode-text">
+            Text diff
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="model" className="space-y-3" data-testid="roundtrip-model-diff">
+        {/* Predicted drops beside what the round trip saw (MFX-43.4). */}
+        {drops.length > 0 && (
+          <div data-testid="roundtrip-predicted-drops">
+            <h4 className="xstd-caps">
+              Predicted drops · {observedDrops} of {drops.length} seen in the round trip
             </h4>
-            {issue && (
-              <a
-                href={issue.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn--sm"
-                data-testid="roundtrip-report-issue"
-              >
-                <Bug className="h-3.5 w-3.5" aria-hidden />
-                Report a fidelity bug
-                <ExternalLink className="h-3 w-3" aria-hidden />
-              </a>
-            )}
+            <ul className="mt-1 space-y-1">
+              {drops.map((row, index) => (
+                <li
+                  key={`drop:${row.finding.construct}:${index}`}
+                  className="xstd-rt__diff"
+                  data-observed={row.observed.length > 0 ? 'true' : 'false'}
+                >
+                  <Badge variant={kindTone('drop')} className="mr-1.5">
+                    {kindGlyph('drop')} {kindLabel('drop')}
+                  </Badge>
+                  <span className="xstd-mono text-2xs">{row.finding.construct}</span>
+                  <span className="xstd-note ml-2">
+                    {row.observed.length > 0
+                      ? `Seen: ${row.observed.map((entry) => `${changeKindLabel(entry.change).toLowerCase()} ${diffEntryLabel(entry)}`).join('; ')}`
+                      : 'Not seen in the round trip — the re-imported model still has it.'}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-          <p className="xstd-note mt-0.5">
-            The fidelity report does not account for these. The report link carries only
-            reproduction coordinates
-            {issue && issue.redactedOptionKeys.length > 0
-              ? ` (credential-shaped options withheld: ${issue.redactedOptionKeys.join(', ')})`
-              : ''}
-            — never your API content.
-          </p>
-          <ul className="mt-1 space-y-1">
-            {result.unexplained.map((entry, index) => (
-              <li
-                key={`${entry.entity}:${entry.key}:${index}`}
-                className="xstd-rt__diff" data-unexplained
-              >
-                <Badge variant={changeKindTone(entry.change)} className="mr-1.5">
-                  {changeKindLabel(entry.change)}
-                </Badge>
-                <span className="xstd-mono text-2xs">
-                  {diffEntryLabel(entry)}
-                </span>
-              </li>
-            ))}
-            {result.overclaims.map((item, index) => (
-              <li
-                key={`overclaim:${item.construct}:${index}`}
-                className="xstd-rt__diff" data-unexplained
-                data-testid="roundtrip-overclaim"
-              >
-                <Badge variant="danger" className="mr-1.5">
-                  Over-claimed
-                </Badge>
-                <span className="xstd-mono text-2xs">
-                  {item.construct}
-                </span>
-                <span className="xstd-note ml-2">
-                  reported preserved (ok), but it changed or vanished
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        )}
+
+        {/* Expected differences — the fidelity report explains each one. */}
+        {result.matched.length > 0 && (
+          <div data-testid="roundtrip-explained">
+            <h4 className="xstd-caps">
+              Expected differences · explained by the fidelity report ({result.matched.length})
+            </h4>
+            <ul className="mt-1 space-y-1">
+              {result.matched.map((pair, index) => (
+                <li
+                  key={`${pair.entry.entity}:${pair.entry.key}:${index}`}
+                  className="xstd-rt__diff"
+                >
+                  <Badge variant={changeKindTone(pair.entry.change)} className="mr-1.5">
+                    {changeKindLabel(pair.entry.change)}
+                  </Badge>
+                  <span className="xstd-mono text-2xs">
+                    {diffEntryLabel(pair.entry)}
+                  </span>
+                  <span className="xstd-note ml-2">
+                    <Badge variant={kindTone(pair.finding.kind)} className="mr-1">
+                      {kindGlyph(pair.finding.kind)} {kindLabel(pair.finding.kind)}
+                    </Badge>
+                    {pair.finding.message}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Unexplained differences — a fidelity bug worth reporting, with the one-click path. */}
+        {(result.unexplained.length > 0 || result.overclaims.length > 0) && (
+          <div data-testid="roundtrip-unexplained">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="xstd-rt__unexplained-title">
+                Unexplained differences ({result.unexplained.length + result.overclaims.length})
+              </h4>
+              {issue && (
+                <a
+                  href={issue.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn--sm"
+                  data-testid="roundtrip-report-issue"
+                >
+                  <Bug className="h-3.5 w-3.5" aria-hidden />
+                  Report a fidelity bug
+                  <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              )}
+            </div>
+            <p className="xstd-note mt-0.5">
+              The fidelity report does not account for these. The report link carries only
+              reproduction coordinates
+              {issue && issue.redactedOptionKeys.length > 0
+                ? ` (credential-shaped options withheld: ${issue.redactedOptionKeys.join(', ')})`
+                : ''}
+              — never your API content.
+            </p>
+            <ul className="mt-1 space-y-1">
+              {result.unexplained.map((entry, index) => (
+                <li
+                  key={`${entry.entity}:${entry.key}:${index}`}
+                  className="xstd-rt__diff" data-unexplained
+                >
+                  <Badge variant={changeKindTone(entry.change)} className="mr-1.5">
+                    {changeKindLabel(entry.change)}
+                  </Badge>
+                  <span className="xstd-mono text-2xs">
+                    {diffEntryLabel(entry)}
+                  </span>
+                </li>
+              ))}
+              {result.overclaims.map((item, index) => (
+                <li
+                  key={`overclaim:${item.construct}:${index}`}
+                  className="xstd-rt__diff" data-unexplained
+                  data-testid="roundtrip-overclaim"
+                >
+                  <Badge variant="danger" className="mr-1.5">
+                    Over-claimed
+                  </Badge>
+                  <span className="xstd-mono text-2xs">
+                    {item.construct}
+                  </span>
+                  <span className="xstd-note ml-2">
+                    reported preserved (ok), but it changed or vanished
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+          {result.diff_count === 0 && drops.length === 0 && (
+            <p className="xstd-quiet">The re-imported model matches the source: nothing changed.</p>
+          )}
+        </TabsContent>
+        <TabsContent value="text" data-testid="roundtrip-text-diff">
+          {result.text_diff ? (
+            <div className="xstd-stack xstd-stack--tight">
+              <p className="xstd-note" data-testid="roundtrip-text-diff-summary">
+                {textDiffSummary(result.text_diff)}
+              </p>
+              <JsonDiffViewer
+                original={result.text_diff.emitted}
+                modified={result.text_diff.reemitted}
+                mode="split"
+                language={monacoLanguageForExportTarget(targetKey ?? result.target, result.text_diff.emitted)}
+                minLines={8}
+                maxLines={40}
+                originalAriaLabel={`${result.text_diff.filename} as exported`}
+                modifiedAriaLabel={`${result.text_diff.filename} after re-import and export`}
+              />
+            </div>
+          ) : (
+            <p className="xstd-quiet" data-testid="roundtrip-text-diff-unavailable">
+              {result.text_diff_reason ??
+                'There is no text to compare: the round trip did not get as far as re-importing the artifact.'}
+            </p>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Reproduction provenance — the coordinates an issue report (or a matrix cell) shares. */}
       <p

@@ -144,6 +144,9 @@ severity, and the rules that fired. Lint is advice: it never changes the verdict
 export. A format Apiome cannot read back (a Postman collection, for example) says it was not linted
 and why.
 
+At the bottom of **Fidelity**, **click “See what a round-trip changes”** to check the prediction
+against reality: the [round-trip comparison](#check-a-round-trip) opens under the tabs and runs.
+
 ## 5. Review & Generate
 
 The summary lists the **Source**, the **Target** (tier and % preserved) and the **Options** you
@@ -160,9 +163,35 @@ When it completes:
 - **One file** — read it in the viewer, then **“Download *file-name*”** or **“Download .zip”**.
 - **A bundle** — browse the files in the tree, then **“Download .zip”**.
 - **Artifact entities**, **Problems**, the mapping graph and **What … loses, worst first** explain
-  the result; **“Run round-trip check”** reads the file back and compares it with the source.
+  the result; **“Run round-trip check”** reads the file back and compares it with the source (see
+  [Check a round trip](#check-a-round-trip)).
 - For an OpenAPI target, **Mock server test drive** serves the file as a live API — see
   [Mock try-out](./mock-try-out.mdx#test-drive-an-export).
+
+### Check a round trip
+
+**“Run round-trip check”** (on **Review**, or **“See what a round-trip changes”** on the **Fidelity**
+tab) exports the source, reads the file back into Apiome and compares the result with the source.
+It runs only when you click it. The banner says whether every difference was expected:
+
+- **Round trip verified**: the fidelity report explains every difference.
+- **Fidelity report incomplete**: something changed that the report did not predict. **“Report a
+  fidelity bug”** opens a pre-filled issue that carries only the reproduction details, never your
+  API.
+- **Comparison skipped**: Apiome cannot read this format back, so there is nothing to compare.
+
+Two tabs show the differences:
+
+- **Model diff** lists what changed in the API itself. **Predicted drops** lists every construct
+  the fidelity report says the export drops, and whether the round trip saw it go. **Expected
+  differences** pairs each change with the finding that explains it, and **Unexplained
+  differences** lists the rest.
+- **Text diff** shows the exported file beside the same file after it is read back and exported
+  again, side by side, so you can see exactly what one more import and export changes. A file that
+  comes back byte for byte says so. A multi-file bundle, a binary file or a very large one has no
+  text diff; the tab says why, and **Model diff** still covers it.
+
+<Screenshot id="export-roundtrip-model-diff" alt="Round-trip comparison for GraphQL SDL on Model diff: one of two predicted drops seen, two expected differences and one unexplained change to type Pet" />
 
 ### When generation fails
 

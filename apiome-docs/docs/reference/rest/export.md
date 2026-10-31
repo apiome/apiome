@@ -589,6 +589,8 @@ its reproduction coordinates without shipping any source bytes.
 | `emitter_version` | string | yes | The emitter implementation version. |
 | `apiome_version` | string | yes | The apiome-rest package version that ran the loop. |
 | `registry_version` | string | yes | The capability-registry snapshot version. |
+| `text_diff` | `RoundtripTextDiff` or null | no | The emitted artifact beside the same format re-emitted from the re-imported model (MFX-43.4); null when the loop did not close or the artifact cannot be diffed as text (see ``text_diff_reason``). |
+| `text_diff_reason` | string or null | no | Why ``text_diff`` is null when the loop closed: a multi-file bundle, a binary artifact, one too large to send, or a re-emit that failed. |
 
 ### `ExportTargetsResponse` {#schema-exporttargetsresponse}
 
