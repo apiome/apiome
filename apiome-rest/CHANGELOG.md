@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.565.0] - 2026-10-30
+
+### Changed
+- **OMG IDL fidelity pack: profile-dependent losses (MFX-28.2, #4169).** `CorbaIdlFidelityRulePack` lays the model out
+  with the IDL writer for the export's `profile` (`apply_options`) and reports:
+  - constraints: a string `max_length` is written `string<N>` and a list `max_items` `sequence<T, N>` (represented,
+    nothing reported); every other constraint is a `// constraints: …` comment above the member, union case,
+    typedef or operation (`APPROX`, writer loss `constraints-as-comment`);
+  - HTTP semantics: under `corba` the operation is an `APPROX` and its method / path / status codes / parameter
+    locations a `DROP` (`http-binding-dropped`); under `dds` every operation is a `DROP` (no interfaces);
+  - event channels: under `dds` a DDS topic — its payload type is declared and `// DDS topic "<address>": <type>`
+    written (`APPROX`, `channel-as-topic`); under `corba` a `DROP` (`channels-dropped`, now one per channel with its
+    pointer); event operations `DROP` under both;
+  - maps: a sequence of key/value entry structs (`APPROX`); unions: the synthesized `<Union>Kind` discriminator
+    (`SYNTH`).
+- The `corbaidl` capability profile now says what the writer does: unions and nullability are carried (discriminated
+  unions, `@optional`) and IDL has no field ids — the pack no longer reports unions dropped, non-null fields
+  "becoming optional", or synthesized field ids; a source's field numbers are reported dropped.
+- The CORBA IDL reader reads bounded strings (`string<N>` / `wstring<N>` → `string` with `max_length`) and sequence
+  bounds (`max_items`); the parser accepts a bounded string member.
+- Fixture `tests/fixtures/corbaidl_fidelity/profiles.json` pins both profiles' reports (regenerate with
+  `APIOME_REGEN_CORBAIDL_FIDELITY=1`). OpenAPI 1.429.0.
+
 ## [1.564.0] - 2026-10-30
 
 ### Changed

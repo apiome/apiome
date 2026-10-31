@@ -222,7 +222,14 @@ def _parse_field_type(s: str, start: int) -> Tuple[str, int]:
         return re.sub(r"\s+", " ", multi_word.group(0)), i + multi_word.end()
     while i < len(s) and (s[i].isalnum() or s[i] in "._"):
         i += 1
-    return s[type_start:i].strip(), i
+    word = s[type_start:i].strip()
+    if word in ("string", "wstring"):
+        # A bounded string, ``string<40>`` (MFX-28.2: the writer bounds a ``max_length``).
+        bound = re.match(r"\s*<\s*\d+\s*>", s[i:])
+        if bound:
+            i += bound.end()
+            return re.sub(r"\s+", "", s[type_start:i]), i
+    return word, i
 
 
 def _parse_struct_fields(inner: str, typedefs: Dict[str, str]) -> Tuple[CorbaIdlField, ...]:

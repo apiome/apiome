@@ -1,0 +1,264 @@
+{
+  "rich-rest": {
+    "corba": [
+      [
+        "",
+        "drop",
+        "document \u2192 IDL module"
+      ],
+      [
+        "Attrs",
+        "approx",
+        "map \u2192 sequence<Entry>"
+      ],
+      [
+        "Attrs",
+        "drop",
+        "map declaration \u2192 typedef"
+      ],
+      [
+        "GET /pets/{id}",
+        "approx",
+        "HTTP operation \u2192 IDL operation"
+      ],
+      [
+        "GET /pets/{id}",
+        "approx",
+        "constraints \u2192 comment"
+      ],
+      [
+        "GET /pets/{id}",
+        "drop",
+        "HTTP binding \u2192 dropped"
+      ],
+      [
+        "GET /pets/{id}",
+        "drop",
+        "operation \u2192 Pets.PetService.getPet"
+      ],
+      [
+        "Pet",
+        "approx",
+        "record \u2192 IDL struct"
+      ],
+      [
+        "Pet",
+        "drop",
+        "type \u2192 Pets.Pet"
+      ],
+      [
+        "Pet.id",
+        "approx",
+        "constraints \u2192 comment"
+      ],
+      [
+        "Pet.name",
+        "approx",
+        "constraints \u2192 comment"
+      ],
+      [
+        "Pets.AttrsEntry",
+        "synth",
+        "map \u2192 entry struct"
+      ],
+      [
+        "Pets.Pet",
+        "synth",
+        "type"
+      ],
+      [
+        "Pets.PetService",
+        "synth",
+        "service \u2192 interface"
+      ],
+      [
+        "Pets.PetService.getPet",
+        "synth",
+        "operation \u2192 IDL operation"
+      ],
+      [
+        "Pets.ShapeKind",
+        "synth",
+        "union \u2192 discriminator"
+      ],
+      [
+        "Shape",
+        "ok",
+        "one-of / discriminated alternatives"
+      ],
+      [
+        "Shape",
+        "synth",
+        "union \u2192 discriminated union"
+      ],
+      [
+        "pets",
+        "drop",
+        "interface \u2192 Pets.PetService"
+      ],
+      [
+        "pets.adopted",
+        "drop",
+        "channel \u2192 dropped"
+      ],
+      [
+        "publishAdopted",
+        "drop",
+        "event operation \u2192 dropped"
+      ]
+    ],
+    "dds": [
+      [
+        "",
+        "drop",
+        "document \u2192 IDL module"
+      ],
+      [
+        "Attrs",
+        "approx",
+        "map \u2192 sequence<Entry>"
+      ],
+      [
+        "Attrs",
+        "drop",
+        "map declaration \u2192 typedef"
+      ],
+      [
+        "GET /pets/{id}",
+        "drop",
+        "operation \u2192 dropped (DDS profile)"
+      ],
+      [
+        "Pet",
+        "approx",
+        "record \u2192 IDL struct"
+      ],
+      [
+        "Pet",
+        "drop",
+        "type \u2192 Pets.Pet"
+      ],
+      [
+        "Pet.id",
+        "approx",
+        "constraints \u2192 comment"
+      ],
+      [
+        "Pet.name",
+        "approx",
+        "constraints \u2192 comment"
+      ],
+      [
+        "Pets.AttrsEntry",
+        "synth",
+        "map \u2192 entry struct"
+      ],
+      [
+        "Pets.Pet",
+        "synth",
+        "type"
+      ],
+      [
+        "Pets.ShapeKind",
+        "synth",
+        "union \u2192 discriminator"
+      ],
+      [
+        "Shape",
+        "ok",
+        "one-of / discriminated alternatives"
+      ],
+      [
+        "Shape",
+        "synth",
+        "union \u2192 discriminated union"
+      ],
+      [
+        "pets",
+        "drop",
+        "service \u2192 dropped (DDS profile)"
+      ],
+      [
+        "pets.adopted",
+        "approx",
+        "channel \u2192 DDS topic"
+      ],
+      [
+        "publishAdopted",
+        "drop",
+        "event operation \u2192 dropped"
+      ]
+    ]
+  },
+  "asyncapi/02-order-events-3.0.yaml": {
+    "corba": [
+      [
+        "",
+        "drop",
+        "document \u2192 IDL module"
+      ],
+      [
+        "Order_Service.default_",
+        "synth",
+        "service \u2192 interface"
+      ],
+      [
+        "default",
+        "drop",
+        "interface \u2192 Order_Service.default_"
+      ],
+      [
+        "order/placed",
+        "drop",
+        "channel \u2192 dropped"
+      ],
+      [
+        "order/shipped",
+        "drop",
+        "channel \u2192 dropped"
+      ],
+      [
+        "receiveOrderPlaced",
+        "drop",
+        "event operation \u2192 dropped"
+      ],
+      [
+        "receiveOrderShipped",
+        "drop",
+        "event operation \u2192 dropped"
+      ]
+    ],
+    "dds": [
+      [
+        "",
+        "drop",
+        "document \u2192 IDL module"
+      ],
+      [
+        "default",
+        "drop",
+        "service \u2192 dropped (DDS profile)"
+      ],
+      [
+        "order/placed",
+        "approx",
+        "channel \u2192 DDS topic"
+      ],
+      [
+        "order/shipped",
+        "approx",
+        "channel \u2192 DDS topic"
+      ],
+      [
+        "receiveOrderPlaced",
+        "drop",
+        "event operation \u2192 dropped"
+      ],
+      [
+        "receiveOrderShipped",
+        "drop",
+        "event operation \u2192 dropped"
+      ]
+    ]
+  }
+}

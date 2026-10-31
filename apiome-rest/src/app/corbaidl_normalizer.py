@@ -15,6 +15,7 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Constraints,
     EnumValue,
     Message,
     MessageRole,
@@ -59,6 +60,31 @@ def _type_key(name: str, namespace: Optional[str]) -> str:
     return Keys.type(name, namespace)
 
 
+#: A bounded string, ``string<40>`` / ``wstring<40>`` (MFX-28.2: the writer bounds a ``max_length``).
+_BOUNDED_STRING_RE = re.compile(r"^w?string\s*<\s*(\d+)\s*>$")
+#: A bounded sequence's bound, ``sequence<T, 5>`` (the writer bounds a ``max_items``).
+_SEQUENCE_BOUND_RE = re.compile(r"^sequence\s*<.*,\s*(\d+)\s*>$", re.DOTALL)
+
+
+def _bound_constraints(type_expr: str) -> Optional[Constraints]:
+    """The constraints an IDL bound states: ``string<N>`` → ``max_length``, ``sequence<T, N>`` → ``max_items``.
+
+    Args:
+        type_expr: A member's resolved type expression.
+
+    Returns:
+        The constraints, or ``None`` for an unbounded type.
+    """
+    expr = type_expr.strip()
+    string_match = _BOUNDED_STRING_RE.match(expr)
+    if string_match:
+        return Constraints(max_length=int(string_match.group(1)))
+    sequence_match = _SEQUENCE_BOUND_RE.match(expr)
+    if sequence_match:
+        return Constraints(max_items=int(sequence_match.group(1)))
+    return None
+
+
 def _resolve_typedef(type_expr: str, typedefs: Dict[str, str]) -> str:
     seq_match = re.fullmatch(r"sequence\s*<\s*([\w.<>, \t]+)\s*>", type_expr.strip())
     if seq_match:
@@ -76,6 +102,8 @@ def _type_ref_from_expr(
     struct_names: frozenset[str],
 ) -> TypeRef:
     resolved = _resolve_typedef(type_expr, typedefs)
+    if _BOUNDED_STRING_RE.match(resolved):
+        return TypeRef(name="string", nullable=False)
     seq_match = re.fullmatch(r"sequence\s*<\s*([\w.<>, \t]+?)(?:\s*,\s*\d+)?\s*>", resolved)
     if seq_match:
         inner = _type_ref_from_expr(
@@ -117,6 +145,7 @@ def _canonical_field(
             struct_names=struct_names,
         ),
         field_number=field_number,
+        constraints=_bound_constraints(resolved),
         extras={"corbaidl_type_expr": field.type_expr},
     )
 
