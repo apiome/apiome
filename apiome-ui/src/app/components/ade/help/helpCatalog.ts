@@ -212,6 +212,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['x12', 'edifact', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
   {
+    id: 'keep-imports-fresh',
+    title: 'Keep imports up to date',
+    summary:
+      'How repositories, URL imports, catalog live refresh and uploaded files stay current, and how to turn refresh off.',
+    page: 'apiome-docs/docs/bring-in/keep-imports-fresh.mdx',
+    section: 'spine',
+    keywords: ['refresh', 'auto-refresh', 'repository', 'url', 'etag', 'webhook', 'upload', 'stale', 'cadence'],
+  },
+  {
     id: 'catalog-refresh',
     title: 'Keep a catalog item fresh',
     summary:

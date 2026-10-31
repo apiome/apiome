@@ -11,6 +11,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Keeping imports current — **Help & docs** lists a new guide, **Keep imports up to date**: how repositories, URL imports, catalog live refresh and uploaded files stay current, and how to turn refresh off
   - Postman collections — a Postman Collection v2.0/v2.1 is now read by the same engine as Insomnia, Bruno and HAR: requests that share a method and path become one operation, schemas are inferred from example bodies, folders group operations, and saved credentials are removed. The **Postman Collection** card converts through it too, so the OpenAPI it imports has schemas and lists what was left out
   - Array merge — with **Additive merge** or **Override merge** selected on the **Changes** step, **Arrays** decides what happens to a list both sides define (`enum`, `required`, `examples` …): **Replace** keeps the merge's list, **Append** adds the other side's items, **Deduplicate** does the same without repeats. **Done** says how many lists were combined
   - Override merge — the **Changes** step's **Merge strategy** also offers **Override merge**: like additive, nothing in the latest version is removed, but wherever both define the same property, operation or security scheme, the spec's definition wins. **Done** says what was merged, added, updated and kept
