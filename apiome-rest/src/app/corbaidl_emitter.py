@@ -29,7 +29,7 @@ an empty struct gets a placeholder member. Constructs IDL cannot carry are repor
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Set, Tuple, Union
 
 from pydantic import Field
 
@@ -47,6 +47,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .constraint_text import constraint_comment
 from .corbaidl_parser import parse_corbaidl
 from .emitter import (
     CapabilityProfile,
@@ -61,7 +62,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
-from .lossiness import LossinessKind, LossinessReport
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import OMG_IDL_SCALAR_FOR_KIND, target_scalar
 
 __all__ = [
@@ -103,6 +104,11 @@ _FREE_FORM = frozenset({"any", "object", "json", "map", "dict", "struct"})
 #: Cyclone DDS ``idlc`` read no wide characters).
 _WIDE_TYPES = {"wstring": "string", "wchar": "char"}
 
+def is_http_operation(operation: Operation) -> bool:
+    """Whether ``operation`` has an HTTP binding (a method or a path) that IDL has no place for."""
+    return bool(operation.http_method or operation.http_path)
+
+
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
 #: Words that are part of a type expression in a CORBA source's own spelling, never type names.
@@ -113,19 +119,130 @@ _EXPR_WORDS = frozenset(
 
 
 class CorbaIdlFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for OMG IDL export.
+    """Fidelity rules for OMG IDL export — renames (MFX-28.1), profile-dependent losses (MFX-28.2, #4169).
 
-    Beyond the capability defaults, it predicts what the writer renames (a name that is not an IDL
-    identifier, MFX-28.1) and that agent descriptors are not written. A CORBA source's names are
-    already identifiers, so nothing of it is predicted renamed.
+    The pack lays the model out with the IDL writer for the export's ``profile`` (``corba`` or ``dds``,
+    :meth:`apply_options`), so it predicts exactly what the export writes:
+
+    * **constraints** — a ``max_length`` on a string member is written ``string<N>`` and a ``max_items``
+      on a list ``sequence<T, N>``: represented, nothing reported; every other constraint is written as a
+      ``// constraints: …`` comment above the member, typedef or operation (``APPROX``);
+    * **HTTP semantics** — under ``corba`` an HTTP operation is an IDL operation (``APPROX``) and its
+      method, path, status codes and parameter locations are a ``DROP``; under ``dds`` no interface is
+      written, so every operation is a ``DROP``;
+    * **event channels** — under ``dds`` a channel is a DDS topic: its payload type is declared and the
+      topic named in a comment (``APPROX``); under ``corba`` it is a ``DROP``; event operations are a
+      ``DROP`` under both;
+    * **maps** — written as a sequence of ``<Map>Entry`` key/value structs, IDL 4.2 ``map`` being
+      unsupported by CORBA compilers (``APPROX``);
+    * **unions** — discriminated on a synthesized ``<Union>Kind`` enum, the canonical model carrying
+      no discriminator (``SYNTH``);
+    * renames of types, members and operations (``APPROX``) and agent descriptors (``DROP``).
+
+    A CORBA source's names are already identifiers and it carries no constraints, so nothing of it is
+    predicted renamed or commented.
     """
 
     target_label = "CORBA IDL"
 
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for the export's options (invalid options fall back to the defaults)."""
+        try:
+            self._options = CorbaIdlEmitOptions.model_validate(dict(options))
+        except ValueError:
+            self._options = CorbaIdlEmitOptions()
+
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Note whether the model came from CORBA IDL (its names are already IDL identifiers)."""
+        """Lay the model out with the writer for the chosen profile, then walk it."""
         self._corba_source = api.format == "corbaidl"
+        options = getattr(self, "_options", None) or CorbaIdlEmitOptions()
+        self._dds = options.profile == "dds"
+        self._writer = _CorbaIdlWriter(api, options)
+        try:
+            self._writer.render()
+        except EmitPreconditionError:
+            pass  # nothing to declare is refused at export; the walk still reports each construct
+        interfaces = self._writer.interface_names()
+        # The reader keys everything under the dotted module path (or, with none, the first interface).
+        self._namespace = ".".join(self._writer.module_path) or next(iter(interfaces.values()), "CorbaIdl")
+        self._interfaces = {} if self._dds else interfaces
+        self._service_of = {op.key: svc.key for svc in api.services for op in svc.operations}
+        self._source_keys = (
+            {t.key for t in api.types} | {s.key for s in api.services} | {o.key for o in api.operations()}
+        )
         return super().evaluate(api)
+
+    # -- keys a re-import gives back ----------------------------------------------
+
+    def _key(self, name: str) -> str:
+        """The key the CORBA IDL reader gives a declaration named ``name``."""
+        return f"{self._namespace}.{name}"
+
+    def _type_key(self, type_: Type) -> Optional[str]:
+        """A declared record / enum / alias's re-import key (maps and unions do not come back as types)."""
+        written = self._writer.type_names.get(type_.key)
+        if written is None or type_.kind in (TypeKind.MAP, TypeKind.UNION, TypeKind.SCALAR, TypeKind.ALIAS):
+            return None
+        return self._key(written)
+
+    def _service_key(self, service_key: str) -> Optional[str]:
+        interface = self._interfaces.get(service_key)
+        return self._key(interface) if interface else None
+
+    def _operation_key(self, operation: Operation) -> Optional[str]:
+        service = self._service_key(self._service_of.get(operation.key, ""))
+        name = self._writer.operation_names.get(operation.key)
+        return f"{service}.{name}" if service and name else None
+
+    def _rekeyed(self, old: str, new: Optional[str], noun: str) -> Optional[FidelityVerdict]:
+        """A ``DROP`` under ``old`` when a re-import keys the construct as ``new``."""
+        if self._corba_source or new is None or new == old:
+            return None
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} declares a {noun} in module {self._namespace!r}; {old!r} reads back as "
+            f"{new!r}",
+            severity=LossinessSeverity.INFO,
+            target_mapping=f"{noun} → {new}",
+        )
+
+    def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
+        """The keys a re-import creates: module-scoped types, interfaces and operations, entry structs and
+        discriminator enums."""
+        if self._corba_source:
+            return []
+        out: List[Tuple[str, FidelityVerdict]] = []
+
+        def add(key: Optional[str], message: str, mapping: str) -> None:
+            if key and key not in self._source_keys and all(key != k for k, _ in out):
+                out.append((key, FidelityVerdict.synth(
+                    message=f"{self.target_label}: {message}", severity=LossinessSeverity.INFO, target_mapping=mapping,
+                )))
+
+        for type_ in api.types:
+            add(self._type_key(type_), f"{type_.key!r} is declared in module {self._namespace!r}", "type")
+            if type_.key in self._writer.entry_names:
+                add(self._key(self._writer.entry_names[type_.key]),
+                    f"the map {type_.key!r} is written with a key/value entry struct", "map → entry struct")
+            if type_.key in self._writer.kind_names:
+                add(self._key(self._writer.kind_names[type_.key]),
+                    f"the union {type_.key!r} is switched on a generated discriminator enum", "union → discriminator")
+        for service in api.services:
+            add(self._service_key(service.key), f"service {service.name!r} is an interface", "service → interface")
+            for operation in service.operations:
+                add(self._operation_key(operation), f"{operation.key!r} is an operation of its interface",
+                    "operation → IDL operation")
+        return out
+
+    def service_verdicts(self, service: Any) -> List[FidelityVerdict]:
+        if self._corba_source:
+            return []
+        if self._dds:
+            return [FidelityVerdict.drop(
+                message=f"{self.target_label} (DDS) writes data types only; service {service.name!r} is not written",
+                target_mapping="service → dropped (DDS profile)",
+            )]
+        rekeyed = self._rekeyed(service.key, self._service_key(service.key), "interface")
+        return [rekeyed] if rekeyed else []
 
     def _renamed(self, name: Optional[str]) -> bool:
         """Whether the writer renames ``name``: not for a CORBA source, whose names are valid."""
@@ -139,47 +256,167 @@ class CorbaIdlFidelityRulePack(CapabilityRulePack):
         )
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """Agent descriptors have no IDL form."""
-        if not api.agents:
-            return []
-        return [FidelityVerdict.drop(
-            message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
-            target_mapping="agents → dropped",
-        )]
+        """Agent descriptors, and a non-CORBA source's document envelope."""
+        verdicts: List[FidelityVerdict] = []
+        if api.agents:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no agent descriptors; {len(api.agents)} agent(s) are not written",
+                target_mapping="agents → dropped",
+            ))
+        if not self._corba_source:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no document title, version, description or servers; the API is "
+                f"written as module {self._namespace!r} and reads back as an RPC API",
+                severity=LossinessSeverity.INFO,
+                target_mapping="document → IDL module",
+            ))
+        return verdicts
+
+    # -- channels and operations ----------------------------------------------
+
+    def channel_verdict(self, channel: Any) -> FidelityVerdict:
+        """A DDS topic under the ``dds`` profile; dropped under ``corba``."""
+        if self._dds:
+            payload = self._writer.topics.get(channel.key)
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} (DDS): {channel.key!r} is a topic created at run time"
+                + (f" with the type {payload}" if payload else ", no payload type is known")
+                + "; IDL declares the type, and the topic name is written as a comment",
+                target_mapping="channel → DDS topic",
+            )
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} has no event channels; {channel.key!r} is not written (the DDS profile "
+            "writes it as a topic)",
+            target_mapping="channel → dropped",
+        )
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation, its HTTP binding and streaming — or, under ``dds``, a ``DROP``."""
+        if operation.kind in _EVENT_OPERATION_KINDS:
+            return [FidelityVerdict.drop(
+                message=f"{self.target_label} has no event vocabulary; {operation.kind.value} operation "
+                f"{operation.key!r} is dropped" + (" (its channel is a DDS topic)" if self._dds else ""),
+                target_mapping="event operation → dropped",
+            )]
+        if self._dds:
+            return [FidelityVerdict.drop(
+                message=f"{self.target_label} (DDS) writes data types only; {operation.key!r} is not written",
+                target_mapping="operation → dropped (DDS profile)",
+            )]
+        verdicts = [self.operation_verdict(operation)]
+        if is_http_operation(operation) and not self._corba_source:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} has no HTTP binding; the method, path, status codes and parameter "
+                f"locations of {operation.key!r} are not written",
+                target_mapping="HTTP binding → dropped",
+            ))
+        if operation.streaming is not StreamingMode.NONE:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label} operations do not stream; {operation.key!r} is written as one call",
+                target_mapping="stream → single call",
+            ))
+        rekeyed = self._rekeyed(operation.key, self._operation_key(operation), "operation")
+        if rekeyed:
+            verdicts.append(rekeyed)
+        commented = [key for key in (p.key for p in operation.parameters) if key in self._writer.commented]
+        if commented:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"{self.target_label} has no validation; the parameter constraints of {operation.key!r} "
+                "are written as a comment above it, not enforced",
+                target_mapping="constraints → comment",
+            ))
+        return verdicts
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        if is_http_operation(operation):
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no HTTP binding; {operation.key!r} is written as an IDL operation",
+                target_mapping="HTTP operation → IDL operation",
+            )
+        if self._renamed(operation.name):
+            return self._rename_verdict("operation", operation.name)
+        verdict = super().operation_verdict(operation)
+        if verdict.kind is LossinessKind.OK and not self._corba_source:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label}: {operation.key!r} is written as an IDL operation — `in` arguments, the "
+                "first success response as its return type, and only exception types raised",
+                severity=LossinessSeverity.INFO,
+                target_mapping="operation → IDL operation",
+            )
+        return verdict
+
+    # -- types and fields ---------------------------------------------------------
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict, a union's synthesized discriminator, and a typedef's constraint comment."""
+        verdicts = [self.type_verdict(type_)]
+        if type_.kind is TypeKind.UNION:
+            verdicts.append(FidelityVerdict.synth(
+                message=f"{self.target_label} unions are discriminated; {type_.key!r} is switched on a "
+                f"synthesized {self._writer._names.get(type_.key, type_.name)}Kind enum, one case per member",
+                severity=LossinessSeverity.INFO,
+                target_mapping="union → discriminated union",
+            ))
+        if type_.key in self._writer.commented:
+            verdicts.append(self._comment_verdict(type_.key))
+        if type_.kind is TypeKind.MAP and not self._corba_source:
+            verdicts.append(FidelityVerdict.drop(
+                message=f"{self.target_label}: the map {type_.key!r} is a typedef of its entry sequence, so it is "
+                "not a type of its own when read back",
+                severity=LossinessSeverity.INFO,
+                target_mapping="map declaration → typedef",
+            ))
+        rekeyed = self._rekeyed(type_.key, self._type_key(type_), "type")
+        if rekeyed:
+            verdicts.append(rekeyed)
+        return verdicts
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
-        verdict = super().type_verdict(type_)
+        if type_.kind is TypeKind.MAP:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label} has no portable map (IDL 4.2 `map` is not read by CORBA compilers); "
+                f"{type_.key!r} is written as a sequence of key/value entry structs",
+                target_mapping="map → sequence<Entry>",
+            )
+        if type_.kind is TypeKind.SCALAR and type_.constraints is not None:
+            # A named scalar's constraints are the typedef's comment (type_verdicts), not a separate loss.
+            verdict = FidelityVerdict.ok(message=f"scalar carried to {self.target_label} as a typedef")
+        else:
+            verdict = super().type_verdict(type_)
         if verdict.kind is LossinessKind.OK and self._renamed(type_.name):
             return self._rename_verdict("type", type_.name)
+        re_read = type_.kind in (TypeKind.RECORD, TypeKind.ENUM)
+        if verdict.kind is LossinessKind.OK and not self._corba_source and re_read:
+            return FidelityVerdict.approx(
+                message=f"{self.target_label}: {type_.key!r} is written as an IDL "
+                f"{'enum' if type_.kind is TypeKind.ENUM else 'struct'} — members in order, IDL types, "
+                "and no descriptions",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"{type_.kind.value} → IDL {'enum' if type_.kind is TypeKind.ENUM else 'struct'}",
+            )
         return verdict
 
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        """The capability verdicts, plus an ``APPROX`` when the writer renames the field."""
+        """The capability verdicts, plus an ``APPROX`` when the writer renames the member."""
         verdicts = super().field_verdicts(field)
         if self._renamed(field.name):
             verdicts.append(self._rename_verdict("member", field.name))
         return verdicts
 
-    def operation_verdict(self, operation) -> FidelityVerdict:
-        if (
-            operation.kind not in _EVENT_OPERATION_KINDS
-            and not (operation.http_method or operation.http_path)
-            and self._renamed(operation.name)
-        ):
-            return self._rename_verdict("operation", operation.name)
-        if operation.kind in _EVENT_OPERATION_KINDS:
-            return FidelityVerdict.drop(
-                message=f"{self.target_label} has no event vocabulary; "
-                f"{operation.kind.value} operation {operation.key!r} is dropped",
-                target_mapping="event operation → dropped",
-            )
-        if operation.http_method or operation.http_path:
-            return FidelityVerdict.approx(
-                message=f"{self.target_label} has no HTTP binding; reframing "
-                f"{operation.key!r} as an IDL operation",
-                target_mapping="HTTP operation → IDL operation",
-            )
-        return super().operation_verdict(operation)
+    def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """A bound is represented (nothing to report); anything else is the member's comment."""
+        if field.key in self._writer.commented:
+            return self._comment_verdict(field.key)
+        return None
+
+    def _comment_verdict(self, key: str) -> FidelityVerdict:
+        bounds = sorted(self._writer.bounded.get(key, ()))
+        written_as = f" ({', '.join(bounds)} is written as an IDL bound)" if bounds else ""
+        return FidelityVerdict.approx(
+            message=f"{self.target_label} has no validation; the constraints of {key!r} are written as a comment "
+            f"({self._writer.commented[key]}), not enforced{written_as}",
+            target_mapping="constraints → comment",
+        )
 
 
 class CorbaIdlEmitOptions(EmitOptions):
@@ -222,14 +459,14 @@ class CorbaIdlEmitter(Emitter, register=True):
 
     @classmethod
     def capability_profile(cls) -> CapabilityProfile:
-        # Unchanged from MFX-24.1: the predictive profile (unions now written as discriminated unions,
-        # nullable members as ``@optional``) is refined by the OMG IDL fidelity pack, MFX-28.2 (#4169).
+        # MFX-28.2: unions are written as discriminated unions and nullable members as ``@optional``,
+        # so both are carried; IDL has no field ids, so a source's field numbers are dropped.
         return CapabilityProfile(
             operations=True,
             events=False,
-            unions=False,
-            nullability=False,
-            field_identity=True,
+            unions=True,
+            nullability=True,
+            field_identity=False,
         )
 
     @classmethod
@@ -379,6 +616,37 @@ class _CorbaIdlWriter:
         self._forward: List[str] = []
         self._definitions: List[List[str]] = []
         self._sequence_typedefs: Dict[str, str] = {}
+        #: Construct key → the constraint attributes written as an IDL bound (``string<N>``,
+        #: ``sequence<T, N>``) — represented, not lost (MFX-28.2).
+        self.bounded: Dict[str, Set[str]] = {}
+        #: Construct key → the ``constraints: …`` text written as a comment above it (MFX-28.2).
+        self.commented: Dict[str, str] = {}
+        #: Channel key → the payload type its DDS topic is written for (DDS profile, MFX-28.2).
+        self.topics: Dict[str, Optional[str]] = {}
+        self._op_comments: List[str] = []
+        #: Operation key → the IDL operation name written (the pack predicts re-import keys, MFX-28.2).
+        self.operation_names: Dict[str, str] = {}
+        #: Map type key → its ``<Map>Entry`` struct; union type key → its ``<Union>Kind`` enum.
+        self.entry_names: Dict[str, str] = {}
+        self.kind_names: Dict[str, str] = {}
+
+    @property
+    def module_path(self) -> List[str]:
+        """The module path the definitions are written in (outermost first)."""
+        return list(self._module_path)
+
+    @property
+    def type_names(self) -> Dict[str, str]:
+        """Type key → the name the type is declared under."""
+        return dict(self._names)
+
+    def interface_names(self) -> Dict[str, str]:
+        """Service key → the interface it is written as (canonical services only)."""
+        return {
+            source.key: name
+            for (_, source), name in zip(self._interfaces, self._interface_names)
+            if isinstance(source, Service)
+        }
 
     # ------------------------------------------------------------------
     # Document
@@ -403,12 +671,17 @@ class _CorbaIdlWriter:
             for (_, source), name in zip(self._interfaces, self._interface_names):
                 self._definitions.append(self._render_interface(name, source))
 
-        if self._api.channels:
-            self.losses.record(
-                LossKind.NA,
-                "channels-dropped",
-                "OMG IDL export has no event channel representation",
-            )
+        for channel in self._api.channels:
+            if self._dds:
+                self._definitions.append(self._render_topic(channel))
+            else:
+                self.losses.record(
+                    LossKind.NA,
+                    "channels-dropped",
+                    f"CORBA IDL has no event channels; {channel.key!r} is not written (the DDS profile writes it "
+                    "as a topic).",
+                    pointer=channel.key,
+                )
 
         if not self._definitions:
             if self._dds:
@@ -632,6 +905,8 @@ class _CorbaIdlWriter:
             expr = self._member_expr(field)
             if expr is None:
                 continue
+            expr = self._bounded(expr, field)
+            members.extend(self._comment_lines(field.constraints, field.key, "  "))
             member = self._member_name(scope, field)
             annotations = []
             if field.name in keys and not expr.startswith("sequence<"):
@@ -704,7 +979,8 @@ class _CorbaIdlWriter:
         self._stack.append(type_.key)
         if type_.fields:
             for field in self._ordered_fields(type_):
-                branches.append((field.name, self._member_expr(field), field.key))
+                expr = self._member_expr(field)
+                branches.append((field.name, self._bounded(expr, field) if expr else expr, field.key))
         else:
             for member in type_.union_members:
                 short = member.split(".")[-1]
@@ -739,6 +1015,7 @@ class _CorbaIdlWriter:
             return [f"struct {name} {{", f"  octet {_Scope(name).claim('reserved')};", "};"]
 
         kind_name = self._top.claim(f"{name}Kind")
+        self.kind_names[type_.key] = kind_name
         scope = _Scope(name)
         cases: List[Tuple[str, str, str]] = []
         for label, expr, pointer in written:
@@ -749,12 +1026,101 @@ class _CorbaIdlWriter:
         lines = [f"enum {kind_name} {{"]
         lines += [f"  {enumerator}," for enumerator, _, _ in cases[:-1]] + [f"  {cases[-1][0]}", "};", ""]
         lines.append(f"union {name} switch ({self._scoped(kind_name)}) {{")
-        for enumerator, expr, member in cases:
+        fields = {field.key: field for field in type_.fields}
+        for (enumerator, expr, member), (_, _, pointer) in zip(cases, written):
             # A ``void`` arm carries no data: its discriminator value simply selects no member.
             if expr != "void":
+                field = fields.get(pointer)
+                if field is not None:
+                    lines.extend(self._comment_lines(field.constraints, field.key, "  "))
                 lines.append(f"  case {self._scoped(enumerator)}: {expr} {member};")
         lines.append("};")
         return lines
+
+    def _bounded(self, expr: str, field: CanonicalField) -> str:
+        """Write a field's ``max_length`` / ``max_items`` as an IDL bound when its type takes one.
+
+        ``string`` becomes ``string<N>`` and an unbounded ``sequence<T>`` becomes ``sequence<T, N>`` — the
+        constraint is then represented, not lost (MFX-28.2). A CORBA source's own expression is kept.
+        """
+        c = field.constraints
+        if c is None or (self._corba_source and field.extras.get("corbaidl_type_expr")):
+            return expr
+        if expr == "string" and isinstance(c.max_length, int) and c.max_length > 0:
+            self.bounded.setdefault(field.key, set()).add("max_length")
+            return f"string<{c.max_length}>"
+        if (
+            expr.startswith("sequence<")
+            and field.type.item is not None
+            and isinstance(c.max_items, int)
+            and c.max_items > 0
+            and not re.search(r",\s*\d+\s*>$", expr)
+        ):
+            self.bounded.setdefault(field.key, set()).add("max_items")
+            return _sequence(expr[len("sequence<"):-1].rstrip(), c.max_items)
+        return expr
+
+    def _comment_lines(
+        self, constraints: Any, pointer: str, indent: str, *, label: Optional[str] = None
+    ) -> List[str]:
+        """A ``// constraints: …`` line for what IDL cannot state (MFX-28.2), recorded as a loss.
+
+        Constraints already written as a bound are left out.
+
+        Args:
+            constraints: The member's, parameter's or type's constraints.
+            pointer: The construct key the comment and the loss are recorded against.
+            indent: The indentation of the line it precedes.
+            label: A parameter name the comment is about (operation parameters share one comment block).
+
+        Returns:
+            The comment line, or nothing when nothing is left to say.
+        """
+        if constraints is None:
+            return []
+        bounded = self.bounded.get(pointer, set())
+        remaining = constraints.model_copy(update={attr: None for attr in bounded}) if bounded else constraints
+        comment = constraint_comment(remaining)
+        if comment is None:
+            return []
+        if label:
+            comment = f"{label} {comment}"
+        self.commented[pointer] = comment
+        self.losses.record(
+            LossKind.INFERRED,
+            "constraints-as-comment",
+            f"IDL has no validation; the constraints of {pointer!r} are written as a comment ({comment}).",
+            pointer=pointer,
+        )
+        return [f"{indent}// {comment}"]
+
+    def _render_topic(self, channel: Any) -> List[str]:
+        """DDS profile: a channel is a topic — its payload type is declared and the topic named in a comment.
+
+        A DDS topic is created at run time from a name and a type; IDL declares only the type.
+        """
+        payload = next(
+            (
+                message.payload
+                for operation in self._api.operations()
+                if operation.channel_ref == channel.key
+                for message in operation.messages
+                if message.payload is not None
+            ),
+            None,
+        )
+        expr = self._expr(payload) if payload is not None else None
+        self.topics[channel.key] = expr
+        self.losses.record(
+            LossKind.INFERRED,
+            "channel-as-topic",
+            f"DDS has no channels in IDL; {channel.key!r} is a topic created at run time"
+            + (f" with the type {expr}" if expr else " (no payload type is known)") + "; its name is written as a "
+            "comment.",
+            pointer=channel.key,
+        )
+        topic = " ".join(str(channel.address or channel.key).split())
+        return [f"// DDS topic \"{topic}\": {expr or 'type unknown'}"]
 
     def _render_typedef(self, type_: Type) -> List[str]:
         """An alias as ``typedef <aliased> Name;``, a named scalar as a typedef of its IDL type."""
@@ -772,7 +1138,7 @@ class _CorbaIdlWriter:
         else:
             fmt = type_.constraints.format if type_.constraints is not None else None
             expr = self._scalar(type_.name, fmt, subject="custom-scalar", pointer=type_.key)
-        return [f"typedef {expr} {self._names[type_.key]};"]
+        return self._comment_lines(type_.constraints, type_.key, "") + [f"typedef {expr} {self._names[type_.key]};"]
 
     def _render_map(self, type_: Type) -> List[str]:
         """A map as ``struct <Map>Entry { K key; V value; }`` plus ``typedef sequence<<Map>Entry> <Map>;``."""
@@ -782,6 +1148,7 @@ class _CorbaIdlWriter:
         value_expr = self._expr(type_.value_type or TypeRef(name="string")) or "string"
         self._stack.pop()
         entry = self._top.claim(f"{name}Entry")
+        self.entry_names[type_.key] = entry
         self.losses.record(
             LossKind.INFERRED,
             "map-as-sequence",
@@ -937,8 +1304,10 @@ class _CorbaIdlWriter:
         scope = _Scope(name)
         if isinstance(source, Service):
             for operation in source.operations:
+                self._op_comments = []
                 rendered = self._render_operation(operation, scope)
                 if rendered:
+                    lines.extend(f"  {comment}" for comment in self._op_comments)
                     lines.append(f"  {rendered};")
             self.tracker.record(source.key, Provenance.SOURCE)
         else:
@@ -985,6 +1354,7 @@ class _CorbaIdlWriter:
             )
             return None
         name = scope.claim(operation.name, "call")
+        self.operation_names[operation.key] = name
         if name != operation.name:
             self.losses.record(
                 LossKind.INFERRED,
@@ -999,6 +1369,18 @@ class _CorbaIdlWriter:
                 "streaming-dropped",
                 f"IDL operations do not stream; {operation.key!r} is written as one call.",
                 pointer=operation.key,
+            )
+        if is_http_operation(operation) and not self._corba_source:
+            self.losses.record(
+                LossKind.NA,
+                "http-binding-dropped",
+                f"IDL has no HTTP binding; the method, path, status codes and parameter locations of "
+                f"{operation.key!r} are not written (it is the operation {name!r}).",
+                pointer=operation.key,
+            )
+        for param in operation.parameters:
+            self._op_comments.extend(
+                self._comment_lines(param.constraints, param.key, "", label=param.name)
             )
         response = _response(operation)
         return_type = (

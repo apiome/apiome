@@ -229,6 +229,27 @@ Each export is checked before you download it:
   left out, and so is any recursive member under the `dds` profile.
 - **From a CORBA item.** An item imported from CORBA IDL keeps its module, `typedef`s, interfaces and
   parameter directions (`in`, `out`, `inout`).
+- **Constraints.** A string's maximum length is written as a bounded string (`string<40>`) and a
+  list's maximum size as a bounded sequence (`sequence<Tag, 5>`), so they are kept. IDL has no other
+  validation, so every other constraint is written as a comment above the member, typedef or
+  operation — `// constraints: >= 1; pattern ^[A-Z]+$` — and nothing enforces it.
+- **Channels (DDS).** Under the `dds` profile each event channel is a DDS topic: its message type is
+  declared, and a comment names the topic (`// DDS topic "orders.placed": ::shop::Order`). A DDS
+  application creates the topic from that name and type.
+
+The fidelity report depends on the profile:
+
+| What the source has | `corba` | `dds` |
+| --- | --- | --- |
+| A maximum string length or list size | Kept as a bound — not reported | Kept as a bound — not reported |
+| Any other constraint | Written as a comment, not enforced (approximated) | Same |
+| An HTTP operation | An IDL operation (approximated); its method, path, status codes and parameter locations are dropped | Dropped: the profile writes data types only |
+| Any other operation | An IDL operation | Dropped |
+| An event channel | Dropped | A DDS topic named in a comment (approximated) |
+| Publish / subscribe operations | Dropped | Dropped (the channel is the topic) |
+| A map | A sequence of key/value entry structs (approximated) | Same |
+| A union | Its discriminator enum is generated (synthesized) | Same |
+| A source's field numbers (Protobuf, Thrift) | Dropped: IDL has none | Same |
 
 ### Smithy from any source
 

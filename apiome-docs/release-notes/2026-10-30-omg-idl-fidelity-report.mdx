@@ -1,0 +1,23 @@
+---
+slug: omg-idl-fidelity-report
+title: OMG IDL fidelity report follows the profile
+description: CORBA and DDS exports keep bounds, comment constraints and report by profile.
+authors: [apiome]
+---
+
+**CORBA IDL** exports now keep what IDL can say and report the rest, differently for the `corba` and
+`dds` profiles. [What the IDL report lists](/ship/export-a-spec#omg-idl-corba-or-dds-from-any-source).
+
+{/* truncate */}
+
+- **Bounds are kept.** A maximum string length is written `string<40>` and a maximum list size
+  `sequence<T, 5>`, and they read back when the IDL is imported.
+- **Other constraints are comments.** `// constraints: >= 1; pattern …` above the member, typedef or
+  operation. The report says nothing enforces them.
+- **By profile.** Under `corba`, an HTTP operation is an IDL operation and its method, path and status
+  codes are dropped, and event channels are dropped. Under `dds`, operations are dropped and each channel
+  is a DDS topic, named in a comment beside its message type.
+- **Maps and unions.** A map is reported as a sequence of key/value structs, and a union's generated
+  discriminator as synthesized.
+- **No more false items.** The report no longer says unions are dropped, that required fields become
+  optional, or that IDL synthesizes field ids.

@@ -76,21 +76,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation 43df6329-226e-4677-ad73-f50348e0bc54; changed roo',
+        'added channel com.example.product; added operation b6a86754-a1d2-4d88-b7b0-75b55fe20221; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation 11f3b00e-1be6-4186-a851-ae878d78fa8a; changed root; ',
+        'added channel com.example.user; added operation dcd085f4-4c41-44e4-9cbe-53be23319069; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation 6f3fafe9-4bc3-4b43-a5ee-be48629571f3; changed ',
+        'added channel com.example.cronwidget; added operation ecc3fed3-4a11-4aac-a451-cb43955036c9; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation d17c965c-60e7-401d-8343-428bd364e755; changed root',
+        'added channel com.example.orders; added operation 5525aaf9-c2c8-423f-88d3-f96cfebc2390; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation c6afc2a8-981d-44d4-8a30-b89b0859527e; c',
+        'added channel com.example.commerce.ontology; added operation 060848e2-ba25-4afd-a14f-9b103beeaac5; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation eb6104ea-af13-4eba-b373-fd4d66a05ece',
+        'added channel com.example.typicalsensormessage; added operation 1c38d2c6-93ec-4a01-928c-6258f417b4a3',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation c7249215-eb39-4824-b0ba-2d',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation a09be85e-4dad-4970-b5a3-d9',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation 436737fc-62c4-4107-833c-f068b14e1ef9; changed r',
+        'added channel com.example.orderline; added operation f5386e84-5a1d-4d06-8e39-b9239d081318; changed r',
     # --- connectrpc (15) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
@@ -122,17 +122,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; added',
     ('tyk', 'connectrpc'):
         'removed operation DELETE /v2/orders/orders/{id}; removed operation GET /v2/orders/orders; removed op',
-    # --- corbaidl (5) ---
-    ('arazzo', 'corbaidl'):
-        'added operation Storefront_checkout.checkout.addItem; added operation Storefront_checkout.checkout.c',
-    ('capnproto', 'corbaidl'):
-        'removed operation Directory.add; removed operation Directory.lookup; added operation DirectoryModule',
-    ('flatbuffers', 'corbaidl'):
-        'changed root; changed type example.game.Color; changed type example.game.Monster; changed type examp',
-    ('wsdl', 'corbaidl'):
-        'added operation example.com.orders.OrderPort.CancelOrder; added operation example.com.orders.OrderPo',
-    ('wsdl2', 'corbaidl'):
-        'added operation example.com.orders.OrderInterface.cancelOrder; added operation example.com.orders.Or',
     # --- graphql (11) ---
     ('agents-manifest', 'graphql'):
         'added operation Mutation.https___returns_northwind_example__well_known_agent_card_json; added operat',
