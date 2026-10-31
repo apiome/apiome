@@ -52,14 +52,21 @@ the 3.1 output to **OpenAPI 3.0.3** or **Swagger 2.0** through
 2020-12 construct, so each downgrade records the constructs it loses on the result's
 :attr:`~app.emitter.EmitResult.losses` — the "3.0/2.0 downgrades flagged as lossy"
 acceptance criterion — feeding the fidelity pack (MFX-9.2).
+
+``openapi_version="3.2"`` (MFX-9.5) writes **OpenAPI 3.2.0** instead, carrying natively what the
+canonical model holds that only 3.2 can express: a ``QUERY`` operation as the path item's ``query``
+key, any other non-standard method under ``additionalOperations``, and the tag hierarchy an
+imported 3.2 document declared (``tags`` with ``parent`` / ``summary`` / ``kind``). The 3.1 output
+(and the 3.0 / 2.0 downgrades made from it) carries the methods on ``x-apiome-*`` extensions and has
+no tag hierarchy; :class:`OpenApiFidelityRulePack` reports both for those versions.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Set, Tuple, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from .canonical_model import (
     ApiParadigm,
@@ -121,6 +128,11 @@ _OAS31_METHODS = frozenset(
 # 3.1 path-item operation key (mirrors the UI 3.2→3.1 converter).
 X_QUERY_OPERATION = "x-apiome-query-operation"
 X_ADDITIONAL_OPERATIONS = "x-apiome-additional-operations"
+#: The OpenAPI version string of the 3.2 output mode (MFX-9.5).
+OPENAPI_32_VERSION = "3.2.0"
+#: Canonical-model extra holding an imported 3.2 document's tag hierarchy (``parent``/``summary``/``kind``
+#: per tag name), as :meth:`app.openapi_normalizer.OpenApiNormalizer._tag_hierarchy` records it.
+TAG_HIERARCHY_EXTRAS_KEY = "tagHierarchy"
 
 # Extracts the identifier-safe tokens of a path/key when synthesizing an
 # ``operationId`` (drops slashes, dots, and ``{param}`` braces).
@@ -130,12 +142,14 @@ _ID_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
 class OpenApiEmitOptions(EmitOptions):
     """Per-target options for :class:`OpenApiEmitter` (MFX-1.4)."""
 
-    openapi_version: Literal["3.1", "3.0", "2.0"] = Field(
+    openapi_version: Literal["3.2", "3.1", "3.0", "2.0"] = Field(
         default="3.1",
         description=(
-            "OpenAPI dialect to emit. ``3.1`` (default) is the native, lossless "
-            "target; ``3.0`` and ``2.0`` (Swagger) are downgrades of the 3.1 output "
-            "and lose 3.1-only constructs, each recorded as a fidelity loss (MFX-9.1)."
+            "OpenAPI dialect to emit. ``3.1`` (default) is the native target; ``3.2`` "
+            "(MFX-9.5) also writes 3.2-only constructs natively — ``query`` and "
+            "``additionalOperations`` methods and the tag hierarchy; ``3.0`` and ``2.0`` "
+            "(Swagger) are downgrades of the 3.1 output and lose 3.1-only constructs, each "
+            "recorded as a fidelity loss (MFX-9.1)."
         ),
     )
     include_paths: bool = Field(
@@ -195,6 +209,39 @@ class OpenApiFidelityRulePack(CapabilityRulePack):
     _EVENT_OPERATION_KINDS = frozenset(
         {OperationKind.PUBLISH, OperationKind.SUBSCRIBE}
     )
+    #: The OpenAPI version the report is computed for (:meth:`apply_options`); 3.1 by default.
+    _version = "3.1"
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for the chosen ``openapi_version`` — MFX-9.5 (#4342).
+
+        Only the 3.2 output carries a ``QUERY`` / custom-method operation natively and the tag
+        hierarchy; every other version reports them (:meth:`operation_verdict`,
+        :meth:`root_verdicts`). Invalid options fall back to the defaults.
+        """
+        try:
+            self._version = OpenApiEmitOptions.model_validate(dict(options)).openapi_version
+        except ValidationError:
+            self._version = "3.1"
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The tag hierarchy (``parent`` / ``summary`` / ``kind``), which only OpenAPI 3.2 can write.
+
+        Below 3.2 a Tag Object has a name and a description only, so the hierarchy an imported 3.2
+        document declared is dropped (``DROP``, info: navigation metadata, not the contract).
+        """
+        verdicts = list(super().root_verdicts(api))
+        hierarchy = _tag_hierarchy(api)
+        if hierarchy and self._version != "3.2":
+            verdicts.append(
+                FidelityVerdict.drop(
+                    message=f"OpenAPI {self._version} tags have no parent, summary or kind; the tag "
+                    f"hierarchy of {len(hierarchy)} tag(s) is dropped — export OpenAPI 3.2 to keep it",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="tag hierarchy → dropped (OpenAPI 3.2 only)",
+                )
+            )
+        return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """Refine event/subscription/streaming operations OpenAPI can only document.
@@ -217,9 +264,22 @@ class OpenApiFidelityRulePack(CapabilityRulePack):
           cardinality, surfaced only as an :data:`X_STREAMING` note
           (:class:`~app.projection.RpcProjection`) — an ``APPROX``.
 
+        A ``QUERY`` or other non-standard HTTP method (MFX-9.5) is native only in OpenAPI 3.2; any
+        other version carries it on an ``x-apiome-*`` path-item extension, which tools for that
+        version do not read — an ``APPROX``.
+
         Every other operation (a unary REST/RPC call, a GraphQL query/mutation) is
         carried faithfully and defers to the inherited ``OK``.
         """
+        method = (operation.http_method or "").lower()
+        if method and method not in _OAS31_METHODS and self._version != "3.2":
+            extension = X_QUERY_OPERATION if method == "query" else X_ADDITIONAL_OPERATIONS
+            return FidelityVerdict.approx(
+                message=f"OpenAPI {self._version} has no {method.upper()} method; the operation is "
+                f"carried on the {extension} extension, which {self._version} tools do not read — "
+                "export OpenAPI 3.2 to write it natively",
+                target_mapping=f"{method.upper()} → {extension}",
+            )
         if operation.kind in self._EVENT_OPERATION_KINDS:
             return FidelityVerdict.approx(
                 message=f"{self.target_label} has no pub/sub semantics; the "
@@ -379,8 +439,15 @@ class OpenApiEmitter(Emitter, register=True):
         if servers:
             document["servers"] = servers
 
+        native_32 = options.openapi_version == "3.2"
+        tags = self._tags(api, tracker, losses, native_32=native_32)
+        if tags:
+            document["tags"] = tags
+
         if options.include_paths:
-            document["paths"] = self._paths(api, schema, tracker, projection, losses)
+            document["paths"] = self._paths(
+                api, schema, tracker, projection, losses, native_32=native_32
+            )
         else:
             document["paths"] = {}
 
@@ -429,6 +496,10 @@ class OpenApiEmitter(Emitter, register=True):
         Returns:
             A ``(document, path, media_type)`` triple for the downgraded output.
         """
+        if version == "3.2":
+            document["openapi"] = OPENAPI_32_VERSION
+            tracker.record("/openapi", Provenance.DEFAULT, "OpenAPI 3.2 output mode (MFX-9.5)")
+            return document, self.OUTPUT_PATH, self.OUTPUT_MEDIA_TYPE
         if version == "3.0":
             document = downgrade_to_openapi_30(document, losses)
             tracker.record(
@@ -521,6 +592,47 @@ class OpenApiEmitter(Emitter, register=True):
             variables[variable.name] = spec
         return variables
 
+    # --- tags ---------------------------------------------------------------
+
+    @staticmethod
+    def _tags(
+        api: CanonicalApi,
+        tracker: ProvenanceTracker,
+        losses: LossTracker,
+        *,
+        native_32: bool,
+    ) -> List[Dict[str, Any]]:
+        """The top-level ``tags`` an imported 3.2 document's hierarchy needs (MFX-9.5).
+
+        In the 3.2 mode each tag with hierarchy metadata is written as a Tag Object with its
+        ``parent`` / ``summary`` / ``kind``, sorted by name. Any other version has no such fields:
+        nothing is written and the dropped hierarchy is recorded as a loss.
+
+        Returns:
+            The Tag Objects to write (empty when there is no hierarchy or the mode is not 3.2).
+        """
+        hierarchy = _tag_hierarchy(api)
+        if not hierarchy:
+            return []
+        if not native_32:
+            losses.record(
+                LossKind.NA,
+                "openapi-3.2-tag-hierarchy",
+                f"the tag hierarchy of {len(hierarchy)} tag(s) (parent / summary / kind) has no "
+                "OpenAPI 3.1 form and is not written",
+            )
+            return []
+        tags: List[Dict[str, Any]] = []
+        for index, name in enumerate(sorted(hierarchy)):
+            meta = hierarchy[name]
+            tag: Dict[str, Any] = {"name": name}
+            for key in ("summary", "parent", "kind"):
+                if isinstance(meta.get(key), str):
+                    tag[key] = meta[key]
+            tags.append(tag)
+            tracker.record(f"/tags/{index}", Provenance.SOURCE, "OpenAPI 3.2 tag hierarchy")
+        return tags
+
     # --- paths / operations -------------------------------------------------
 
     def _paths(
@@ -530,8 +642,14 @@ class OpenApiEmitter(Emitter, register=True):
         tracker: ProvenanceTracker,
         projection: "ProjectionStrategy",
         losses: LossTracker,
+        *,
+        native_32: bool = False,
     ) -> Dict[str, Any]:
         """Emit the ``paths`` object, one path item per route, one method per op.
+
+        With ``native_32`` (the OpenAPI 3.2 mode, MFX-9.5) a ``QUERY`` operation is the path item's
+        ``query`` key and any other non-standard method goes under ``additionalOperations``;
+        otherwise both are stashed on ``x-apiome-*`` extensions and reported as a loss.
 
         Operations are processed in a deterministic (service key, operation key)
         order. Each operation's ``(method, path)`` binding — and whether it came
@@ -571,6 +689,9 @@ class OpenApiEmitter(Emitter, register=True):
             self._apply_extensions(operation_obj, binding, op_ptr, tracker)
             self._apply_security(operation_obj, operation, stubs, op_ptr, tracker)
             method = binding.method.lower()
+            if method not in _OAS31_METHODS and native_32:
+                self._place_oas32_operation(item, method, operation_obj, op_ptr, tracker)
+                continue
             if method not in _OAS31_METHODS:
                 self._stash_non_oas31_operation(
                     item, method, operation_obj, operation, losses
@@ -578,6 +699,25 @@ class OpenApiEmitter(Emitter, register=True):
                 continue
             item[method] = operation_obj
         return paths
+
+    @staticmethod
+    def _place_oas32_operation(
+        item: Dict[str, Any],
+        method: str,
+        operation_obj: Dict[str, Any],
+        op_ptr: str,
+        tracker: ProvenanceTracker,
+    ) -> None:
+        """Write a 3.2-only HTTP method natively: ``query``, else ``additionalOperations[<METHOD>]``.
+
+        OpenAPI 3.2 reserves the nine fixed methods (``QUERY`` included) as path-item keys, so
+        ``additionalOperations`` holds only the others, keyed by the method name as sent.
+        """
+        if method == "query":
+            item["query"] = operation_obj
+        else:
+            item.setdefault("additionalOperations", {})[method.upper()] = operation_obj
+        tracker.record(op_ptr, Provenance.SOURCE, "OpenAPI 3.2 native method")
 
     @staticmethod
     def _stash_non_oas31_operation(
@@ -982,3 +1122,11 @@ class OpenApiEmitter(Emitter, register=True):
         if default is not None:
             base["default"] = default
         return base
+
+
+def _tag_hierarchy(api: CanonicalApi) -> Dict[str, Dict[str, Any]]:
+    """The tag hierarchy the model carries (tag name → ``parent``/``summary``/``kind``), or ``{}``."""
+    hierarchy = (api.extras or {}).get(TAG_HIERARCHY_EXTRAS_KEY)
+    if not isinstance(hierarchy, dict):
+        return {}
+    return {str(name): meta for name, meta in hierarchy.items() if isinstance(meta, dict) and meta}

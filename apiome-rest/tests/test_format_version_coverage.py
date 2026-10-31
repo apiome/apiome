@@ -368,7 +368,7 @@ def test_the_capability_endpoint_serves_the_field() -> None:
     openapi = formats["openapi"]["version_coverage"]
     assert openapi["default_write"] == "3.1.0"
     assert [row["version"] for row in openapi["reads"]] == ["3.2", "3.1", "3.0", "2.0", "1.2"]
-    assert [row["format_key"] for row in openapi["writes"]] == ["openapi-3.1"] * 3
+    assert [row["format_key"] for row in openapi["writes"]] == ["openapi-3.1"] * 4
 
 
 def test_the_single_format_capability_endpoint_serves_the_field() -> None:

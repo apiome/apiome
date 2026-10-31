@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.570.0] - 2026-10-31
+
+### Added
+- **OpenAPI 3.2 output option (MFX-9.5, #4342).** `OpenApiEmitOptions.openapi_version` takes `3.2` (the default stays
+  `3.1`). It writes `openapi: 3.2.0` with the 3.2-only constructs the canonical model carries:
+  - a `QUERY` operation as the path item's `query` key;
+  - other non-standard methods under `additionalOperations`;
+  - the imported tag hierarchy (`extras.tagHierarchy`) as `tags` with `parent` / `summary` / `kind`.
+
+  The output passes the bundled 3.2 meta-schema and the export gate, and re-imports to the same operations and tag
+  hierarchy. Webhooks, callbacks and full 3.2 security schemes are not in the canonical model yet (private-suite#39)
+  and are not written.
+- `OpenApiFidelityRulePack.apply_options` computes the report for the chosen version. Below 3.2:
+  - a `QUERY` / custom-method operation is `APPROX` (carried on `x-apiome-*`);
+  - the tag hierarchy is a root `DROP` (info);
+  - the emitter records the dropped hierarchy as loss `openapi-3.2-tag-hierarchy`.
+- Version coverage: OpenAPI writes `3.2.0` (partial).
+- Fixtures `tests/fixtures/openapi_32_output/`, tests `tests/test_openapi_emitter_32.py`.
+
+### Changed
+- Export conformance matrix: `consul`, `envoy-xds`, `haproxy`, `istio`, `nginx` and `traefik` → `openapi` move from
+  silent-loss to lossy (their `ANY` operations are now reported), and leave the ledger.
+- OpenAPI 1.434.0.
+
 ## [1.569.0] - 2026-10-31
 
 ### Added

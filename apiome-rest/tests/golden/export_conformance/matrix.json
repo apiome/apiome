@@ -11386,15 +11386,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /v2/orders",
-        "changed root",
-        "removed service orders"
-      ],
       "family": "consul",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -16943,18 +16944,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /health",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root",
-        "removed service storefront"
-      ],
       "family": "envoy-xds",
-      "reason": "Fidelity report is empty but the round trip shows 6 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -20919,18 +20918,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /metrics",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root"
-      ],
       "family": "haproxy",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -27296,18 +27293,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /healthz",
-        "removed operation ANY /v2/products",
-        "changed operation GET /v2/orders",
-        "changed operation POST /v2/orders",
-        "changed root"
-      ],
       "family": "istio",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -27590,7 +27585,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 9848d5eb-bfef-4bd8-9973-3c4dcaa24a9e",
+        "added operation ba7025c6-b9b0-497c-bf76-d292d7de8f08",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -28648,7 +28643,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 077d3b3d-b5e5-49ff-8153-9d36b92d685f",
+        "added operation b29f846b-7954-41a2-94d4-ec2fe6d3f6e8",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -29194,7 +29189,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation f44488a6-6c93-4ef3-9baf-43dfb29364a1",
+        "added operation fd582fb3-5a2e-4476-8eae-47f70137ffb4",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -34982,18 +34977,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /#api.example.com:80@return",
-        "removed operation ANY /healthz",
-        "removed operation ANY /static/",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products"
-      ],
       "family": "nginx",
-      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -36517,7 +36510,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 0d539183-35b9-49b3-93fa-51ce02f29291",
+        "added operation 6b11e662-7926-4ce1-97c1-3dcb473713b0",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -39216,7 +39209,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 2aca8457-f2d5-482e-87fb-413ddf24a313",
+        "added operation 6bab800c-2842-457a-b552-2b46d7e60d95",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -44876,7 +44869,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 12c01f9b-a635-45e3-a4ca-5f1f8c2ed73d",
+        "added operation ecae0ac0-d192-44fd-94f2-abee676c6158",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -47670,7 +47663,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 10a9d5f6-05bc-4846-ade4-d1729c4ded2a",
+        "added operation 3fe8356f-aa86-4154-808d-218fc7bc6d50",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -52542,18 +52535,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "removed operation ANY /",
-        "removed operation ANY /v2/orders",
-        "removed operation ANY /v2/products",
-        "changed root",
-        "removed service catalogue-service",
-        "removed service noop"
-      ],
       "family": "traefik",
-      "reason": "Fidelity report is empty but the round trip shows 7 difference(s).",
-      "status": "silent-loss",
-      "target": "openapi"
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "openapi",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -53986,7 +53977,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 74ca44a8-69c3-4c6a-9a3b-e25aeb7b6099",
+        "added operation 6ec5480a-6865-4d32-9100-ce996cfc20f9",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -60628,10 +60619,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3823,
+    "lossy": 3829,
     "ok": 36,
     "refused": 1996,
-    "silent-loss": 193,
+    "silent-loss": 187,
     "skipped": 0
   },
   "families": [

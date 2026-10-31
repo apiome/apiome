@@ -465,7 +465,9 @@ export interface ExportDialect {
   nativeValue: string;
   /** Whether the chosen version is the target's native one. */
   native: boolean;
-  /** The badge text, e.g. `"2.6 · downgrade"`. */
+  /** Whether the chosen version is newer than the native one (OpenAPI 3.2 over 3.1, MFX-9.5). */
+  newer: boolean;
+  /** The badge text, e.g. `"2.6 · downgrade"` or `"3.2 · newer"`. */
   label: string;
   /** The badge tone — the same fidelity table a tier badge reads. */
   tone: StatusTone;
@@ -477,7 +479,8 @@ export interface ExportDialect {
  * Resolve the version a target will emit, as a fidelity badge (FMT-3.2, #5427).
  *
  * Some emitters offer more than one version of their format — AsyncAPI's native 3.1 plus a
- * 2.6 downgrade, OpenAPI's 3.1 plus 3.0 and Swagger 2.0 — and picking the older one is a
+ * 2.6 downgrade, OpenAPI's 3.1 plus 3.0 and Swagger 2.0 (and, since MFX-9.5, the newer 3.2,
+ * badged `newer` rather than `downgrade`) — and picking the older one is a
  * *fidelity* decision, not a formatting one: the emitter records everything the older version
  * cannot express as a declared loss. The target card's tier badge is computed for the source
  * before any option is chosen, so on its own it cannot say that. This does.
@@ -507,17 +510,43 @@ export function resolveExportDialect(
   if (!value) return null;
 
   const native = value === nativeValue;
+  // A version above the default is not a downgrade: it writes what the default can only stash or
+  // drop (OpenAPI 3.2's QUERY methods and tag hierarchy over 3.1, MFX-9.5).
+  const newer = !native && compareVersions(value, nativeValue) > 0;
+  const kind = native ? 'native' : newer ? 'newer' : 'downgrade';
   return {
     optionKey: field.key,
     value,
     nativeValue,
     native,
-    label: `${value} · ${native ? 'native' : 'downgrade'}`,
-    tone: tierTone(native ? 'lossless' : 'lossy'),
+    newer,
+    label: `${value} · ${kind}`,
+    tone: tierTone(native || newer ? 'lossless' : 'lossy'),
     detail: native
       ? `Version ${value} is this target's native output — nothing is downgraded.`
-      : `Version ${value} is a downgrade from ${nativeValue}; constructs it cannot express are reported as losses.`,
+      : newer
+        ? `Version ${value} is newer than the default ${nativeValue}: constructs only ${value} can express are written natively, and older tools may not read it.`
+        : `Version ${value} is a downgrade from ${nativeValue}; constructs it cannot express are reported as losses.`,
   };
+}
+
+/**
+ * Compare two dotted version strings numerically (`3.2` > `3.1` > `3.0` > `2.0`, `1.10` > `1.9`).
+ *
+ * A part that is not a number compares as 0, so a malformed version never throws.
+ *
+ * @param a The first version.
+ * @param b The second version.
+ * @returns A negative number when `a < b`, 0 when equal, a positive number when `a > b`.
+ */
+export function compareVersions(a: string, b: string): number {
+  const left = a.split('.').map((part) => Number.parseInt(part, 10) || 0);
+  const right = b.split('.').map((part) => Number.parseInt(part, 10) || 0);
+  for (let index = 0; index < Math.max(left.length, right.length); index++) {
+    const difference = (left[index] ?? 0) - (right[index] ?? 0);
+    if (difference !== 0) return difference;
+  }
+  return 0;
 }
 
 /** The outcome of validating the export options form against the emitter's schema. */

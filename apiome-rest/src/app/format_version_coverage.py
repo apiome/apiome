@@ -1500,6 +1500,15 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
         writes=[
             FormatVersion(version="3.1.0", format_key="openapi-3.1", support=VersionSupport.FULL),
             FormatVersion(
+                version="3.2.0",
+                format_key="openapi-3.1",
+                support=VersionSupport.PARTIAL,
+                note="Written with `openapi_version='3.2'` (MFX-9.5): QUERY and other custom methods "
+                "(`additionalOperations`) and the tag hierarchy are written natively. Webhooks, "
+                "callbacks and the full 3.2 security schemes are not in the canonical model yet, so they "
+                "are not written.",
+            ),
+            FormatVersion(
                 version="3.0.3",
                 format_key="openapi-3.1",
                 support=VersionSupport.PARTIAL,

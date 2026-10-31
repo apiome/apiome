@@ -76,21 +76,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation b6a86754-a1d2-4d88-b7b0-75b55fe20221; changed roo',
+        'added channel com.example.product; added operation ba7025c6-b9b0-497c-bf76-d292d7de8f08; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation dcd085f4-4c41-44e4-9cbe-53be23319069; changed root; ',
+        'added channel com.example.user; added operation b29f846b-7954-41a2-94d4-ec2fe6d3f6e8; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation ecc3fed3-4a11-4aac-a451-cb43955036c9; changed ',
+        'added channel com.example.cronwidget; added operation fd582fb3-5a2e-4476-8eae-47f70137ffb4; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 5525aaf9-c2c8-423f-88d3-f96cfebc2390; changed root',
+        'added channel com.example.orders; added operation 6b11e662-7926-4ce1-97c1-3dcb473713b0; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation 060848e2-ba25-4afd-a14f-9b103beeaac5; c',
+        'added channel com.example.commerce.ontology; added operation 6bab800c-2842-457a-b552-2b46d7e60d95; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation 1c38d2c6-93ec-4a01-928c-6258f417b4a3',
+        'added channel com.example.typicalsensormessage; added operation ecae0ac0-d192-44fd-94f2-abee676c6158',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation a09be85e-4dad-4970-b5a3-d9',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 3fe8356f-aa86-4154-808d-21',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation f5386e84-5a1d-4d06-8e39-b9239d081318; changed r',
+        'added channel com.example.orderline; added operation 6ec5480a-6865-4d32-9100-ce996cfc20f9; changed r',
     # --- connectrpc (15) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',
@@ -223,7 +223,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation OrderPort.OrderPort.CancelOrder; added operation OrderPort.OrderPort.CreateOrder; ad',
     ('wsdl2', 'oncrpc'):
         'added operation OrderInterface.OrderInterface.cancelOrder; added operation OrderInterface.OrderInter',
-    # --- openapi (51) ---
+    # --- openapi (45) ---
     ('acp', 'openapi'):
         'removed agent research-assistant; added operation POST /research-assistant.Cite_sources; added opera',
     ('agents-manifest', 'openapi'):
@@ -238,8 +238,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed operation GET /orders; changed operation GET /orders/{orderId}; changed root',
     ('bruno', 'openapi'):
         'changed operation POST /v2/orders; changed root; removed service Bruno collection; added service def',
-    ('consul', 'openapi'):
-        'removed operation ANY /v2/orders; changed root; removed service orders',
     ('cue', 'openapi'):
         'changed root; changed type Order; changed type OrderLine; changed type OrderStatus',
     ('dbt', 'openapi'):
@@ -248,14 +246,10 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; changed type Currency; changed type Order; changed type OrderLine; changed type OrderS',
     ('discovery', 'openapi'):
         'changed operation GET /bookstore/v1/books; changed operation GET /bookstore/v1/books/{bookId}; chang',
-    ('envoy-xds', 'openapi'):
-        'removed operation ANY /; removed operation ANY /health; removed operation ANY /v2/orders; removed op',
     ('gateway-api', 'openapi'):
         'changed operation GET /users; changed operation GET /users/{userId}; changed operation POST /users; ',
     ('graphql', 'openapi'):
         'added operation GET /graphql/product; added operation GET /graphql/products; removed operation Query',
-    ('haproxy', 'openapi'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /metrics; removed ope',
     ('har', 'openapi'):
         'changed operation DELETE /v1/users/{id}; changed operation GET /v1/users; changed operation GET /v1/',
     ('hoppscotch', 'openapi'):
@@ -264,8 +258,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed operation GET /users; changed operation POST /users; changed root; added service default; re',
     ('insomnia', 'openapi'):
         'changed operation DELETE /v1/users/{userId}; changed operation GET /health; changed operation GET /v',
-    ('istio', 'openapi'):
-        'removed operation ANY /; removed operation ANY /healthz; removed operation ANY /v2/products; changed',
     ('json-schema', 'openapi'):
         'changed root; changed type Product',
     ('jsonld', 'openapi'):
@@ -280,8 +272,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'removed operation 02-typical-anthropic.create_ticket; removed operation 02-typical-anthropic.search_',
     ('mcp', 'openapi'):
         'removed operation Acme Support Tickets.prompts.summarize_ticket; removed operation Acme Support Tick',
-    ('nginx', 'openapi'):
-        'removed operation ANY /; removed operation ANY /#api.example.com:80@return; removed operation ANY /h',
     ('odcs', 'openapi'):
         'changed root; changed type orders',
     ('opcua-nodeset', 'openapi'):
@@ -314,8 +304,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root',
     ('thunder-client', 'openapi'):
         'changed operation GET /healthz; changed operation GET /v2/orders; changed operation GET /v2/orders/{',
-    ('traefik', 'openapi'):
-        'removed operation ANY /; removed operation ANY /v2/orders; removed operation ANY /v2/products; chang',
     ('trpc', 'openapi'):
         'added operation POST /orderRouter/byId; added operation POST /orderRouter/cancel; added operation PO',
     ('tyk', 'openapi'):

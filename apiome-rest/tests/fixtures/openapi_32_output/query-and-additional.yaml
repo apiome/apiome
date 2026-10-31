@@ -1,0 +1,65 @@
+# OpenAPI 3.2.0 QUERY method and additionalOperations (OA4, #3501).
+openapi: 3.2.0
+info:
+  title: Search API
+  version: 1.0.0
+paths:
+  /search:
+    get:
+      operationId: listSearches
+      responses:
+        "200":
+          description: Saved searches
+    query:
+      operationId: runSearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchFilter'
+      responses:
+        "200":
+          description: Matches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+    additionalOperations:
+      REPORT:
+        operationId: reportSearches
+        summary: WebDAV-style report
+        deprecated: true
+        responses:
+          "207":
+            description: Multi-status report
+            content:
+              application/xml:
+                schema:
+                  $ref: '#/components/schemas/SearchReport'
+      Purge:
+        operationId: purgeSearches
+        responses:
+          "204":
+            description: Purged
+components:
+  schemas:
+    SearchFilter:
+      type: object
+      properties:
+        text:
+          type: string
+        limit:
+          type: integer
+    SearchResult:
+      type: object
+      properties:
+        id:
+          type: string
+        score:
+          type: number
+    SearchReport:
+      type: object
+      properties:
+        total:
+          type: integer

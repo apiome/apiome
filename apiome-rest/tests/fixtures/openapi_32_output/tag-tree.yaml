@@ -1,0 +1,60 @@
+# OpenAPI 3.2.0 hierarchical tags (OA5, #3502): billing > invoices > invoice-lines, billing > refunds.
+openapi: 3.2.0
+info:
+  title: Billing API
+  version: 1.0.0
+tags:
+  - name: billing
+    summary: Billing
+    description: Everything about money.
+    kind: nav
+    externalDocs:
+      url: https://example.com/docs/billing
+  - name: invoices
+    summary: Invoices
+    parent: billing
+  - name: invoice-lines
+    parent: invoices
+    kind: nav
+  - name: refunds
+    parent: billing
+  - name: internal
+    kind: audience
+paths:
+  /invoices:
+    get:
+      operationId: listInvoices
+      tags: [invoices]
+      responses:
+        "200":
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+  /refunds:
+    post:
+      operationId: createRefund
+      tags: [refunds, internal]
+      responses:
+        "201":
+          description: Created
+components:
+  schemas:
+    Invoice:
+      type: object
+      x-tags: [invoices, billing]
+      properties:
+        id:
+          type: string
+    Refund:
+      type: object
+      x-tag: refunds
+      properties:
+        amount:
+          type: number
+    Untagged:
+      type: object
+      properties:
+        note:
+          type: string
