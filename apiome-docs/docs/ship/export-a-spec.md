@@ -112,6 +112,32 @@ Over the API, every export route answers `422` with a structured `detail`:
 An export job fails with `SOURCE_LOAD_FAILED`, and its `error.context` carries the same `source_code`
 and `reimport`.
 
+### OpenAPI 3.2, 3.1, 3.0 and Swagger 2.0
+
+Exporting to **OpenAPI** writes OpenAPI **3.1** by default. Set **openapi_version** to pick another
+version. On the target card and in the options, a badge says what that choice does: `3.1 · native`,
+`3.2 · newer`, or `3.0 · downgrade` / `2.0 · downgrade`.
+
+- **3.2** writes OpenAPI 3.2.0 and keeps what only 3.2 can express:
+  - a `QUERY` operation, as the path's `query` key;
+  - any other method, such as `REPORT` or `PURGE`, under `additionalOperations`;
+  - the tag tree of an item imported from OpenAPI 3.2, as `tags` with `parent`, `summary` and `kind`.
+
+  The document is checked against the OpenAPI 3.2 schema before you download it. Tools that only
+  read 3.1 may not open it.
+- **3.1** has no `QUERY` or custom methods and no tag tree. Those operations are kept on the
+  `x-apiome-query-operation` and `x-apiome-additional-operations` extensions, which 3.1 tools do not
+  read. The tag tree is not written. The fidelity report lists each operation as approximated and the
+  tag tree as dropped, and says to export 3.2 to keep them.
+- **3.0** and **2.0** are downgrades of the 3.1 document. They report the same losses, plus what
+  their version cannot express.
+
+The fidelity report is computed for the version you pick, so changing **openapi_version** updates
+it. From the CLI, run `apiome export openapi-3.1 <item> --out openapi.json --option openapi_version=3.2`.
+
+Webhooks, callbacks and the full set of 3.2 security-scheme fields are not written yet, in any
+version.
+
 ### Protobuf and Thrift from an OpenAPI source
 
 An OpenAPI schema's `type` and `format` become the target's own scalar types:

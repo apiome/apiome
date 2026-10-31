@@ -175,7 +175,7 @@ def test_options_schema_advertises_version_choice() -> None:
     schema = OpenApiEmitter.options_schema()
     version = schema["properties"]["openapi_version"]
     assert version["default"] == "3.1"
-    assert set(version["enum"]) == {"3.1", "3.0", "2.0"}
+    assert version["enum"] == ["3.2", "3.1", "3.0", "2.0"]
 
 
 def test_unknown_version_is_rejected() -> None:

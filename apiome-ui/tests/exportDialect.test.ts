@@ -13,6 +13,7 @@
  */
 
 import {
+  compareVersions,
   resolveExportDialect,
   type ExportTargetEntry,
 } from '../src/app/components/ade/dashboard/export/exportTargetCatalog';
@@ -125,5 +126,38 @@ describe('resolveExportDialect', () => {
     const dialect = resolveExportDialect(openapi, { openapi_version: '2.0' });
     expect(dialect!.optionKey).toBe('openapi_version');
     expect(dialect!.label).toBe('2.0 · downgrade');
+  });
+
+  it('reports a version above the default as newer, not a downgrade (MFX-9.5)', () => {
+    const entry = asyncapiEntry();
+    const openapi: ExportTargetEntry = {
+      ...entry,
+      descriptor: { ...entry.descriptor, key: 'openapi', label: 'OpenAPI 3.1' },
+      options_schema: {
+        properties: {
+          openapi_version: { type: 'string', enum: ['3.2', '3.1', '3.0', '2.0'], default: '3.1' },
+        },
+      },
+      default_options: { openapi_version: '3.1' },
+    };
+    const newer = resolveExportDialect(openapi, { openapi_version: '3.2' });
+    expect(newer!.native).toBe(false);
+    expect(newer!.newer).toBe(true);
+    expect(newer!.label).toBe('3.2 · newer');
+    expect(newer!.detail).toContain('newer than the default 3.1');
+    expect(newer!.tone).toBe(resolveExportDialect(openapi, {})!.tone);
+    const older = resolveExportDialect(openapi, { openapi_version: '3.0' });
+    expect(older!.newer).toBe(false);
+    expect(older!.label).toBe('3.0 · downgrade');
+  });
+});
+
+describe('compareVersions', () => {
+  it('orders dotted versions numerically', () => {
+    expect(compareVersions('3.2', '3.1')).toBeGreaterThan(0);
+    expect(compareVersions('2.0', '3.1')).toBeLessThan(0);
+    expect(compareVersions('1.10', '1.9')).toBeGreaterThan(0);
+    expect(compareVersions('3.1', '3.1.0')).toBe(0);
+    expect(compareVersions('v1', '1')).toBeLessThan(0);
   });
 });

@@ -248,7 +248,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | ODCS Data Contract | `odcs` | ODCS v3.x (v3.0, v3.1) | ODCS v3.1.0, ODCS v3.0.2 | ODCS v3.1.0 |
 | ONC RPC | `oncrpc` | rpcgen (RPCL) definition* | rpcgen (RPCL) definition* | rpcgen (RPCL) definition |
 | OPC UA NodeSet2 | `opcua-nodeset` | NodeSet2 (UANodeSet.xsd, OPC UA 1.04 and 1.05)* | — | — |
-| OpenAPI / Swagger | `openapi` | 3.2, 3.1, 3.0, 2.0, 1.2* | 3.1.0, 3.0.3*, 2.0* | 3.1.0 |
+| OpenAPI / Swagger | `openapi` | 3.2, 3.1, 3.0, 2.0, 1.2* | 3.1.0, 3.2.0*, 3.0.3*, 2.0* | 3.1.0 |
 | OpenRPC | `openrpc` | 1.x* | 1.x* | 1.x |
 | OWL / RDFS ontologies | `owl` | OWL 2 (W3C Recommendation, 2012)*, RDF Schema 1.1* | — | — |
 | Pkl | `pkl` | Pkl (evaluated with the bundled pkl 0.32.2)* | — | — |
@@ -528,6 +528,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 **OpenAPI / Swagger**
 
 - Reads **1.2** (partial) — Read by projecting the resource listing and its API declarations onto the 2.0 path (FMT-3.6). Swagger 1.0 and 1.1 share the `swaggerVersion` marker but not the grammar, and are rejected as `FORMAT_VERSION_UNSUPPORTED` rather than mis-read as 1.2.
+- Writes **3.2.0** (partial) — Written with `openapi_version='3.2'` (MFX-9.5): QUERY and other custom methods (`additionalOperations`) and the tag hierarchy are written natively. Webhooks, callbacks and the full 3.2 security schemes are not in the canonical model yet, so they are not written.
 - Writes **3.0.3** (partial) — Written by downgrading the 3.1 document (`openapi_version='3.0'`); what the 3.0 dialect cannot carry is reported as a loss rather than dropped silently.
 - Writes **2.0** (partial) — Swagger 2.0, written by downgrading the 3.1 document (`openapi_version='2.0'`), on the same terms as 3.0.
 

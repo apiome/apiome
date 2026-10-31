@@ -1,0 +1,20 @@
+---
+slug: openapi-32-output
+title: Export OpenAPI 3.2
+description: OpenAPI exports can write 3.2, keeping QUERY methods and the tag tree.
+authors: [apiome]
+---
+
+The **OpenAPI** export can now write **OpenAPI 3.2**.
+[OpenAPI versions](/ship/export-a-spec#openapi-32-31-30-and-swagger-20).
+
+{/* truncate */}
+
+- **Pick 3.2.** Set **openapi_version** to `3.2`; the badge reads `3.2 · newer`. A `QUERY` operation, any
+  other method such as `REPORT` (under `additionalOperations`) and the tag tree of an item imported from
+  3.2 (`parent`, `summary`, `kind`) are written natively, and the document is checked against the
+  OpenAPI 3.2 schema.
+- **3.1 says what it loses.** The default 3.1 export keeps those methods only on `x-apiome-*`
+  extensions and has no tag tree. Its fidelity report now lists each of them, so exports of gateway
+  configs with `ANY` routes no longer lose them silently.
+- From the CLI: `apiome export openapi-3.1 <item> --out openapi.json --option openapi_version=3.2`.
