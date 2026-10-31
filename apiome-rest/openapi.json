@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.422.0",
+    "version": "1.423.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -42014,6 +42014,94 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for import schematron documentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/lint/overlay": {
+      "post": {
+        "tags": [
+          "lint"
+        ],
+        "summary": "Lint Overlay",
+        "description": "Lint an OpenAPI Overlay on its own, without a base document (GVM-4.1).\n\nThe version and structural rules run; `overlay.unmatched-target` and\n`overlay.extends-unresolved` are reported `skipped` (`no-base`) because only a base can decide\nthem.\n\nRaises:\n    HTTPException: 413 when the document is over the size limit; 422 when it is not YAML or\n        JSON, or not a mapping.",
+        "operationId": "lint_overlay_v1_lint_overlay_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Overlayauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Overlayauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Lint Overlay Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Lint Overlay Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverlayLintRequest",
+                "description": "Request body for lint overlayrequest."
+              }
+            }
+          },
+          "description": "Request body for lint overlay."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for lint overlay.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverlayLintResponse",
+                  "description": "Response payload for lint overlayresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for lint overlayresponse422."
                 }
               }
             }
@@ -162809,6 +162897,178 @@
         "type": "object",
         "title": "OperationUpdateRequest",
         "description": "Partial update payload for an operation."
+      },
+      "OverlayLintFindingOut": {
+        "properties": {
+          "rule": {
+            "type": "string",
+            "title": "Rule",
+            "description": "The `overlay.*` rule that fired.",
+            "example": "documentation.schema-missing-description"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "The rule's default severity (error / warning).",
+            "example": "warning"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Message.",
+            "example": "Example validation message."
+          },
+          "target": {
+            "type": "string",
+            "title": "Target",
+            "description": "The action's `target`, when the finding is about an action.",
+            "default": "",
+            "example": "example"
+          },
+          "actionIndex": {
+            "type": "integer",
+            "title": "Actionindex",
+            "description": "0-based action index; -1 for a finding about the document itself.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule",
+          "severity",
+          "message",
+          "actionIndex"
+        ],
+        "title": "OverlayLintFindingOut",
+        "description": "One finding of the ``overlay`` pack."
+      },
+      "OverlayLintRequest": {
+        "properties": {
+          "document": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Document",
+            "description": "The Overlay document, as YAML or JSON text.",
+            "example": "example"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512,
+                "description": "Request body for overlay lint."
+              },
+              {
+                "type": "null",
+                "description": "Request body for overlay lint."
+              }
+            ],
+            "title": "Filename",
+            "description": "Its file name, used to label the findings."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "OverlayLintRequest",
+        "description": "``POST /v1/lint/overlay``: the overlay to lint."
+      },
+      "OverlayLintResponse": {
+        "properties": {
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for overlay lint."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for overlay lint."
+              }
+            ],
+            "title": "Version",
+            "description": "The overlay's `overlay` marker, as written."
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for overlay lint."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for overlay lint."
+              }
+            ],
+            "title": "Revision",
+            "description": "The supported revision it selects (`1.0`, `1.1`, `1.2`), or null."
+          },
+          "findings": {
+            "items": {
+              "$ref": "#/components/schemas/OverlayLintFindingOut"
+            },
+            "type": "array",
+            "title": "Findings",
+            "description": "Findings.",
+            "maxItems": 1000
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/OverlayLintRuleStatus"
+            },
+            "type": "array",
+            "title": "Rules",
+            "description": "Rules.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "OverlayLintResponse",
+        "description": "The lint of one bare overlay."
+      },
+      "OverlayLintRuleStatus": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "Rule ID.",
+            "example": "documentation.schema-missing-description"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "passed",
+              "failed",
+              "skipped"
+            ],
+            "title": "Status",
+            "description": "Status.",
+            "example": "passed"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Overlay Lint Rule schema."
+              },
+              {
+                "type": "null",
+                "description": "Overlay Lint Rule schema."
+              }
+            ],
+            "title": "Reason",
+            "description": "Why a rule was skipped: `no-base` (it needs the base document) or `version-unsupported` (the overlay's version is not one Apiome reads)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "status"
+        ],
+        "title": "OverlayLintRuleStatus",
+        "description": "Whether one ``overlay`` rule passed, failed or could not run."
       },
       "OwnedEntity": {
         "properties": {

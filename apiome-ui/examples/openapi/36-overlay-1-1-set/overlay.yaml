@@ -1,0 +1,32 @@
+overlay: 1.1.0
+info:
+  title: Public loans surface
+  version: 1.0.0
+extends: ./openapi.yaml
+actions:
+  # Overlay 1.1: an array update concatenates onto the target array.
+  - target: $.servers
+    description: Publish both production regions.
+    update:
+      - url: https://loans.eu.example.org
+        description: EU production
+      - url: https://loans.us.example.org
+        description: US production
+  # Overlay 1.1: arrays inside an object merge concatenate too.
+  - target: $.paths['/loans'].get.parameters[0].schema
+    description: Expose the returned status.
+    update:
+      enum: [returned]
+  # Overlay 1.1: a primitive target is replaced by a primitive update.
+  - target: $.paths['/legacy/loans'].get.summary
+    update: List loans (legacy shape, retiring)
+  # Overlay 1.1: copy a node of the document onto another, then remove the original (a move).
+  - target: $.paths
+    description: Create the new path before copying into it.
+    update:
+      /v2/loans: {}
+  - target: $.paths['/v2/loans']
+    description: Serve the legacy listing under its new path.
+    copy: $.paths['/legacy/loans']
+  - target: $.paths['/legacy/loans']
+    remove: true

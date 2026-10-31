@@ -1,0 +1,345 @@
+{
+  "adapter": "openapi",
+  "canonical": {
+    "channels": [],
+    "description": "Base description maintained by the circulation team.",
+    "extras": {
+      "overlay": {
+        "applied": [
+          "overlay.yaml"
+        ],
+        "base": "openapi.yaml",
+        "findings": [],
+        "ignored_members": [],
+        "provenance": [
+          {
+            "action_index": 0,
+            "kind": "appended",
+            "overlay": "overlay.yaml",
+            "pointer": "/servers/1",
+            "target": "$.servers"
+          },
+          {
+            "action_index": 0,
+            "kind": "appended",
+            "overlay": "overlay.yaml",
+            "pointer": "/servers/2",
+            "target": "$.servers"
+          },
+          {
+            "action_index": 1,
+            "kind": "appended",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1loans/get/parameters/0/schema/enum/2",
+            "target": "$.paths['/loans'].get.parameters[0].schema"
+          },
+          {
+            "action_index": 2,
+            "kind": "replaced",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1legacy~1loans/get/summary",
+            "target": "$.paths['/legacy/loans'].get.summary"
+          },
+          {
+            "action_index": 3,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1v2~1loans",
+            "target": "$.paths"
+          },
+          {
+            "action_index": 4,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1v2~1loans/get",
+            "target": "$.paths['/v2/loans']"
+          },
+          {
+            "action_index": 5,
+            "kind": "removed",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1legacy~1loans",
+            "target": "$.paths['/legacy/loans']"
+          }
+        ],
+        "provenance_total": 7,
+        "provenance_truncated": false,
+        "revisions": {
+          "overlay.yaml": "1.1"
+        }
+      }
+    },
+    "format": "openapi-3.1",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Library Loans API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Local development",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://localhost:8081",
+        "variables": []
+      },
+      {
+        "description": "EU production",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://loans.eu.example.org",
+        "variables": []
+      },
+      {
+        "description": "US production",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "https://loans.us.example.org",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": "Book loans",
+        "extras": {},
+        "key": "loans",
+        "name": "loans",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List active loans",
+            "extras": {
+              "operationId": "listLoans",
+              "summary": "List active loans"
+            },
+            "http_method": "GET",
+            "http_path": "/loans",
+            "key": "GET /loans",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": "The active loans.",
+                "extras": {},
+                "headers": [],
+                "key": "GET /loans#response.200",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Loan",
+                    "nullable": false
+                  },
+                  "name": null,
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "listLoans",
+            "parameters": [
+              {
+                "constraints": {
+                  "enum": [
+                    "active",
+                    "overdue",
+                    "returned"
+                  ],
+                  "exclusive_maximum": null,
+                  "exclusive_minimum": null,
+                  "extras": {},
+                  "format": null,
+                  "max_items": null,
+                  "max_length": null,
+                  "maximum": null,
+                  "min_items": null,
+                  "min_length": null,
+                  "minimum": null,
+                  "multiple_of": null,
+                  "pattern": null,
+                  "unique_items": null
+                },
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /loans#query.status",
+                "location": "query",
+                "name": "status",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "loans"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List loans (legacy shape, retiring)",
+            "extras": {
+              "operationId": "listLegacyLoans",
+              "summary": "List loans (legacy shape, retiring)"
+            },
+            "http_method": "GET",
+            "http_path": "/v2/loans",
+            "key": "GET /v2/loans",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The loans, in the 1.x shape.",
+                "extras": {},
+                "headers": [],
+                "key": "GET /v2/loans#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "listLegacyLoans",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "loans"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Library Loans API",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Loan.bookId",
+            "name": "bookId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Loan.dueDate",
+            "name": "dueDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": null,
+            "key": "Loan.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "Loan",
+        "key_type": null,
+        "kind": "record",
+        "name": "Loan",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": "2.0.0"
+  },
+  "corpus_path": "openapi/36-overlay-1-1-set/openapi.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 3,
+    "services": 1,
+    "types": 1
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "openapi-3.1"
+  },
+  "fingerprint": "sha256:fd868ee6ab0efe929c8a7855860afa1697652b7d03870c9ff2238eaeccc5059d",
+  "lint": {
+    "findings": 7,
+    "grade": "A",
+    "report_fingerprint": "26a59811a7b74cab2351208fa8bb21986220898cf7e07f53c93481069f4fbee2",
+    "score": 90,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 1
+    }
+  },
+  "snapshot_version": 1
+}

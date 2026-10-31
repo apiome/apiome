@@ -1,0 +1,53 @@
+{
+  "applied": [
+    "overlay.yaml"
+  ],
+  "findings": [],
+  "provenance": [
+    {
+      "action_index": 0,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1tickets/get/x-audience",
+      "target": "$.paths['/tickets'].get"
+    },
+    {
+      "action_index": 0,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1tickets/get/tags",
+      "target": "$.paths['/tickets'].get"
+    },
+    {
+      "action_index": 1,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1tickets~1{id}/get/x-audience",
+      "target": "$.paths['/tickets/{id}'].get"
+    },
+    {
+      "action_index": 1,
+      "kind": "set",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1tickets~1{id}/get/tags",
+      "target": "$.paths['/tickets/{id}'].get"
+    },
+    {
+      "action_index": 2,
+      "kind": "removed",
+      "overlay": "overlay.yaml",
+      "pointer": "/paths/~1internal~1sales",
+      "target": "$.paths['/internal/sales']"
+    },
+    {
+      "action_index": 3,
+      "kind": "replaced",
+      "overlay": "overlay.yaml",
+      "pointer": "/info/description",
+      "target": "$.info"
+    }
+  ],
+  "revisions": {
+    "overlay.yaml": "1.2"
+  }
+}

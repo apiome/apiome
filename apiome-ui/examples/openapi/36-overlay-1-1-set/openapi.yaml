@@ -1,0 +1,54 @@
+openapi: 3.1.0
+info:
+  title: Library Loans API
+  version: 2.0.0
+  description: Base description maintained by the circulation team.
+servers:
+  - url: http://localhost:8081
+    description: Local development
+tags:
+  - name: loans
+    description: Book loans
+paths:
+  /loans:
+    get:
+      operationId: listLoans
+      tags: [loans]
+      summary: List active loans
+      deprecated: false
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, overdue]
+      responses:
+        '200':
+          description: The active loans.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Loan'
+  /legacy/loans:
+    get:
+      operationId: listLegacyLoans
+      tags: [loans]
+      summary: List loans (legacy shape)
+      responses:
+        '200':
+          description: The loans, in the 1.x shape.
+components:
+  schemas:
+    Loan:
+      type: object
+      required: [id, bookId]
+      properties:
+        id:
+          type: string
+        bookId:
+          type: string
+        dueDate:
+          type: string
+          format: date

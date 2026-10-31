@@ -404,6 +404,22 @@ def _qualified_versions(coverage: VersionCoverage) -> List[Tuple[str, FormatVers
     ]
 
 
+def _overlay_version_row() -> str:
+    """The OpenAPI Overlay row of the version table (GVM-4.1).
+
+    An Overlay is not a format with an import adapter of its own — the OpenAPI adapter applies it
+    to its base — so it has no matrix row; its revisions come from the declared table
+    :data:`app.openapi_overlay.OVERLAY_READ_VERSIONS`, evidenced by a corpus fileset per revision.
+    """
+    from .openapi_overlay import SUPPORTED_REVISIONS
+
+    return (
+        "| OpenAPI Overlay (applied by `openapi`) | `overlay` | "
+        + ", ".join(SUPPORTED_REVISIONS)
+        + f" | {_NONE} | {_NONE} |"
+    )
+
+
 def _version_coverage_section(rows: Sequence[FormatRow]) -> List[str]:
     """Render the declared read/write version coverage for every format (FMT-3.8).
 
@@ -448,6 +464,7 @@ def _version_coverage_section(rows: Sequence[FormatRow]) -> List[str]:
             )
             + " |"
         )
+    lines.append(_overlay_version_row())
 
     qualified = [(row, _qualified_versions(row.version_coverage)) for row in rows]
     qualified = [(row, entries) for row, entries in qualified if entries]

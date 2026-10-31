@@ -1,0 +1,210 @@
+{
+  "adapter": "openapi",
+  "canonical": {
+    "channels": [],
+    "description": "Public ticketing surface of the museum.",
+    "extras": {
+      "overlay": {
+        "applied": [
+          "overlay.yaml"
+        ],
+        "base": "openapi.yaml",
+        "findings": [],
+        "ignored_members": [],
+        "provenance": [
+          {
+            "action_index": 0,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1tickets/get/x-audience",
+            "target": "$.paths['/tickets'].get"
+          },
+          {
+            "action_index": 0,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1tickets/get/tags",
+            "target": "$.paths['/tickets'].get"
+          },
+          {
+            "action_index": 1,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1tickets~1{id}/get/x-audience",
+            "target": "$.paths['/tickets/{id}'].get"
+          },
+          {
+            "action_index": 1,
+            "kind": "set",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1tickets~1{id}/get/tags",
+            "target": "$.paths['/tickets/{id}'].get"
+          },
+          {
+            "action_index": 2,
+            "kind": "removed",
+            "overlay": "overlay.yaml",
+            "pointer": "/paths/~1internal~1sales",
+            "target": "$.paths['/internal/sales']"
+          },
+          {
+            "action_index": 3,
+            "kind": "replaced",
+            "overlay": "overlay.yaml",
+            "pointer": "/info/description",
+            "target": "$.info"
+          }
+        ],
+        "provenance_total": 6,
+        "provenance_truncated": false,
+        "revisions": {
+          "overlay.yaml": "1.2"
+        }
+      }
+    },
+    "format": "openapi-3.1",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "Museum Tickets API",
+      "namespace": null
+    },
+    "paradigm": "rest",
+    "protocol": "http",
+    "schema_version": 1,
+    "servers": [
+      {
+        "description": "Local development",
+        "extras": {},
+        "name": null,
+        "protocol": null,
+        "url": "http://localhost:8082",
+        "variables": []
+      }
+    ],
+    "services": [
+      {
+        "description": null,
+        "extras": {},
+        "key": "public",
+        "name": "public",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "List ticket types",
+            "extras": {
+              "operationId": "listTickets",
+              "summary": "List ticket types"
+            },
+            "http_method": "GET",
+            "http_path": "/tickets",
+            "key": "GET /tickets",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The ticket types.",
+                "extras": {},
+                "headers": [],
+                "key": "GET /tickets#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "listTickets",
+            "parameters": [],
+            "streaming": "none",
+            "tags": [
+              "public"
+            ]
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": "Get one ticket type",
+            "extras": {
+              "operationId": "getTicket",
+              "summary": "Get one ticket type"
+            },
+            "http_method": "GET",
+            "http_path": "/tickets/{id}",
+            "key": "GET /tickets/{id}",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": "The ticket type.",
+                "extras": {},
+                "headers": [],
+                "key": "GET /tickets/{id}#response.200",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "getTicket",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "GET /tickets/{id}#path.id",
+                "location": "path",
+                "name": "id",
+                "required": true,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": false
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": [
+              "public"
+            ]
+          }
+        ]
+      }
+    ],
+    "title": "Museum Tickets API",
+    "types": [],
+    "version": "3.1.0"
+  },
+  "corpus_path": "openapi/37-overlay-1-2-set/openapi.yaml",
+  "counts": {
+    "channels": 0,
+    "operations": 2,
+    "servers": 1,
+    "services": 1,
+    "types": 0
+  },
+  "detection": {
+    "confidence": 0.99,
+    "format": "openapi-3.1"
+  },
+  "fingerprint": "sha256:7822ff155f91506a8927a4b390d02b02420cd8cb23b570b63d90d1a06e1022ff",
+  "lint": {
+    "findings": 0,
+    "grade": "A",
+    "report_fingerprint": "49f00aff0ad03525a1e73592c60211f9f8572853ba37d488054fdb78f1f77bd1",
+    "score": 100,
+    "severity_counts": {
+      "error": 0,
+      "info": 0,
+      "warning": 0
+    }
+  },
+  "snapshot_version": 1
+}

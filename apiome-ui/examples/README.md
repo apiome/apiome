@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1523 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1527 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -41,7 +41,7 @@ The corpus holds **1523 files** across **110 format directories**. Every file ha
 | `nginx/` | nginx configuration | rest | `server { listen … location … }` / `upstream … { server … }` blocks | 15 |
 | `odata/` | OData v4 (EDMX) | rest | `<edmx:Edmx>` root | 13 |
 | `odata-v2/` | OData v2 / v3 (CSDL) | rest | `<edmx:Edmx>` with the 2007/06 or 2009/11 EDM namespaces | 14 |
-| `openapi/` | OpenAPI 3.x | rest | top-level `openapi:` version | 44 |
+| `openapi/` | OpenAPI 3.x | rest | top-level `openapi:` version | 48 |
 | `postman/` | Postman v2.1 | rest | collection `info.schema` URL | 11 |
 | `postman-v2/` | Postman Collection v2.0 | rest | `info.schema` ending `/collection/v2.0.0/collection.json` | 13 |
 | `raml/` | RAML 1.0 | rest | `#%RAML 1.0` header | 11 |
@@ -1822,6 +1822,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `35-overlay-chain-set/01-region-defaults.yaml` ⚠ | multi-file (member) | `openapi-3.1` (no guarantee) | valid | `overlay`, `overlay-chain`, `overlay-add`, `overlay-update` |
 | `35-overlay-chain-set/02-production.yaml` ⚠ | multi-file (member) | `openapi-3.1` (no guarantee) | valid | `overlay`, `overlay-chain`, `overlay-update`, `overlay-remove` |
 | `35-overlay-chain-set/openapi.yaml` | multi-file (root) | `openapi-3.1` ≥ 0.99 | valid | `overlay`, `overlay-chain`, `overlay-base`, `requestBody` |
+| `36-overlay-1-1-set/openapi.yaml` | multi-file (root) | `openapi-3.1` ≥ 0.99 | valid | `overlay`, `overlay-base`, `parameters`, `servers` |
+| `36-overlay-1-1-set/overlay.yaml` ⚠ | multi-file (member) | `openapi-3.1` (no guarantee) | valid | `overlay`, `overlay-1.1`, `overlay-copy`, `overlay-update`, `overlay-remove` |
+| `37-overlay-1-2-set/openapi.yaml` | multi-file (root) | `openapi-3.1` ≥ 0.99 | valid | `overlay`, `overlay-base`, `self` |
+| `37-overlay-1-2-set/overlay.yaml` ⚠ | multi-file (member) | `openapi-3.1` (no guarantee) | valid | `overlay`, `overlay-1.2`, `overlay-reusable-actions`, `overlay-self`, `overlay-update`, `overlay-remove` |
 | `negative/01-syntactic-unclosed-flow-sequence.yaml` | — | `openapi-3.1` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-flow-sequence` |
 | `negative/02-truncated-mid-quoted-ref.yaml` | — | `openapi-3.1` (no guarantee) | invalid | `negative`, `truncated`, `cut-mid-token` |
 | `negative/03-wrong-format-graphql-sdl.graphql` | — | `openapi-3.1` (no guarantee) | invalid | `negative`, `wrong-format`, `graphql-sdl` |
@@ -1858,6 +1862,10 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 > ⚠ **`35-overlay-chain-set/01-region-defaults.yaml`** — Fileset member: an Overlay document applied in member-path order before 02-production.yaml; imports only through the set root openapi.yaml.
 
 > ⚠ **`35-overlay-chain-set/02-production.yaml`** — Fileset member: an Overlay document applied in member-path order after 01-region-defaults.yaml; imports only through the set root openapi.yaml.
+
+> ⚠ **`36-overlay-1-1-set/overlay.yaml`** — Fileset member: an Overlay document, not an API description. Importing it alone fails with INPUT_OVERLAY_BASE_MISSING; it imports only through the set root openapi.yaml.
+
+> ⚠ **`37-overlay-1-2-set/overlay.yaml`** — Fileset member: an Overlay document, not an API description. Importing it alone fails with INPUT_OVERLAY_BASE_MISSING; it imports only through the set root openapi.yaml.
 
 > ⚠ **`negative/05-version-out-of-range.yaml`** — Fails at the normalize phase (parse succeeds since the YAML is well-formed); the adapter's detect declines the 9.0.0 marker, so normalize raises and the pipeline grounds INPUT_SEMANTIC_INVALID.
 
@@ -2827,7 +2835,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1523 | `Apache-2.0` |
+| `hand-authored` | 1527 | `Apache-2.0` |
 
 ## Trying an import
 

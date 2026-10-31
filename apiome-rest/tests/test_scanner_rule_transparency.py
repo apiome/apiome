@@ -22,7 +22,7 @@ MONOREPO_ROOT = REPO_ROOT.parent
 def test_transparency_catalog_matches_live_error_rules() -> None:
     assert_blocking_rules_complete()
     assert set(blocking_rule_ids()) == live_blocking_rule_ids()
-    assert len(BLOCKING_RULES) == 56
+    assert len(BLOCKING_RULES) == 59  # +2 FHIR profile rules (MFI-20.1), +1 overlay (GVM-4.1)
 
 
 def test_every_blocking_rule_has_required_transparency_fields() -> None:

@@ -3224,11 +3224,11 @@
         "swagger-1.2"
       ],
       "fixtures": {
-        "valid": 47,
+        "valid": 51,
         "negative": 12,
         "adversarial": 0,
         "scale": 0,
-        "total": 59
+        "total": 63
       },
       "rungs": [
         "composition",
@@ -3239,7 +3239,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 42,
+      "goldens": 44,
       "golden_directories": [
         "openapi",
         "swagger",

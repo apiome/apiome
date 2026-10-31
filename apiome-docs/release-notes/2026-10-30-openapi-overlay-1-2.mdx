@@ -1,0 +1,24 @@
+---
+slug: openapi-overlay-1-2
+title: OpenAPI Overlay 1.1 and 1.2, with their own lint rules
+description: Overlays 1.1 and 1.2 apply with their own rules, and bare overlays lint.
+authors: [apiome]
+---
+
+Apiome now applies **Overlay 1.1** and **1.2** documents with the rules each revision defines, and
+reports overlay problems in their own **overlay** lint rule pack.
+[How it works](/bring-in/overlays).
+
+{/* truncate */}
+
+- **1.1:** `copy` takes one part of the document and merges it somewhere else, single values can be
+  changed directly, and lists are joined rather than replaced.
+- **1.2:** reusable actions (`components.actions`, used with `$ref`) and `$self`.
+- **Newer revisions are refused, not guessed.** An overlay declaring `overlay: 1.3.0` is refused with
+  a message naming the revisions Apiome reads.
+- **Five overlay rules.** `overlay.unmatched-target`, `overlay.action-invalid`,
+  `overlay.target-expression-invalid`, `overlay.extends-unresolved` and
+  `overlay.version-unsupported` replace the two `intake.overlay-*` rules. A style guide can raise
+  any of them to an error.
+- **Lint an overlay on its own** with `POST /v1/lint/overlay`. Rules that need the base document
+  are reported as skipped, never as passed.

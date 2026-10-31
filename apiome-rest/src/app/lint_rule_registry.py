@@ -33,6 +33,8 @@ Sources aggregated (all derived from the live engines, so the registry cannot dr
 * every registered per-*paradigm* pack (FMT-5.5's ``data-contract`` pack, which runs for
   every ``data_schema`` artifact rather than for one format key) — catalogued here so a
   style guide can govern its rules exactly like any other built-in rule;
+* the ``overlay`` pack (:data:`app.overlay_lint_rules.OVERLAY_RULES`, GVM-4.1) — OpenAPI Overlay
+  findings raised while overlays are applied (or a bare overlay is linted);
 * the intake-stage catalogue (:data:`app.intake_lint_rules.INTAKE_RULES`) — rules that
   describe the *source document as it arrived* rather than the model it produced (MFI-29.4's
   unresolved external references), which no model-driven pack can emit.
@@ -63,6 +65,7 @@ from .lint_engine import (
     load_format_rule_packs,
     unconditional_rule_packs,
 )
+from .overlay_lint_rules import OVERLAY_PACK, OVERLAY_RULES
 from .owasp_api import validate_risk_ids
 from .schema_lint import OPENAPI_RULES
 from .security_score import SECURITY_CATEGORY, security_rule_weight
@@ -220,6 +223,9 @@ def builtin_rule_descriptors() -> Tuple[LintRuleDescriptor, ...]:
     #    (MFI-29.4 remote $ref resolution), which never run through a model rule pack.
     for rule_id, (category, severity, rationale) in INTAKE_RULES.items():
         by_id[rule_id] = _descriptor(rule_id, INTAKE_PACK, category, severity, rationale)
+    # The OpenAPI Overlay pack (GVM-4.1): emitted while overlays are applied, never by a model pack.
+    for rule_id, (category, severity, rationale) in OVERLAY_RULES.items():
+        by_id[rule_id] = _descriptor(rule_id, OVERLAY_PACK, category, severity, rationale)
 
     # 4. Every registered per-*paradigm* pack (FMT-5.5). A paradigm pack runs for a whole
     #    family of formats rather than one syntax — the data-contract pack for every
