@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**56<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**57<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -54,7 +54,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **56<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **57<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -153,6 +153,45 @@ The fidelity report is computed for the version you pick. Each thing the older v
 is listed with where it was (`/servers/robot/bindings/ros2`), as dropped or approximated. Every
 version is checked with the AsyncAPI parser before you download it. From the CLI, run
 `apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
+
+### MCP tool definitions
+
+Exporting to **MCP Tool Definitions** turns the API's operations into the tools an MCP host lists,
+so an agent can call them. You get an MCP **server descriptor**, `<server>.mcp.json`. It holds the
+server's `name`, `title` and `version`, `capabilities.tools`, and one tool per operation. It is the
+same file **Import to catalog** reads for an MCP server, so it imports back.
+
+Each tool has:
+
+- a **`name`** — the operationId when it is a legal MCP tool name, else one made from it (or from
+  the method and path), unique in the descriptor (`listPets`, `GET_orders_id`, `listOrders_2`). A
+  name Apiome made up is listed as **synthesized** in the fidelity report;
+- a **`description`** — the summary and description, plus a sentence saying what a successful call
+  returns;
+- an **`inputSchema`** — one object holding the path, query and header parameters and the request
+  body, as JSON Schema;
+- an **`outputSchema`** (2025-06-18) — the success response's schema, when the response is an
+  object. A response that is an array or a single value is described in the description only,
+  because MCP requires an object output schema.
+
+Operations that are not callable — events, streams, and the resources and prompts of an imported MCP
+server — get no tool, and the fidelity report lists them as dropped. Deprecated operations are left
+out unless you turn on **include_deprecated**. A source with no callable operation is greyed out in
+the **Export** dialog with that reason.
+
+Options:
+
+- **protocol_version** — `2025-06-18` (default) or `2025-03-26`, which has no `outputSchema`.
+- **grouping** — `single` (default), or `per-service`: one descriptor per service,
+  `<server>-<service>.mcp.json`, downloaded together as a `.zip`. A tool has the same name either way.
+- **output_schema** — on by default. A server that serves these tools must return
+  `structuredContent` matching each `outputSchema`; turn it off if yours does not.
+- **include_deprecated** — also write a tool for each deprecated operation.
+
+Every tool is checked against the MCP Tool schema of the chosen revision before you download it. The
+descriptor describes the tools; it is not a running server. From the CLI, run
+`apiome export mcp <item> --out petstore.mcp.json`, or
+`apiome export mcp <item> --out <folder> --option grouping=per-service` for one file per service.
 
 ### Protobuf and Thrift from an OpenAPI source
 
@@ -1400,6 +1439,7 @@ re-import shows what API Blueprint could not keep; the fidelity report names tho
 | Kong Declarative Config | REST | Any source |
 | Kubernetes CRD | Data schema | Any source |
 | LLM Tool Definitions | Agent tools | Any source |
+| MCP Tool Definitions | Agent tools | A source with an operation an agent can call |
 | OData | REST | Any source |
 | ODCS Data Contract | Data schema | Any source |
 | ONC RPC | RPC | Any source |

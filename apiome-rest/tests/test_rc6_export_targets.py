@@ -85,6 +85,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "kafka-connect",
     "kong",
     "llm-tools",
+    "mcp",
     "odata",
     "odcs",
     "oncrpc",

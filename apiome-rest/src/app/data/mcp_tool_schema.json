@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "The MCP Tool object, transcribed from the Model Context Protocol specification's schema.json (https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema) for the two protocol revisions the MCP emitter writes (MFX-32.1, #4295). Only the Tool definition and what it references are kept. 2025-03-26 has no title or outputSchema; 2025-06-18 adds both (outputSchema, like inputSchema, must be an object schema).",
+  "definitions": {
+    "ToolAnnotations": {
+      "type": "object",
+      "properties": {
+        "title": {"type": "string"},
+        "readOnlyHint": {"type": "boolean"},
+        "destructiveHint": {"type": "boolean"},
+        "idempotentHint": {"type": "boolean"},
+        "openWorldHint": {"type": "boolean"}
+      }
+    },
+    "ObjectSchema": {
+      "type": "object",
+      "properties": {
+        "type": {"type": "string", "const": "object"},
+        "properties": {
+          "type": "object",
+          "additionalProperties": {"type": "object", "additionalProperties": true, "properties": {}}
+        },
+        "required": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["type"]
+    },
+    "Tool-2025-03-26": {
+      "type": "object",
+      "properties": {
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "inputSchema": {"$ref": "#/definitions/ObjectSchema"},
+        "annotations": {"$ref": "#/definitions/ToolAnnotations"}
+      },
+      "required": ["name", "inputSchema"],
+      "additionalProperties": false
+    },
+    "Tool-2025-06-18": {
+      "type": "object",
+      "properties": {
+        "_meta": {"type": "object", "additionalProperties": {}},
+        "name": {"type": "string"},
+        "title": {"type": "string"},
+        "description": {"type": "string"},
+        "inputSchema": {"$ref": "#/definitions/ObjectSchema"},
+        "outputSchema": {"$ref": "#/definitions/ObjectSchema"},
+        "annotations": {"$ref": "#/definitions/ToolAnnotations"}
+      },
+      "required": ["name", "inputSchema"],
+      "additionalProperties": false
+    }
+  }
+}
