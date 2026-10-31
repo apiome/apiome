@@ -46,9 +46,10 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``thrift`` — the Apache Thrift compiler (``thrift --gen json``,
   :func:`app.thrift_compile.compile_thrift_idl`) when the toolchain has it, else a re-parse through
   :func:`app.thrift_parser.parse_thrift`;
-* ``postman`` — :func:`app.postman_roundtrip.check_emitted_collection` (MFX-31.4): a Postman file
-  against the published Postman Collection v2.1.0 JSON Schema (vendored; one finding per violation),
-  an Insomnia / Bruno file (MFX-31.3 modes) by its import adapter, then a re-import;
+* ``postman`` / ``insomnia`` / ``bruno`` — :func:`app.postman_roundtrip.check_emitted_collection`
+  (MFX-31.4): a Postman file against the published Postman Collection v2.1.0 JSON Schema (vendored; one
+  finding per violation), an Insomnia v4 export or a Bruno collection (MFX-31.3 — the ``insomnia`` /
+  ``bruno`` targets, or the Postman target's ``flavor``) by its import adapter, then a re-import;
 * ``hoppscotch`` / ``thunder-client`` — :func:`app.hoppscotch_emitter.validate_hoppscotch_export`
   and :func:`app.thunder_client_emitter.validate_thunder_client_export` (the emitted collection
   and environment re-parsed together as one upload through the client's import adapter, FMT-10.4);
@@ -1492,6 +1493,9 @@ _VALIDATORS: Dict[str, _Validator] = {
     "thunder-client": _validate_thunder_client,
     # MFX-31.1 (#4289)
     "postman": _validate_postman,
+    # MFX-31.3 (#4291): the same check, chosen by what each emitted file is.
+    "insomnia": _validate_postman,
+    "bruno": _validate_postman,
     # MFX-33.1 (#4301)
     "openrpc": _validate_openrpc,
     # MFX-25.1 (#4151)

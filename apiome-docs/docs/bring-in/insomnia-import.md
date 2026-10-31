@@ -100,9 +100,11 @@ Apiome records these in the import's coverage ledger instead of guessing:
 
 ## Exporting back to Insomnia
 
-Apiome does not export Insomnia collections yet. To get a catalog item into an API client, export it
-as a [Hoppscotch or Thunder Client collection](../ship/export-to-an-api-client.md), or as OpenAPI,
-which Insomnia imports.
+Any HTTP catalog item or version exports as an Insomnia v4 export: pick the **Insomnia** card in the
+export dialog, or run `apiome export insomnia`. A collection imported from Insomnia exports back to
+the same requests, folders, auth schemes and base URL; scripts, tests and environments other than
+the base one are not written back. See [Export to an API
+client](../ship/export-to-an-api-client.md).
 
 ## When an import is refused
 

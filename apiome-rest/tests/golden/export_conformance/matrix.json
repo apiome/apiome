@@ -68,6 +68,12 @@
     },
     {
       "family": "a2a",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "a2a",
       "loss_counts": {
         "approx": 8,
         "drop": 0,
@@ -220,6 +226,12 @@
     },
     {
       "family": "a2a",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
+    },
+    {
+      "family": "a2a",
       "reason": "Only a source imported as ISO 20022 can be exported to ISO 20022.",
       "status": "refused",
       "target": "iso20022"
@@ -362,7 +374,7 @@
       "family": "a2a",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -560,6 +572,12 @@
     },
     {
       "family": "acp",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "acp",
       "loss_counts": {
         "approx": 6,
         "drop": 0,
@@ -709,6 +727,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "acp",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "acp",
@@ -862,7 +886,7 @@
       "family": "acp",
       "loss_counts": {
         "approx": 1,
-        "drop": 3,
+        "drop": 4,
         "synth": 0
       },
       "reason": null,
@@ -1062,6 +1086,12 @@
     },
     {
       "family": "agents-manifest",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "agents-manifest",
       "loss_counts": {
         "approx": 8,
         "drop": 0,
@@ -1216,6 +1246,12 @@
     },
     {
       "family": "agents-manifest",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
+    },
+    {
+      "family": "agents-manifest",
       "reason": "Only a source imported as ISO 20022 can be exported to ISO 20022.",
       "status": "refused",
       "target": "iso20022"
@@ -1366,8 +1402,8 @@
       "family": "agents-manifest",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
-        "synth": 0
+        "drop": 8,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -1591,6 +1627,18 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
+        "approx": 8,
+        "drop": 11,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
         "approx": 9,
         "drop": 0,
         "synth": 10
@@ -1767,6 +1815,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 11,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "api-blueprint",
@@ -1951,7 +2011,7 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 1,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -2185,6 +2245,18 @@
     {
       "family": "apigee",
       "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "apigee",
+      "loss_counts": {
         "approx": 6,
         "drop": 0,
         "synth": 4
@@ -2357,6 +2429,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "apigee",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -2533,8 +2617,8 @@
       "family": "apigee",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -2729,6 +2813,12 @@
     },
     {
       "family": "arazzo",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "arazzo",
       "loss_counts": {
         "approx": 3,
         "drop": 0,
@@ -2882,6 +2972,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "arazzo",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "arazzo",
@@ -3043,8 +3139,8 @@
       "family": "arazzo",
       "loss_counts": {
         "approx": 1,
-        "drop": 3,
-        "synth": 0
+        "drop": 4,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -3257,6 +3353,12 @@
     },
     {
       "family": "arrow",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "arrow",
       "loss_counts": {
         "approx": 12,
         "drop": 0,
@@ -3410,6 +3512,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "arrow",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "arrow",
@@ -3576,9 +3684,9 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -3779,6 +3887,12 @@
     },
     {
       "family": "asn1",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "asn1",
       "loss_counts": {
         "approx": 12,
         "drop": 0,
@@ -3932,6 +4046,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "asn1",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "asn1",
@@ -4098,9 +4218,9 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 5,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -4296,6 +4416,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "asyncapi",
       "loss_counts": {
         "approx": 0,
         "drop": 4,
@@ -4440,6 +4566,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
+    },
+    {
+      "family": "asyncapi",
       "reason": "Only a source imported as ISO 20022 can be exported to ISO 20022.",
       "status": "refused",
       "target": "iso20022"
@@ -4580,8 +4712,8 @@
       "family": "asyncapi",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
-        "synth": 0
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -4776,6 +4908,12 @@
     },
     {
       "family": "avro",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "avro",
       "loss_counts": {
         "approx": 6,
         "drop": 0,
@@ -4929,6 +5067,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "avro",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "avro",
@@ -5095,9 +5239,9 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 4,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -5304,6 +5448,12 @@
     },
     {
       "family": "avro-idl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "avro-idl",
       "loss_counts": {
         "approx": 13,
         "drop": 1,
@@ -5457,6 +5607,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "avro-idl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "avro-idl",
@@ -5624,8 +5780,8 @@
       "family": "avro-idl",
       "loss_counts": {
         "approx": 5,
-        "drop": 3,
-        "synth": 0
+        "drop": 9,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -5858,6 +6014,18 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
+        "approx": 9,
+        "drop": 7,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
         "approx": 10,
         "drop": 1,
         "synth": 11
@@ -6034,6 +6202,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 7,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "aws-apigateway",
@@ -6219,9 +6399,9 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 0
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -6450,6 +6630,18 @@
     {
       "family": "azure-apim",
       "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "azure-apim",
+      "loss_counts": {
         "approx": 4,
         "drop": 2,
         "synth": 3
@@ -6624,6 +6816,18 @@
     },
     {
       "family": "azure-apim",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
+    },
+    {
+      "family": "azure-apim",
       "reason": "Only a source imported as ISO 20022 can be exported to ISO 20022.",
       "status": "refused",
       "target": "iso20022"
@@ -6794,8 +6998,8 @@
       "family": "azure-apim",
       "loss_counts": {
         "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -7027,6 +7231,18 @@
     {
       "family": "bruno",
       "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
         "approx": 7,
         "drop": 0,
         "synth": 5
@@ -7203,6 +7419,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "bruno",
@@ -7388,7 +7616,7 @@
     {
       "family": "bruno",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 0
       },
@@ -7609,6 +7837,12 @@
     },
     {
       "family": "capnproto",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "capnproto",
       "reason": null,
       "status": "ok",
       "target": "capnproto"
@@ -7758,6 +7992,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "capnproto",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "capnproto",
@@ -7926,9 +8166,9 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 6,
-        "drop": 13,
-        "synth": 1
+        "approx": 9,
+        "drop": 16,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -8145,6 +8385,12 @@
     },
     {
       "family": "cddl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "cddl",
       "loss_counts": {
         "approx": 32,
         "drop": 0,
@@ -8298,6 +8544,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "cddl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "cddl",
@@ -8464,9 +8716,9 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 4,
+        "approx": 10,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -8673,6 +8925,12 @@
     },
     {
       "family": "cics-bms",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "cics-bms",
       "loss_counts": {
         "approx": 19,
         "drop": 0,
@@ -8826,6 +9084,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "cics-bms",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "cics-bms",
@@ -8992,9 +9256,9 @@
     {
       "family": "cics-bms",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -9195,6 +9459,12 @@
     },
     {
       "family": "cloudevents",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "cloudevents",
       "loss_counts": {
         "approx": 7,
         "drop": 2,
@@ -9342,6 +9612,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "cloudevents",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "cloudevents",
@@ -9508,8 +9784,8 @@
     {
       "family": "cloudevents",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 2,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -9717,6 +9993,12 @@
     },
     {
       "family": "cobolcopybook",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "cobolcopybook",
       "loss_counts": {
         "approx": 17,
         "drop": 0,
@@ -9863,6 +10145,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "cobolcopybook",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "cobolcopybook",
@@ -10028,9 +10316,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "approx": 5,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -10237,6 +10525,12 @@
     },
     {
       "family": "connectrpc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "connectrpc",
       "loss_counts": {
         "approx": 14,
         "drop": 0,
@@ -10390,6 +10684,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "connectrpc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "connectrpc",
@@ -10556,9 +10856,9 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 8,
-        "drop": 4,
-        "synth": 1
+        "approx": 1,
+        "drop": 13,
+        "synth": 9
       },
       "reason": null,
       "status": "lossy",
@@ -10787,6 +11087,12 @@
     },
     {
       "family": "consul",
+      "reason": "Bruno export requires at least one HTTP operation on a method Bruno saves (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, CONNECT, TRACE).",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "consul",
       "loss_counts": {
         "approx": 2,
         "drop": 0,
@@ -10961,6 +11267,18 @@
     },
     {
       "family": "consul",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
+    },
+    {
+      "family": "consul",
       "reason": "Only a source imported as ISO 20022 can be exported to ISO 20022.",
       "status": "refused",
       "target": "iso20022"
@@ -11130,8 +11448,8 @@
       "family": "consul",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
-        "synth": 0
+        "drop": 2,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -11338,6 +11656,12 @@
     },
     {
       "family": "corbaidl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "corbaidl",
       "loss_counts": {
         "approx": 10,
         "drop": 3,
@@ -11491,6 +11815,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "corbaidl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "corbaidl",
@@ -11658,8 +11988,8 @@
       "family": "corbaidl",
       "loss_counts": {
         "approx": 5,
-        "drop": 4,
-        "synth": 1
+        "drop": 10,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -11877,6 +12207,12 @@
     },
     {
       "family": "cue",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "cue",
       "loss_counts": {
         "approx": 19,
         "drop": 0,
@@ -12030,6 +12366,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "cue",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "cue",
@@ -12198,9 +12540,9 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 2,
+        "approx": 7,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -12406,6 +12748,12 @@
     },
     {
       "family": "dbt",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "dbt",
       "loss_counts": {
         "approx": 14,
         "drop": 0,
@@ -12559,6 +12907,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "dbt",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "dbt",
@@ -12725,9 +13079,9 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 1,
+        "approx": 4,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -12936,6 +13290,12 @@
     },
     {
       "family": "dhall",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "dhall",
       "loss_counts": {
         "approx": 13,
         "drop": 0,
@@ -13089,6 +13449,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "dhall",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "dhall",
@@ -13258,9 +13624,9 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 1,
+        "approx": 7,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -13467,6 +13833,12 @@
     },
     {
       "family": "dicom",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "dicom",
       "loss_counts": {
         "approx": 82,
         "drop": 0,
@@ -13620,6 +13992,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "dicom",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "dicom",
@@ -13786,9 +14164,9 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 12,
-        "drop": 0,
-        "synth": 0
+        "approx": 13,
+        "drop": 11,
+        "synth": 12
       },
       "reason": null,
       "status": "lossy",
@@ -14014,6 +14392,18 @@
     {
       "family": "discovery",
       "loss_counts": {
+        "approx": 9,
+        "drop": 10,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
         "approx": 12,
         "drop": 0,
         "synth": 18
@@ -14190,6 +14580,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 10,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "discovery",
@@ -14376,7 +14778,7 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 6,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -14597,6 +14999,12 @@
     },
     {
       "family": "dtd",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "dtd",
       "loss_counts": {
         "approx": 33,
         "drop": 0,
@@ -14750,6 +15158,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "dtd",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "dtd",
@@ -14916,9 +15330,9 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 3,
+        "approx": 8,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -15125,6 +15539,12 @@
     },
     {
       "family": "edifact",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "edifact",
       "loss_counts": {
         "approx": 107,
         "drop": 0,
@@ -15280,6 +15700,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "edifact",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "edifact",
@@ -15448,9 +15874,9 @@
     {
       "family": "edifact",
       "loss_counts": {
-        "approx": 11,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 10,
+        "synth": 11
       },
       "reason": null,
       "status": "lossy",
@@ -15657,6 +16083,12 @@
     },
     {
       "family": "edix12",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "edix12",
       "loss_counts": {
         "approx": 47,
         "drop": 0,
@@ -15817,6 +16249,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "edix12",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "edix12",
@@ -15985,9 +16423,9 @@
     {
       "family": "edix12",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -16207,6 +16645,12 @@
     },
     {
       "family": "envoy-xds",
+      "reason": "Bruno export requires at least one HTTP operation on a method Bruno saves (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, CONNECT, TRACE).",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "envoy-xds",
       "loss_counts": {
         "approx": 8,
         "drop": 0,
@@ -16380,6 +16824,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "envoy-xds",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "envoy-xds",
@@ -16557,8 +17013,8 @@
       "family": "envoy-xds",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
-        "synth": 0
+        "drop": 5,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -16784,6 +17240,18 @@
     {
       "family": "fhir",
       "loss_counts": {
+        "approx": 14,
+        "drop": 14,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
         "approx": 13,
         "drop": 0,
         "synth": 13
@@ -16960,6 +17428,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
+        "approx": 14,
+        "drop": 14,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "fhir",
@@ -17145,8 +17625,8 @@
       "family": "fhir",
       "loss_counts": {
         "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "drop": 3,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -17365,6 +17845,12 @@
     },
     {
       "family": "fix",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "fix",
       "loss_counts": {
         "approx": 42,
         "drop": 0,
@@ -17523,6 +18009,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "fix",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "fix",
@@ -17689,9 +18181,9 @@
     {
       "family": "fix",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -17897,6 +18389,12 @@
     },
     {
       "family": "fix-orchestra",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "fix-orchestra",
       "loss_counts": {
         "approx": 28,
         "drop": 0,
@@ -18050,6 +18548,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "fix-orchestra",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "fix-orchestra",
@@ -18216,9 +18720,9 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 13,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -18425,6 +18929,12 @@
     },
     {
       "family": "flatbuffers",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "flatbuffers",
       "loss_counts": {
         "approx": 0,
         "drop": 0,
@@ -18575,6 +19085,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "flatbuffers",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "flatbuffers",
@@ -18737,9 +19253,9 @@
     {
       "family": "flatbuffers",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 1
+        "approx": 6,
+        "drop": 4,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -18960,6 +19476,18 @@
     {
       "family": "gateway-api",
       "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "gateway-api",
+      "loss_counts": {
         "approx": 6,
         "drop": 0,
         "synth": 4
@@ -19132,6 +19660,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "gateway-api",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -19309,8 +19849,8 @@
       "family": "gateway-api",
       "loss_counts": {
         "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -19523,6 +20063,12 @@
     },
     {
       "family": "graphql",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "graphql",
       "loss_counts": {
         "approx": 17,
         "drop": 0,
@@ -19673,6 +20219,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "graphql",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "graphql",
@@ -19841,9 +20393,9 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 3,
-        "drop": 2,
-        "synth": 1
+        "approx": 6,
+        "drop": 4,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -20070,6 +20622,12 @@
     },
     {
       "family": "haproxy",
+      "reason": "Bruno export requires at least one HTTP operation on a method Bruno saves (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, CONNECT, TRACE).",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "haproxy",
       "loss_counts": {
         "approx": 10,
         "drop": 0,
@@ -20243,6 +20801,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "haproxy",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -20420,8 +20990,8 @@
       "family": "haproxy",
       "loss_counts": {
         "approx": 1,
-        "drop": 5,
-        "synth": 0
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -20647,6 +21217,18 @@
     {
       "family": "har",
       "loss_counts": {
+        "approx": 21,
+        "drop": 11,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
         "approx": 24,
         "drop": 0,
         "synth": 26
@@ -20823,6 +21405,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
+        "approx": 21,
+        "drop": 11,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "har",
@@ -21009,7 +21603,7 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 6,
+        "approx": 12,
         "drop": 0,
         "synth": 0
       },
@@ -21230,6 +21824,12 @@
     },
     {
       "family": "hl7v2",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "hl7v2",
       "loss_counts": {
         "approx": 99,
         "drop": 0,
@@ -21390,6 +21990,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "hl7v2",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "hl7v2",
@@ -21558,9 +22164,9 @@
     {
       "family": "hl7v2",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 4,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -21767,6 +22373,12 @@
     },
     {
       "family": "hl7v3",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "hl7v3",
       "loss_counts": {
         "approx": 84,
         "drop": 0,
@@ -21920,6 +22532,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "hl7v3",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "hl7v3",
@@ -22086,9 +22704,9 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 37,
-        "drop": 0,
-        "synth": 0
+        "approx": 14,
+        "drop": 36,
+        "synth": 37
       },
       "reason": null,
       "status": "lossy",
@@ -22314,6 +22932,18 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
         "approx": 11,
         "drop": 0,
         "synth": 7
@@ -22490,6 +23120,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "hoppscotch",
@@ -22676,7 +23318,7 @@
     {
       "family": "hoppscotch",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -22917,6 +23559,18 @@
       "family": "http-file",
       "loss_counts": {
         "approx": 6,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
+        "approx": 6,
         "drop": 0,
         "synth": 5
       },
@@ -23092,6 +23746,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "http-file",
@@ -23278,7 +23944,7 @@
     {
       "family": "http-file",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 0
       },
@@ -23499,6 +24165,12 @@
     },
     {
       "family": "idoc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "idoc",
       "loss_counts": {
         "approx": 51,
         "drop": 0,
@@ -23660,6 +24332,12 @@
       "status": "lossy",
       "target": "idoc",
       "tier": "types-only"
+    },
+    {
+      "family": "idoc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "idoc",
@@ -23828,9 +24506,9 @@
     {
       "family": "idoc",
       "loss_counts": {
-        "approx": 10,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 9,
+        "synth": 10
       },
       "reason": null,
       "status": "lossy",
@@ -24039,6 +24717,12 @@
     },
     {
       "family": "ims",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "ims",
       "loss_counts": {
         "approx": 58,
         "drop": 0,
@@ -24192,6 +24876,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "ims",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "ims",
@@ -24358,9 +25048,9 @@
     {
       "family": "ims",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "approx": 5,
+        "drop": 3,
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -24586,6 +25276,18 @@
     {
       "family": "insomnia",
       "loss_counts": {
+        "approx": 10,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
         "approx": 13,
         "drop": 0,
         "synth": 9
@@ -24762,6 +25464,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "insomnia",
@@ -24948,7 +25662,7 @@
     {
       "family": "insomnia",
       "loss_counts": {
-        "approx": 6,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -25169,6 +25883,12 @@
     },
     {
       "family": "iso20022",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "iso20022",
       "loss_counts": {
         "approx": 72,
         "drop": 0,
@@ -25324,6 +26044,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "iso20022",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "iso20022",
@@ -25498,9 +26224,9 @@
     {
       "family": "iso20022",
       "loss_counts": {
-        "approx": 19,
-        "drop": 0,
-        "synth": 0
+        "approx": 20,
+        "drop": 18,
+        "synth": 19
       },
       "reason": null,
       "status": "lossy",
@@ -25709,6 +26435,12 @@
     },
     {
       "family": "iso8583",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "iso8583",
       "loss_counts": {
         "approx": 44,
         "drop": 0,
@@ -25864,6 +26596,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "iso8583",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "iso8583",
@@ -26038,9 +26776,9 @@
     {
       "family": "iso8583",
       "loss_counts": {
-        "approx": 13,
-        "drop": 0,
-        "synth": 0
+        "approx": 14,
+        "drop": 12,
+        "synth": 13
       },
       "reason": null,
       "status": "lossy",
@@ -26262,6 +27000,18 @@
     {
       "family": "istio",
       "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "istio",
+      "loss_counts": {
         "approx": 10,
         "drop": 0,
         "synth": 6
@@ -26434,6 +27184,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "istio",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -26611,8 +27373,8 @@
       "family": "istio",
       "loss_counts": {
         "approx": 3,
-        "drop": 3,
-        "synth": 0
+        "drop": 4,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -26819,6 +27581,12 @@
     },
     {
       "family": "json-schema",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "json-schema",
       "loss_counts": {
         "approx": 4,
         "drop": 0,
@@ -26844,7 +27612,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 409bca25-9ae3-4fdf-a04b-5c1f1a658aa6",
+        "added operation 9be318f4-11e6-433e-af35-36c10a15a633",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -26973,6 +27741,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "json-schema",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "json-schema",
@@ -27135,9 +27909,9 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -27337,6 +28111,12 @@
     },
     {
       "family": "jsonld",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "jsonld",
       "loss_counts": {
         "approx": 12,
         "drop": 0,
@@ -27490,6 +28270,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "jsonld",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "jsonld",
@@ -27656,9 +28442,9 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 3,
+        "approx": 7,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -27859,6 +28645,12 @@
     },
     {
       "family": "jtd",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "jtd",
       "loss_counts": {
         "approx": 8,
         "drop": 0,
@@ -27884,7 +28676,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 6521d798-2692-44e5-a0c4-4aed28197872",
+        "added operation 289fc188-4859-40bf-b30c-823c3ec39fb1",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -28016,6 +28808,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "jtd",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "jtd",
@@ -28183,9 +28981,9 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 1,
+        "approx": 4,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -28393,6 +29191,12 @@
     },
     {
       "family": "k8s-crd",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "k8s-crd",
       "loss_counts": {
         "approx": 2,
         "drop": 0,
@@ -28418,7 +29222,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 28ed5236-1c29-4800-8676-2d5517be627e",
+        "added operation d5914ce8-d4de-4ed5-9888-fb0203f7f17a",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -28549,6 +29353,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "k8s-crd",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "k8s-crd",
@@ -28708,9 +29518,9 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 2,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -28917,6 +29727,12 @@
     },
     {
       "family": "kafka-connect",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "kafka-connect",
       "loss_counts": {
         "approx": 11,
         "drop": 0,
@@ -29069,6 +29885,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "kafka-connect",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "kafka-connect",
@@ -29234,9 +30056,9 @@
     {
       "family": "kafka-connect",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -29454,6 +30276,18 @@
     {
       "family": "kong",
       "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "kong",
+      "loss_counts": {
         "approx": 10,
         "drop": 0,
         "synth": 6
@@ -29626,6 +30460,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "kong",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -29803,8 +30649,8 @@
       "family": "kong",
       "loss_counts": {
         "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -30017,6 +30863,12 @@
     },
     {
       "family": "llm-tools",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "llm-tools",
       "loss_counts": {
         "approx": 11,
         "drop": 0,
@@ -30170,6 +31022,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "llm-tools",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "llm-tools",
@@ -30338,8 +31196,8 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 3,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -30553,6 +31411,12 @@
     },
     {
       "family": "lwm2m",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "lwm2m",
       "loss_counts": {
         "approx": 9,
         "drop": 0,
@@ -30706,6 +31570,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "lwm2m",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "lwm2m",
@@ -30872,9 +31742,9 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 1,
-        "drop": 7,
-        "synth": 0
+        "approx": 2,
+        "drop": 9,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -31091,6 +31961,12 @@
     },
     {
       "family": "matter",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "matter",
       "loss_counts": {
         "approx": 26,
         "drop": 0,
@@ -31244,6 +32120,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "matter",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "matter",
@@ -31410,9 +32292,9 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 9,
-        "drop": 15,
-        "synth": 0
+        "approx": 11,
+        "drop": 19,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -31629,6 +32511,12 @@
     },
     {
       "family": "mcp",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "mcp",
       "loss_counts": {
         "approx": 26,
         "drop": 0,
@@ -31782,6 +32670,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "mcp",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "mcp",
@@ -31950,9 +32844,9 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 2,
-        "drop": 6,
-        "synth": 0
+        "approx": 5,
+        "drop": 10,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -32165,6 +33059,12 @@
     },
     {
       "family": "nacha",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "nacha",
       "loss_counts": {
         "approx": 62,
         "drop": 0,
@@ -32320,6 +33220,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "nacha",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "nacha",
@@ -32488,9 +33394,9 @@
     {
       "family": "nacha",
       "loss_counts": {
-        "approx": 8,
-        "drop": 0,
-        "synth": 0
+        "approx": 9,
+        "drop": 7,
+        "synth": 8
       },
       "reason": null,
       "status": "lossy",
@@ -32699,6 +33605,12 @@
     },
     {
       "family": "natural-ddm",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "natural-ddm",
       "loss_counts": {
         "approx": 35,
         "drop": 0,
@@ -32852,6 +33764,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "natural-ddm",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "natural-ddm",
@@ -33018,9 +33936,9 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -33227,6 +34145,12 @@
     },
     {
       "family": "ncpdp",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "ncpdp",
       "loss_counts": {
         "approx": 172,
         "drop": 0,
@@ -33382,6 +34306,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "ncpdp",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "ncpdp",
@@ -33550,9 +34480,9 @@
     {
       "family": "ncpdp",
       "loss_counts": {
-        "approx": 32,
-        "drop": 0,
-        "synth": 0
+        "approx": 33,
+        "drop": 31,
+        "synth": 32
       },
       "reason": null,
       "status": "lossy",
@@ -33773,6 +34703,12 @@
     },
     {
       "family": "nginx",
+      "reason": "Bruno export requires at least one HTTP operation on a method Bruno saves (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, CONNECT, TRACE).",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "nginx",
       "loss_counts": {
         "approx": 12,
         "drop": 0,
@@ -33946,6 +34882,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "nginx",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -34123,8 +35071,8 @@
       "family": "nginx",
       "loss_counts": {
         "approx": 1,
-        "drop": 6,
-        "synth": 0
+        "drop": 8,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -34350,6 +35298,18 @@
     {
       "family": "odata",
       "loss_counts": {
+        "approx": 6,
+        "drop": 11,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
         "approx": 9,
         "drop": 0,
         "synth": 11
@@ -34526,6 +35486,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 11,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "odata",
@@ -34711,8 +35683,8 @@
       "family": "odata",
       "loss_counts": {
         "approx": 7,
-        "drop": 0,
-        "synth": 1
+        "drop": 4,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -34950,6 +35922,18 @@
     {
       "family": "odata-v2",
       "loss_counts": {
+        "approx": 17,
+        "drop": 24,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
         "approx": 25,
         "drop": 0,
         "synth": 22
@@ -35126,6 +36110,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
+        "approx": 17,
+        "drop": 24,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "odata-v2",
@@ -35311,8 +36307,8 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 13,
-        "drop": 0,
-        "synth": 1
+        "drop": 6,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -35524,6 +36520,12 @@
     },
     {
       "family": "odcs",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "odcs",
       "loss_counts": {
         "approx": 12,
         "drop": 0,
@@ -35549,7 +36551,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 76e4b4bb-487a-479d-af78-b3e5a1d8a191",
+        "added operation bc726e79-3f9f-4037-a54d-a78076ce9f78",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -35678,6 +36680,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "odcs",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "odcs",
@@ -35841,9 +36849,9 @@
     {
       "family": "odcs",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -36049,6 +37057,12 @@
     },
     {
       "family": "oncrpc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "oncrpc",
       "loss_counts": {
         "approx": 18,
         "drop": 0,
@@ -36202,6 +37216,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "oncrpc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "oncrpc",
@@ -36369,8 +37389,8 @@
       "family": "oncrpc",
       "loss_counts": {
         "approx": 5,
-        "drop": 3,
-        "synth": 1
+        "drop": 9,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -36583,6 +37603,12 @@
     },
     {
       "family": "opcua-nodeset",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "opcua-nodeset",
       "loss_counts": {
         "approx": 11,
         "drop": 0,
@@ -36736,6 +37762,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "opcua-nodeset",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "opcua-nodeset",
@@ -36904,9 +37936,9 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 3,
-        "drop": 1,
-        "synth": 0
+        "approx": 4,
+        "drop": 3,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -37117,6 +38149,12 @@
     },
     {
       "family": "openapi",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "openapi",
       "loss_counts": {
         "approx": 6,
         "drop": 0,
@@ -37270,6 +38308,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "openapi",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "openapi",
@@ -37430,9 +38474,9 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -37639,6 +38683,12 @@
     },
     {
       "family": "openrpc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "openrpc",
       "loss_counts": {
         "approx": 9,
         "drop": 0,
@@ -37792,6 +38842,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "openrpc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "openrpc",
@@ -37954,8 +39010,8 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 1,
-        "drop": 2,
+        "approx": 3,
+        "drop": 3,
         "synth": 0
       },
       "reason": null,
@@ -38163,6 +39219,12 @@
     },
     {
       "family": "owl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "owl",
       "loss_counts": {
         "approx": 2,
         "drop": 0,
@@ -38188,7 +39250,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 7f79a76f-c45c-4d5f-9943-7431ab7d7089",
+        "added operation b0c38505-d739-48f6-8582-7fb5c3bb5de6",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -38320,6 +39382,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "owl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "owl",
@@ -38478,9 +39546,9 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 9,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -38691,6 +39759,12 @@
     },
     {
       "family": "pkl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "pkl",
       "loss_counts": {
         "approx": 19,
         "drop": 0,
@@ -38844,6 +39918,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "pkl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "pkl",
@@ -39013,9 +40093,9 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 8,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -39222,6 +40302,12 @@
     },
     {
       "family": "pli",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "pli",
       "loss_counts": {
         "approx": 57,
         "drop": 0,
@@ -39375,6 +40461,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "pli",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "pli",
@@ -39541,9 +40633,9 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 4,
-        "drop": 0,
-        "synth": 0
+        "approx": 5,
+        "drop": 3,
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -39769,6 +40861,18 @@
     {
       "family": "postman",
       "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
         "approx": 9,
         "drop": 0,
         "synth": 7
@@ -39807,7 +40911,7 @@
       "loss_counts": {
         "approx": 1,
         "drop": 4,
-        "synth": 3
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -39931,7 +41035,7 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 5,
+        "approx": 8,
         "drop": 0,
         "synth": 0
       },
@@ -39945,6 +41049,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "postman",
@@ -40046,7 +41162,7 @@
       "family": "postman",
       "loss_counts": {
         "approx": 6,
-        "drop": 2,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -40095,7 +41211,7 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 3,
         "synth": 0
       },
@@ -40125,7 +41241,7 @@
     {
       "family": "postman",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 0,
         "synth": 0
       },
@@ -40269,7 +41385,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 7,
+        "approx": 10,
         "drop": 0,
         "synth": 0
       },
@@ -40282,7 +41398,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 5,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40294,7 +41410,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 5,
-        "drop": 1,
+        "drop": 2,
         "synth": 5
       },
       "reason": null,
@@ -40307,7 +41423,7 @@
       "loss_counts": {
         "approx": 2,
         "drop": 5,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40365,9 +41481,21 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 12,
+        "approx": 10,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
+        "approx": 15,
         "drop": 0,
-        "synth": 7
+        "synth": 9
       },
       "reason": null,
       "status": "lossy",
@@ -40379,7 +41507,7 @@
       "loss_counts": {
         "approx": 0,
         "drop": 4,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40401,9 +41529,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
-        "drop": 5,
-        "synth": 6
+        "approx": 3,
+        "drop": 6,
+        "synth": 10
       },
       "reason": null,
       "status": "lossy",
@@ -40413,9 +41541,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 0,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40425,9 +41553,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 6,
+        "approx": 8,
         "drop": 0,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40444,7 +41572,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 6,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40455,7 +41583,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 6,
+        "approx": 7,
         "drop": 1,
         "synth": 0
       },
@@ -40473,9 +41601,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
-        "drop": 5,
-        "synth": 2
+        "approx": 4,
+        "drop": 6,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -40486,7 +41614,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40515,8 +41643,8 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 7,
-        "drop": 1,
+        "approx": 9,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40527,7 +41655,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 5,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -40541,6 +41669,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "postman-v2",
@@ -40558,7 +41698,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 6,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40571,7 +41711,7 @@
       "loss_counts": {
         "approx": 1,
         "drop": 5,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40583,7 +41723,7 @@
       "loss_counts": {
         "approx": 0,
         "drop": 4,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40618,7 +41758,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40629,7 +41769,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 1,
         "synth": 0
       },
@@ -40641,9 +41781,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 7,
+        "approx": 8,
         "drop": 2,
-        "synth": 1
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -40665,9 +41805,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 6,
+        "approx": 8,
         "drop": 0,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40684,7 +41824,7 @@
         "removed service Orders API"
       ],
       "family": "postman-v2",
-      "reason": "Fidelity report is empty but the round trip shows 8 difference(s).",
+      "reason": "Fidelity report is empty but the round trip shows 9 difference(s).",
       "status": "silent-loss",
       "target": "openapi"
     },
@@ -40715,9 +41855,9 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 0,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40727,7 +41867,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 5,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -40739,7 +41879,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 3,
         "synth": 0
       },
@@ -40753,7 +41893,7 @@
       "loss_counts": {
         "approx": 4,
         "drop": 0,
-        "synth": 2
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -40763,8 +41903,8 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 7,
-        "drop": 1,
+        "approx": 9,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40776,7 +41916,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 6,
-        "drop": 1,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -40836,8 +41976,8 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 1,
-        "drop": 5,
-        "synth": 4
+        "drop": 6,
+        "synth": 8
       },
       "reason": null,
       "status": "lossy",
@@ -40853,7 +41993,7 @@
     {
       "family": "postman-v2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 5,
         "synth": 1
       },
@@ -40945,6 +42085,12 @@
       "reason": "Azure API Management export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "azure-apim"
+    },
+    {
+      "family": "protobuf",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
     },
     {
       "family": "protobuf",
@@ -41101,6 +42247,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "protobuf",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "protobuf",
@@ -41267,9 +42419,9 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 8,
-        "drop": 3,
-        "synth": 1
+        "approx": 1,
+        "drop": 12,
+        "synth": 9
       },
       "reason": null,
       "status": "lossy",
@@ -41486,6 +42638,12 @@
     },
     {
       "family": "protobuf-editions",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "protobuf-editions",
       "loss_counts": {
         "approx": 11,
         "drop": 0,
@@ -41639,6 +42797,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "protobuf-editions",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "protobuf-editions",
@@ -41805,9 +42969,9 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 5,
-        "drop": 2,
-        "synth": 1
+        "approx": 2,
+        "drop": 8,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -42025,6 +43189,12 @@
     },
     {
       "family": "pydantic",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "pydantic",
       "loss_counts": {
         "approx": 29,
         "drop": 0,
@@ -42178,6 +43348,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "pydantic",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "pydantic",
@@ -42347,9 +43523,9 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -42575,6 +43751,18 @@
     {
       "family": "raml",
       "loss_counts": {
+        "approx": 12,
+        "drop": 13,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
         "approx": 13,
         "drop": 0,
         "synth": 12
@@ -42751,6 +43939,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 13,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "raml",
@@ -43150,6 +44350,12 @@
     },
     {
       "family": "relaxng",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "relaxng",
       "loss_counts": {
         "approx": 11,
         "drop": 0,
@@ -43303,6 +44509,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "relaxng",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "relaxng",
@@ -43469,9 +44681,9 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -43671,6 +44883,12 @@
     },
     {
       "family": "ros2",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "ros2",
       "loss_counts": {
         "approx": 21,
         "drop": 0,
@@ -43696,7 +44914,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 918dfb0c-bc58-4129-96ca-57d4e5267546",
+        "added operation ba048ec3-e603-48ad-8ab7-07795d0c6b50",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -43827,6 +45045,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "ros2",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "ros2",
@@ -43993,9 +45217,9 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 4,
+        "approx": 6,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -44203,6 +45427,12 @@
     },
     {
       "family": "sepa",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "sepa",
       "loss_counts": {
         "approx": 118,
         "drop": 0,
@@ -44358,6 +45588,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "sepa",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "sepa",
@@ -44532,9 +45768,9 @@
     {
       "family": "sepa",
       "loss_counts": {
-        "approx": 26,
-        "drop": 0,
-        "synth": 0
+        "approx": 27,
+        "drop": 25,
+        "synth": 26
       },
       "reason": null,
       "status": "lossy",
@@ -44737,6 +45973,12 @@
     },
     {
       "family": "shacl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "shacl",
       "loss_counts": {
         "approx": 10,
         "drop": 0,
@@ -44890,6 +46132,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "shacl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "shacl",
@@ -45056,9 +46304,9 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 5,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -45265,6 +46513,12 @@
     },
     {
       "family": "smithy",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "smithy",
       "loss_counts": {
         "approx": 9,
         "drop": 0,
@@ -45420,6 +46674,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "smithy",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "smithy",
@@ -45589,8 +46849,8 @@
       "family": "smithy",
       "loss_counts": {
         "approx": 7,
-        "drop": 2,
-        "synth": 0
+        "drop": 10,
+        "synth": 7
       },
       "reason": null,
       "status": "lossy",
@@ -45818,6 +47078,18 @@
     {
       "family": "soapui",
       "loss_counts": {
+        "approx": 8,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
         "approx": 11,
         "drop": 0,
         "synth": 7
@@ -45994,6 +47266,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "soapui",
@@ -46180,7 +47464,7 @@
     {
       "family": "soapui",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -46395,6 +47679,12 @@
     },
     {
       "family": "sparkplug",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "sparkplug",
       "loss_counts": {
         "approx": 7,
         "drop": 2,
@@ -46420,7 +47710,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation d784c0c3-9de9-4418-b772-c8cfb95cb49a",
+        "added operation 9f36a8a9-d153-4048-8939-83b129c44a1d",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -46550,6 +47840,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "sparkplug",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "sparkplug",
@@ -46716,9 +48012,9 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 2,
-        "drop": 2,
-        "synth": 0
+        "approx": 3,
+        "drop": 4,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -46919,6 +48215,12 @@
     },
     {
       "family": "sql-ddl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "sql-ddl",
       "loss_counts": {
         "approx": 49,
         "drop": 0,
@@ -47072,6 +48374,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "sql-ddl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "sql-ddl",
@@ -47242,9 +48550,9 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 6,
-        "drop": 0,
-        "synth": 0
+        "approx": 7,
+        "drop": 5,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -47470,6 +48778,18 @@
     {
       "family": "swagger",
       "loss_counts": {
+        "approx": 38,
+        "drop": 14,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
         "approx": 28,
         "drop": 3,
         "synth": 43
@@ -47646,6 +48966,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 38,
+        "drop": 14,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "swagger",
@@ -47828,9 +49160,9 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 9,
-        "drop": 0,
-        "synth": 0
+        "approx": 17,
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -48068,6 +49400,18 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
+        "approx": 20,
+        "drop": 8,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
         "approx": 15,
         "drop": 3,
         "synth": 17
@@ -48244,6 +49588,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 20,
+        "drop": 8,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "swagger-1.2",
@@ -48425,9 +49781,9 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 0
+        "approx": 9,
+        "drop": 1,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -48646,6 +50002,12 @@
     },
     {
       "family": "swift-mt",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "swift-mt",
       "loss_counts": {
         "approx": 31,
         "drop": 0,
@@ -48801,6 +50163,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "swift-mt",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "swift-mt",
@@ -48969,9 +50337,9 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 16,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 15,
+        "synth": 16
       },
       "reason": null,
       "status": "lossy",
@@ -49178,6 +50546,12 @@
     },
     {
       "family": "thrift",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "thrift",
       "loss_counts": {
         "approx": 6,
         "drop": 2,
@@ -49331,6 +50705,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "thrift",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "thrift",
@@ -49498,8 +50878,8 @@
       "family": "thrift",
       "loss_counts": {
         "approx": 5,
-        "drop": 3,
-        "synth": 1
+        "drop": 9,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -49727,6 +51107,18 @@
     {
       "family": "thunder-client",
       "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
         "approx": 11,
         "drop": 0,
         "synth": 7
@@ -49903,6 +51295,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "thunder-client",
@@ -50089,7 +51493,7 @@
     {
       "family": "thunder-client",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 0,
         "synth": 0
       },
@@ -50310,6 +51714,12 @@
     },
     {
       "family": "tradacoms",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "tradacoms",
       "loss_counts": {
         "approx": 37,
         "drop": 0,
@@ -50464,6 +51874,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "tradacoms",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "tradacoms",
@@ -50632,9 +52048,9 @@
     {
       "family": "tradacoms",
       "loss_counts": {
-        "approx": 3,
-        "drop": 0,
-        "synth": 0
+        "approx": 2,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -50853,6 +52269,12 @@
     },
     {
       "family": "traefik",
+      "reason": "Bruno export requires at least one HTTP operation on a method Bruno saves (GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD, CONNECT, TRACE).",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "traefik",
       "loss_counts": {
         "approx": 6,
         "drop": 0,
@@ -51026,6 +52448,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "traefik",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "traefik",
@@ -51203,8 +52637,8 @@
       "family": "traefik",
       "loss_counts": {
         "approx": 1,
-        "drop": 3,
-        "synth": 0
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -51411,6 +52845,12 @@
     },
     {
       "family": "trpc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "trpc",
       "loss_counts": {
         "approx": 48,
         "drop": 0,
@@ -51564,6 +53004,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "trpc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "trpc",
@@ -51732,8 +53178,8 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 7,
-        "drop": 4,
+        "approx": 17,
+        "drop": 5,
         "synth": 0
       },
       "reason": null,
@@ -51960,6 +53406,18 @@
     {
       "family": "tyk",
       "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "tyk",
+      "loss_counts": {
         "approx": 8,
         "drop": 0,
         "synth": 5
@@ -52132,6 +53590,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "tyk",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -52525,6 +53995,12 @@
     },
     {
       "family": "typescript-types",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "typescript-types",
       "loss_counts": {
         "approx": 23,
         "drop": 0,
@@ -52550,7 +54026,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 6337af43-2863-4988-9430-d5111c42fb4a",
+        "added operation 0d37affb-ae84-4743-86ba-4fb07516d101",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -52682,6 +54158,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "typescript-types",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "typescript-types",
@@ -52852,9 +54334,9 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 1,
+        "approx": 8,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -53082,6 +54564,18 @@
     {
       "family": "typespec",
       "loss_counts": {
+        "approx": 11,
+        "drop": 14,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
         "approx": 9,
         "drop": 0,
         "synth": 15
@@ -53258,6 +54752,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 14,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -53443,8 +54949,8 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 7,
-        "drop": 0,
-        "synth": 1
+        "drop": 4,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -53657,6 +55163,12 @@
     },
     {
       "family": "vsam-idcams",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "vsam-idcams",
       "loss_counts": {
         "approx": 4,
         "drop": 0,
@@ -53810,6 +55322,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "vsam-idcams",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "vsam-idcams",
@@ -53976,9 +55494,9 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 0
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
       },
       "reason": null,
       "status": "lossy",
@@ -54204,6 +55722,18 @@
     {
       "family": "wadl",
       "loss_counts": {
+        "approx": 5,
+        "drop": 8,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
         "approx": 3,
         "drop": 0,
         "synth": 8
@@ -54380,6 +55910,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 8,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "wadl",
@@ -54564,9 +56106,9 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 2,
-        "drop": 0,
-        "synth": 1
+        "approx": 3,
+        "drop": 2,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -54785,6 +56327,12 @@
     },
     {
       "family": "wit",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "wit",
       "loss_counts": {
         "approx": 9,
         "drop": 1,
@@ -54938,6 +56486,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "wit",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "wit",
@@ -55107,8 +56661,8 @@
       "family": "wit",
       "loss_counts": {
         "approx": 4,
-        "drop": 2,
-        "synth": 1
+        "drop": 8,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -55315,6 +56869,12 @@
     },
     {
       "family": "wsdl",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "wsdl",
       "loss_counts": {
         "approx": 7,
         "drop": 3,
@@ -55470,6 +57030,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "wsdl",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "wsdl",
@@ -55639,8 +57205,8 @@
       "family": "wsdl",
       "loss_counts": {
         "approx": 11,
-        "drop": 3,
-        "synth": 1
+        "drop": 13,
+        "synth": 11
       },
       "reason": null,
       "status": "lossy",
@@ -55857,6 +57423,12 @@
     },
     {
       "family": "wsdl2",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "wsdl2",
       "loss_counts": {
         "approx": 10,
         "drop": 2,
@@ -56012,6 +57584,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "wsdl2",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "wsdl2",
@@ -56181,8 +57759,8 @@
       "family": "wsdl2",
       "loss_counts": {
         "approx": 8,
-        "drop": 3,
-        "synth": 1
+        "drop": 11,
+        "synth": 9
       },
       "reason": null,
       "status": "lossy",
@@ -56399,6 +57977,12 @@
     },
     {
       "family": "xmlrpc",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "xmlrpc",
       "loss_counts": {
         "approx": 4,
         "drop": 0,
@@ -56552,6 +58136,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "xmlrpc",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "xmlrpc",
@@ -56718,8 +58308,8 @@
     {
       "family": "xmlrpc",
       "loss_counts": {
-        "approx": 1,
-        "drop": 1,
+        "approx": 2,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -56921,6 +58511,12 @@
     },
     {
       "family": "xregistry",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "xregistry",
       "loss_counts": {
         "approx": 7,
         "drop": 4,
@@ -57074,6 +58670,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "xregistry",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "xregistry",
@@ -57240,9 +58842,9 @@
     {
       "family": "xregistry",
       "loss_counts": {
-        "approx": 1,
-        "drop": 4,
-        "synth": 0
+        "approx": 3,
+        "drop": 6,
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -57449,6 +59051,12 @@
     },
     {
       "family": "xsd",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "xsd",
       "loss_counts": {
         "approx": 15,
         "drop": 0,
@@ -57602,6 +59210,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "xsd",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "xsd",
@@ -57768,9 +59382,9 @@
     {
       "family": "xsd",
       "loss_counts": {
-        "approx": 5,
-        "drop": 0,
-        "synth": 0
+        "approx": 6,
+        "drop": 4,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -57972,6 +59586,12 @@
     },
     {
       "family": "zod",
+      "reason": "Bruno export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "bruno"
+    },
+    {
+      "family": "zod",
       "loss_counts": {
         "approx": 27,
         "drop": 0,
@@ -58125,6 +59745,12 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "zod",
+      "reason": "Insomnia export needs at least one HTTP operation (a method and a path); this source has none.",
+      "status": "refused",
+      "target": "insomnia"
     },
     {
       "family": "zod",
@@ -58294,9 +59920,9 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 4,
+        "approx": 9,
         "drop": 0,
-        "synth": 0
+        "synth": 1
       },
       "reason": null,
       "status": "lossy",
@@ -58522,6 +60148,18 @@
     {
       "family": "zosconnect",
       "loss_counts": {
+        "approx": 5,
+        "drop": 8,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "bruno",
+      "tier": "lossy"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
         "approx": 8,
         "drop": 0,
         "synth": 5
@@ -58698,6 +60336,18 @@
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 8,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "insomnia",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -58883,8 +60533,8 @@
       "family": "zosconnect",
       "loss_counts": {
         "approx": 7,
-        "drop": 0,
-        "synth": 0
+        "drop": 5,
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -59026,9 +60676,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3739,
+    "lossy": 3798,
     "ok": 35,
-    "refused": 1839,
+    "refused": 1996,
     "silent-loss": 219,
     "skipped": 0
   },
@@ -59152,6 +60802,7 @@
     "avro",
     "aws-apigateway",
     "azure-apim",
+    "bruno",
     "capnproto",
     "cddl",
     "cloudevents",
@@ -59169,6 +60820,7 @@
     "hoppscotch",
     "http-file",
     "idoc",
+    "insomnia",
     "iso20022",
     "iso8583",
     "istio",

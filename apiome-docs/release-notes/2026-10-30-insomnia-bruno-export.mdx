@@ -1,0 +1,22 @@
+---
+slug: insomnia-bruno-export
+title: Export to Insomnia and Bruno
+description: Any HTTP API exports as an Insomnia v4 export or a Bruno collection.
+authors: [apiome]
+---
+
+Two new export targets: **Insomnia** and **Bruno**.
+[Export to an API client](/ship/export-to-an-api-client).
+
+{/* truncate */}
+
+- **Insomnia.** One `.insomnia.json` file in the Insomnia v4 export format: a workspace with a folder
+  per tag, one request per operation, and a base environment. Import it from Insomnia's project menu.
+- **Bruno.** A `.zip` of a Bruno collection folder: `bruno.json`, one `.bru` file per request, and a
+  `Default` environment. Unzip it and open the folder in Bruno.
+- **Credentials stay out.** Every credential is a variable reference: empty in Insomnia's
+  environment, and listed as a secret variable in Bruno's, with no value.
+- **Checked before download.** Apiome's own Insomnia or Bruno importer reads the export back, and an
+  export that does not import fails.
+- **From Postman too.** The **Postman** target's `flavor` option (`insomnia` or `bruno`) writes the
+  same files.

@@ -35,7 +35,7 @@ import json
 import re
 from http import HTTPStatus
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 from urllib.parse import urlsplit
 
 from pydantic import Field
@@ -56,6 +56,7 @@ from .client_collection_emit import (
 from .client_collection_fidelity import ExampleCollectionFidelityRulePack
 from .emitter import CapabilityProfile, EmitOptions, EmitOptionsError, EmitResult, EmittedFile, Emitter, LossKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .lossiness import LossinessReport
 
 __all__ = [
     "POSTMAN_AUTH_BLOCKS",
@@ -140,6 +141,27 @@ class PostmanFidelityRulePack(ExampleCollectionFidelityRulePack):
     target_label = "Postman collection"
     format_key = _FORMAT_KEY
     auth_blocks = POSTMAN_AUTH_BLOCKS
+    #: The Insomnia or Bruno pack the report is handed to when the ``flavor`` option asks for one.
+    _flavor_pack: Optional[CapabilityRulePack] = None
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for the flavor the options choose (invalid options fall back to Postman)."""
+        flavor = options.get("flavor") if isinstance(options, Mapping) else None
+        self._flavor_pack = None
+        if flavor == "insomnia":
+            from .insomnia_emitter import InsomniaFidelityRulePack
+
+            self._flavor_pack = InsomniaFidelityRulePack(self.profile, "Insomnia")
+        elif flavor == "bruno":
+            from .bruno_emitter import BrunoFidelityRulePack
+
+            self._flavor_pack = BrunoFidelityRulePack(self.profile, "Bruno")
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """The flavor's own report when one is chosen, else the Postman report."""
+        if self._flavor_pack is not None:
+            return self._flavor_pack.evaluate(api)
+        return super().evaluate(api)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """A model from another format loses its format and identity; servers become variables.
@@ -199,6 +221,13 @@ class PostmanEmitOptions(EmitOptions):
         description="Synthesized example bodies fill required properties only (`minimal`) or every "
         "declared property (`full`).",
     )
+    flavor: Literal["postman", "insomnia", "bruno"] = Field(
+        default="postman",
+        description="The collection format written (MFX-31.3): `postman` (a Collection v2.1 document), `insomnia` "
+        "(an Insomnia v4 export, as the `insomnia` target writes it) or `bruno` (a Bruno collection zip, as the "
+        "`bruno` target writes it). `variable_style` and `indent` apply to the Postman flavor (and `indent` to "
+        "Insomnia).",
+    )
 
 
 class PostmanEmitter(Emitter, register=True):
@@ -250,6 +279,8 @@ class PostmanEmitter(Emitter, register=True):
             EmitPreconditionError: When ``api`` has no HTTP operation.
         """
         options = _coerce_options(opts)
+        if options.flavor != "postman":
+            return _emit_flavor(api, options)
         plan = plan_collection(
             api,
             target_label="Postman",
@@ -285,6 +316,25 @@ class PostmanEmitter(Emitter, register=True):
                 if api.format != _FORMAT_KEY or loss.subject not in _NATIVE_NON_LOSSES
             ],
         )
+
+
+def _flavor_options(options: PostmanEmitOptions) -> Dict[str, Any]:
+    """The options a flavor's own emitter takes from the Postman options."""
+    shared: Dict[str, Any] = {"folder_strategy": options.folder_strategy, "example_depth": options.example_depth}
+    if options.flavor == "insomnia":
+        shared["indent"] = options.indent
+    return shared
+
+
+def _emit_flavor(api: CanonicalApi, options: PostmanEmitOptions) -> EmitResult:
+    """Write the Insomnia or Bruno flavor with that target's emitter (one implementation, MFX-31.3)."""
+    if options.flavor == "insomnia":
+        from .insomnia_emitter import InsomniaEmitOptions, InsomniaEmitter
+
+        return InsomniaEmitter().emit(api, opts=InsomniaEmitOptions(**_flavor_options(options)))
+    from .bruno_emitter import BrunoEmitOptions, BrunoEmitter
+
+    return BrunoEmitter().emit(api, opts=BrunoEmitOptions(**_flavor_options(options)))
 
 
 def _is_v2_0(api: CanonicalApi) -> bool:

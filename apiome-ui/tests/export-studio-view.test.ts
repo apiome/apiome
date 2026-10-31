@@ -89,7 +89,7 @@ describe('familyForParadigm', () => {
 
 describe('familyForTarget', () => {
   it('files every API-client collection target under its own heading (FMT-10.4)', () => {
-    for (const key of ['postman', 'hoppscotch', 'thunder-client', 'http-file']) {
+    for (const key of ['postman', 'insomnia', 'bruno', 'hoppscotch', 'thunder-client', 'http-file']) {
       expect({ key, family: familyForTarget('rest', key).key }).toEqual({ key, family: 'client' });
     }
     expect(familyForTarget('rest', 'postman').label).toBe('API clients & collections');

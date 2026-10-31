@@ -70,11 +70,14 @@ class ExampleCollectionFidelityRulePack(ClientCollectionFidelityRulePack):
 
     #: Canonical schemes this collection writes as an auth block.
     auth_blocks: frozenset = frozenset()
+    #: Whether the collection saves example responses (Postman does; Insomnia and Bruno exports
+    #: save the call only, so their declared responses are dropped — MFX-31.3).
+    carries_responses: bool = True
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Note the model and whether it came from this collection format, then run the drive loop."""
         self._api = api
-        self._native = api.format == self.format_key
+        self._native = self.is_native(api)
         return super().evaluate(api)
 
     # -- operations ---------------------------------------------------------
@@ -124,6 +127,16 @@ class ExampleCollectionFidelityRulePack(ClientCollectionFidelityRulePack):
 
     def _response_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
         responses = [m for m in operation.messages if m.role in (MessageRole.RESPONSE, MessageRole.ERROR)]
+        if not self.carries_responses:
+            if not responses:
+                return []
+            return [FidelityVerdict.drop(
+                message=(
+                    f"{self.target_label} saves the request, not the reply; the declared response(s) of "
+                    f"{operation.key!r} are not carried"
+                ),
+                target_mapping="responses → dropped",
+            )]
         saved = sorted({_status(m) or "200" for m in responses if _status(m) in _STATUS_CODES or not _status(m)})
         typed = sorted({_status(m) or "200" for m in responses if _has_body(m) and (_status(m) or "200") in saved})
         ranges = sorted({_status(m) for m in responses if _status(m) and _status(m) not in _STATUS_CODES})

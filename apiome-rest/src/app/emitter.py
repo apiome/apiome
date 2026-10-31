@@ -743,6 +743,9 @@ def load_builtin_emitters() -> None:
     from . import avro_emitter as _avro  # noqa: F401
     from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401
     from . import azure_apim_emitter as _azure_apim_emitter  # noqa: F401
+
+    # MFX-31.3 (#4291): Insomnia v4 and Bruno collections, on the same client-collection plan.
+    from . import bruno_emitter as _bruno_emitter  # noqa: F401
     from . import capnproto_emitter as _capnproto  # noqa: F401
     from . import cddl_emitter as _cddl_emitter  # noqa: F401
     from . import cloudevents_emitter as _cloudevents  # noqa: F401
@@ -764,6 +767,7 @@ def load_builtin_emitters() -> None:
     from . import hoppscotch_emitter as _hoppscotch_emitter  # noqa: F401
     from . import http_file_emitter as _http_file_emitter  # noqa: F401
     from . import idoc_emitter as _idoc  # noqa: F401
+    from . import insomnia_emitter as _insomnia_emitter  # noqa: F401
     from . import iso8583_emitter as _iso8583  # noqa: F401
     from . import iso20022_emitter as _iso20022  # noqa: F401
     from . import istio_emitter as _istio_emitter  # noqa: F401
