@@ -167,6 +167,28 @@ unchanged.
   keeps its own namespaces and `typedef`s.
 - **uuid.** A UUID is written as `string`, because only Thrift 0.21 and later compilers know the
   `uuid` type. An item imported from Thrift keeps `uuid`.
+- **Constraints.** Thrift has no validation, so a field's, parameter's or type's constraints are
+  written as a comment above it — `// constraints: >= 1; max length 40; pattern ^[A-Z]+$` — for the
+  people reading the file. Nothing enforces them.
+
+The fidelity report lists what Thrift cannot carry, each on the construct it affects:
+
+| What the source has | What the report says | Kind |
+| --- | --- | --- |
+| Constraints (pattern, bounds, lengths, format) | Written as a comment, not enforced | approximated |
+| A nullable field | Written `optional`: Thrift has no null, so it is absent instead | approximated |
+| An HTTP operation | Written as an RPC method | approximated |
+| Its HTTP method, path, status codes and parameter locations | Not written | dropped |
+| Event operations and channels (AsyncAPI) | Not written: Thrift has no events | dropped |
+| A type that extends another (TypeScript, Pydantic, SQL `INHERITS`) | One `struct` holding the inherited fields | approximated |
+| A field with no field id | A field id is assigned | synthesized |
+| A streaming call | Written as one call | dropped |
+| A map type | Written inline as `map<K, V>`; its declaration is not kept | dropped |
+| The title, version, description and servers | Not written: an IDL file has no place for them | dropped |
+| A renamed type, service or method, or a `<Method>Request` struct | Dropped under its old key and added under the new name, which is how it reads back | dropped / synthesized |
+
+Exporting an OpenAPI, gRPC, GraphQL, WSDL or Avro source to Thrift and reading it back shows no
+change the report did not name.
 
 ### OMG IDL (CORBA or DDS) from any source
 

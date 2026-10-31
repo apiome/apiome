@@ -1,0 +1,22 @@
+---
+slug: thrift-fidelity-report
+title: Thrift fidelity report names every loss
+description: Thrift exports keep constraints as comments and report each change.
+authors: [apiome]
+---
+
+**Apache Thrift** exports now say exactly what they change.
+[What the Thrift report lists](/ship/export-a-spec#thrift-from-any-source).
+
+{/* truncate */}
+
+- **Constraints are kept as comments.** A field's constraints (`>= 1`, `max length 40`, a pattern) are
+  written as a `// constraints: …` comment above it. The report says nothing checks them.
+- **Every change is in the report**, on the field, type or operation it concerns:
+  - nullable fields written `optional`;
+  - HTTP operations written as RPC methods, with their method, path and status codes dropped;
+  - event operations and channels dropped;
+  - inherited fields written into one `struct`;
+  - field ids, service and method names, and request structs that Apiome assigned.
+- **Round trip.** Exporting an OpenAPI, gRPC, GraphQL, WSDL or Avro item to Thrift and reading it back
+  now shows no change the report did not predict.
