@@ -869,6 +869,17 @@ pointer such as `/segments/2/elements/0`) and its rule, when:
 A `004010` guide's `ST` has two elements: `ST03` (implementation convention reference) exists from
 `004020`.
 
+**Where to find it.** In the **Export** dialog, the **X12 implementation guide** card is under **Data
+schema & graph** on the **Target** step, marked multi-file. Its badge is **types-only** for every source,
+an imported X12 item included: a guide invents the lengths, codes and segment IDs an interchange does
+not state, and leaves operations out. Pick the card and type the **Transaction Set** (`850`, `810`,
+`837` …) and **Version** (`005010`, `004010` …); leave them empty for the item's own, else `850` and
+`005010`. From the CLI, run `apiome export x12 <item> --out <folder>` (the three files are unpacked into
+the folder) and add `--option transaction_set=810` or `--option version=004010`. `apiome export x12`
+writes the guide; the X12 interchange itself is `apiome export edix12`. A types-only export exits
+non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers the guide too, as a `.zip`.
+
 ### WSDL and XSD from any source
 
 Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the

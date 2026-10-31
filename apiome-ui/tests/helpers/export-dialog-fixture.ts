@@ -10,6 +10,8 @@ import jsonSchemaTargetsForRest from '../fixtures/export-targets-json-schema-res
 import jsonSchemaTargetsForJsonSchema from '../fixtures/export-targets-json-schema-json-schema.json';
 import copybookTargetsForRest from '../fixtures/export-targets-copybook-rest.json';
 import copybookTargetsForCopybook from '../fixtures/export-targets-copybook-copybook.json';
+import x12GuideTargetsForRest from '../fixtures/export-targets-x12-guide-rest.json';
+import x12GuideTargetsForX12 from '../fixtures/export-targets-x12-guide-x12.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -235,6 +237,19 @@ export function jsonSchemaTargets(source: 'rest' | 'json-schema'): ExportTargets
  */
 export function copybookTargets(source: 'rest' | 'copybook'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? copybookTargetsForRest : copybookTargetsForCopybook);
+}
+
+/**
+ * The X12 implementation-guide target as the registry lists it (MFX-24.5, #4149), for a REST source and
+ * for an imported X12 850 — recorded from the live REST registry by
+ * `apiome-rest/tests/test_x12_guide_target_card.py`. A guide invents lengths, codes and segment IDs, so
+ * both are `types-only`.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `x12` (an imported X12 850 purchase order).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function x12GuideTargets(source: 'rest' | 'x12'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? x12GuideTargetsForRest : x12GuideTargetsForX12);
 }
 
 /**

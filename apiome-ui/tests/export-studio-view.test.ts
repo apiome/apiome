@@ -110,6 +110,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'cobolcopybook').label).toBe('Data schema & graph');
   });
 
+  it('files the X12 implementation guide under Data schema & graph by paradigm (MFX-24.5)', () => {
+    expect(familyForTarget('data_schema', 'x12-guide').label).toBe('Data schema & graph');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

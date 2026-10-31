@@ -1,0 +1,93 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "x12-guide",
+        "format": "x12-guide",
+        "label": "X12 implementation guide",
+        "description": "Export the types as an X12 transaction-set implementation guide (JSON, CSV and Markdown).",
+        "icon": "table",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`X12GuideEmitter`.",
+        "properties": {
+          "transaction_set": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The transaction set's 3-digit ID (`850`, `810`, `837` \u2026). Default: an imported X12 item's own, else `850`.",
+            "title": "Transaction Set"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The 6-digit X12 version (`005010`, `004010` \u2026). Default: an imported X12 item's own, else `005010`.",
+            "title": "Version"
+          },
+          "default_element_length": {
+            "default": 80,
+            "description": "Maximum length of a text element with no maxLength.",
+            "maximum": 9999,
+            "minimum": 1,
+            "title": "Default Element Length",
+            "type": "integer"
+          },
+          "max_code_length": {
+            "default": 3,
+            "description": "The longest code an enum value may be used as directly; a longer value (or one that is not upper-case letters and digits) gets a synthesized code.",
+            "maximum": 30,
+            "minimum": 1,
+            "title": "Max Code Length",
+            "type": "integer"
+          }
+        },
+        "title": "X12GuideEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "transaction_set": null,
+        "version": null,
+        "default_element_length": 80,
+        "max_code_length": 3
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 8,
+        "total": 25,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 1,
+        "synthesized": 22
+      }
+    }
+  ]
+}
