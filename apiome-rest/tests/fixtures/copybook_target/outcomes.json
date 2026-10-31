@@ -1,0 +1,103 @@
+{
+  "cards": {
+    "copybook": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "types-only"
+    }
+  },
+  "cases": {
+    "decimal-occurs-depending": {
+      "default": {
+        "files": [
+          "WAREHOUSE-SNAPSHOT.cpy"
+        ],
+        "loss_subjects": [],
+        "reimported_types": [
+          "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT"
+        ],
+        "tier": "lossless"
+      },
+      "display-free": {
+        "files": [
+          "WAREHOUSE-SNAPSHOT.cpy"
+        ],
+        "loss_subjects": [],
+        "reimported_types": [
+          "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT"
+        ],
+        "tier": "lossless"
+      }
+    },
+    "decimal-redefines": {
+      "default": {
+        "files": [
+          "PAYMENT-RECORD.cpy"
+        ],
+        "loss_subjects": [],
+        "reimported_types": [
+          "PAYMENT-RECORD.PAYMENT-RECORD"
+        ],
+        "tier": "lossless"
+      },
+      "display-free": {
+        "files": [
+          "PAYMENT-RECORD.cpy"
+        ],
+        "loss_subjects": [],
+        "reimported_types": [
+          "PAYMENT-RECORD.PAYMENT-RECORD"
+        ],
+        "tier": "lossless"
+      }
+    },
+    "nested-array-long-name": {
+      "default": {
+        "files": [
+          "Order.cpy"
+        ],
+        "loss_subjects": [
+          "counter-synthesized",
+          "format-as-comment",
+          "length-synthesized",
+          "name-mangled",
+          "occurs-synthesized",
+          "services-dropped"
+        ],
+        "reimported_types": [
+          "ORDER-X.ORDER-X"
+        ],
+        "tier": "types-only"
+      },
+      "display-free": {
+        "files": [
+          "Order.cpy"
+        ],
+        "loss_subjects": [
+          "counter-synthesized",
+          "float-as-decimal",
+          "format-as-comment",
+          "length-synthesized",
+          "name-mangled",
+          "occurs-synthesized",
+          "services-dropped"
+        ],
+        "reimported_types": [
+          "ORDER-X.ORDER-X"
+        ],
+        "tier": "types-only"
+      }
+    }
+  }
+}

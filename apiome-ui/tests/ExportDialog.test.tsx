@@ -20,6 +20,8 @@
  *     per-source tier, Bruno marked multi-file, and Postman's `flavor` offered as an option.
  * 10. The JSON Schema card (MFX-21.5): `types-only` for a REST source, `lossless` for a JSON Schema
  *     item, with its `draft`, `packaging` and `mode` options — from the recorded live registry.
+ * 11. The COBOL copybook card (MFX-23.5): `types-only` for a REST source, `lossless` for a copybook
+ *     item, with its layout options — from the recorded live registry.
  */
 
 import React from 'react';
@@ -52,6 +54,7 @@ import { ExportDialog } from '../src/app/components/ade/dashboard/export/ExportD
 import {
   EXPORT_DIALOG_COLLECTION_TARGETS as COLLECTION_TARGETS,
   EXPORT_DIALOG_TARGETS as TARGETS,
+  copybookTargets,
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
 } from './helpers/export-dialog-fixture';
@@ -988,5 +991,43 @@ describe('ExportDialog — JSON Schema target card (MFX-21.5)', () => {
     expect(choices('Packaging')).toEqual(['bundle', 'per-type']);
     expect(choices('Mode')).toEqual(['json-schema', 'jtd']);
     expect(within(screen.getByRole('radiogroup', { name: 'Draft' })).getByRole('radio', { name: '2020-12' })).toBeChecked();
+  });
+});
+
+
+describe('ExportDialog — COBOL copybook target card (MFX-23.5)', () => {
+  it('badges a REST source types-only — copybook is one of the lossiest targets', async () => {
+    await renderAtTargetStep(mockFetch(copybookTargets('rest')));
+
+    const card = screen.getByTestId('export-target-cobolcopybook');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('COBOL Copybook')).toBeInTheDocument();
+    expect(within(card).getByText('types-only')).toBeInTheDocument();
+    fireEvent.click(card);
+    // Most of the model is synthesized or approximated: the headline says how little is kept as is.
+    expect(screen.getByTestId('export-fidelity-headline')).toHaveTextContent(/\d+% preserved/);
+    expect(screen.getByTestId('export-fidelity-headline')).not.toHaveTextContent('100% preserved');
+  });
+
+  it('badges a copybook item lossless', async () => {
+    await renderAtTargetStep(mockFetch(copybookTargets('copybook')));
+
+    const card = screen.getByTestId('export-target-cobolcopybook');
+    expect(within(card).getByText('lossless')).toBeInTheDocument();
+  });
+
+  it('offers the numeric usage, fixed format and header comment as options', async () => {
+    await renderAtTargetStep(mockFetch(copybookTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-cobolcopybook'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const usage = screen.getByRole('radiogroup', { name: 'Numeric Usage' });
+    expect(within(usage).getAllByRole('radio').map((option) => option.textContent)).toEqual(['comp', 'display']);
+    expect(within(usage).getByRole('radio', { name: 'comp' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Fixed Format/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /Include Comments/ })).toBeChecked();
+    // The integer layout defaults (string length, occurs, decimal scale) have no generic form
+    // control, so they stay at their server defaults here and are set with the CLI's --option.
+    expect(screen.queryByText('Default Occurs')).toBeNull();
   });
 });

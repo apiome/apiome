@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.567.0] - 2026-10-31
+
+### Added
+- **COBOL copybook target card fixtures (MFX-23.5, #4143).** `tests/test_copybook_target_card.py` with fixtures under
+  `tests/fixtures/copybook_target/` (regenerate with `APIOME_REGEN_COPYBOOK_TARGET=1`):
+  - the `cobolcopybook` card tier per source kind (REST, RPC and JSON Schema `types-only`, a copybook item `lossless`);
+  - the copybooks written for the nested / array / long-name case (`source.openapi.yaml`) and two decimal cases
+    (copybook corpus items) under the default options and `display` / free format, each importing again;
+  - the browse `…/document` plain-text delivery;
+  - the CLI / UI registry fixtures kept equal to the live registry.
+- No API change. OpenAPI 1.431.0.
+
 ## [1.566.0] - 2026-10-31
 
 ### Fixed

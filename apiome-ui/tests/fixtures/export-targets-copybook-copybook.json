@@ -1,0 +1,99 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "cobolcopybook",
+        "format": "cobolcopybook",
+        "label": "COBOL Copybook",
+        "description": "Export as a COBOL copybook record layout (.cpy) from any source.",
+        "icon": "file-code",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": false,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`CobolCopybookEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit a header comment block in the generated copybook.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "fixed_format": {
+            "default": true,
+            "description": "Fixed-format layout (code in columns 8-72, long entries continued on the next line); `false` writes free format with no column limits.",
+            "title": "Fixed Format",
+            "type": "boolean"
+          },
+          "numeric_usage": {
+            "default": "comp",
+            "description": "`comp`: binary integers (`COMP`), packed decimals (`COMP-3`) and floats (`COMP-1`/`COMP-2`); `display`: zoned decimal numbers. Applies to a source that is not a copybook.",
+            "enum": [
+              "comp",
+              "display"
+            ],
+            "title": "Numeric Usage",
+            "type": "string"
+          },
+          "default_string_length": {
+            "default": 255,
+            "description": "Length of text with no maxLength (`PIC X(n)`).",
+            "maximum": 32767,
+            "minimum": 1,
+            "title": "Default String Length",
+            "type": "integer"
+          },
+          "default_occurs": {
+            "default": 10,
+            "description": "Maximum occurrences of a list with no maxItems (`OCCURS \u2026 TO n`).",
+            "maximum": 32767,
+            "minimum": 1,
+            "title": "Default Occurs",
+            "type": "integer"
+          },
+          "decimal_scale": {
+            "default": 2,
+            "description": "Digits after the decimal point of a decimal with no multipleOf (`S9(p)V9(s)`).",
+            "maximum": 17,
+            "minimum": 0,
+            "title": "Decimal Scale",
+            "type": "integer"
+          }
+        },
+        "title": "CobolCopybookEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "fixed_format": true,
+        "numeric_usage": "comp",
+        "default_string_length": 255,
+        "default_occurs": 10,
+        "decimal_scale": 2
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 1,
+        "preserved": 1,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

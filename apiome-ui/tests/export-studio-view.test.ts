@@ -106,6 +106,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'jtd').key).toBe('data');
   });
 
+  it('files the COBOL copybook target under Data schema & graph by paradigm (MFX-23.5)', () => {
+    expect(familyForTarget('data_schema', 'cobolcopybook').label).toBe('Data schema & graph');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

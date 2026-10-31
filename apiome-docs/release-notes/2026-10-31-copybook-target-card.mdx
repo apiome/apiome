@@ -1,0 +1,19 @@
+---
+slug: copybook-target-card
+title: COBOL copybook export in the dialog and CLI
+description: Export copybooks from the Export dialog, Browse and apiome export copybook.
+authors: [apiome]
+---
+
+The **COBOL Copybook** target is now on every export surface, with an honest fidelity badge.
+[Export a COBOL copybook](/ship/export-a-spec#cobol-copybook-from-any-source).
+
+{/* truncate */}
+
+- **An honest badge.** Copybook is one of the lossiest targets. The card reads **types-only** for
+  anything that is not a copybook (most of the fixed-width layout is invented: lengths, table sizes,
+  counters and names), and **lossless** for an item imported from a copybook.
+- **`apiome export copybook`.** The CLI exports the target as `copybook`, `cobol` or `cobolcopybook`.
+  The layout options (`numeric_usage`, `fixed_format`, `default_string_length`, `default_occurs`,
+  `decimal_scale`) are passed with `--option`, and `--json` prints the tier.
+- **Browse.** A public item's **Export** dialog offers the copybook too.
