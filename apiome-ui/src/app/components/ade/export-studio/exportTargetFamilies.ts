@@ -32,7 +32,7 @@
  * ### The one family that is not a paradigm
  *
  * *API clients & collections* (FMT-10.4, #5479) is chosen by **target key**, not paradigm: a
- * Postman, Hoppscotch or Thunder Client collection and an `.http` request file all describe REST
+ * Postman, Insomnia, Bruno, Hoppscotch or Thunder Client collection and an `.http` request file all describe REST
  * calls, so by paradigm they would sit among the specification formats under *REST & HTTP*. But a
  * reader exporting "to the client my team uses" is asking a different question from one exporting
  * a specification, and the answer is a set of saved requests rather than a contract — so those
@@ -109,6 +109,8 @@ const PARADIGM_FAMILY: Readonly<Record<string, string>> = {
  */
 const TARGET_FAMILY: Readonly<Record<string, string>> = {
   postman: 'client',
+  insomnia: 'client',
+  bruno: 'client',
   hoppscotch: 'client',
   'thunder-client': 'client',
   'http-file': 'client',

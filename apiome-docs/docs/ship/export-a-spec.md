@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**54<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**56<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -54,14 +54,15 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **54<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **56<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
 and an export request is refused with `422`.
 
 Formats that write HTTP routes or saved requests (Kong, Gateway API, Envoy, Istio, Traefik, Apigee,
-AWS API Gateway, Azure API Management, Hoppscotch, Thunder Client and the `.http` file) need at least
+AWS API Gateway, Azure API Management, Postman, Insomnia, Bruno, Hoppscotch, Thunder Client and the `.http`
+file) need at least
 one HTTP operation, and the data-contract formats (ODCS, Kafka Connect) need at least one record type.
 API Blueprint needs at least one HTTP operation or one type. For a source without one, the card is
 greyed out with that reason; for example, a GraphQL schema with no HTTP bindings cannot become a Kong
@@ -1226,6 +1227,7 @@ re-import shows what API Blueprint could not keep; the fidelity report names tho
 | AsyncAPI 3.1 | Events | Any source |
 | AWS API Gateway | REST | Any source |
 | Azure API Management | REST | Any source |
+| Bruno | REST | Any source |
 | Cap'n Proto | RPC | Any source |
 | CDDL | Data schema | Any source |
 | CloudEvents | Events | Any source |
@@ -1242,6 +1244,7 @@ re-import shows what API Blueprint could not keep; the fidelity report names tho
 | HL7 v2 | Data schema | A source imported as HL7 v2 |
 | Hoppscotch | REST | Any source |
 | HTTP Request File | REST | Any source |
+| Insomnia | REST | Any source |
 | ISO 20022 | Data schema | A source imported as ISO 20022 |
 | ISO 8583 | Data schema | A source imported as ISO 8583 |
 | Istio VirtualService | REST | Any source |

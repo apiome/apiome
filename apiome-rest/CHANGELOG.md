@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.562.0] - 2026-10-30
+
+### Added
+- **Insomnia and Bruno export (MFX-31.3, #4291).** Two client-collection targets on the request tree the Postman,
+  Hoppscotch and Thunder Client emitters share (`app.client_collection_emit.plan_collection`):
+  - `insomnia` (`app.insomnia_emitter`): one `<name>.insomnia.json` Insomnia v4 export — `_type: export`,
+    `__export_format: 4`, a `workspace`, one `request_group` per folder level, one `request` per operation (and per
+    body media type) and a base `environment` declaring `baseUrl` and every credential empty. Values are
+    `{{ _.variable }}` references; `bearer` / `basic` / `digest` / `apikey` / `oauth2` authentication blocks on each
+    request (v4 has no collection auth). Options `indent`, `folder_strategy` (default `tag`), `example_depth`.
+  - `bruno` (`app.bruno_emitter`): a multi-file export delivered as a zip (MFX-4.2) — `bruno.json`, one `.bru` per
+    request in a folder per tag (`folder.bru` holds the display name and order), `collection.bru` for auth every
+    request shares (requests `inherit` it), and `environments/Default.bru` with `baseUrl` under `vars` and every
+    credential under `vars:secret`. Keys that need it are quoted, optional parameters are `~`-disabled, multi-line
+    values use `'''`; a folder named `environments` at the root and a request named `collection` / `folder` are
+    renamed. A request on a method Bruno has no block for is a `method-not-supported` loss. Options
+    `folder_strategy`, `example_depth`.
+  - The Postman target's new option `flavor` (`postman` | `insomnia` | `bruno`) writes the same files through those
+    emitters, and `PostmanFidelityRulePack.apply_options` hands the report to their pack.
+  - Fidelity: `InsomniaFidelityRulePack` / `BrunoFidelityRulePack` (example-collection rules, MFX-31.2). New pack
+    switches: `ExampleCollectionFidelityRulePack.carries_responses` (`False` for both: declared responses are a
+    `DROP`) and `ClientCollectionFidelityRulePack.native_is_lossless` (`False` for both: a model imported from the same
+    client is reported as rewritten — v5 layout, sub-environments, request variables, scripts and tests are not
+    written back). The defaults keep Postman, Hoppscotch and Thunder Client unchanged.
+  - Validation: the `insomnia` and `bruno` export gates use the MFX-31.4 collection check
+    (`app.postman_roundtrip.check_emitted_collection`), so the export is read back by its import adapter
+    (`insomnia.reimport` / `bruno.reimport`). `validate_insomnia_export` / `validate_bruno_export` re-parse an export.
+  - The planner reads Insomnia and Bruno auth records (`insomnia_auth` / `bruno_auth`, `key_name` / `key_location`),
+    so an API key keeps its parameter name and location.
+  - Format coverage: both formats declare a write version (`format_version_coverage`); 56 export targets.
+- Goldens: round-trip matrix columns `insomnia` and `bruno` (9 cells pass each, including the native and
+  cross-client rows; 198 new `KNOWN_ROUNDTRIP_XFAILS` entries — sources with no HTTP operation and service renames,
+  as for Postman). OpenAPI 1.426.0.
+
 ## [1.561.0] - 2026-10-30
 
 ### Changed

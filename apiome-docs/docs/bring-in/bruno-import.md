@@ -95,9 +95,11 @@ Blocks Bruno adds in future versions are skipped without failing the import.
 
 ## Exporting back to Bruno
 
-Apiome does not export Bruno collections yet. To get a catalog item into an API client, export it as a
-[Hoppscotch or Thunder Client collection](../ship/export-to-an-api-client.md), or as OpenAPI, which
-Bruno imports.
+Any HTTP catalog item or version exports as a Bruno collection (a `.zip` of the collection folder):
+pick the **Bruno** card in the export dialog, or run `apiome export bruno`. A collection imported
+from Bruno exports back to the same requests, folders, auth schemes and base URL; scripts, tests and
+environments other than the base one are not written back. See [Export to an API
+client](../ship/export-to-an-api-client.md).
 
 ## When an import is refused
 

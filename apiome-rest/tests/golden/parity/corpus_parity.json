@@ -619,9 +619,16 @@
       "golden_directories": [
         "bruno"
       ],
-      "emit_key": null,
+      "emit_key": "bruno",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "bruno",
+          "emit_key": "bruno",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",
@@ -2185,9 +2192,16 @@
       "golden_directories": [
         "insomnia"
       ],
-      "emit_key": null,
+      "emit_key": "insomnia",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "insomnia",
+          "emit_key": "insomnia",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",

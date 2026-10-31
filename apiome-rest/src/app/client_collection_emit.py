@@ -116,10 +116,13 @@ HEADER_VARIABLES: Dict[str, str] = {
     "cookie": "cookie",
 }
 
-#: Operation extras holding the auth records a client import resolved (scheme, ``in``, ``name``,
-#: OAuth grant type, token URL, scopes) — read back so an apiKey keeps its parameter name and an
-#: OAuth flow its token endpoint.
-_AUTH_RECORD_KEYS: Tuple[str, ...] = ("hoppscotch_auth", "thunder_client_auth")
+#: Operation extras holding the auth records a client import resolved (scheme, ``in`` / ``name`` —
+#: ``key_location`` / ``key_name`` from Insomnia and Bruno —, OAuth grant type, token URL, scopes) —
+#: read back so an apiKey keeps its parameter name and an OAuth flow its token endpoint.
+_AUTH_RECORD_KEYS: Tuple[str, ...] = ("hoppscotch_auth", "thunder_client_auth", "insomnia_auth", "bruno_auth")
+
+#: An API key's ``key_location`` (Insomnia ``addTo``, Bruno ``placement``) that means the query string.
+_QUERY_KEY_LOCATIONS = frozenset({"query", "queryparams"})
 
 #: Body media types written as fields rather than text.
 FORM_MEDIA_TYPES: Tuple[str, ...] = ("application/x-www-form-urlencoded", "multipart/form-data")
@@ -378,11 +381,31 @@ class ClientCollectionFidelityRulePack(CapabilityRulePack):
 
     target_label = "API client collection"
     format_key = ""
+    #: Whether a model imported from this client is written back exactly as it was read. A client
+    #: whose import keeps facts the export cannot write again (Insomnia's v5 layout and
+    #: sub-environments, Bruno's file layout and request variables — MFX-31.3) sets this ``False``,
+    #: and its own models are reported like any other source's.
+    native_is_lossless: bool = True
+
+    def is_native(self, api: CanonicalApi) -> bool:
+        """Whether ``api`` came from this client and is written back exactly as it was read."""
+        return api.format == self.format_key and self.native_is_lossless
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """Declare the root facts a collection has nowhere to put (none for a native model)."""
-        if api.format == self.format_key:
+        if self.is_native(api):
             return []
+        if api.format == self.format_key:
+            return [
+                FidelityVerdict.approx(
+                    message=(
+                        f"{self.target_label} is written anew from the model: the source's file layout, "
+                        "environments other than the base one, request-level variables, scripts and tests "
+                        "are not carried"
+                    ),
+                    target_mapping="collection → rewritten collection",
+                )
+            ]
         return [
             FidelityVerdict.approx(
                 message=(
@@ -1037,8 +1060,10 @@ class _Planner:
             )
             return ClientAuth(scheme="bearer")
         if scheme == "apiKey":
-            location = "query" if record.get("in") == "query" else "header"
-            name = record.get("name") if isinstance(record.get("name"), str) else None
+            spelled = str(record.get("in") or record.get("key_location") or "").lower()
+            location = "query" if spelled in _QUERY_KEY_LOCATIONS else "header"
+            name = record.get("name") or record.get("key_name")
+            name = name if isinstance(name, str) else None
             if not name:
                 for parameter in operation.parameters:
                     if _API_KEY_NAME_RE.search(parameter.name) and parameter.location in (

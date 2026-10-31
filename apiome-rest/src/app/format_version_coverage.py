@@ -1150,8 +1150,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "branching on the version; unknown blocks are skipped.",
             )
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="Bruno collection (`bruno.json` `version` 1) with Bru-lang `.bru` files",
+                format_key="bruno",
+                support=VersionSupport.FULL,
+                note="MFX-31.3: delivered as a zip — `bruno.json`, one `.bru` per request in a folder per tag "
+                "(`folder.bru` names it), `collection.bru` for shared auth, and `environments/Default.bru` whose "
+                "`vars:secret` lists every credential; values are `{{variable}}` references.",
+            )
+        ],
+        default_write="Bruno collection (`bruno.json` `version` 1) with Bru-lang `.bru` files",
     ),
     "insomnia": VersionCoverage(
         reads=[
@@ -1171,8 +1180,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "is refused with `FORMAT_VERSION_UNSUPPORTED`.",
             ),
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="Insomnia export format 4 (JSON)",
+                format_key="insomnia",
+                support=VersionSupport.FULL,
+                note="MFX-31.3: a workspace, one `request_group` per folder, one `request` per operation and a "
+                "base environment declaring `baseUrl` and every credential empty; values are `{{ _.variable }}` "
+                "references. Insomnia imports v4 into its current format.",
+            )
+        ],
+        default_write="Insomnia export format 4 (JSON)",
     ),
     "hoppscotch": VersionCoverage(
         reads=[
