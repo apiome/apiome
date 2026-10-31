@@ -13,6 +13,8 @@ file or unpacking a zip bundle to ``--out``.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import click
 import typer
 from typer.core import TyperGroup
@@ -100,8 +102,44 @@ _EXPORT_TIMEOUT_HELP = (
 )
 
 
+#: Collection formats the ``postman`` target writes, chosen with ``--flavor`` (MFX-31.3 / 31.5).
+POSTMAN_FLAVORS = ("postman", "insomnia", "bruno")
+
+_FLAVOR_HELP = (
+    "Collection format to write: postman (Collection v2.1, default), insomnia (an Insomnia v4 "
+    "export) or bruno (a Bruno collection, a multi-file bundle: --out a directory unpacks it, a "
+    ".zip path keeps the archive). Same as --option flavor=…; the insomnia and bruno targets write "
+    "the same files."
+)
+
+
+def with_flavor(option_values: Sequence[str], flavor: str | None) -> tuple[str, ...]:
+    """Add ``--flavor`` to the ``--option`` values as ``flavor=…``.
+
+    Args:
+        option_values: The repeatable ``--option key=value`` flags as given.
+        flavor: The ``--flavor`` value, or ``None`` when the flag was not given.
+
+    Returns:
+        The option values to send, with ``flavor=<flavor>`` appended when the flag was given.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` when ``--option flavor=…`` is given as well.
+    """
+    if flavor is None:
+        return tuple(option_values)
+    if "flavor" in parse_export_options(option_values):
+        typer.echo("Give the collection format once: --flavor or --option flavor=…, not both.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    return (*option_values, f"flavor={flavor}")
+
+
 def _build_generic_export_command(target_format: str) -> click.Command:
-    """Build a Click command that exports ``target_format`` via the async job seam (MFX-8.1)."""
+    """Build a Click command that exports ``target_format`` via the async job seam (MFX-8.1).
+
+    The ``postman`` command also takes ``--flavor`` (:data:`POSTMAN_FLAVORS`), a shorthand for its
+    ``flavor`` emit option (MFX-31.5).
+    """
 
     @click.command(
         name=target_format,
@@ -196,8 +234,10 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         targets_raw: str | None,
         items_raw: str | None,
         overlay_paths: tuple[str, ...],
+        flavor: str | None = None,
     ) -> None:
         ctx = click.get_current_context()
+        option_values = with_flavor(option_values, flavor)
         if (artifact is None) == (items_raw is None):
             typer.echo("Name an ARTIFACT or --items (not both).", err=True)
             raise typer.Exit(EXIT_USAGE)
@@ -238,6 +278,14 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             overlay_paths=overlay_paths,
         )
 
+    if target_format == "postman":
+        _generic = click.option(
+            "--flavor",
+            "flavor",
+            type=click.Choice(POSTMAN_FLAVORS),
+            default=None,
+            help=_FLAVOR_HELP,
+        )(_generic)
     return _generic
 
 

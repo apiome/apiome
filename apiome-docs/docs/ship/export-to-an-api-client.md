@@ -44,21 +44,40 @@ and again on the **Env** tab.
 
 1. On the project's **Versions** page, **open a version's Actions menu** and **choose “Export to
    another format…”**.
-2. Pick the **Postman**, **Insomnia**, **Bruno**, **Hoppscotch** or **Thunder Client** card.
+2. Pick the **Postman**, **Insomnia**, **Bruno**, **Hoppscotch** or **Thunder Client** card. Each card
+   shows how faithfully this version survives the export (its fidelity badge), and **Bruno**,
+   **Hoppscotch** and **Thunder Client** say **multi-file**: they download as a `.zip`. On the
+   **Postman** card, **Flavor** writes the same collection as an Insomnia export or a Bruno collection.
+
+<Screenshot id="export-dialog-client-targets" alt="The Export dialog's target step: the Postman, Insomnia and Bruno cards with their lossy badges, and the Postman options with Folder Strategy, Example Depth and Flavor" />
+
 3. Read its fidelity: a client collection is **lossy**, because it saves calls, not a contract (see
    [What a collection cannot carry](#what-a-collection-cannot-carry)).
 4. **Click “Export”** (or **“Export anyway”** when the fidelity check warns) and download the
    bundle.
 
-From the CLI, write the files into a folder. A lossy export exits `1` unless you pass `--force`:
+From the CLI, write the files into a folder. A lossy export exits `1` unless you pass `--force`.
+A multi-file export (Bruno, Hoppscotch, Thunder Client) is unpacked into the `--out` folder; give
+`--out` a `.zip` path to keep the archive instead:
 
 ```bash
 apiome export postman petstore-sample --version 1.0.0 --out ./petstore-postman/ --force
 apiome export insomnia petstore-sample --version 1.0.0 --out ./petstore-insomnia/ --force
 apiome export bruno petstore-sample --version 1.0.0 --out ./petstore-bruno/ --force
+apiome export bruno petstore-sample --version 1.0.0 --out ./petstore-bruno.zip --force
 apiome export hoppscotch petstore-sample --version 1.0.0 --out ./petstore-hoppscotch/ --force
 apiome export thunder-client petstore-sample --version 1.0.0 --out ./petstore-thunder/ --force
 ```
+
+`apiome export postman` also takes `--flavor insomnia` or `--flavor bruno`, the same as
+`--option flavor=…`: it writes what the `insomnia` and `bruno` targets write.
+
+```bash
+apiome export postman petstore-sample --version 1.0.0 --flavor bruno --out ./petstore-bruno/ --force
+```
+
+On a published version's public page, **Export** offers the same cards; a multi-file target
+downloads as a `.zip` of every file.
 
 With the API, use the target key (`postman`, `insomnia`, `bruno`, `hoppscotch` or `thunder-client`) with
 `POST /v1/export/{tenant}/preview` and the export job endpoints. See

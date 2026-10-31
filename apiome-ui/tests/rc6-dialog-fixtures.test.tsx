@@ -52,7 +52,7 @@ import ConfirmDialog from '../src/app/components/dialogs/ConfirmDialog';
 import { unpublishVersionConfirm } from '../src/app/components/ade/versions/versionsModel';
 import type { ImportSourceDescriptor } from '../src/app/components/ade/dashboard/importSourceCatalog';
 
-import { mockExportDialogFetch } from './helpers/export-dialog-fixture';
+import { EXPORT_DIALOG_COLLECTION_TARGETS, mockExportDialogFetch } from './helpers/export-dialog-fixture';
 
 const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-rc6-dialogs');
 const DUMP = process.env.RC6_DIALOGS_FIXTURE_DUMP === '1';
@@ -231,6 +231,19 @@ describe('the keyboard path into Import to catalog', () => {
 });
 
 describe('the version Export dialog', () => {
+  it('draws the API-client collection cards with the Postman flavor (MFX-31.5)', async () => {
+    global.fetch = mockExportDialogFetch(EXPORT_DIALOG_COLLECTION_TARGETS) as unknown as typeof fetch;
+    render(<ExportDialog open onClose={() => {}} artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);
+
+    const chooseTarget = await screen.findByTestId('export-dialog-choose-target');
+    await waitFor(() => expect(chooseTarget).toBeEnabled());
+    fireEvent.click(chooseTarget);
+    await waitFor(() => expect(screen.getByTestId('export-target-postman')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('export-target-postman'));
+    await waitFor(() => expect(screen.getByRole('radiogroup', { name: 'Flavor' })).toBeInTheDocument());
+    await judgeAndWrite('export-target-clients', openDialog());
+  });
+
   it('draws the target, fidelity and emitted steps', async () => {
     global.fetch = mockExportDialogFetch() as unknown as typeof fetch;
     render(<ExportDialog open onClose={() => {}} artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);

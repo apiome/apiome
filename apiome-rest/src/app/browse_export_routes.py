@@ -263,11 +263,17 @@ async def preview_public_export_fidelity(
         "Emit the published public version to one ``target`` through the Emitter SPI and "
         "return the document itself — JSON by default, YAML when ``Accept: application/yaml`` "
         "is sent — as a download. The anonymous counterpart of "
-        "``POST /v1/export/{tenant_slug}/document``. Strictly read-only: no field-identity "
+        "``POST /v1/export/{tenant_slug}/document``. A target that writes more than one file "
+        "(Bruno, Hoppscotch, Thunder Client) returns every file as an ``application/zip`` "
+        "bundle with a ``manifest.json``. Strictly read-only: no field-identity "
         "state is persisted for anonymous exports."
     ),
     response_class=Response,
     responses={
+        200: {
+            "description": "The emitted document, or the zip bundle of a multi-file target.",
+            "content": {"application/json": {}, "application/x-yaml": {}, "application/zip": {}},
+        },
         **_NOT_FOUND_RESPONSES,
         413: {"description": "Emitted document exceeds the public download size cap (MFX-7.3)."},
         429: {"description": "Public export rate limit exceeded (MFX-7.3)."},
@@ -301,8 +307,10 @@ async def emit_public_export_document(
     """
     source = _load_public_source(tenant_slug, project_slug, version_slug)
     # persistence=None keeps the anonymous path read-only (no field-number writes).
+    # A multi-file target (Bruno, Hoppscotch, Thunder Client) downloads as its zip bundle: the
+    # public dialog has no export job to fetch one from (MFX-31.5).
     response = render_emitted_document(
-        source.api, request.target, request.options, accept, persistence=None
+        source.api, request.target, request.options, accept, persistence=None, bundle_multi_file=True
     )
     enforce_public_export_document_size(response)
     return response

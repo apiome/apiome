@@ -110,6 +110,104 @@ export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
   ],
 };
 
+/** One API-client collection target, as the registry lists it for a REST source (MFX-31.5). */
+function collectionTarget(
+  key: string,
+  label: string,
+  description: string,
+  multiFile: boolean,
+  options: Record<string, unknown>,
+  preserved: number,
+): ExportTargetsResponse['targets'][number] {
+  return {
+    descriptor: {
+      key,
+      format: key,
+      label,
+      description,
+      icon: key === 'postman' ? 'file-json' : 'send',
+      paradigm: 'rest',
+      multi_file: multiFile,
+      needs_toolchain: false,
+      available: true,
+      unavailable_reason: null,
+    },
+    capability_profile: { operations: true, events: false, unions: false },
+    options_schema: { type: 'object', properties: options },
+    default_options: Object.fromEntries(
+      Object.entries(options).map(([name, schema]) => [name, (schema as { default?: unknown }).default]),
+    ),
+    fidelity: {
+      tier: 'lossy',
+      preserved_percent: Math.round((preserved / 58) * 100),
+      total: 58,
+      preserved,
+      dropped: 6,
+      approximated: 58 - preserved - 9,
+      synthesized: 3,
+    },
+  };
+}
+
+const FOLDER_STRATEGY = {
+  type: 'string',
+  enum: ['tag', 'auto', 'service', 'flat'],
+  default: 'tag',
+  title: 'Folder Strategy',
+  description: 'How requests are filed into folders.',
+};
+const EXAMPLE_DEPTH = {
+  type: 'string',
+  enum: ['minimal', 'full'],
+  default: 'minimal',
+  title: 'Example Depth',
+  description: 'Example bodies fill required properties only, or every property.',
+};
+
+/**
+ * The API-client collection targets of a REST version (MFX-31.3 / MFX-31.5): Postman with its
+ * `flavor` option, Insomnia (one file) and Bruno (a multi-file zip) — each lossy, with its tier.
+ */
+export const EXPORT_DIALOG_COLLECTION_TARGETS: ExportTargetsResponse = {
+  ...EXPORT_DIALOG_TARGETS,
+  targets: [
+    collectionTarget(
+      'postman',
+      'Postman',
+      'Export as a Postman Collection v2.1 with synthesized example bodies and responses.',
+      false,
+      {
+        folder_strategy: { ...FOLDER_STRATEGY, enum: ['auto', 'tag', 'service', 'flat'], default: 'auto' },
+        example_depth: EXAMPLE_DEPTH,
+        flavor: {
+          type: 'string',
+          enum: ['postman', 'insomnia', 'bruno'],
+          default: 'postman',
+          title: 'Flavor',
+          description: 'The collection format written: Postman, an Insomnia v4 export or a Bruno collection.',
+        },
+      },
+      41,
+    ),
+    collectionTarget(
+      'insomnia',
+      'Insomnia',
+      'Export as an Insomnia v4 export: a workspace with one request per operation.',
+      false,
+      { folder_strategy: FOLDER_STRATEGY, example_depth: EXAMPLE_DEPTH },
+      38,
+    ),
+    collectionTarget(
+      'bruno',
+      'Bruno',
+      'Export as a Bruno collection, delivered as a zip: bruno.json and one .bru file per operation.',
+      true,
+      { folder_strategy: FOLDER_STRATEGY, example_depth: EXAMPLE_DEPTH },
+      38,
+    ),
+  ],
+};
+
 /** The MFX-6.2 dry-run previews (advisory + per-construct report) per selectable target. */
 export const EXPORT_DIALOG_PREVIEWS: Record<string, ExportFidelityEnvelope> = {
   proto: {
@@ -186,13 +284,19 @@ export const EXPORT_DIALOG_PREVIEWS: Record<string, ExportFidelityEnvelope> = {
   },
 };
 
-export function mockExportDialogFetch(): jest.Mock {
+/**
+ * A `fetch` mock serving the Export dialog's routes.
+ *
+ * @param targets The registry the targets route lists (the three-target registry by default).
+ * @returns The mock.
+ */
+export function mockExportDialogFetch(targets: ExportTargetsResponse = EXPORT_DIALOG_TARGETS): jest.Mock {
   return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ success: true, ...EXPORT_DIALOG_TARGETS }),
+        json: () => Promise.resolve({ success: true, ...targets }),
       });
     }
     if (url.includes('/api/export/preview') && init?.method === 'POST') {

@@ -119,6 +119,29 @@ def _out_is_directory(out: str) -> bool:
     return path.suffix == ""
 
 
+def bundle_member_path(root: Path, member: str) -> Path:
+    """Where one bundle member is unpacked: inside ``root``, never outside it.
+
+    The server keeps bundle paths relative (X6), but an archive is untrusted input, so a member
+    that is absolute or climbs out with ``..`` ("zip slip") is refused here as well.
+
+    Args:
+        root: The resolved ``--out`` directory.
+        member: The archive member name.
+
+    Returns:
+        The member's destination path.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` for a member that would land outside ``root``.
+    """
+    target = (root / member).resolve()
+    if target != root and root not in target.parents:
+        typer.echo(f"Refusing to unpack {member!r}: it would be written outside {root}.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    return target
+
+
 def write_export_artifact(
     body: bytes,
     *,
@@ -143,13 +166,14 @@ def write_export_artifact(
             )
             raise typer.Exit(EXIT_USAGE)
         out_path.mkdir(parents=True, exist_ok=True)
+        root = out_path.resolve()
         total = 0
         with zipfile.ZipFile(BytesIO(body)) as archive:
             for member in archive.namelist():
+                target = bundle_member_path(root, member)
                 if member.endswith("/"):
-                    (out_path / member).mkdir(parents=True, exist_ok=True)
+                    target.mkdir(parents=True, exist_ok=True)
                     continue
-                target = out_path / member
                 target.parent.mkdir(parents=True, exist_ok=True)
                 data = archive.read(member)
                 target.write_bytes(data)

@@ -1,0 +1,21 @@
+---
+slug: api-client-export-cards
+title: Postman, Insomnia and Bruno export cards and CLI
+description: Collection cards with fidelity badges, a --flavor flag, and complete public downloads.
+authors: [apiome]
+---
+
+The **Export** dialog, a public version page and the CLI now offer every API-client collection
+format. [Export to an API client](/ship/export-to-an-api-client).
+
+{/* truncate */}
+
+- **Cards.** **Postman**, **Insomnia** and **Bruno** each show the fidelity badge for the version you
+  are exporting. **Bruno** says **multi-file**: it downloads as a `.zip`.
+- **One Postman card, three formats.** The Postman card's **Flavor** option writes the same
+  collection as an Insomnia export or a Bruno collection.
+- **CLI.** `apiome export postman --flavor insomnia` or `--flavor bruno`. A Bruno collection is
+  unpacked into the `--out` folder (or kept as a `.zip` when `--out` names one), and nothing in an
+  archive is ever written outside that folder.
+- **Public downloads are complete.** On a public version page, a multi-file export (Bruno,
+  Hoppscotch, Thunder Client) now downloads every file as a `.zip`, not just the first one.

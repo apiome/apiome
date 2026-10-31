@@ -1,0 +1,138 @@
+{
+  "data_schema": {
+    "bruno": {
+      "available": false,
+      "refused": "Bruno export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "insomnia": {
+      "available": false,
+      "refused": "Insomnia export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "postman": {
+      "available": false,
+      "refused": "Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    }
+  },
+  "event": {
+    "bruno": {
+      "available": false,
+      "refused": "Bruno export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "insomnia": {
+      "available": false,
+      "refused": "Insomnia export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "postman": {
+      "available": false,
+      "refused": "Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    }
+  },
+  "graph": {
+    "bruno": {
+      "available": false,
+      "refused": "Bruno export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "insomnia": {
+      "available": false,
+      "refused": "Insomnia export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "postman": {
+      "available": false,
+      "refused": "Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    }
+  },
+  "rest": {
+    "bruno": {
+      "available": true,
+      "files": [
+        "bruno.json",
+        "createPet -application-x-www-form-urlencoded.bru",
+        "createPet.bru",
+        "deletePet.bru",
+        "environments/Default.bru",
+        "getPetById.bru",
+        "listPets.bru",
+        "updatePet.bru"
+      ],
+      "loss_subjects": [
+        "api-description",
+        "optional-parameters-disabled",
+        "responses-not-carried",
+        "types-not-declared"
+      ],
+      "reimported_operations": [
+        "DELETE /pets/{petId}",
+        "GET /pets",
+        "GET /pets/{petId}",
+        "POST /pets",
+        "PUT /pets/{petId}"
+      ],
+      "tier": "lossy"
+    },
+    "insomnia": {
+      "available": true,
+      "files": [
+        "Sample_Pet_Store_API_OpenAPI_3_0.insomnia.json"
+      ],
+      "loss_subjects": [
+        "api-description",
+        "optional-parameters-disabled",
+        "responses-not-carried",
+        "types-not-declared"
+      ],
+      "reimported_operations": [
+        "DELETE /pets/{petId}",
+        "GET /pets",
+        "GET /pets/{petId}",
+        "POST /pets",
+        "PUT /pets/{petId}"
+      ],
+      "tier": "lossy"
+    },
+    "postman": {
+      "available": true,
+      "files": [
+        "Sample_Pet_Store_API_OpenAPI_3_0.postman_collection.json"
+      ],
+      "loss_subjects": [
+        "example-response-synthesized",
+        "optional-parameters-disabled",
+        "types-not-declared"
+      ],
+      "reimported_operations": [
+        "DELETE /pets/{petId}",
+        "GET /pets",
+        "GET /pets/{petId}",
+        "POST /pets",
+        "PUT /pets/{petId}"
+      ],
+      "tier": "lossy"
+    }
+  },
+  "rpc": {
+    "bruno": {
+      "available": false,
+      "refused": "Bruno export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "insomnia": {
+      "available": false,
+      "refused": "Insomnia export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    },
+    "postman": {
+      "available": false,
+      "refused": "Postman export requires at least one HTTP operation: a collection is a set of saved requests, and a model with no HTTP binding has no request to save.",
+      "tier": "lossy"
+    }
+  }
+}
