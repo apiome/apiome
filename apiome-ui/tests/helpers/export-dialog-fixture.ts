@@ -8,6 +8,8 @@ import type { ExportTargetsResponse } from '../../src/app/components/ade/dashboa
 import type { ExportFidelityEnvelope } from '../../src/app/components/ade/dashboard/export/exportFidelityPreview';
 import jsonSchemaTargetsForRest from '../fixtures/export-targets-json-schema-rest.json';
 import jsonSchemaTargetsForJsonSchema from '../fixtures/export-targets-json-schema-json-schema.json';
+import copybookTargetsForRest from '../fixtures/export-targets-copybook-rest.json';
+import copybookTargetsForCopybook from '../fixtures/export-targets-copybook-copybook.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -220,7 +222,28 @@ export const EXPORT_DIALOG_COLLECTION_TARGETS: ExportTargetsResponse = {
  * @returns The targets response the dialog's targets route serves.
  */
 export function jsonSchemaTargets(source: 'rest' | 'json-schema'): ExportTargetsResponse {
-  const recorded = source === 'rest' ? jsonSchemaTargetsForRest : jsonSchemaTargetsForJsonSchema;
+  return recordedTargets(source === 'rest' ? jsonSchemaTargetsForRest : jsonSchemaTargetsForJsonSchema);
+}
+
+/**
+ * The COBOL copybook target as the registry lists it (MFX-23.5, #4143), for a REST source and for a
+ * copybook item — recorded from the live REST registry by `apiome-rest/tests/test_copybook_target_card.py`.
+ *
+ * @param source `rest` (an OpenAPI order API: operations dropped, lengths and names synthesized, so
+ *   `types-only`) or `copybook` (a copybook item exported again: `lossless`).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function copybookTargets(source: 'rest' | 'copybook'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? copybookTargetsForRest : copybookTargetsForCopybook);
+}
+
+/**
+ * The dialog's registry with its targets replaced by ones recorded from the live REST registry.
+ *
+ * @param recorded A recorded `GET …/export/targets` body (its `targets` list is what is used).
+ * @returns The targets response the dialog's targets route serves.
+ */
+function recordedTargets(recorded: { targets: unknown[] }): ExportTargetsResponse {
   return {
     ...EXPORT_DIALOG_TARGETS,
     targets: recorded.targets as unknown as ExportTargetsResponse['targets'],

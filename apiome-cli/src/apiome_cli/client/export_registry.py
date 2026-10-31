@@ -171,11 +171,16 @@ def fetch_projection_evidence(
 
 
 # User-facing target aliases that differ from the emitter registry key. ``jsonschema`` is the
-# hyphen-free spelling of the ``json-schema`` target (MFX-21.5): ``apiome export jsonschema``.
+# hyphen-free spelling of the ``json-schema`` target (MFX-21.5): ``apiome export jsonschema``;
+# ``copybook`` names the ``cobolcopybook`` target (MFX-23.5): ``apiome export copybook``.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",
     "jsonschema": "json-schema",
     "json_schema": "json-schema",
+    # ``apiome export copybook`` (MFX-23.5): the COBOL copybook target is keyed ``cobolcopybook``.
+    "copybook": "cobolcopybook",
+    "cobol": "cobolcopybook",
+    "cobol-copybook": "cobolcopybook",
 }
 
 

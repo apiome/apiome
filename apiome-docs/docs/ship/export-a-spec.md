@@ -752,6 +752,18 @@ cb2xml reads fixed format only, so a free-format export is laid out in columns 8
 an error in it then has no line number. Without cb2xml, the export is read back by Apiome's copybook
 reader.
 
+**Where to find it.** In the **Export** dialog, the **COBOL Copybook** card is under **Data schema &
+graph** on the **Target** step. Its badge is computed for the item. Copybook is one of the lossiest
+targets: anything that is not a copybook (a REST API, a gRPC service, a JSON Schema) is **types-only**,
+with most of its layout synthesized, while an item imported from a copybook is **lossless**. Pick the
+card to set **Numeric Usage**, **Fixed Format** and **Include Comments**; the three defaults
+(**default_string_length**, **default_occurs**, **decimal_scale**) are set from the CLI. Run
+`apiome export copybook <item> --out <Name>.cpy` (`cobol` and `cobolcopybook` work too) and add
+`--option numeric_usage=display`, `--option fixed_format=false` or `--option default_occurs=25`.
+A types-only export exits non-zero unless you add `--force`; `--out -` writes the copybook to
+standard output, and `--json` prints the file written and its tier as JSON. A public item's **Export**
+dialog on Browse offers the same target.
+
 ### X12 implementation guide from any source
 
 Exporting to **X12 implementation guide** describes the item's types as an X12 transaction set, for
