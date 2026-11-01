@@ -28,7 +28,8 @@ format Apiome reads can be exported to any format it writes.
 5. **Validate.** Each export is checked before you can download it — re-imported, or checked with the
    format's own tool where the server has it (see
    [Exports checked with the format's own tool](./export-a-spec.md#exports-checked-with-the-formats-own-tool)).
-   An export that fails its check is never delivered. A format whose checker is not installed is
+   An export that fails its check is never delivered — see
+   [How an export is checked](./check-an-export.mdx). A format whose checker is not installed is
    reported as not re-validated, not as failed.
 6. **Decide delivery.** The check's verdict, the source's lint grade, the predicted fidelity and the
    workspace's export quality policy are folded into one decision: deliver, deliver with a warning
