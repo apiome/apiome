@@ -36,6 +36,9 @@
  * 17. The API Blueprint card (MFX-18.4): `lossy` for a REST source, `lossless` for an imported blueprint, one
  *     file, with its format, header-comment and media-type options, and described on the Fidelity step as
  *     a human-readable docs export — from the recorded live registry.
+ * 18. The Smithy card (MFX-20.4): `lossy` for a REST source, `lossless` for an imported Smithy model, one
+ *     file, with its output picker (IDL by default), protocol picker (none by default), header-comment and
+ *     version options — from the recorded live registry.
  */
 
 import React from 'react';
@@ -74,6 +77,7 @@ import {
   mockExportDialogFetch as mockFetch,
   odataTargets,
   ramlTargets,
+  smithyTargets,
   x12GuideTargets,
   typespecTargets,
   wsdlTargets,
@@ -1229,5 +1233,48 @@ describe('ExportDialog — API Blueprint target card (MFX-18.4)', () => {
     expect(screen.getByLabelText(/Format Version/i)).toHaveValue('1A');
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
     expect(screen.getByLabelText(/Media Type/i)).toHaveValue('application/json');
+  });
+});
+
+describe('ExportDialog — Smithy target card (MFX-20.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['smithy', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(smithyTargets(source)));
+
+    const card = screen.getByTestId('export-target-smithy');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Smithy')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .smithy IDL file by default: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the output and protocol pickers, IDL and no protocol by default', async () => {
+    await renderAtTargetStep(mockFetch(smithyTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-smithy'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const output = screen.getByRole('radiogroup', { name: 'Output' });
+    expect(within(output).getAllByRole('radio').map((option) => option.textContent)).toEqual(['idl', 'json-ast', 'both']);
+    expect(within(output).getByRole('radio', { name: 'idl' })).toBeChecked();
+    const protocol = screen.getByRole('radiogroup', { name: 'Protocol' });
+    expect(within(protocol).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'none',
+      'restJson1',
+      'rpcv2Cbor',
+    ]);
+    expect(within(protocol).getByRole('radio', { name: 'none' })).toBeChecked();
+    fireEvent.click(within(protocol).getByRole('radio', { name: 'restJson1' }));
+    expect(within(protocol).getByRole('radio', { name: 'restJson1' })).toBeChecked();
+  });
+
+  it('offers the header comment and Smithy version options', async () => {
+    await renderAtTargetStep(mockFetch(smithyTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-smithy'));
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    expect(screen.getByLabelText(/Smithy Version/i)).toHaveValue('2.0');
   });
 });

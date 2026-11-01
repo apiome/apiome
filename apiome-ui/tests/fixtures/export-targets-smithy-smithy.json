@@ -1,0 +1,85 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "smithy",
+        "format": "smithy",
+        "label": "Smithy",
+        "description": "Export as a Smithy 2.0 model (.smithy IDL and / or JSON AST).",
+        "icon": "hammer",
+        "paradigm": "rpc",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`SmithyEmitter`.",
+        "properties": {
+          "smithy_version": {
+            "default": "2.0",
+            "description": "Smithy `$version` control value.",
+            "title": "Smithy Version",
+            "type": "string"
+          },
+          "include_comments": {
+            "default": true,
+            "description": "Emit brief generated-file header comments.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "output": {
+            "default": "idl",
+            "description": "`idl` writes `<Name>.smithy`; `json-ast` writes the Smithy JSON AST (`<Name>.json`); `both` writes the two \u2014 two views of one model, not files to load together.",
+            "enum": [
+              "idl",
+              "json-ast",
+              "both"
+            ],
+            "title": "Output",
+            "type": "string"
+          },
+          "protocol": {
+            "default": "none",
+            "description": "Protocol trait applied to each service: `restJson1` (aws.protocols) or `rpcv2Cbor` (smithy.protocols). Validating either needs its trait package (or `--allow-unknown-traits`).",
+            "enum": [
+              "none",
+              "restJson1",
+              "rpcv2Cbor"
+            ],
+            "title": "Protocol",
+            "type": "string"
+          }
+        },
+        "title": "SmithyEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "smithy_version": "2.0",
+        "include_comments": true,
+        "output": "idl",
+        "protocol": "none"
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 9,
+        "preserved": 9,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

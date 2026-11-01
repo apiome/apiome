@@ -1,0 +1,20 @@
+---
+slug: smithy-target-card
+title: Export to Smithy from the Export dialog and the CLI
+description: The Smithy card shows its output and protocol options, and Smithy models export losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **Smithy** card writes a Smithy 2.0 model and shows its four options:
+**Output**, **Protocol**, **Include Comments** and **Smithy Version**. The CLI exports the same with
+`apiome export smithy`. [Where to find it](/ship/export-a-spec#smithy-from-any-source).
+
+{/* truncate */}
+
+- **IDL, JSON AST or both.** **Output** is `idl` (`.smithy`) by default. Pick `json-ast` for the
+  Smithy JSON AST or `both` for the two; from the CLI, add `--option output=json-ast`.
+- **Protocol traits.** Set **Protocol** to `restJson1` or `rpcv2Cbor` to mark each service with that
+  protocol trait.
+- **High fidelity.** Constraints become constraint traits (`@range`, `@length`, `@pattern`), and
+  required fields `@required`. An item imported from Smithy badges **lossless**; any other source is
+  **lossy**, and the fidelity report lists what Smithy does not keep.

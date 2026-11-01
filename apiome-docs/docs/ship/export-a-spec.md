@@ -467,6 +467,16 @@ The report predicts exactly what the export writes:
 - **Carried.** For each operation and type that is carried, the report names the Smithy shape it
   became, such as `operation getPet @http(GET /pets/{id})` or `structure Pet`.
 
+**Where to find it.** In the **Export** dialog, the **Smithy** card is on the **Target** step (under
+**RPC** in **Export studio**), as one file. Its badge is **lossless** for an item imported from Smithy
+and **lossy** for any other source. Pick the card to see its four options: **Output** (`idl` by
+default; `json-ast` or `both`), **Protocol** (`none` by default; `restJson1` or `rpcv2Cbor`),
+**Include Comments** (on by default), which writes the IDL header comment, and **Smithy Version**
+(`2.0`). From the CLI, run `apiome export smithy <item> --out <file>.smithy`, and add
+`--option output=json-ast` or `--option protocol=restJson1`. A lossy export exits non-zero unless you
+add `--force`, and `--json` prints the tier. A public item's **Export** dialog on Browse offers Smithy
+too: the `.smithy` file, or with `both` a zip of the two views.
+
 ### TypeSpec from any source
 
 Exporting to **TypeSpec** writes one `.tsp` file that compiles with the TypeSpec compiler Apiome

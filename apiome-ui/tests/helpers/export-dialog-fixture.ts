@@ -24,6 +24,8 @@ import ramlTargetsForGraphql from '../fixtures/export-targets-raml-graphql.json'
 import ramlPreviewForGraphql from '../fixtures/export-preview-raml-graphql.json';
 import apiblueprintTargetsForRest from '../fixtures/export-targets-apiblueprint-rest.json';
 import apiblueprintTargetsForApiblueprint from '../fixtures/export-targets-apiblueprint-apiblueprint.json';
+import smithyTargetsForRest from '../fixtures/export-targets-smithy-rest.json';
+import smithyTargetsForSmithy from '../fixtures/export-targets-smithy-smithy.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -514,4 +516,16 @@ export function ramlTargets(source: 'rest' | 'raml' | 'graphql'): ExportTargetsR
  */
 export function apiblueprintTargets(source: 'rest' | 'apiblueprint'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? apiblueprintTargetsForRest : apiblueprintTargetsForApiblueprint);
+}
+
+/**
+ * The Smithy target as the registry lists it (MFX-20.4, #3917), for a REST source and for an imported Smithy
+ * model — recorded from the live REST registry by `apiome-rest/tests/test_smithy_target_card.py`. A REST
+ * source loses what Smithy does not keep (`lossy`); a Smithy model exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `smithy` (an imported Smithy orders service).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function smithyTargets(source: 'rest' | 'smithy'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? smithyTargetsForRest : smithyTargetsForSmithy);
 }

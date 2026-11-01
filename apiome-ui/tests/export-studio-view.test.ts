@@ -134,6 +134,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rest', 'apiblueprint').label).toBe('REST & HTTP');
   });
 
+  it('files Smithy under RPC by its registry paradigm (MFX-20.4)', () => {
+    expect(familyForTarget('rpc', 'smithy').key).toBe('rpc');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });
