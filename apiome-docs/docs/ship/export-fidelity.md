@@ -119,6 +119,35 @@ so a destination-format limit is never blamed for an apiome-side gap (and vice v
 | `target_tool_unavailable` | Toolchain unavailable | The runtime's missing external tool | Install/enable the destination's toolchain and re-export. |
 | `not_applicable` | Not applicable | Nobody | No action needed. |
 
+## Severity and the advisory
+
+Every loss also has a **severity**, independent of its status, that says how much you should care:
+
+| Severity | Means |
+| --- | --- |
+| `info` | Cosmetic or metadata only; safe to ignore (a description written as a comment). |
+| `warn` | A meaningful degradation; review it (a validation rule the target cannot express). |
+| `critical` | A semantic loss: the export may not behave like the source (a union with no form in the target, an operation that cannot be written). |
+
+From the counts and the worst severity, Apiome writes one **advisory** — *“Exporting to Protobuf may
+lose some fidelity. The destination format can't represent everything in this API, so 7 constructs
+will be dropped or approximated — review the fidelity report before downloading.”* The Export dialog,
+the Export studio, Browse and the CLI all show this same sentence, word for word, so the warning never
+reads differently in two places. It is hidden for a lossless export, and when any loss is `critical` it
+also asks for an explicit acknowledgement before you continue. The REST API returns
+it as `advisory` on every preview and export (`show`, `severity`, `requires_ack`, the counts,
+`headline` and `message`); pass `min_severity` to raise it only for `warn` or `critical` losses.
+
+## Check the prediction with a round trip
+
+The report is a **prediction**, made before anything is written. To test it, run a round trip: Apiome
+exports the source, reads the file back and compares the result with the source, then says whether
+the report explained every difference. Each difference it did not predict is listed, as is each
+predicted drop that did not happen. See
+[Check a round trip](./export-studio.mdx#check-a-round-trip) in the Export studio, and
+[Measured loss from the API](./export-studio.mdx#measured-loss-from-the-api) for the `measurement`
+the REST API returns.
+
 ## Destination documentation links
 
 When (and only when) the cause is a genuine `destination_unsupported` specification

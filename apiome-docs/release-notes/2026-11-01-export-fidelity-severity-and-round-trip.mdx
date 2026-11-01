@@ -1,0 +1,20 @@
+---
+slug: export-fidelity-severity-and-round-trip
+title: "Export fidelity: severities, the advisory and round-trip checks explained"
+description: The export fidelity guide now covers severities, the advisory and round trips.
+authors: [apiome]
+---
+
+[Understand export fidelity](/ship/export-fidelity) now explains the last pieces of the fidelity
+engine: how much each loss matters, the one warning every surface shows, and how to test the
+prediction.
+
+{/* truncate */}
+
+- **Severity.** Every loss is `info` (cosmetic), `warn` (review it) or `critical` (the export may not
+  behave like the source).
+- **One advisory, everywhere.** The Export dialog, the Export studio, Browse and the CLI show the
+  same *“Exporting to … may lose some fidelity”* sentence. A critical loss also asks you to
+  acknowledge it before you continue.
+- **Check the prediction.** A round trip exports, reads the file back and compares, listing any
+  difference the report did not predict.
