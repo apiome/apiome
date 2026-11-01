@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.579.0] - 2026-11-01
+
+### Added
+- **TypeSpec target card + fixtures (MFX-15.4, #3896).** `tests/test_typespec_target_card.py` +
+  `fixtures/typespec_target/outcomes.json` pin the `typespec` card per source kind (REST, RPC, GraphQL, JSON Schema,
+  WSDL `lossy`; an imported TypeSpec project `lossless`), the `include_http_imports` / `include_comments` choices (one
+  `.tsp` the built-in reader parses; the HTTP import and header comment present or not), the MFX-15.3 validation
+  gate (and, where `tsp` is installed, the compile + OpenAPI re-import), browse delivering the `.tsp` itself, and keep
+  the CLI / UI registry fixtures and the CLI job fixture equal to the live registry
+  (`APIOME_REGEN_TYPESPEC_TARGET=1`).
+- OpenAPI document version 1.442.0 → 1.443.0.
+
 ## [1.578.0] - 2026-11-01
 
 ### Added

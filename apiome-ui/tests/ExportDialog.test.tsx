@@ -26,6 +26,8 @@
  *     transaction-set and version picker — from the recorded live registry.
  * 13. The WSDL card (MFX-14.4): `lossy` for a REST source, `lossless` for an imported WSDL, multi-file
  *     (the WSDL and its XSD), with its layout picker — from the recorded live registry.
+ * 14. The TypeSpec card (MFX-15.4): `lossy` for a REST source, `lossless` for an imported TypeSpec
+ *     project, one file, with its HTTP-imports and header-comment options — from the recorded live registry.
  */
 
 import React from 'react';
@@ -62,6 +64,7 @@ import {
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
   x12GuideTargets,
+  typespecTargets,
   wsdlTargets,
 } from './helpers/export-dialog-fixture';
 
@@ -1090,5 +1093,34 @@ describe('ExportDialog — WSDL target card (MFX-14.4)', () => {
     const layout = screen.getByRole('radiogroup', { name: 'Layout' });
     expect(within(layout).getAllByRole('radio').map((option) => option.textContent)).toEqual(['bundle', 'single']);
     expect(within(layout).getByRole('radio', { name: 'bundle' })).toBeChecked();
+  });
+});
+
+
+describe('ExportDialog — TypeSpec target card (MFX-15.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['typespec', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(typespecTargets(source)));
+
+    const card = screen.getByTestId('export-target-typespec');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('TypeSpec')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .tsp document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the HTTP imports and header comment options, both on by default', async () => {
+    await renderAtTargetStep(mockFetch(typespecTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-typespec'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const httpImports = screen.getByLabelText(/Include Http Imports/i);
+    expect(httpImports).toBeChecked();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    fireEvent.click(httpImports);
+    expect(httpImports).not.toBeChecked();
   });
 });

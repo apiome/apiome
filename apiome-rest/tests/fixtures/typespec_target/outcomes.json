@@ -1,0 +1,94 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "typespec": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3.0.tsp"
+        ],
+        "header_comment": true,
+        "imports_http": true,
+        "parses": true,
+        "preserved_percent": 15,
+        "tier": "lossy"
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3.0.tsp"
+        ],
+        "header_comment": false,
+        "imports_http": true,
+        "parses": true,
+        "preserved_percent": 15,
+        "tier": "lossy"
+      },
+      "no-http-imports": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3.0.tsp"
+        ],
+        "header_comment": true,
+        "imports_http": false,
+        "parses": true,
+        "preserved_percent": 15,
+        "tier": "lossy"
+      }
+    },
+    "typespec": {
+      "default": {
+        "files": [
+          "PetStore.tsp"
+        ],
+        "header_comment": true,
+        "imports_http": true,
+        "parses": true,
+        "preserved_percent": 100,
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "files": [
+          "PetStore.tsp"
+        ],
+        "header_comment": false,
+        "imports_http": true,
+        "parses": true,
+        "preserved_percent": 100,
+        "tier": "lossless"
+      },
+      "no-http-imports": {
+        "files": [
+          "PetStore.tsp"
+        ],
+        "header_comment": true,
+        "imports_http": false,
+        "parses": true,
+        "preserved_percent": 100,
+        "tier": "lossless"
+      }
+    }
+  }
+}

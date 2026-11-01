@@ -1,0 +1,20 @@
+---
+slug: typespec-target-card
+title: Export to TypeSpec from the Export dialog and the CLI
+description: The TypeSpec card shows its options, and TypeSpec projects export losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **TypeSpec** card writes one `.tsp` file and shows its two options,
+**Include Http Imports** and **Include Comments**. The CLI exports the same with
+`apiome export typespec`. [Where to find it](/ship/export-a-spec#typespec-from-any-source).
+
+{/* truncate */}
+
+- **Ready to compile.** By default the file carries the `@typespec/http` import and `using` it needs.
+  Turn **Include Http Imports** off only if you add them yourself; from the CLI, add
+  `--option include_http_imports=false`.
+- **Your TypeSpec exports losslessly.** An item imported from TypeSpec badges **lossless**. Any other
+  source is **lossy**, and the fidelity report lists what TypeSpec does not keep.
+- **One file.** The card, the CLI and a public item's Export dialog on Browse all deliver the `.tsp`
+  itself, not a `.zip`.
