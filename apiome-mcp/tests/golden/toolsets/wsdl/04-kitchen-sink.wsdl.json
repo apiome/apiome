@@ -18,25 +18,43 @@
       "operation": "http://example.com/telemetry.AlarmPort.RaiseAlarm"
     },
     {
-      "description": "Returns string.",
+      "description": "Returns http://example.com/telemetry.GetSensorStatusOutput.",
       "inputSchema": {
         "properties": {
-          "body": {
+          "includeHistory": {},
+          "sensorId": {
             "type": "string"
           }
         },
-        "required": [
-          "body"
-        ],
         "type": "object"
       },
       "name": "GetSensorStatus",
       "operation": "http://example.com/telemetry.IngestionPort.GetSensorStatus",
       "output": {
         "schema": {
-          "type": "string"
+          "properties": {
+            "lastReading": {
+              "properties": {
+                "capturedAt": {
+                  "type": "string"
+                },
+                "sensorId": {
+                  "type": "string"
+                },
+                "unit": {
+                  "type": "string"
+                },
+                "value": {}
+              },
+              "type": "object"
+            },
+            "status": {
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
-        "shape": "string"
+        "shape": "http://example.com/telemetry.GetSensorStatusOutput"
       }
     },
     {

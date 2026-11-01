@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "List all books.\n\nReturns Book.",
+      "description": "List all books.\n\nReturns HTTP 200 (Book).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -39,11 +39,12 @@
           ],
           "type": "object"
         },
-        "shape": "Book"
+        "shape": "Book",
+        "status": "200"
       }
     },
     {
-      "description": "Fetch a book by id.\n\nReturns Book.",
+      "description": "Fetch a book by id.\n\nReturns HTTP 200 (Book).",
       "inputSchema": {
         "properties": {
           "bookId": {
@@ -88,11 +89,12 @@
           ],
           "type": "object"
         },
-        "shape": "Book"
+        "shape": "Book",
+        "status": "200"
       }
     },
     {
-      "description": "Add a new book.\n\nReturns Book.",
+      "description": "Add a new book.\n\nReturns HTTP 201 (Book).",
       "inputSchema": {
         "properties": {
           "author": {
@@ -142,7 +144,8 @@
           ],
           "type": "object"
         },
-        "shape": "Book"
+        "shape": "Book",
+        "status": "201"
       }
     }
   ]

@@ -1,0 +1,197 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns i32.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "available",
+      "operation": "com.example.orders.v1.InventoryService.available",
+      "output": {
+        "schema": {},
+        "shape": "i32"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "reserve",
+      "operation": "com.example.orders.v1.InventoryService.reserve"
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "cancelOrder",
+      "operation": "com.example.orders.v1.OrderService.cancelOrder"
+    },
+    {
+      "description": "Returns com.example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "getOrder",
+      "operation": "com.example.orders.v1.OrderService.getOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {
+                    "properties": {
+                      "amount": {},
+                      "currency": {
+                        "enum": [
+                          1,
+                          2,
+                          3
+                        ],
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "type": "integer"
+            },
+            "total": {}
+          },
+          "required": [
+            "id",
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.orders.v1.Order"
+      }
+    },
+    {
+      "description": "Returns com.example.orders.v1.Order.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "placeOrder",
+      "operation": "com.example.orders.v1.OrderService.placeOrder",
+      "output": {
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "lines": {
+              "items": {
+                "properties": {
+                  "quantity": {},
+                  "sku": {
+                    "type": "string"
+                  },
+                  "unitPrice": {
+                    "properties": {
+                      "amount": {},
+                      "currency": {
+                        "enum": [
+                          1,
+                          2,
+                          3
+                        ],
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "amount",
+                      "currency"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "quantity",
+                  "sku"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                1,
+                2,
+                3,
+                4
+              ],
+              "type": "integer"
+            },
+            "total": {}
+          },
+          "required": [
+            "id",
+            "lines"
+          ],
+          "type": "object"
+        },
+        "shape": "com.example.orders.v1.Order"
+      }
+    },
+    {
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "ping",
+      "operation": "com.example.shared.v1.BaseService.ping",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    }
+  ]
+}

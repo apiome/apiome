@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Lifecycle status of\n\nReturns HTTP 200 application/json (array of PetStore.Pet).",
+      "description": "List all pets.\n\nReturns HTTP 200 application/json (array of PetStore.Pet).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -13,7 +13,37 @@
         "mediaType": "application/json",
         "schema": {
           "items": {
-            "properties": {},
+            "description": "A pet available for adoption.",
+            "properties": {
+              "age": {},
+              "id": {
+                "description": "Unique pet identifier.",
+                "type": "string"
+              },
+              "name": {
+                "description": "The pet's name.",
+                "type": "string"
+              },
+              "species": {
+                "description": "Species, e.g. \"dog\" or \"cat\".",
+                "type": "string"
+              },
+              "status": {
+                "description": "Lifecycle status of a pet listing.",
+                "enum": [
+                  0,
+                  1,
+                  2
+                ],
+                "type": "integer"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "species",
+              "status"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -23,7 +53,7 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (PetStore.Pet).",
+      "description": "Fetch a pet by id.\n\nReturns HTTP 200 application/json (PetStore.Pet).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -40,7 +70,37 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A pet available for adoption.",
+          "properties": {
+            "age": {},
+            "id": {
+              "description": "Unique pet identifier.",
+              "type": "string"
+            },
+            "name": {
+              "description": "The pet's name.",
+              "type": "string"
+            },
+            "species": {
+              "description": "Species, e.g. \"dog\" or \"cat\".",
+              "type": "string"
+            },
+            "status": {
+              "description": "Lifecycle status of a pet listing.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "species",
+            "status"
+          ],
           "type": "object"
         },
         "shape": "PetStore.Pet",
@@ -48,9 +108,21 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (PetStore.Pet).",
+      "description": "Create a new pet.\n\nReturns HTTP 200 application/json (PetStore.Pet).",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "age": {},
+          "name": {
+            "type": "string"
+          },
+          "species": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "species"
+        ],
         "type": "object"
       },
       "name": "create",
@@ -58,7 +130,37 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A pet available for adoption.",
+          "properties": {
+            "age": {},
+            "id": {
+              "description": "Unique pet identifier.",
+              "type": "string"
+            },
+            "name": {
+              "description": "The pet's name.",
+              "type": "string"
+            },
+            "species": {
+              "description": "Species, e.g. \"dog\" or \"cat\".",
+              "type": "string"
+            },
+            "status": {
+              "description": "Lifecycle status of a pet listing.",
+              "enum": [
+                0,
+                1,
+                2
+              ],
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "species",
+            "status"
+          ],
           "type": "object"
         },
         "shape": "PetStore.Pet",

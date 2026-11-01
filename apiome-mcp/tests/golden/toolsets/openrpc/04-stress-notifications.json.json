@@ -11,21 +11,6 @@
       "operation": "Telemetry Ingest API.emitReading"
     },
     {
-      "description": "Deprecated synchronous flush.\n\nReturns boolean.",
-      "inputSchema": {
-        "properties": {},
-        "type": "object"
-      },
-      "name": "flushBuffer",
-      "operation": "Telemetry Ingest API.flushBuffer",
-      "output": {
-        "schema": {
-          "type": "boolean"
-        },
-        "shape": "boolean"
-      }
-    },
-    {
       "description": "Query stored readings for a sensor.\n\nReturns array of number.",
       "inputSchema": {
         "properties": {},

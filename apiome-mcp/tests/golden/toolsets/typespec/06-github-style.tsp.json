@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns HTTP 200 application/json (array of GitHubStyle.Issue).",
+      "description": "List issues for a repository.\n\nReturns HTTP 200 application/json (array of GitHubStyle.Issue).",
       "inputSchema": {
         "properties": {
           "fullName": {
@@ -13,18 +13,49 @@
           }
         },
         "required": [
-          "fullName"
+          "fullName",
+          "state"
         ],
         "type": "object"
       },
       "name": "list",
-      "operation": "GET /user/repos/{fullName}",
+      "operation": "GET /repos/{fullName}",
       "output": {
         "mediaType": "application/json",
         "schema": {
           "items": {
-            "description": "A",
-            "properties": {},
+            "description": "An issue on a repository.",
+            "properties": {
+              "body": {
+                "type": "string"
+              },
+              "createdAt": {},
+              "issueNumber": {},
+              "labels": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "state": {
+                "description": "Issue lifecycle state.",
+                "enum": [
+                  0,
+                  1
+                ],
+                "type": "integer"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "createdAt",
+              "issueNumber",
+              "labels",
+              "state",
+              "title"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -34,25 +65,69 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (GitHubStyle.Issue).",
+      "description": "Open a new issue on a repository.\n\nReturns HTTP 200 application/json (GitHubStyle.Issue).",
       "inputSchema": {
         "properties": {
+          "body": {
+            "type": "string"
+          },
           "fullName": {
+            "type": "string"
+          },
+          "labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": {
             "type": "string"
           }
         },
         "required": [
-          "fullName"
+          "fullName",
+          "labels",
+          "title"
         ],
         "type": "object"
       },
       "name": "create",
-      "operation": "POST /user/repos/{fullName}",
+      "operation": "POST /repos/{fullName}",
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "description": "A",
-          "properties": {},
+          "description": "An issue on a repository.",
+          "properties": {
+            "body": {
+              "type": "string"
+            },
+            "createdAt": {},
+            "issueNumber": {},
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "state": {
+              "description": "Issue lifecycle state.",
+              "enum": [
+                0,
+                1
+              ],
+              "type": "integer"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "createdAt",
+            "issueNumber",
+            "labels",
+            "state",
+            "title"
+          ],
           "type": "object"
         },
         "shape": "GitHubStyle.Issue",
@@ -60,13 +135,16 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (array of GitHubStyle.Repository).",
+      "description": "List repositories for the authenticated user.\n\nReturns HTTP 200 application/json (array of GitHubStyle.Repository).",
       "inputSchema": {
         "properties": {
           "visibility": {
             "type": "string"
           }
         },
+        "required": [
+          "visibility"
+        ],
         "type": "object"
       },
       "name": "list_2",
@@ -75,7 +153,49 @@
         "mediaType": "application/json",
         "schema": {
           "items": {
-            "properties": {},
+            "description": "A source-code repository.",
+            "properties": {
+              "defaultBranch": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "fullName": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "openIssuesCount": {},
+              "owner": {
+                "description": "The account that owns a repository.",
+                "properties": {
+                  "login": {
+                    "type": "string"
+                  },
+                  "ownerId": {},
+                  "siteAdmin": {}
+                },
+                "required": [
+                  "login",
+                  "ownerId",
+                  "siteAdmin"
+                ],
+                "type": "object"
+              },
+              "private": {},
+              "stargazersCount": {}
+            },
+            "required": [
+              "defaultBranch",
+              "fullName",
+              "name",
+              "openIssuesCount",
+              "owner",
+              "private",
+              "stargazersCount"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -85,9 +205,20 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (GitHubStyle.Repository).",
+      "description": "Create a repository for the authenticated user.\n\nReturns HTTP 200 application/json (GitHubStyle.Repository).",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "private": {}
+        },
+        "required": [
+          "name"
+        ],
         "type": "object"
       },
       "name": "create_2",
@@ -95,7 +226,49 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A source-code repository.",
+          "properties": {
+            "defaultBranch": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "fullName": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "openIssuesCount": {},
+            "owner": {
+              "description": "The account that owns a repository.",
+              "properties": {
+                "login": {
+                  "type": "string"
+                },
+                "ownerId": {},
+                "siteAdmin": {}
+              },
+              "required": [
+                "login",
+                "ownerId",
+                "siteAdmin"
+              ],
+              "type": "object"
+            },
+            "private": {},
+            "stargazersCount": {}
+          },
+          "required": [
+            "defaultBranch",
+            "fullName",
+            "name",
+            "openIssuesCount",
+            "owner",
+            "private",
+            "stargazersCount"
+          ],
           "type": "object"
         },
         "shape": "GitHubStyle.Repository",

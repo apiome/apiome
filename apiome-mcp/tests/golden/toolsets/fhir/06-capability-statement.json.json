@@ -2,275 +2,199 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns HTTP 200 application/fhir+json (CapabilityStatement.CapabilityStatement).",
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Observation).",
       "inputSchema": {
         "properties": {
-          "_count": {}
-        },
-        "type": "object"
-      },
-      "name": "searchCapabilityStatement",
-      "operation": "GET /CapabilityStatement",
-      "output": {
-        "mediaType": "application/fhir+json",
-        "schema": {
-          "properties": {
-            "_comment": {
-              "type": "string"
-            },
-            "date": {
-              "type": "string"
-            },
-            "fhirVersion": {
-              "type": "string"
-            },
-            "format": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "id": {
-              "type": "string"
-            },
-            "implementation": {
-              "properties": {},
-              "type": "object"
-            },
-            "kind": {
-              "type": "string"
-            },
-            "publisher": {
-              "type": "string"
-            },
-            "rest": {
-              "items": {
-                "properties": {},
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "software": {
-              "properties": {},
-              "type": "object"
-            },
-            "status": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "_comment",
-            "date",
-            "fhirVersion",
-            "format",
-            "id",
-            "kind",
-            "publisher",
-            "rest",
-            "status"
-          ],
-          "type": "object"
-        },
-        "shape": "CapabilityStatement.CapabilityStatement",
-        "status": "200"
-      }
-    },
-    {
-      "description": "Returns HTTP 200 application/fhir+json (CapabilityStatement.CapabilityStatement).",
-      "inputSchema": {
-        "properties": {},
-        "type": "object"
-      },
-      "name": "readCapabilityStatement",
-      "operation": "GET /CapabilityStatement/{id}",
-      "output": {
-        "mediaType": "application/fhir+json",
-        "schema": {
-          "properties": {
-            "_comment": {
-              "type": "string"
-            },
-            "date": {
-              "type": "string"
-            },
-            "fhirVersion": {
-              "type": "string"
-            },
-            "format": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "id": {
-              "type": "string"
-            },
-            "implementation": {
-              "properties": {},
-              "type": "object"
-            },
-            "kind": {
-              "type": "string"
-            },
-            "publisher": {
-              "type": "string"
-            },
-            "rest": {
-              "items": {
-                "properties": {},
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "software": {
-              "properties": {},
-              "type": "object"
-            },
-            "status": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "_comment",
-            "date",
-            "fhirVersion",
-            "format",
-            "id",
-            "kind",
-            "publisher",
-            "rest",
-            "status"
-          ],
-          "type": "object"
-        },
-        "shape": "CapabilityStatement.CapabilityStatement",
-        "status": "200"
-      }
-    },
-    {
-      "description": "Returns HTTP 201 application/fhir+json (CapabilityStatement.CapabilityStatement).",
-      "inputSchema": {
-        "properties": {
-          "_comment": {
+          "code": {
             "type": "string"
           },
           "date": {
             "type": "string"
           },
-          "fhirVersion": {
+          "patient": {
             "type": "string"
-          },
-          "format": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchObservation",
+      "operation": "GET /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Observation).",
+      "inputSchema": {
+        "properties": {
           "id": {
-            "type": "string"
-          },
-          "implementation": {
-            "properties": {},
-            "type": "object"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "publisher": {
-            "type": "string"
-          },
-          "rest": {
-            "items": {
-              "properties": {},
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "software": {
-            "properties": {},
-            "type": "object"
-          },
-          "status": {
             "type": "string"
           }
         },
         "required": [
-          "_comment",
-          "date",
-          "fhirVersion",
-          "format",
-          "id",
-          "kind",
-          "publisher",
-          "rest",
-          "status"
+          "id"
         ],
         "type": "object"
       },
-      "name": "createCapabilityStatement",
-      "operation": "POST /CapabilityStatement",
+      "name": "readObservation",
+      "operation": "GET /Observation/{id}",
       "output": {
         "mediaType": "application/fhir+json",
         "schema": {
-          "properties": {
-            "_comment": {
-              "type": "string"
-            },
-            "date": {
-              "type": "string"
-            },
-            "fhirVersion": {
-              "type": "string"
-            },
-            "format": {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            "id": {
-              "type": "string"
-            },
-            "implementation": {
-              "properties": {},
-              "type": "object"
-            },
-            "kind": {
-              "type": "string"
-            },
-            "publisher": {
-              "type": "string"
-            },
-            "rest": {
-              "items": {
-                "properties": {},
-                "type": "object"
-              },
-              "type": "array"
-            },
-            "software": {
-              "properties": {},
-              "type": "object"
-            },
-            "status": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "_comment",
-            "date",
-            "fhirVersion",
-            "format",
-            "id",
-            "kind",
-            "publisher",
-            "rest",
-            "status"
-          ],
+          "properties": {},
           "type": "object"
         },
-        "shape": "CapabilityStatement.CapabilityStatement",
+        "shape": "Example FHIR Server.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (Example FHIR Server.Observation).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createObservation",
+      "operation": "POST /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Observation",
         "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Patient).",
+      "inputSchema": {
+        "properties": {
+          "birthdate": {
+            "type": "string"
+          },
+          "identifier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchPatient",
+      "operation": "GET /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Patient).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "readPatient",
+      "operation": "GET /Patient/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Patient).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "vid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "vid"
+        ],
+        "type": "object"
+      },
+      "name": "vreadPatient",
+      "operation": "GET /Patient/{id}/_history/{vid}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (Example FHIR Server.Patient).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createPatient",
+      "operation": "POST /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Patient",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (Example FHIR Server.Patient).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "updatePatient",
+      "operation": "PUT /Patient/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "Example FHIR Server.Patient",
+        "status": "200"
       }
     }
   ]
