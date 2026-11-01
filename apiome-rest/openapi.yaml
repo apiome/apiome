@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.438.0
+  version: 1.439.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -25299,7 +25299,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-10-31T23:00:54Z'
+                        example: '2026-11-01T02:23:50Z'
                       method:
                         type: string
                         example: GET
@@ -88081,7 +88081,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         completed_at:
           anyOf:
           - type: string
@@ -89299,7 +89299,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
       type: object
       required:
       - api_key
@@ -89342,7 +89342,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -89803,7 +89803,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -89976,7 +89976,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -90581,13 +90581,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -93106,7 +93106,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 4cccafa4-9cb5-464f-8552-da5e13fbb7a5
+          example: 75c8df3c-6612-475e-85c1-d1340abd99b7
         method:
           type: string
           title: Method
@@ -95249,7 +95249,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         envelope:
           additionalProperties: true
           type: object
@@ -96740,7 +96740,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         browse_url:
           anyOf:
           - type: string
@@ -96989,6 +96989,33 @@ components:
       - stale_after_days
       title: DriftResponse
       description: The ownership drift report.
+    DropCorroboration:
+      properties:
+        finding:
+          $ref: '#/components/schemas/LossItem'
+          description: The predicted ``drop`` finding.
+        corroborated:
+          type: boolean
+          title: Corroborated
+          description: True when the round trip removed or changed the dropped construct
+            (or the entity that owns it).
+          example: false
+        evidence:
+          items:
+            $ref: '#/components/schemas/CanonicalDiffEntry'
+          type: array
+          title: Evidence
+          description: The removed/changed differences that corroborate the drop;
+            empty when the construct came back unchanged.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - finding
+      - corroborated
+      title: DropCorroboration
+      description: One predicted DROP checked against what the round trip actually
+        did.
     DroppedPointBody:
       properties:
         id:
@@ -97352,6 +97379,48 @@ components:
       title: EmitterDescriptor
       description: Self-description of an export target for UI/CLI/REST enumeration
         (MFX-1.1).
+    EmpiricalLoss:
+      properties:
+        entity:
+          type: string
+          title: Entity
+          description: 'Entity family: root/service/operation/type/channel.'
+          example: example
+        key:
+          type: string
+          title: Key
+          description: The entity's stable canonical key (empty for ``root``).
+          example: example
+        change:
+          $ref: '#/components/schemas/DiffChangeKind'
+          description: 'The observed change: added / removed / changed.'
+        kind:
+          $ref: '#/components/schemas/LossinessKind'
+          description: 'The change as a loss kind: removed → ``drop``, added → ``synth``,
+            changed → ``approx``.'
+        predicted:
+          type: boolean
+          title: Predicted
+          description: True when a fidelity finding explains this loss.
+          example: false
+        finding:
+          anyOf:
+          - $ref: '#/components/schemas/LossItem'
+          - type: 'null'
+            description: Empirical Loss schema.
+          description: The predicted finding that explains this loss; null when it
+            was not predicted.
+      additionalProperties: false
+      type: object
+      required:
+      - entity
+      - key
+      - change
+      - kind
+      - predicted
+      title: EmpiricalLoss
+      description: One difference the round trip actually produced, in the lossiness
+        vocabulary.
     EnrichmentFlagOut:
       properties:
         operation:
@@ -101547,6 +101616,15 @@ components:
           title: Registry Version
           description: The capability-registry snapshot version.
           example: 1.0.0
+        measurement:
+          anyOf:
+          - $ref: '#/components/schemas/FidelityMeasurement'
+          - type: 'null'
+            description: Response payload for export roundtrip.
+          description: 'The empirical loss list and its corroboration of the fidelity
+            report (MFX-2.6): every observed difference as a loss, every predicted
+            ``drop`` with the differences that confirm it, and every divergence (unpredicted
+            loss, unobserved drop, over-claim). Null when the loop did not close.'
         text_diff:
           anyOf:
           - $ref: '#/components/schemas/RoundtripTextDiff'
@@ -102454,6 +102532,93 @@ components:
       - path
       title: FederationSourceRef
       description: A repository file, as the history shows it.
+    FidelityDivergence:
+      properties:
+        kind:
+          $ref: '#/components/schemas/FidelityDivergenceKind'
+          description: unpredicted_loss / unobserved_drop / overclaim.
+        construct:
+          type: string
+          title: Construct
+          description: The canonical construct or entity key concerned.
+          example: example
+        message:
+          type: string
+          title: Message
+          description: Human-readable explanation of the disagreement.
+          example: Example validation message.
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      - construct
+      - message
+      title: FidelityDivergence
+      description: One place where the predicted report and the measurement disagree.
+    FidelityDivergenceKind:
+      type: string
+      enum:
+      - unpredicted_loss
+      - unobserved_drop
+      - overclaim
+      title: FidelityDivergenceKind
+      description: How a prediction and the round-trip measurement disagree.
+    FidelityMeasurement:
+      properties:
+        empirical_losses:
+          items:
+            $ref: '#/components/schemas/EmpiricalLoss'
+          type: array
+          title: Empirical Losses
+          description: Every difference between the source and its re-import, in diff
+            order.
+          maxItems: 1000
+        drops:
+          items:
+            $ref: '#/components/schemas/DropCorroboration'
+          type: array
+          title: Drops
+          description: Every predicted ``drop`` finding, in report order, with its
+            evidence.
+          maxItems: 1000
+        divergences:
+          items:
+            $ref: '#/components/schemas/FidelityDivergence'
+          type: array
+          title: Divergences
+          description: 'Every disagreement between prediction and measurement: unpredicted
+            losses first, then unobserved drops, then over-claims.'
+          maxItems: 1000
+        predicted_drop_count:
+          type: integer
+          title: Predicted Drop Count
+          description: '``drop`` findings in the report.'
+          default: 0
+          example: 1
+        corroborated_drop_count:
+          type: integer
+          title: Corroborated Drop Count
+          description: Predicted drops the round trip confirmed.
+          default: 0
+          example: 1
+        unpredicted_loss_count:
+          type: integer
+          title: Unpredicted Loss Count
+          description: Empirical losses no finding explains.
+          default: 0
+          example: 1
+        diverges:
+          type: boolean
+          title: Diverges
+          description: True when the prediction and the measurement disagree anywhere
+            (``divergences`` is non-empty).
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      title: FidelityMeasurement
+      description: The empirical loss list and its corroboration of the predicted
+        report (MFX-2.6).
     FirstTenantProvisionRequest:
       properties:
         name:
@@ -134175,7 +134340,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
       additionalProperties: false
       type: object
       required:
@@ -143819,12 +143984,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
       additionalProperties: false
       type: object
       required:
@@ -144953,7 +145118,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         detected_by:
           anyOf:
           - type: string
@@ -151629,13 +151794,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-10-31T23:00:54Z'
+          example: '2026-11-01T02:23:50Z'
         outcome:
           anyOf:
           - type: string

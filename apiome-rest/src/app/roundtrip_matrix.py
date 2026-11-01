@@ -71,6 +71,7 @@ __all__ = [
     "import_adapter_for_emit",
     "production_emit_targets",
     "classify_cell",
+    "construct_relates_to",
     "reconcile",
     "serialize_emitted_text",
     "emitted_fileset",
@@ -322,7 +323,7 @@ def classify_cell(
     return None
 
 
-def _related(construct_key: str, entity_key: str) -> bool:
+def construct_relates_to(construct_key: str, entity_key: str) -> bool:
     """Whether a fidelity construct key concerns a canonical-diff entity key.
 
     Exact match, or a nested field/member under the entity (``User.email`` under
@@ -370,7 +371,7 @@ def reconcile(diff: CanonicalDiff, report: LossinessReport) -> ReconciliationRes
                 continue
             if item.kind not in allowed:
                 continue
-            if not _related(item.construct_key, entry.key):
+            if not construct_relates_to(item.construct_key, entry.key):
                 continue
             explanation = item
             used_finding_ids.add(id(item))

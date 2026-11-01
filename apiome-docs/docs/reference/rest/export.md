@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.438.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.439.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export` · 11 operations
 
@@ -589,6 +589,7 @@ its reproduction coordinates without shipping any source bytes.
 | `emitter_version` | string | yes | The emitter implementation version. |
 | `apiome_version` | string | yes | The apiome-rest package version that ran the loop. |
 | `registry_version` | string | yes | The capability-registry snapshot version. |
+| `measurement` | `FidelityMeasurement` or null | no | The empirical loss list and its corroboration of the fidelity report (MFX-2.6): every observed difference as a loss, every predicted ``drop`` with the differences that confirm it, and every divergence (unpredicted loss, unobserved drop, over-claim). Null when the loop did not close. |
 | `text_diff` | `RoundtripTextDiff` or null | no | The emitted artifact beside the same format re-emitted from the re-imported model (MFX-43.4); null when the loop did not close or the artifact cannot be diffed as text (see ``text_diff_reason``). |
 | `text_diff_reason` | string or null | no | Why ``text_diff`` is null when the loop closed: a multi-file bundle, a binary artifact, one too large to send, or a re-emit that failed. |
 
