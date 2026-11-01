@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.577.2] - 2026-11-01
+
+### Fixed
+- **The image starts again.** Node 26 (1.577.0) links `libatomic.so.1`, which the `python:3.12-slim` runtime stage did
+  not have, so `node` — and with it every Node-backed bundled tool (`asyncapi-parser`, `typescript-types-extract`,
+  `zod-extract`, `dbml-validate`, `prisma-validate`) — failed to load (`error while loading shared libraries:
+  libatomic.so.1`), the startup toolchain self-check refused to start, and the service exited. The runtime stage now
+  installs `libatomic1` and runs `node --version` right after copying node, so a missing shared library fails the
+  image build instead of startup. The tools stage installs `libatomic1` explicitly too (it had it only through
+  `build-essential`).
+- OpenAPI document version 1.441.1 → 1.441.2.
+
 ## [1.577.1] - 2026-11-01
 
 ### Fixed

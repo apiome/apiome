@@ -85,10 +85,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Build/download toolchain: curl+unzip for release archives, git+cmake+g++ to build drafter (no
 # official static release), default-jre for the AMF jar. node and npm for the JS CLIs come from the
-# uideps stage (below), not Debian's nodejs package.
+# uideps stage (below), not Debian's nodejs package; libatomic1 is the library that node links.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl unzip xz-utils tar \
       git cmake build-essential \
+      libatomic1 \
       default-jre-headless \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p ${TOOLS_PREFIX}/bin ${TOOLS_PREFIX}/lib
@@ -416,14 +417,15 @@ WORKDIR /app
 
 # libpq5 for psycopg; nodejs to run the tsx-based spec-import worker. Create the non-root
 # user up front so the workspace copies below can be chowned in a single layer.
-# libpq5 for psycopg; libstdc++6 for native tools (buf/rover/drafter); libgmp10 for dhall
-# (FMT-8.5); default-jre-headless
+# libpq5 for psycopg; libstdc++6 for native tools (buf/rover/drafter); libatomic1 for node, which
+# links libatomic.so.1 (Node 26+); libgmp10 for dhall (FMT-8.5); default-jre-headless
 # for the AMF jar wrapper (MFI-5.2). smithy's CLI ships its own runtime, so it needs no JRE.
 # omniidl + cyclonedds-tools (idlc): the OMG IDL compilers that check an emitted .idl (MFX-28.3) — the
 # Debian packages, smoke-tested below; both are optional tools (without them the reader re-parses).
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libpq5 \
       libstdc++6 \
+      libatomic1 \
       libgmp10 \
       default-jre-headless \
       omniidl \
@@ -437,7 +439,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Node.js runtime for the tsx spec-import worker. Copy the binary from the Node build stage
 # (a real /usr/local/bin/node) rather than relying on Debian's nodejs package, whose layout
 # (e.g. /usr/bin/nodejs vs /usr/bin/node) broke the worker's `#!/usr/bin/env node` shebang.
+# Run it once here, so a shared library the binary needs and this base lacks fails the build rather
+# than the container's startup self-check.
 COPY --from=uideps /usr/local/bin/node /usr/local/bin/node
+RUN node --version
 
 # Python dependencies (requirements.txt + extras from pyproject.toml)
 COPY apiome-rest/requirements.txt .
