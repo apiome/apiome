@@ -42,6 +42,9 @@
  * 19. The XSD card (MFX-22.6): `types-only` for a REST source, `lossless` for an imported XSD, one file,
  *     with its XSD version picker (1.0 by default), XML-declaration and header-comment options — from the
  *     recorded live registry.
+ * 20. The Apache Thrift card (MFX-25.5): `lossy` for a REST source, `lossless` for an imported Thrift IDL, one
+ *     file, with its header-comment option; the namespace and stored-field-id maps stay off the panel —
+ *     from the recorded live registry.
  */
 
 import React from 'react';
@@ -81,6 +84,7 @@ import {
   odataTargets,
   ramlTargets,
   smithyTargets,
+  thriftTargets,
   xsdTargets,
   x12GuideTargets,
   typespecTargets,
@@ -1310,5 +1314,32 @@ describe('ExportDialog — XSD target card (MFX-22.6)', () => {
     expect(within(version).getByRole('radio', { name: '1.1' })).toBeChecked();
     expect(screen.getByLabelText(/Include Xml Declaration/i)).toBeChecked();
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+  });
+});
+
+describe('ExportDialog — Apache Thrift target card (MFX-25.5)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['thrift', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(thriftTargets(source)));
+
+    const card = screen.getByTestId('export-target-thrift');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Apache Thrift')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .thrift document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the header comment option and keeps the namespace and field-id maps off the panel', async () => {
+    await renderAtTargetStep(mockFetch(thriftTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-thrift'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    // Map options are set from the CLI / REST API (the stored ids by the export service itself).
+    expect(screen.queryByLabelText(/Namespaces/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Persisted Field Numbers/i)).not.toBeInTheDocument();
   });
 });

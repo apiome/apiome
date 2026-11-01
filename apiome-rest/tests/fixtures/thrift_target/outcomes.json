@@ -1,0 +1,131 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "raml": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "smithy": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "thrift": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "thrift-payments": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "id_stability": {
+    "first": {
+      "age": 1,
+      "category": 2,
+      "id": 3,
+      "name": 4,
+      "tag": 5,
+      "weight": 6
+    },
+    "new_assignments": {
+      "Pet.nickname": 7
+    },
+    "re_export_with_stored_ids": {
+      "age": 1,
+      "category": 2,
+      "id": 3,
+      "name": 4,
+      "nickname": 7,
+      "weight": 6
+    },
+    "re_export_without_stored_ids": {
+      "age": 2,
+      "category": 3,
+      "id": 4,
+      "name": 5,
+      "nickname": 1,
+      "weight": 6
+    }
+  },
+  "options": {
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.thrift"
+        ],
+        "header_comment": true,
+        "java_namespace": false,
+        "preserved_percent": 0,
+        "problems": [],
+        "tier": "lossy"
+      },
+      "java-namespace": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.thrift"
+        ],
+        "header_comment": true,
+        "java_namespace": true,
+        "preserved_percent": 0,
+        "problems": [],
+        "tier": "lossy"
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.thrift"
+        ],
+        "header_comment": false,
+        "java_namespace": false,
+        "preserved_percent": 0,
+        "problems": [],
+        "tier": "lossy"
+      }
+    },
+    "thrift": {
+      "default": {
+        "files": [
+          "com_example_user.thrift"
+        ],
+        "header_comment": true,
+        "java_namespace": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "java-namespace": {
+        "files": [
+          "com_example_user.thrift"
+        ],
+        "header_comment": true,
+        "java_namespace": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "files": [
+          "com_example_user.thrift"
+        ],
+        "header_comment": false,
+        "java_namespace": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      }
+    }
+  }
+}

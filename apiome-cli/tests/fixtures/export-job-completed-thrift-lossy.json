@@ -1,0 +1,44 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "thrift",
+    "dry_run": false,
+    "fidelity": {
+      "summary": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 48,
+        "preserved": 0,
+        "dropped": 12,
+        "approximated": 16,
+        "synthesized": 20
+      },
+      "target": {
+        "key": "thrift",
+        "format": "thrift",
+        "label": "Apache Thrift"
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "message": "Exporting to Apache Thrift may lose some fidelity. The destination format can't represent everything in this API, so 48 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      }
+    },
+    "files": [
+      {
+        "path": "Sample_Pet_Store_API_OpenAPI_3_0.thrift",
+        "media_type": "application/x-thrift",
+        "size_bytes": 1191
+      }
+    ],
+    "media_type": "application/x-thrift",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

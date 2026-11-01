@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.586.0] - 2026-11-01
+
+### Added
+- **Thrift target card + fixtures (MFX-25.5, #4155).** `tests/test_thrift_target_card.py` +
+  `fixtures/thrift_target/outcomes.json` pin the `thrift` card per source kind (REST, GraphQL, JSON Schema, WSDL,
+  RAML, Smithy `lossy`; an imported Thrift IDL `lossless`), the `include_comments` / `namespaces` choices (each passes
+  `spot_check_thrift`), the **re-export id-stability fixture** (MFX-25.2: the Petstore's `Pet` re-exported after a
+  field is added and one removed keeps every surviving id with the stored ids, gives the new field a fresh id and
+  retires the removed one's; without the stored ids the positions shift; a Thrift source's own ids win), the MFX-25.4
+  gate, browse delivering the `.thrift` itself, and keep the CLI / UI registry fixtures and the CLI job fixture equal
+  to the live registry (`APIOME_REGEN_THRIFT_TARGET=1`).
+- OpenAPI document version 1.449.0 → 1.450.0.
+
 ## [1.585.0] - 2026-11-01
 
 ### Added
