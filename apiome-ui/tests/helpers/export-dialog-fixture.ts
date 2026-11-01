@@ -18,6 +18,10 @@ import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.jso
 import typespecTargetsForTypespec from '../fixtures/export-targets-typespec-typespec.json';
 import odataTargetsForRest from '../fixtures/export-targets-odata-rest.json';
 import odataTargetsForOdata from '../fixtures/export-targets-odata-odata.json';
+import ramlTargetsForRest from '../fixtures/export-targets-raml-rest.json';
+import ramlTargetsForRaml from '../fixtures/export-targets-raml-raml.json';
+import ramlTargetsForGraphql from '../fixtures/export-targets-raml-graphql.json';
+import ramlPreviewForGraphql from '../fixtures/export-preview-raml-graphql.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -345,6 +349,9 @@ export const EXPORT_DIALOG_PREVIEWS: Record<string, ExportFidelityEnvelope> = {
       message: 'Every construct is carried faithfully to OpenAPI 3.1.',
     },
   },
+  // The GraphQL source's live RAML preview (MFX-17.4), its report led by "RAML captures REST only" —
+  // recorded by `apiome-rest/tests/test_raml_target_card.py`.
+  raml: ramlPreviewForGraphql as unknown as ExportFidelityEnvelope,
 };
 
 /**
@@ -478,4 +485,18 @@ export function typespecTargets(source: 'rest' | 'typespec'): ExportTargetsRespo
  */
 export function odataTargets(source: 'rest' | 'odata'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? odataTargetsForRest : odataTargetsForOdata);
+}
+
+/**
+ * The RAML target as the registry lists it (MFX-17.4, #3904), for a REST source, an imported RAML API and a
+ * GraphQL source — recorded from the live REST registry by `apiome-rest/tests/test_raml_target_card.py`. A
+ * REST or GraphQL source loses what RAML does not keep (`lossy`; a GraphQL source's report also leads with
+ * "RAML captures REST only"); a RAML API exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI), `raml` (an imported RAML orders API) or `graphql`.
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function ramlTargets(source: 'rest' | 'raml' | 'graphql'): ExportTargetsResponse {
+  const recorded = { rest: ramlTargetsForRest, raml: ramlTargetsForRaml, graphql: ramlTargetsForGraphql };
+  return recordedTargets(recorded[source]);
 }

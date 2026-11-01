@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.581.0] - 2026-11-01
+
+### Added
+- **RAML target card + fixtures (MFX-17.4, #3904).** `tests/test_raml_target_card.py` +
+  `fixtures/raml_target/outcomes.json` pin the `raml` card per source kind (REST, RPC, GraphQL, JSON Schema, WSDL
+  `lossy`; an imported RAML API `lossless`), the "RAML captures REST only" warning leading the report of every
+  non-REST source (RPC, GraphQL, JSON Schema) and absent from REST ones (OpenAPI, RAML, WSDL), the
+  `include_comments` / `media_type` choices (one `.raml` the export gate accepts; the option names the `mediaType`
+  only when the source has none), the MFX-17.3 gate, browse delivering the `.raml` itself, and keep the CLI / UI
+  registry fixtures, the CLI job fixtures and the UI GraphQL preview equal to the live registry
+  (`APIOME_REGEN_RAML_TARGET=1`).
+- OpenAPI document version 1.444.0 → 1.445.0.
+
 ## [1.580.0] - 2026-11-01
 
 ### Added

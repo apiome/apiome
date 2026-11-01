@@ -30,7 +30,9 @@
  *     project, one file, with its HTTP-imports and header-comment options — from the recorded live registry.
  * 15. The OData card (MFX-16.4): `lossy` for a REST source, `lossless` for an imported OData service, one
  *     file, with its CSDL output picker (JSON by default) and XML header-comment option — from the recorded
- *     live registry.
+ *     live registry. * 16. The RAML card (MFX-17.4): `lossy` for a REST or GraphQL source, `lossless` for an imported RAML API,
+ *     one file, with its header-comment and media-type options; a GraphQL source's fidelity report leads
+ *     with "RAML captures REST only" — from the recorded live registry and preview.
  */
 
 import React from 'react';
@@ -67,6 +69,7 @@ import {
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
   odataTargets,
+  ramlTargets,
   x12GuideTargets,
   typespecTargets,
   wsdlTargets,
@@ -1155,5 +1158,40 @@ describe('ExportDialog — OData target card (MFX-16.4)', () => {
     fireEvent.click(within(output).getByRole('radio', { name: 'both' }));
     expect(within(output).getByRole('radio', { name: 'both' })).toBeChecked();
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+  });
+});
+
+describe('ExportDialog — RAML target card (MFX-17.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['graphql', 'lossy'],
+    ['raml', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(ramlTargets(source)));
+
+    const card = screen.getByTestId('export-target-raml');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('RAML')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .raml document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the header comment and media type options', async () => {
+    await renderAtTargetStep(mockFetch(ramlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-raml'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    expect(screen.getByLabelText(/Media Type/i)).toHaveValue('application/json');
+  });
+
+  it('leads a GraphQL source\'s fidelity report with "RAML captures REST only"', async () => {
+    await renderAtFidelityStep(mockFetch(ramlTargets('graphql')), 'raml');
+
+    await waitFor(() => expect(screen.getByTestId('export-report-toggle')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('export-report-toggle'));
+    const report = screen.getByTestId('export-fidelity-report');
+    expect(within(report).getAllByText(/RAML captures REST only/).length).toBeGreaterThan(0);
   });
 });

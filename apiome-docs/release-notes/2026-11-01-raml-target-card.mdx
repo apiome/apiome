@@ -1,0 +1,19 @@
+---
+slug: raml-target-card
+title: Export to RAML from the Export dialog and the CLI
+description: The RAML card shows its options and warns that RAML captures REST only.
+authors: [apiome]
+---
+
+The **Export** dialog's **RAML** card writes one `.raml` file and shows its two options,
+**Include Comments** and **Media Type**. The CLI exports the same with `apiome export raml`.
+[Where to find it](/ship/export-a-spec#raml-from-any-source).
+
+{/* truncate */}
+
+- **REST only.** RAML is a legacy, REST-only format. Exporting a GraphQL, RPC or data-schema item
+  starts its fidelity report with **RAML captures REST only**, in the dialog and in the CLI's output.
+- **Your RAML exports losslessly.** An item imported from RAML badges **lossless**. Any other source is
+  **lossy**, and the fidelity report lists what RAML does not keep.
+- **One file.** The card, the CLI and a public item's Export dialog on Browse all deliver the `.raml`
+  itself, not a `.zip`.
