@@ -97,6 +97,7 @@ apiome-rest/docs/normalizer_spi.md
 apiome-rest/docs/notifications.md
 apiome-rest/docs/openapi_compatibility_evidence.md
 apiome-rest/docs/openapi_validation_packs.md
+apiome-rest/docs/overlay.md
 apiome-rest/docs/payload_analysis.md
 apiome-rest/docs/payload_analyzers.md
 apiome-rest/docs/preservation_envelope.md
