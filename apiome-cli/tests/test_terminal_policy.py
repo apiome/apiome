@@ -14,6 +14,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
+from helpers import strip_ansi
 from apiome_cli.cli_context import settings_from_context
 from apiome_cli.exit_codes import EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.main import app
@@ -123,13 +124,13 @@ def test_root_flags_are_advertised_in_help() -> None:
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == EXIT_SUCCESS
     for flag in ("--no-color", "--quiet", "--no-input", "--api-key-file"):
-        assert flag in result.output
+        assert flag in strip_ansi(result.output)
 
 
 def test_debug_is_an_alias_for_verbose() -> None:
     """clig.dev discourages overloading -v; -d/--debug is the documented spelling."""
     result = runner.invoke(app, ["--help"])
-    assert "--debug" in result.output
+    assert "--debug" in strip_ansi(result.output)
 
 
 def test_no_color_flag_disables_colour_via_context() -> None:

@@ -14,6 +14,7 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
+from helpers import strip_ansi
 from apiome_cli.exit_codes import EXIT_SUCCESS, EXIT_USAGE
 from apiome_cli.main import app
 
@@ -299,4 +300,4 @@ def test_formats_help_documents_every_flag() -> None:
     result = runner.invoke(app, ["formats", "--help"])
     assert result.exit_code == EXIT_SUCCESS
     for flag in ("--json", "--paradigm", "--direction"):
-        assert flag in result.stdout
+        assert flag in strip_ansi(result.stdout)

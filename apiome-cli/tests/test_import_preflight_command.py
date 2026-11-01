@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from helpers import strip_ansi
 from apiome_cli.exit_codes import (
     EXIT_POLICY_BLOCKED,
     EXIT_PREFLIGHT_UNUSABLE,
@@ -290,7 +291,7 @@ def test_preflight_rejects_an_off_ladder_min_grade(spec_file: Path) -> None:
     """A typo must exit as usage (2), never as a quality failure."""
     result = runner.invoke(app, ["import", "preflight", str(spec_file), "--min-grade", "E"])
     assert result.exit_code == EXIT_USAGE
-    assert "--min-grade" in result.stderr
+    assert "--min-grade" in strip_ansi(result.stderr)
 
 
 def test_preflight_rejects_an_off_ladder_fail_on(spec_file: Path) -> None:

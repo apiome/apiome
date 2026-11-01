@@ -9,6 +9,7 @@ import httpx
 import pytest
 from typer.testing import CliRunner
 
+from helpers import strip_ansi
 from apiome_cli.client.schema_registry import (
     normalize_choice,
     refusal_message,
@@ -205,7 +206,7 @@ def test_register_needs_a_type_for_an_unknown_extension(tmp_path: Path) -> None:
     path.write_text(_AVRO, encoding="utf-8")
     result = runner.invoke(app, ["registry", "register", "orders-value", str(path)])
     assert result.exit_code == EXIT_USAGE
-    assert "--type" in result.output
+    assert "--type" in strip_ansi(result.output)
 
 
 def test_register_rejects_a_bad_type(avro_file: Path) -> None:
