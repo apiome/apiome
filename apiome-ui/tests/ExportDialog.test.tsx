@@ -51,6 +51,9 @@
  * 22. The OMG IDL card (MFX-28.4): `lossy` for a REST source, `lossless` for an imported CORBA IDL, one file,
  *     with its profile picker (CORBA by default, or DDS), module and header-comment options; the DDS key
  *     map stays off the panel — from the recorded live registry.
+ * 23. The FlatBuffers and Cap'n Proto cards (MFX-30.4): FlatBuffers `types-only` and Cap'n Proto `lossy` for a
+ *     REST source, each `lossless` for its own format, one file, with the header-comment option (and
+ *     FlatBuffers' root type); the stored-field-id map stays off the panel — from the recorded live registry.
  */
 
 import React from 'react';
@@ -91,6 +94,7 @@ import {
   mockExportDialogFetch as mockFetch,
   odataTargets,
   ramlTargets,
+  serializationIdlTargets,
   smithyTargets,
   thriftTargets,
   xsdTargets,
@@ -1408,5 +1412,36 @@ describe('ExportDialog — OMG IDL target card (MFX-28.4)', () => {
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
     // The DDS `@key` map is set from the CLI / REST API.
     expect(screen.queryByLabelText(/Key Fields/i)).not.toBeInTheDocument();
+  });
+});
+
+describe.each([
+  ['flatbuffers', 'FlatBuffers', 'types-only'],
+  ['capnproto', "Cap'n Proto", 'lossy'],
+] as const)('ExportDialog — %s target card (MFX-30.4)', (target, label, restTier) => {
+  it.each([
+    ['rest', restTier],
+    ['own', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(serializationIdlTargets(target, source)));
+
+    const card = screen.getByTestId(`export-target-${target}`);
+    expect(card).toBeEnabled();
+    expect(within(card).getByText(label)).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the header comment option and keeps the stored field ids off the panel', async () => {
+    await renderAtTargetStep(mockFetch(serializationIdlTargets(target, 'rest')));
+
+    fireEvent.click(screen.getByTestId(`export-target-${target}`));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    // The stored ids are kept by the export service itself (MFX-12.2), not chosen in the dialog.
+    expect(screen.queryByLabelText(/Persisted Field Numbers/i)).not.toBeInTheDocument();
+    if (target === 'flatbuffers') {
+      expect(screen.getByLabelText(/Root Type/i)).toHaveValue('');
+    }
   });
 });

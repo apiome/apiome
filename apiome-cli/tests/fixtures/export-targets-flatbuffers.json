@@ -1,0 +1,77 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "flatbuffers",
+        "format": "flatbuffers",
+        "label": "FlatBuffers",
+        "description": "Export as a FlatBuffers schema (.fbs): tables, structs, enums and unions with stable field ids.",
+        "icon": "boxes",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": false,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`FlatBuffersEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit a generated-file header and type / field descriptions as `///` comments.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "root_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The table a buffer starts with (`root_type`), by type name or key; defaults to the imported schema's root type.",
+            "title": "Root Type"
+          },
+          "persisted_field_numbers": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Field ids stored by earlier exports (`<field key> \u2192 id`); filled by the export service so a re-export writes the same ids.",
+            "title": "Persisted Field Numbers",
+            "type": "object"
+          }
+        },
+        "title": "FlatBuffersEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "root_type": null,
+        "persisted_field_numbers": {}
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 10,
+        "total": 21,
+        "preserved": 2,
+        "dropped": 6,
+        "approximated": 4,
+        "synthesized": 9
+      }
+    }
+  ]
+}

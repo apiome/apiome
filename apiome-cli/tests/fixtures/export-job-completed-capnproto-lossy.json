@@ -1,0 +1,44 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "capnproto",
+    "dry_run": false,
+    "fidelity": {
+      "summary": {
+        "tier": "lossy",
+        "preserved_percent": 20,
+        "total": 35,
+        "preserved": 7,
+        "dropped": 4,
+        "approximated": 9,
+        "synthesized": 15
+      },
+      "target": {
+        "key": "capnproto",
+        "format": "capnproto",
+        "label": "Cap'n Proto"
+      },
+      "advisory": {
+        "show": true,
+        "severity": "warn",
+        "message": "Exporting to Cap'n Proto may lose some fidelity. The destination format can't represent everything in this API, so 28 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      }
+    },
+    "files": [
+      {
+        "path": "Sample_Pet_Store_API_OpenAPI_3_0.capnp",
+        "media_type": "text/x-capnproto",
+        "size_bytes": 676
+      }
+    ],
+    "media_type": "text/x-capnproto",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

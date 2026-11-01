@@ -154,6 +154,11 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'corbaidl').key).toBe('rpc');
   });
 
+  it('files FlatBuffers under Data schema & graph and Cap\'n Proto under RPC by paradigm (MFX-30.4)', () => {
+    expect(familyForTarget('data_schema', 'flatbuffers').label).toBe('Data schema & graph');
+    expect(familyForTarget('rpc', 'capnproto').key).toBe('rpc');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

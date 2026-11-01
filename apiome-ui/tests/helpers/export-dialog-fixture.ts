@@ -34,6 +34,10 @@ import asn1TargetsForRest from '../fixtures/export-targets-asn1-rest.json';
 import asn1TargetsForAsn1 from '../fixtures/export-targets-asn1-asn1.json';
 import corbaidlTargetsForRest from '../fixtures/export-targets-corbaidl-rest.json';
 import corbaidlTargetsForCorbaidl from '../fixtures/export-targets-corbaidl-corbaidl.json';
+import flatbuffersTargetsForRest from '../fixtures/export-targets-flatbuffers-rest.json';
+import flatbuffersTargetsForFlatbuffers from '../fixtures/export-targets-flatbuffers-flatbuffers.json';
+import capnprotoTargetsForRest from '../fixtures/export-targets-capnproto-rest.json';
+import capnprotoTargetsForCapnproto from '../fixtures/export-targets-capnproto-capnproto.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -584,4 +588,25 @@ export function asn1Targets(source: 'rest' | 'asn1'): ExportTargetsResponse {
  */
 export function corbaidlTargets(source: 'rest' | 'corbaidl'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? corbaidlTargetsForRest : corbaidlTargetsForCorbaidl);
+}
+
+/**
+ * The FlatBuffers and Cap'n Proto targets as the registry lists them (MFX-30.4, #4181), for a REST source and for
+ * a source in the target's own format — recorded from the live REST registry by
+ * `apiome-rest/tests/test_serialization_idl_target_cards.py`. A REST source badges FlatBuffers `types-only` and
+ * Cap'n Proto `lossy`; each format's own schema exports again unchanged (`lossless`).
+ *
+ * @param target `flatbuffers` or `capnproto`.
+ * @param source `rest` (the Petstore OpenAPI) or `own` (the Monster `.fbs` / address-book `.capnp`).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function serializationIdlTargets(
+  target: 'flatbuffers' | 'capnproto',
+  source: 'rest' | 'own',
+): ExportTargetsResponse {
+  const recorded = {
+    flatbuffers: { rest: flatbuffersTargetsForRest, own: flatbuffersTargetsForFlatbuffers },
+    capnproto: { rest: capnprotoTargetsForRest, own: capnprotoTargetsForCapnproto },
+  };
+  return recordedTargets(recorded[target][source]);
 }
