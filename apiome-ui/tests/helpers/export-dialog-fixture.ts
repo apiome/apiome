@@ -22,6 +22,8 @@ import ramlTargetsForRest from '../fixtures/export-targets-raml-rest.json';
 import ramlTargetsForRaml from '../fixtures/export-targets-raml-raml.json';
 import ramlTargetsForGraphql from '../fixtures/export-targets-raml-graphql.json';
 import ramlPreviewForGraphql from '../fixtures/export-preview-raml-graphql.json';
+import apiblueprintTargetsForRest from '../fixtures/export-targets-apiblueprint-rest.json';
+import apiblueprintTargetsForApiblueprint from '../fixtures/export-targets-apiblueprint-apiblueprint.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -499,4 +501,17 @@ export function odataTargets(source: 'rest' | 'odata'): ExportTargetsResponse {
 export function ramlTargets(source: 'rest' | 'raml' | 'graphql'): ExportTargetsResponse {
   const recorded = { rest: ramlTargetsForRest, raml: ramlTargetsForRaml, graphql: ramlTargetsForGraphql };
   return recordedTargets(recorded[source]);
+}
+
+/**
+ * The API Blueprint target as the registry lists it (MFX-18.4, #3908), for a REST source and for an imported
+ * API Blueprint — recorded from the live REST registry by `apiome-rest/tests/test_apiblueprint_target_card.py`.
+ * A REST source loses what Markdown + MSON does not keep, its rich constraints among them (`lossy`); an API
+ * Blueprint exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `apiblueprint` (an imported bookstore blueprint).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function apiblueprintTargets(source: 'rest' | 'apiblueprint'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? apiblueprintTargetsForRest : apiblueprintTargetsForApiblueprint);
 }

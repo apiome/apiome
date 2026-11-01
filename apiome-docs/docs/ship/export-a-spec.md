@@ -1540,6 +1540,18 @@ Each export is checked before you download it:
 An item imported from API Blueprint exports and re-imports unchanged. From any other source, the
 re-import shows what API Blueprint could not keep; the fidelity report names those losses.
 
+**Where to find it.** In the **Export** dialog, the **API Blueprint** card is under **REST & HTTP** on
+the **Target** step, as one file. Its badge is **lossless** for an item imported from API Blueprint and
+**lossy** for any other source. On the **Fidelity** step, the export is described as one for
+human-readable docs, and the report lists each constraint MSON cannot express (`format`, `minimum`,
+`maximum`, exclusive bounds) as dropped. Pick the card to see its three options: **Format Version**
+(`1A`, the `FORMAT` line), **Include Comments** (on by default), which writes the generated-file comment
+under the title, and **Media Type** (`application/json` by default), for a request body whose item
+names none. From the CLI, run `apiome export apiblueprint <item> --out <file>.apib`, and add
+`--option include_comments=false` or `--option media_type=application/xml`. The CLI prints the
+dropped constraints. A lossy export exits non-zero unless you add `--force`, and `--json` prints the
+tier. A public item's **Export** dialog on Browse offers API Blueprint too, as the `.apib` file.
+
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | Apache Avro | Data schema | Any source |
