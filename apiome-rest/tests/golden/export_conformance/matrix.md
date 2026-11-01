@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 38 |
-| lossy | 3939 |
+| ok | 39 |
+| lossy | 3938 |
 | refused | 2115 |
 | silent-loss | 172 |
 | crash | 0 |
@@ -36,7 +36,7 @@ Every corpus source family exported to every production target through the catal
 | cobolcopybook | L | R | R | L | L | L | R | R | R | L | S | L | ok | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | S | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | connectrpc | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
 | consul | L | L | L | L | L | R | L | L | R | L | L | L | R | S | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | R | L | L | L | R | R | L | R |
-| corbaidl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
+| corbaidl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | ok | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
 | cue | L | R | R | L | S | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | dbt | L | R | R | L | S | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | dhall | L | R | R | L | S | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |

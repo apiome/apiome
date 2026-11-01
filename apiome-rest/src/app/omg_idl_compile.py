@@ -56,6 +56,8 @@ _DDS_HEADER_RE = re.compile(r"^//\s*Generated OMG IDL[^\n]*\(DDS profile\)", re.
 _CORBA_HEADER_RE = re.compile(r"^//\s*Generated OMG IDL[^\n]*\(CORBA profile\)", re.MULTILINE)
 #: An annotation (``@key``, ``@optional``, ``@topic``): OMG IDL uses ``@`` for nothing else.
 _ANNOTATION_RE = re.compile(r"(?<![\w\"'])@[A-Za-z_]")
+#: A declaration only the CORBA profile writes: the DDS profile has no interfaces or exceptions.
+_CORBA_DECLARATION_RE = re.compile(r"^\s*(?:local\s+|abstract\s+)?(?:interface|exception)\s+\w+", re.MULTILINE)
 _DIAGNOSTIC_RE = re.compile(r"\berror\b", re.IGNORECASE)
 #: The compiler's closing tally (``omniidl: 1 error.``), which repeats nothing a finding needs.
 _SUMMARY_RE = re.compile(r"^\S+:\s*\d+\s+errors?\.?$", re.IGNORECASE)
@@ -87,12 +89,16 @@ def idl_compiler_for(text: str) -> str:
 
     Returns:
         :data:`IDLC_TOOL_KEY` when the header names the DDS profile, or (without a header) when the file
-        has an annotation line; :data:`OMNIIDL_TOOL_KEY` otherwise — a DDS-profile file with neither is
-        plain IDL that both compilers accept.
+        has an annotation line and no ``interface`` / ``exception`` — the DDS profile writes neither, so
+        either one marks a CORBA file whose comments were turned off (MFX-28.4, #4171);
+        :data:`OMNIIDL_TOOL_KEY` otherwise — a DDS-profile file with no annotation is plain IDL that both
+        compilers accept.
     """
     if _DDS_HEADER_RE.search(text):
         return IDLC_TOOL_KEY
     if _CORBA_HEADER_RE.search(text):
+        return OMNIIDL_TOOL_KEY
+    if _CORBA_DECLARATION_RE.search(text):
         return OMNIIDL_TOOL_KEY
     return IDLC_TOOL_KEY if _ANNOTATION_RE.search(text) else OMNIIDL_TOOL_KEY
 

@@ -172,6 +172,20 @@ class CorbaIdlFidelityRulePack(CapabilityRulePack):
         )
         return super().evaluate(api)
 
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """A CORBA IDL source's field number is its member position, which the writer keeps: not a loss.
+
+        Args:
+            field: The source field.
+
+        Returns:
+            ``None`` for a CORBA IDL source (the reader numbers members by position and the writer writes them
+            in that order — MFX-28.4, #4171); otherwise the capability profile's verdict.
+        """
+        if getattr(self, "_corba_source", False):
+            return None
+        return super()._field_identity_verdict(field)
+
     # -- keys a re-import gives back ----------------------------------------------
 
     def _key(self, name: str) -> str:

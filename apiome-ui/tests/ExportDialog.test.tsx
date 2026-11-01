@@ -48,6 +48,9 @@
  * 21. The ASN.1 card (MFX-27.4): `types-only` for a REST source, `lossless` for an imported ASN.1 module, one
  *     file, with its module name, OID, automatic-tags and header-comment options — from the recorded live
  *     registry.
+ * 22. The OMG IDL card (MFX-28.4): `lossy` for a REST source, `lossless` for an imported CORBA IDL, one file,
+ *     with its profile picker (CORBA by default, or DDS), module and header-comment options; the DDS key
+ *     map stays off the panel — from the recorded live registry.
  */
 
 import React from 'react';
@@ -84,6 +87,7 @@ import {
   jsonSchemaTargets,
   apiblueprintTargets,
   asn1Targets,
+  corbaidlTargets,
   mockExportDialogFetch as mockFetch,
   odataTargets,
   ramlTargets,
@@ -1372,5 +1376,37 @@ describe('ExportDialog — ASN.1 target card (MFX-27.4)', () => {
     expect(screen.getByLabelText(/Oid/i)).toHaveValue('');
     expect(screen.getByLabelText(/Automatic Tags/i)).toBeChecked();
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+  });
+});
+
+describe('ExportDialog — OMG IDL target card (MFX-28.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['corbaidl', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(corbaidlTargets(source)));
+
+    const card = screen.getByTestId('export-target-corbaidl');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('CORBA IDL')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .idl document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the profile picker, CORBA by default, and the module and header comment options', async () => {
+    await renderAtTargetStep(mockFetch(corbaidlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-corbaidl'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const profile = screen.getByRole('radiogroup', { name: 'Profile' });
+    expect(within(profile).getAllByRole('radio').map((option) => option.textContent)).toEqual(['corba', 'dds']);
+    expect(within(profile).getByRole('radio', { name: 'corba' })).toBeChecked();
+    fireEvent.click(within(profile).getByRole('radio', { name: 'dds' }));
+    expect(within(profile).getByRole('radio', { name: 'dds' })).toBeChecked();
+    expect(screen.getByLabelText(/Module/i)).toHaveValue('');
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    // The DDS `@key` map is set from the CLI / REST API.
+    expect(screen.queryByLabelText(/Key Fields/i)).not.toBeInTheDocument();
   });
 });

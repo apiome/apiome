@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.589.0] - 2026-11-01
+
+### Added
+- **OMG IDL target card + fixtures (MFX-28.4, #4171).** `tests/test_corbaidl_target_card.py` +
+  `fixtures/corbaidl_target/outcomes.json` pin the `corbaidl` card per source kind (REST, RPC, GraphQL, JSON Schema,
+  WSDL, RAML, Smithy `lossy`; an imported CORBA IDL `lossless`), the `profile` (`corba` → omniidl, interfaces; `dds` →
+  idlc, `@key`, no interfaces), `key_fields`, `module` and `include_comments` choices (each re-parses through the OMG
+  IDL reader), the MFX-28.3 gate, browse delivering the `.idl` itself, and keep the CLI / UI registry fixtures and the
+  CLI job fixture equal to the live registry (`APIOME_REGEN_CORBAIDL_TARGET=1`).
+
+### Fixed
+- **OMG IDL fidelity: no false field-number loss for a CORBA IDL source.** `CorbaIdlFidelityRulePack` no longer reports
+  a CORBA source's field numbers as dropped: the reader numbers members by position and the writer writes them in that
+  order. Every corpus CORBA IDL now badges `lossless` (export conformance `corbaidl → corbaidl` is `ok`).
+- **A CORBA export without comments is checked by omniidl.** `omg_idl_compile.idl_compiler_for` sent a header-less
+  CORBA file with an annotation (`@optional`) to the DDS compiler `idlc`; an `interface` or `exception` — which the
+  DDS profile never writes — now marks it CORBA.
+- OpenAPI document version 1.452.0 → 1.453.0.
+
 ## [1.588.0] - 2026-11-01
 
 ### Added
