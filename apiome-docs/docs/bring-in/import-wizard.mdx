@@ -288,6 +288,27 @@ example `[{ "name": "key", "arguments": { "fields": "id" } }]`. An enum value's 
 To keep the schema in its own GraphQL form instead — queries, mutations and all — import it to the
 catalog (below).
 
+### Protocol Buffers and Avro schemas
+
+A `.proto` file (proto2 or proto3) or an Avro schema (`.avsc`) can be imported as a project too: each
+message, record and enum becomes a class. Try `apiome-ui/examples/protobuf/04-telemetry-stress.proto`
+or `apiome-ui/examples/avro/02-order-record.avsc`. Services and RPCs are not imported.
+
+| In the schema | In the project |
+| --- | --- |
+| A Protobuf `message`, an Avro `record` | A class, with one property per field |
+| An `enum` | A class whose values are the enum's values |
+| `repeated` (Protobuf), `array` (Avro) | A list property |
+| `map<K, V>` (Protobuf), `map` (Avro) | An object property whose values are of the map's type |
+| A Protobuf `oneof` | One optional property per member, each marked `x-proto-oneof` with the group's name; the class lists its groups under `x-proto-oneofs` — at most one member is set |
+| An Avro union | `null` and one type becomes an optional property; several types become a property that is one of them |
+| An Avro logical type | The type it stands for, marked `x-avro-logical-type` |
+
+Avro logical types become: `date` → a date, `time-millis` / `time-micros` → a time,
+`timestamp-*` and `local-timestamp-*` → a date and time, `uuid` → a UUID, `duration` → a duration, and
+`decimal` → a number that keeps its `x-avro-precision` and `x-avro-scale`. A logical type Apiome does
+not know keeps its underlying type (a `long` stays a 64-bit integer) and its name.
+
 ## Import to catalog
 
 **Click “Import to catalog”** on the [Catalog](./catalog.mdx). Steps: **Source → Detect & route →

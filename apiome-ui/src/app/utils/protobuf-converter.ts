@@ -9,7 +9,15 @@ import { looksLikeStructuredDocument } from './document-markers';
  * - enum definitions → string schemas with enum array
  * - repeated → array of item type
  * - map<K,V> → object with additionalProperties
+ * - oneof → each member stays an (optional) property tagged `x-proto-oneof: <group>`; the message schema
+ *   lists its groups under `x-proto-oneofs` (`{ group: [member, …] }`) — at most one member is set (#2776)
  */
+
+/** The property extension naming the `oneof` group a field belongs to (#2776). */
+export const PROTO_ONEOF_EXTENSION = 'x-proto-oneof';
+
+/** The message-schema extension listing each `oneof` group and its members, in declaration order (#2776). */
+export const PROTO_ONEOFS_EXTENSION = 'x-proto-oneofs';
 
 export interface ProtobufConversionResult {
   success: boolean;
@@ -88,8 +96,45 @@ interface ProtoMessage {
     keyType?: string;
     valueType?: string;
     number: number;
+    /** The `oneof` group the field is declared in, when it is (#2776). */
+    oneof?: string;
   }>;
   nested: Array<ProtoMessage | ProtoEnum>;
+}
+
+/**
+ * The `oneof` groups a message body declares at its own level — not those of a message or enum nested in it.
+ *
+ * @param inner - The message body (between its braces).
+ * @returns Field name → the `oneof` group it is declared in.
+ */
+function parseOneofGroups(inner: string): Map<string, string> {
+  // The spans of nested message / enum blocks, whose oneofs belong to the nested message.
+  const nested: Array<[number, number]> = [];
+  const nestedRegex = /\b(?:message|enum)\s+\w+\s*\{/g;
+  let nestedMatch;
+  while ((nestedMatch = nestedRegex.exec(inner)) !== null) {
+    const open = nestedMatch.index + nestedMatch[0].length - 1;
+    const close = findMatchingBrace(inner, open + 1);
+    if (close !== -1) nested.push([open, close]);
+  }
+  const insideNested = (index: number) => nested.some(([open, close]) => index > open && index < close);
+
+  const groups = new Map<string, string>();
+  const oneofRegex = /\boneof\s+(\w+)\s*\{/g;
+  let oneofMatch;
+  while ((oneofMatch = oneofRegex.exec(inner)) !== null) {
+    if (insideNested(oneofMatch.index)) continue;
+    const open = oneofMatch.index + oneofMatch[0].length - 1;
+    const close = findMatchingBrace(inner, open + 1);
+    if (close === -1) continue;
+    const memberRegex = /(?:map\s*<[^>]*>|\w+)\s+(\w+)\s*=\s*\d+\s*;/g;
+    let memberMatch;
+    while ((memberMatch = memberRegex.exec(inner.slice(open + 1, close))) !== null) {
+      groups.set(memberMatch[1], oneofMatch[1]);
+    }
+  }
+  return groups;
 }
 
 function parseProtoEnumsAndMessages(
@@ -209,6 +254,13 @@ function parseProtoEnumsAndMessages(
         }
       }
 
+      // Members of a `oneof` (#2776): at most one is set, so each is optional and carries its group.
+      const oneofGroups = parseOneofGroups(inner);
+      for (const field of fields) {
+        const group = oneofGroups.get(field.name);
+        if (group) field.oneof = group;
+      }
+
       const msg: ProtoMessage = { name: block.name, fullName, fields, nested: [] };
       allMessages.set(fullName, msg);
       parseProtoEnumsAndMessages(inner, fullName, allEnums, allMessages, warnings);
@@ -308,9 +360,13 @@ export function convertProtobufToOpenAPI(content: string, _fileName?: string): P
   for (const [fullName, msg] of allMessages) {
     const properties: Record<string, any> = {};
     const required: string[] = [];
+    const oneofs: Record<string, string[]> = {};
     for (const f of msg.fields) {
-      properties[f.name] = protoTypeToSchema(f, allEnums, allMessages);
-      if (protoVersion === 'proto2' && f.modifier === 'required') {
+      const schema = protoTypeToSchema(f, allEnums, allMessages);
+      properties[f.name] = f.oneof ? { ...schema, [PROTO_ONEOF_EXTENSION]: f.oneof } : schema;
+      if (f.oneof) {
+        (oneofs[f.oneof] ??= []).push(f.name);
+      } else if (protoVersion === 'proto2' && f.modifier === 'required') {
         required.push(f.name);
       }
     }
@@ -318,6 +374,7 @@ export function convertProtobufToOpenAPI(content: string, _fileName?: string): P
       type: 'object',
       properties: Object.keys(properties).length ? properties : {},
       ...(required.length ? { required } : {}),
+      ...(Object.keys(oneofs).length ? { [PROTO_ONEOFS_EXTENSION]: oneofs } : {}),
       description: `Message: ${msg.name}`,
     };
   }

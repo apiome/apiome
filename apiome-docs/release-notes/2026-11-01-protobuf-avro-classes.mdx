@@ -1,0 +1,17 @@
+---
+slug: protobuf-avro-classes
+title: Protobuf oneof and Avro logical types come through when imported as a project
+description: A oneof's members and Avro logical types now map onto the imported classes.
+authors: [apiome]
+---
+
+Importing a `.proto` or `.avsc` file as a project now keeps the last two constructs it used to lose.
+[See how they import](/bring-in/import-wizard#protocol-buffers-and-avro-schemas).
+
+{/* truncate */}
+
+- **Protobuf `oneof`.** Each member stays an optional property marked `x-proto-oneof` with its group,
+  and the class lists the groups under `x-proto-oneofs` — so you can see which fields exclude each other.
+- **Avro logical types.** `date`, `time-*`, `timestamp-*`, `uuid`, `duration` and `decimal` become the
+  type they stand for (a `timestamp-millis` is a date and time, not a bare 64-bit number), marked
+  `x-avro-logical-type`; `decimal` keeps its precision and scale.
