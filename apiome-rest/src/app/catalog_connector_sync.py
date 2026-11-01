@@ -121,6 +121,7 @@ __all__ = [
     "ItemSyncOutcome",
     "import_document_as_catalog_item",
     "process_connector_refresh_sweep",
+    "unseal_connector_credentials",
     "register_connector_source",
     "run_connector_sync",
     "source_factory_for",
@@ -385,6 +386,11 @@ def _unseal(db: Any, connector_id: str) -> tuple:
     if opened is None:
         return None, True
     return {str(k): str(v) for k, v in opened.items()}, False
+
+
+def unseal_connector_credentials(db: Any, connector_id: str) -> tuple:
+    """``(credentials, unreadable)`` for a connector, for a caller outside a sync (MFX-19.4's push)."""
+    return _unseal(db, connector_id)
 
 
 def _catalog_slug(connector: Mapping[str, Any], candidate: RefreshCandidate) -> str:

@@ -9,7 +9,8 @@ A **schema registry connector** keeps a copy of a Confluent-compatible schema re
 Confluent Platform or Cloud, Karapace, or Apicurio Registry's compatibility API
 (`https://<apicurio>/apis/ccompat/v7`). Each upstream subject becomes a subject in Apiome's
 [schema registry](../reference/rest/schema-registry.md) and a catalog item with one revision per
-upstream version. The connector only reads. It never writes to the upstream registry.
+upstream version. A sync only reads: it never writes to the upstream registry. To register an
+Avro export there, [push it through the connector](../ship/push-avro-to-a-schema-registry.md).
 
 A registry can hold thousands of subjects. Each sync works within a **crawl budget** and records
 where it stopped. The next sync carries on from there, so a large registry is mirrored over several
@@ -104,3 +105,4 @@ the whole registry on each sync, without a checkpoint.
 - [Import Avro](./avro-import.md) — what a mirrored Avro schema becomes, and Confluent-style compatibility
 - [Import a CNCF xRegistry](./xregistry-import.md) — the registry crawl for CloudEvents catalogs
 - [`apiome connectors`](../reference/cli/connectors.md) — add, update, sync and read runs
+- [Push Avro to a schema registry](../ship/push-avro-to-a-schema-registry.md) — register an Avro export's subjects through the connector

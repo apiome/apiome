@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 11 operations."
+description: "REST endpoints tagged export: 12 operations."
 sidebar_position: 31
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,38 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.455.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.456.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 11 operations
+Tag: `export` · 12 operations
+
+## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
+
+**Register an Avro export on a schema registry through a connector**
+
+MFX-19.4: export one version to Avro (``.avsc``, one schema per type, each under the subject its naming strategy gives it), validate it with fastavro, then push each subject to the registry of an existing ``schema-registry`` connector, using the connector's base URL and stored credentials. Per subject, referenced schemas first: look the schema up (already registered → nothing written), check it against the subject's latest version under the subject's compatibility level (incompatible → not registered), then register it, with Confluent ``references`` to the subjects of the types it names. ``dry_run`` does everything but register. The response gives each subject's status, schema id and version. Needs ``imports:edit``.
+
+Operation id: `push_avro_export_v1_export__tenant_slug__avro_push_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for register an avro export on a schema registry through a connector.
+
+- `application/json` — [`AvroPushRequest`](#schema-avropushrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for register an avro export on a schema registry through a connector. | `application/json` [`AvroPushResponse`](#schema-avropushresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/export/{tenant_slug}/capability-registry` {#get-capability-registry-v1-export-tenant-slug-capability-registry-get}
 
@@ -326,6 +355,34 @@ Request body for pre-flight an export: source lint + target-readiness ranking (n
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
+
+### `AvroPushRequest` {#schema-avropushrequest}
+
+Which version to export to Avro, and the connector whose registry receives it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `artifact` | string | yes | The artifact (project) id to export. |
+| `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
+| `options` | object or null | no | Avro emit options (``namespace``, ``subject_naming``, ``topic``, ``subject_role``); ``output_syntax`` must stay ``avsc``. Null applies the defaults. |
+| `connector_id` | string (uuid) | yes | The ``schema-registry`` connector whose registry receives the push. |
+| `dry_run` | boolean | no | Look up and check every subject against the registry, but register nothing. |
+| `confirm` | boolean | no | Push a **severe** conversion (MFX-3.3) the export guard would otherwise refuse. |
+
+### `AvroPushResponse` {#schema-avropushresponse}
+
+What the push did for each subject.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `artifact` | string | yes | The artifact (project) id exported. |
+| `version_record_id` | string | yes | The resolved revision (``versions.id``). |
+| `version_label` | string or null | no | The resolved revision's version label. |
+| `connector_id` | string | yes | The connector pushed through. |
+| `registry_url` | string | yes | The registry's base URL. |
+| `dry_run` | boolean | yes | Whether nothing was registered. |
+| `summary` | map of integer | yes | How many subjects ended in each status (``registered``, ``already_registered``, ``would_register``, ``incompatible``, ``failed``, ``skipped``). |
+| `subjects` | array of `AvroPushSubjectResult` | yes | One result per subject, in the order they were pushed (referenced schemas first). |
 
 ### `CapabilityRegistrySnapshot` {#schema-capabilityregistrysnapshot}
 

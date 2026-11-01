@@ -491,6 +491,10 @@ class SchemaRegistrySource(ConnectorRefreshSource):
             kwargs["transport"] = self._transport
         return build_connector_http_client(**kwargs)
 
+    def http_client(self) -> httpx.Client:
+        """The connector's SSRF-guarded, authenticated client — for a push to the registry (MFX-19.4)."""
+        return self._client()
+
     def _get_json(
         self, client: httpx.Client, path: str, params: Optional[Mapping[str, Any]] = None, *, allow_404: bool = False
     ) -> Any:
