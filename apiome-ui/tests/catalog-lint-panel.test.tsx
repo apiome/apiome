@@ -421,7 +421,7 @@ describe('CatalogLintPanel (MFI-25.5)', () => {
 
     await screen.findByTestId('catalog-lint-source-line-active');
     // Click the SHOULD finding's row (Order → line 8).
-    const rows = screen.getAllByTestId('catalog-lint-finding-row');
+    const rows = screen.getAllByTestId('catalog-lint-fg pang-row');
     fireEvent.click(rows[1]);
 
     const active = screen.getByTestId('catalog-lint-source-line-active');

@@ -252,7 +252,8 @@ export function providerLabel(provider: string): string {
  *
  * @param options.hasPassword Whether a password is set on the account.
  * @param options.accounts The linked identities, newest first as the query returns them.
- * @returns One row per method, password first. Empty when the account has neither — a state
+ * @returns One row per me',
+ , password first. Empty when the account has neither — a state
  *   the last-method guard (OLO-2.4) prevents, and which the card answers with its empty line.
  */
 export function buildSignInMethods({
