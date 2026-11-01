@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.583.0] - 2026-11-01
+
+### Added
+- **Smithy target card + fixtures (MFX-20.4, #3917).** `tests/test_smithy_target_card.py` +
+  `fixtures/smithy_target/outcomes.json` pin the `smithy` card per source kind (REST, RPC, GraphQL, JSON Schema,
+  WSDL, RAML `lossy`; an imported Smithy model `lossless`), constraints and required fields written as traits
+  (`@range`, `@required`), the `output` (`idl` / `json-ast` / `both`), `protocol` (`none` / `restJson1` /
+  `rpcv2Cbor`) and `include_comments` choices (every one passes the export gate's check; the protocol `use` line
+  present or not), the MFX-20.3 gate, browse (`.smithy`; a zip for `both`), and keep the CLI / UI registry
+  fixtures and the CLI job fixture equal to the live registry (`APIOME_REGEN_SMITHY_TARGET=1`).
+- OpenAPI document version 1.446.0 → 1.447.0.
+
 ## [1.582.0] - 2026-11-01
 
 ### Added

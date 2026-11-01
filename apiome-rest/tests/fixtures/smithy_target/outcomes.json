@@ -1,0 +1,192 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "raml": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "smithy": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "rest": {
+      "both": {
+        "files": [
+          "default.smithy",
+          "default.json"
+        ],
+        "header_comment": true,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": true,
+        "required_trait": true,
+        "tier": "lossy"
+      },
+      "default": {
+        "files": [
+          "default.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": true,
+        "required_trait": true,
+        "tier": "lossy"
+      },
+      "json-ast": {
+        "files": [
+          "default.json"
+        ],
+        "header_comment": null,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": false,
+        "required_trait": false,
+        "tier": "lossy"
+      },
+      "no-comments": {
+        "files": [
+          "default.smithy"
+        ],
+        "header_comment": false,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": true,
+        "required_trait": true,
+        "tier": "lossy"
+      },
+      "rest-json": {
+        "files": [
+          "default.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [
+          "use aws.protocols#restJson1"
+        ],
+        "range_trait": true,
+        "required_trait": true,
+        "tier": "lossy"
+      },
+      "rpc-cbor": {
+        "files": [
+          "default.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 46,
+        "problems": [],
+        "protocol_uses": [
+          "use smithy.protocols#rpcv2Cbor"
+        ],
+        "range_trait": true,
+        "required_trait": true,
+        "tier": "lossy"
+      }
+    },
+    "smithy": {
+      "both": {
+        "files": [
+          "OrderService.smithy",
+          "OrderService.json"
+        ],
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": false,
+        "required_trait": true,
+        "tier": "lossless"
+      },
+      "default": {
+        "files": [
+          "OrderService.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": false,
+        "required_trait": true,
+        "tier": "lossless"
+      },
+      "json-ast": {
+        "files": [
+          "OrderService.json"
+        ],
+        "header_comment": null,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": false,
+        "required_trait": false,
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "files": [
+          "OrderService.smithy"
+        ],
+        "header_comment": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [],
+        "range_trait": false,
+        "required_trait": true,
+        "tier": "lossless"
+      },
+      "rest-json": {
+        "files": [
+          "OrderService.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [
+          "use aws.protocols#restJson1"
+        ],
+        "range_trait": false,
+        "required_trait": true,
+        "tier": "lossless"
+      },
+      "rpc-cbor": {
+        "files": [
+          "OrderService.smithy"
+        ],
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "protocol_uses": [
+          "use smithy.protocols#rpcv2Cbor"
+        ],
+        "range_trait": false,
+        "required_trait": true,
+        "tier": "lossless"
+      }
+    }
+  }
+}
