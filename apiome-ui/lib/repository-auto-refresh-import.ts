@@ -17,6 +17,8 @@
  * and a golden-fixture test can assert byte-identical option application.
  */
 
+import { readFileSync } from 'node:fs';
+
 import { parse as parseYaml } from 'yaml';
 
 import { convertSwaggerToOpenAPI, isSwagger2 } from '../src/app/utils/swagger-converter';
@@ -67,15 +69,47 @@ export interface WorkerImportMetadata {
   repository_import_spec?: StoredImportSpec | null;
 }
 
-/** The worker stdin payload from the REST layer. */
+/**
+ * The worker stdin payload from the REST layer.
+ *
+ * The document arrives one of two ways: `document_path`, a tempfile the REST upload route streamed
+ * the file to (IXH-6.5, so a large upload is not base64-doubled in the payload; REST deletes it when
+ * the job ends), or `document_base64` for JSON intake. {@link readPayloadDocument} prefers the path,
+ * like apiome-rest's `_decode_document_bytes`.
+ */
 export interface WorkerImportPayload {
   tenant_id: string;
   user_id: string;
   rest_job_id: string;
   metadata: WorkerImportMetadata;
-  document_base64: string;
+  document_path?: string | null;
+  document_base64?: string | null;
   filename?: string | null;
   content_type?: string | null;
+}
+
+/**
+ * Read the submitted document's bytes from a worker payload.
+ *
+ * @param payload the worker stdin payload.
+ * @returns the document bytes: the `document_path` file when one is given, else the decoded
+ *   `document_base64`.
+ * @throws when the path cannot be read, or when the payload carries neither field.
+ */
+export function readPayloadDocument(payload: Pick<WorkerImportPayload, 'document_path' | 'document_base64'>): Buffer {
+  const path = payload.document_path;
+  if (typeof path === 'string' && path.trim()) {
+    try {
+      return readFileSync(path);
+    } catch (e: unknown) {
+      throw new Error(`document_path could not be read: ${(e as Error)?.message ?? e}`);
+    }
+  }
+  const b64 = payload.document_base64;
+  if (typeof b64 === 'string' && b64) {
+    return Buffer.from(b64, 'base64');
+  }
+  throw new Error('Import payload carries neither document_path nor document_base64.');
 }
 
 /**
@@ -254,9 +288,9 @@ export function buildImportJobInput(payload: WorkerImportPayload): ImportJobInpu
   const meta = payload.metadata;
   const resolved = resolveImport(meta);
 
+  const bytes = readPayloadDocument(payload);
   let document: unknown;
   try {
-    const bytes = Buffer.from(payload.document_base64, 'base64');
     const text = bytes.toString('utf8');
     // The stored descriptor's content type wins on refresh; otherwise honor the
     // request content type when present, else sniff.

@@ -12,13 +12,18 @@
  * byte-identical option application versus the original run.
  */
 
-import { describe, test, expect } from '@jest/globals';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
 
 import {
   AUTO_REFRESH_SOURCE_KIND,
   buildImportJobInput,
   mapSourceKind,
   parseSpecDocument,
+  readPayloadDocument,
   resolveImport,
   type StoredImportSpec,
   type WorkerImportPayload,
@@ -274,5 +279,80 @@ describe('Swagger 2.0 import via the worker (CLI "import auto" → source_kind "
     const doc = built.document as { openapi?: string; components?: { schemas?: Record<string, unknown> } };
     expect(doc.openapi).toMatch(/^3\./);
     expect(doc.components?.schemas).toHaveProperty('Quote');
+  });
+});
+
+/**
+ * Streamed uploads (IXH-6.5): `POST …/imports/upload` writes the file to a tempfile and sends the
+ * worker its `document_path`, with no `document_base64`. The worker used to decode only
+ * `document_base64`, so every uploaded OpenAPI file failed with
+ * "Could not parse specification document: … Received undefined" (INTERNAL_WORKER_FAULT).
+ */
+describe('Worker document source: document_path (streamed upload) or document_base64', () => {
+  let dir: string;
+  const OPENAPI = { openapi: '3.1.0', info: { title: 'Orders', version: '2.0.0' }, paths: {} };
+
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'apiome-worker-doc-'));
+  });
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function uploadPayload(fields: Partial<WorkerImportPayload>): WorkerImportPayload {
+    return {
+      tenant_id: 'tenant-1',
+      user_id: 'user-1',
+      rest_job_id: 'job-upload',
+      metadata: {
+        source_kind: 'openapi-3',
+        project: { name: 'Orders', slug: 'orders', description: null },
+        version: { version_id: '2.0.0', description: null },
+      },
+      filename: 'openapi.json',
+      content_type: 'application/json',
+      ...fields,
+    };
+  }
+
+  test('a streamed upload (document_path, no document_base64) builds the importer input', () => {
+    const path = join(dir, 'openapi.json');
+    writeFileSync(path, JSON.stringify(OPENAPI), 'utf8');
+    const built = buildImportJobInput(uploadPayload({ document_path: path }));
+    expect(built.document).toEqual(OPENAPI);
+  });
+
+  test('document_path wins over document_base64, as in apiome-rest _decode_document_bytes', () => {
+    const path = join(dir, 'preferred.json');
+    writeFileSync(path, JSON.stringify(OPENAPI), 'utf8');
+    const other = Buffer.from(JSON.stringify({ ...OPENAPI, info: { title: 'Other', version: '1' } })).toString(
+      'base64',
+    );
+    const bytes = readPayloadDocument({ document_path: path, document_base64: other });
+    expect(JSON.parse(bytes.toString('utf8'))).toEqual(OPENAPI);
+  });
+
+  test('document_base64 still works when no path is given (JSON intake)', () => {
+    const b64 = Buffer.from(JSON.stringify(OPENAPI), 'utf8').toString('base64');
+    expect(buildImportJobInput(uploadPayload({ document_base64: b64 })).document).toEqual(OPENAPI);
+  });
+
+  test('a blank document_path falls back to document_base64', () => {
+    const b64 = Buffer.from(JSON.stringify(OPENAPI), 'utf8').toString('base64');
+    expect(buildImportJobInput(uploadPayload({ document_path: '  ', document_base64: b64 })).document).toEqual(
+      OPENAPI,
+    );
+  });
+
+  test('an unreadable document_path names the path problem', () => {
+    expect(() => readPayloadDocument({ document_path: join(dir, 'missing.json') })).toThrow(
+      /^document_path could not be read: /,
+    );
+  });
+
+  test('a payload with neither field says so instead of "Received undefined"', () => {
+    expect(() => buildImportJobInput(uploadPayload({}))).toThrow(
+      'Import payload carries neither document_path nor document_base64.',
+    );
   });
 });

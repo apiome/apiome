@@ -1091,3 +1091,98 @@ def test_multipart_start_resolves_the_project_target_too(monkeypatch):
 def test_start_without_name_slug_or_project_id_is_422():
     r = client.post("/v1/tenants/acme/imports", json=_start_body({"name": "Payments"}))
     assert r.status_code == 422, r.text
+
+
+# ---------------------------------------------------------------------------
+# Streamed upload → worker document contract (IXH-6.5)
+# ---------------------------------------------------------------------------
+#
+# ``POST …/imports/upload`` streams the file to a tempfile and hands the worker its
+# ``document_path`` — not ``document_base64``. The apiome-ui worker
+# (``lib/repository-auto-refresh-import.ts`` ``readPayloadDocument``) reads that path; the
+# engine deletes the tempfile when the job ends.
+
+_UPLOAD_META = json.dumps(
+    {
+        "source_kind": "openapi-3",
+        "project": {"name": "Payments", "slug": "payments-api"},
+        "version": {"version_id": "1.0.0"},
+        "options": {},
+    }
+)
+_UPLOAD_BYTES = b'{"openapi": "3.1.0", "info": {"title": "Payments", "version": "1.0.0"}, "paths": {}}'
+
+
+def _wait_until_removed(path: str) -> bool:
+    """The tempfile is removed in ``_drive_job``'s ``finally``, just after the terminal state."""
+    import os
+
+    for _ in range(200):
+        if not os.path.exists(path):
+            return True
+        time.sleep(0.01)
+    return False
+
+
+def _recording_worker(seen: dict, *, ok: bool):
+    async def _fake(payload: dict) -> dict:
+        import os
+
+        path = payload.get("document_path")
+        seen["document_path"] = path
+        seen["document_base64"] = payload.get("document_base64")
+        seen["bytes"] = open(path, "rb").read() if path and os.path.exists(path) else None
+        if not ok:
+            return {"ok": False, "error": "Could not parse specification document: boom"}
+        jid = payload["rest_job_id"]
+        md = payload["metadata"]
+        return {
+            "ok": True,
+            "job_id": jid,
+            "status": {
+                "job_id": jid,
+                "state": "completed",
+                "percent": 100,
+                "events": [],
+                "summary": {},
+                "result": {
+                    "project_id": "550e8400-e29b-41d4-a716-446655440099",
+                    "project_slug": md["project"]["slug"],
+                    "version_id": md["version"]["version_id"],
+                    "version_record_id": "660e8400-e29b-41d4-a716-446655440088",
+                },
+            },
+        }
+
+    return _fake
+
+
+def test_upload_hands_the_worker_a_readable_document_path(monkeypatch):
+    seen: dict = {}
+    monkeypatch.setattr("app.spec_import_engine._worker_runner", _recording_worker(seen, ok=True))
+    r = client.post(
+        "/v1/tenants/acme/imports/upload",
+        files={"file": ("openapi.json", _UPLOAD_BYTES, "application/json")},
+        data={"metadata": _UPLOAD_META},
+    )
+    assert r.status_code == 202, r.text
+    assert _wait_completed(r.json()["job_id"])["state"] == "completed"
+    assert seen["document_base64"] is None
+    assert isinstance(seen["document_path"], str) and seen["document_path"]
+    assert seen["bytes"] == _UPLOAD_BYTES
+
+
+@pytest.mark.parametrize("ok", [True, False], ids=["completed", "worker-failed"])
+def test_upload_tempfile_is_removed_when_the_job_ends(monkeypatch, ok):
+    seen: dict = {}
+    monkeypatch.setattr("app.spec_import_engine._worker_runner", _recording_worker(seen, ok=ok))
+    r = client.post(
+        "/v1/tenants/acme/imports/upload",
+        files={"file": ("openapi.json", _UPLOAD_BYTES, "application/json")},
+        data={"metadata": _UPLOAD_META},
+    )
+    assert r.status_code == 202, r.text
+    final = _wait_completed(r.json()["job_id"])
+    assert final["state"] == ("completed" if ok else "failed")
+    assert seen["bytes"] == _UPLOAD_BYTES
+    assert _wait_until_removed(seen["document_path"]), "the upload tempfile outlived its job"

@@ -34,6 +34,7 @@ from .import_source_pipeline import (
     build_job_error,
     run_adapter_import_job,
 )
+from .intake_streaming import cleanup_intake_tempfile
 from .logging_config import bind_contextvars
 from .models import (
     SpecImportCommitResponse,
@@ -728,11 +729,14 @@ async def _run_inprocess_adapter_job(
 
 
 async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
-    """Drive a job to a terminal state, then record its IXH-6.6 job metrics.
+    """Drive a job to a terminal state, record its IXH-6.6 job metrics, drop its upload tempfile.
 
     The wrapper (not the pipeline) owns the whole-job wall clock and the terminal
     metrics because it is the one seam every path exits through — worker faults,
-    in-process failures, engine faults, and cancels alike.
+    in-process failures, engine faults, and cancels alike. For the same reason it deletes the
+    ``document_path`` tempfile a streamed upload wrote (IXH-6.5): the in-process pipeline removes
+    its own, but the worker path never did, so every worker upload left its document behind.
+    Nothing reads the document after the job ends (a commit replays the stored result).
     """
     rec = _jobs.get(job_id)
     if rec is not None:
@@ -744,6 +748,7 @@ async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
         await _drive_job_inner(job_id, payload)
     finally:
         _record_terminal_import_metrics(job_id, payload)
+        cleanup_intake_tempfile(payload.get("document_path"))
 
 
 def _record_terminal_import_metrics(job_id: str, payload: Dict[str, Any]) -> None:
