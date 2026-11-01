@@ -35,6 +35,18 @@ jobs:
       - name: Set up Python
         run: uv python install
 
+      # Fail fast, with its own step name, when the runner cannot reach the catalog server (down,
+      # wrong APIOME_BASE_URL, blocked by a firewall). `doctor` is the CLI's anonymous `GET /health`
+      # probe, so a green step here and a red import below means the server was reachable and the
+      # import itself did not finish.
+      - name: Check the catalog server is reachable
+        run: |
+          cd apiome-cli
+          uv sync
+          ./run.sh doctor
+        env:
+          APIOME_LOAD_DOTENV: "0"
+
       - name: Build CLI and push OpenAPI to catalog
         run: |
           cd apiome-cli
