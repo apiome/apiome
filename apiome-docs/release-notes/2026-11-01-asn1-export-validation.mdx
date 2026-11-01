@@ -1,0 +1,18 @@
+---
+slug: asn1-export-validation
+title: ASN.1 exports are compiled before you download them
+description: Every ASN.1 export compiles with asn1tools and holds exactly the planned types.
+authors: [apiome]
+---
+
+Every **ASN.1** export is now compiled with **asn1tools** before it is delivered, and must define
+exactly the types Apiome planned to write. [Read more](/ship/export-a-spec#asn1-from-any-source).
+
+{/* truncate */}
+
+- **Located errors.** A syntax error names its line and column; a module that does not compile names
+  the type or constraint asn1tools rejects.
+- **Nothing missing, nothing extra.** A planned type the module does not define, or a type it defines
+  that was not planned, fails the export.
+- **Fails the job.** A module that fails a check is not delivered; the export job fails and lists each
+  problem with its rule.

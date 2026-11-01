@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.587.0] - 2026-11-01
+
+### Added
+- **Validate emitted ASN.1 with asn1tools (MFX-27.3, #4165).** New `app/asn1_validation.check_emitted_asn1`: every
+  emitted module is parsed (`asn1.parse`, with line / column) and compiled (`asn1.compile`) by asn1tools, must be one
+  module (`asn1.module-count`), and must assign exactly the types of the emit plan (`asn1_emitter.asn1_type_plan`:
+  `asn1.missing-type`, `asn1.unexpected-type`). The `asn1` export gate now reports these as located, ruled findings
+  (was: compile only, one free-text line), so a non-compiling module fails the job with `EMITTED_ARTIFACT_INVALID`
+  and detail. Every runnable corpus family's ASN.1 export passes. Tests `tests/test_asn1_validation.py`.
+- OpenAPI document version 1.450.0 → 1.451.0.
+
 ## [1.586.0] - 2026-11-01
 
 ### Added

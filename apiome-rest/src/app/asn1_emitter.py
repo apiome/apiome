@@ -384,6 +384,10 @@ class _Asn1Writer:
         lines.append("END")
         return "\n".join(lines).rstrip() + "\n"
 
+    def planned_type_names(self) -> List[str]:
+        """The ASN.1 type reference of every assignment :meth:`render` writes, in module order."""
+        return [self._type_names.name(type_.name or type_.key, key=type_.key) for type_ in self._ordered_types()]
+
     def _ordered_types(self) -> List[Type]:
         """Declaration order, with the type named like the item first: the ASN.1 import titles an item
         after its module's first type, so the title survives a round trip."""
@@ -819,6 +823,22 @@ def _number(value: Any) -> Optional[float]:
         except ValueError:
             return None
     return None
+
+
+def asn1_type_plan(api: CanonicalApi) -> List[str]:
+    """The type assignments the ASN.1 emitter writes for ``api``, in module order — MFX-27.3 (#4165).
+
+    Every canonical type is written as exactly one ``Name ::= …`` assignment, and the names are allocated
+    from the model alone (no emit option renames a type), so this is the inventory an emitted module must
+    hold whatever options it was written with.
+
+    Args:
+        api: The source model.
+
+    Returns:
+        The ASN.1 type references, in the order the module declares them.
+    """
+    return _Asn1Writer(api, Asn1EmitOptions()).planned_type_names()
 
 
 def validate_asn1_module(content: str) -> None:
