@@ -1,0 +1,325 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "raml",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "raml",
+        "format": "raml",
+        "label": "RAML",
+        "description": "Export as a RAML 1.0 REST API definition.",
+        "icon": "book-marked",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 36,
+        "preserved": 0,
+        "dropped": 5,
+        "approximated": 29,
+        "synthesized": 2
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "RAML: RAML captures REST only; this graph API reads back as a REST API, and 3 operation(s) RAML cannot place on an HTTP resource are not written; only its types are exported",
+            "target_mapping": "graph \u2192 REST"
+          },
+          {
+            "construct": "",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the operations of service(s) 'Query' become resources of one RAML API",
+            "target_mapping": "document \u2192 RAML root"
+          },
+          {
+            "construct": "",
+            "kind": "synth",
+            "severity": "info",
+            "message": "RAML: RAML requires a title; 'GraphQL Schema' is used",
+            "target_mapping": "title"
+          },
+          {
+            "construct": "BankAccount",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "BankAccount.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "Category",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "Category.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "CommentEvent",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "CommentEvent.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "CreditCard",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "CreditCard.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "Crypto",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "Crypto.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "FollowEvent",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "FollowEvent.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "GraphQL Schema",
+            "kind": "synth",
+            "severity": "info",
+            "message": "RAML: a RAML document is one API; it reads back as the service 'GraphQL Schema'",
+            "target_mapping": "title \u2192 service"
+          },
+          {
+            "construct": "LikeEvent",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "LikeEvent.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "LikeEvent.targetId",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "PayPal",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "PayPal.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "PaymentMethod",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: source-specific details (graphql_type) are not written",
+            "target_mapping": "union \u2192 RAML type"
+          },
+          {
+            "construct": "Post",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "Post.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "PostEvent",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "PostEvent.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "Product",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "Product.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          },
+          {
+            "construct": "Query",
+            "kind": "drop",
+            "severity": "info",
+            "message": "RAML: RAML has no services; the operations of 'Query' become resources of one API, read back as the service 'GraphQL Schema'",
+            "target_mapping": "service \u2192 API GraphQL Schema"
+          },
+          {
+            "construct": "Query.paymentMethods",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "RAML describes HTTP resources only; the operation has no HTTP method and path; the operation is dropped",
+            "target_mapping": "dropped"
+          },
+          {
+            "construct": "Query.search",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "RAML describes HTTP resources only; the operation has no HTTP method and path; the operation is dropped",
+            "target_mapping": "dropped"
+          },
+          {
+            "construct": "Query.timeline",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "RAML describes HTTP resources only; the operation has no HTTP method and path; the operation is dropped",
+            "target_mapping": "dropped"
+          },
+          {
+            "construct": "SearchResult",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: source-specific details (graphql_type) are not written",
+            "target_mapping": "union \u2192 RAML type"
+          },
+          {
+            "construct": "TimelineItem",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: source-specific details (graphql_type) are not written",
+            "target_mapping": "union \u2192 RAML type"
+          },
+          {
+            "construct": "User",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: RAML has no field numbers; the properties keep their order and read back numbered by position; source-specific details (graphql_type) are not written",
+            "target_mapping": "record \u2192 RAML type"
+          },
+          {
+            "construct": "User.id",
+            "kind": "approx",
+            "severity": "info",
+            "message": "RAML: the type 'ID' is not declared; it is written as any",
+            "target_mapping": "field \u2192 property"
+          }
+        ],
+        "kind_counts": {
+          "drop": 5,
+          "approx": 29,
+          "synth": 2,
+          "ok": 0
+        },
+        "severity_counts": {
+          "info": 32,
+          "warn": 0,
+          "critical": 4
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "requires_ack": true,
+        "target_format": "RAML",
+        "dropped": 5,
+        "approximated": 29,
+        "synthesized": 2,
+        "affected": 36,
+        "headline": "Fidelity notice \u2014 exporting to RAML may lose detail.",
+        "message": "Exporting to RAML may lose some fidelity. The destination format can't represent everything in this API, so 36 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      }
+    },
+    "files": [
+      {
+        "path": "GraphQL_Schema.raml",
+        "media_type": "application/raml+yaml",
+        "size_bytes": 2352
+      }
+    ],
+    "media_type": "application/raml+yaml",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

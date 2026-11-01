@@ -126,6 +126,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rest', 'odata').label).toBe('REST & HTTP');
   });
 
+  it('files RAML under REST & HTTP by paradigm (MFX-17.4)', () => {
+    expect(familyForTarget('rest', 'raml').label).toBe('REST & HTTP');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

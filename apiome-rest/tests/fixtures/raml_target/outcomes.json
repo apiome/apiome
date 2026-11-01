@@ -1,0 +1,132 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "rest_only_warning": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "rest_only_warning": true,
+      "tier": "lossy"
+    },
+    "raml": {
+      "available": true,
+      "rest_only_warning": false,
+      "tier": "lossless"
+    },
+    "rest": {
+      "available": true,
+      "rest_only_warning": false,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "rest_only_warning": true,
+      "tier": "lossy"
+    },
+    "wsdl": {
+      "available": true,
+      "rest_only_warning": false,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "json-schema": {
+      "default": {
+        "files": [
+          "Address_Book.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      },
+      "no-comments": {
+        "files": [
+          "Address_Book.raml"
+        ],
+        "header_comment": false,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      },
+      "xml-media-type": {
+        "files": [
+          "Address_Book.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/xml",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      }
+    },
+    "raml": {
+      "default": {
+        "files": [
+          "Orders_API.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "violations": []
+      },
+      "no-comments": {
+        "files": [
+          "Orders_API.raml"
+        ],
+        "header_comment": false,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "violations": []
+      },
+      "xml-media-type": {
+        "files": [
+          "Orders_API.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "violations": []
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.raml"
+        ],
+        "header_comment": false,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      },
+      "xml-media-type": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.raml"
+        ],
+        "header_comment": true,
+        "media_type_line": "mediaType: application/json",
+        "preserved_percent": 0,
+        "tier": "lossy",
+        "violations": []
+      }
+    }
+  }
+}

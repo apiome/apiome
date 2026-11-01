@@ -1,0 +1,61 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "raml",
+        "format": "raml",
+        "label": "RAML",
+        "description": "Export as a RAML 1.0 REST API definition.",
+        "icon": "book-marked",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`RamlEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Write a generated-file comment under the `#%RAML 1.0` header.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "media_type": {
+            "default": "application/json",
+            "description": "The document `mediaType` when the source has no media type of its own and no body names one.",
+            "title": "Media Type",
+            "type": "string"
+          }
+        },
+        "title": "RamlEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "media_type": "application/json"
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 36,
+        "preserved": 0,
+        "dropped": 5,
+        "approximated": 29,
+        "synthesized": 2
+      }
+    }
+  ]
+}

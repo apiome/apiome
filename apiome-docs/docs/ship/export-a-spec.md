@@ -1432,6 +1432,17 @@ shows what RAML could not keep, and the fidelity report names each of those chan
 in the report: Apiome's RAML reader does not read `displayName`, so an operation's name reads back as
 its method and path (`DELETE /reindex`).
 
+**Where to find it.** In the **Export** dialog, the **RAML** card is under **REST & HTTP** on the
+**Target** step, as one file. Its badge is **lossless** for an item imported from RAML and **lossy**
+for any other source. A GraphQL, RPC or data-schema item's fidelity report, on the **Fidelity** step,
+starts with **RAML captures REST only**. Pick the card to see its two options: **Include Comments** (on
+by default) writes the generated-file comment under the `#%RAML 1.0` line, and **Media Type**
+(`application/json` by default) is the document `mediaType` when the item names none. From the CLI,
+run `apiome export raml <item> --out <file>.raml`, and add `--option include_comments=false` or
+`--option media_type=application/xml`. The CLI prints the report's warnings, the REST-only one
+included. A lossy export exits non-zero unless you add `--force`, and `--json` prints the tier. A
+public item's **Export** dialog on Browse offers RAML too, as the `.raml` file.
+
 An item imported from WADL is written back as it was read. Import now also reads a WADL root written
 as `<wadl:application>`, the query and header params a method's request declares, and — when you
 upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
