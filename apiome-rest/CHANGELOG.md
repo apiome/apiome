@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.584.0] - 2026-11-01
+
+### Added
+- **Kubernetes CRD structural-schema output (MFX-21.6, #4345).** The CRD output the ticket describes is the
+  `k8s-crd` export target (FMT-2.1, #5419: `$ref`s inline-expanded, structural rules enforced, the root type
+  wrapped in a `CustomResourceDefinition` with `group` / `kind` / `version` options); this closes its gaps:
+  - **kubeconform.** New optional bundled tool `kubeconform` 0.7.0 (`APIOME_KUBECONFORM_BIN`; the image caches
+    the `apiextensions.k8s.io/v1` CRD schema under `share/kubeconform` behind a `-schema-location` wrapper).
+    `app.k8s_kubeconform.run_kubeconform` reads its `-output json` report; the `k8s-crd` export gate runs it
+    after the structural-schema rules (keyword `kubeconform`; installed but giving no answer is a finding).
+  - **Non-structural constructs reported.** `K8sCrdFidelityRulePack` now files the structural losses the
+    emitter records (`filed_writer_verdicts`): `reference-cycle`, `unresolved-type-reference`, `null-type`,
+    `untyped-enum`, `synthesized-spec-wrapper` are `APPROX`; `deprecated-keyword`, `required-without-property`
+    are `DROP`. The pack builds the CRD mappings without emitting (`_K8sCrdWriter.build`), so a badge still
+    needs no emit.
+  - Export conformance: 11 `→ k8s-crd` pairs are no longer silent losses (`dbt`, `json-schema`, `jtd`, `odcs`,
+    `openapi`, `owl`, `pydantic`, `ros2`, `shacl`, `sql-ddl`, `typescript-types`); the ledger drops all 15
+    `k8s-crd` entries (`cue`, `dhall`, `pkl`, `zod` predicted, not measured locally).
+  - Tests `tests/test_k8s_crd_structural_mode.py`.
+- OpenAPI document version 1.447.0 → 1.448.0.
+
 ## [1.583.0] - 2026-11-01
 
 ### Added

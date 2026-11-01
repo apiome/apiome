@@ -330,7 +330,11 @@ def test_a_request_file_carries_a_type_only_as_an_example_body() -> None:
 def test_a_structural_schema_cannot_express_a_union() -> None:
     """Kubernetes' ``oneOf`` may not carry a ``type``, so a union drops to a free-form node."""
     items = _items_for("k8s-crd", _rich_api(), "Shape")
-    assert [item.kind for item in items] == [LossinessKind.DROP]
+    # The union is dropped; as the CRD's root it is also nested under a synthesized `spec` (MFX-21.6).
+    assert [(item.kind, item.target_mapping) for item in items] == [
+        (LossinessKind.DROP, "union → free-form node"),
+        (LossinessKind.APPROX, "synthesized-spec-wrapper"),
+    ]
     assert items[0].target_mapping == "union → free-form node"
 
 

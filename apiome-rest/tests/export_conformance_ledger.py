@@ -176,37 +176,6 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type CodeWord; added type Field13C; added type Field20; added type Field23B; add',
     ('tradacoms', 'jtd'):
         'changed root; added type MessageORDERS; added type OLD; added type TRADACOMS ORDERS; removed type TR',
-    # --- k8s-crd (15) ---
-    ('cue', 'k8s-crd'):
-        'changed root; added service moneys.example.com; removed type Money; removed type Order; removed type',
-    ('dbt', 'k8s-crd'):
-        'changed root; added service customerses.example.com; removed type customers; added type example.com/',
-    ('dhall', 'k8s-crd'):
-        'changed root; added service moneys.example.com; removed type Currency; removed type Money; removed t',
-    ('json-schema', 'k8s-crd'):
-        'changed root; added service products.example.com; removed type Product; added type example.com/v1.Pr',
-    ('jtd', 'k8s-crd'):
-        'changed root; added service users.example.com; removed type User; removed type UserAddress; removed ',
-    ('odcs', 'k8s-crd'):
-        'changed root; added service orderses.commerce; added type commerce/v1.Orders; removed type orders',
-    ('openapi', 'k8s-crd'):
-        'changed root; added service userprofiles.example.com; removed type UserProfile; added type example.c',
-    ('owl', 'k8s-crd'):
-        'changed root; added service agents.example.com; removed type Agent; removed type Customer; removed t',
-    ('pkl', 'k8s-crd'):
-        'changed root; added service orderses.example.com; removed type Money; removed type Order; removed ty',
-    ('pydantic', 'k8s-crd'):
-        'changed root; added service orderlines.example.com; removed type NewOrder; removed type Order; remov',
-    ('ros2', 'k8s-crd'):
-        'changed root; added service typicalsensormessages.example.com; removed type TypicalSensorMessage; re',
-    ('shacl', 'k8s-crd'):
-        'changed root; added service organisationshapes.example.com; removed type OrganisationShape; removed ',
-    ('sql-ddl', 'k8s-crd'):
-        'changed root; added service customers.example.com; removed type commerce.customer; removed type comm',
-    ('typescript-types', 'k8s-crd'):
-        'changed root; added service orderlines.example.com; removed type NewOrder; removed type NewOrder_lin',
-    ('zod', 'k8s-crd'):
-        'changed root; added service orderlines.example.com; removed type NewOrder; removed type Order; remov',
     # --- kafka-connect (3) ---
     ('json-schema', 'kafka-connect'):
         'changed root; changed type Product',
