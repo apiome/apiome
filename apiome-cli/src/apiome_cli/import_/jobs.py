@@ -26,6 +26,43 @@ def format_import_progress(state: str, *, elapsed_seconds: float) -> str:
     return f"Import {state}… ({elapsed}s)"
 
 
+def format_import_timeout(
+    timeout: float,
+    job_id: str,
+    *,
+    last_state: str | None = None,
+    last_percent: float | None = None,
+    polls: int = 0,
+) -> str:
+    """Build the error line for an import that did not finish before the deadline.
+
+    The first sentence is the long-standing "Import timed out after N seconds." The second names the
+    job, the last state the server reported and how many status checks answered, so a timed-out CI
+    run shows whether the job was still working (and how far it got) or never left its first state,
+    and whether the server answered quickly (many checks) or slowly (few — each check may take up to
+    the timeout).
+
+    Args:
+        timeout: The wait limit, in seconds.
+        job_id: The import job that was being polled.
+        last_state: The state of the last successful poll, or ``None`` when no poll completed.
+        last_percent: The ``percent`` of the last poll when the server sent one.
+        polls: How many status checks the server answered.
+
+    Returns:
+        For example ``Import timed out after 900 seconds. Job 3f2a… was last reported as running
+        (42%) after 873 status checks.``
+    """
+    timeout_seconds = int(timeout)
+    unit = "second" if timeout_seconds == 1 else "seconds"
+    message = f"Import timed out after {timeout_seconds} {unit}."
+    if last_state is None:
+        return f"{message} Job {job_id} never reported a state."
+    progress = f" ({last_percent:g}%)" if last_percent is not None else ""
+    checks = "status check" if polls == 1 else "status checks"
+    return f"{message} Job {job_id} was last reported as {last_state}{progress} after {polls} {checks}."
+
+
 def _failure_detail(payload: dict[str, Any]) -> str | None:
     """Best-effort human-readable reason for a non-completed terminal import.
 
@@ -98,12 +135,15 @@ def wait_for_import_job(
     # the message is echoed below, once the spinner has been cleared.
     error_message: str | None = None
     failure_exit: int = EXIT_ERROR
+    last_state: str | None = None
+    last_percent: float | None = None
+    polls = 0
     with import_progress(enabled=not no_progress) as status:
         while True:
             if monotonic() >= deadline:
-                timeout_seconds = int(timeout)
-                unit = "second" if timeout_seconds == 1 else "seconds"
-                error_message = f"Import timed out after {timeout_seconds} {unit}."
+                error_message = format_import_timeout(
+                    timeout, job_id, last_state=last_state, last_percent=last_percent, polls=polls
+                )
                 failure_exit = EXIT_ERROR
                 break
 
@@ -119,6 +159,15 @@ def wait_for_import_job(
                 error_message = "Import status response missing state field."
                 failure_exit = EXIT_ERROR
                 break
+
+            polls += 1
+            last_state = job_state
+            percent = payload.get("percent")
+            last_percent = (
+                float(percent)
+                if isinstance(percent, (int, float)) and not isinstance(percent, bool)
+                else None
+            )
 
             elapsed = timeout - (deadline - monotonic())
             if status is not None:

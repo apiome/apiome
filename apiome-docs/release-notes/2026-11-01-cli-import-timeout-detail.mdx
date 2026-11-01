@@ -1,0 +1,22 @@
+---
+slug: cli-import-timeout-detail
+title: A timed-out CLI import says where the job got to
+description: An import that runs out of time now names its job, state and status checks.
+authors: [apiome]
+---
+
+When `apiome import` waits longer than `--import-timeout`, the message now says more than
+*Import timed out after N seconds*. It also names the job, the last state the server reported (with
+its progress when the server sends one), and how many status checks it answered:
+
+```
+Import timed out after 900 seconds. Job 3f2a… was last reported as running (42%) after 873 status checks.
+```
+
+{/* truncate */}
+
+- **Still running, or stuck?** A state that moved and a rising percentage mean the import was still
+  working, so raise `--import-timeout`. A job that never left its first state points at the server.
+- **Fast or slow answers?** Each status check can take up to `--import-timeout`, so a handful of
+  checks means the server answered slowly; hundreds mean it answered quickly and the job was simply
+  not done.
