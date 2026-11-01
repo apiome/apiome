@@ -77,6 +77,8 @@ ARG CAPNP_VERSION=1.0.1
 ARG THRIFT_VERSION=0.21.0
 # FlatBuffers compiler (MFX-30.1, #4178) — optional: it compiles an emitted .fbs schema.
 ARG FLATC_VERSION=25.12.19
+# kubeconform (MFX-21.6, #4345) — optional: it checks an emitted CustomResourceDefinition manifest.
+ARG KUBECONFORM_VERSION=0.7.0
 # buildx populates TARGETARCH ("amd64"/"arm64"); fall back to amd64 for a plain `docker build`.
 ARG TARGETARCH=amd64
 
@@ -379,6 +381,20 @@ RUN curl -fsSL "https://capnproto.org/capnproto-c++-${CAPNP_VERSION}.tar.gz" | t
     && ${TOOLS_PREFIX}/bin/capnp compile -o- /tmp/smoke.capnp > /dev/null \
     && rm -f /tmp/smoke.capnp
 
+# kubeconform — Kubernetes manifest validator (MFX-21.6). Static release binary under lib/, plus the
+# apiextensions.k8s.io/v1 CustomResourceDefinition JSON Schema cached under share/kubeconform so the
+# check needs no network; the bin/ wrapper points -schema-location at that cache (app.k8s_kubeconform).
+RUN mkdir -p ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict \
+    && curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-${TARGETARCH}.tar.gz" \
+      | tar -xz -C ${TOOLS_PREFIX}/lib kubeconform \
+    && curl -fsSL "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/customresourcedefinition-apiextensions-v1.json" \
+      -o ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict/customresourcedefinition-apiextensions-v1.json \
+    && printf '#!/bin/sh\nexec %s/lib/kubeconform -schema-location "%s/share/kubeconform/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json" "$@"\n' "${TOOLS_PREFIX}" "${TOOLS_PREFIX}" \
+      > ${TOOLS_PREFIX}/bin/kubeconform \
+    && chmod +x ${TOOLS_PREFIX}/lib/kubeconform ${TOOLS_PREFIX}/bin/kubeconform \
+    && printf 'apiVersion: apiextensions.k8s.io/v1\nkind: CustomResourceDefinition\nmetadata: {name: widgets.example.com}\nspec: {group: example.com, scope: Namespaced, names: {kind: Widget, plural: widgets}, versions: [{name: v1, served: true, storage: true, schema: {openAPIV3Schema: {type: object}}}]}\n' \
+      | ${TOOLS_PREFIX}/bin/kubeconform -strict -summary -
+
 # thrift — Apache Thrift compiler (MFX-25.1). No official Linux binary, so build only the compiler from
 # the pinned release tarball (BUILD_LIBRARIES=OFF: no language runtimes); it needs flex and bison.
 RUN apt-get update && apt-get install -y --no-install-recommends flex bison && rm -rf /var/lib/apt/lists/* \
@@ -460,7 +476,7 @@ COPY --from=uideps --chown=appuser:appuser /repo/apiome-ui /apiome-ui
 # Polyglot toolchain binaries (MFI-5.2, #3751). Copy the whole bundled-tools tree and put its
 # bin/ on PATH so the toolchain runner resolves
 # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/cue/pkl/dhall/asyncapi-diff/rover/graphql-inspector-diff/
-# spectral/vacuum/redocly by name. The tree is read-only to the app user (owned by root); the
+# spectral/vacuum/redocly/kubeconform by name. The tree is read-only to the app user (owned by root); the
 # runner never writes to it.
 COPY --from=tools /opt/apiome-tools /opt/apiome-tools
 
@@ -474,7 +490,7 @@ ENV PYTHONPATH=/app/src \
     NODE_ENV=production \
     # Put the bundled toolchain (MFI-5.2) ahead of the system path so the runner resolves
     # buf/tsp/smithy/drafter/amf/asyncapi/asyncapi-parser/typescript-types-extract/zod-extract/cue/pkl/dhall/asyncapi-diff/rover/graphql-inspector-diff/
-    # spectral/vacuum/redocly by bare name. A deployment can still point any
+    # spectral/vacuum/redocly/kubeconform by bare name. A deployment can still point any
     # APIOME_<TOOL>_BIN at a custom binary; an absent tool degrades that format to
     # "unavailable" (surfaced by GET /v1/ops/toolchain) rather than failing the service.
     PATH=/opt/apiome-tools/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \

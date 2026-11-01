@@ -95,6 +95,7 @@ way the last column says.
 | COBOL copybook | cb2xml parses the copybook, and the layout it reads must match the one Apiome planned | Read back by Apiome's copybook reader |
 | X12 implementation guide | pyx12's segment dictionary, for the envelope and segments carried from X12 | Checked by Apiome's guide rules only |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
+| Kubernetes CRD | Apiome's structural-schema rules, then kubeconform against the `apiextensions.k8s.io/v1` schema | Checked by Apiome's structural-schema rules only |
 
 The sections below say what each check rejects.
 
@@ -1230,6 +1231,44 @@ carry, on the type or field it is in:
 | An enumeration of numbers | Approximated: only the values' type is checked |
 | `title`, `deprecated`, `default`, `examples` | Dropped (note) |
 | Undeclared properties | Approximated (note): JTD rejects a property a record does not declare; the JSON Schema export allows it |
+
+### Kubernetes CRD from any source
+
+Exporting to **Kubernetes CRD** writes a `CustomResourceDefinition` (`apiextensions.k8s.io/v1`) whose
+`openAPIV3Schema` you can apply to a cluster. Platform teams use it to turn a JSON Schema (or any
+other data schema) into a custom resource. Kubernetes only accepts a *structural* schema, so the
+export does not paste the JSON Schema in as it is:
+
+- **No `$ref`.** Every named type is expanded where it is used. A type that refers back to itself
+  (a cycle) cannot be expanded, so that member is written as a free-form `type: object`.
+- **One root.** The type the **kind** option names (else the item's title, else its only type) is the
+  resource. If it is not shaped like a resource root, its fields are nested under `spec`.
+- **Structural rules.** Every node declares a `type`. A union (`oneOf`), `uniqueItems`, a `format`
+  Kubernetes does not know, `deprecated`, and a `required` name with no property are not written.
+- **Names.** The **group**, **kind**, **plural**, **scope** and **version** options name the CRD
+  (`widgets.acme.io`, `Widget`, `v1alpha1`). Without them, the export derives each one from the item
+  and the fidelity report says so.
+
+The fidelity report lists what the structural rules cost, on the type or field it concerns:
+
+| In the source | In the report |
+| --- | --- |
+| A reference cycle, a reference to a type the item does not declare, a `null` type, an enum mixing value types | Approximated: written as a free-form node |
+| A root type that is not shaped like a resource | Approximated: nested under `spec` |
+| A union (`oneOf` / `anyOf`) | Dropped: a structural union may not declare a `type` |
+| `uniqueItems`, an unknown `format`, `deprecated`, a `required` name with no property | Dropped |
+| Operations and channels | Dropped: the API server generates a CRD's endpoints |
+
+Each export is checked before you download it:
+
+1. Apiome's **structural-schema rules** check every node the way the API server does.
+2. **kubeconform** checks the manifest against the `apiextensions.k8s.io/v1`
+   `CustomResourceDefinition` schema, when the server has it. Each problem names its JSON path
+   (`/spec/names: missing property 'plural'`). A kubeconform that is installed but cannot validate
+   the manifest fails the export too. Without kubeconform, the structural rules decide.
+
+To check the file yourself before you apply it, run `kubeconform -strict -summary <file>.yaml`, or
+`kubectl apply --dry-run=server -f <file>.yaml` against a cluster.
 
 ### XSD (XML Schema) on its own
 

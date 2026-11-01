@@ -58,6 +58,7 @@ _EXPECTED_KEYS = {
     "oasdiff",
     "openapi-changes",
     "capnp",
+    "kubeconform",
     "thrift",
     "omniidl",
     "idlc",

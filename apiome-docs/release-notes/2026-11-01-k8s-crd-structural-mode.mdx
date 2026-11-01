@@ -1,0 +1,20 @@
+---
+slug: k8s-crd-structural-mode
+title: Kubernetes CRD export checked by kubeconform, with every structural loss reported
+description: The CRD export runs kubeconform and reports what structural schemas cost.
+authors: [apiome]
+---
+
+The **Kubernetes CRD** export turns a JSON Schema, or any data schema, into a
+`CustomResourceDefinition` you can apply to a cluster. Each export is now also checked with
+**kubeconform**, and the fidelity report names everything the structural-schema rules cost.
+[Read more](/ship/export-a-spec#kubernetes-crd-from-any-source).
+
+{/* truncate */}
+
+- **kubeconform.** When the server has it, kubeconform checks the manifest against the
+  `apiextensions.k8s.io/v1` schema after Apiome's structural rules. Each problem names its JSON path.
+- **Honest report.** Expanding `$ref`s can change what a schema means. A reference cycle, an
+  unresolved reference, a `null` type and the `spec` wrapper are now **approximated** in the report,
+  and `deprecated` and a `required` name with no property are **dropped**. A CRD export that used to
+  badge **lossless** while losing these now says what it lost.

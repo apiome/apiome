@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Widget",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {"type": "string", "maxLength": 63},
+    "owner": {"$ref": "#/$defs/Owner"},
+    "tags": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "email": {"type": "string", "format": "email"},
+    "target": {"oneOf": [{"type": "string"}, {"type": "integer"}]},
+    "parent": {"$ref": "#/$defs/Node"},
+    "legacy": {"type": "string", "deprecated": true}
+  },
+  "$defs": {
+    "Owner": {"type": "object", "properties": {"team": {"type": "string"}}},
+    "Node": {"type": "object", "properties": {"child": {"$ref": "#/$defs/Node"}}}
+  }
+}

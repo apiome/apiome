@@ -8162,7 +8162,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 9,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -14352,11 +14352,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 7,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Schema",
@@ -14366,15 +14366,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'schemas.example.com', added type 'example.com/v1.Schema'; overclaim: OK 'Schema' (observed: unexplained: changed root '', added service 'schemas.example.com', added type 'example.com/v1.Schema'; overclaim: OK 'Schema')",
+      "reason": "unexplained: changed root '', added service 'schemas.example.com', added type 'example.com/v1.Schema'; overclaim: OK 'Schema' (observed: unexplained: added service 'schemas.example.com', added type 'example.com/v1.Schema'; overclaim: OK 'Schema')",
       "source_format": "arrow",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -16303,7 +16298,7 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 13,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -19657,11 +19652,11 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "com.example.user.Status",
@@ -19678,15 +19673,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'users.com.example.user', removed type 'com.example.user.Status', added type 'com.example.user/v1.User'; overclaim: OK 'com.example.u... (observed: unexplained: changed root '', added service 'users.com.example.user', removed type 'com.example.user.Status', added type 'com.example.user/v1.User'; overclaim: OK 'com.example.user.Status', OK 'com.example.user.User')",
+      "reason": "unexplained: changed root '', added service 'users.com.example.user', removed type 'com.example.user.Status', added type 'com.example.user/v1.User'; overclaim: OK 'com.example.u... (observed: unexplained: added service 'users.com.example.user', removed type 'com.example.user.Status', added type 'com.example.user/v1.User'; overclaim: OK 'com.example.user.Status', OK 'com.example.user.User')",
       "source_format": "avro",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -21861,11 +21851,11 @@
       "diff_count": 11,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 14,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "com.example.orders.Order",
@@ -21896,15 +21886,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'com.example.orders.OrderService', added service 'orders.com.example.orders', removed type 'com.example.orders.OrderStatus', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus' (observed: unexplained: changed root '', removed service 'com.example.orders.OrderService', added service 'orders.com.example.orders', removed type 'com.example.orders.OrderStatus', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus')",
+      "reason": "unexplained: changed root '', removed service 'com.example.orders.OrderService', added service 'orders.com.example.orders', removed type 'com.example.orders.OrderStatus', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus' (observed: unexplained: removed service 'com.example.orders.OrderService', added service 'orders.com.example.orders', removed type 'com.example.orders.OrderStatus', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order', OK 'com.example.orders.OrderLine', OK 'com.example.orders.OrderNotFound', OK 'com.example.orders.OrderStatus')",
       "source_format": "avro-idl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -25057,7 +25042,7 @@
       "diff_count": 11,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -29565,7 +29550,7 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -31846,11 +31831,11 @@
       "diff_count": 11,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 5,
       "loss_drop": 13,
       "loss_ok": 5,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "AddressBook",
@@ -31888,15 +31873,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Directory', added service 'addressbooks.example.com', removed type 'Person.PhoneNumber.Type', added type 'example.com/v1.AddressBo... (observed: unexplained: changed root '', removed service 'Directory', added service 'addressbooks.example.com', removed type 'Person.PhoneNumber.Type', added type 'example.com/v1.AddressBook'; overclaim: OK 'AddressBook', OK 'Date', OK 'Person', OK 'Person.PhoneNumber', OK 'Person.PhoneNumber.Type')",
+      "reason": "unexplained: changed root '', removed service 'Directory', added service 'addressbooks.example.com', removed type 'Person.PhoneNumber.Type', added type 'example.com/v1.AddressBo... (observed: unexplained: removed service 'Directory', added service 'addressbooks.example.com', removed type 'Person.PhoneNumber.Type', added type 'example.com/v1.AddressBook'; overclaim: OK 'AddressBook', OK 'Date', OK 'Person', OK 'Person.PhoneNumber', OK 'Person.PhoneNumber.Type')",
       "source_format": "capnproto",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -34772,11 +34752,11 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 1,
+      "loss_approx": 3,
       "loss_drop": 19,
       "loss_ok": 6,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "address",
@@ -34821,15 +34801,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'orders.example.com', removed type 'epoch-time', added type 'example.com/v1.Order', removed type 'status'; overclaim: OK 'address', OK 'customer', OK 'line', OK 'money', OK 'order', OK 'status' (observed: unexplained: changed root '', added service 'orders.example.com', removed type 'epoch-time', added type 'example.com/v1.Order', removed type 'status'; overclaim: OK 'address', OK 'customer', OK 'line', OK 'money', OK 'order', OK 'status')",
+      "reason": "unexplained: changed root '', added service 'orders.example.com', removed type 'epoch-time', added type 'example.com/v1.Order', removed type 'status'; overclaim: OK 'address', OK 'customer', OK 'line', OK 'money', OK 'order', OK 'status' (observed: unexplained: added service 'orders.example.com', removed type 'epoch-time', added type 'example.com/v1.Order', removed type 'status'; overclaim: OK 'address', OK 'customer', OK 'line', OK 'money', OK 'order', OK 'status')",
       "source_format": "cddl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -36900,7 +36875,7 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -38274,7 +38249,7 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -39733,11 +39708,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 5,
       "loss_drop": 7,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "CUSTOMER-RECORD.CUSTOMER-RECORD",
@@ -39747,15 +39722,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'customerrecords.customer-record', added type 'customer-record/v1.CUSTOMERRECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD' (observed: unexplained: changed root '', added service 'customerrecords.customer-record', added type 'customer-record/v1.CUSTOMERRECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
+      "reason": "unexplained: changed root '', added service 'customerrecords.customer-record', added type 'customer-record/v1.CUSTOMERRECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD' (observed: unexplained: added service 'customerrecords.customer-record', added type 'customer-record/v1.CUSTOMERRECORD'; overclaim: OK 'CUSTOMER-RECORD.CUSTOMER-RECORD')",
       "source_format": "cobolcopybook",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -47440,11 +47410,11 @@
       "diff_count": 12,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 10,
       "loss_ok": 4,
       "loss_synth": 0,
-      "matched_count": 7,
+      "matched_count": 8,
       "overclaims": [
         {
           "construct": "Banking.Account",
@@ -47475,15 +47445,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Banking.Bank', added service 'accounts.banking', removed type 'Banking.AccountKind', added type 'banking/v1.Account'; overclaim: O... (observed: unexplained: changed root '', removed service 'Banking.Bank', added service 'accounts.banking', removed type 'Banking.AccountKind', added type 'banking/v1.Account'; overclaim: OK 'Banking.Account', OK 'Banking.AccountKind', OK 'Banking.AccountNotFound', OK 'Banking.InsufficientFunds')",
+      "reason": "unexplained: changed root '', removed service 'Banking.Bank', added service 'accounts.banking', removed type 'Banking.AccountKind', added type 'banking/v1.Account'; overclaim: O... (observed: unexplained: removed service 'Banking.Bank', added service 'accounts.banking', removed type 'Banking.AccountKind', added type 'banking/v1.Account'; overclaim: OK 'Banking.Account', OK 'Banking.AccountKind', OK 'Banking.AccountNotFound', OK 'Banking.InsufficientFunds')",
       "source_format": "corbaidl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -52591,7 +52556,7 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -58377,7 +58342,7 @@
       "diff_count": 14,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 36,
       "loss_ok": 11,
       "loss_synth": 0,
@@ -62366,7 +62331,7 @@
       "diff_count": 14,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 5,
       "loss_synth": 0,
@@ -65867,7 +65832,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 2,
+      "loss_approx": 3,
       "loss_drop": 15,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -69053,7 +69018,7 @@
       "diff_count": 13,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 49,
       "loss_ok": 10,
       "loss_synth": 0,
@@ -71731,7 +71696,7 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 23,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -75790,11 +75755,11 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 12,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "Patient.BackboneElement",
@@ -75811,15 +75776,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'patients.patient', removed type 'Patient.BackboneElement', added type 'patient/v1.Patient'; overclaim: OK 'Patient.BackboneElement',... (observed: unexplained: changed root '', added service 'patients.patient', removed type 'Patient.BackboneElement', added type 'patient/v1.Patient'; overclaim: OK 'Patient.BackboneElement', OK 'Patient.Patient')",
+      "reason": "unexplained: changed root '', added service 'patients.patient', removed type 'Patient.BackboneElement', added type 'patient/v1.Patient'; overclaim: OK 'Patient.BackboneElement',... (observed: unexplained: added service 'patients.patient', removed type 'Patient.BackboneElement', added type 'patient/v1.Patient'; overclaim: OK 'Patient.BackboneElement', OK 'Patient.Patient')",
       "source_format": "fhir",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -77921,7 +77881,7 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 21,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -80016,7 +79976,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 13,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -82648,7 +82608,7 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 12,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -86674,7 +86634,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 2,
+      "loss_approx": 3,
       "loss_drop": 2,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -92617,7 +92577,7 @@
       "diff_count": 15,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -95892,7 +95852,7 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 49,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -102282,11 +102242,11 @@
       "diff_count": 39,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 132,
       "loss_ok": 36,
       "loss_synth": 0,
-      "matched_count": 36,
+      "matched_count": 37,
       "overclaims": [
         {
           "construct": "POCD_HD000040.AD",
@@ -102541,15 +102501,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'ads.example.com', added type 'example.com/v1.AD'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'ads.example.com', added type 'example.com/v1.AD'; overclaim: OK 'POCD_HD000040.AD', OK 'POCD_HD000040.Act', OK 'POCD_HD000040.AssignedAuthor', OK 'POCD_HD000040.AssignedCustodian', OK 'POCD_HD000040.AssignedPerson', OK 'POCD_HD000040.Author', OK 'POCD_HD000040.BL', OK 'POCD_HD000040.CD', OK 'POCD_HD000040.CE', OK 'POCD_HD000040.CS', OK 'POCD_HD000040.ClinicalDocument', OK 'POCD_HD000040.ClinicalDocumentComponent', OK 'POCD_HD000040.Consumable', OK 'POCD_HD000040.Custodian', OK 'POCD_HD000040.DocumentationOf', OK 'POCD_HD000040.Entry', OK 'POCD_HD000040.II', OK 'POCD_HD000040.INT', OK 'POCD_HD000040.IVL_TS', OK 'POCD_HD000040.LanguageCommunication', OK 'POCD_HD000040.ManufacturedMaterial', OK 'POCD_HD000040.ManufacturedProduct', OK 'POCD_HD000040.PN', OK 'POCD_HD000040.PQ', OK 'POCD_HD000040.Patient', OK 'POCD_HD000040.PatientRole', OK 'POCD_HD000040.RecordTarget', OK 'POCD_HD000040.RepresentedCustodianOrganization', OK 'POCD_HD000040.RepresentedOrganization', OK 'POCD_HD000040.Section', OK 'POCD_HD000040.ServiceEvent', OK 'POCD_HD000040.StructuredBody', OK 'POCD_HD000040.StructuredBodyComponent', OK 'POCD_HD000040.SubstanceAdministration', OK 'POCD_HD000040.TEL', OK 'POCD_HD000040.TS')",
       "source_format": "hl7v3",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -108414,7 +108369,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -110786,7 +110741,7 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -113669,7 +113624,7 @@
       "diff_count": 12,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 34,
       "loss_ok": 9,
       "loss_synth": 0,
@@ -116363,7 +116318,7 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 19,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -118471,7 +118426,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -123315,7 +123270,7 @@
       "diff_count": 21,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 36,
       "loss_ok": 18,
       "loss_synth": 0,
@@ -128356,7 +128311,7 @@
       "diff_count": 15,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 22,
       "loss_ok": 12,
       "loss_synth": 0,
@@ -133709,11 +133664,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "Product",
@@ -133723,15 +133678,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'products.example.com', removed type 'Product', added type 'example.com/v1.Product'; overclaim: OK 'Product' (observed: unexplained: changed root '', added service 'products.example.com', removed type 'Product', added type 'example.com/v1.Product'; overclaim: OK 'Product')",
+      "reason": "unexplained: changed root '', added service 'products.example.com', removed type 'Product', added type 'example.com/v1.Product'; overclaim: OK 'Product' (observed: unexplained: added service 'products.example.com', removed type 'Product', added type 'example.com/v1.Product'; overclaim: OK 'Product')",
       "source_format": "json-schema",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -135268,11 +135218,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 3,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "Address",
@@ -135296,15 +135246,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'typicalcontexts.example.com', removed type 'Address', removed type 'LanguageMap', added type 'example.com/v1.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: changed root '', added service 'typicalcontexts.example.com', removed type 'Address', removed type 'LanguageMap', added type 'example.com/v1.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
+      "reason": "unexplained: changed root '', added service 'typicalcontexts.example.com', removed type 'Address', removed type 'LanguageMap', added type 'example.com/v1.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext' (observed: unexplained: added service 'typicalcontexts.example.com', removed type 'Address', removed type 'LanguageMap', added type 'example.com/v1.TypicalContext'; overclaim: OK 'Address', OK 'LanguageMap', OK 'TypicalContext')",
       "source_format": "jsonld",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -137168,11 +137113,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "User",
@@ -137196,15 +137141,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'users.example.com', removed type 'User', removed type 'UserAddress', removed type 'UserStatus', added type 'example.com/v1.User'; ov... (observed: unexplained: changed root '', added service 'users.example.com', removed type 'User', removed type 'UserAddress', removed type 'UserStatus', added type 'example.com/v1.User'; overclaim: OK 'User', OK 'UserAddress', OK 'UserStatus')",
+      "reason": "unexplained: changed root '', added service 'users.example.com', removed type 'User', removed type 'UserAddress', removed type 'UserStatus', added type 'example.com/v1.User'; ov... (observed: unexplained: added service 'users.example.com', removed type 'User', removed type 'UserAddress', removed type 'UserStatus', added type 'example.com/v1.User'; overclaim: OK 'User', OK 'UserAddress', OK 'UserStatus')",
       "source_format": "jtd",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -140565,11 +140505,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 8,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "com.example.orders.Order",
@@ -140579,15 +140519,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'orders.com.example.orders', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order' (observed: unexplained: changed root '', added service 'orders.com.example.orders', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order')",
+      "reason": "unexplained: changed root '', added service 'orders.com.example.orders', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order' (observed: unexplained: added service 'orders.com.example.orders', added type 'com.example.orders/v1.Order'; overclaim: OK 'com.example.orders.Order')",
       "source_format": "kafka-connect",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -144679,7 +144614,7 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -146811,11 +146746,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 7,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "Temperature",
@@ -146825,15 +146760,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'TemperatureService', added service 'temperatures.example.com', added type 'example.com/v1.Temperature'; overclaim: OK 'Temperature' (observed: unexplained: changed root '', removed service 'TemperatureService', added service 'temperatures.example.com', added type 'example.com/v1.Temperature'; overclaim: OK 'Temperature')",
+      "reason": "unexplained: changed root '', removed service 'TemperatureService', added service 'temperatures.example.com', added type 'example.com/v1.Temperature'; overclaim: OK 'Temperature' (observed: unexplained: removed service 'TemperatureService', added service 'temperatures.example.com', added type 'example.com/v1.Temperature'; overclaim: OK 'Temperature')",
       "source_format": "lwm2m",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -149361,11 +149291,11 @@
       "diff_count": 14,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 15,
       "loss_ok": 5,
       "loss_synth": 0,
-      "matched_count": 8,
+      "matched_count": 9,
       "overclaims": [
         {
           "construct": "OnOff",
@@ -149403,15 +149333,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'OnOffService', added service 'onoffs.example.com', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum', added type 'example.com/v1.OnOff'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum' (observed: unexplained: changed root '', removed service 'OnOffService', added service 'onoffs.example.com', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum', added type 'example.com/v1.OnOff'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
+      "reason": "unexplained: changed root '', removed service 'OnOffService', added service 'onoffs.example.com', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum', added type 'example.com/v1.OnOff'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum' (observed: unexplained: removed service 'OnOffService', added service 'onoffs.example.com', removed type 'OnOffFeature', removed type 'StartUpOnOffEnum', added type 'example.com/v1.OnOff'; overclaim: OK 'OnOff', OK 'OnOff.OffWithEffectRequest', OK 'OnOff.OnWithTimedOffRequest', OK 'OnOffFeature', OK 'StartUpOnOffEnum')",
       "source_format": "matter",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -153143,7 +153068,7 @@
       "diff_count": 15,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -157028,11 +156953,11 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 62,
       "loss_ok": 7,
       "loss_synth": 0,
-      "matched_count": 7,
+      "matched_count": 8,
       "overclaims": [
         {
           "construct": "NACHA-ACH.AchFile",
@@ -157084,15 +157009,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'achfiles.nacha-ach', added type 'nacha-ach/v1.AchFile'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'achfiles.nacha-ach', added type 'nacha-ach/v1.AchFile'; overclaim: OK 'NACHA-ACH.AchFile', OK 'NACHA-ACH.Batch', OK 'NACHA-ACH.BatchControl', OK 'NACHA-ACH.BatchHeader', OK 'NACHA-ACH.EntryDetail', OK 'NACHA-ACH.FileControl', OK 'NACHA-ACH.FileHeader')",
       "source_format": "nacha",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -159198,11 +159118,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 12,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "natural.CUSTOMER-FILE",
@@ -159212,15 +159132,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'customerfiles.natural', added type 'natural/v1.CUSTOMERFILE'; overclaim: OK 'natural.CUSTOMER-FILE' (observed: unexplained: changed root '', added service 'customerfiles.natural', added type 'natural/v1.CUSTOMERFILE'; overclaim: OK 'natural.CUSTOMER-FILE')",
+      "reason": "unexplained: changed root '', added service 'customerfiles.natural', added type 'natural/v1.CUSTOMERFILE'; overclaim: OK 'natural.CUSTOMER-FILE' (observed: unexplained: added service 'customerfiles.natural', added type 'natural/v1.CUSTOMERFILE'; overclaim: OK 'natural.CUSTOMER-FILE')",
       "source_format": "natural-ddm",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -164874,7 +164789,7 @@
       "diff_count": 34,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 92,
       "loss_ok": 31,
       "loss_synth": 0,
@@ -173599,7 +173514,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 8,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -177521,7 +177436,7 @@
       "diff_count": 18,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 21,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -181047,11 +180962,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "orders",
@@ -181061,15 +180976,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'orderses.commerce', added type 'commerce/v1.Orders', removed type 'orders'; overclaim: OK 'orders' (observed: unexplained: changed root '', added service 'orderses.commerce', added type 'commerce/v1.Orders', removed type 'orders'; overclaim: OK 'orders')",
+      "reason": "unexplained: changed root '', added service 'orderses.commerce', added type 'commerce/v1.Orders', removed type 'orders'; overclaim: OK 'orders' (observed: unexplained: added service 'orderses.commerce', added type 'commerce/v1.Orders', removed type 'orders'; overclaim: OK 'orders')",
       "source_format": "odcs",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -183091,11 +183001,11 @@
       "diff_count": 11,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 8,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 7,
       "overclaims": [
         {
           "construct": "KV_PROG.kv_entry",
@@ -183119,15 +183029,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'KV_PROG.KV_PROG', added service 'kventries.example.com', removed type 'KV_PROG.kv_status', added type 'example.com/v1.KvEntry'; ov... (observed: unexplained: changed root '', removed service 'KV_PROG.KV_PROG', added service 'kventries.example.com', removed type 'KV_PROG.kv_status', added type 'example.com/v1.KvEntry'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
+      "reason": "unexplained: changed root '', removed service 'KV_PROG.KV_PROG', added service 'kventries.example.com', removed type 'KV_PROG.kv_status', added type 'example.com/v1.KvEntry'; ov... (observed: unexplained: removed service 'KV_PROG.KV_PROG', added service 'kventries.example.com', removed type 'KV_PROG.kv_status', added type 'example.com/v1.KvEntry'; overclaim: OK 'KV_PROG.kv_entry', OK 'KV_PROG.kv_put_args', OK 'KV_PROG.kv_status')",
       "source_format": "oncrpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -185750,7 +185655,7 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 3,
       "loss_synth": 0,
@@ -187944,7 +187849,7 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -189577,7 +189482,7 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -192261,7 +192166,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -197755,11 +197660,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 5,
       "loss_drop": 19,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "pli.CUSTOMER_REC",
@@ -197783,15 +197688,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'customerrecs.pli', added type 'pli/v1.CUSTOMERREC'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: changed root '', added service 'customerrecs.pli', added type 'pli/v1.CUSTOMERREC'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
+      "reason": "unexplained: changed root '', added service 'customerrecs.pli', added type 'pli/v1.CUSTOMERREC'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS' (observed: unexplained: added service 'customerrecs.pli', added type 'pli/v1.CUSTOMERREC'; overclaim: OK 'pli.CUSTOMER_REC', OK 'pli.CUSTOMER_REC.CUST_ADDRESS', OK 'pli.CUSTOMER_REC.CUST_CONTACTS')",
       "source_format": "pli",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -199698,7 +199598,7 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -202230,11 +202130,11 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "GetOrderResponse200",
@@ -202251,15 +202151,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Orders API', added service 'orders.example.com', removed type 'Order', added type 'example.com/v1.Order'; overclaim: OK 'Order' (observed: unexplained: changed root '', removed service 'Orders API', added service 'getorderresponse200s.example.com', removed type 'GetOrderResponse200', removed type 'PostOrderRequest', added type 'example.com/v1.GetOrderResponse200'; overclaim: OK 'GetOrderResponse200', OK 'PostOrderRequest')",
+      "reason": "unexplained: changed root '', removed service 'Orders API', added service 'orders.example.com', removed type 'Order', added type 'example.com/v1.Order'; overclaim: OK 'Order' (observed: unexplained: removed service 'Orders API', added service 'getorderresponse200s.example.com', removed type 'GetOrderResponse200', removed type 'PostOrderRequest', added type 'example.com/v1.GetOrderResponse200'; overclaim: OK 'GetOrderResponse200', OK 'PostOrderRequest')",
       "source_format": "postman-v2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -211757,7 +211652,7 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -214295,11 +214190,11 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 11,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "Book",
@@ -214316,15 +214211,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Bookstore API', added service 'books.example.com', added type 'example.com/v1.Book'; overclaim: OK 'Book', OK 'NewBook' (observed: unexplained: changed root '', removed service 'Bookstore API', added service 'books.example.com', added type 'example.com/v1.Book'; overclaim: OK 'Book', OK 'NewBook')",
+      "reason": "unexplained: changed root '', removed service 'Bookstore API', added service 'books.example.com', added type 'example.com/v1.Book'; overclaim: OK 'Book', OK 'NewBook' (observed: unexplained: removed service 'Bookstore API', added service 'books.example.com', added type 'example.com/v1.Book'; overclaim: OK 'Book', OK 'NewBook')",
       "source_format": "raml",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -216612,11 +216502,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 3,
       "loss_drop": 10,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 3,
+      "matched_count": 4,
       "overclaims": [
         {
           "construct": "catalogue",
@@ -216640,15 +216530,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'catalogues.example.com', added type 'example.com/v1.Catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: changed root '', added service 'catalogues.example.com', added type 'example.com/v1.Catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
+      "reason": "unexplained: changed root '', added service 'catalogues.example.com', added type 'example.com/v1.Catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product' (observed: unexplained: added service 'catalogues.example.com', added type 'example.com/v1.Catalogue'; overclaim: OK 'catalogue', OK 'money', OK 'product')",
       "source_format": "relaxng",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -218361,11 +218246,11 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 4,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "TypicalSensorMessage",
@@ -218382,15 +218267,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: changed root '', added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
+      "reason": "unexplained: changed root '', added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants' (observed: unexplained: added service 'typicalsensormessages.example.com', removed type 'TypicalSensorMessage', removed type 'TypicalSensorMessage_Constants', added type 'example.com/v1.TypicalSensorMessage'; overclaim: OK 'TypicalSensorMessage', OK 'TypicalSensorMessage_Constants')",
       "source_format": "ros2",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -223349,7 +223229,7 @@
       "diff_count": 28,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 59,
       "loss_ok": 25,
       "loss_synth": 0,
@@ -227480,7 +227360,7 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -229952,7 +229832,7 @@
       "diff_count": 12,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 2,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -233137,7 +233017,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -235386,11 +235266,11 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 2,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "NBIRTH",
@@ -235400,15 +235280,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'Sparkplug', added service 'nbirths.spbv1.0', removed type 'NBIRTH', added type 'spbv1.0/v1.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: changed root '', removed service 'Sparkplug', added service 'nbirths.spbv1.0', removed type 'NBIRTH', added type 'spbv1.0/v1.NBIRTH'; overclaim: OK 'NBIRTH')",
+      "reason": "unexplained: changed root '', removed service 'Sparkplug', added service 'nbirths.spbv1.0', removed type 'NBIRTH', added type 'spbv1.0/v1.NBIRTH'; overclaim: OK 'NBIRTH' (observed: unexplained: removed service 'Sparkplug', added service 'nbirths.spbv1.0', removed type 'NBIRTH', added type 'spbv1.0/v1.NBIRTH'; overclaim: OK 'NBIRTH')",
       "source_format": "sparkplug",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -237627,11 +237502,11 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 0,
       "loss_ok": 5,
       "loss_synth": 0,
-      "matched_count": 0,
+      "matched_count": 1,
       "overclaims": [
         {
           "construct": "commerce.customer",
@@ -237669,15 +237544,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'customers.example.com', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'example.com/v1.Customer'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status' (observed: unexplained: changed root '', added service 'customers.example.com', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'example.com/v1.Customer'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status')",
+      "reason": "unexplained: changed root '', added service 'customers.example.com', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'example.com/v1.Customer'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status' (observed: unexplained: added service 'customers.example.com', removed type 'commerce.customer', removed type 'commerce.open_orders', removed type 'commerce.order', removed type 'commerce.order_line', removed type 'commerce.order_status', added type 'example.com/v1.Customer'; overclaim: OK 'commerce.customer', OK 'commerce.open_orders', OK 'commerce.order', OK 'commerce.order_line', OK 'commerce.order_status')",
       "source_format": "sql-ddl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -241337,7 +241207,7 @@
       "diff_count": 18,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 16,
       "loss_ok": 8,
       "loss_synth": 0,
@@ -245808,7 +245678,7 @@
       "diff_count": 12,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 8,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -250479,7 +250349,7 @@
       "diff_count": 18,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 36,
       "loss_ok": 15,
       "loss_synth": 0,
@@ -254189,7 +254059,7 @@
       "diff_count": 11,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 12,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -257076,7 +256946,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 1,
       "loss_synth": 0,
@@ -259355,11 +259225,11 @@
       "diff_count": 5,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 18,
       "loss_ok": 2,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "TRADACOMS-ORDERS.MessageORDERS",
@@ -259376,15 +259246,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: changed root '', added service 'messageorderses.tradacoms-orders', added type 'tradacoms-orders/v1.MessageORDERS'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
+      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: added service 'messageorderses.tradacoms-orders', added type 'tradacoms-orders/v1.MessageORDERS'; overclaim: OK 'TRADACOMS-ORDERS.MessageORDERS', OK 'TRADACOMS-ORDERS.OLD')",
       "source_format": "tradacoms",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -271769,7 +271634,7 @@
       "diff_count": 9,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 0,
       "loss_ok": 6,
       "loss_synth": 0,
@@ -274982,11 +274847,11 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 11,
       "loss_ok": 3,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 6,
       "overclaims": [
         {
           "construct": "PetStore.NewPet",
@@ -275010,15 +274875,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'PetStore.Pets', added service 'newpets.petstore', removed type 'PetStore.NewPet', removed type 'PetStore.Pet', removed type 'PetSt... (observed: unexplained: changed root '', removed service 'PetStore.Pets', added service 'newpets.petstore', removed type 'PetStore.PetStatus', added type 'petstore/v1.NewPet'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
+      "reason": "unexplained: changed root '', removed service 'PetStore.Pets', added service 'newpets.petstore', removed type 'PetStore.NewPet', removed type 'PetStore.Pet', removed type 'PetSt... (observed: unexplained: removed service 'PetStore.Pets', added service 'newpets.petstore', removed type 'PetStore.PetStatus', added type 'petstore/v1.NewPet'; overclaim: OK 'PetStore.NewPet', OK 'PetStore.Pet', OK 'PetStore.PetStatus')",
       "source_format": "typespec",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -277282,11 +277142,11 @@
       "diff_count": 4,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 1,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 1,
+      "matched_count": 2,
       "overclaims": [
         {
           "construct": "vsam.EXAMPLE_CUSTOMER_KSDS",
@@ -277296,15 +277156,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'examplecustomerksdses.vsam', added type 'vsam/v1.EXAMPLECUSTOMERKSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS' (observed: unexplained: changed root '', added service 'examplecustomerksdses.vsam', added type 'vsam/v1.EXAMPLECUSTOMERKSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
+      "reason": "unexplained: changed root '', added service 'examplecustomerksdses.vsam', added type 'vsam/v1.EXAMPLECUSTOMERKSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS' (observed: unexplained: added service 'examplecustomerksdses.vsam', added type 'vsam/v1.EXAMPLECUSTOMERKSDS'; overclaim: OK 'vsam.EXAMPLE_CUSTOMER_KSDS')",
       "source_format": "vsam-idcams",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -279079,11 +278934,11 @@
       "diff_count": 8,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 7,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 4,
+      "matched_count": 5,
       "overclaims": [
         {
           "construct": "http://example.com/bookstore.Book",
@@ -279093,15 +278948,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', added service 'books.example.com', removed service 'http://example.com/bookstore.WADL API', added type 'example.com/v1.Book'; overclaim: OK 'http:/... (observed: unexplained: changed root '', added service 'books.example.com', removed service 'http://example.com/bookstore.WADL API', added type 'example.com/v1.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
+      "reason": "unexplained: changed root '', added service 'books.example.com', removed service 'http://example.com/bookstore.WADL API', added type 'example.com/v1.Book'; overclaim: OK 'http:/... (observed: unexplained: added service 'books.example.com', removed service 'http://example.com/bookstore.WADL API', added type 'example.com/v1.Book'; overclaim: OK 'http://example.com/bookstore.Book')",
       "source_format": "wadl",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "added",
           "entity": "service",
@@ -281542,7 +281392,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 3,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -285214,7 +285064,7 @@
       "diff_count": 16,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 21,
       "loss_ok": 9,
       "loss_synth": 0,
@@ -289300,7 +289150,7 @@
       "diff_count": 14,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 18,
       "loss_ok": 7,
       "loss_synth": 0,
@@ -292184,11 +292034,11 @@
       "diff_count": 6,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 2,
       "loss_drop": 3,
       "loss_ok": 1,
       "loss_synth": 0,
-      "matched_count": 2,
+      "matched_count": 3,
       "overclaims": [
         {
           "construct": "InventoryReserveStockParam3",
@@ -292198,15 +292048,10 @@
           "target_mapping": null
         }
       ],
-      "reason": "unexplained: changed root '', removed service 'inventory.reserveStock', added service 'inventoryreservestockparam3s.example.com', added type 'example.com/v1.InventoryReserveStoc... (observed: unexplained: changed root '', removed service 'inventory.reserveStock', added service 'inventoryreservestockparam3s.example.com', added type 'example.com/v1.InventoryReserveStockParam3'; overclaim: OK 'InventoryReserveStockParam3')",
+      "reason": "unexplained: changed root '', removed service 'inventory.reserveStock', added service 'inventoryreservestockparam3s.example.com', added type 'example.com/v1.InventoryReserveStoc... (observed: unexplained: removed service 'inventory.reserveStock', added service 'inventoryreservestockparam3s.example.com', added type 'example.com/v1.InventoryReserveStockParam3'; overclaim: OK 'InventoryReserveStockParam3')",
       "source_format": "xmlrpc",
       "status": "xfail",
       "unexplained": [
-        {
-          "change": "changed",
-          "entity": "root",
-          "key": ""
-        },
         {
           "change": "removed",
           "entity": "service",
@@ -293932,7 +293777,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 2,
       "loss_synth": 0,
@@ -296088,7 +295933,7 @@
       "diff_count": 7,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 14,
       "loss_ok": 4,
       "loss_synth": 0,
@@ -301190,7 +301035,7 @@
       "diff_count": 10,
       "emit_format": "k8s-crd",
       "emit_key": "k8s-crd",
-      "loss_approx": 0,
+      "loss_approx": 1,
       "loss_drop": 4,
       "loss_ok": 4,
       "loss_synth": 0,

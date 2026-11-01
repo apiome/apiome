@@ -28,7 +28,10 @@ check. This module is the thin dispatcher that picks the matching validator per 
   compiled by ``capnp``; needs the optional ``capnp`` toolchain, MFX-30.2);
 * ``k8s-crd`` / ``gateway-api`` — :func:`app.k8s_structural_schema.validate_k8s_crd_document`
   and :func:`app.gateway_api_schema.validate_httproute_manifest` (re-import plus the field
-  rules the API server enforces on each CRD; pure Python, FMT-2.7);
+  rules the API server enforces on each CRD; pure Python, FMT-2.7); a ``k8s-crd`` manifest is
+  then checked by :func:`app.k8s_kubeconform.run_kubeconform` against the
+  ``apiextensions.k8s.io/v1`` schema when the optional ``kubeconform`` toolchain is installed
+  (MFX-21.6);
 * ``kong`` — :func:`app.kong_deck_schema.validate_kong_declarative_document`, the vendored
   equivalent of ``deck validate`` (``deck`` is a Go binary and is not in this runtime);
 * ``http-file`` — :func:`app.http_file_emitter.validate_http_file_document` (a re-parse
@@ -1079,10 +1082,41 @@ async def _validate_arazzo(
 async def _validate_k8s_crd(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted CustomResourceDefinition (re-import + structural rules)."""
-    from .k8s_structural_schema import validate_k8s_crd_document
+    """Re-validate an emitted CustomResourceDefinition (re-import + structural rules + kubeconform).
 
-    return await _run_text_validator(target, emit_result, validate_k8s_crd_document)
+    Apiome's structural-schema rules (:func:`app.k8s_structural_schema.validate_k8s_crd_document`) check
+    the schema inside the CRD the way the API server does; then, when the toolchain has it, kubeconform
+    checks the manifest against the ``apiextensions.k8s.io/v1`` CustomResourceDefinition schema (MFX-21.6,
+    :mod:`app.k8s_kubeconform`). Each kubeconform problem is a finding with keyword ``kubeconform``; a
+    kubeconform that is installed but gives no answer is a finding too. Without kubeconform the structural
+    rules alone decide.
+    """
+    from .k8s_kubeconform import kubeconform_available, run_kubeconform
+    from .k8s_structural_schema import validate_k8s_crd_document
+    from .toolchain_runner import ToolchainError
+
+    verdict = await _run_text_validator(target, emit_result, validate_k8s_crd_document)
+    if not verdict.valid or not kubeconform_available():
+        return verdict
+
+    def _run() -> List[ValidationFinding]:
+        findings: List[ValidationFinding] = []
+        for emitted in emit_result.files:
+            try:
+                problems = run_kubeconform(str(emitted.content))
+            except (ToolchainError, ValueError) as exc:
+                findings.append(ValidationFinding(message=f"kubeconform could not validate the CRD: {exc}",
+                                                  file=emitted.path, keyword="kubeconform"))
+                continue
+            findings.extend(
+                ValidationFinding(message=problem["message"], path=problem.get("path"), file=emitted.path,
+                                  keyword="kubeconform")
+                for problem in problems
+            )
+        return findings
+
+    findings = await asyncio.to_thread(_run)
+    return verdict if not findings else _rejected(target, findings)
 
 
 async def _validate_kong(

@@ -20,7 +20,7 @@ What lives here:
   ``zod-schema-extractor``, ``dbml-validator``, ``prisma-validator``, ``cue``, ``pkl``, ``dhall``,
   ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``.
+  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``, ``kubeconform``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -379,6 +379,20 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         description="Cap'n Proto compiler: `capnp compile` checks an emitted .capnp schema "
         "(capnproto/capnproto, MFX-30.2). Optional: without it the export is not re-validated.",
         env_override_key="APIOME_CAPNP_BIN",
+        parses_json=False,
+        runtime="native",
+    ),
+    BundledTool(
+        key="kubeconform",
+        executable="kubeconform",
+        version="0.7.0",
+        description="Kubernetes manifest validator (yannh/kubeconform): checks an emitted CustomResourceDefinition "
+        "against the apiextensions.k8s.io/v1 schema cached at build time (MFX-21.6). Optional: without it the "
+        "export is checked by the structural-schema rules alone.",
+        env_override_key="APIOME_KUBECONFORM_BIN",
+        version_probe_args=("-v",),
+        # The CRD seam (MFX-21.6, app.k8s_kubeconform) reads kubeconform's `-output json` report itself: it
+        # exits 1 when a resource is invalid.
         parses_json=False,
         runtime="native",
     ),

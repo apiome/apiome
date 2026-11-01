@@ -91,9 +91,8 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .k8s_crd_normalizer import K8S_CRD_FORMAT
-from .lossiness import LossinessSeverity
 from .k8s_structural_schema import (
     CRD_API_VERSION,
     CRD_KIND,
@@ -105,6 +104,8 @@ from .k8s_structural_schema import (
     structural_schema_violations,
     validate_k8s_crd_document,
 )
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .writer_loss_rulepack import filed_writer_verdicts
 
 __all__ = [
     "K8sCrdEmitOptions",
@@ -234,9 +235,59 @@ class K8sCrdFidelityRulePack(CapabilityRulePack):
     ``uniqueItems: true`` is refused outright, and a ``format`` outside the set the
     API server knows validates nothing. Each of those is named here rather than
     discovered in the artifact.
+
+    MFX-21.6 (#4345) — the structural-schema rules the emitter enforces while it inlines every named
+    type (a structural schema has no ``$ref``) are reported too: the pack builds the CRD once with the
+    default options and files each structural loss the emitter recorded under its construct
+    (:func:`~app.writer_loss_rulepack.filed_writer_verdicts`, the root when the loss names a schema node
+    rather than a construct). Where the expansion changes what the schema means — a reference cycle or an
+    unresolved reference emitted as a free-form node, a ``null`` type, an enum mixing value types, a
+    record nested under a synthesized ``spec`` — it is ``APPROX``; a keyword the schema cannot carry
+    (``deprecated``, a ``required`` name with no property) is ``DROP``. The constructs reported by the
+    rules above (unions, untyped scalars, ``uniqueItems``, unknown formats) are not reported twice.
     """
 
     target_label = "Kubernetes CRD"
+
+    #: Emitter loss subject → (verdict kind, severity) for the structural-schema losses (MFX-21.6).
+    _STRUCTURAL_LOSSES: Mapping[str, Tuple[LossinessKind, LossinessSeverity]] = {
+        "reference-cycle": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "unresolved-type-reference": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "null-type": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "untyped-enum": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "synthesized-spec-wrapper": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "deprecated-keyword": (LossinessKind.DROP, LossinessSeverity.INFO),
+        "required-without-property": (LossinessKind.DROP, LossinessSeverity.WARN),
+    }
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Build the CRD mappings once to learn their structural losses, then run the drive loop.
+
+        Nothing is emitted: the writer builds the documents with the default options and the YAML is never
+        rendered, so a target card still badges from the model alone.
+
+        Args:
+            api: The source model.
+
+        Returns:
+            The fidelity report.
+        """
+        writer = _K8sCrdWriter(api, K8sCrdEmitOptions())
+        writer.build()
+        self._filed = filed_writer_verdicts(api, writer.losses.records(), self._STRUCTURAL_LOSSES)
+        return super().evaluate(api)
+
+    def _structural(self, key: str) -> List[FidelityVerdict]:
+        """The structural-schema verdicts filed under ``key`` (``[]`` before :meth:`evaluate`)."""
+        return getattr(self, "_filed", {}).get(key, [])
+
+    def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        """The base root verdicts, then the structural losses that name a schema node, not a construct."""
+        return super().root_verdicts(api) + self._structural(ROOT_CONSTRUCT_KEY)
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict, then the structural losses filed under it."""
+        return super().type_verdicts(type_) + self._structural(type_.key)
 
     def channel_verdict(self, channel: Channel) -> FidelityVerdict:
         """An event channel has no place in a resource definition; it is dropped."""
@@ -291,7 +342,7 @@ class K8sCrdFidelityRulePack(CapabilityRulePack):
         are enumerated here so a source that carries them is warned before the emit
         silently drops the keyword.
         """
-        verdicts = super().field_verdicts(field)
+        verdicts = super().field_verdicts(field) + self._structural(field.key)
         constraints = field.constraints
         if constraints is None:
             return verdicts
@@ -1495,10 +1546,19 @@ class _K8sCrdWriter:
         self._plans = _plan_crds(api, options, self.losses)
         self.output_path = _output_path(api, self._plans)
 
+    def build(self) -> List[Dict[str, Any]]:
+        """Build the CRD mappings (one per planned CRD), recording every loss the structural rules cost.
+
+        Returns:
+            The documents :meth:`render` serializes. The fidelity pack calls this alone (MFX-21.6): it
+            needs the losses, not the YAML.
+        """
+        self._record_unrepresentable_constructs()
+        return [self._document(plan, index) for index, plan in enumerate(self._plans)]
+
     def render(self) -> str:
         """Return the emitted YAML text (one document per planned CRD)."""
-        self._record_unrepresentable_constructs()
-        documents = [self._document(plan, index) for index, plan in enumerate(self._plans)]
+        documents = self.build()
         if self._options.pretty_print:
             return yaml.safe_dump_all(
                 documents,
