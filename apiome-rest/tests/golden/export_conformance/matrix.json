@@ -4489,15 +4489,9 @@
     },
     {
       "family": "asyncapi",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "asyncapi",
@@ -12517,15 +12511,9 @@
     },
     {
       "family": "cue",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "cue",
@@ -13629,15 +13617,9 @@
     },
     {
       "family": "dhall",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 6,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "dhall",
@@ -40868,15 +40850,9 @@
     },
     {
       "family": "pkl",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "pkl",
@@ -55558,15 +55534,9 @@
     },
     {
       "family": "typescript-types",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 7,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "typescript-types",
@@ -61340,15 +61310,9 @@
     },
     {
       "family": "zod",
-      "loss_counts": {
-        "approx": 1,
-        "drop": 5,
-        "synth": 0
-      },
-      "reason": null,
-      "status": "lossy",
-      "target": "arazzo",
-      "tier": "lossy"
+      "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+      "status": "refused",
+      "target": "arazzo"
     },
     {
       "family": "zod",
@@ -62533,9 +62497,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3932,
+    "lossy": 3926,
     "ok": 36,
-    "refused": 2109,
+    "refused": 2115,
     "silent-loss": 187,
     "skipped": 0
   },
