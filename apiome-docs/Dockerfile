@@ -13,10 +13,11 @@
 #   docker build -f apiome-docs/Dockerfile --build-arg DOCS_URL=https://docs.example.com .
 
 # Stage 1: install the docs workspace's dependencies and build the static site.
-FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:alpine AS builder
 WORKDIR /repo
 
-RUN corepack enable && corepack prepare yarn@4.12.0 --activate
+# Node 25+ no longer bundles Corepack; install it (pinned) to get the repo's packageManager yarn.
+RUN npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
 
 # Yarn validates the lockfile against every workspace, so every workspace manifest is copied;
 # `workspaces focus` then installs only what apiome-docs needs.

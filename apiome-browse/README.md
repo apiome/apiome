@@ -38,7 +38,7 @@ This application follows a clean architecture pattern:
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 26+ (the images and CI use the latest Node release)
 - PostgreSQL database with Apiome schema
 - apiome-rest service running (for fetching specifications)
 

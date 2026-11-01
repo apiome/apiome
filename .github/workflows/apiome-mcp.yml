@@ -160,7 +160,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: latest
 
       - name: Install the corpus toolchain (buf, the required Node tools and the CUE/Pkl/Dhall evaluators)
         run: ./scripts/install_dev_toolchain.sh buf asyncapi-parser typescript-types-extractor zod-schema-extractor dbml-validator prisma-validator cue pkl dhall

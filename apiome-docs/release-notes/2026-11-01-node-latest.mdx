@@ -1,0 +1,19 @@
+---
+slug: node-latest
+title: Apiome runs on the latest Node.js
+description: Every Apiome image and CI job now uses the latest Node.js release.
+authors: [apiome]
+---
+
+Every Apiome image and every CI job now runs on the **latest Node.js release**, Node 26, instead of
+pinning Node 20 or 24.
+
+{/* truncate */}
+
+- **Images.** apiome-rest and apiome-db build on `node:slim`, and apiome-ui, apiome-browse and
+  apiome-docs build on `node:alpine`. Both tags follow the newest Node release.
+- **CI.** Every `setup-node` step uses `node-version: latest`.
+- **Mock action.** The `apiome-mock` GitHub Action runs on the Actions `node24` runtime, the newest
+  one GitHub offers.
+- **If you build the images yourself:** Node 26 no longer bundles Corepack or Yarn. The Dockerfiles
+  now install both themselves, so no change is needed on your side.

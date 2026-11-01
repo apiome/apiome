@@ -38,13 +38,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Enable Corepack and set Yarn to 4.12.0
-        run: corepack enable && corepack prepare yarn@4.12.0 --activate
-
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: latest
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
 
       - name: Install dependencies
         run: yarn install --immutable

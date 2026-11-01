@@ -8,11 +8,14 @@
 # apiome-browse/Dockerfile.dockerignore limits the context to those two directories.
 
 # Stage 1: Dependencies
-FROM --platform=$BUILDPLATFORM node:24-alpine AS deps
+# `node:alpine` is the newest Node release. Its images no longer bundle Yarn (Node 26+), so each
+# stage that runs `yarn` installs the Yarn classic the older images shipped.
+FROM --platform=$BUILDPLATFORM node:alpine AS deps
 WORKDIR /app/apiome-browse
 
 # Install dependencies for native modules (bcrypt, pg)
 RUN apk add --no-cache libc6-compat python3 make g++
+RUN npm install -g yarn@1.22.22
 
 # Copy package files
 COPY apiome-browse/package.json ./
@@ -22,8 +25,9 @@ COPY apiome-browse/package.json ./
 RUN yarn install
 
 # Stage 2: Builder
-FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
+FROM --platform=$BUILDPLATFORM node:alpine AS builder
 WORKDIR /app/apiome-browse
+RUN npm install -g yarn@1.22.22
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/apiome-browse/node_modules ./node_modules
@@ -39,8 +43,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN yarn build
 
 # Stage 3: Runner (Production)
-FROM node:24-alpine AS runner
+FROM node:alpine AS runner
 WORKDIR /app
+RUN npm install -g yarn@1.22.22
 
 # Set to production environment
 ENV NODE_ENV=production
