@@ -185,6 +185,10 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     # ``apiome export x12`` (MFX-24.5): the X12 implementation guide. The interchange is ``edix12``.
     "x12": "x12-guide",
     "x12guide": "x12-guide",
+    # ``apiome export idl`` (MFX-28.4): the OMG IDL target (CORBA and DDS profiles) is keyed ``corbaidl``.
+    "idl": "corbaidl",
+    "omg-idl": "corbaidl",
+    "corba-idl": "corbaidl",
 }
 
 

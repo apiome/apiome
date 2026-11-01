@@ -1,0 +1,218 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "idl-bank": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "idl-nested": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "idl-stress": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "raml": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "smithy": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "idl-bank": {
+      "dds": {
+        "compiler": "idlc",
+        "files": [
+          "Banking.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 0,
+        "keys": [
+          "@key string id;",
+          "@key string id;"
+        ],
+        "modules": [
+          "module Banking {"
+        ],
+        "preserved_percent": 50,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "dds-keys": {
+        "compiler": "idlc",
+        "files": [
+          "Banking.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 0,
+        "keys": [
+          "@key string id;",
+          "@key string id;"
+        ],
+        "modules": [
+          "module Banking {"
+        ],
+        "preserved_percent": 50,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "default": {
+        "compiler": "omniidl",
+        "files": [
+          "Banking.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module Banking {"
+        ],
+        "preserved_percent": 100,
+        "reparses": true,
+        "tier": "lossless"
+      },
+      "module": {
+        "compiler": "omniidl",
+        "files": [
+          "Banking.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module acme {",
+          "module pets {"
+        ],
+        "preserved_percent": 100,
+        "reparses": true,
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "compiler": "omniidl",
+        "files": [
+          "Banking.idl"
+        ],
+        "header_comment": false,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module Banking {"
+        ],
+        "preserved_percent": 100,
+        "reparses": true,
+        "tier": "lossless"
+      }
+    },
+    "rest": {
+      "dds": {
+        "compiler": "idlc",
+        "files": [
+          "default.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 0,
+        "keys": [
+          "@key long long id;",
+          "@key long long id;"
+        ],
+        "modules": [
+          "module Sample_Pet_Store_API_OpenAPI_3 {",
+          "module n0 {"
+        ],
+        "preserved_percent": 0,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "dds-keys": {
+        "compiler": "idlc",
+        "files": [
+          "default.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 0,
+        "keys": [
+          "@key long long id;",
+          "@key string name;"
+        ],
+        "modules": [
+          "module Sample_Pet_Store_API_OpenAPI_3 {",
+          "module n0 {"
+        ],
+        "preserved_percent": 0,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "default": {
+        "compiler": "omniidl",
+        "files": [
+          "default.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module Sample_Pet_Store_API_OpenAPI_3 {",
+          "module n0 {"
+        ],
+        "preserved_percent": 0,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "module": {
+        "compiler": "omniidl",
+        "files": [
+          "default.idl"
+        ],
+        "header_comment": true,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module acme {",
+          "module pets {"
+        ],
+        "preserved_percent": 0,
+        "reparses": true,
+        "tier": "lossy"
+      },
+      "no-comments": {
+        "compiler": "omniidl",
+        "files": [
+          "default.idl"
+        ],
+        "header_comment": false,
+        "interfaces": 1,
+        "keys": [],
+        "modules": [
+          "module Sample_Pet_Store_API_OpenAPI_3 {",
+          "module n0 {"
+        ],
+        "preserved_percent": 0,
+        "reparses": true,
+        "tier": "lossy"
+      }
+    }
+  }
+}

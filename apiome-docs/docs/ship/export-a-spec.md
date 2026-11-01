@@ -419,6 +419,20 @@ The fidelity report depends on the profile:
 | A union | Its discriminator enum is generated (synthesized) | Same |
 | A source's field numbers (Protobuf, Thrift) | Dropped: IDL has none | Same |
 
+An item imported from CORBA IDL exports back **lossless**: its members keep their order, which is all
+IDL records about them.
+
+**Where to find it.** In the **Export** dialog, the **CORBA IDL** card is under **RPC** on the
+**Target** step, as one `.idl` file. Its badge is **lossless** for an item imported from CORBA IDL and
+**lossy** for any other source. Pick the card to see **Profile** (`corba` by default, or `dds`),
+**Module** (empty: the item's own module or name) and **Include Comments** (on by default). The DDS
+`@key` fields are set from the CLI or the REST API with **key_fields**. From the CLI, run
+`apiome export idl <item> --out <file>.idl` (`omg-idl` and `corba-idl` work too), and add
+`--option profile=dds` or `--option 'key_fields={"Order": ["orderId"]}'`. A CORBA export written
+without comments is still checked by omniidl. A lossy export exits non-zero unless you add `--force`,
+and `--json` prints the tier. A public item's **Export** dialog on Browse offers IDL too, as the
+`.idl` file.
+
 ### Smithy from any source
 
 Exporting to **Smithy** writes a Smithy 2.0 model that `smithy validate` accepts. Set the **output**

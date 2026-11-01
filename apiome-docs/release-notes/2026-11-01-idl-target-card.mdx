@@ -1,0 +1,20 @@
+---
+slug: idl-target-card
+title: Export to OMG IDL (CORBA or DDS) from the Export dialog and the CLI
+description: The IDL card picks the CORBA or DDS profile, and CORBA IDL exports losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **CORBA IDL** card writes one `.idl` file and shows its **Profile** picker —
+`corba` (interfaces and exceptions) or `dds` (topic data types with `@key`) — with **Module** and
+**Include Comments**. The CLI exports the same with `apiome export idl`.
+[Where to find it](/ship/export-a-spec#omg-idl-corba-or-dds-from-any-source).
+
+{/* truncate */}
+
+- **Your CORBA IDL exports losslessly.** An item imported from CORBA IDL now badges **lossless**: the
+  report no longer lists its member positions as dropped field numbers.
+- **The right compiler.** A CORBA export written without comments is checked by omniidl, not by the
+  DDS compiler.
+- **`idl` on the CLI.** `apiome export idl`, `omg-idl` and `corba-idl` all name the target; add
+  `--option profile=dds` for the DDS profile.

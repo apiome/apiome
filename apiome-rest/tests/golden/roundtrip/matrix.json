@@ -46744,7 +46744,7 @@
       "emit_format": "corbaidl",
       "emit_key": "corbaidl",
       "loss_approx": 0,
-      "loss_drop": 6,
+      "loss_drop": 0,
       "loss_ok": 8,
       "loss_synth": 0,
       "matched_count": 0,

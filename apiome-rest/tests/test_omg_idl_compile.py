@@ -215,3 +215,30 @@ async def test_every_corpus_export_passes_the_gate(runner: _FakeRunner, path: st
     assert verdict.validated and verdict.valid, verdict.errors
     expected = OMNIIDL_TOOL_KEY if profile == "corba" else IDLC_TOOL_KEY
     assert {call["key"] for call in runner.calls} == {expected}
+
+
+# ---------------------------------------------------------------------------
+# A CORBA export with its comments turned off is still checked by omniidl (MFX-28.4, #4171)
+# ---------------------------------------------------------------------------
+
+
+def test_a_corba_file_with_annotations_but_no_header_goes_to_omniidl() -> None:
+    """``include_comments: false`` drops the profile header; ``@optional`` alone must not route to idlc."""
+    text = ("module Shop {\n  struct Pet {\n    @optional string tag;\n  };\n"
+            "  interface Pets {\n    Pet get();\n  };\n};\n")
+    assert idl_compiler_for(text) == OMNIIDL_TOOL_KEY
+
+
+def test_an_exception_also_marks_a_headerless_file_as_corba() -> None:
+    assert idl_compiler_for("module M {\n  exception NotFound { @optional string reason; };\n};\n") == OMNIIDL_TOOL_KEY
+
+
+def test_a_headerless_dds_file_with_a_key_still_goes_to_idlc() -> None:
+    assert idl_compiler_for("module M {\n  struct Pet {\n    @key long long id;\n  };\n};\n") == IDLC_TOOL_KEY
+
+
+@pytest.mark.parametrize("include_comments", [True, False])
+def test_a_corba_export_is_checked_by_omniidl_with_or_without_comments(include_comments: bool) -> None:
+    text = str(_emit(_rest_api(), profile="corba", include_comments=include_comments).files[0].content)
+    assert "interface " in text and "@" in text
+    assert idl_compiler_for(text) == OMNIIDL_TOOL_KEY

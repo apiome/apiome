@@ -32,6 +32,8 @@ import thriftTargetsForRest from '../fixtures/export-targets-thrift-rest.json';
 import thriftTargetsForThrift from '../fixtures/export-targets-thrift-thrift.json';
 import asn1TargetsForRest from '../fixtures/export-targets-asn1-rest.json';
 import asn1TargetsForAsn1 from '../fixtures/export-targets-asn1-asn1.json';
+import corbaidlTargetsForRest from '../fixtures/export-targets-corbaidl-rest.json';
+import corbaidlTargetsForCorbaidl from '../fixtures/export-targets-corbaidl-corbaidl.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -570,4 +572,16 @@ export function thriftTargets(source: 'rest' | 'thrift'): ExportTargetsResponse 
  */
 export function asn1Targets(source: 'rest' | 'asn1'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? asn1TargetsForRest : asn1TargetsForAsn1);
+}
+
+/**
+ * The OMG IDL target as the registry lists it (MFX-28.4, #4171), for a REST source and for an imported CORBA
+ * IDL — recorded from the live REST registry by `apiome-rest/tests/test_corbaidl_target_card.py`. A REST
+ * source loses what IDL does not keep (`lossy`); a CORBA IDL exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `corbaidl` (an imported CORBA bank definition).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function corbaidlTargets(source: 'rest' | 'corbaidl'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? corbaidlTargetsForRest : corbaidlTargetsForCorbaidl);
 }

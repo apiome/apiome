@@ -12065,15 +12065,9 @@
     },
     {
       "family": "corbaidl",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 6,
-        "synth": 0
-      },
       "reason": null,
-      "status": "lossy",
-      "target": "corbaidl",
-      "tier": "lossy"
+      "status": "ok",
+      "target": "corbaidl"
     },
     {
       "family": "corbaidl",
@@ -62440,8 +62434,8 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3939,
-    "ok": 38,
+    "lossy": 3938,
+    "ok": 39,
     "refused": 2115,
     "silent-loss": 172,
     "skipped": 0

@@ -1,0 +1,91 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "corbaidl",
+        "format": "corbaidl",
+        "label": "CORBA IDL",
+        "description": "Export as an OMG IDL 4.2 definition (.idl) for CORBA or DDS.",
+        "icon": "network",
+        "paradigm": "rpc",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`CorbaIdlEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit brief generated-file header comments.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "profile": {
+            "default": "corba",
+            "description": "`corba` writes interfaces and exceptions; `dds` writes the topic-friendly data-type subset (no interfaces, exceptions or recursive members) with `@key` on identifier fields.",
+            "enum": [
+              "corba",
+              "dds"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "module": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Module path to write the definitions in (`acme::orders` or `acme.orders`). Defaults to a CORBA source's own module, else the API namespace, else the API name.",
+            "title": "Module"
+          },
+          "key_fields": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "DDS profile: the `@key` fields per type name (`{\"Order\": [\"id\"]}`). A type not listed keys its identifier field \u2014 `id`, `<type>Id` or `<type>_id`.",
+            "title": "Key Fields",
+            "type": "object"
+          }
+        },
+        "title": "CorbaIdlEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "profile": "corba",
+        "module": null,
+        "key_fields": {}
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 8,
+        "preserved": 8,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

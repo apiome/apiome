@@ -150,6 +150,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'asn1').label).toBe('Data schema & graph');
   });
 
+  it('files OMG IDL under RPC by paradigm (MFX-28.4)', () => {
+    expect(familyForTarget('rpc', 'corbaidl').key).toBe('rpc');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });
