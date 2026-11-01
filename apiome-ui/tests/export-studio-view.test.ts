@@ -159,6 +159,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'capnproto').key).toBe('rpc');
   });
 
+  it('files OpenRPC under RPC by paradigm (MFX-33.4)', () => {
+    expect(familyForTarget('rpc', 'openrpc').key).toBe('rpc');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

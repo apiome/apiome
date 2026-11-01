@@ -1,0 +1,18 @@
+---
+slug: openrpc-target-card
+title: Export to OpenRPC from the Export dialog and the CLI
+description: The OpenRPC card badges every paradigm, and the CLI prints the fidelity report.
+authors: [apiome]
+---
+
+The **Export** dialog's **OpenRPC** card writes one `.openrpc.json` JSON-RPC 2.0 document, badged with
+the fidelity it keeps for the item. The CLI exports the same with `apiome export openrpc`.
+[Where to find it](/ship/export-a-spec#openrpc-from-any-source).
+
+{/* truncate */}
+
+- **Every paradigm.** REST, RPC, GraphQL and data-schema items each badge **lossy** with the share
+  they keep; an item imported from OpenRPC badges **lossless**.
+- **The report on the CLI.** `apiome export openrpc` prints the tier, the preserved share, the counts
+  and the worst losses first. A lossy export exits non-zero unless you add `--force`.
+- **Compact JSON.** Add `--option indent=0` for a one-line document.

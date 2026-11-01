@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.591.0] - 2026-11-01
+
+### Added
+- **OpenRPC target card + fixtures (MFX-33.4, #4304).** `tests/test_openrpc_target_card.py` +
+  `fixtures/openrpc_target/outcomes.json` pin the `openrpc` card across paradigms (REST — OpenAPI, WSDL, RAML; RPC —
+  Thrift, Smithy; graph — GraphQL; data schema — JSON Schema: `lossy`, each with its preserved share; imported OpenRPC
+  `lossless`), the `indent` choices (each passes the MFX-33.3 gate; `0` writes one line), browse delivering the
+  `.openrpc.json` itself, and keep the CLI / UI registry fixtures and the CLI job fixture — with the live **report** —
+  equal to the live registry (`APIOME_REGEN_OPENRPC_TARGET=1`).
+- OpenAPI document version 1.454.0 → 1.455.0.
+
 ## [1.590.0] - 2026-11-01
 
 ### Added

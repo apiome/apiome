@@ -1,0 +1,54 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "openrpc",
+        "format": "openrpc",
+        "label": "OpenRPC",
+        "description": "Export as an OpenRPC JSON-RPC 2.0 service description.",
+        "icon": "workflow",
+        "paradigm": "rpc",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`OpenRpcEmitter`.",
+        "properties": {
+          "indent": {
+            "default": 2,
+            "description": "JSON indentation width (0 for compact output).",
+            "title": "Indent",
+            "type": "integer"
+          }
+        },
+        "title": "OpenRpcEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "indent": 2
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 4,
+        "preserved": 4,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

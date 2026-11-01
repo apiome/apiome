@@ -783,6 +783,16 @@ any value).
 - **Carried.** For each operation that is carried, the report names the method or notification it
   became, such as `method getPet`.
 
+**Where to find it.** In the **Export** dialog, the **OpenRPC** card is under **RPC** on the **Target**
+step, as one `<Name>.openrpc.json` file. Its badge is **lossless** for an item imported from OpenRPC and
+**lossy**, with the share it keeps, for an item of any other paradigm: REST (OpenAPI, WSDL, RAML), RPC
+(Thrift, Smithy), GraphQL or a data schema. Its one option, **indent** (`2` by default; `0` for compact
+JSON), is a number, so the card has no options panel; set it from the CLI or the REST API. From the
+CLI, run `apiome export openrpc <item> --out <file>.openrpc.json`, and add `--option indent=0`. The
+CLI prints the fidelity report: the tier and preserved share, the counts, and the worst losses first.
+A lossy export exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's
+**Export** dialog on Browse offers OpenRPC too, as the `.openrpc.json` file.
+
 ### Cap'n Proto from any source
 
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever
