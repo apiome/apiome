@@ -38,6 +38,8 @@ import flatbuffersTargetsForRest from '../fixtures/export-targets-flatbuffers-re
 import flatbuffersTargetsForFlatbuffers from '../fixtures/export-targets-flatbuffers-flatbuffers.json';
 import capnprotoTargetsForRest from '../fixtures/export-targets-capnproto-rest.json';
 import capnprotoTargetsForCapnproto from '../fixtures/export-targets-capnproto-capnproto.json';
+import openrpcTargetsForRest from '../fixtures/export-targets-openrpc-rest.json';
+import openrpcTargetsForOpenrpc from '../fixtures/export-targets-openrpc-openrpc.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -609,4 +611,16 @@ export function serializationIdlTargets(
     capnproto: { rest: capnprotoTargetsForRest, own: capnprotoTargetsForCapnproto },
   };
   return recordedTargets(recorded[target][source]);
+}
+
+/**
+ * The OpenRPC target as the registry lists it (MFX-33.4, #4304), for a REST source and for an imported OpenRPC
+ * document — recorded from the live REST registry by `apiome-rest/tests/test_openrpc_target_card.py`. A REST
+ * source loses what JSON-RPC does not keep (`lossy`); an OpenRPC document exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `openrpc` (an imported OpenRPC wallet API).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function openrpcTargets(source: 'rest' | 'openrpc'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? openrpcTargetsForRest : openrpcTargetsForOpenrpc);
 }

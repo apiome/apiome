@@ -54,6 +54,9 @@
  * 23. The FlatBuffers and Cap'n Proto cards (MFX-30.4): FlatBuffers `types-only` and Cap'n Proto `lossy` for a
  *     REST source, each `lossless` for its own format, one file, with the header-comment option (and
  *     FlatBuffers' root type); the stored-field-id map stays off the panel — from the recorded live registry.
+ * 24. The OpenRPC card (MFX-33.4): `lossy` with its preserved share for a REST source, `lossless` for an
+ *     imported OpenRPC document, one file; its one option (the JSON indent, a number) draws no panel — from
+ *     the recorded live registry.
  */
 
 import React from 'react';
@@ -93,6 +96,7 @@ import {
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
   odataTargets,
+  openrpcTargets,
   ramlTargets,
   serializationIdlTargets,
   smithyTargets,
@@ -1443,5 +1447,33 @@ describe.each([
     if (target === 'flatbuffers') {
       expect(screen.getByLabelText(/Root Type/i)).toHaveValue('');
     }
+  });
+});
+
+describe('ExportDialog — OpenRPC target card (MFX-33.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['openrpc', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    const targets = openrpcTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-openrpc');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('OpenRPC')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    // The card renders the recorded fidelity tier and its preserved share.
+    expect(targets.targets[0].fidelity.tier).toBe(tier);
+  });
+
+  it('draws no options panel: its one option, the JSON indent, is a number set from the CLI or REST API', async () => {
+    await renderAtTargetStep(mockFetch(openrpcTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-openrpc'));
+    // The options form draws booleans, enums and strings; an integer such as `indent` has no control.
+    expect(screen.queryByText('Target options')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Indent/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
   });
 });
