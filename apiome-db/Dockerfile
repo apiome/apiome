@@ -1,5 +1,6 @@
 # apiome-db: TypeScript CLI (migrate + admin commands)
-FROM node:20-bookworm-slim AS build
+# `node:slim`: the newest Node release on Debian slim (trixie), for both stages.
+FROM node:slim AS build
 
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
     && rm -rf /var/lib/apt/lists/*
@@ -11,7 +12,7 @@ COPY src ./src
 
 RUN npm install && npm run build
 
-FROM node:20-bookworm-slim
+FROM node:slim
 
 # postgresql-client supplies pg_dump / pg_restore, which the `backup` command group shells out to
 # for full-cluster (`backup create --full`) and full-restore operations. Without it those commands

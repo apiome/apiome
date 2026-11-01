@@ -1,6 +1,6 @@
 {
   "name": "@apiome/mock-action",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "private": true,
   "description": "GitHub Action that starts a version-pinned Apiome portable mock for a CI job",
   "scripts": {

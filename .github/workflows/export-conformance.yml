@@ -70,7 +70,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: latest
 
       # The same toolchain the nightly suite installs, so the families that need it (AsyncAPI,
       # TypeScript types, Zod, CUE/Pkl/Dhall, buf) run here instead of skipping.

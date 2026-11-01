@@ -6,10 +6,14 @@
 #   docker build -f apiome-rest/Dockerfile .
 
 # ── Stage 1: install the apiome-ui workspace deps (provides tsx + the worker's libs) ──
-FROM node:20-bookworm-slim AS uideps
+# `node:slim` is the newest Node release on Debian trixie-slim — the same Debian as the
+# python:3.12-slim runtime below, which runs this stage's node binary and the native modules it
+# builds. This stage is also where the tools stage gets its node and npm.
+FROM node:slim AS uideps
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 WORKDIR /repo
-RUN corepack enable
+# Node 25+ no longer bundles Corepack; install it (pinned) to get the repo's packageManager yarn.
+RUN npm install -g corepack@0.36.0 && corepack enable
 
 # Root workspace metadata + every workspace manifest: yarn needs the whole graph to resolve,
 # even though we only install (focus) the apiome-ui workspace below.
@@ -79,12 +83,12 @@ ARG TARGETARCH=amd64
 ENV TOOLS_PREFIX=/opt/apiome-tools
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Build/download toolchain: curl+unzip for release archives, node/npm for the JS CLIs,
-# git+cmake+g++ to build drafter (no official static release), default-jre for the AMF jar.
+# Build/download toolchain: curl+unzip for release archives, git+cmake+g++ to build drafter (no
+# official static release), default-jre for the AMF jar. node and npm for the JS CLIs come from the
+# uideps stage (below), not Debian's nodejs package.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl unzip xz-utils tar \
       git cmake build-essential \
-      nodejs npm \
       default-jre-headless \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p ${TOOLS_PREFIX}/bin ${TOOLS_PREFIX}/lib
@@ -237,11 +241,15 @@ RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSI
 # app.toolchain_selfcheck refuses to start without them.
 COPY apiome-rest/toolchain/package.json ${TOOLS_PREFIX}/lib/node/package.json
 
-# Install and smoke-test the toolchain with the runtime stage's node, not Debian's Node 18: the
-# image runs these tools on that node, and `prisma` (a hard dependency since MFX-35.2) refuses to
-# install below Node 20.19 (its preinstall checks the version). /usr/local/bin precedes /usr/bin on
-# PATH, so Debian's npm — `#!/usr/bin/env node` — and every package install script run on it too.
+# Install and smoke-test the toolchain with the node (and npm) the runtime stage ships, copied from
+# uideps: the image runs these tools on that node, and `prisma` (a hard dependency since MFX-35.2)
+# refuses to install on an old Node (its preinstall checks the version). The links mirror the
+# official node image's layout.
 COPY --from=uideps /usr/local/bin/node /usr/local/bin/node
+COPY --from=uideps /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && node --version && npm --version
 
 # tsp (TypeSpec compiler, with the @typespec/http, rest, openapi3 and versioning libraries a
 # compile resolves through the staged project's node_modules link — MFI-14.1) + asyncapi CLI +
@@ -302,8 +310,8 @@ RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS
 # or `zod-extract` costs the image a shipped format. Prove *at build time*
 # that the wrapper loads `@asyncapi/parser` and parses a document, instead of discovering it on
 # the first import in production. A failure here fails the build — which is the point.
-# The smoke test runs on the runtime stage's node (copied in above the toolchain install), not
-# Debian's: Node 18 has no permission model, so `zod-extract` cannot sandbox itself there.
+# The smoke test runs on the runtime stage's node (copied in above the toolchain install), whose
+# permission model `zod-extract` sandboxes itself with.
 RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"asyncapi":"2.6.0","info":{"title":"toolchain smoke test","version":"1.0.0"},"channels":{}}' \
        | ${TOOLS_PREFIX}/bin/asyncapi-parser > /tmp/asyncapi-smoke.json \

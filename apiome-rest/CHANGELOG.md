@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.577.0] - 2026-11-01
+
+### Changed
+- **The image runs on the latest Node (26).** The workspace-deps stage moves from `node:20-bookworm-slim` to
+  `node:slim` (Node 26.13.0 on Debian trixie, the same Debian as the `python:3.12-slim` runtime that runs its node
+  binary and native modules). The tools stage no longer installs Debian's `nodejs`/`npm` (Node 18, npm 9): it copies
+  node and npm 11 from that stage, so the toolchain installs, smoke-tests and runs on one Node. Node 25+ no longer
+  bundles Corepack, so the stage installs `corepack@0.36.0` before `corepack enable`.
+- OpenAPI document version 1.440.2 → 1.441.0.
+
 ## [1.576.2] - 2026-11-01
 
 ### Fixed
