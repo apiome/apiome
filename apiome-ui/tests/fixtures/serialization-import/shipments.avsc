@@ -1,0 +1,25 @@
+{
+  "type": "record",
+  "name": "Shipment",
+  "namespace": "shipping.v1",
+  "doc": "REPO-3.7 (#2776) round-trip fixture: records, unions and logical types.",
+  "fields": [
+    { "name": "id", "type": { "type": "string", "logicalType": "uuid" } },
+    { "name": "shippedOn", "type": { "type": "int", "logicalType": "date" } },
+    { "name": "createdAt", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+    { "name": "cutOff", "type": { "type": "int", "logicalType": "time-millis" } },
+    { "name": "insuredValue", "type": { "type": "bytes", "logicalType": "decimal", "precision": 10, "scale": 2 } },
+    { "name": "trackingCode", "type": ["null", "string"], "default": null },
+    { "name": "destination", "type": [
+      { "type": "record", "name": "Address", "fields": [
+        { "name": "line1", "type": "string" },
+        { "name": "city", "type": "string" }
+      ] },
+      "string"
+    ] },
+    { "name": "carrier", "type": { "type": "enum", "name": "Carrier", "symbols": ["POST", "COURIER"] } },
+    { "name": "tags", "type": { "type": "array", "items": "string" } },
+    { "name": "labels", "type": { "type": "map", "values": "string" } },
+    { "name": "custom", "type": { "type": "long", "logicalType": "x-epoch-seconds" } }
+  ]
+}

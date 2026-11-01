@@ -10,7 +10,55 @@
  * - map → object with additionalProperties
  * - union → oneOf (or nullable when union includes "null")
  * - fixed → string format byte
+ * - logical types (#2776) → the OpenAPI type and format they stand for, tagged `x-avro-logical-type`
+ *   (`decimal` keeps `x-avro-precision` / `x-avro-scale`); an unknown logical type keeps its base type
  */
+
+/** The extension naming the Avro logical type a schema came from (#2776). */
+export const AVRO_LOGICAL_TYPE_EXTENSION = 'x-avro-logical-type';
+
+/**
+ * What each Avro logical type stands for in OpenAPI (#2776). The underlying Avro type (`int`, `long`,
+ * `bytes`, `fixed`, `string`) is how it is encoded; the class models what it means.
+ */
+const AVRO_LOGICAL_TYPES: Record<string, Record<string, unknown>> = {
+  date: { type: 'string', format: 'date' },
+  'time-millis': { type: 'string', format: 'time' },
+  'time-micros': { type: 'string', format: 'time' },
+  'timestamp-millis': { type: 'string', format: 'date-time' },
+  'timestamp-micros': { type: 'string', format: 'date-time' },
+  'timestamp-nanos': { type: 'string', format: 'date-time' },
+  'local-timestamp-millis': { type: 'string', format: 'date-time' },
+  'local-timestamp-micros': { type: 'string', format: 'date-time' },
+  'local-timestamp-nanos': { type: 'string', format: 'date-time' },
+  uuid: { type: 'string', format: 'uuid' },
+  duration: { type: 'string', format: 'duration' },
+  decimal: { type: 'number' },
+};
+
+/**
+ * The OpenAPI schema for an Avro schema that carries a `logicalType`, or `null` when it carries none.
+ *
+ * @param schema - An Avro type object (`{ "type": "long", "logicalType": "timestamp-millis" }`).
+ * @param base - The schema its underlying type maps to, used for an unknown logical type.
+ * @returns The mapped schema, tagged {@link AVRO_LOGICAL_TYPE_EXTENSION}.
+ */
+function logicalTypeSchema(
+  schema: { [k: string]: unknown },
+  base: () => Record<string, unknown>
+): Record<string, unknown> | null {
+  const logical = schema.logicalType;
+  if (typeof logical !== 'string' || !logical) return null;
+  const mapped = AVRO_LOGICAL_TYPES[logical];
+  const result: Record<string, unknown> = mapped ? { ...mapped } : { ...base() };
+  result[AVRO_LOGICAL_TYPE_EXTENSION] = logical;
+  if (logical === 'decimal') {
+    if (typeof schema.precision === 'number') result['x-avro-precision'] = schema.precision;
+    if (typeof schema.scale === 'number') result['x-avro-scale'] = schema.scale;
+  }
+  if (schema.doc) result.description = schema.doc;
+  return result;
+}
 
 export interface AvroConversionResult {
   success: boolean;
@@ -146,6 +194,8 @@ function avroTypeToOpenAPI(
   if (!schema || typeof schema !== 'object') return { type: 'string' };
 
   const t = schema.type;
+  const logical = logicalTypeSchema(schema, () => avroTypeToOpenAPI(t, named, warnings, schemaNameToRef));
+  if (logical) return logical;
   switch (t) {
     case 'null':
       return { type: 'null' };

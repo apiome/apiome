@@ -1,0 +1,29 @@
+// REPO-3.7 (#2776) round-trip fixture: proto3 messages, enums, oneof, repeated and map.
+syntax = "proto3";
+
+package shipping.v1;
+
+enum Carrier {
+  CARRIER_UNSPECIFIED = 0;
+  CARRIER_POST = 1;
+  CARRIER_COURIER = 2;
+}
+
+message Address {
+  string line1 = 1;
+  string city = 2;
+  string country_code = 3;
+}
+
+message Shipment {
+  string id = 1;
+  Carrier carrier = 2;
+  repeated string tracking_numbers = 3;
+  map<string, string> labels = 4;
+  repeated Address stops = 5;
+  oneof destination {
+    Address address = 6;
+    string pickup_point_id = 7;
+  }
+  int64 weight_grams = 8;
+}
