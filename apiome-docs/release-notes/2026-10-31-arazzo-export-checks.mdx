@@ -1,0 +1,23 @@
+---
+slug: arazzo-export-checks
+title: Arazzo exports pass the official Arazzo schema
+description: Arazzo exports are checked against the official schema and must import again.
+authors: [apiome]
+---
+
+An **Arazzo** export built from any other kind of item now passes the official Arazzo JSON Schema
+before you download it, and every Arazzo export must import again.
+[Arazzo export checks](/ship/export-a-spec#arazzo-export-checks).
+
+{/* truncate */}
+
+- **A valid document.** Arazzo requires a source description and a version. When the item has
+  neither, the document gets a placeholder source description named after your API (for example
+  `./shop-orders.openapi.yaml`) and version `1.0.0`. Replace the placeholder URL with your API
+  description's address. The fidelity report marks both as synthesized.
+- **Each problem on its own.** A schema problem is listed with its location, such as
+  `/sourceDescriptions`, and the document is not delivered.
+- **Your own workflows still export.** An item imported from Arazzo is written back as it was read and
+  is checked by importing it again; spellings the schema does not allow are listed but do not block it.
+- **Nothing to sequence, no Arazzo.** An item with only types or events has no workflow to write, so
+  Arazzo is no longer offered for it.

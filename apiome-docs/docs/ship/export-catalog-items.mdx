@@ -127,7 +127,7 @@ Each of the 58 targets, measured against four small sources: **From a REST API**
 | Apache Thrift | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | API Blueprint | REST | `lossy` | `lossy` | `lossy` | `lossy` |
 | Apigee API proxy | REST | `lossy` | not offered | not offered | not offered |
-| Arazzo | REST | `lossy` | `lossy` | `lossy` | `lossy` |
+| Arazzo | REST | `lossy` | `lossy` | not offered | not offered |
 | ASN.1 | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | AsyncAPI 3.1 | Events | `lossy` | `lossy` | `lossless` | `lossless` |
 | AWS API Gateway | REST | `lossy` | not offered | not offered | not offered |
@@ -185,6 +185,7 @@ Each of the 58 targets, measured against four small sources: **From a REST API**
 Why a target is not offered for a source:
 
 - **Apigee API proxy** — Apigee API proxy export needs at least one HTTP operation (a method and a path); this source has none.
+- **Arazzo** — Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).
 - **AWS API Gateway** — AWS API Gateway export needs at least one HTTP operation (a method and a path); this source has none.
 - **Azure API Management** — Azure API Management export needs at least one HTTP operation (a method and a path); this source has none.
 - **Bruno** — Bruno export needs at least one HTTP operation (a method and a path); this source has none.
