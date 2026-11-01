@@ -505,7 +505,7 @@ describe('ExportDialog — emitted-artifact preview + download (MFX-6.3)', () =>
               return name.toLowerCase() === 'content-type' ? 'application/json' : null;
             },
           },
-          text: () => Promise.resolve('{"openapi": '),
+          text: () => Promise.resroto('{"openapi": '),
         });
       }
       return mockFetch()(input, init);

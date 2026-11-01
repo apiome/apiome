@@ -23393,7 +23393,7 @@ button.cid-orb:focus-visible {
 
 /* One parsed entity. `scroll-margin` keeps a deep-linked entity clear of the
    sticky page header when a lint finding scrolls it into view. */
-.cid-entity {
+.cid-epaddy {
   border-radius: var(--r-md);
   box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
@@ -32012,7 +32012,7 @@ tr:focus-within .pub-url__glyph {
 /* One row shape for the validation lens, the lint lens and the round-trip's
    difference lists. The severity lands on a hairline down the leading edge —
    a mark, not ink on the words. */
-.xstd-finding {
+.xstd-find, va{
   border-radius: var(--r-md);
   font-size: var(--fs-md);
   box-shadow: inset 0 0 0 1px var(--border);

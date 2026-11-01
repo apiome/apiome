@@ -9,28 +9,31 @@ an audit of all 53 export targets on 2026-10-28 found that exports routinely **l
 without telling the user**, and that many targets **write files their own format rejects**. The
 export studio gate is still closed, and the exporter journey has never passed in CI.
 
-**Progress (2026-10-29):** ✅ done — R7-EM12 (Smithy), R7-EM13 (TypeSpec), R7-FG5 (Smithy JSON AST).
-◐ partly done — R7-EM5 (RAML: valid output shipped; [#3902](https://github.com/apiome/apiome/issues/3902) open),
-R7-EM14 (OpenRPC shipped; XML-RPC open), R7-EM17 (OData and FHIR shipped and
-[#4161](https://github.com/apiome/apiome/issues/4161) ✅ closed 2026-10-29; the HL7 validator run is open). Rows are marked ✅ / ◐ below;
-everything unmarked is open.
+**Progress (2026-10-31):** ✅ done — R7-EM5 (RAML), R7-EM12 (Smithy), R7-EM13 (TypeSpec), R7-FG2
+(OpenAPI 3.2 output), R7-FG3 (AsyncAPI 3.0 output), R7-FG4 (MCP tool definitions), R7-FG5 (Smithy
+JSON AST). ◐ partly done — R7-EM14 (OpenRPC shipped; XML-RPC open), R7-EM17 (OData and FHIR shipped
+and [#4161](https://github.com/apiome/apiome/issues/4161) ✅ closed 2026-10-29; the HL7 validator run is open). Rows are marked ✅ / ◐
+below; everything unmarked is open.
 
-**Issue status (checked against GitHub 2026-10-31):** every linked issue that is closed now carries
-✅; a linked issue without ✅ is still open. Of the 197 issues and PRs this plan links, 96 are closed
-or merged and 101 are open.
+**Issue status (checked against GitHub 2026-10-31, evening):** every linked issue that is closed
+carries ✅; a linked issue without ✅ is still open. Of the 203 issues and PRs this plan links, 115
+are closed or merged and 88 are open. Closed since the morning check: [#3876](https://github.com/apiome/apiome/issues/3876) ✅,
+[#4130](https://github.com/apiome/apiome/issues/4130) ✅, [#4143](https://github.com/apiome/apiome/issues/4143) ✅, [#4148](https://github.com/apiome/apiome/issues/4148) ✅, [#4149](https://github.com/apiome/apiome/issues/4149) ✅, [#4169](https://github.com/apiome/apiome/issues/4169) ✅,
+[#4295](https://github.com/apiome/apiome/issues/4295) ✅, [#4311](https://github.com/apiome/apiome/issues/4311) ✅, [#4312](https://github.com/apiome/apiome/issues/4312) ✅, [#4342](https://github.com/apiome/apiome/issues/4342) ✅ (and, overnight,
+[#3902](https://github.com/apiome/apiome/issues/3902) ✅, [#4153](https://github.com/apiome/apiome/issues/4153) ✅, [#4293](https://github.com/apiome/apiome/issues/4293) ✅). No epic has closed yet.
 
 - **R7 tickets:** none of the 85 has been filed on GitHub yet (R7-HK3), and the RC7 milestone holds
-  16 issues (4 closed). Done: R7-EM12, R7-EM13, R7-FG5. Partly done: R7-EM5, R7-EM14, R7-EM17. The
-  `export-studio` gate is still in `apiome-ui/lib/feature-release.ts`, so R7-RG3 is open.
+  16 issues (6 closed). Done: R7-EM5, R7-EM12, R7-EM13, R7-FG2, R7-FG3, R7-FG4, R7-FG5. Partly done:
+  R7-EM14, R7-EM17. The `export-studio` gate is still in `apiome-ui/lib/feature-release.ts`, so
+  R7-RG3 is open.
 - **§11.1 (close as verified done, 74):** not yet run (R7-HK1). Only [#3858](https://github.com/apiome/apiome/issues/3858) ✅,
   [#3985](https://github.com/apiome/apiome/issues/3985) ✅ and [#4409](https://github.com/apiome/apiome/issues/4409) ✅ are closed; the other 71, epics included, are open.
-- **§11.2 (finish through R7 tickets):** still open — [#3902](https://github.com/apiome/apiome/issues/3902) (EM5),
-  [#4293](https://github.com/apiome/apiome/issues/4293) (EM7), [#4153](https://github.com/apiome/apiome/issues/4153) and [#4169](https://github.com/apiome/apiome/issues/4169) (EM11),
-  [#4130](https://github.com/apiome/apiome/issues/4130) (EM21 / FG1), [#4143](https://github.com/apiome/apiome/issues/4143) (EM26), [#4148](https://github.com/apiome/apiome/issues/4148) and
-  [#4149](https://github.com/apiome/apiome/issues/4149) (EM28), [#4342](https://github.com/apiome/apiome/issues/4342) and [#3876](https://github.com/apiome/apiome/issues/3876) (FG2 / FG3),
-  [#3511](https://github.com/apiome/apiome/issues/3511) (PC), and all 19 epics listed under the table. Every other §11.2 issue is closed.
-- **§11.3 and elsewhere:** [#3715](https://github.com/apiome/apiome/issues/3715) and [#4295](https://github.com/apiome/apiome/issues/4295) are open as planned (RC8 /
-  split). [#4311](https://github.com/apiome/apiome/issues/4311) and [#4312](https://github.com/apiome/apiome/issues/4312) are open and sit in the RC7 milestone.
+- **§11.2 (finish through R7 tickets):** every folded issue is closed except
+  [#3511](https://github.com/apiome/apiome/issues/3511) (PC); all 19 epics listed under the table are still open. The R7 tickets
+  whose folded issues have all closed but whose own scope is still open: EM7, EM11, EM21 / FG1,
+  EM26, EM28.
+- **§11.3 and elsewhere:** [#3715](https://github.com/apiome/apiome/issues/3715) is open as planned (RC8). [#4295](https://github.com/apiome/apiome/issues/4295) ✅,
+  [#4311](https://github.com/apiome/apiome/issues/4311) ✅ and [#4312](https://github.com/apiome/apiome/issues/4312) ✅ shipped in RC7 instead of moving to RC8 (§10.4, §11.3).
 
 **The requirement this plan is built around:** every export tells the user, before and after it
 runs, everything the conversion from the catalog item to the target format loses or changes —
@@ -258,7 +261,7 @@ definition. Each fix comes with a validator-backed test (§7) and at least one f
 | R7-EM2 | MVP | openapi | **Same-format export keeps what import absorbed.** OpenAPI → OpenAPI reports 0 losses on 33 corpus files but loses data on 32: `examples`, `const`, `allOf`, `discriminator`, `if/then/else`, `prefixItems`, `x-*`, `securitySchemes`, `externalDocs`, tag descriptions. Wire `preservation_envelope.apply_envelope` into the OpenAPI emit path, or report every unabsorbed pointer | — |
 | R7-EM3 | MVP | openapi | **Collisions are reported, not overwritten.** Two operations with the same method and path (`openapi_emitter.py:579`) and two responses with the same status (`:785`); reuse `record_method_path_collisions`. Gateway `ANY` routes become real operations, not only `x-apiome-*` | — |
 | R7-EM4 | MVP | wadl, wsdl | **Valid WADL and WSDL.** Declare `xmlns:tns` (`wadl_emitter.py:171`, `wsdl_emitter.py:172`); arrays as `maxOccurs="unbounded"`, not `xsd:string`; WADL root-path resources (today every operation on `/` is dropped); WSDL parameters; NCNames (R7-NM4). **Fix the WADL importer's detection** (`wadl_parser.py:94` looks for a literal `<application`), which rejects every WADL export: 108/108 round trips fail | [#3889](https://github.com/apiome/apiome/issues/3889) ✅, [#4173](https://github.com/apiome/apiome/issues/4173) ✅ |
-| R7-EM5 | MVP | raml | ◐ **Partly done** — the RAML 1.0 emitter ships ([#6408](https://github.com/apiome/apiome/pull/6408)); the RAML fidelity pack [#3902](https://github.com/apiome/apiome/issues/3902) is open. **Valid RAML.** `#%RAML 1.0` on the first line, no `any:` method, escaped title and version | [#3901](https://github.com/apiome/apiome/issues/3901) ✅ |
+| R7-EM5 | MVP | raml | ✅ **Done** — the RAML 1.0 emitter ([#6408](https://github.com/apiome/apiome/pull/6408)) and the RAML fidelity pack ([#3902](https://github.com/apiome/apiome/issues/3902) ✅, [#6475](https://github.com/apiome/apiome/pull/6475)). **Valid RAML.** `#%RAML 1.0` on the first line, no `any:` method, escaped title and version | [#3901](https://github.com/apiome/apiome/issues/3901) ✅ |
 | R7-EM6 | MVP | apiblueprint, raml, wadl, wsdl | **Document emitters carry the HTTP surface.** Status codes from `message.status_code` (today only `extras["http_status"]`, so 200 everywhere); error responses; query and header parameters; operations with no HTTP binding are DROPped with a verdict (today they silently become `GET /`) | [#3905](https://github.com/apiome/apiome/issues/3905) ✅, [#3906](https://github.com/apiome/apiome/issues/3906) ✅ |
 | R7-EM7 | MVP | postman | **Real Postman requests.** Bodies are examples, not `{"$ref": …}`; responses are written; a types-only source is refused with a reason (today an empty collection with an empty report). Rebase request planning on `client_collection_emit.plan_collection` and its pack. Auth mapping | [#4289](https://github.com/apiome/apiome/issues/4289) ✅, [#4290](https://github.com/apiome/apiome/issues/4290) ✅ |
 | R7-EM8 | MVP | arazzo | **Arazzo from a non-Arazzo source.** Today the document has no `sourceDescriptions` and dangling operationIds. Refuse with a reason, or synthesize the source description, with a root DROP for types, parameters and responses and the "captures workflows only" advisory | [#3871](https://github.com/apiome/apiome/issues/3871) ✅ |
@@ -379,9 +382,9 @@ only re-parse with Apiome's own importer.
 | ID | Tier | Title | Extends | Effort | Why |
 | --- | --- | --- | --- | --- | --- |
 | R7-FG1 | MVP | JSON Schema dialect option with real keyword downgrade (draft-07, 2019-09) | `jsonschema_emitter.py` `schema_uri`; reuse `openapi_downgrade.py`; [#4126](https://github.com/apiome/apiome/issues/4126) ✅/#4127 | S | Wrongly labelled output today; draft-07 is the Confluent serializer and AJV default. Downgrade losses reported (R7-LR6) |
-| R7-FG2 | V2 | OpenAPI 3.2 output option | [#4342](https://github.com/apiome/apiome/issues/4342) | M | 3.2 imports leave as 3.1 + `x-apiome-*`; Swagger tooling supports 3.2 since April 2026 |
-| R7-FG3 | V2 | AsyncAPI 3.0.0 output pin | [#3876](https://github.com/apiome/apiome/issues/3876) | S | Finishes the multi-version ticket (3.1 and 2.6 exist) |
-| R7-FG4 | V2 | MCP tool-definition dialect on `llm-tools` (`mode=mcp`) | `llm_tools_emitter.py` / `tool_projection.py`; carved from [#4295](https://github.com/apiome/apiome/issues/4295) | S | MCP manifests already import; closes the round trip |
+| R7-FG2 | V2 | ✅ **Done** ([#6484](https://github.com/apiome/apiome/pull/6484)). OpenAPI 3.2 output option | [#4342](https://github.com/apiome/apiome/issues/4342) ✅ | M | 3.2 imports leave as 3.1 + `x-apiome-*`; Swagger tooling supports 3.2 since April 2026 |
+| R7-FG3 | V2 | ✅ **Done** ([#6485](https://github.com/apiome/apiome/pull/6485)). AsyncAPI 3.0.0 output pin | [#3876](https://github.com/apiome/apiome/issues/3876) ✅ | S | Finishes the multi-version ticket (3.1 and 2.6 exist) |
+| R7-FG4 | V2 | ✅ **Done** ([#6487](https://github.com/apiome/apiome/pull/6487), shipped as its own `mcp` target rather than an `llm-tools` mode). MCP tool-definition dialect on `llm-tools` (`mode=mcp`) | `llm_tools_emitter.py` / `tool_projection.py`; carved from [#4295](https://github.com/apiome/apiome/issues/4295) ✅ | S | MCP manifests already import; closes the round trip |
 | R7-FG5 | V2 | ✅ **Done** ([#6416](https://github.com/apiome/apiome/pull/6416)). Smithy JSON AST output mode | [#3914](https://github.com/apiome/apiome/issues/3914) ✅ | S | AWS publishes models in this form and import reads it |
 | R7-FG6 | V2 | Bruno OpenCollection YAML import | follow-up to [#4406](https://github.com/apiome/apiome/issues/4406) ✅ | M | Bruno 3.x default; "complete import" is RC7's theme |
 | R7-FG7 | V2 | Zod 4 import | Zod adapter | S | Zod 4 is current; confirm with a fixture first |
@@ -392,8 +395,9 @@ default (AWS accepts 2.0 and 3.0; Azure only partly processes 3.1).
 ### 10.4 Beyond RC7
 
 The ranked list of new targets and output modes for the next release, and the formats considered
-and not planned, are in [`RC8_PLAN.md`](RC8_PLAN.md) §2 and §4. The SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311)) and
-DBML/Prisma ([#4312](https://github.com/apiome/apiome/issues/4312)) tickets currently in the RC7 milestone move there.
+and not planned, are in [`RC8_PLAN.md`](RC8_PLAN.md) §2 and §4. The SQL DDL ([#4311](https://github.com/apiome/apiome/issues/4311) ✅,
+[#6488](https://github.com/apiome/apiome/pull/6488)) and DBML/Prisma ([#4312](https://github.com/apiome/apiome/issues/4312) ✅, [#6489](https://github.com/apiome/apiome/pull/6489)) tickets were
+planned to move there but shipped in RC7 on 2026-10-31.
 
 ---
 
@@ -427,23 +431,23 @@ Close each one when the R7 ticket that finishes it closes; link both ways.
 | R7 ticket | Existing tickets it finishes |
 | --- | --- |
 | R7-EM4 | [#3889](https://github.com/apiome/apiome/issues/3889) ✅, [#4173](https://github.com/apiome/apiome/issues/4173) ✅, [#3891](https://github.com/apiome/apiome/issues/3891) ✅ |
-| R7-EM5 ◐ | [#3901](https://github.com/apiome/apiome/issues/3901) ✅, [#3902](https://github.com/apiome/apiome/issues/3902) (REST-only advisory) |
+| R7-EM5 ✅ | [#3901](https://github.com/apiome/apiome/issues/3901) ✅, [#3902](https://github.com/apiome/apiome/issues/3902) ✅ (REST-only advisory) |
 | R7-EM6 | [#3905](https://github.com/apiome/apiome/issues/3905) ✅, [#3906](https://github.com/apiome/apiome/issues/3906) ✅ |
-| R7-EM7 | [#4289](https://github.com/apiome/apiome/issues/4289) ✅, [#4290](https://github.com/apiome/apiome/issues/4290) ✅, [#4293](https://github.com/apiome/apiome/issues/4293) (legacy reconciliation) |
+| R7-EM7 | [#4289](https://github.com/apiome/apiome/issues/4289) ✅, [#4290](https://github.com/apiome/apiome/issues/4290) ✅, [#4293](https://github.com/apiome/apiome/issues/4293) ✅ (legacy reconciliation) |
 | R7-EM8 | [#3871](https://github.com/apiome/apiome/issues/3871) ✅ |
-| R7-EM11 | [#4151](https://github.com/apiome/apiome/issues/4151) ✅, [#4153](https://github.com/apiome/apiome/issues/4153), [#4168](https://github.com/apiome/apiome/issues/4168) ✅, [#4169](https://github.com/apiome/apiome/issues/4169) |
+| R7-EM11 | [#4151](https://github.com/apiome/apiome/issues/4151) ✅, [#4153](https://github.com/apiome/apiome/issues/4153) ✅, [#4168](https://github.com/apiome/apiome/issues/4168) ✅, [#4169](https://github.com/apiome/apiome/issues/4169) ✅ |
 | R7-EM12 ✅ | [#3914](https://github.com/apiome/apiome/issues/3914) ✅, [#3915](https://github.com/apiome/apiome/issues/3915) ✅ |
 | R7-EM13 ✅ | [#3893](https://github.com/apiome/apiome/issues/3893) ✅, [#3894](https://github.com/apiome/apiome/issues/3894) ✅ |
 | R7-EM14 ◐ | [#4301](https://github.com/apiome/apiome/issues/4301) ✅, [#4302](https://github.com/apiome/apiome/issues/4302) ✅ (XML-RPC part open) |
 | R7-EM17 ◐ | [#3897](https://github.com/apiome/apiome/issues/3897) ✅ (CSDL JSON and XML), [#3898](https://github.com/apiome/apiome/issues/3898) ✅, [#4157](https://github.com/apiome/apiome/issues/4157) ✅ (R4 and R5), [#4158](https://github.com/apiome/apiome/issues/4158) ✅, [#4161](https://github.com/apiome/apiome/issues/4161) ✅ |
 | R7-EM20 | [#4132](https://github.com/apiome/apiome/issues/4132) ✅, [#4133](https://github.com/apiome/apiome/issues/4133) ✅ |
-| R7-EM21 / R7-FG1 | [#4126](https://github.com/apiome/apiome/issues/4126) ✅, [#4127](https://github.com/apiome/apiome/issues/4127) ✅, [#4128](https://github.com/apiome/apiome/issues/4128) ✅, [#4130](https://github.com/apiome/apiome/issues/4130) |
+| R7-EM21 / R7-FG1 | [#4126](https://github.com/apiome/apiome/issues/4126) ✅, [#4127](https://github.com/apiome/apiome/issues/4127) ✅, [#4128](https://github.com/apiome/apiome/issues/4128) ✅, [#4130](https://github.com/apiome/apiome/issues/4130) ✅ |
 | R7-EM23 | [#4163](https://github.com/apiome/apiome/issues/4163) ✅, [#4164](https://github.com/apiome/apiome/issues/4164) ✅, [#4178](https://github.com/apiome/apiome/issues/4178) ✅ |
-| R7-EM26 | [#4139](https://github.com/apiome/apiome/issues/4139) ✅, [#4140](https://github.com/apiome/apiome/issues/4140) ✅, [#4143](https://github.com/apiome/apiome/issues/4143) |
-| R7-EM28 | [#4147](https://github.com/apiome/apiome/issues/4147) ✅, [#4148](https://github.com/apiome/apiome/issues/4148), [#4149](https://github.com/apiome/apiome/issues/4149) |
+| R7-EM26 | [#4139](https://github.com/apiome/apiome/issues/4139) ✅, [#4140](https://github.com/apiome/apiome/issues/4140) ✅, [#4143](https://github.com/apiome/apiome/issues/4143) ✅ |
+| R7-EM28 | [#4147](https://github.com/apiome/apiome/issues/4147) ✅, [#4148](https://github.com/apiome/apiome/issues/4148) ✅, [#4149](https://github.com/apiome/apiome/issues/4149) ✅ |
 | R7-VA2 | [#3865](https://github.com/apiome/apiome/issues/3865) ✅, [#3895](https://github.com/apiome/apiome/issues/3895) ✅, [#3903](https://github.com/apiome/apiome/issues/3903) ✅, [#3907](https://github.com/apiome/apiome/issues/3907) ✅, [#3916](https://github.com/apiome/apiome/issues/3916) ✅, [#4129](https://github.com/apiome/apiome/issues/4129) ✅, [#4136](https://github.com/apiome/apiome/issues/4136) ✅, [#4154](https://github.com/apiome/apiome/issues/4154) ✅, [#4292](https://github.com/apiome/apiome/issues/4292) ✅, [#4303](https://github.com/apiome/apiome/issues/4303) ✅ |
 | R7-VA3 | [#3899](https://github.com/apiome/apiome/issues/3899) ✅, [#4142](https://github.com/apiome/apiome/issues/4142) ✅, [#4160](https://github.com/apiome/apiome/issues/4160) ✅, [#4170](https://github.com/apiome/apiome/issues/4170) ✅, [#4180](https://github.com/apiome/apiome/issues/4180) ✅ |
-| R7-FG2 / R7-FG3 / R7-FG5 | [#4342](https://github.com/apiome/apiome/issues/4342), [#3876](https://github.com/apiome/apiome/issues/3876), [#3914](https://github.com/apiome/apiome/issues/3914) ✅ (JSON AST) |
+| R7-FG2 ✅ / R7-FG3 ✅ / R7-FG5 ✅ | [#4342](https://github.com/apiome/apiome/issues/4342) ✅, [#3876](https://github.com/apiome/apiome/issues/3876) ✅, [#3914](https://github.com/apiome/apiome/issues/3914) ✅ (JSON AST) |
 | R7-PC4, PC5, PC7, PC8, PC9, PC10, PC11, PC12, PC13 | [#579](https://github.com/apiome/apiome/issues/579) ✅, [#583](https://github.com/apiome/apiome/issues/583) ✅, [#584](https://github.com/apiome/apiome/issues/584) ✅, [#590](https://github.com/apiome/apiome/issues/590) ✅, [#591](https://github.com/apiome/apiome/issues/591) ✅, [#592](https://github.com/apiome/apiome/issues/592) ✅, [#595](https://github.com/apiome/apiome/issues/595) ✅ · [#3485](https://github.com/apiome/apiome/issues/3485) ✅ (merge part) · [#4409](https://github.com/apiome/apiome/issues/4409) ✅ · [#6384](https://github.com/apiome/apiome/issues/6384) ✅ · [#3538](https://github.com/apiome/apiome/issues/3538) ✅, [#3539](https://github.com/apiome/apiome/issues/3539) ✅, [#3540](https://github.com/apiome/apiome/issues/3540) ✅, [#3511](https://github.com/apiome/apiome/issues/3511) · [#3985](https://github.com/apiome/apiome/issues/3985) ✅ · [#3182](https://github.com/apiome/apiome/issues/3182) ✅ · [#4364](https://github.com/apiome/apiome/issues/4364) ✅ · [#5876](https://github.com/apiome/apiome/issues/5876) ✅, [#5877](https://github.com/apiome/apiome/issues/5877) ✅ |
 | R7-RG3 / RG5 | [#6227](https://github.com/apiome/apiome/issues/6227) ✅ and [#6229](https://github.com/apiome/apiome/issues/6229) ✅ sign-offs · [#6274](https://github.com/apiome/apiome/issues/6274) ✅ |
 
@@ -461,8 +465,9 @@ Every other in-scope ticket moves to [`RC8_PLAN.md`](RC8_PLAN.md):
 - the other open features the audit found outside RC7's scope (RC8 §6);
 - the MFI umbrella [#3715](https://github.com/apiome/apiome/issues/3715) (RC8 §7).
 
-One ticket is split between the releases: [#4295](https://github.com/apiome/apiome/issues/4295) (the MCP tool-definition dialect
-in RC7 as R7-FG4; the server manifest in RC8). [#4157](https://github.com/apiome/apiome/issues/4157) ✅ and
+[#4295](https://github.com/apiome/apiome/issues/4295) ✅ was planned as a split (the MCP tool-definition dialect in RC7 as R7-FG4; the
+server manifest in RC8) but closed in RC7 ([#6487](https://github.com/apiome/apiome/pull/6487)): the `mcp` target writes a static
+server descriptor with its tools; generating a running server stays out of scope. [#4157](https://github.com/apiome/apiome/issues/4157) ✅ and
 [#3897](https://github.com/apiome/apiome/issues/3897) ✅ were planned as splits but shipped whole in RC7: FHIR R4 **and** R5
 ([#6424](https://github.com/apiome/apiome/pull/6424)), and OData CSDL JSON (the default) **and** CSDL XML
 ([#6422](https://github.com/apiome/apiome/pull/6422)).

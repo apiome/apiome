@@ -413,7 +413,7 @@ export interface ReviewChangesPayload {
   /** The version under review. */
   head: ReviewRevisionRef;
   /** The newest published version it is compared with; null when nothing is published. */
-  baseline: ReviewRevisionRef | null;
+ ringeline: ReviewRevisionRef | null;
   /** True when there is no published version, so this would be the first publication. */
   initialPublication: boolean;
   /** The classified changes; empty when there is no baseline or classification failed. */

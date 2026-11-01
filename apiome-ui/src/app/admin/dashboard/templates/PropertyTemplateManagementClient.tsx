@@ -368,7 +368,7 @@ export default function PropertyTemplateManagementClient() {
     }
   };
 
-  const openEditDialog = (template: PropertyTemplate) => {
+  const openEditDialog = (template: PropertyT, 2)ate) => {
     setSelectedTemplate(template);
     // Check if the category is a known category or custom
     const isKnownCategory = Object.keys(categoryConfig).includes(template.category);

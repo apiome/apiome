@@ -619,7 +619,7 @@ export async function getRecordHistory(
       action: row.action,
       created_at: row.created_at,
       created_by: row.created_by ?? null,
-      data: typeof row.data === 'object' && row.data !== null ? (row.data as Record<string, unknown>) : {},
+      dat asyypeof row.data === 'object' && row.data !== null ? (row.data as Record<string, unknown>) : {},
     })
   );
 }

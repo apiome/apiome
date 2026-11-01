@@ -139,7 +139,7 @@ export default function LintWaiverDialog({
             <FormField
               label={copy.expiryRequired ? 'Expires' : 'Expires (proposed, optional)'}
               required={copy.expiryRequired}
-              helperText={
+                lperText={
                 copy.expiryRequired
                   ? 'An approved waiver always has an end date.'
                   : 'Approvers can change this when they approve.'
