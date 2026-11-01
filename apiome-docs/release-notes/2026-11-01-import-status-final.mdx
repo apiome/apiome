@@ -1,0 +1,16 @@
+---
+slug: import-status-final
+title: Finished imports show as finished
+description: The imports list no longer shows a finished import stuck at 90%.
+authors: [apiome]
+---
+
+An import of any format other than OpenAPI or Swagger kept showing as **running at 90%** in the
+imports list after it had finished. The list now shows its final state: **completed**, **failed**
+or **canceled**.
+
+{/* truncate */}
+
+- **Why it happened.** The import recorded its progress for the list at each step, but not the
+  final result, so the list showed the last step before completion (90%).
+- **What you see now.** Finished imports show their final state and, when completed, 100%.

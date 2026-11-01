@@ -721,11 +721,16 @@ async def _run_inprocess_adapter_job(
             _set_status(
                 rec, SpecImportJobStatus(job_id=job_id, state="canceled", percent=0)
             )
-            return
-        _set_status(rec, final)
-        rec.commit_response = _maybe_build_commit_response(job_id, final)
-        fresh = _take_new_import_events(rec, final)
+            fresh = []
+        else:
+            _set_status(rec, final)
+            rec.commit_response = _maybe_build_commit_response(job_id, final)
+            fresh = _take_new_import_events(rec, final)
     _log_import_events(fresh, job_id)
+    # Mirror the terminal state too, not only the snapshots: the jobs list and every non-owning
+    # reader serve the shared store, which otherwise kept the last snapshot (``running`` at the
+    # pipeline's 90% lint step) for a job that had finished.
+    await _mirror_job(job_id)
 
 
 async def _drive_job(job_id: str, payload: Dict[str, Any]) -> None:
