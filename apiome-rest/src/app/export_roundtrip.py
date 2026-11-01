@@ -28,7 +28,12 @@ Studio result reconciles with the published matrix for corpus entries:
    **expected**; an unexplained difference (or an ``OK`` over-claim) is a fidelity
    bug the user should report.
 
-5. **re-emit (MFX-43.4)** — the re-imported model is emitted again to the same target with
+5. **measure (MFX-2.6)** — :func:`app.fidelity_measurement.measure_roundtrip_fidelity`
+   turns the same diff into an empirical loss list, checks every predicted ``DROP``
+   against it, and flags each divergence between prediction and measurement as
+   ``measurement``. It never changes ``status``, which stays the matrix's verdict.
+
+6. **re-emit (MFX-43.4)** — the re-imported model is emitted again to the same target with
    the same options, and both texts come back as ``text_diff`` so the Studio can show, line
    by line, what an artifact would look like if it were re-imported and exported again
    (single-document artifacts only; a bundle, a binary artifact or one over
@@ -51,6 +56,7 @@ from .emitter import EmitterTarget, describe_emit_targets, get_emitter
 from .export_dispatch import dispatch_from_source
 from .export_service import emit_canonical
 from .export_source import ExportSource
+from .fidelity_measurement import FidelityMeasurement, measure_roundtrip_fidelity
 from .import_source import (
     CanonicalDiffEntry,
     ImportSourceError,
@@ -217,6 +223,13 @@ class ExportRoundtripResponse(BaseModel):
     emitter_version: str = Field(description="The emitter implementation version.")
     apiome_version: str = Field(description="The apiome-rest package version that ran the loop.")
     registry_version: str = Field(description="The capability-registry snapshot version.")
+    measurement: Optional[FidelityMeasurement] = Field(
+        default=None,
+        description="The empirical loss list and its corroboration of the fidelity report "
+        "(MFX-2.6): every observed difference as a loss, every predicted ``drop`` with the "
+        "differences that confirm it, and every divergence (unpredicted loss, unobserved drop, "
+        "over-claim). Null when the loop did not close.",
+    )
     text_diff: Optional[RoundtripTextDiff] = Field(
         default=None,
         description="The emitted artifact beside the same format re-emitted from the re-imported "
@@ -423,6 +436,7 @@ def run_export_roundtrip(
 
     diff = canonical_diff(source.api, reimported)
     reconciliation = reconcile(diff, report)
+    measurement = measure_roundtrip_fidelity(diff, report, reconciliation=reconciliation)
     text_diff, text_diff_reason = build_text_diff(
         dispatch.emit, reimported, dispatch.target, multi_file=descriptor.multi_file, options=options
     )
@@ -454,6 +468,7 @@ def run_export_roundtrip(
         unexplained=list(reconciliation.unexplained),
         overclaims=list(reconciliation.overclaims),
         reimported_fingerprint=canonical_fingerprint(reimported),
+        measurement=measurement,
         text_diff=text_diff,
         text_diff_reason=text_diff_reason,
     )

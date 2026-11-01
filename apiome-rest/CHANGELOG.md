@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.575.0] - 2026-10-31
+
+### Added
+- **Round-trip fidelity measurement (MFX-2.6, #3843).** `POST /v1/export/{tenant_slug}/roundtrip` now returns
+  `measurement` (`FidelityMeasurement`), which compares the predicted fidelity report with what the export → re-import
+  → diff actually did. It is null when the loop did not close.
+  - `empirical_losses`: every source → re-import difference as a loss (removed → `drop`, added → `synth`, changed →
+    `approx`), with the predicted finding that explains it (if any).
+  - `drops`: every predicted `drop`, `corroborated` when the round trip removed or changed the construct or the
+    entity that owns it, with the differences as `evidence`.
+  - `divergences` and `diverges`: `unpredicted_loss`, `unobserved_drop` and `overclaim`.
+  - New pure module `app.fidelity_measurement` (`measure_roundtrip_fidelity`). It reuses
+    `app.roundtrip_matrix.reconcile` for the pairing, so `status` (the IXH-1.7 verdict) is unchanged.
+  - `roundtrip_matrix._related` is now public as `construct_relates_to`.
+- OpenAPI document version 1.438.0 → 1.439.0.
+
 ## [1.574.0] - 2026-10-31
 
 ### Added

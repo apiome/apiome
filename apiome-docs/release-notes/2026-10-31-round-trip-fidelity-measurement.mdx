@@ -1,0 +1,20 @@
+---
+slug: round-trip-fidelity-measurement
+title: Measure what an export really loses
+description: The round-trip API now checks every predicted drop against the real round trip.
+authors: [apiome]
+---
+
+The round-trip check now **measures** loss as well as predicting it. `POST
+/v1/export/{tenant_slug}/roundtrip` returns a `measurement` that compares the fidelity report with
+what really happened when the export was read back. [Measured loss from the
+API](/ship/export-studio#measured-loss-from-the-api).
+
+{/* truncate */}
+
+- **Empirical losses.** Every difference between the source and the file read back is listed as a
+  loss (`drop`, `synth` or `approx`), marked with whether the fidelity report predicted it.
+- **Predicted drops, checked.** Each `drop` in the report says whether the round trip confirmed it
+  and which differences prove it.
+- **Divergences flagged.** A loss nobody predicted, a predicted drop that did not happen, and a
+  construct the report calls preserved that changed are each listed, and `diverges` is `true`.

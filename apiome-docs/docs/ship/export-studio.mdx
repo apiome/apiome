@@ -225,6 +225,23 @@ Two tabs show the differences:
 
 <Screenshot id="export-roundtrip-model-diff" alt="Round-trip comparison for GraphQL SDL on Model diff: one of two predicted drops seen, two expected differences and one unexplained change to type Pet" />
 
+#### Measured loss from the API
+
+The same check is available as
+[`POST /v1/export/{tenant_slug}/roundtrip`](../reference/rest/export.md#roundtrip-export-v1-export-tenant-slug-roundtrip-post).
+Its `measurement` field compares the predicted fidelity report with what the round trip actually
+did. It is `null` when the comparison was skipped or the file could not be read back.
+
+| Field | What it holds |
+| --- | --- |
+| `empirical_losses` | Every difference between the source and the file read back, as a loss: removed → `drop`, added → `synth`, changed → `approx`. `predicted` says whether the fidelity report explains it. |
+| `drops` | Every `drop` the report predicts. `corroborated` is true when the round trip removed or changed that construct (or the entity that holds it); `evidence` lists those differences. |
+| `divergences` | Every place prediction and measurement disagree: `unpredicted_loss` (a difference the report did not predict), `unobserved_drop` (a predicted drop that did not happen) and `overclaim` (a construct the report calls preserved that changed). |
+| `diverges` | `true` when `divergences` is not empty. |
+
+`measurement` does not change `status`. An `unobserved_drop` means the report is more cautious than
+it needs to be, so the round trip can still be **Round trip verified**.
+
 ### When generation fails
 
 A failure card names the stage and offers the next step — for example *The emitted artifact failed
