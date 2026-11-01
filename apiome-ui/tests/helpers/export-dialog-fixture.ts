@@ -26,6 +26,8 @@ import apiblueprintTargetsForRest from '../fixtures/export-targets-apiblueprint-
 import apiblueprintTargetsForApiblueprint from '../fixtures/export-targets-apiblueprint-apiblueprint.json';
 import smithyTargetsForRest from '../fixtures/export-targets-smithy-rest.json';
 import smithyTargetsForSmithy from '../fixtures/export-targets-smithy-smithy.json';
+import xsdTargetsForRest from '../fixtures/export-targets-xsd-rest.json';
+import xsdTargetsForXsd from '../fixtures/export-targets-xsd-xsd.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -528,4 +530,16 @@ export function apiblueprintTargets(source: 'rest' | 'apiblueprint'): ExportTarg
  */
 export function smithyTargets(source: 'rest' | 'smithy'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? smithyTargetsForRest : smithyTargetsForSmithy);
+}
+
+/**
+ * The standalone XSD target as the registry lists it (MFX-22.6, #4137), for a REST source and for an imported
+ * XSD — recorded from the live REST registry by `apiome-rest/tests/test_xsd_target_card.py`. XSD keeps a REST
+ * source's types only (`types-only`); an XSD exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `xsd` (an imported purchase-order schema).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function xsdTargets(source: 'rest' | 'xsd'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? xsdTargetsForRest : xsdTargetsForXsd);
 }

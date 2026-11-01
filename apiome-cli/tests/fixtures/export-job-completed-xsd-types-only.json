@@ -1,0 +1,44 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "xsd",
+    "dry_run": false,
+    "fidelity": {
+      "summary": {
+        "tier": "types-only",
+        "preserved_percent": 12,
+        "total": 17,
+        "preserved": 2,
+        "dropped": 6,
+        "approximated": 8,
+        "synthesized": 1
+      },
+      "target": {
+        "key": "xsd",
+        "format": "xsd",
+        "label": "XSD"
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "message": "Exporting to XSD may lose some fidelity. The destination format can't represent everything in this API, so 15 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      }
+    },
+    "files": [
+      {
+        "path": "Sample_Pet_Store_API_OpenAPI_3_0.xsd",
+        "media_type": "application/xml",
+        "size_bytes": 2185
+      }
+    ],
+    "media_type": "application/xml",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

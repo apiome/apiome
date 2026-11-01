@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.585.0] - 2026-11-01
+
+### Added
+- **XSD target card + fixtures (MFX-22.6, #4137).** `tests/test_xsd_target_card.py` + `fixtures/xsd_target/outcomes.json`
+  pin the standalone `xsd` card per source kind (REST, RPC, GraphQL, JSON Schema, WSDL, RAML `types-only`; an
+  imported XSD `lossless`), the fixture cases (plain, facet-heavy, UBL-style profile, and a two-URI-namespace model
+  that writes one `.xsd` per namespace with `xs:import`), the `xsd_version` / `include_xml_declaration` /
+  `include_comments` choices (each passes `check_emitted_xsd`; `vc:minVersion="1.1"` for 1.1), the MFX-22.5 gate,
+  browse (`.xsd`; a zip for several namespaces), and keep the CLI / UI registry fixtures and the CLI job fixture equal
+  to the live registry (`APIOME_REGEN_XSD_TARGET=1`). RELAX NG / DTD (MFX-22.3) and ISO 20022 (MFX-22.4) are not in
+  the registry yet.
+- OpenAPI document version 1.448.0 → 1.449.0.
+
 ## [1.584.0] - 2026-11-01
 
 ### Added
