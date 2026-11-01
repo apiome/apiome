@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.575.1] - 2026-10-31
+
+### Added
+- **Arazzo emitter contract tests (MFX-10.1, #3870).** The `arazzo` target (`app.arazzo_emitter.ArazzoEmitter`) already
+  shipped (Arazzo support, FMT-3.1 #5426, MFX-10.2 #3871); `tests/test_arazzo_emitter.py` now pins its standard
+  contract over every `apiome-ui/examples/arazzo` workflow: registry entry, deterministic single-file emit, the
+  dispatch's fidelity report (no DROP from an Arazzo source; the workflows-only warning for a REST source), the MFX-5.1
+  emitted-output validation gate, and a lossless re-import (the IXH-1.7 matrix cell passes). No behaviour change.
+- OpenAPI document version 1.439.0 → 1.439.1.
+
 ## [1.575.0] - 2026-10-31
 
 ### Added
