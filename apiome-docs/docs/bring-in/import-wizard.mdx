@@ -85,6 +85,20 @@ The import still runs. To fix the references, add the missing schemas to the spe
 with a schema defined in it, and import again. A reference to a schema you didn't tick can't happen:
 ticking a schema ticks every schema it uses.
 
+### Change property descriptions
+
+To fix or fill in a property's description as you import, rather than editing it in the project
+afterwards, use **Property descriptions** on the **Preview** step:
+
+1. **Click “Property descriptions”** to open it. It lists every property of each schema you ticked,
+   by **Schema** and **Property**.
+2. **Type a description** in the **Description** box. The box shows the spec's own description as a
+   hint (*As in spec: …*), or *(no description in spec)* when it has none.
+3. **Leave a box empty** to keep the spec's description as it is.
+
+The descriptions you type replace the spec's for those properties in the imported project; the
+spec file itself is not changed. Untick a schema and its rows leave the list.
+
 ### Import a new version of an existing project
 
 When the **Slug** on Preview matches a project you already have, the import adds a new version to
