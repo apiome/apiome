@@ -1,0 +1,17 @@
+---
+slug: repository-formats
+title: "Documented: which formats a repository scan finds"
+description: The repositories guide now lists every format a scan imports, and external $refs.
+authors: [apiome]
+---
+
+The [repositories guide](/bring-in/repositories#formats-a-scan-finds) now lists every specification
+format a repository scan recognises — OpenAPI and Swagger, AsyncAPI, Arazzo, JSON Schema, GraphQL,
+Protocol Buffers, Avro, Postman, Prisma, DBML and SQL.
+
+{/* truncate */}
+
+- **Found by name or by content.** A file is recognised by its name, and an unhelpfully named `.json`
+  or `.yaml` by what it contains.
+- **External `$ref`s are not fetched.** A reference to a schema hosted outside the repository is
+  reported on **Discovered specs** (*N unresolved external $refs*) instead of being followed.

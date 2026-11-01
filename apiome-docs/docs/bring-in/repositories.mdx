@@ -220,6 +220,35 @@ write access to **Contents** and **Pull requests**. A repository registered from
 account, so it cannot receive pull requests. Every pull request PR-back opens is recorded in the
 audit log as `repository.pr_back_opened`, and every update as `repository.pr_back_updated`.
 
+## Formats a scan finds
+
+A scan reads every file's name, and the content where the name is not enough, to decide which
+specifications a repository holds. These become rows you can import with **Map & import** (above):
+
+| A file named | Is read as |
+| --- | --- |
+| `*openapi*.yaml` / `.yml` / `.json`, `*swagger*.…` | OpenAPI 3.0 / 3.1, or Swagger 2.0 |
+| `*asyncapi*.yaml` / `.yml` / `.json` | AsyncAPI 2.x / 3.x |
+| `*arazzo*.yaml` / `.yml` / `.json`, `*.arazzo.yaml` | Arazzo 1.x workflows |
+| `*.schema.json`, or a `.json` under a `schemas/` folder | JSON Schema |
+| `*.graphql`, `*.gql` | GraphQL SDL |
+| `*.proto` | Protocol Buffers |
+| `*.avsc` | Avro |
+| `*.postman.json`, `postman_collection.json` | Postman collection |
+| `schema.prisma`, `*.dbml`, `*.sql` / `*.ddl` | Prisma, DBML and SQL schemas |
+
+Any other `.json` or `.yaml` file is read by its content, so an OpenAPI document named `api.yaml` is
+still found. The [import wizard](./import-wizard.mdx) explains how a GraphQL, Protocol Buffers or Avro
+file maps onto classes when it is imported into a project.
+
+### References to schemas outside the repository
+
+A spec may point at a schema hosted somewhere else, such as
+`{"$ref": "https://schemas.acme.com/common.json#/Money"}`. A scan **does not fetch** it: following
+links found in a repository would let any file make Apiome call any address. The reference is
+reported instead: the file's row on **Discovered specs** carries a warning such as
+**2 unresolved external $refs**, so a model that is missing those definitions never looks complete.
+
 ## Discovered specs
 
 <Route path="/ade/dashboard/repositories/catalog" />
