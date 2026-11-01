@@ -19,7 +19,6 @@ from pathlib import Path
 from typing import Dict, List
 
 import pytest
-import yaml
 
 from app.arazzo_emitter import WORKFLOWS_ONLY_WARNING, ArazzoEmitter, validate_arazzo_document
 from app.canonical_model import (
@@ -36,6 +35,7 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.catalog_conversion import build_conversion_source
+from app.emitter import EmitPreconditionError
 from app.fidelity_advisory import build_export_advisory
 from app.fidelity_engine import compute_lossiness_for_emitter
 from app.lossiness import LossinessKind
@@ -130,13 +130,15 @@ def test_synthesized_workflows_are_named() -> None:
     ],
     ids=["types-only", "events-only"],
 )
-def test_a_source_with_nothing_to_sequence_is_a_near_empty_document(operations) -> None:
+def test_a_source_with_nothing_to_sequence_is_reported_near_empty_and_refused(operations) -> None:
+    """The preview still says why (near-empty DROP); the export itself is refused (MFX-10.3)."""
     api = _api(*operations, channels=[Channel(key="orders", name="orders", address="orders")])
     near_empty = next(item for item in _items(api)[""] if item.target_mapping == "no operations → near-empty document")
     assert near_empty.kind is LossinessKind.DROP
-    result = ArazzoEmitter().emit(api)
-    assert yaml.safe_load(result.files[0].content)["workflows"] == []
-    assert "no-workflow" in {loss.subject for loss in result.losses}
+    reason = ArazzoEmitter.source_unsupported_reason(api)
+    assert reason is not None and "at least one operation to sequence" in reason
+    with pytest.raises(EmitPreconditionError, match="at least one operation to sequence"):
+        ArazzoEmitter().emit(api)
 
 
 def test_each_operation_becomes_a_step_and_a_made_up_target_is_synthesized() -> None:

@@ -1416,10 +1416,31 @@ surface*.
 - **Each operation** becomes a step and is marked **approximated**. Its parameters, request and
   response schemas stay in the source description and are not written.
 - **Types, servers and event channels** are not written. Types and channels are marked **dropped**.
-- **An item with nothing to sequence**, such as a set of types or an event API, exports as a
-  near-empty document with no workflow, marked **dropped**.
+- **A source description** is required by Arazzo. When the item names none, the document gets one
+  entry named after the API, pointing at a placeholder such as `./shop-orders.openapi.yaml`.
+  **Replace that URL** with the address of the real API description before you run the workflow.
+  The report marks the entry **synthesized**.
+- **A version** is required too. An item without one is written as version `1.0.0`, marked
+  **synthesized**.
+- **An item with nothing to sequence**, such as a set of types or an event API, cannot be exported
+  to Arazzo: a valid Arazzo document needs at least one workflow. Arazzo is not offered for it, and
+  the export is refused with the reason.
 
 Every export from a non-Arazzo item shows the fidelity warning before you download.
+
+#### Arazzo export checks
+
+Before you download, Apiome checks the document:
+
+1. **Schema** (`arazzo.schema`). A document Apiome built from a non-Arazzo item must pass the official
+   Arazzo JSON Schema for the version it declares (1.0 or 1.1). Each problem names its location, such
+   as `/sourceDescriptions`. A document that fails is not delivered.
+2. **Re-import** (`arazzo.reimport`). Every document is read back through the Arazzo importer, the
+   same way an upload is, and compared with the item.
+
+An item imported from Arazzo is your own document, written back as it was read, so it is checked by
+re-import only. Apiome reads some spellings the schema does not allow, such as `name` instead of
+`workflowId`; those are listed in the round-trip report but do not block the export.
 
 ### API Blueprint from any source
 
@@ -1478,7 +1499,7 @@ re-import shows what API Blueprint could not keep; the fidelity report names tho
 | Apache Thrift | RPC | Any source |
 | API Blueprint | REST | Any source |
 | Apigee API proxy | REST | Any source |
-| Arazzo | REST | Any source |
+| Arazzo | REST | A source with an operation to sequence |
 | ASN.1 | Data schema | Any source |
 | AsyncAPI 3.1 | Events | Any source |
 | AWS API Gateway | REST | Any source |

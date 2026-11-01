@@ -15,6 +15,14 @@ says so: the report warns that *this target captures workflows, not the full API
 each synthesized workflow and step target ``SYNTH``, each operation reduced to a step ``APPROX``,
 every type declaration ``DROP``, and a source with nothing to sequence (a set of types, an event API)
 as a near-empty document (``DROP``). The writer records the same losses.
+
+**A valid document (MFX-10.3, #3872).** A document rebuilt from a non-Arazzo source must pass the
+official Arazzo JSON Schema, so the writer fills in what the schema requires and the source cannot
+supply — one ``sourceDescriptions`` entry pointing at a relative placeholder (``./<name>.openapi.yaml``)
+and an ``info.version`` of :data:`DEFAULT_INFO_VERSION` — and records each as a ``SYNTH``. A source with
+no operation to sequence is refused (:meth:`ArazzoEmitter.source_unsupported_reason`), because a
+schema-valid Arazzo document needs at least one workflow. :mod:`app.arazzo_roundtrip` validates and
+round-trips the result.
 """
 
 from __future__ import annotations
@@ -41,6 +49,7 @@ from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Operatio
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitPreconditionError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -57,6 +66,9 @@ __all__ = [
     "ArazzoEmitOptions",
     "ArazzoEmitter",
     "ArazzoFidelityRulePack",
+    "DEFAULT_INFO_VERSION",
+    "is_workflow_source",
+    "synthesized_source_description",
     "validate_arazzo_document",
 ]
 
@@ -66,9 +78,54 @@ _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRI
 WORKFLOWS_ONLY_WARNING = "this target captures workflows, not the full API surface"
 
 
+#: The ``info.version`` a rebuilt document declares when the source has none (MFX-10.3).
+DEFAULT_INFO_VERSION = "1.0.0"
+
+
 def _is_arazzo_source(api: CanonicalApi) -> bool:
     """Whether ``api`` was imported from Arazzo (its workflows are real, not synthesized)."""
     return api.format == ARAZZO_FORMAT
+
+
+def is_workflow_source(api: CanonicalApi) -> bool:
+    """Whether ``api`` was imported from Arazzo, so its export is the user's own workflow document.
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        True for an Arazzo import (written back as read, or rebuilt from its own workflows); False
+        for any other source, whose workflows the emitter synthesizes (MFX-10.3).
+    """
+    return _is_arazzo_source(api)
+
+
+def _slug(text: str) -> str:
+    """``text`` reduced to the characters an Arazzo name allows (``[A-Za-z0-9_-]``)."""
+    return re.sub(r"[^A-Za-z0-9_\-]+", "-", text.strip()).strip("-") or "api"
+
+
+def synthesized_source_description(api: CanonicalApi) -> Dict[str, str]:
+    """The ``sourceDescriptions`` entry a rebuilt document declares when the source has none (MFX-10.3).
+
+    Arazzo requires at least one source description, and the steps of a synthesized workflow call the
+    source's operations by id, so the entry names the source API. Its ``url`` is a relative placeholder
+    for the user to point at the real description; ``type`` is ``openapi`` because the steps call
+    request/response operations and Arazzo 1.0 describes only OpenAPI and Arazzo sources.
+
+    Args:
+        api: The source canonical model.
+
+    Returns:
+        ``{"name", "url", "type"}``, e.g. ``{"name": "Shop", "url": "./shop.openapi.yaml", "type": "openapi"}``.
+    """
+    name = _slug(api.title or api.identity.name or "api")
+    return {"name": name, "url": f"./{name.lower()}.openapi.yaml", "type": "openapi"}
+
+
+def _has_source_descriptions(api: CanonicalApi) -> bool:
+    value = api.extras.get("sourceDescriptions")
+    return isinstance(value, list) and bool(value)
 
 
 def _steps(api: CanonicalApi) -> List[Operation]:
@@ -135,6 +192,24 @@ class ArazzoFidelityRulePack(CapabilityRulePack):
                 severity=LossinessSeverity.INFO,
                 target_mapping="service → synthesized workflow",
             ))
+            if not _has_source_descriptions(api):
+                placeholder = synthesized_source_description(api)
+                verdicts.append(FidelityVerdict.synth(
+                    message=(
+                        f"Arazzo: the source names no source description; {placeholder['name']!r} points at the "
+                        f"placeholder {placeholder['url']!r} — replace it with the real API description's URL"
+                    ),
+                    severity=LossinessSeverity.WARN,
+                    target_mapping="source API → placeholder sourceDescriptions entry",
+                ))
+            if not api.version:
+                verdicts.append(FidelityVerdict.synth(
+                    message=(
+                        f"Arazzo requires info.version; the source has none, so {DEFAULT_INFO_VERSION!r} is written"
+                    ),
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"no version → {DEFAULT_INFO_VERSION}",
+                ))
         else:
             verdicts.append(FidelityVerdict.drop(
                 message="Arazzo: the source has no operation to sequence; the document carries no workflow",
@@ -231,6 +306,28 @@ class ArazzoEmitter(Emitter, register=True):
     OUTPUT_MEDIA_TYPE = "application/yaml"
 
     @classmethod
+    def source_unsupported_reason(cls, api: CanonicalApi) -> Optional[str]:
+        """A non-Arazzo source with no operation to sequence cannot be exported (MFX-10.3).
+
+        A schema-valid Arazzo document needs at least one workflow with at least one step, and a
+        synthesized workflow's steps are the source's request/response operations — a set of types or an
+        event-only API has none.
+
+        Args:
+            api: The source canonical model.
+
+        Returns:
+            The reason, or ``None`` when the source is an Arazzo import or has an operation to sequence.
+        """
+        reason = super().source_unsupported_reason(api)
+        if reason or _is_arazzo_source(api) or _steps(api):
+            return reason
+        return (
+            "Arazzo export needs at least one operation to sequence into a workflow; "
+            "this source has none (only types or events)."
+        )
+
+    @classmethod
     def capability_profile(cls) -> CapabilityProfile:
         return CapabilityProfile(
             operations=True,
@@ -255,6 +352,9 @@ class ArazzoEmitter(Emitter, register=True):
             if isinstance(opts, ArazzoEmitOptions)
             else ArazzoEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
+        unsupported = self.source_unsupported_reason(api)
+        if unsupported:
+            raise EmitPreconditionError(unsupported)
         writer = _ArazzoWriter(api, options)
         content = writer.render()
         return EmitResult(
@@ -418,6 +518,14 @@ class _ArazzoWriter:
             info["summary"] = summary
         if self._api.version:
             info["version"] = self._api.version
+        elif not _is_arazzo_source(self._api):
+            info["version"] = DEFAULT_INFO_VERSION
+            self.losses.record(
+                LossKind.INFERRED,
+                "info-version-default",
+                f"The source has no version; Arazzo requires info.version, so {DEFAULT_INFO_VERSION!r} is written.",
+                pointer="info/version",
+            )
         if self._api.description:
             info["description"] = self._api.description
 
@@ -429,6 +537,16 @@ class _ArazzoWriter:
         source_descriptions = self._api.extras.get("sourceDescriptions")
         if isinstance(source_descriptions, list) and source_descriptions:
             document["sourceDescriptions"] = source_descriptions
+        elif not _is_arazzo_source(self._api):
+            placeholder = synthesized_source_description(self._api)
+            document["sourceDescriptions"] = [placeholder]
+            self.losses.record(
+                LossKind.INFERRED,
+                "source-description-placeholder",
+                f"The source names no source description; {placeholder['name']!r} points at the placeholder "
+                f"{placeholder['url']!r}. Replace it with the real API description's URL.",
+                pointer="sourceDescriptions",
+            )
         components = self._api.extras.get("components")
         if isinstance(components, dict) and components:
             # Reusable `$ref` targets for inputs, parameters and success/failure actions.

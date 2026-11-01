@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.576.0] - 2026-10-31
+
+### Added
+- **Arazzo export validate + round-trip (MFX-10.3, #3872).** New `app.arazzo_roundtrip`: `check_emitted_arazzo`
+  (parse → official Arazzo JSON Schema → re-import through `ArazzoImportSource`), `reimport_arazzo` and
+  `round_trip_arazzo` (`ArazzoRoundTripReport`: `INVALID` / `UNPARSEABLE` / `LOSSY` / `LOSSLESS`, the empirical diff
+  reconciled with the fidelity report, `diverges`). The `arazzo` export gate now reports one finding per problem with
+  its rule (`arazzo.yaml`, `arazzo.schema`, `arazzo.reimport`) and JSON pointer.
+  - Schemas vendored byte for byte, offline: `data/arazzo_1_0_schema_2025_10_15.json`
+    (`https://spec.openapis.org/arazzo/1.0/schema/2025-10-15`) and `data/arazzo_1_1_schema_2026_04_15.json`
+    (`https://spec.openapis.org/arazzo/1.1/schema/2026-04-15`), chosen by the document's declared version.
+  - The schema gates documents rebuilt from a non-Arazzo source. An Arazzo import (written back as read) is gated on
+    re-import only; its schema violations are listed in `ArazzoRoundTripReport.schema_violations`.
+
+### Changed
+- **Arazzo exports from non-Arazzo sources are schema-valid.** A rebuilt document with no source description gets one
+  placeholder entry (`synthesized_source_description`: `{name, url: ./<name>.openapi.yaml, type: openapi}`) and, with
+  no version, `info.version: 1.0.0` (`DEFAULT_INFO_VERSION`); both are recorded as losses and `SYNTH` fidelity
+  verdicts.
+- **Arazzo refuses a source with nothing to sequence.** `ArazzoEmitter.source_unsupported_reason`: a non-Arazzo source
+  with no request/response operation (types only, events only) is not offered and its export is refused (422), as for
+  XML-RPC. The round-trip and export-conformance matrices record those `arazzo` cells as refusals.
+- OpenAPI document version 1.439.1 → 1.440.0.
+
 ## [1.575.1] - 2026-10-31
 
 ### Added

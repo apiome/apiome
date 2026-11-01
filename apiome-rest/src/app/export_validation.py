@@ -1045,16 +1045,27 @@ async def _validate_jtd(
 async def _validate_arazzo(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted Arazzo workflow by re-parsing it."""
-    from .arazzo_emitter import validate_arazzo_document
+    """Re-validate an emitted Arazzo workflow (MFX-10.3, #3872).
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
-        try:
-            validate_arazzo_document(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    The official Arazzo JSON Schema for the declared version (vendored, offline; one finding per
+    violation with its JSON pointer) — for a document rebuilt from a non-Arazzo source only, since an
+    Arazzo import is the user's own document written back as read — then a re-import through the Arazzo
+    import source (:func:`app.arazzo_roundtrip.check_emitted_arazzo`). Findings carry the rule as
+    ``keyword``.
+    """
+    from .arazzo_emitter import is_workflow_source
+    from .arazzo_roundtrip import check_emitted_arazzo
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Arazzo export wrote no file.")])
+    problems = await asyncio.to_thread(
+        check_emitted_arazzo, emit_result, passthrough=is_workflow_source(api)
+    )
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 # --- FMT-2.7 (#5425): the six FMT-EPIC-2 targets ---------------------------
