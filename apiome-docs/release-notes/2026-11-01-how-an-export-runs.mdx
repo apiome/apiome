@@ -1,0 +1,20 @@
+---
+slug: how-an-export-runs
+title: "New guide: how an export runs"
+description: One page explains the export job behind the dialog, studio, CLI and API.
+authors: [apiome]
+---
+
+Every export, whichever surface starts it, runs the same **export job**: pick a version and a target,
+preview the fidelity, guard the conversion, write the files, check them, decide delivery, and deliver.
+The new [How an export runs](/ship/export-jobs) guide walks through it.
+
+{/* truncate */}
+
+- **The transcoding guard.** A conversion is **clean**, **lossy**, **near-empty** (only schemas export)
+  or **severe**. A severe one needs your confirmation before anything is written.
+- **Job states and failure codes.** A job is queued, running, completed, failed or canceled. The guide
+  lists the failure codes you are most likely to see (`TRANSCODE_CONFIRMATION_REQUIRED`,
+  `STALE_PREVIEW`, `EMITTED_ARTIFACT_INVALID`, `EXPORT_DELIVERY_BLOCKED`) and what to do about each.
+- **One job, four surfaces.** The Export dialog, Export studio, CLI and REST API all start the same
+  job.
