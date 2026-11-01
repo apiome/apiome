@@ -536,6 +536,16 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 
+**Where to find it.** In the **Export** dialog, the **TypeSpec** card is under **REST & HTTP** on the
+**Target** step, as one file. Its badge is **lossy** for a REST, RPC, GraphQL, JSON Schema or WSDL
+source and **lossless** for an item imported from TypeSpec. Pick the card to see its two options, both
+on by default: **Include Http Imports** writes the `@typespec/http` import and `using` the document
+needs to compile (turn it off only if you add them yourself), and **Include Comments** writes the
+header comment. From the CLI, run `apiome export typespec <item> --out <file>.tsp`, and add
+`--option include_http_imports=false` or `--option include_comments=false`. A lossy export exits
+non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers TypeSpec too, as the `.tsp` file.
+
 ### FHIR (StructureDefinition) from any source
 
 Exporting to **FHIR** writes each cataloged type as a FHIR **StructureDefinition logical model**

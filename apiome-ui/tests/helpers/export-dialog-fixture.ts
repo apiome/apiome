@@ -14,6 +14,8 @@ import x12GuideTargetsForRest from '../fixtures/export-targets-x12-guide-rest.js
 import x12GuideTargetsForX12 from '../fixtures/export-targets-x12-guide-x12.json';
 import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
 import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
+import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.json';
+import typespecTargetsForTypespec from '../fixtures/export-targets-typespec-typespec.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -449,4 +451,17 @@ export function mockExportDialogFetch(targets: ExportTargetsResponse = EXPORT_DI
  */
 export function wsdlTargets(source: 'rest' | 'wsdl'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? wsdlTargetsForRest : wsdlTargetsForWsdl);
+}
+
+/**
+ * The TypeSpec target as the registry lists it (MFX-15.4, #3896), for a REST source and for an imported
+ * TypeSpec project — recorded from the live REST registry by `apiome-rest/tests/test_typespec_target_card.py`.
+ * A REST source loses what TypeSpec does not keep (`lossy`); a TypeSpec project exports again unchanged
+ * (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `typespec` (an imported TypeSpec pets API).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function typespecTargets(source: 'rest' | 'typespec'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? typespecTargetsForRest : typespecTargetsForTypespec);
 }

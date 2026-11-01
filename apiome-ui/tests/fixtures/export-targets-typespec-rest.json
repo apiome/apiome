@@ -1,0 +1,61 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "typespec",
+        "format": "typespec",
+        "label": "TypeSpec",
+        "description": "Export as a Microsoft TypeSpec API definition (.tsp).",
+        "icon": "file-code",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`TypeSpecEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit a header comment in the generated TypeSpec document.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "include_http_imports": {
+            "default": true,
+            "description": "Emit the `@typespec/http` (and, for a version, `@typespec/openapi`) imports and `using`s. Without them the document only compiles where they are added.",
+            "title": "Include Http Imports",
+            "type": "boolean"
+          }
+        },
+        "title": "TypeSpecEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "include_http_imports": true
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 15,
+        "total": 13,
+        "preserved": 2,
+        "dropped": 5,
+        "approximated": 6,
+        "synthesized": 0
+      }
+    }
+  ]
+}
