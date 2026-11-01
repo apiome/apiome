@@ -1326,6 +1326,16 @@ The fidelity report lists, construct by construct, what XML Schema cannot say th
 | A deprecated property | Dropped (note): XSD has no deprecation marker |
 | A name that is not an XML name (`first name`) | Approximated (note): `firstName` |
 
+**Where to find it.** In the **Export** dialog, the **XSD** card is under **Data schema & graph** on the
+**Target** step. Its badge is **lossless** for an item imported from XSD and **types-only** for any
+other source (XSD keeps the types and leaves out the operations). Pick the card to see its three
+options: **Xsd Version** (`1.0` by default, or `1.1`), **Include Xml Declaration** and **Include
+Comments** (both on by default). From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add
+`--option xsd_version=1.1` or `--option include_xml_declaration=false`. A types-only export exits
+non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces. RELAX NG
+and DTD output and the ISO 20022 profile are not offered yet.
+
 ### ASN.1 from any source
 
 Exporting to **ASN.1** writes the item's data types as one ITU-T X.680 module, `<Module>.asn1`,

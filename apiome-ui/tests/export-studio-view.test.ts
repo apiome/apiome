@@ -138,6 +138,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'smithy').key).toBe('rpc');
   });
 
+  it('files XSD under Data schema & graph by paradigm (MFX-22.6)', () => {
+    expect(familyForTarget('data_schema', 'xsd').label).toBe('Data schema & graph');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

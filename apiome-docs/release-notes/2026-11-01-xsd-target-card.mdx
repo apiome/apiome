@@ -1,0 +1,20 @@
+---
+slug: xsd-target-card
+title: Export to XSD from the Export dialog and the CLI
+description: The XSD card shows its version and output options, and XSD items export losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **XSD** card writes the item's data types as a standalone XML Schema and shows
+its three options: **Xsd Version**, **Include Xml Declaration** and **Include Comments**. The CLI
+exports the same with `apiome export xsd`. [Where to find it](/ship/export-a-spec#xsd-xml-schema-on-its-own).
+
+{/* truncate */}
+
+- **XSD 1.0 or 1.1.** **Xsd Version** is `1.0` by default; `1.1` marks the schema
+  `vc:minVersion="1.1"` and writes `multipleOf` as an assertion. From the CLI, add
+  `--option xsd_version=1.1`.
+- **Your XSD exports losslessly.** An item imported from XSD badges **lossless**. Any other source is
+  **types-only**: XSD keeps its types and leaves out its operations.
+- **One file per namespace.** A one-namespace item downloads as its `.xsd`; an item that spans several
+  namespaces downloads as a `.zip` of schemas that import each other.

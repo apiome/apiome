@@ -1,0 +1,72 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "xsd",
+        "format": "xsd",
+        "label": "XSD",
+        "description": "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1).",
+        "icon": "file-code",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`XsdEmitter`.",
+        "properties": {
+          "xsd_version": {
+            "default": "1.0",
+            "description": "`1.0` (default) or `1.1`. XSD 1.1 marks the schema `vc:minVersion=\"1.1\"` and writes `multipleOf` as an `xs:assertion` facet.",
+            "enum": [
+              "1.0",
+              "1.1"
+            ],
+            "title": "Xsd Version",
+            "type": "string"
+          },
+          "include_xml_declaration": {
+            "default": true,
+            "description": "Emit the XML 1.0 declaration prolog.",
+            "title": "Include Xml Declaration",
+            "type": "boolean"
+          },
+          "include_comments": {
+            "default": true,
+            "description": "Emit an XML comment header in the generated XSD.",
+            "title": "Include Comments",
+            "type": "boolean"
+          }
+        },
+        "title": "XsdEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "xsd_version": "1.0",
+        "include_xml_declaration": true,
+        "include_comments": true
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 12,
+        "total": 17,
+        "preserved": 2,
+        "dropped": 6,
+        "approximated": 8,
+        "synthesized": 1
+      }
+    }
+  ]
+}

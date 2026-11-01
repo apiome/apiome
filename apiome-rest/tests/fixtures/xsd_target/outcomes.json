@@ -1,0 +1,226 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "multi-namespace": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "raml": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "xsd-facets": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "xsd-plain": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "xsd-profile": {
+      "available": true,
+      "tier": "lossless"
+    }
+  },
+  "cases": {
+    "xsd-plain": {
+      "files": [
+        "note.xsd"
+      ],
+      "header_comment": true,
+      "imports": 0,
+      "min_version_1_1": false,
+      "preserved_percent": 100,
+      "problems": [],
+      "tier": "lossless",
+      "xml_declaration": true
+    },
+    "xsd-profile": {
+      "files": [
+        "Invoice.xsd"
+      ],
+      "header_comment": true,
+      "imports": 0,
+      "min_version_1_1": false,
+      "preserved_percent": 100,
+      "problems": [],
+      "tier": "lossless",
+      "xml_declaration": true
+    }
+  },
+  "options": {
+    "multi-namespace": {
+      "default": {
+        "files": [
+          "Orders.xsd",
+          "Orders-common.xsd"
+        ],
+        "header_comment": true,
+        "imports": 1,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      },
+      "no-comments": {
+        "files": [
+          "Orders.xsd",
+          "Orders-common.xsd"
+        ],
+        "header_comment": false,
+        "imports": 1,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      },
+      "no-declaration": {
+        "files": [
+          "Orders.xsd",
+          "Orders-common.xsd"
+        ],
+        "header_comment": true,
+        "imports": 1,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": false
+      },
+      "xsd-1.1": {
+        "files": [
+          "Orders.xsd",
+          "Orders-common.xsd"
+        ],
+        "header_comment": true,
+        "imports": 1,
+        "min_version_1_1": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only",
+        "xml_declaration": true
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "header_comment": false,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only",
+        "xml_declaration": true
+      },
+      "no-declaration": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only",
+        "xml_declaration": false
+      },
+      "xsd-1.1": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": true,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only",
+        "xml_declaration": true
+      }
+    },
+    "xsd-facets": {
+      "default": {
+        "files": [
+          "purchaseOrder.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      },
+      "no-comments": {
+        "files": [
+          "purchaseOrder.xsd"
+        ],
+        "header_comment": false,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      },
+      "no-declaration": {
+        "files": [
+          "purchaseOrder.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": false
+      },
+      "xsd-1.1": {
+        "files": [
+          "purchaseOrder.xsd"
+        ],
+        "header_comment": true,
+        "imports": 0,
+        "min_version_1_1": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_declaration": true
+      }
+    }
+  }
+}

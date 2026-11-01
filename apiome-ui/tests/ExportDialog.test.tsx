@@ -39,6 +39,9 @@
  * 18. The Smithy card (MFX-20.4): `lossy` for a REST source, `lossless` for an imported Smithy model, one
  *     file, with its output picker (IDL by default), protocol picker (none by default), header-comment and
  *     version options — from the recorded live registry.
+ * 19. The XSD card (MFX-22.6): `types-only` for a REST source, `lossless` for an imported XSD, one file,
+ *     with its XSD version picker (1.0 by default), XML-declaration and header-comment options — from the
+ *     recorded live registry.
  */
 
 import React from 'react';
@@ -78,6 +81,7 @@ import {
   odataTargets,
   ramlTargets,
   smithyTargets,
+  xsdTargets,
   x12GuideTargets,
   typespecTargets,
   wsdlTargets,
@@ -1276,5 +1280,35 @@ describe('ExportDialog — Smithy target card (MFX-20.4)', () => {
     fireEvent.click(screen.getByTestId('export-target-smithy'));
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
     expect(screen.getByLabelText(/Smithy Version/i)).toHaveValue('2.0');
+  });
+});
+
+describe('ExportDialog — XSD target card (MFX-22.6)', () => {
+  it.each([
+    ['rest', 'types-only'],
+    ['xsd', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(xsdTargets(source)));
+
+    const card = screen.getByTestId('export-target-xsd');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('XSD')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .xsd per namespace: a one-namespace source is one file, not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the XSD version picker, 1.0 by default, and the declaration and comment options', async () => {
+    await renderAtTargetStep(mockFetch(xsdTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-xsd'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const version = screen.getByRole('radiogroup', { name: 'Xsd Version' });
+    expect(within(version).getAllByRole('radio').map((option) => option.textContent)).toEqual(['1.0', '1.1']);
+    expect(within(version).getByRole('radio', { name: '1.0' })).toBeChecked();
+    fireEvent.click(within(version).getByRole('radio', { name: '1.1' }));
+    expect(within(version).getByRole('radio', { name: '1.1' })).toBeChecked();
+    expect(screen.getByLabelText(/Include Xml Declaration/i)).toBeChecked();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
   });
 });
