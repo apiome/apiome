@@ -106,7 +106,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: latest
+          node-version: lts/*
 
       - name: Syntax check the action scripts
         run: node --check lib.js && node --check main.js && node --check post.js
