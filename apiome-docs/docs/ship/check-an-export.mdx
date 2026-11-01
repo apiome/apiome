@@ -1,0 +1,59 @@
+---
+title: How an export is checked
+description: Every export is validated before delivery, then linted as advice.
+sidebar_position: 5.3
+---
+
+A converter can have bugs. So Apiome never trusts that an exported file is legal in its format: every
+export is **checked before you can download it**, and you can also have the exported file **linted**,
+to see whether it is good of its kind. Both run on the *exported* file, not on the item you exported.
+The checks are part of every [export job](./export-jobs.mdx), whichever surface starts it.
+
+## 1. Validation: is the file legal?
+
+Apiome reads the exported file back with the **same importer it uses for that format** — a Protobuf
+export is read by the Protobuf importer, a GraphQL export by the GraphQL importer — and, where the
+server has it, checks it with the format's own tool too (`buf build`, `tsp compile`, `smithy validate`,
+AMF, drafter, `flatc`, `capnp compile` and others; the full list is in
+[Exports checked with the format's own tool](./export-a-spec.md#exports-checked-with-the-formats-own-tool)).
+Each format's section of [Export a spec](./export-a-spec.md) says exactly what its check rejects.
+
+The check ends in one of four verdicts:
+
+| Verdict | What it means | What happens |
+| --- | --- | --- |
+| **Valid** | The file read back cleanly. | The export is delivered. |
+| **Invalid** | A check ran and rejected the file. | The export is **blocked**: the job fails with `EMITTED_ARTIFACT_INVALID` and nothing is delivered. |
+| **Skipped** | The format has a check, but its tool is not installed on this server. | The export is delivered with a warning that it was **not re-validated**. |
+| **Not applicable** | No importer reads the format back. | The export is delivered; there was nothing to check. |
+
+An invalid verdict lists each problem on its own: the message, the file it is in, its place (a JSON
+pointer such as `/components/schemas/Pet`, or a line and column), the rule or tool that found it,
+and which check ran. A completed job carries the verdict next to its fidelity report; a blocked one
+carries it in the job's error.
+
+An invalid export means the converter wrote something wrong, not that your item is wrong — please
+report it with the problems listed.
+
+## 2. Lint: is the file good of its kind?
+
+**Lint** answers a different question from validation: not *does it parse?* but *is it good?* Apiome
+reads the exported file back and runs the **same lint rules an import of that format runs**, so a
+GraphQL export is checked by the GraphQL rules and a Protobuf export by the Protobuf rules. You get a
+score and a grade like a catalog item's, the findings grouped by severity, and the rules that fired.
+
+Lint is **advice**: it never blocks an export or changes the verification verdict. A format Apiome
+cannot read back (a Postman collection, a gateway configuration) is reported as not linted, with the
+reason, rather than as a clean score.
+
+## Where you see the checks
+
+| Surface | Validation | Lint |
+| --- | --- | --- |
+| [Export studio](./export-studio.mdx#5-verify) — **Verify** step | The **Validation** tab, and an **Invalid — export blocked** verdict | The **Lint** tab: score, grade and findings |
+| **Export** dialog | A blocked export stops at the validation stage, with its error; open it in the Export studio to see each problem | — |
+| CLI (`apiome export …`) | A blocked export exits non-zero and prints the error and the job's error log lines | — |
+| REST API | The job's `result.validation` (completed) or `error.context` (`EMITTED_ARTIFACT_INVALID`); `POST /v1/export/{tenant_slug}/verify` runs it without exporting | `POST /v1/export/{tenant_slug}/verify` |
+
+Fidelity — what the conversion keeps and loses — is a third, separate question, answered *before*
+the export runs: see [Understand export fidelity](./export-fidelity.md).

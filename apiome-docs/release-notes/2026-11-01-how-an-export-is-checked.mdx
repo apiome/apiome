@@ -1,0 +1,20 @@
+---
+slug: how-an-export-is-checked
+title: "New guide: how an export is checked"
+description: Validation blocks a broken export; lint grades the exported file.
+authors: [apiome]
+---
+
+Every export is checked before you can download it, and the exported file can be linted. The new
+[How an export is checked](/ship/check-an-export) guide explains both.
+
+{/* truncate */}
+
+- **Validation blocks a broken export.** Apiome reads the exported file back with that format's
+  importer, and checks it with the format's own tool where the server has it. The verdict is
+  **valid**, **invalid** (the export is blocked and each problem is listed), **skipped** (the tool is not
+  installed, so it is delivered with a warning) or **not applicable**.
+- **Lint grades the exported file.** The same lint rules an import of that format runs score the
+  exported file. Lint is advice and never blocks an export.
+- **Where to see it.** The Export studio's **Verify** step has a **Validation** tab and a **Lint** tab;
+  the REST API returns both from `POST /v1/export/{tenant_slug}/verify`.

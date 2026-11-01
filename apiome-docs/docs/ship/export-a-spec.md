@@ -98,7 +98,8 @@ way the last column says.
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 | Kubernetes CRD | Apiome's structural-schema rules, then kubeconform against the `apiextensions.k8s.io/v1` schema | Checked by Apiome's structural-schema rules only |
 
-The sections below say what each check rejects.
+The sections below say what each check rejects. [How an export is checked](./check-an-export.mdx)
+explains the four verdicts and the lint of the exported file.
 
 ### When an item has nothing to export from
 
