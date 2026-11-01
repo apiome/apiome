@@ -237,6 +237,12 @@ RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSI
 # app.toolchain_selfcheck refuses to start without them.
 COPY apiome-rest/toolchain/package.json ${TOOLS_PREFIX}/lib/node/package.json
 
+# Install and smoke-test the toolchain with the runtime stage's node, not Debian's Node 18: the
+# image runs these tools on that node, and `prisma` (a hard dependency since MFX-35.2) refuses to
+# install below Node 20.19 (its preinstall checks the version). /usr/local/bin precedes /usr/bin on
+# PATH, so Debian's npm — `#!/usr/bin/env node` — and every package install script run on it too.
+COPY --from=uideps /usr/local/bin/node /usr/local/bin/node
+
 # tsp (TypeSpec compiler, with the @typespec/http, rest, openapi3 and versioning libraries a
 # compile resolves through the staged project's node_modules link — MFI-14.1) + asyncapi CLI +
 # @graphql-inspector/core — Node packages installed
@@ -296,9 +302,8 @@ RUN printf '#!/bin/sh\nexec node %s/lib/node/asyncapi-parse.mjs "$@"\n' "${TOOLS
 # or `zod-extract` costs the image a shipped format. Prove *at build time*
 # that the wrapper loads `@asyncapi/parser` and parses a document, instead of discovering it on
 # the first import in production. A failure here fails the build — which is the point.
-# Smoke-test with the runtime stage's node, not Debian's (Node 18 has no permission model, so
-# `zod-extract` cannot sandbox itself there); /usr/local/bin precedes /usr/bin on PATH.
-COPY --from=uideps /usr/local/bin/node /usr/local/bin/node
+# The smoke test runs on the runtime stage's node (copied in above the toolchain install), not
+# Debian's: Node 18 has no permission model, so `zod-extract` cannot sandbox itself there.
 RUN ${TOOLS_PREFIX}/bin/asyncapi-parser --version \
     && echo '{"asyncapi":"2.6.0","info":{"title":"toolchain smoke test","version":"1.0.0"},"channels":{}}' \
        | ${TOOLS_PREFIX}/bin/asyncapi-parser > /tmp/asyncapi-smoke.json \
