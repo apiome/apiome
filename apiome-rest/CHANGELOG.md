@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.577.1] - 2026-11-01
+
+### Fixed
+- **Uploaded OpenAPI/Swagger files import again.** `POST /v1/tenants/{tenant_slug}/imports/upload` (used by
+  `apiome import openapi`/`swagger`/`auto` with a file) streams the upload to a tempfile and gives the import worker
+  its `document_path` (IXH-6.5, #5124). The apiome-ui worker only ever decoded `document_base64`, so every such
+  import failed within a second: `Could not parse specification document: The first argument must be of type
+  string … Received undefined`, reported as `INTERNAL_WORKER_FAULT`. The worker now reads `document_path` (preferred,
+  as `_decode_document_bytes` does) and falls back to `document_base64`; `readPayloadDocument` in
+  `apiome-ui/lib/repository-auto-refresh-import.ts`. The worker ships in this image.
+- **Upload tempfiles are deleted when the job ends.** The in-process import pipeline removed its own tempfile, but
+  the worker path never did; `_drive_job` now deletes `document_path` on every exit path.
+- OpenAPI document version 1.441.0 → 1.441.1.
+
 ## [1.577.0] - 2026-11-01
 
 ### Changed

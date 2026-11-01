@@ -1,0 +1,19 @@
+---
+slug: upload-import-fixed
+title: Importing an uploaded OpenAPI file works again
+description: Uploading an OpenAPI or Swagger file to import it no longer fails.
+authors: [apiome]
+---
+
+Importing an **OpenAPI** or **Swagger** file by upload (`apiome import openapi <file>`, or `POST
+…/imports/upload`) failed within a second with `INTERNAL_WORKER_FAULT`, whatever the file. It now
+imports again.
+
+{/* truncate */}
+
+- **What went wrong.** Uploads are streamed to a temporary file so that a large file is not held
+  twice in memory, but the importer still expected the file's content in the request itself, found
+  nothing, and stopped.
+- **What changed.** The importer reads the uploaded file. Imports that carry the document in the
+  request body (`POST …/imports` with `document_base64`) work as before.
+- **Housekeeping.** The temporary copy of an uploaded file is now deleted when its import finishes.
