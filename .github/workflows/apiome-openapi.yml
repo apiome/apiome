@@ -53,6 +53,6 @@ jobs:
           uv sync
           # Base URL, tenant, and API key come from the saved APIOME_* secrets above. The JSON
           # document is the one imported: the YAML twin of the same spec faults the import worker.
-          ./run.sh import openapi ../apiome-rest/openapi.json --publish public --poll-interval 1000 --import-timeout 900
+          ./run.sh import openapi ../apiome-rest/openapi.json --publish public --poll-interval 1 --import-timeout 900
         env:
           APIOME_LOAD_DOTENV: "0"

@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.577.3] - 2026-11-01
+
+### Fixed
+- **Finished imports no longer list at 90%.** An import run by the in-process pipeline (every format except
+  OpenAPI/Swagger) mirrored each progress snapshot to the shared job store but not its final status, so
+  `GET /v1/tenants/{tenant_slug}/imports` — which reads that store — and any non-owning reader kept showing it
+  `running` at the last snapshot (90%, the lint step) after it had completed, failed or been canceled.
+  `_run_inprocess_adapter_job` now mirrors the terminal status, as the worker path already did.
+- OpenAPI document version 1.441.2 → 1.441.3.
+
+### CI
+- **apiome-openapi polls every second.** The workflow passed `--poll-interval 1000`, but the option is in seconds, so
+  the CLI checked the job once, slept for the rest of `--import-timeout 900`, and timed out on an import that had
+  finished. It now passes `--poll-interval 1`.
+
 ## [1.577.2] - 2026-11-01
 
 ### Fixed

@@ -1186,3 +1186,69 @@ def test_upload_tempfile_is_removed_when_the_job_ends(monkeypatch, ok):
     assert final["state"] == ("completed" if ok else "failed")
     assert seen["bytes"] == _UPLOAD_BYTES
     assert _wait_until_removed(seen["document_path"]), "the upload tempfile outlived its job"
+
+
+# ---------------------------------------------------------------------------
+# In-process adapter jobs mirror their terminal status
+# ---------------------------------------------------------------------------
+#
+# The jobs list (and every non-owning reader) serves the shared store. The in-process runner
+# mirrored each progress snapshot but not the final status, so a finished job was listed at its
+# last snapshot — ``running`` at the pipeline's 90% lint step — forever.
+
+
+def _inprocess_record(job_id: str):
+    from app import spec_import_engine as sie
+
+    sie._jobs[job_id] = sie._JobRecord(
+        tenant_slug="acme",
+        job_id=job_id,
+        state="running",
+        status=SpecImportJobStatus(job_id=job_id, state="running", percent=5),
+    )
+    return sie
+
+
+def _stub_pipeline(monkeypatch, sie, final_state: str):
+    async def _run(adapter, payload, *, on_snapshot, is_canceled):
+        jid = payload["rest_job_id"]
+        await on_snapshot(SpecImportJobStatus(job_id=jid, state="running", percent=90))
+        return SpecImportJobStatus(job_id=jid, state=final_state, percent=100 if final_state == "completed" else 0)
+
+    monkeypatch.setattr(sie, "run_adapter_import_job", _run)
+
+
+@pytest.mark.parametrize("final_state", ["completed", "failed"])
+async def test_inprocess_job_mirrors_its_terminal_status(monkeypatch, final_state):
+    import uuid
+
+    from app.database import db
+
+    job_id = str(uuid.uuid4())
+    sie = _inprocess_record(job_id)
+    _stub_pipeline(monkeypatch, sie, final_state)
+
+    await sie._run_inprocess_adapter_job(job_id, object(), {"rest_job_id": job_id})
+
+    row = db.get_async_job(job_id, "acme", sie._SHARED_JOB_KIND)
+    assert row is not None
+    assert row["state"] == final_state
+    assert row["status"]["percent"] == (100 if final_state == "completed" else 0)
+    listed = await sie.list_spec_import_jobs("acme")
+    [item] = [j for j in listed.jobs if j.job_id == job_id]
+    assert (item.state, item.percent) == (final_state, 100 if final_state == "completed" else 0)
+
+
+async def test_inprocess_job_mirrors_a_cancel(monkeypatch):
+    import uuid
+
+    from app.database import db
+
+    job_id = str(uuid.uuid4())
+    sie = _inprocess_record(job_id)
+    _stub_pipeline(monkeypatch, sie, "completed")
+    sie._jobs[job_id].cancel_requested = True
+
+    await sie._run_inprocess_adapter_job(job_id, object(), {"rest_job_id": job_id})
+
+    assert db.get_async_job(job_id, "acme", sie._SHARED_JOB_KIND)["state"] == "canceled"
