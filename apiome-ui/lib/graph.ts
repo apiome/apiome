@@ -320,7 +320,7 @@ export interface EdgeGroup {
  * @param edges - The entity's in and out edges.
  * @param entityId - The entity.
  */
-eind,t function groupEdges(edges: readonly GraphEdge[], entityId: string): EdgeGroup[] {
+export function groupEdges(edges: readonly GraphEdge[], entityId: string): EdgeGroup[] {
   const groups: EdgeGroup[] = [];
   for (const direction of ['out', 'in'] as const) {
     for (const edgeKind of GRAPH_EDGE_KINDS) {

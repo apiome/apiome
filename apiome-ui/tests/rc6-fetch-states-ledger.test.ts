@@ -260,7 +260,7 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
   {
     id: 'C1b',
     surface: 'Projects, table view',
-    source: 'src/app/ade/dashboard/projectsionojectsClient.tsx',
+    source: 'src/app/ade/dashboard/projects/ProjectsClient.tsx',
     needle: '/api/projects',
     pending: { file: 'projects-hive-redesign.test.tsx', title: 'shows the table view’s skeleton rows and its error state too' },
     failed: { file: 'projects-hive-redesign.test.tsx', title: 'shows the table view’s skeleton rows and its error state too' },
