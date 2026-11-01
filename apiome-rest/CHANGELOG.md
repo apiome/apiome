@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.576.2] - 2026-11-01
+
+### Fixed
+- **Image build: the bundled toolchain installs on the runtime's Node.** The `tools` stage installed the toolchain
+  with Debian bookworm's `nodejs` (Node 18). `prisma` (a hard toolchain dependency since MFX-35.2, #4312) refuses to
+  install below Node 20.19, so `npm install` failed and no image was pushed. The stage now copies the runtime stage's
+  `node` (`node:20-bookworm-slim`, Node 20.20.2) in before the install, not only before the smoke test, so the install,
+  its package scripts and the smoke test all run on the Node the image ships.
+- OpenAPI document version 1.440.1 → 1.440.2.
+
 ## [1.576.1] - 2026-11-01
 
 ### Fixed
