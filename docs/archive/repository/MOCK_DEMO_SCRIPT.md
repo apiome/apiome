@@ -143,7 +143,7 @@ export VER=1.0.0
 
 ## ACT 2 — Publish, then switch the mock on (2:30)
 
-*The whole setup cost of the mock is one switch. Land thppeaand land it fast — everything after this
+*The whole setup cost of the mock is one switch. Land that, and land it fast — everything after this
 is payoff.*
 
 **DO** — Go to <http://localhost:3000/ade/dashboard/versions>.

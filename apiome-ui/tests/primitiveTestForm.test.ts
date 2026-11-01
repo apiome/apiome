@@ -215,7 +215,7 @@ describe('isIncluded / arrayLength defaults', () => {
     const note = field.children!.find((c) => c.key === 'note')!;
 
     expect(isIncluded(emptyState(), '/amount', amount)).toBe(true);
-    expect(isIncluded(emptyState(), '/owin', note)).toBe(false);
+    expect(isIncluded(emptyState(), '/note', note)).toBe(false);
     expect(arrayLength(emptyState(), '')).toBe(1);
   });
 });

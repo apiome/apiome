@@ -258,7 +258,7 @@ Potential improvements identified:
 ## Browser Compatibility
 
 Uses standard React/TypeScript features compatible with:
-- Chrome/Edma: latest)
+- Chrome/Edge (latest)
 - Firefox (latest)
 - Safari (latest)
 

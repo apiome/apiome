@@ -411,14 +411,17 @@ export const UNCOVERED_MOCKUPS: readonly UncoveredMockup[] = [
   // Round-3 facelift proposals (docs/mockups/PROPOSALS_FACELIFT.md): each screen renders both the
   // shipped look (?fx=none) and the proposal (?fx=…); nothing is ticketed yet. The compare page
   // is the viewer that loads them side by side, not a product screen.
+  // All of them, the compare viewer and the two overlays included, are `awaiting-redesign` until a
+  // ticket lands a route: any other reason marks the mockup redesigned, and the a11y ledger
+  // (tests/a11y-routes.test.ts) then requires a route that does not exist yet.
   { mockup: 'proposals/facelift-admin.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-catalog-item.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-catalog.html', reason: 'awaiting-redesign' },
-  { mockup: 'proposals/facelift-compare.html', reason: 'other-shell' },
+  { mockup: 'proposals/facelift-compare.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-export-studio.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-home.html', reason: 'awaiting-redesign' },
-  { mockup: 'proposals/facelift-mock-scenarios.html', reason: 'overlay-not-page' },
-  { mockup: 'proposals/facelift-themes.html', reason: 'overlay-not-page' },
+  { mockup: 'proposals/facelift-mock-scenarios.html', reason: 'awaiting-redesign' },
+  { mockup: 'proposals/facelift-themes.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-versions-changes.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/facelift-versions.html', reason: 'awaiting-redesign' },
   { mockup: 'proposals/launcher-focused.html', reason: 'awaiting-redesign' },

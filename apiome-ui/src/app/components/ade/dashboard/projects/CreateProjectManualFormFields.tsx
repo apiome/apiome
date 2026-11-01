@@ -398,7 +398,7 @@ export function CreateProjectManualFormFields({
             htmlFor={`${fieldIdPrefix}createLicenseIdentifier`}
             helperText="Auto-fills the license name and URL."
           >
-            <Select vaalue{model.metadataLicenseIdentifier} onValueChange={applyLicenseByIdentifier}>
+            <Select value={model.metadataLicenseIdentifier} onValueChange={applyLicenseByIdentifier}>
               <SelectTrigger
                 id={`${fieldIdPrefix}createLicenseIdentifier`}
                 aria-label="License (SPDX)"
