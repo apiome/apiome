@@ -52,8 +52,12 @@ test("pyproject.toml requires Python >= 3.12", () => {
 
 test("pyproject.toml declares CLI stack dependencies", () => {
   const raw = readFileSync(join(root, "pyproject.toml"), "utf8");
+  // Typer no longer ships the `typer[all]` extra or depends on click/rich, so the CLI declares
+  // all three directly (see the comment on them in pyproject.toml).
   for (const dep of [
-    "typer[all]>=",
+    "typer>=",
+    "click>=",
+    "rich>=",
     "httpx>=",
     "pydantic-settings>=",
     "py-yaml12>=",
@@ -79,12 +83,11 @@ test("pyproject.toml registers apiome console script", () => {
 test("installed apiome --version prints package version", () => {
   const script = join(root, ".venv", "bin", "apiome");
   assert.ok(existsSync(script), "expected .venv/bin/apiome after uv sync");
-  const initPy = readFileSync(
-    join(root, "src", "apiome_cli", "__init__.py"),
-    "utf8",
-  );
-  const match = initPy.match(/__version__\s*=\s*"([^"]+)"/);
-  assert.ok(match, "expected __version__ in apiome_cli/__init__.py");
+  // apiome_cli/__init__.py reads __version__ from the installed distribution's metadata, so
+  // pyproject.toml is the single source of truth `--version` must agree with.
+  const pyproject = readFileSync(join(root, "pyproject.toml"), "utf8");
+  const match = pyproject.match(/^version\s*=\s*"([^"]+)"/m);
+  assert.ok(match, "expected a version in pyproject.toml");
   const result = spawnSync(script, ["--version"], { encoding: "utf8" });
   assert.strictEqual(result.status, 0, result.stderr || result.stdout);
   assert.strictEqual(result.stdout.trim(), `apiome ${match[1]}`);
