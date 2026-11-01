@@ -824,6 +824,15 @@ When the server has the Cap'n Proto compiler, every export is compiled before it
 schema that does not compile fails the export, and the check lists each compiler error with its file,
 line and column. A schema that imports other `.capnp` files is not compiled on its own.
 
+**Where to find it.** In the **Export** dialog, the **Cap'n Proto** card is under **RPC** on the
+**Target** step, as one `.capnp` file. Its badge is **lossless** for an item imported from Cap'n Proto
+and **lossy** for any other source. Pick the card to see **Include Comments** (on by default). The
+numbers and file id Apiome stored for the item are reused on every export, so a field you remove keeps
+its number as an `obsolete…` placeholder and the next export keeps the same `@0x…` file id. From the
+CLI, run `apiome export capnp <item> --out <file>.capnp` (`capnproto` works too). A lossy export exits
+non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers Cap'n Proto too, as the `.capnp` file.
+
 ### FlatBuffers from any source
 
 Exporting to **FlatBuffers** writes one `<Name>.fbs` schema that compiles with `flatc`, whatever the
@@ -884,6 +893,15 @@ When the server has the FlatBuffers compiler, every export is compiled with `fla
 delivered. A schema that does not compile fails the export, and the check lists each compiler error
 with its file, line and column. Without the compiler, the export is read back with Apiome's FlatBuffers
 importer. A schema that includes other `.fbs` files is not compiled on its own.
+
+**Where to find it.** In the **Export** dialog, the **FlatBuffers** card is under **Data schema &
+graph** on the **Target** step, as one `.fbs` file. Its badge is **lossless** for an item imported from
+FlatBuffers and **types-only** for any other source (FlatBuffers keeps the tables and leaves out the
+operations). Pick the card to see **Include Comments** (on by default) and **Root Type** (the table
+`root_type` names; empty picks one). From the CLI, run `apiome export flatbuffers <item> --out <file>.fbs`
+(`fbs` works too), and add `--option root_type=Pet`. A types-only export exits non-zero unless you add
+`--force`, and `--json` prints the tier. A public item's **Export** dialog on Browse offers FlatBuffers
+too, as the `.fbs` file.
 
 ### COBOL copybook from any source
 

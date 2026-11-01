@@ -1,0 +1,21 @@
+---
+slug: flatbuffers-capnproto-target-cards
+title: Export to FlatBuffers and Cap'n Proto from the Export dialog and the CLI
+description: The FlatBuffers and Cap'n Proto cards keep field ids stable across exports.
+authors: [apiome]
+---
+
+The **Export** dialog's **FlatBuffers** and **Cap'n Proto** cards each write one schema file, `.fbs` or
+`.capnp`. The CLI exports the same with `apiome export flatbuffers` and `apiome export capnp`.
+[FlatBuffers](/ship/export-a-spec#flatbuffers-from-any-source) ·
+[Cap'n Proto](/ship/export-a-spec#capn-proto-from-any-source).
+
+{/* truncate */}
+
+- **Stable ids.** A field keeps its id on every export. A field you add gets a new id, and a field you
+  remove keeps its id as a placeholder (`deprecated` in FlatBuffers, `obsolete…` in Cap'n Proto), so
+  readers built from an earlier schema keep working. Cap'n Proto also keeps its file id.
+- **Your schemas export losslessly.** An item imported from FlatBuffers or Cap'n Proto badges
+  **lossless** in its own format. Any other source badges FlatBuffers **types-only** and Cap'n Proto
+  **lossy**.
+- **Root type.** The FlatBuffers card offers **Root Type**; from the CLI, add `--option root_type=Pet`.

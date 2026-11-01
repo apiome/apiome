@@ -189,6 +189,11 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "idl": "corbaidl",
     "omg-idl": "corbaidl",
     "corba-idl": "corbaidl",
+    # ``apiome export capnp`` (MFX-30.4): the Cap'n Proto target is keyed ``capnproto``.
+    "capnp": "capnproto",
+    "capn-proto": "capnproto",
+    # ``apiome export fbs`` (MFX-30.4): the FlatBuffers target, by its schema file extension.
+    "fbs": "flatbuffers",
 }
 
 

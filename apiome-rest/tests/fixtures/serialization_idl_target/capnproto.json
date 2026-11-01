@@ -1,0 +1,87 @@
+{
+  "cards": {
+    "graphql": "lossy",
+    "json-schema": "lossy",
+    "own": "lossless",
+    "raml": "lossy",
+    "rest": "lossy",
+    "rpc": "lossy",
+    "smithy": "lossy",
+    "wsdl": "lossy"
+  },
+  "id_stability": {
+    "file_id_kept": true,
+    "first": {
+      "age": 0,
+      "category": 1,
+      "id": 2,
+      "name": 3,
+      "tag": 4,
+      "weight": 5
+    },
+    "placeholder": "obsoleteTag @4 :AnyPointer;",
+    "re_export_with_stored_ids": {
+      "age": 0,
+      "category": 1,
+      "id": 2,
+      "name": 3,
+      "nickname": 6,
+      "obsoleteTag": 4,
+      "weight": 5
+    },
+    "re_export_without_stored_ids": {
+      "age": 1,
+      "category": 2,
+      "id": 3,
+      "name": 4,
+      "nickname": 0,
+      "weight": 5
+    }
+  },
+  "options": {
+    "own": {
+      "default": {
+        "files": [
+          "Directory.capnp"
+        ],
+        "header_comment": true,
+        "preserved_percent": 100,
+        "root_type": null,
+        "tier": "lossless",
+        "valid": true
+      },
+      "no-comments": {
+        "files": [
+          "Directory.capnp"
+        ],
+        "header_comment": false,
+        "preserved_percent": 100,
+        "root_type": null,
+        "tier": "lossless",
+        "valid": true
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.capnp"
+        ],
+        "header_comment": true,
+        "preserved_percent": 20,
+        "root_type": null,
+        "tier": "lossy",
+        "valid": true
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.capnp"
+        ],
+        "header_comment": false,
+        "preserved_percent": 20,
+        "root_type": null,
+        "tier": "lossy",
+        "valid": true
+      }
+    }
+  }
+}

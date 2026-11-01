@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.590.0] - 2026-11-01
+
+### Added
+- **FlatBuffers and Cap'n Proto target cards + fixtures (MFX-30.4, #4181).** `tests/test_serialization_idl_target_cards.py`
+  + `fixtures/serialization_idl_target/{flatbuffers,capnproto}.json` pin both cards per source kind (other formats
+  FlatBuffers `types-only` / Cap'n Proto `lossy`; each format's own schema `lossless`), the `include_comments` and
+  FlatBuffers `root_type` choices (each passes the MFX-30.3 gate), the **re-export id-stability fixture** (the
+  Petstore's `Pet` + `nickname` − `tag` with the stored ids keeps every surviving id, gives `nickname` 6 and holds
+  `tag`'s 4 with a placeholder — `tag: ubyte (id: 4, deprecated)` / `obsoleteTag @4 :AnyPointer`; Cap'n Proto keeps
+  its file id; without the stored ids the positions shift), browse delivering the schema itself, and keep the CLI /
+  UI registry fixtures and the CLI job fixtures equal to the live registry (`APIOME_REGEN_SERIALIZATION_IDL_TARGET=1`).
+- OpenAPI document version 1.453.0 → 1.454.0.
+
 ## [1.589.0] - 2026-11-01
 
 ### Added
