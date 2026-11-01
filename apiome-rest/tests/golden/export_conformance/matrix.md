@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 37 |
-| lossy | 3925 |
+| ok | 38 |
+| lossy | 3924 |
 | refused | 2115 |
 | silent-loss | 187 |
 | crash | 0 |
@@ -78,7 +78,7 @@ Every corpus source family exported to every production target through the catal
 | natural-ddm | L | R | R | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | ncpdp | L | R | R | L | L | L | R | R | R | L | S | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | S | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | nginx | L | L | L | L | L | R | L | L | R | L | L | L | R | S | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | R | L | L | L | R | R | L | R |
-| odata | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
+| odata | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | ok | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | odata-v2 | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | odcs | L | R | R | L | ok | S | R | R | R | L | L | S | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | L | L | S | S | R | L | R | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | S | L | L | R | L | R |
 | oncrpc | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | L | L | R |

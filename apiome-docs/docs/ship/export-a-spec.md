@@ -664,12 +664,22 @@ The fidelity report lists what OData cannot carry, in three groups:
 | Type coercion | An unsigned or unknown primitive | Approximated: it is widened, or written as `Edm.String` |
 | Type coercion | A `format` with no CSDL type, such as `email` or `uri` | Dropped |
 | Type coercion | `minLength`, `multipleOf`, `uniqueItems` | Dropped |
-| Type coercion | Field numbers (Protobuf, Thrift) | Dropped (info) |
+| Type coercion | Field numbers (Protobuf, Thrift) | Dropped (info). An OData item's properties keep their order, so they are not listed |
 
 Also dropped: header and cookie parameters, declared error responses (OData uses its standard
 error format), defaults that do not fit, servers, and the document's title, description and
 version. Also approximated: CRUD operations served by an entity set (their query parameters become
 OData query options such as `$top` and `$filter`), unions, maps, aliases and renamed elements.
+
+**Where to find it.** In the **Export** dialog, the **OData** card is under **REST & HTTP** on the
+**Target** step, as one file. Its badge is **lossy** for a REST, RPC, GraphQL, JSON Schema or WSDL
+source and **lossless** for an item imported from OData. Pick the card to see its two options:
+**Output** (`json` by default; `xml` or `both`) and **Include Comments** (on by default), which writes
+the comment header in the CSDL XML document. From the CLI, run
+`apiome export odata <item> --out <file>.csdl.json`, and add `--option output=xml` or
+`--option include_comments=false`. A lossy export exits non-zero unless you add `--force`, and `--json`
+prints the tier. A public item's **Export** dialog on Browse offers OData too: the `.csdl.json` file,
+or with `both` a zip of the two documents.
 
 ### OpenRPC from any source
 

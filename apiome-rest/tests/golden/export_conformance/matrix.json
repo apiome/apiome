@@ -36606,15 +36606,9 @@
     },
     {
       "family": "odata",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 5,
-        "synth": 0
-      },
       "reason": null,
-      "status": "lossy",
-      "target": "odata",
-      "tier": "lossy"
+      "status": "ok",
+      "target": "odata"
     },
     {
       "family": "odata",
@@ -62491,8 +62485,8 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3925,
-    "ok": 37,
+    "lossy": 3924,
+    "ok": 38,
     "refused": 2115,
     "silent-loss": 187,
     "skipped": 0

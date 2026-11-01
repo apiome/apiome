@@ -172,6 +172,20 @@ class ODataFidelityRulePack(WriterLossRulePack):
         identity = self._field_identity_verdict(field)
         return self.loss_verdicts(field.key) + ([identity] if identity is not None else [])
 
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """An OData source's field number is its property position, which the writer keeps: not a loss.
+
+        Args:
+            field: The source field.
+
+        Returns:
+            ``None`` for an OData source (the reader numbers properties by position and the writer writes them
+            in that order — MFX-16.4, #3900); otherwise the capability profile's verdict.
+        """
+        if self._writer._odata_source:
+            return None
+        return super()._field_identity_verdict(field)
+
 
 class ODataEmitOptions(EmitOptions):
     """Per-target options for :class:`ODataEmitter`."""
