@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: latest
+          node-version: lts/*
 
       # The milestone of the same name links "every issue in this release"; none is fine.
       - name: Find the RC's milestone

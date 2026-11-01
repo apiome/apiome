@@ -12,7 +12,9 @@ pinning Node 20 or 24.
 
 - **Images.** apiome-rest and apiome-db build on `node:slim`, and apiome-ui, apiome-browse and
   apiome-docs build on `node:alpine`. Both tags follow the newest Node release.
-- **CI.** Every `setup-node` step uses `node-version: latest`.
+- **CI.** Every `setup-node` step uses `node-version: lts/*`, the newest long-term-support release
+  (Node 26 today). `latest` is not used in CI: Node.js lists prereleases such as `v27.0.0-alpha` in
+  its release index, and `latest` picks them up.
 - **Mock action.** The `apiome-mock` GitHub Action runs on the Actions `node24` runtime, the newest
   one GitHub offers.
 - **If you build the images yourself:** Node 26 no longer bundles Corepack or Yarn. The Dockerfiles
