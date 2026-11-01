@@ -146,6 +146,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'thrift').key).toBe('rpc');
   });
 
+  it('files ASN.1 under Data schema & graph by paradigm (MFX-27.4)', () => {
+    expect(familyForTarget('data_schema', 'asn1').label).toBe('Data schema & graph');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

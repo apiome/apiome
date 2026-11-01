@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.588.0] - 2026-11-01
+
+### Added
+- **ASN.1 target card + fixtures (MFX-27.4, #4166).** `tests/test_asn1_target_card.py` + `fixtures/asn1_target/`
+  pin the `asn1` card per source kind (REST, RPC, GraphQL, JSON Schema, WSDL, RAML `types-only`; an imported ASN.1
+  module `lossless`), the fixture cases (`constrained-devices.yaml`: constrained strings `SIZE (8..16)` and
+  `FROM ("A".."Z")`, ranges `INTEGER (1..65535)` / `REAL (0..1)` / `SEQUENCE (SIZE (1..4)) OF`, a `oneOf` as
+  `CHOICE`; the corpus `CHOICE` of `05-stress-grammar`), the `include_comments` / `automatic_tags` / `module_name` /
+  `oid` choices (each passes the MFX-27.3 asn1tools check), browse delivering the `.asn1` itself, and keep the CLI / UI
+  registry fixtures and the CLI job fixture equal to the live registry (`APIOME_REGEN_ASN1_TARGET=1`).
+- OpenAPI document version 1.451.0 → 1.452.0.
+
 ## [1.587.0] - 2026-11-01
 
 ### Added

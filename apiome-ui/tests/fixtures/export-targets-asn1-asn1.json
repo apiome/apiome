@@ -1,0 +1,89 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "asn1",
+        "format": "asn1",
+        "label": "ASN.1",
+        "description": "Export as an ASN.1 module (.asn1): SEQUENCE / CHOICE / ENUMERATED types with SIZE and range constraints.",
+        "icon": "binary",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`Asn1Emitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit a generated-file header and type / field descriptions as `--` comments.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "automatic_tags": {
+            "default": true,
+            "description": "Emit `AUTOMATIC TAGS` on the module header (otherwise the imported module's tagging, else none).",
+            "title": "Automatic Tags",
+            "type": "boolean"
+          },
+          "module_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Module name (a modulereference such as `Shop-Orders`); defaults to the imported module name, else the item's name.",
+            "title": "Module Name"
+          },
+          "oid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Module object identifier, dotted (`1.3.6.1.4.1.99999.1`) or as arcs in braces (`{ iso(1) identified-organization(3) 6 }`).",
+            "title": "Oid"
+          }
+        },
+        "title": "Asn1EmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "automatic_tags": true,
+        "module_name": null,
+        "oid": null
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 5,
+        "preserved": 5,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

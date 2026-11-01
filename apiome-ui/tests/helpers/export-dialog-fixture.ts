@@ -30,6 +30,8 @@ import xsdTargetsForRest from '../fixtures/export-targets-xsd-rest.json';
 import xsdTargetsForXsd from '../fixtures/export-targets-xsd-xsd.json';
 import thriftTargetsForRest from '../fixtures/export-targets-thrift-rest.json';
 import thriftTargetsForThrift from '../fixtures/export-targets-thrift-thrift.json';
+import asn1TargetsForRest from '../fixtures/export-targets-asn1-rest.json';
+import asn1TargetsForAsn1 from '../fixtures/export-targets-asn1-asn1.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -556,4 +558,16 @@ export function xsdTargets(source: 'rest' | 'xsd'): ExportTargetsResponse {
  */
 export function thriftTargets(source: 'rest' | 'thrift'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? thriftTargetsForRest : thriftTargetsForThrift);
+}
+
+/**
+ * The ASN.1 target as the registry lists it (MFX-27.4, #4166), for a REST source and for an imported ASN.1
+ * module — recorded from the live REST registry by `apiome-rest/tests/test_asn1_target_card.py`. ASN.1 keeps a
+ * REST source's types only (`types-only`); an ASN.1 module exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `asn1` (an imported ASN.1 person module).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function asn1Targets(source: 'rest' | 'asn1'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? asn1TargetsForRest : asn1TargetsForAsn1);
 }

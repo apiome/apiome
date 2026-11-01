@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: Device Registry
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Device:
+      type: object
+      required: [serial, model, port]
+      properties:
+        serial:
+          type: string
+          minLength: 8
+          maxLength: 16
+        model:
+          type: string
+          pattern: "^[A-Z]+$"
+        port:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        ratio:
+          type: number
+          minimum: 0
+          maximum: 1
+        tags:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 4
+        address:
+          $ref: "#/components/schemas/Address"
+    Address:
+      oneOf:
+        - $ref: "#/components/schemas/Ipv4"
+        - $ref: "#/components/schemas/HostName"
+    Ipv4:
+      type: object
+      properties:
+        octets:
+          type: string
+          maxLength: 15
+    HostName:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 253
