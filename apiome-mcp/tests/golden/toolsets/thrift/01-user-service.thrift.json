@@ -4,7 +4,17 @@
     {
       "description": "Returns com.example.user.User.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "displayName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
         "type": "object"
       },
       "name": "createUser",
@@ -48,7 +58,11 @@
     },
     {
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "name": "deleteUser",
@@ -57,7 +71,11 @@
     {
       "description": "Returns com.example.user.User.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "name": "getUser",

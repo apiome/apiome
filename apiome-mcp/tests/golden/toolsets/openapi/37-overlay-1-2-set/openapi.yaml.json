@@ -1,0 +1,38 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List ticket types\n\nReturns HTTP 200 with no body: The ticket types.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listTickets",
+      "operation": "GET /tickets",
+      "output": {
+        "description": "The ticket types.",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get one ticket type\n\nReturns HTTP 200 with no body: The ticket type.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "getTicket",
+      "operation": "GET /tickets/{id}",
+      "output": {
+        "description": "The ticket type.",
+        "status": "200"
+      }
+    }
+  ]
+}

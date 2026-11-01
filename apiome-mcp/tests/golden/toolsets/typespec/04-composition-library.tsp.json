@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns HTTP 200 application/json (array of Library.Book).",
+      "description": "List all books.\n\nReturns HTTP 200 application/json (array of Library.Book).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -13,7 +13,38 @@
         "mediaType": "application/json",
         "schema": {
           "items": {
-            "properties": {},
+            "description": "A book composed from the shared base models plus its own fields.",
+            "properties": {
+              "author": {
+                "type": "string"
+              },
+              "isbn": {
+                "type": "string"
+              },
+              "publisher": {
+                "description": "A publisher, nested inside Book as a model-typed field.",
+                "properties": {
+                  "country": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "author",
+              "publisher",
+              "title"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -23,7 +54,7 @@
       }
     },
     {
-      "description": "A publi\n\nReturns HTTP 200 application/json (Library.Borrower).",
+      "description": "Fetch a book by id.\n\nReturns HTTP 200 application/json (Library.Book).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -40,15 +71,46 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A book composed from the shared base models plus its own fields.",
+          "properties": {
+            "author": {
+              "type": "string"
+            },
+            "isbn": {
+              "type": "string"
+            },
+            "publisher": {
+              "description": "A publisher, nested inside Book as a model-typed field.",
+              "properties": {
+                "country": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            "title": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "author",
+            "publisher",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "Library.Borrower",
+        "shape": "Library.Book",
         "status": "200"
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (Library.Borrower).",
+      "description": "Fetch a borrower by id.\n\nReturns HTTP 200 application/json (Library.Borrower).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -61,11 +123,23 @@
         "type": "object"
       },
       "name": "read_2",
-      "operation": "GET /books/{id}",
+      "operation": "GET /borrowers/{id}",
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A borrower record reusing the same shared base models.",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "fullName": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email",
+            "fullName"
+          ],
           "type": "object"
         },
         "shape": "Library.Borrower",

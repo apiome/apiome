@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns example.payments.SubmitPaymentOutput.",
+      "description": "Submit a payment using any supported payment method.\n\nReturns example.payments.SubmitPaymentOutput.",
       "inputSchema": {
         "properties": {
           "amountMinor": {},
@@ -15,7 +15,9 @@
             },
             "type": "object"
           },
-          "method": {},
+          "method": {
+            "description": "Exactly one member of the union is present on the wire."
+          },
           "paymentId": {
             "type": "string"
           }
@@ -37,7 +39,6 @@
               "type": "string"
             },
             "status": {
-              "description": "Exactly one member of the union is present o",
               "enum": [
                 0,
                 1,

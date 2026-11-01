@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns example.weather.CurrentConditions.",
+      "description": "Returns the current conditions for a city.\n\nReturns example.weather.CurrentConditions.",
       "inputSchema": {
         "properties": {
           "city": {
@@ -45,7 +45,7 @@
       }
     },
     {
-      "description": "Returns example.weather.Forecast.",
+      "description": "Returns the multi-day forecast for a city.\n\nReturns example.weather.Forecast.",
       "inputSchema": {
         "properties": {
           "city": {
@@ -69,7 +69,6 @@
               "type": "string"
             },
             "days": {
-              "description": "Returns the multi-",
               "items": {
                 "properties": {
                   "condition": {

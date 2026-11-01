@@ -2,9 +2,16 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "List registered devices page by page.\n\nReturns DevicePage.",
+      "description": "List registered devices page by page.\n\nReturns HTTP 200 (DevicePage).",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "page": {
+            "description": "Zero-based page index."
+          },
+          "pageSize": {
+            "description": "Number of entries per page."
+          }
+        },
         "type": "object"
       },
       "name": "GET_devices",
@@ -22,11 +29,12 @@
           ],
           "type": "object"
         },
-        "shape": "DevicePage"
+        "shape": "DevicePage",
+        "status": "200"
       }
     },
     {
-      "description": "Fetch one device.\n\nReturns Device.",
+      "description": "Fetch one device.\n\nReturns HTTP 200 (Device).",
       "inputSchema": {
         "properties": {
           "deviceId": {
@@ -70,11 +78,12 @@
           ],
           "type": "object"
         },
-        "shape": "Device"
+        "shape": "Device",
+        "status": "200"
       }
     },
     {
-      "description": "Register a device.\n\nReturns Device.",
+      "description": "Register a device.\n\nReturns HTTP 201 (Device).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -133,7 +142,8 @@
           ],
           "type": "object"
         },
-        "shape": "Device"
+        "shape": "Device",
+        "status": "201"
       }
     }
   ]

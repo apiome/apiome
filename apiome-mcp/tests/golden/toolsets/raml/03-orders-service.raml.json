@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Cancel an order that has not shipped yet.",
+      "description": "Cancel an order that has not shipped yet.\n\nReturns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {
           "orderId": {
@@ -16,10 +16,13 @@
         "type": "object"
       },
       "name": "DELETE_orders_orderId",
-      "operation": "DELETE /orders/{orderId}"
+      "operation": "DELETE /orders/{orderId}",
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "List orders, optionally filtered.\n\nReturns Order.",
+      "description": "List orders, optionally filtered.\n\nReturns HTTP 200 (Order).",
       "inputSchema": {
         "properties": {
           "customerId": {
@@ -68,11 +71,12 @@
           ],
           "type": "object"
         },
-        "shape": "Order"
+        "shape": "Order",
+        "status": "200"
       }
     },
     {
-      "description": "Fetch an order by id.\n\nReturns Order.",
+      "description": "Fetch an order by id.\n\nReturns HTTP 200 (Order).",
       "inputSchema": {
         "properties": {
           "orderId": {
@@ -120,11 +124,12 @@
           ],
           "type": "object"
         },
-        "shape": "Order"
+        "shape": "Order",
+        "status": "200"
       }
     },
     {
-      "description": "Place a new order.\n\nReturns Order.",
+      "description": "Place a new order.\n\nReturns HTTP 201 (Order).",
       "inputSchema": {
         "properties": {
           "customerId": {
@@ -173,7 +178,8 @@
           ],
           "type": "object"
         },
-        "shape": "Order"
+        "shape": "Order",
+        "status": "201"
       }
     }
   ]

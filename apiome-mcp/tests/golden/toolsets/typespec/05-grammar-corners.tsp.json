@@ -2,6 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
+      "description": "Decommission a device.",
       "inputSchema": {
         "properties": {
           "id": {
@@ -17,7 +18,7 @@
       "operation": "DELETE /devices/{id}"
     },
     {
-      "description": "Sparse update payload; e\n\nReturns HTTP 200 application/json (array of DeviceFleet.Device).",
+      "description": "List devices, filtered by state and paged with a query cursor.\n\nReturns HTTP 200 application/json (array of DeviceFleet.Device).",
       "inputSchema": {
         "properties": {
           "cursor": {
@@ -27,6 +28,10 @@
             "type": "string"
           }
         },
+        "required": [
+          "cursor",
+          "state"
+        ],
         "type": "object"
       },
       "name": "list",
@@ -35,7 +40,44 @@
         "mediaType": "application/json",
         "schema": {
           "items": {
-            "properties": {},
+            "description": "A managed device in the fleet.",
+            "properties": {
+              "batteryPercent": {},
+              "firmwareVersion": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "lastSeen": {},
+              "serialNumber": {
+                "type": "string"
+              },
+              "shadowEnabled": {},
+              "state": {
+                "description": "Operational state reported by a device.",
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3
+                ],
+                "type": "integer"
+              },
+              "tags": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "serialNumber",
+              "shadowEnabled",
+              "state",
+              "tags"
+            ],
             "type": "object"
           },
           "type": "array"
@@ -45,7 +87,7 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (DeviceFleet.Device).",
+      "description": "Fetch one device; supports conditional reads via an entity-tag header.\n\nReturns HTTP 200 application/json (DeviceFleet.Device).",
       "inputSchema": {
         "properties": {
           "id": {
@@ -56,7 +98,8 @@
           }
         },
         "required": [
-          "id"
+          "id",
+          "ifNoneMatch"
         ],
         "type": "object"
       },
@@ -65,7 +108,44 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A managed device in the fleet.",
+          "properties": {
+            "batteryPercent": {},
+            "firmwareVersion": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "lastSeen": {},
+            "serialNumber": {
+              "type": "string"
+            },
+            "shadowEnabled": {},
+            "state": {
+              "description": "Operational state reported by a device.",
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "serialNumber",
+            "shadowEnabled",
+            "state",
+            "tags"
+          ],
           "type": "object"
         },
         "shape": "DeviceFleet.Device",
@@ -73,11 +153,25 @@
       }
     },
     {
-      "description": "A firmware rollou\n\nReturns HTTP 200 application/json (DeviceFleet.Device).",
+      "description": "Apply a sparse update to a device.\n\nReturns HTTP 200 application/json (DeviceFleet.Device).",
       "inputSchema": {
         "properties": {
+          "firmwareVersion": {
+            "type": "string"
+          },
           "id": {
             "type": "string"
+          },
+          "shadowEnabled": {},
+          "state": {
+            "description": "Operational state reported by a device.",
+            "enum": [
+              0,
+              1,
+              2,
+              3
+            ],
+            "type": "integer"
           }
         },
         "required": [
@@ -90,7 +184,44 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "A managed device in the fleet.",
+          "properties": {
+            "batteryPercent": {},
+            "firmwareVersion": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "lastSeen": {},
+            "serialNumber": {
+              "type": "string"
+            },
+            "shadowEnabled": {},
+            "state": {
+              "description": "Operational state reported by a device.",
+              "enum": [
+                0,
+                1,
+                2,
+                3
+              ],
+              "type": "integer"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "serialNumber",
+            "shadowEnabled",
+            "state",
+            "tags"
+          ],
           "type": "object"
         },
         "shape": "DeviceFleet.Device",
@@ -98,9 +229,20 @@
       }
     },
     {
-      "description": "Returns HTTP 200 application/json (DeviceFleet.RolloutSummary).",
+      "description": "Start a firmware rollout across the fleet.\n\nReturns HTTP 200 application/json (DeviceFleet.RolloutSummary).",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "dryRun": {},
+          "maxFailuresPercent": {},
+          "targetVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "dryRun",
+          "maxFailuresPercent",
+          "targetVersion"
+        ],
         "type": "object"
       },
       "name": "create",
@@ -108,7 +250,17 @@
       "output": {
         "mediaType": "application/json",
         "schema": {
-          "properties": {},
+          "description": "Summary returned by the rollout endpoint.",
+          "properties": {
+            "deviceCount": {},
+            "rolloutId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "deviceCount",
+            "rolloutId"
+          ],
           "type": "object"
         },
         "shape": "DeviceFleet.RolloutSummary",

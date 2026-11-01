@@ -14,7 +14,10 @@
       "name": "currentPrices",
       "operation": "com.example.orders.OrderService.currentPrices",
       "output": {
-        "schema": {},
+        "schema": {
+          "additionalProperties": {},
+          "type": "object"
+        },
         "shape": "com.example.orders.map_string_shared.Money_"
       }
     },

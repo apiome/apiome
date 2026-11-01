@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns example.dynamodb.GetItemOutput.",
+      "description": "Fetch a single item by its primary key.\n\nReturns example.dynamodb.GetItemOutput.",
       "inputSchema": {
         "properties": {
           "consistentRead": {
@@ -21,10 +21,11 @@
       "operation": "example.dynamodb.DynamoDbLike.GetItem",
       "output": {
         "schema": {
-          "description": "Query items sharing",
           "properties": {
             "item": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "description": "A single DynamoDB-style attribute value; exactly one member is set."
+              },
               "type": "object"
             }
           },
@@ -34,11 +35,13 @@
       }
     },
     {
-      "description": "Returns example.dynamodb.PutItemOutput.",
+      "description": "Store an item in a table, replacing any existing item with the same key.\n\nReturns example.dynamodb.PutItemOutput.",
       "inputSchema": {
         "properties": {
           "item": {
-            "additionalProperties": {},
+            "additionalProperties": {
+              "description": "A single DynamoDB-style attribute value; exactly one member is set."
+            },
             "type": "object"
           },
           "tableName": {
@@ -64,11 +67,13 @@
       }
     },
     {
-      "description": "Returns example.dynamodb.QueryOutput.",
+      "description": "Query items sharing a partition key.\n\nReturns example.dynamodb.QueryOutput.",
       "inputSchema": {
         "properties": {
           "expressionValues": {
-            "additionalProperties": {},
+            "additionalProperties": {
+              "description": "A single DynamoDB-style attribute value; exactly one member is set."
+            },
             "type": "object"
           },
           "keyConditionExpression": {
@@ -100,13 +105,17 @@
             },
             "items": {
               "items": {
-                "additionalProperties": {},
+                "additionalProperties": {
+                  "description": "A single DynamoDB-style attribute value; exactly one member is set."
+                },
                 "type": "object"
               },
               "type": "array"
             },
             "lastEvaluatedKey": {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "description": "A single DynamoDB-style attribute value; exactly one member is set."
+              },
               "type": "object"
             }
           },

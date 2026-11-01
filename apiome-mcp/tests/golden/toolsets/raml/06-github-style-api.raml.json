@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Fetch a repository.\n\nReturns Repository.",
+      "description": "Fetch a repository.\n\nReturns HTTP 200 (Repository).",
       "inputSchema": {
         "properties": {
           "repo": {
@@ -51,11 +51,12 @@
           ],
           "type": "object"
         },
-        "shape": "Repository"
+        "shape": "Repository",
+        "status": "200"
       }
     },
     {
-      "description": "List issues of the repository.\n\nReturns Issue.",
+      "description": "List issues of the repository.\n\nReturns HTTP 200 (Issue).",
       "inputSchema": {
         "properties": {
           "per_page": {
@@ -100,11 +101,12 @@
           ],
           "type": "object"
         },
-        "shape": "Issue"
+        "shape": "Issue",
+        "status": "200"
       }
     },
     {
-      "description": "Fetch a single issue.\n\nReturns Issue.",
+      "description": "Fetch a single issue.\n\nReturns HTTP 200 (Issue).",
       "inputSchema": {
         "properties": {
           "issue_number": {
@@ -148,11 +150,12 @@
           ],
           "type": "object"
         },
-        "shape": "Issue"
+        "shape": "Issue",
+        "status": "200"
       }
     },
     {
-      "description": "Open a new issue.\n\nReturns Issue.",
+      "description": "Open a new issue.\n\nReturns HTTP 201 (Issue).",
       "inputSchema": {
         "properties": {
           "body": {
@@ -199,7 +202,8 @@
           ],
           "type": "object"
         },
-        "shape": "Issue"
+        "shape": "Issue",
+        "status": "201"
       }
     }
   ]

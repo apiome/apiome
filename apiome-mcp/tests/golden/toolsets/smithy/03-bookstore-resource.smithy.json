@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "A book catalog entry\n\nReturns example.bookstore.BookSummary.",
+      "description": "Add a new book to the catalog.\n\nReturns example.bookstore.BookSummary.",
       "inputSchema": {
         "properties": {
           "author": {
@@ -25,6 +25,7 @@
       "operation": "example.bookstore.BookstoreService.CreateBook",
       "output": {
         "schema": {
+          "description": "Shared representation of a book, reused by read and list operations.",
           "properties": {
             "author": {
               "type": "string"
@@ -50,7 +51,7 @@
       }
     },
     {
-      "description": "Returns example.bookstore.BookSummary.",
+      "description": "Fetch a single book by id.\n\nReturns example.bookstore.BookSummary.",
       "inputSchema": {
         "properties": {
           "bookId": {
@@ -66,6 +67,7 @@
       "operation": "example.bookstore.BookstoreService.GetBook",
       "output": {
         "schema": {
+          "description": "Shared representation of a book, reused by read and list operations.",
           "properties": {
             "author": {
               "type": "string"
@@ -91,7 +93,7 @@
       }
     },
     {
-      "description": "Returns example.bookstore.ListBooksOutput.",
+      "description": "List all books in the catalog.\n\nReturns example.bookstore.ListBooksOutput.",
       "inputSchema": {
         "properties": {
           "pageSize": {
@@ -110,6 +112,7 @@
           "properties": {
             "books": {
               "items": {
+                "description": "Shared representation of a book, reused by read and list operations.",
                 "properties": {
                   "author": {
                     "type": "string"

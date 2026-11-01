@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "List archives with optional filters.\n\nReturns ArchiveEntry.",
+      "description": "List archives with optional filters.\n\nReturns HTTP 200 (ArchiveEntry).",
       "inputSchema": {
         "properties": {
           "createdAfter": {
@@ -87,11 +87,12 @@
           ],
           "type": "object"
         },
-        "shape": "ArchiveEntry"
+        "shape": "ArchiveEntry",
+        "status": "200"
       }
     },
     {
-      "description": "Fetch one archive.\n\nReturns ArchiveEntry.",
+      "description": "Fetch one archive.\n\nReturns HTTP 200 (ArchiveEntry).",
       "inputSchema": {
         "properties": {
           "archiveId": {
@@ -170,11 +171,12 @@
           ],
           "type": "object"
         },
-        "shape": "ArchiveEntry"
+        "shape": "ArchiveEntry",
+        "status": "200"
       }
     },
     {
-      "description": "Existence probe without a response body.",
+      "description": "Existence probe without a response body.\n\nReturns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {
           "archiveId": {
@@ -188,19 +190,25 @@
         "type": "object"
       },
       "name": "HEAD_archives_archiveId",
-      "operation": "HEAD /archives/{archiveId}"
+      "operation": "HEAD /archives/{archiveId}",
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "Discover the allowed methods.",
+      "description": "Discover the allowed methods.\n\nReturns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {},
         "type": "object"
       },
       "name": "OPTIONS_archives_archiveId_attachments",
-      "operation": "OPTIONS /archives/{archiveId}/attachments"
+      "operation": "OPTIONS /archives/{archiveId}/attachments",
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "Partially update archive metadata.\n\nReturns ArchiveEntry.",
+      "description": "Partially update archive metadata.\n\nReturns HTTP 200 (ArchiveEntry).",
       "inputSchema": {
         "properties": {
           "archiveId": {
@@ -280,11 +288,12 @@
           ],
           "type": "object"
         },
-        "shape": "ArchiveEntry"
+        "shape": "ArchiveEntry",
+        "status": "200"
       }
     },
     {
-      "description": "Attach a file to the archive.\n\nReturns Attachment.",
+      "description": "Attach a file to the archive.\n\nReturns HTTP 201 (Attachment).",
       "inputSchema": {
         "properties": {
           "checksum": {
@@ -329,7 +338,8 @@
           ],
           "type": "object"
         },
-        "shape": "Attachment"
+        "shape": "Attachment",
+        "status": "201"
       }
     }
   ]

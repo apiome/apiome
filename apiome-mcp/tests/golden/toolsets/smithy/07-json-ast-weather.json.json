@@ -1,0 +1,113 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns example.weather.GetCityOutput.",
+      "inputSchema": {
+        "properties": {
+          "cityId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cityId"
+        ],
+        "type": "object"
+      },
+      "name": "GetCity",
+      "operation": "example.weather.Weather.GetCity",
+      "output": {
+        "schema": {
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "region": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "example.weather.GetCityOutput"
+      }
+    },
+    {
+      "description": "Returns example.weather.GetCurrentTimeOutput.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "GetCurrentTime",
+      "operation": "example.weather.Weather.GetCurrentTime",
+      "output": {
+        "schema": {
+          "properties": {
+            "time": {}
+          },
+          "required": [
+            "time"
+          ],
+          "type": "object"
+        },
+        "shape": "example.weather.GetCurrentTimeOutput"
+      }
+    },
+    {
+      "description": "Returns example.weather.GetForecastOutput.",
+      "inputSchema": {
+        "properties": {
+          "cityId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cityId"
+        ],
+        "type": "object"
+      },
+      "name": "GetForecast",
+      "operation": "example.weather.Weather.GetForecast",
+      "output": {
+        "schema": {
+          "properties": {
+            "chanceOfRain": {},
+            "conditions": {
+              "items": {
+                "enum": [
+                  0,
+                  1,
+                  2
+                ],
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            "priceOfUmbrella": {
+              "properties": {
+                "amount": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "amount",
+                "currency"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "example.weather.GetForecastOutput"
+      }
+    }
+  ]
+}

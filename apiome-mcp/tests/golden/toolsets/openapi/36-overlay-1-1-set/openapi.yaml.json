@@ -1,0 +1,64 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "List active loans\n\nReturns HTTP 200 application/json (array of Loan): The active loans.",
+      "inputSchema": {
+        "properties": {
+          "status": {
+            "enum": [
+              "active",
+              "overdue",
+              "returned"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "listLoans",
+      "operation": "GET /loans",
+      "output": {
+        "description": "The active loans.",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "bookId": {
+                "type": "string"
+              },
+              "dueDate": {
+                "format": "date",
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "bookId",
+              "id"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Loan",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List loans (legacy shape, retiring)\n\nReturns HTTP 200 with no body: The loans, in the 1.x shape.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listLegacyLoans",
+      "operation": "GET /v2/loans",
+      "output": {
+        "description": "The loans, in the 1.x shape.",
+        "status": "200"
+      }
+    }
+  ]
+}

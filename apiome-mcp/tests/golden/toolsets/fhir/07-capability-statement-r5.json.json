@@ -1,0 +1,294 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.DiagnosticReport).",
+      "inputSchema": {
+        "properties": {
+          "issued": {
+            "type": "string"
+          },
+          "patient": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchDiagnosticReport",
+      "operation": "GET /DiagnosticReport",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "description": "Finalised laboratory reports.",
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.DiagnosticReport",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.DiagnosticReport).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "readDiagnosticReport",
+      "operation": "GET /DiagnosticReport/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "description": "Finalised laboratory reports.",
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.DiagnosticReport",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.DiagnosticReport).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "historyDiagnosticReport",
+      "operation": "GET /DiagnosticReport/{id}/_history",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "description": "Finalised laboratory reports.",
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.DiagnosticReport",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "summary",
+      "operation": "POST /DiagnosticReport/$summary",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 204 application/fhir+json.",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "deleteObservation",
+      "operation": "DELETE /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "status": "204"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Observation).",
+      "inputSchema": {
+        "properties": {
+          "component-value-quantity": {},
+          "subject": {
+            "type": "string"
+          },
+          "value-quantity": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchObservation",
+      "operation": "GET /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Observation).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "readObservation",
+      "operation": "GET /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Observation).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "patchObservation",
+      "operation": "PATCH /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/fhir+json (LabResultsServer.Observation).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "createObservation",
+      "operation": "POST /Observation",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Observation",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Observation).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "updateObservation",
+      "operation": "PUT /Observation/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Observation",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Specimen).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "searchSpecimen",
+      "operation": "GET /Specimen",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Specimen",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (LabResultsServer.Specimen).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "readSpecimen",
+      "operation": "GET /Specimen/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "LabResultsServer.Specimen",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "everything",
+      "operation": "POST /$everything",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "status": "200"
+      }
+    }
+  ]
+}

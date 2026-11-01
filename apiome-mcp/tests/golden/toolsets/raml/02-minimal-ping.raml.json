@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Liveness probe.\n\nReturns object.",
+      "description": "Liveness probe.\n\nReturns HTTP 200 (object).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -11,7 +11,8 @@
       "operation": "GET /ping",
       "output": {
         "schema": {},
-        "shape": "object"
+        "shape": "object",
+        "status": "200"
       }
     }
   ]

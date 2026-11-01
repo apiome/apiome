@@ -1,0 +1,52 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 200 application/fhir+json (R6PreviewServer.Patient).",
+      "inputSchema": {
+        "properties": {
+          "family": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "searchPatient",
+      "operation": "GET /Patient",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "R6PreviewServer.Patient",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/fhir+json (R6PreviewServer.Patient).",
+      "inputSchema": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "name": "readPatient",
+      "operation": "GET /Patient/{id}",
+      "output": {
+        "mediaType": "application/fhir+json",
+        "schema": {
+          "properties": {},
+          "type": "object"
+        },
+        "shape": "R6PreviewServer.Patient",
+        "status": "200"
+      }
+    }
+  ]
+}

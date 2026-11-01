@@ -4,34 +4,7 @@
     {
       "description": "Create a new order for a customer.\n\nReturns Order.",
       "inputSchema": {
-        "properties": {
-          "body": {
-            "items": {
-              "description": "One line of an order.",
-              "properties": {
-                "note": {
-                  "type": "string"
-                },
-                "quantity": {
-                  "minimum": 1.0,
-                  "type": "integer"
-                },
-                "sku": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "quantity",
-                "sku"
-              ],
-              "type": "object"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "body"
-        ],
+        "properties": {},
         "type": "object"
       },
       "name": "createOrder",
@@ -168,7 +141,14 @@
     {
       "description": "List all orders belonging to a customer.\n\nReturns array of Order.",
       "inputSchema": {
-        "properties": {},
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
         "type": "object"
       },
       "name": "listOrders",
