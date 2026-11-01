@@ -94,6 +94,7 @@ way the last column says.
 | FHIR | The HL7 FHIR validator | Checked by Apiome's structural FHIR rules |
 | COBOL copybook | cb2xml parses the copybook, and the layout it reads must match the one Apiome planned | Read back by Apiome's copybook reader |
 | X12 implementation guide | pyx12's segment dictionary, for the envelope and segments carried from X12 | Checked by Apiome's guide rules only |
+| ASN.1 | asn1tools parses and compiles the module, and it must define exactly the planned types | Always checked: asn1tools ships with Apiome |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 | Kubernetes CRD | Apiome's structural-schema rules, then kubeconform against the `apiextensions.k8s.io/v1` schema | Checked by Apiome's structural-schema rules only |
 
@@ -1412,6 +1413,18 @@ The fidelity report lists, on each type or field:
 | A name respelled to the ASN.1 rules (`order_id` → `order-id`) | Synthesized (note) |
 | A type that refers to itself (`Node.next: Node`) | Carried |
 | A description, a document of another format, types read back under the module name | Approximated (note) |
+
+Each export is checked with **asn1tools** before you download it:
+
+1. The module parses. A syntax error fails the export and names its line and column
+   (`asn1.parse`).
+2. The module compiles: every type it uses is defined, and every constraint is valid
+   (`asn1.compile`).
+3. It is one module (`asn1.module-count`), and it defines exactly the types Apiome planned to write
+   for the item: a planned type that is missing (`asn1.missing-type`) or an extra one
+   (`asn1.unexpected-type`) fails the export.
+
+A failed check fails the export job and lists each problem with its rule.
 
 ### WADL from any source
 

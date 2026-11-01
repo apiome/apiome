@@ -569,16 +569,22 @@ _OptionValidator = Callable[[str, EmitResult, CanonicalApi, Mapping[str, Any]], 
 async def _validate_asn1(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
-    """Re-validate an emitted ASN.1 module with ``asn1tools``."""
-    from .asn1_emitter import validate_asn1_module
+    """Re-validate an emitted ASN.1 module with ``asn1tools`` (MFX-27.3, #4165).
 
-    errors: List[str] = []
-    for emitted in emit_result.files:
-        try:
-            validate_asn1_module(str(emitted.content))
-        except Exception as exc:
-            errors.append(f"{emitted.path}: {exc}")
-    return _passed(target) if not errors else _rejected(target, [_finding_from_message(err) for err in errors])
+    asn1tools parses and compiles every module (``asn1.parse`` / ``asn1.compile``), and the module's type
+    assignments must be exactly the emit plan's (``asn1.missing-type`` / ``asn1.unexpected-type``) — see
+    :mod:`app.asn1_validation`.
+    """
+    from .asn1_validation import check_emitted_asn1
+
+    problems = await asyncio.to_thread(check_emitted_asn1, emit_result, api)
+    if not problems:
+        return _passed(target)
+    return _rejected(target, [
+        ValidationFinding(message=problem["message"], file=problem["file"] or None, line=problem.get("line"),
+                          column=problem.get("column"), keyword=problem["rule"])
+        for problem in problems
+    ])
 
 
 async def _validate_idoc(
