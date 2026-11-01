@@ -1,0 +1,18 @@
+---
+slug: asn1-target-card
+title: Export to ASN.1 from the Export dialog and the CLI
+description: The ASN.1 card writes subtype constraints and shows its module options.
+authors: [apiome]
+---
+
+The **Export** dialog's **ASN.1** card writes the item's types as one ASN.1 module and shows its four
+options: **Module Name**, **Oid**, **Automatic Tags** and **Include Comments**. The CLI exports the
+same with `apiome export asn1`. [Where to find it](/ship/export-a-spec#asn1-from-any-source).
+
+{/* truncate */}
+
+- **Constraints kept.** String lengths become `SIZE`, a pattern of letters becomes `FROM`, numeric
+  bounds become ranges such as `INTEGER (1..65535)`, and a `oneOf` becomes a `CHOICE`.
+- **Your ASN.1 exports losslessly.** An item imported from ASN.1 badges **lossless**. Any other source
+  is **types-only**: ASN.1 keeps its types and leaves out its operations.
+- **Checked before delivery.** Every module is compiled with asn1tools before you download it.

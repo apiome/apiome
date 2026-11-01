@@ -1,0 +1,245 @@
+{
+  "cards": {
+    "asn1": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "asn1-choice": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "constrained": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "graphql": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "raml": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "types-only"
+    }
+  },
+  "modules": {
+    "asn1-choice": [
+      "Priority ::= ENUMERATED { low(0), normal(1), high(2), critical(3) }",
+      "Endpoint ::= SEQUENCE {",
+      "host UTF8String,",
+      "port INTEGER,",
+      "tag UTF8String OPTIONAL",
+      "}",
+      "Envelope ::= SEQUENCE {",
+      "version INTEGER,",
+      "priority Priority DEFAULT normal,",
+      "transport EnvelopeTransport DEFAULT tcp,",
+      "contentType OBJECT IDENTIFIER,",
+      "flags OCTET STRING OPTIONAL,",
+      "source Endpoint,",
+      "hops SEQUENCE OF Endpoint,",
+      "payload Payload,",
+      "ttlSeconds INTEGER",
+      "}",
+      "EnvelopeTransport ::= ENUMERATED { tcp(0), udp(1), quic(2) }",
+      "Payload ::= CHOICE {",
+      "text UTF8String,",
+      "binary OCTET STRING,",
+      "empty NULL",
+      "}"
+    ],
+    "constrained": [
+      "Address ::= CHOICE {",
+      "ipv4 Ipv4,",
+      "hostName HostName",
+      "}",
+      "Device ::= SEQUENCE {",
+      "address Address OPTIONAL,",
+      "model UTF8String (SIZE (1..MAX)) (FROM (\"A\"..\"Z\")),",
+      "port INTEGER (1..65535),",
+      "ratio REAL (0..1) OPTIONAL,",
+      "serial UTF8String (SIZE (8..16)),",
+      "tags SEQUENCE (SIZE (1..4)) OF UTF8String OPTIONAL",
+      "}",
+      "HostName ::= SEQUENCE {",
+      "name UTF8String (SIZE (0..253)) OPTIONAL",
+      "}",
+      "Ipv4 ::= SEQUENCE {",
+      "octets UTF8String (SIZE (0..15)) OPTIONAL",
+      "}"
+    ]
+  },
+  "options": {
+    "asn1": {
+      "default": {
+        "files": [
+          "PersonModule.asn1"
+        ],
+        "header": "PersonModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "explicit-tags": {
+        "files": [
+          "PersonModule.asn1"
+        ],
+        "header": "PersonModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "module-name": {
+        "files": [
+          "Acme-Devices.asn1"
+        ],
+        "header": "Acme-Devices DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "files": [
+          "PersonModule.asn1"
+        ],
+        "header": "PersonModule DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "oid": {
+        "files": [
+          "PersonModule.asn1"
+        ],
+        "header": "PersonModule { 1 3 6 1 4 1 99999 1 } DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      }
+    },
+    "constrained": {
+      "default": {
+        "files": [
+          "Device-Registry.asn1"
+        ],
+        "header": "Device-Registry DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 48,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "explicit-tags": {
+        "files": [
+          "Device-Registry.asn1"
+        ],
+        "header": "Device-Registry DEFINITIONS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 48,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "module-name": {
+        "files": [
+          "Acme-Devices.asn1"
+        ],
+        "header": "Acme-Devices DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 48,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "no-comments": {
+        "files": [
+          "Device-Registry.asn1"
+        ],
+        "header": "Device-Registry DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": false,
+        "preserved_percent": 48,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "oid": {
+        "files": [
+          "Device-Registry.asn1"
+        ],
+        "header": "Device-Registry { 1 3 6 1 4 1 99999 1 } DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 48,
+        "problems": [],
+        "tier": "types-only"
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3-0.asn1"
+        ],
+        "header": "Sample-Pet-Store-API-OpenAPI-3-0 DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "explicit-tags": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3-0.asn1"
+        ],
+        "header": "Sample-Pet-Store-API-OpenAPI-3-0 DEFINITIONS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "module-name": {
+        "files": [
+          "Acme-Devices.asn1"
+        ],
+        "header": "Acme-Devices DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "no-comments": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3-0.asn1"
+        ],
+        "header": "Sample-Pet-Store-API-OpenAPI-3-0 DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": false,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only"
+      },
+      "oid": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3-0.asn1"
+        ],
+        "header": "Sample-Pet-Store-API-OpenAPI-3-0 { 1 3 6 1 4 1 99999 1 } DEFINITIONS AUTOMATIC TAGS ::= BEGIN",
+        "header_comment": true,
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "types-only"
+      }
+    }
+  }
+}

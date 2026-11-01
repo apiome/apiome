@@ -1426,6 +1426,18 @@ Each export is checked with **asn1tools** before you download it:
 
 A failed check fails the export job and lists each problem with its rule.
 
+**Where to find it.** In the **Export** dialog, the **ASN.1** card is under **Data schema & graph** on
+the **Target** step, as one file. Its badge is **lossless** for an item imported from ASN.1 and
+**types-only** for any other source (ASN.1 keeps the types and leaves out the operations). Pick the
+card to see its four options: **Module Name**, **Oid**, **Automatic Tags** and **Include Comments**.
+For example, an OpenAPI `string` with `minLength: 8, maxLength: 16` is written
+`UTF8String (SIZE (8..16))`, a pattern such as `^[A-Z]+$` adds `(FROM ("A".."Z"))`, an `integer`
+with `minimum: 1, maximum: 65535` is `INTEGER (1..65535)`, and a `oneOf` is a `CHOICE`. From the
+CLI, run `apiome export asn1 <item> --out <file>.asn1`, and add `--option module_name=Acme-Pets` or
+`--option oid=1.3.6.1.4.1.99999.1`. A types-only export exits non-zero unless you add `--force`, and
+`--json` prints the tier. A public item's **Export** dialog on Browse offers ASN.1 too, as the `.asn1`
+file.
+
 ### WADL from any source
 
 Exporting to **WADL** writes a description that validates against the W3C WADL schema, with its

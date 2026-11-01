@@ -45,6 +45,9 @@
  * 20. The Apache Thrift card (MFX-25.5): `lossy` for a REST source, `lossless` for an imported Thrift IDL, one
  *     file, with its header-comment option; the namespace and stored-field-id maps stay off the panel —
  *     from the recorded live registry.
+ * 21. The ASN.1 card (MFX-27.4): `types-only` for a REST source, `lossless` for an imported ASN.1 module, one
+ *     file, with its module name, OID, automatic-tags and header-comment options — from the recorded live
+ *     registry.
  */
 
 import React from 'react';
@@ -80,6 +83,7 @@ import {
   copybookTargets,
   jsonSchemaTargets,
   apiblueprintTargets,
+  asn1Targets,
   mockExportDialogFetch as mockFetch,
   odataTargets,
   ramlTargets,
@@ -1341,5 +1345,32 @@ describe('ExportDialog — Apache Thrift target card (MFX-25.5)', () => {
     // Map options are set from the CLI / REST API (the stored ids by the export service itself).
     expect(screen.queryByLabelText(/Namespaces/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Persisted Field Numbers/i)).not.toBeInTheDocument();
+  });
+});
+
+describe('ExportDialog — ASN.1 target card (MFX-27.4)', () => {
+  it.each([
+    ['rest', 'types-only'],
+    ['asn1', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(asn1Targets(source)));
+
+    const card = screen.getByTestId('export-target-asn1');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('ASN.1')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .asn1 module: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the module name, OID, automatic tags and header comment options', async () => {
+    await renderAtTargetStep(mockFetch(asn1Targets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-asn1'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Module Name/i)).toHaveValue('');
+    expect(screen.getByLabelText(/Oid/i)).toHaveValue('');
+    expect(screen.getByLabelText(/Automatic Tags/i)).toBeChecked();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
   });
 });
