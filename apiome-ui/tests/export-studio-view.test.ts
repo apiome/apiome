@@ -114,6 +114,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'x12-guide').label).toBe('Data schema & graph');
   });
 
+  it('files WSDL under REST & HTTP by paradigm (MFX-14.4)', () => {
+    expect(familyForTarget('rest', 'wsdl').label).toBe('REST & HTTP');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

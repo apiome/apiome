@@ -24,6 +24,8 @@
  *     item, with its layout options — from the recorded live registry.
  * 12. The X12 implementation-guide card (MFX-24.5): `types-only` for every source, multi-file, with the
  *     transaction-set and version picker — from the recorded live registry.
+ * 13. The WSDL card (MFX-14.4): `lossy` for a REST source, `lossless` for an imported WSDL, multi-file
+ *     (the WSDL and its XSD), with its layout picker — from the recorded live registry.
  */
 
 import React from 'react';
@@ -60,6 +62,7 @@ import {
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
   x12GuideTargets,
+  wsdlTargets,
 } from './helpers/export-dialog-fixture';
 
 
@@ -1060,5 +1063,32 @@ describe('ExportDialog — X12 implementation guide target card (MFX-24.5)', () 
     expect(version).toHaveValue('');
     fireEvent.change(transactionSet, { target: { value: '810' } });
     expect(transactionSet).toHaveValue('810');
+  });
+});
+
+
+describe('ExportDialog — WSDL target card (MFX-14.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['wsdl', 'lossless'],
+  ] as const)('badges a %s source %s and marks the WSDL multi-file', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(wsdlTargets(source)));
+
+    const card = screen.getByTestId('export-target-wsdl');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('WSDL')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // The WSDL and its XSD types come as one download.
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+  });
+
+  it('offers the layout picker, bundle by default', async () => {
+    await renderAtTargetStep(mockFetch(wsdlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-wsdl'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const layout = screen.getByRole('radiogroup', { name: 'Layout' });
+    expect(within(layout).getAllByRole('radio').map((option) => option.textContent)).toEqual(['bundle', 'single']);
+    expect(within(layout).getByRole('radio', { name: 'bundle' })).toBeChecked();
   });
 });

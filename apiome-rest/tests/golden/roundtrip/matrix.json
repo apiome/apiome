@@ -291010,30 +291010,16 @@
       "diff_count": 1,
       "emit_format": "wsdl",
       "emit_key": "wsdl",
-      "loss_approx": 0,
-      "loss_drop": 15,
-      "loss_ok": 10,
+      "loss_approx": 1,
+      "loss_drop": 0,
+      "loss_ok": 9,
       "loss_synth": 0,
-      "matched_count": 0,
-      "overclaims": [
-        {
-          "construct": "http://example.com/orders.OrderInterface.cancelOrder",
-          "kind": "ok",
-          "message": "operation carried to WSDL",
-          "severity": "info",
-          "target_mapping": null
-        }
-      ],
-      "reason": "FMT-3.3 is import-only: the WSDL emitter writes 1.1 (2.0 output is #4182), so a 2.0 source loses its interface/endpoint vocabulary and its MEPs on the way out. unexplained: changed operation 'http://example.com/orders.OrderInterface.cancelOrder', changed root '', changed type 'http://example.com/orders.order'; overclaim: OK 'http://example.com/orders.OrderInterface.cancelOrder', OK 'http://example.com/orders.order' (observed: unexplained: changed operation 'http://example.com/orders.OrderInterface.cancelOrder'; overclaim: OK 'http://example.com/orders.OrderInterface.cancelOrder')",
+      "matched_count": 1,
+      "overclaims": [],
+      "reason": null,
       "source_format": "wsdl2",
-      "status": "xfail",
-      "unexplained": [
-        {
-          "change": "changed",
-          "entity": "operation",
-          "key": "http://example.com/orders.OrderInterface.cancelOrder"
-        }
-      ]
+      "status": "pass",
+      "unexplained": []
     },
     {
       "corpus_path": "wsdl2/02-typical-orders.wsdl",

@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.578.0] - 2026-11-01
+
+### Added
+- **WSDL target card + fixtures (MFX-14.4, #3892).** `tests/test_wsdl_target_card.py` +
+  `fixtures/wsdl_target/outcomes.json` pin the `wsdl` card per source kind (REST, RPC, GraphQL, JSON Schema, XSD
+  `lossy`; an imported WSDL `lossless`), both layouts (`bundle`, `single`) passing the MFX-14.3 bundle check, the
+  browse zip, and keep the CLI / UI registry fixtures and the CLI job fixture equal to the live registry
+  (`APIOME_REGEN_WSDL_TARGET=1`).
+
+### Fixed
+- **A WSDL or XSD source no longer reports its field numbers as dropped.** Those importers number fields by sequence
+  position, which the WSDL export keeps; `WsdlFidelityRulePack` now treats them as preserved (real Protobuf/Thrift
+  numbers still `DROP`). A WSDL item exporting to WSDL was rated `lossy`, 40% preserved; it is now `lossless`.
+- **One-way operations are reported.** WSDL 1.1 writes a one-way operation input-only but has no message-exchange
+  pattern, so a re-import reads it as request/response; the pack now says so (`APPROX`) instead of leaving a silent
+  difference. The `wsdl2 → wsdl` round-trip cell now passes (its xfail is removed) and `wsdl → wsdl` in the export
+  conformance matrix is `ok`.
+- OpenAPI document version 1.441.3 → 1.442.0.
+
 ## [1.577.3] - 2026-11-01
 
 ### Fixed

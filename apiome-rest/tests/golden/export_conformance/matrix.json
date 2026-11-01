@@ -59006,15 +59006,9 @@
     },
     {
       "family": "wsdl",
-      "loss_counts": {
-        "approx": 0,
-        "drop": 18,
-        "synth": 0
-      },
       "reason": null,
-      "status": "lossy",
-      "target": "wsdl",
-      "tier": "lossy"
+      "status": "ok",
+      "target": "wsdl"
     },
     {
       "family": "wsdl",
@@ -62497,8 +62491,8 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3926,
-    "ok": 36,
+    "lossy": 3925,
+    "ok": 37,
     "refused": 2115,
     "silent-loss": 187,
     "skipped": 0

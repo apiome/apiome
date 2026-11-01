@@ -492,3 +492,70 @@ def test_wsdl_source_keeps_its_notification_operations() -> None:
 def test_losses_are_inferred_or_not_applicable() -> None:
     result = _emit(_rich_model())
     assert {loss.kind for loss in result.losses} <= {LossKind.INFERRED, LossKind.NA}
+
+
+# ===========================================================================
+# Field numbers and one-way operations in the report (MFX-14.4, #3892)
+# ===========================================================================
+#
+# A WSDL or XSD import numbers every field by its sequence position, which the export keeps, so a WSDL
+# source must not be reported as dropping them (the WSDL card read "lossy, 40% preserved" for a WSDL
+# source). Real field numbers (Protobuf, Thrift) are still dropped. A one-way operation is written
+# input-only, but WSDL 1.1 reads it back as request/response: an APPROX, never an OK.
+
+
+def _numbered(fmt: str) -> CanonicalApi:
+    pet = _pet(
+        _field("id", TypeRef(name="string"), field_number=1),
+        _field("name", TypeRef(name="string"), field_number=2),
+    )
+    return _api([pet]).model_copy(update={"format": fmt})
+
+
+def _field_number_items(api: CanonicalApi) -> list:
+    report = compute_lossiness_for_emitter(api, WsdlEmitter)
+    return [item for item in report.items if "field number" in item.message]
+
+
+@pytest.mark.parametrize("fmt", ["wsdl", "xsd"])
+def test_a_wsdl_or_xsd_sources_positional_field_numbers_are_kept(fmt: str) -> None:
+    assert _field_number_items(_numbered(fmt)) == []
+
+
+@pytest.mark.parametrize("fmt", ["protobuf", "thrift", "openapi"])
+def test_real_field_numbers_from_other_sources_are_still_dropped(fmt: str) -> None:
+    items = _field_number_items(_numbered(fmt))
+    assert {item.construct_key for item in items} == {"Pet.id", "Pet.name"}
+    assert {item.kind for item in items} == {LossinessKind.DROP}
+
+
+def test_an_imported_wsdl_exports_losslessly() -> None:
+    report = compute_lossiness_for_emitter(_corpus_api(_EXAMPLES / "wsdl" / "02-order-service.wsdl"), WsdlEmitter)
+    assert {item.kind for item in report.items} == {LossinessKind.OK}
+
+
+def _one_way_api(name: str = "cancelOrder") -> CanonicalApi:
+    operation = Operation(key=f"Orders.{name}", name=name, kind=OperationKind.ONE_WAY)
+    return _api([_pet()], [Service(key="Orders", name="Orders", operations=[operation])])
+
+
+def test_a_one_way_operation_is_reported_as_reading_back_as_request_response() -> None:
+    report = compute_lossiness_for_emitter(_one_way_api(), WsdlEmitter)
+    items = [item for item in report.items if item.construct_key == "Orders.cancelOrder"]
+    assert [item.kind for item in items] == [LossinessKind.APPROX]
+    assert "reads back as a request/response operation" in items[0].message
+
+
+def test_a_renamed_one_way_operation_keeps_its_rename_beside_the_one_way_note() -> None:
+    report = compute_lossiness_for_emitter(_one_way_api("cancel order"), WsdlEmitter)
+    items = [item for item in report.items if item.construct_key == "Orders.cancel order"]
+    assert len(items) == 2 and {item.kind for item in items} == {LossinessKind.APPROX}
+    assert any("reads back as a request/response" in item.message for item in items)
+
+
+def test_a_request_response_operation_gets_no_one_way_note() -> None:
+    operation = Operation(key="Orders.getOrder", name="getOrder", kind=OperationKind.REQUEST_RESPONSE)
+    report = compute_lossiness_for_emitter(
+        _api([_pet()], [Service(key="Orders", name="Orders", operations=[operation])]), WsdlEmitter
+    )
+    assert not any("reads back as a request/response" in item.message for item in report.items)
