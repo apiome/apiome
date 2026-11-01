@@ -1842,6 +1842,9 @@ Other representations of the same version:
 For private versions, pass an in-scope API key via the `X-API-Key` header (or the `api_key` query
 parameter).
 
+Every export runs as a job: [How an export runs](./export-jobs.mdx) covers the pipeline, the job
+states, the transcoding guard and the failure codes.
+
 ### Export to several formats in one job
 
 To publish a version in several formats at once, send one export job with a `targets` list instead

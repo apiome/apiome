@@ -1,0 +1,94 @@
+---
+title: How an export runs
+description: The export job pipeline, from version and target to a checked download.
+sidebar_position: 5.2
+---
+
+Every export in Apiome — from the **Export** dialog, the [Export studio](./export-studio.mdx), the CLI
+or the REST API — runs the same pipeline as an **export job**. It is the reverse of an import: instead
+of reading a file into a version, it reads a version and writes a file in the format you pick. Any
+format Apiome reads can be exported to any format it writes.
+
+## The pipeline
+
+1. **Pick a version and a target.** The source is one version of an item (the latest when you name
+   none). The target is the format to write, such as `openapi`, `protobuf` or `avro`, with its options.
+2. **Preview the fidelity.** Before anything is written, Apiome predicts what the target keeps, changes
+   and drops, and grades it **lossless**, **lossy** or **types-only** — see
+   [Understand export fidelity](./export-fidelity.md). A dry run stops here.
+3. **Guard the conversion.** The conversion is classed by how much of the source survives:
+   - **clean** — nothing is lost;
+   - **lossy** — some detail is lost, but the operations survive; the fidelity report lists it;
+   - **near-empty** — the target is types-only, so only the schemas export and every operation is left
+     out (for example an OpenAPI item exported to Avro); the export warns that only schemas export;
+   - **severe** — the target cannot represent what the source is about (an event-only API exported to
+     gRPC, or a critical loss such as a union with no form in the target). A severe export needs your
+     **confirmation**; without it the job fails before anything is written.
+4. **Emit.** The target's emitter writes the files.
+5. **Validate.** Each export is checked before you can download it — re-imported, or checked with the
+   format's own tool where the server has it (see
+   [Exports checked with the format's own tool](./export-a-spec.md#exports-checked-with-the-formats-own-tool)).
+   An export that fails its check is never delivered. A format whose checker is not installed is
+   reported as not re-validated, not as failed.
+6. **Decide delivery.** The check's verdict, the source's lint grade, the predicted fidelity and the
+   workspace's export quality policy are folded into one decision: deliver, deliver with a warning
+   (logged on the job), or block.
+7. **Package and deliver.** One file is delivered as itself; several files (a multi-file target,
+   several formats or several items in one job) as one `.zip` with a manifest.
+
+## Job states
+
+A job is **queued**, **running**, **completed**, **failed** or **canceled**. While it runs it reports a
+percentage and a log of events. A finished job describes itself:
+
+- **completed** — its result holds the fidelity report, the files written and the path to download
+  them from;
+- **failed** — its error names a code, a message and the context to act on. The codes you are most
+  likely to see:
+
+| Code | Why the job failed | What to do |
+| --- | --- | --- |
+| `TRANSCODE_CONFIRMATION_REQUIRED` | The conversion is **severe** and was not confirmed. | Read the warning, then start the job again with `confirm`. |
+| `STALE_PREVIEW` | The preview you acknowledged no longer describes the export: the version, the options or the emitter changed since. | Preview again, then export. |
+| `EMITTED_ARTIFACT_INVALID` | The written export failed its check. | The error lists each problem with its file and place; report it, since the emitter wrote it. |
+| `EXPORT_DELIVERY_BLOCKED` | The delivery decision blocked it: the source's lint grade or the predicted fidelity falls below the workspace's export quality policy. | The error gives each reason; fix the source, pick another target, or ask an admin about the policy. |
+
+You can cancel a queued or running job. A workspace runs up to five export jobs at a time; see
+[Limits](./export-a-spec.md#limits).
+
+## Where you start a job
+
+| Surface | How |
+| --- | --- |
+| **Export** dialog | Pick a target card, check the **Fidelity** step, then export. A severe conversion asks you to confirm first. |
+| [Export studio](./export-studio.mdx) | Follow a conversion step by step, and watch, download or cancel its job. |
+| CLI | `apiome export <format> <item> --out <file>` polls the job for you. A lossy or types-only export exits non-zero unless you add `--force`. |
+| REST API | `POST /v1/export/{tenant_slug}/jobs`, then poll the `status_path` it returns. |
+
+## With the REST API
+
+```http
+POST /v1/export/{tenant_slug}/jobs
+Content-Type: application/json
+
+{
+  "artifact": "<project id>",
+  "version": "1.0.0",
+  "target": "protobuf",
+  "options": {},
+  "confirm": false
+}
+```
+
+1. The `202` response carries the `job_id` and a `status_path`.
+2. Poll `GET /v1/export/{tenant_slug}/jobs/{job_id}` until `state` is `completed`, `failed` or
+   `canceled`.
+3. Download the result from `GET /v1/export/{tenant_slug}/jobs/{job_id}/download`.
+
+Set `"dry_run": true` to stop after the fidelity report, and `"confirm": true` to run a severe
+conversion. Pass the preview's snapshot hash as `acknowledged_snapshot` to make sure the export is the
+one you previewed. `DELETE /v1/export/{tenant_slug}/jobs/{job_id}` cancels a job, and
+`GET /v1/export/{tenant_slug}/jobs` lists the workspace's jobs. To export several formats, several
+versions or several items in one job, see
+[Export to several formats in one job](./export-a-spec.md#export-to-several-formats-in-one-job). Every
+route and field is in the [export jobs reference](/reference/rest/export-jobs).
