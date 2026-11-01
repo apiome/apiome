@@ -28,6 +28,9 @@
  *     (the WSDL and its XSD), with its layout picker — from the recorded live registry.
  * 14. The TypeSpec card (MFX-15.4): `lossy` for a REST source, `lossless` for an imported TypeSpec
  *     project, one file, with its HTTP-imports and header-comment options — from the recorded live registry.
+ * 15. The OData card (MFX-16.4): `lossy` for a REST source, `lossless` for an imported OData service, one
+ *     file, with its CSDL output picker (JSON by default) and XML header-comment option — from the recorded
+ *     live registry.
  */
 
 import React from 'react';
@@ -63,6 +66,7 @@ import {
   copybookTargets,
   jsonSchemaTargets,
   mockExportDialogFetch as mockFetch,
+  odataTargets,
   x12GuideTargets,
   typespecTargets,
   wsdlTargets,
@@ -1122,5 +1126,34 @@ describe('ExportDialog — TypeSpec target card (MFX-15.4)', () => {
     expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
     fireEvent.click(httpImports);
     expect(httpImports).not.toBeChecked();
+  });
+});
+
+describe('ExportDialog — OData target card (MFX-16.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['odata', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(odataTargets(source)));
+
+    const card = screen.getByTestId('export-target-odata');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('OData')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One CSDL JSON document by default: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the CSDL output picker, JSON by default, and the header comment option', async () => {
+    await renderAtTargetStep(mockFetch(odataTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-odata'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const output = screen.getByRole('radiogroup', { name: 'Output' });
+    expect(within(output).getAllByRole('radio').map((option) => option.textContent)).toEqual(['json', 'xml', 'both']);
+    expect(within(output).getByRole('radio', { name: 'json' })).toBeChecked();
+    fireEvent.click(within(output).getByRole('radio', { name: 'both' }));
+    expect(within(output).getByRole('radio', { name: 'both' })).toBeChecked();
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
   });
 });

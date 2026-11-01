@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.580.0] - 2026-11-01
+
+### Added
+- **OData target card + fixtures (MFX-16.4, #3900).** `tests/test_odata_target_card.py` +
+  `fixtures/odata_target/outcomes.json` pin the `odata` card per source kind (REST, RPC, GraphQL, JSON Schema, WSDL
+  `lossy`; an imported OData service `lossless`), the `output` (`json` / `xml` / `both`) and `include_comments`
+  choices (CSDL an OData import accepts, every entity type keyed, the XML comment header present or not), the
+  MFX-16.3 validation gate, browse delivering the `.csdl.json` itself (a zip for `both`), and keep the CLI / UI
+  registry fixtures and the CLI job fixture equal to the live registry (`APIOME_REGEN_ODATA_TARGET=1`).
+
+### Fixed
+- **OData fidelity: no false field-number loss for an OData source.** `ODataFidelityRulePack` no longer reports an
+  OData source's field numbers as dropped: the reader numbers properties by position and the writer writes them in
+  that order. An imported OData service now badges `lossless` (export conformance `odata → odata` is `ok`).
+- OpenAPI document version 1.443.0 → 1.444.0.
+
 ## [1.579.0] - 2026-11-01
 
 ### Added

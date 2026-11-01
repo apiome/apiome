@@ -122,6 +122,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rest', 'typespec').label).toBe('REST & HTTP');
   });
 
+  it('files OData under REST & HTTP by paradigm (MFX-16.4)', () => {
+    expect(familyForTarget('rest', 'odata').label).toBe('REST & HTTP');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

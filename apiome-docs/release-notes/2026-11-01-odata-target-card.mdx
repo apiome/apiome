@@ -1,0 +1,20 @@
+---
+slug: odata-target-card
+title: Export to OData from the Export dialog and the CLI
+description: The OData card shows its options, and OData services export losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **OData** card writes the service's CSDL metadata and shows its two options,
+**Output** and **Include Comments**. The CLI exports the same with `apiome export odata`.
+[Where to find it](/ship/export-a-spec#odata-csdl-from-any-source).
+
+{/* truncate */}
+
+- **JSON, XML or both.** **Output** is `json` (CSDL JSON 4.01, `.csdl.json`) by default. Pick `xml`
+  for CSDL XML (`.edmx`) or `both` for the two; from the CLI, add `--option output=xml`.
+- **Your OData exports losslessly.** An item imported from OData badges **lossless**. Its properties
+  keep their order, so the report no longer lists their positions as dropped. Any other source is
+  **lossy**, and the fidelity report lists what CSDL does not keep.
+- **One file by default.** The card, the CLI and a public item's Export dialog on Browse deliver the
+  `.csdl.json` itself; with `both`, Browse delivers a `.zip` of the two documents.

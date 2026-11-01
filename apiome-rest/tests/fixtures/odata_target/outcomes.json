@@ -1,0 +1,128 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "odata": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "odata": {
+      "both": {
+        "entity_types_keyed": true,
+        "files": [
+          "Example.Catalog.csdl.json",
+          "Example.Catalog.edmx"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_header_comment": [
+          true
+        ]
+      },
+      "default": {
+        "entity_types_keyed": true,
+        "files": [
+          "Example.Catalog.csdl.json"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_header_comment": []
+      },
+      "xml": {
+        "entity_types_keyed": true,
+        "files": [
+          "Example.Catalog.edmx"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_header_comment": [
+          true
+        ]
+      },
+      "xml-no-comments": {
+        "entity_types_keyed": true,
+        "files": [
+          "Example.Catalog.edmx"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless",
+        "xml_header_comment": [
+          false
+        ]
+      }
+    },
+    "rest": {
+      "both": {
+        "entity_types_keyed": true,
+        "files": [
+          "Sample.Pet.Store.API.OpenAPI._3._0.csdl.json",
+          "Sample.Pet.Store.API.OpenAPI._3._0.edmx"
+        ],
+        "preserved_percent": 9,
+        "problems": [],
+        "tier": "lossy",
+        "xml_header_comment": [
+          true
+        ]
+      },
+      "default": {
+        "entity_types_keyed": true,
+        "files": [
+          "Sample.Pet.Store.API.OpenAPI._3._0.csdl.json"
+        ],
+        "preserved_percent": 9,
+        "problems": [],
+        "tier": "lossy",
+        "xml_header_comment": []
+      },
+      "xml": {
+        "entity_types_keyed": true,
+        "files": [
+          "Sample.Pet.Store.API.OpenAPI._3._0.edmx"
+        ],
+        "preserved_percent": 9,
+        "problems": [],
+        "tier": "lossy",
+        "xml_header_comment": [
+          true
+        ]
+      },
+      "xml-no-comments": {
+        "entity_types_keyed": true,
+        "files": [
+          "Sample.Pet.Store.API.OpenAPI._3._0.edmx"
+        ],
+        "preserved_percent": 9,
+        "problems": [],
+        "tier": "lossy",
+        "xml_header_comment": [
+          false
+        ]
+      }
+    }
+  }
+}

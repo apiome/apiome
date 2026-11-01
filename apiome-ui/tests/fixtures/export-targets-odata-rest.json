@@ -1,0 +1,66 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "odata",
+        "format": "odata",
+        "label": "OData",
+        "description": "Export as OData v4 service metadata: CSDL JSON 4.01, optionally CSDL XML (.edmx).",
+        "icon": "database",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`ODataEmitter`.",
+        "properties": {
+          "output": {
+            "default": "json",
+            "description": "`json` writes CSDL JSON 4.01 (`<Namespace>.csdl.json`, the canonical form); `xml` writes CSDL XML (`<Namespace>.edmx`); `both` writes the two \u2014 two views of one model.",
+            "enum": [
+              "json",
+              "xml",
+              "both"
+            ],
+            "title": "Output",
+            "type": "string"
+          },
+          "include_comments": {
+            "default": true,
+            "description": "Emit an XML comment header in the CSDL XML document.",
+            "title": "Include Comments",
+            "type": "boolean"
+          }
+        },
+        "title": "ODataEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "output": "json",
+        "include_comments": true
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 9,
+        "total": 11,
+        "preserved": 1,
+        "dropped": 3,
+        "approximated": 7,
+        "synthesized": 0
+      }
+    }
+  ]
+}

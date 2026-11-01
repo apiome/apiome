@@ -16,6 +16,8 @@ import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
 import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
 import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.json';
 import typespecTargetsForTypespec from '../fixtures/export-targets-typespec-typespec.json';
+import odataTargetsForRest from '../fixtures/export-targets-odata-rest.json';
+import odataTargetsForOdata from '../fixtures/export-targets-odata-odata.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -464,4 +466,16 @@ export function wsdlTargets(source: 'rest' | 'wsdl'): ExportTargetsResponse {
  */
 export function typespecTargets(source: 'rest' | 'typespec'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? typespecTargetsForRest : typespecTargetsForTypespec);
+}
+
+/**
+ * The OData target as the registry lists it (MFX-16.4, #3900), for a REST source and for an imported OData
+ * service — recorded from the live REST registry by `apiome-rest/tests/test_odata_target_card.py`. A REST
+ * source loses what CSDL does not keep (`lossy`); an OData service exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `odata` (an imported Northwind-style OData service).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function odataTargets(source: 'rest' | 'odata'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? odataTargetsForRest : odataTargetsForOdata);
 }
