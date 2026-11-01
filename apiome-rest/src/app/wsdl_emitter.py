@@ -62,7 +62,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
-from .lossiness import LossinessKind, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .xsd_schema import (
     NameScope,
     XsdSchemaWriter,
@@ -90,6 +90,11 @@ _WSDL_PREFIX = "wsdl"
 #: The source format whose messages, parts and topology the emitter writes back as they were read.
 _WSDL_FORMAT = "wsdl"
 
+#: Source formats whose importer numbers every field by its position in the sequence it was read from
+#: (``app.wsdl_normalizer`` / ``app.xsd_normalizer``). The emitter writes fields in that order, so a
+#: re-import assigns the same numbers: nothing is lost.
+_POSITIONAL_FIELD_NUMBER_FORMATS = frozenset({_WSDL_FORMAT, "xsd"})
+
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
 class WsdlFidelityRulePack(CapabilityRulePack):
@@ -98,10 +103,30 @@ class WsdlFidelityRulePack(CapabilityRulePack):
     On top of the capability rules: names that are not legal ``NCName`` s are reported as renames;
     a map is written as a list of entries; an untyped value becomes ``xs:anyType``; ``multipleOf``,
     ``uniqueItems`` and ``deprecated`` have no XSD form; a REST operation loses its HTTP method and
-    path.
+    path. A field number is kept when it is only a sequence position (a WSDL or XSD source) and
+    dropped when it is a real one (Protobuf, Thrift, …).
     """
 
     target_label = "WSDL"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note whether the source's field numbers are sequence positions, then run the drive loop."""
+        self._positional_field_numbers = api.format in _POSITIONAL_FIELD_NUMBER_FORMATS
+        return super().evaluate(api)
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """A WSDL or XSD source's field number is its position, which the sequence keeps: not a loss.
+
+        Args:
+            field: The source field.
+
+        Returns:
+            ``None`` for a positional number (WSDL/XSD source), else the capability verdict — a ``DROP``
+            for a real field number WSDL cannot carry.
+        """
+        if getattr(self, "_positional_field_numbers", False):
+            return None
+        return super()._field_identity_verdict(field)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """The target namespace every type, element and operation is qualified by.
@@ -139,6 +164,33 @@ class WsdlFidelityRulePack(CapabilityRulePack):
             rename_verdict(operation.name, emitted, target_label=self.target_label, noun="operation")
             or verdict
         )
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's verdict, plus an ``APPROX`` when a one-way operation will read back as request/response.
+
+        WSDL 1.1 writes a one-way operation correctly — an ``input`` and no ``output`` — but a WSDL 1.1
+        document has no message-exchange pattern, so ``app.wsdl_versions.operation_kind_for_pattern`` reads
+        every 1.1 operation back as request/response. The round trip changes the operation's kind; the
+        report says so rather than leaving a silent difference.
+
+        Args:
+            operation: The source operation.
+
+        Returns:
+            The verdicts for the operation, in order.
+        """
+        verdicts = super().operation_verdicts(operation)
+        if operation.kind is OperationKind.ONE_WAY and all(v.kind is not LossinessKind.DROP for v in verdicts):
+            emitted = ncname(operation.name or operation.key, fallback="operation")
+            # The operation changes, so an ``OK`` beside this would claim it is preserved (an over-claim).
+            verdicts = [v for v in verdicts if v.kind is not LossinessKind.OK]
+            verdicts.append(FidelityVerdict.approx(
+                message=f"WSDL 1.1 writes the one-way operation {emitted!r} with an input and no output, but has "
+                "no message-exchange pattern, so it reads back as a request/response operation",
+                severity=LossinessSeverity.INFO,
+                target_mapping="one-way → input-only operation (reads back as request/response)",
+            ))
+        return verdicts
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
         verdict = super().type_verdict(type_)

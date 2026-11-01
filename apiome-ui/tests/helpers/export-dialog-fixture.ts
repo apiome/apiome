@@ -12,6 +12,8 @@ import copybookTargetsForRest from '../fixtures/export-targets-copybook-rest.jso
 import copybookTargetsForCopybook from '../fixtures/export-targets-copybook-copybook.json';
 import x12GuideTargetsForRest from '../fixtures/export-targets-x12-guide-rest.json';
 import x12GuideTargetsForX12 from '../fixtures/export-targets-x12-guide-x12.json';
+import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
+import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -435,4 +437,16 @@ export function mockExportDialogFetch(targets: ExportTargetsResponse = EXPORT_DI
     }
     return Promise.resolve({ ok: false, json: () => Promise.resolve({}) });
   }) as unknown as jest.Mock;
+}
+
+/**
+ * The WSDL target as the registry lists it (MFX-14.4, #3892), for a REST source and for an imported WSDL —
+ * recorded from the live REST registry by `apiome-rest/tests/test_wsdl_target_card.py`. A REST source
+ * loses its HTTP method and path (`lossy`); a WSDL item exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `wsdl` (an imported WSDL 1.1 order service).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function wsdlTargets(source: 'rest' | 'wsdl'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? wsdlTargetsForRest : wsdlTargetsForWsdl);
 }

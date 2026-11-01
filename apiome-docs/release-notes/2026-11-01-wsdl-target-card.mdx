@@ -1,0 +1,20 @@
+---
+slug: wsdl-target-card
+title: Export to WSDL from the Export dialog and the CLI
+description: The WSDL card offers its layout, and WSDL items export losslessly.
+authors: [apiome]
+---
+
+The **Export** dialog's **WSDL** card is multi-file (the WSDL and its XSD) and offers its **Layout**:
+**bundle** or **single**. The CLI exports the same with `apiome export wsdl`.
+[Where to find it](/ship/export-a-spec#wsdl-and-xsd-from-any-source).
+
+{/* truncate */}
+
+- **Pick a layout.** **bundle** (the default) writes the WSDL and its XSD types as two files in one
+  `.zip`; **single** inlines the types in the WSDL. From the CLI, add `--option layout=single`.
+- **Your WSDL exports losslessly.** An item imported from WSDL now badges **lossless**: its field
+  order is kept, so it is no longer reported as dropping field numbers.
+- **One-way operations are named.** A WSDL 1.1 file has no way to mark an operation one-way, so
+  importing the export again reads it as request/response. The fidelity report now says so for
+  each one.

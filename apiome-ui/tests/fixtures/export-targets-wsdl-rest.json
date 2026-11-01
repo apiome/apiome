@@ -1,0 +1,65 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "wsdl",
+        "format": "wsdl",
+        "label": "WSDL",
+        "description": "Export as a SOAP WSDL 1.1 web service description with XSD types.",
+        "icon": "file-code",
+        "paradigm": "rest",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`WsdlEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit an XML comment header in the generated WSDL.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "layout": {
+            "default": "bundle",
+            "description": "`bundle` writes the WSDL and its XSD types as two files joined by an `xsd:import`; `single` inlines the schema in the WSDL.",
+            "enum": [
+              "bundle",
+              "single"
+            ],
+            "title": "Layout",
+            "type": "string"
+          }
+        },
+        "title": "WsdlEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "layout": "bundle"
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 25,
+        "total": 8,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 5,
+        "synthesized": 1
+      }
+    }
+  ]
+}

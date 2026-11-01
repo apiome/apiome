@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 36 |
-| lossy | 3926 |
+| ok | 37 |
+| lossy | 3925 |
 | refused | 2115 |
 | silent-loss | 187 |
 | crash | 0 |
@@ -116,7 +116,7 @@ Every corpus source family exported to every production target through the catal
 | vsam-idcams | L | R | R | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | wadl | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
 | wit | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | ok | L | L | L | L | R |
-| wsdl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
+| wsdl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | L | L | R | R | L | L | L | ok | L | S | L | R |
 | wsdl2 | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
 | xmlrpc | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | ok | L | R |
 | xregistry | L | R | R | L | ok | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |

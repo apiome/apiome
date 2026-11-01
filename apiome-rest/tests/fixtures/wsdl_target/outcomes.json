@@ -1,0 +1,68 @@
+{
+  "cards": {
+    "graphql": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "tier": "lossy"
+    },
+    "wsdl": {
+      "available": true,
+      "tier": "lossless"
+    },
+    "xsd": {
+      "available": true,
+      "tier": "lossy"
+    }
+  },
+  "layouts": {
+    "rest": {
+      "bundle": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.wsdl",
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "preserved_percent": 25,
+        "problems": [],
+        "tier": "lossy"
+      },
+      "single": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.wsdl"
+        ],
+        "preserved_percent": 25,
+        "problems": [],
+        "tier": "lossy"
+      }
+    },
+    "wsdl": {
+      "bundle": {
+        "files": [
+          "OrderService.wsdl",
+          "OrderService.xsd"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "single": {
+        "files": [
+          "OrderService.wsdl"
+        ],
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      }
+    }
+  }
+}

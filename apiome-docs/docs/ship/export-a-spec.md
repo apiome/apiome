@@ -1067,6 +1067,22 @@ To get one file with the types inline, set the **layout** option to `single`.
 An item imported from WSDL is written back as it was read: its messages, parts, bindings, SOAP
 versions and XSD details round-trip unchanged.
 
+- **Field numbers.** WSDL has no field numbers, only element order. An item imported from WSDL or XSD
+  numbers its fields by their order, which the export keeps, so nothing is reported. Real field
+  numbers (from Protobuf or Thrift) are not written; the report lists each one.
+- **One-way operations.** An operation with no reply is written with an `input` and no `output`.
+  WSDL 1.1 has no message-exchange pattern, so importing the file again reads it as a request/response
+  operation; the report says so for each one.
+
+**Where to find it.** In the **Export** dialog, the **WSDL** card is under **REST & HTTP** on the
+**Target** step, marked multi-file. Its badge is **lossy** for a REST, RPC, GraphQL or JSON Schema
+source (the HTTP method and path, field numbers and JSON-only rules are not carried) and **lossless**
+for an item imported from WSDL. Pick the card and choose the **Layout**: **bundle** (the default, the
+WSDL and its XSD) or **single** (the types inline). From the CLI, run
+`apiome export wsdl <item> --out <folder>` (the files are unpacked into the folder) and add
+`--option layout=single` for one file. A lossy export exits non-zero unless you add `--force`, and
+`--json` prints the tier. A public item's **Export** dialog on Browse offers WSDL too, as a `.zip`.
+
 Every WSDL export is checked before you can download it, the way it arrives once you unzip it:
 
 - **Packaged.** The bundle holds exactly one WSDL, and every `xsd:import`, `xsd:include` and
