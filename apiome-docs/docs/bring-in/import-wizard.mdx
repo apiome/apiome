@@ -265,6 +265,29 @@ instead.
 **Design with AI** drafts a specification from a description; **“Import This Spec”** loads the
 draft into the wizard as if you had pasted it. It is also on **New project → Design with AI**.
 
+### GraphQL schemas
+
+A GraphQL schema (`.graphql` or `.gql` SDL) can be imported as a project: the wizard converts it to
+OpenAPI first, and each type becomes a class. Try `apiome-ui/examples/graphql/11-github-style-api.graphql`.
+
+| In the schema | In the project |
+| --- | --- |
+| `type` and `input` | A class, with one property per field; a non-null field is required |
+| `interface` | A class marked `x-graphql-interface`; a type that implements it extends it |
+| `enum` | A class whose values are the enum values |
+| `union` | A class that is one of its member types |
+| `scalar` | A class of the matching type (`DateTime` is a `date-time` string); a custom scalar is a string |
+| `Query`, `Mutation`, `Subscription` | Left out: they are operations, not data |
+
+**Directives are kept.** Every directive applied to a type, a field or an enum value — `@deprecated`,
+`@key(fields: "id")` or your own — is kept with its arguments, so nothing the schema says is lost.
+A type's or a field's directives are stored as `x-graphql-directive` on its class or property, for
+example `[{ "name": "key", "arguments": { "fields": "id" } }]`. An enum value's are listed under
+`x-graphql-enum-value-directives` on the enum's class.
+
+To keep the schema in its own GraphQL form instead — queries, mutations and all — import it to the
+catalog (below).
+
 ## Import to catalog
 
 **Click “Import to catalog”** on the [Catalog](./catalog.mdx). Steps: **Source → Detect & route →

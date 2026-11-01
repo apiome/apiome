@@ -1,0 +1,68 @@
+# A subset of GitHub's public GraphQL schema (types, fields and the directives it applies:
+# @deprecated, @preview, @possibleTypes), reduced to what the #2775 round trip checks.
+
+"""
+An object with an ID.
+"""
+interface Node @possibleTypes(concreteTypes: ["Issue", "Repository"], abstractType: "Node") {
+  "ID of the object."
+  id: ID!
+}
+
+"""
+The possible states of an issue.
+"""
+enum IssueState {
+  "An issue that is still open"
+  OPEN
+  "An issue that has been closed"
+  CLOSED
+  "Kept for old clients"
+  ARCHIVED @deprecated(reason: "Use CLOSED with a stateReason instead.")
+}
+
+"""
+An Issue is a place to discuss ideas, enhancements, tasks, and bugs for a project.
+"""
+type Issue implements Node @key(fields: "id, number") {
+  id: ID!
+  "Identifies the issue number."
+  number: Int!
+  "Identifies the issue title."
+  title: String!
+  state: IssueState!
+  "Identifies the date and time when the object was last updated."
+  lastEditedAt: DateTime @deprecated(reason: "Use `updatedAt` (it covers @mentions, too).")
+  "Whether the issue is pinned."
+  isPinned: Boolean @preview(toggledBy: "elektra-preview") @cost(complexity: 2, multipliers: ["first", "last"], enabled: true)
+}
+
+"""
+A repository contains the content for a project.
+"""
+type Repository implements Node {
+  id: ID!
+  name: String!
+  "The issues of this repository."
+  issueCount: Int
+}
+
+"""
+The results of a search.
+"""
+union SearchResultItem @possibleTypes(concreteTypes: ["Issue", "Repository"]) = Issue | Repository
+
+"""
+Specifies the attributes for a new issue.
+"""
+input CreateIssueInput @oneField(required: false) {
+  "The Node ID of the repository."
+  repositoryId: ID!
+  "The title for the issue."
+  title: String! @length(max: 256)
+}
+
+"""
+An ISO-8601 encoded UTC date string.
+"""
+scalar DateTime @specifiedBy(url: "https://tools.ietf.org/html/rfc3339")

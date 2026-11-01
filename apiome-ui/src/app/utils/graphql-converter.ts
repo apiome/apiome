@@ -11,7 +11,9 @@ import { looksLikeStructuredDocument } from './document-markers';
  * - Nullability (nullable vs non-null)
  * - Lists/Arrays
  * - Descriptions/Comments
- * - Directives (as extensions)
+ * - Directives (as extensions): every applied directive on a type, field or enum value is kept as
+ *   `x-graphql-directive` (`[{ name, arguments? }]`) on the schema or property it became; enum values'
+ *   directives are mapped under `x-graphql-enum-value-directives` on the enum schema (#2775)
  */
 
 /**
@@ -75,7 +77,7 @@ interface GraphQLTypeDef {
   name: string;
   description?: string;
   fields?: GraphQLField[];
-  enumValues?: Array<{ name: string; description?: string }>;
+  enumValues?: Array<{ name: string; description?: string; directives?: GraphQLDirective[] }>;
   interfaces?: string[];
   possibleTypes?: string[];
   directives?: GraphQLDirective[];
@@ -258,11 +260,12 @@ function parseGraphQLSDL(content: string, warnings: string[]): GraphQLTypeDef[] 
   // This is a simplified parser - for production, use graphql-js
 
   // Match type definitions
-  const typePattern = /(?:"""([\s\S]*?)"""\s*)?(?:"([^"]*?)"\s*)?(type|input|interface|enum|union|scalar)\s+(\w+)(?:\s+implements\s+([\w\s,&]+))?(?:\s*@\w+(?:\([^)]*\))?)*\s*(?:\{([\s\S]*?)\})?/g;
+  // The applied directives between the name (or `implements` list) and the body are captured (#2775).
+  const typePattern = /(?:"""([\s\S]*?)"""\s*)?(?:"([^"]*?)"\s*)?(type|input|interface|enum|union|scalar)\s+(\w+)(?:\s+implements\s+([\w\s,&]+))?((?:\s*@\w+(?:\([^)]*\))?)*)\s*(?:\{([\s\S]*?)\})?/g;
 
   let match;
   while ((match = typePattern.exec(processedContent)) !== null) {
-    const [, tripleQuoteDesc, singleQuoteDesc, kind, name, implementsClause, body] = match;
+    const [, tripleQuoteDesc, singleQuoteDesc, kind, name, implementsClause, directiveClause, body] = match;
     const description = tripleQuoteDesc?.trim() || singleQuoteDesc?.trim();
 
     const typeDef: GraphQLTypeDef = {
@@ -270,6 +273,11 @@ function parseGraphQLSDL(content: string, warnings: string[]): GraphQLTypeDef[] 
       name,
       description
     };
+
+    const typeDirectives = parseDirectives(directiveClause ?? '');
+    if (typeDirectives.length > 0) {
+      typeDef.directives = typeDirectives;
+    }
 
     // Parse implements
     if (implementsClause) {
@@ -290,7 +298,8 @@ function parseGraphQLSDL(content: string, warnings: string[]): GraphQLTypeDef[] 
     // Handle union without braces
     if (kind === 'union' && !body) {
       // Look for = Type1 | Type2 pattern after the definition
-      const unionPattern = new RegExp(`union\\s+${name}\\s*=\\s*([\\w\\s|]+?)(?:type|input|interface|enum|union|scalar|$)`);
+      // Applied directives may sit between the name and `=` (`union Result @key(fields: "id") = A | B`, #2775).
+      const unionPattern = new RegExp(`union\\s+${name}(?:\\s*@\\w+(?:\\([^)]*\\))?)*\\s*=\\s*([\\w\\s|]+?)(?:type|input|interface|enum|union|scalar|$)`);
       const unionMatch = processedContent.match(unionPattern);
       if (unionMatch) {
         typeDef.possibleTypes = unionMatch[1].split('|').map(s => s.trim()).filter(Boolean);
@@ -302,7 +311,7 @@ function parseGraphQLSDL(content: string, warnings: string[]): GraphQLTypeDef[] 
 
   // Parse standalone unions (union Name = Type1 | Type2)
   // This pattern handles unions that aren't caught by the main pattern
-  const standaloneUnionPattern = /(?:"""([\s\S]*?)"""\s*)?union\s+(\w+)\s*=\s*([^"\n]+?)(?=\s*\n|$)/gm;
+  const standaloneUnionPattern = /(?:"""([\s\S]*?)"""\s*)?union\s+(\w+)(?:\s*@\w+(?:\([^)]*\))?)*\s*=\s*([^"\n]+?)(?=\s*\n|$)/gm;
   while ((match = standaloneUnionPattern.exec(processedContent)) !== null) {
     const [, description, name, types_str] = match;
     // Check if we already have this union with possibleTypes
@@ -329,8 +338,8 @@ function parseGraphQLSDL(content: string, warnings: string[]): GraphQLTypeDef[] 
 /**
  * Parse enum values from body
  */
-function parseEnumValues(body: string): Array<{ name: string; description?: string }> {
-  const values: Array<{ name: string; description?: string }> = [];
+function parseEnumValues(body: string): Array<{ name: string; description?: string; directives?: GraphQLDirective[] }> {
+  const values: Array<{ name: string; description?: string; directives?: GraphQLDirective[] }> = [];
   const lines = body.split('\n');
 
   let currentDescription: string | undefined;
@@ -360,11 +369,13 @@ function parseEnumValues(body: string): Array<{ name: string; description?: stri
     }
 
     // Parse enum value
-    const valueMatch = trimmed.match(/^(\w+)/);
+    const valueMatch = trimmed.match(/^(\w+)(.*)$/);
     if (valueMatch) {
+      const directives = parseDirectives(valueMatch[2]);
       values.push({
         name: valueMatch[1],
-        description: currentDescription
+        description: currentDescription,
+        ...(directives.length > 0 ? { directives } : {})
       });
       currentDescription = undefined;
     }
@@ -436,15 +447,20 @@ function parseFields(body: string, warnings: string[]): GraphQLField[] {
     }
 
     // Parse field
-    const fieldMatch = trimmed.match(/^(\w+)(?:\s*\(([\s\S]*?)\))?\s*:\s*(.+?)(?:\s*@|$)/);
+    const fieldMatch = trimmed.match(/^(\w+)(?:\s*\(([\s\S]*?)\))?\s*:\s*([^@]+?)\s*(@.*)?$/);
     if (fieldMatch) {
-      const [, fieldName, args, typeStr] = fieldMatch;
+      const [, fieldName, args, typeStr, directiveClause] = fieldMatch;
 
       const field: GraphQLField = {
         name: fieldName,
         description: currentDescription,
         type: parseTypeRef(typeStr.trim())
       };
+
+      const fieldDirectives = parseDirectives(directiveClause ?? '');
+      if (fieldDirectives.length > 0) {
+        field.directives = fieldDirectives;
+      }
 
       // Parse arguments if present
       if (args) {
@@ -519,6 +535,137 @@ function splitArguments(argsStr: string): string[] {
 }
 
 /**
+ * The OpenAPI extension that carries a type's, field's or enum value's applied GraphQL directives (#2775).
+ */
+export const GRAPHQL_DIRECTIVE_EXTENSION = 'x-graphql-directive';
+
+/**
+ * The enum-schema extension mapping each enum value to its applied directives (#2775) — an enum value has
+ * no schema of its own to carry {@link GRAPHQL_DIRECTIVE_EXTENSION}.
+ */
+export const GRAPHQL_ENUM_VALUE_DIRECTIVES_EXTENSION = 'x-graphql-enum-value-directives';
+
+/**
+ * Split a comma-separated list at the top level, ignoring commas inside quotes, brackets, braces or parens.
+ *
+ * @param text - The list text (a directive's arguments).
+ * @returns The trimmed, non-empty entries.
+ */
+function splitTopLevel(text: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let depth = 0;
+  let quote: string | null = null;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (quote) {
+      current += char;
+      if (char === '\\') {
+        current += text[i + 1] ?? '';
+        i++;
+      } else if (char === quote) {
+        quote = null;
+      }
+      continue;
+    }
+    if (char === '"') {
+      quote = char;
+      current += char;
+    } else if (char === '[' || char === '(' || char === '{') {
+      depth++;
+      current += char;
+    } else if (char === ']' || char === ')' || char === '}') {
+      depth--;
+      current += char;
+    } else if (char === ',' && depth === 0) {
+      if (current.trim()) parts.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) parts.push(current.trim());
+  return parts;
+}
+
+/**
+ * Parse the applied directives in a clause such as `@key(fields: "id") @deprecated(reason: "Use sku")`.
+ *
+ * Strings are read whole (an `@` or `)` inside quotes is not a delimiter). Each argument value is typed the
+ * way a field default is ({@link parseDefaultValue}): strings unquoted, numbers and booleans parsed, enum
+ * values, lists and objects kept as written.
+ *
+ * @param clause - The text after a type name, field type or enum value.
+ * @returns The directives in order, each with its arguments when it has any; empty when there are none.
+ */
+function parseDirectives(clause: string): GraphQLDirective[] {
+  const directives: GraphQLDirective[] = [];
+  let i = 0;
+  while (i < clause.length) {
+    const char = clause[i];
+    if (char === '"') {
+      // Skip a string that is not a directive argument (defensive: a stray default value).
+      const end = clause.indexOf('"', i + 1);
+      i = end < 0 ? clause.length : end + 1;
+      continue;
+    }
+    if (char !== '@') {
+      i++;
+      continue;
+    }
+    const nameMatch = /^@([_A-Za-z]\w*)/.exec(clause.slice(i));
+    if (!nameMatch) {
+      i++;
+      continue;
+    }
+    const directive: GraphQLDirective = { name: nameMatch[1] };
+    i += nameMatch[0].length;
+    while (i < clause.length && /\s/.test(clause[i])) i++;
+    if (clause[i] === '(') {
+      let depth = 0;
+      let quote: string | null = null;
+      const start = i + 1;
+      for (; i < clause.length; i++) {
+        const c = clause[i];
+        if (quote) {
+          if (c === '\\') i++;
+          else if (c === quote) quote = null;
+          continue;
+        }
+        if (c === '"') quote = c;
+        else if (c === '(') depth++;
+        else if (c === ')') {
+          depth--;
+          if (depth === 0) break;
+        }
+      }
+      const args: Record<string, unknown> = {};
+      for (const entry of splitTopLevel(clause.slice(start, i))) {
+        const argMatch = /^(\w+)\s*:\s*([\s\S]+)$/.exec(entry);
+        if (argMatch) args[argMatch[1]] = parseDefaultValue(argMatch[2].trim());
+      }
+      if (Object.keys(args).length > 0) directive.arguments = args;
+      i++;
+    }
+    directives.push(directive);
+  }
+  return directives;
+}
+
+/**
+ * Put a construct's applied directives on its OpenAPI schema as {@link GRAPHQL_DIRECTIVE_EXTENSION}.
+ *
+ * @param schema - The schema (or property) the construct became; returned as is when it has no directives.
+ * @param directives - The construct's applied directives.
+ * @returns The schema, with the extension when there is at least one directive.
+ */
+function withDirectives<T extends object | null>(schema: T, directives?: GraphQLDirective[]): T {
+  if (!schema || !directives || directives.length === 0) return schema;
+  return { ...schema, [GRAPHQL_DIRECTIVE_EXTENSION]: directives.map((d) => ({ ...d })) } as T;
+}
+
+/**
  * Parse a default value string
  */
 function parseDefaultValue(value: string): any {
@@ -567,6 +714,18 @@ function parseTypeRef(typeStr: string): GraphQLTypeRef {
  * Convert a GraphQL type definition to an OpenAPI schema
  */
 function convertTypeToSchema(
+  typeDef: GraphQLTypeDef,
+  allTypes: GraphQLTypeDef[],
+  customScalars: Set<string>,
+  warnings: string[]
+) {
+  return withDirectives(convertTypeKindToSchema(typeDef, allTypes, customScalars, warnings), typeDef.directives);
+}
+
+/**
+ * Convert a GraphQL type definition to an OpenAPI schema by its kind (without its applied directives).
+ */
+function convertTypeKindToSchema(
   typeDef: GraphQLTypeDef,
   allTypes: GraphQLTypeDef[],
   customScalars: Set<string>,
@@ -697,6 +856,16 @@ function convertEnumType(typeDef: GraphQLTypeDef): any {
     if (descriptions.length > 0) {
       schema['x-enum-descriptions'] = descriptions;
     }
+
+    // Applied directives per enum value (#2775), e.g. `RETIRED @deprecated(reason: "…")`.
+    const valueDirectives = Object.fromEntries(
+      typeDef.enumValues
+        .filter((v) => v.directives && v.directives.length > 0)
+        .map((v) => [v.name, v.directives!.map((d) => ({ ...d }))])
+    );
+    if (Object.keys(valueDirectives).length > 0) {
+      schema[GRAPHQL_ENUM_VALUE_DIRECTIVES_EXTENSION] = valueDirectives;
+    }
   }
 
   return schema;
@@ -769,7 +938,7 @@ function convertFields(
       }));
     }
 
-    properties[field.name] = property;
+    properties[field.name] = withDirectives(property, field.directives);
 
     if (isRequired) {
       required.push(field.name);

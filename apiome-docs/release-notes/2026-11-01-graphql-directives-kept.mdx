@@ -1,0 +1,17 @@
+---
+slug: graphql-directives-kept
+title: GraphQL schemas keep their directives when imported as a project
+description: Every applied directive now comes through as x-graphql-directive on the class.
+authors: [apiome]
+---
+
+Importing a GraphQL schema as a project now keeps every directive the schema applies.
+[See how GraphQL schemas import](/bring-in/import-wizard#graphql-schemas).
+
+{/* truncate */}
+
+- **Types, fields and enum values.** `@deprecated`, `@key(fields: "id")` and your own directives are
+  kept with their arguments — on the class and on each property as `x-graphql-directive`, and per enum
+  value under `x-graphql-enum-value-directives`.
+- **Unions with a directive.** A union such as `union Result @key(fields: "id") = A | B` now keeps its
+  member types too.
