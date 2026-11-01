@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.576.1] - 2026-11-01
+
+### Fixed
+- **Export conformance and round-trip matrices: six `arazzo` cells (MFX-10.3 follow-up, #3872).** `asyncapi`, `cue`,
+  `dhall`, `pkl`, `typescript-types` and `zod` → `arazzo` are refusals (no operation to sequence), like the other
+  types- and events-only sources. The 1.576.0 artifacts kept their old `lossy` / `pass` status because those sources'
+  import tools were missing where the column was regenerated, so the Export Conformance workflow failed on drift. The
+  round-trip xfail ledger lists the five new refusals and gives `asyncapi → arazzo` the refusal reason.
+- OpenAPI document version 1.440.0 → 1.440.1.
+
 ## [1.576.0] - 2026-10-31
 
 ### Added

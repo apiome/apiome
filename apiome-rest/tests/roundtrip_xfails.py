@@ -4133,7 +4133,7 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('kong', 'xsd'): 'Re-import failed: No XSD types or elements found (kong->xsd)',
     ('kong', 'zosconnect'): 'Emit failed: z/OS Connect export requires `zosconnect_descriptor` extras from import',
     ('asyncapi', 'apiblueprint'): 'Re-import failed: No API Blueprint resources or data structures found (asyncapi->apiblueprint)',
-    ('asyncapi', 'arazzo'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
+    ('asyncapi', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
     ('asyncapi', 'asn1'): 'Re-import failed: ASN.1 module `UserAccountService` defines no types',
     ('asyncapi', 'asyncapi'): 'Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim).',
     ('asyncapi', 'avro'): 'Re-import failed: EmitResult has no files',
@@ -5819,4 +5819,9 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('tradacoms', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
     ('vsam-idcams', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
     ('xsd', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    ('cue', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    ('dhall', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    ('pkl', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    ('typescript-types', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    ('zod', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
 }

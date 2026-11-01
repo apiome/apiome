@@ -17480,25 +17480,19 @@
     },
     {
       "corpus_path": "asyncapi/01-user-events-2.6.yaml",
-      "diff_count": 6,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": "Empirical canonical_diff not fully explained by fidelity report (unexplained diff and/or OK over-claim). (observed: unexplained: removed service 'default')",
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "asyncapi",
       "status": "xfail",
-      "unexplained": [
-        {
-          "change": "removed",
-          "entity": "service",
-          "key": "default"
-        }
-      ]
+      "unexplained": []
     },
     {
       "corpus_path": "asyncapi/01-user-events-2.6.yaml",
@@ -49385,18 +49379,18 @@
     },
     {
       "corpus_path": "cue/02-typical-order-schema.cue",
-      "diff_count": 5,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": null,
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "cue",
-      "status": "pass",
+      "status": "xfail",
       "unexplained": []
     },
     {
@@ -53562,18 +53556,18 @@
     },
     {
       "corpus_path": "dhall/02-typical-order-schema.dhall",
-      "diff_count": 6,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 6,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 6,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": null,
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "dhall",
-      "status": "pass",
+      "status": "xfail",
       "unexplained": []
     },
     {
@@ -193943,18 +193937,18 @@
     },
     {
       "corpus_path": "pkl/02-typical-order-schema.pkl",
-      "diff_count": 7,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 7,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": null,
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "pkl",
-      "status": "pass",
+      "status": "xfail",
       "unexplained": []
     },
     {
@@ -270356,18 +270350,18 @@
     },
     {
       "corpus_path": "typescript-types/02-typical-order-model.ts",
-      "diff_count": 7,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 7,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": null,
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "typescript-types",
-      "status": "pass",
+      "status": "xfail",
       "unexplained": []
     },
     {
@@ -297169,18 +297163,18 @@
     },
     {
       "corpus_path": "zod/02-typical-order-schemas.ts",
-      "diff_count": 5,
+      "diff_count": 0,
       "emit_format": "arazzo",
       "emit_key": "arazzo",
       "loss_approx": 1,
       "loss_drop": 5,
       "loss_ok": 0,
       "loss_synth": 0,
-      "matched_count": 5,
+      "matched_count": 0,
       "overclaims": [],
-      "reason": null,
+      "reason": "Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events). (observed: Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).)",
       "source_format": "zod",
-      "status": "pass",
+      "status": "xfail",
       "unexplained": []
     },
     {
