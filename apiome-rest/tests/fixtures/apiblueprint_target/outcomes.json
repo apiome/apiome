@@ -1,0 +1,85 @@
+{
+  "cards": {
+    "apiblueprint": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossless"
+    },
+    "graphql": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossy"
+    },
+    "raml": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "mson_constraint_drops": 8,
+      "tier": "lossy"
+    },
+    "rpc": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossy"
+    },
+    "wsdl": {
+      "available": true,
+      "mson_constraint_drops": 0,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "apiblueprint": {
+      "default": {
+        "files": [
+          "Bookstore_API.apib"
+        ],
+        "format_line": "FORMAT: 1A",
+        "header_comment": true,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      },
+      "no-comments": {
+        "files": [
+          "Bookstore_API.apib"
+        ],
+        "format_line": "FORMAT: 1A",
+        "header_comment": false,
+        "preserved_percent": 100,
+        "problems": [],
+        "tier": "lossless"
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.apib"
+        ],
+        "format_line": "FORMAT: 1A",
+        "header_comment": true,
+        "preserved_percent": 11,
+        "problems": [],
+        "tier": "lossy"
+      },
+      "no-comments": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.apib"
+        ],
+        "format_line": "FORMAT: 1A",
+        "header_comment": false,
+        "preserved_percent": 11,
+        "problems": [],
+        "tier": "lossy"
+      }
+    }
+  }
+}

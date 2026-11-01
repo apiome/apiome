@@ -33,6 +33,9 @@
  *     live registry. * 16. The RAML card (MFX-17.4): `lossy` for a REST or GraphQL source, `lossless` for an imported RAML API,
  *     one file, with its header-comment and media-type options; a GraphQL source's fidelity report leads
  *     with "RAML captures REST only" — from the recorded live registry and preview.
+ * 17. The API Blueprint card (MFX-18.4): `lossy` for a REST source, `lossless` for an imported blueprint, one
+ *     file, with its format, header-comment and media-type options, and described on the Fidelity step as
+ *     a human-readable docs export — from the recorded live registry.
  */
 
 import React from 'react';
@@ -67,6 +70,7 @@ import {
   EXPORT_DIALOG_TARGETS as TARGETS,
   copybookTargets,
   jsonSchemaTargets,
+  apiblueprintTargets,
   mockExportDialogFetch as mockFetch,
   odataTargets,
   ramlTargets,
@@ -1193,5 +1197,37 @@ describe('ExportDialog — RAML target card (MFX-17.4)', () => {
     fireEvent.click(screen.getByTestId('export-report-toggle'));
     const report = screen.getByTestId('export-fidelity-report');
     expect(within(report).getAllByText(/RAML captures REST only/).length).toBeGreaterThan(0);
+  });
+});
+
+describe('ExportDialog — API Blueprint target card (MFX-18.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['apiblueprint', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(apiblueprintTargets(source)));
+
+    const card = screen.getByTestId('export-target-apiblueprint');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('API Blueprint')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .apib document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('describes the target as a human-readable docs export on the Fidelity step', async () => {
+    await renderAtFidelityStep(mockFetch(apiblueprintTargets('rest')), 'apiblueprint');
+
+    expect(await screen.findByText(/Markdown \+ MSON\), for human-readable docs/)).toBeInTheDocument();
+  });
+
+  it('offers the format, header comment and media type options', async () => {
+    await renderAtTargetStep(mockFetch(apiblueprintTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-apiblueprint'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Format Version/i)).toHaveValue('1A');
+    expect(screen.getByLabelText(/Include Comments/i)).toBeChecked();
+    expect(screen.getByLabelText(/Media Type/i)).toHaveValue('application/json');
   });
 });

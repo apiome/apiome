@@ -1,0 +1,21 @@
+---
+slug: apiblueprint-target-card
+title: Export to API Blueprint from the Export dialog and the CLI
+description: The API Blueprint card writes human-readable docs and lists the constraints it drops.
+authors: [apiome]
+---
+
+The **Export** dialog's **API Blueprint** card writes one `.apib` file, Markdown with MSON data
+structures, for people to read. It shows its three options: **Format Version**, **Include Comments**
+and **Media Type**. The CLI exports the same with `apiome export apiblueprint`.
+[Where to find it](/ship/export-a-spec#api-blueprint-from-any-source).
+
+{/* truncate */}
+
+- **Docs, not validation.** MSON has no validation facets, so a `format`, a `minimum` or `maximum`,
+  and an exclusive bound are dropped. The fidelity report lists each one, in the dialog and in the
+  CLI's output.
+- **Your blueprint exports losslessly.** An item imported from API Blueprint badges **lossless**. Any
+  other source is **lossy**.
+- **One file.** The card, the CLI and a public item's Export dialog on Browse all deliver the `.apib`
+  itself, not a `.zip`.

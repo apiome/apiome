@@ -1,0 +1,68 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "apiblueprint",
+        "format": "apiblueprint",
+        "label": "API Blueprint",
+        "description": "Export as an API Blueprint 1A document (Markdown + MSON), for human-readable docs.",
+        "icon": "file-text",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`ApiblueprintEmitter`.",
+        "properties": {
+          "format_version": {
+            "default": "1A",
+            "description": "API Blueprint `FORMAT` value.",
+            "title": "Format Version",
+            "type": "string"
+          },
+          "include_comments": {
+            "default": true,
+            "description": "Write a generated-file HTML comment under the API title.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "media_type": {
+            "default": "application/json",
+            "description": "The media type of a request body whose source names none.",
+            "title": "Media Type",
+            "type": "string"
+          }
+        },
+        "title": "ApiblueprintEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "format_version": "1A",
+        "include_comments": true,
+        "media_type": "application/json"
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 6,
+        "preserved": 6,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

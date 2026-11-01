@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.582.0] - 2026-11-01
+
+### Added
+- **API Blueprint target card + fixtures (MFX-18.4, #3908).** `tests/test_apiblueprint_target_card.py` +
+  `fixtures/apiblueprint_target/outcomes.json` pin the `apiblueprint` card per source kind (REST, RPC, GraphQL,
+  JSON Schema, WSDL, RAML `lossy`; an imported API Blueprint `lossless`), its description as a human-readable docs
+  export, the count of "MSON has no validation facets" drops per source (the Petstore's formats and bounds), the
+  `include_comments` choices (one `.apib` the export gate accepts, `FORMAT: 1A`, the comment present or not), the
+  MFX-18.3 gate, browse delivering the `.apib` itself, and keep the CLI / UI registry fixtures and the CLI job
+  fixture (with its report) equal to the live registry (`APIOME_REGEN_APIBLUEPRINT_TARGET=1`).
+- OpenAPI document version 1.445.0 → 1.446.0.
+
 ## [1.581.0] - 2026-11-01
 
 ### Added
