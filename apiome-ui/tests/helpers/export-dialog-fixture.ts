@@ -28,6 +28,8 @@ import smithyTargetsForRest from '../fixtures/export-targets-smithy-rest.json';
 import smithyTargetsForSmithy from '../fixtures/export-targets-smithy-smithy.json';
 import xsdTargetsForRest from '../fixtures/export-targets-xsd-rest.json';
 import xsdTargetsForXsd from '../fixtures/export-targets-xsd-xsd.json';
+import thriftTargetsForRest from '../fixtures/export-targets-thrift-rest.json';
+import thriftTargetsForThrift from '../fixtures/export-targets-thrift-thrift.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -542,4 +544,16 @@ export function smithyTargets(source: 'rest' | 'smithy'): ExportTargetsResponse 
  */
 export function xsdTargets(source: 'rest' | 'xsd'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? xsdTargetsForRest : xsdTargetsForXsd);
+}
+
+/**
+ * The Apache Thrift target as the registry lists it (MFX-25.5, #4155), for a REST source and for an imported
+ * Thrift IDL — recorded from the live REST registry by `apiome-rest/tests/test_thrift_target_card.py`. A REST
+ * source loses what Thrift does not keep (`lossy`); a Thrift IDL exports again unchanged (`lossless`).
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `thrift` (an imported Thrift user service).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function thriftTargets(source: 'rest' | 'thrift'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? thriftTargetsForRest : thriftTargetsForThrift);
 }

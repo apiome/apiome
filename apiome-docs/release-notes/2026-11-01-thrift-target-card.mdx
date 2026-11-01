@@ -1,0 +1,19 @@
+---
+slug: thrift-target-card
+title: Export to Apache Thrift from the Export dialog and the CLI
+description: The Thrift card writes one .thrift file whose field ids stay stable across exports.
+authors: [apiome]
+---
+
+The **Export** dialog's **Apache Thrift** card writes one `.thrift` file. The CLI exports the same with
+`apiome export thrift`. [Where to find it](/ship/export-a-spec#thrift-from-any-source).
+
+{/* truncate */}
+
+- **Stable field ids.** A field that has no Thrift id gets one on its first export, and keeps it on
+  every export after that. A field added later gets a new id, and a removed field's id is never
+  reused, so clients built from an earlier export keep working.
+- **Your Thrift exports losslessly.** An item imported from Thrift badges **lossless** and keeps its
+  own ids. Any other source is **lossy**, and the fidelity report lists what Thrift does not keep.
+- **Namespaces from the CLI.** Add `--option 'namespaces={"java": "com.acme"}'` to write `namespace`
+  lines; the dialog offers **Include Comments**.

@@ -142,6 +142,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('data_schema', 'xsd').label).toBe('Data schema & graph');
   });
 
+  it('files Apache Thrift under RPC by paradigm (MFX-25.5)', () => {
+    expect(familyForTarget('rpc', 'thrift').key).toBe('rpc');
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

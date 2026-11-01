@@ -1,6 +1,6 @@
 {
   "name": "@apiome/cli",
-  "version": "0.103.0",
+  "version": "0.104.0",
   "private": true,
   "description": "Command-line client for the Apiome REST API",
   "scripts": {

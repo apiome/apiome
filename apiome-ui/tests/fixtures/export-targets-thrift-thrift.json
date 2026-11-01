@@ -1,0 +1,72 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "thrift",
+        "format": "thrift",
+        "label": "Apache Thrift",
+        "description": "Export as an Apache Thrift IDL (.thrift) document.",
+        "icon": "network",
+        "paradigm": "rpc",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`ThriftEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit brief generated-file header comments.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "persisted_field_numbers": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Pre-loaded stable field ids keyed by canonical field key (MFX-25.2).",
+            "title": "Persisted Field Numbers",
+            "type": "object"
+          },
+          "namespaces": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "`namespace` lines to write, language \u2192 namespace (`{\"java\": \"com.acme\", \"py\": \"acme\"}`; `*` for every language). Defaults to a Thrift source's own namespaces, else `py` and the API's namespace.",
+            "title": "Namespaces",
+            "type": "object"
+          }
+        },
+        "title": "ThriftEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "persisted_field_numbers": {},
+        "namespaces": {}
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 7,
+        "preserved": 7,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

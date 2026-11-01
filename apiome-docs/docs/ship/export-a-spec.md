@@ -313,6 +313,10 @@ unchanged.
   success response's type. An operation with parameters (an OpenAPI path or query parameter, say)
   takes one `<Method>Request` struct that holds them and the body; otherwise it takes its request
   type as `1: T arg`.
+- **Field ids.** A Thrift item keeps its own field ids. A field without one (from OpenAPI, say) gets
+  the next free id, and Apiome stores it, so the next export of the item gives that field the same
+  id. A field you add later gets a new id, and the id of a field you removed is never reused, so
+  clients built from an earlier export keep reading the wire correctly.
 - **Names.** Thrift names are plain identifiers that are not reserved words. `com.acme.Order` is
   written `com_acme_Order`, `order-id` is `order_id`, and `default` is `default_`. Each rename is in
   the fidelity report, and a clash gets a number (`addPet2`).
@@ -343,6 +347,15 @@ The fidelity report lists what Thrift cannot carry, each on the construct it aff
 
 Exporting an OpenAPI, gRPC, GraphQL, WSDL or Avro source to Thrift and reading it back shows no
 change the report did not name.
+
+**Where to find it.** In the **Export** dialog, the **Apache Thrift** card is under **RPC** on the
+**Target** step, as one file. Its badge is **lossless** for an item imported from Thrift and **lossy**
+for any other source. Pick the card to see **Include Comments** (on by default), which writes the
+header comment. The **namespaces** option (`namespace` lines per language) is set from the CLI or the
+REST API: run `apiome export thrift <item> --out <file>.thrift`, and add
+`--option 'namespaces={"java": "com.acme"}'` or `--option include_comments=false`. A lossy export exits
+non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers Thrift too, as the `.thrift` file.
 
 ### OMG IDL (CORBA or DDS) from any source
 
