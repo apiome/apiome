@@ -20,8 +20,8 @@ import { cn } from '../../../../lib/utils';
 const cardVariants = cva('rounded-lg bg-surface text-fg transition-[box-shadow,transform] duration-[var(--dur-base)] ease-out', {
   variants: {
     variant: {
-      /** Surface + soft shadow — the default panel. */
-      default: 'shadow-sm',
+      /** Surface raised above the canvas by a soft shadow and no hairline (facelift "layers"). */
+      default: 'shadow-card',
       /** Hairline instead of elevation — a panel nested inside another surface. */
       flat: 'shadow-[inset_0_0_0_1px_var(--border)]',
       /** Tinted, flush — a region of a page rather than an object on it. */
@@ -31,7 +31,7 @@ const cardVariants = cva('rounded-lg bg-surface text-fg transition-[box-shadow,t
     },
     /** Lifts on hover — only for a card that is itself clickable. */
     hover: {
-      true: 'hover:-translate-y-px hover:shadow-md',
+      true: 'hover:-translate-y-0.5 hover:shadow-card-hover',
       false: '',
     },
     /** The whole card is a link: inherit ink, never underline. */
@@ -90,7 +90,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('text-base font-semibold leading-snug tracking-[-0.01em] text-fg', className)}
+    className={cn('hive-display text-base font-semibold leading-snug tracking-[-0.01em] text-fg', className)}
     {...props}
   />
 ));

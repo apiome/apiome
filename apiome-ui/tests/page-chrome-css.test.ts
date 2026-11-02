@@ -183,15 +183,18 @@ describe('page chrome — why a long title cannot scroll the document', () => {
 describe('page chrome — type that survives the unlayered prose rules', () => {
   it('gives the title its own font size, weight and tracking', () => {
     const title = declarationsOf('.page-header__title');
-    expect(title.get('font-size')).toBe('var(--fs-3xl)');
-    expect(title.get('font-weight')).toBe('600');
-    expect(title.get('letter-spacing')).toBe('var(--track-tight)');
+    // The facelift's display voice (PROPOSALS_FACELIFT.md "type"): Manrope 800 at the stat
+    // step, tracked 1.5× tighter than the text face.
+    expect(title.get('font-family')).toBe('var(--font-display)');
+    expect(title.get('font-size')).toBe('var(--fs-4xl)');
+    expect(title.get('font-weight')).toBe('800');
+    expect(title.get('letter-spacing')).toBe('calc(var(--track-tight) * 1.5)');
     expect(title.get('min-width')).toBe('0');
   });
 
   it('gives the description its own size and ink', () => {
     const description = declarationsOf('.page-header__desc');
-    expect(description.get('font-size')).toBe('var(--fs-sm)');
+    expect(description.get('font-size')).toBe('var(--fs-md)');
     expect(description.get('color')).toBe('var(--fg-muted)');
   });
 

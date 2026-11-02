@@ -78,7 +78,7 @@ export const TAB_TRIGGER_SIZE_CLASS: Record<TabSize, string> = {
 };
 
 /** Selected: the underline and label inked in `--fg`, the strongest ink the theme has. */
-export const TAB_TRIGGER_ACTIVE_CLASS = 'border-fg text-fg';
+export const TAB_TRIGGER_ACTIVE_CLASS = 'border-accent text-fg';
 
 /** Unselected: muted label, and the underline previews on hover. */
 export const TAB_TRIGGER_IDLE_CLASS =
@@ -109,7 +109,7 @@ export const TAB_COUNT_CLASS =
 const PILL_BASE_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border-0 ' +
   'font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none';
-const PILL_ACTIVE_CLASS = 'bg-fg text-surface';
+const PILL_ACTIVE_CLASS = 'bg-brand-navy text-white dark:bg-fg dark:text-surface';
 const PILL_IDLE_CLASS = 'text-fg-muted hover:bg-subtle hover:text-fg';
 const PILL_DISABLED_CLASS = 'cursor-not-allowed text-fg-faint opacity-50';
 

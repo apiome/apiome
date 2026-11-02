@@ -1,4 +1,4 @@
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Manrope } from "next/font/google";
 
 /**
  * App typography: Inter for UI text, JetBrains Mono for code — the pairing
@@ -23,4 +23,16 @@ export const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   display: "swap",
   variable: "--app-webfont-mono",
+});
+
+/**
+ * The display voice (facelift idea "type", PROPOSALS_FACELIFT.md §2): Manrope at 700/800 for
+ * page titles, greetings, section and dialog titles and the big numbers. Inter stays the text
+ * face. `globals.css` reads it as `--font-display`, with the sans stack as the fallback.
+ */
+export const manropeDisplay = Manrope({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  display: "swap",
+  variable: "--app-webfont-display",
 });

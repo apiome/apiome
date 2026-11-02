@@ -20,6 +20,7 @@ import {
   writeCollapsedNavGroups,
 } from './navGroupCollapse';
 import { RAIL_ITEM_CLASS, RAIL_ITEM_HOVER_CLASS, RailTooltip } from './railChrome';
+import { prefersReducedMotion } from '@lib/motion';
 
 /**
  * The rail's grouped navigation (HIVE-3.1, #5287; `DESIGN.md` §5.2 and §6).
@@ -194,15 +195,48 @@ export default function RailNav({ groups, pathname, iconRail }: RailNavProps) {
     });
   }, []);
 
+  /**
+   * The hover pill that follows the pointer (facelift "motion", PROPOSALS_FACELIFT.md §2): one
+   * tinted pill slides between rows at `--dur-slow` instead of each row tinting on its own.
+   * It is decoration — `aria-hidden`, no pointer events — and stays parked under reduced
+   * motion, where the rows keep their own hover tint (`.rail-nav[data-pill]` in globals.css).
+   */
+  const navRef = React.useRef<HTMLElement | null>(null);
+  const pillRef = React.useRef<HTMLSpanElement | null>(null);
+  const [pillOn, setPillOn] = React.useState(false);
+  const pillEnabled = !iconRail && !prefersReducedMotion();
+
+  const movePill = React.useCallback(
+    (event: React.PointerEvent<HTMLElement>) => {
+      if (!pillEnabled) return;
+      const row = (event.target as HTMLElement).closest<HTMLElement>('.rail-item');
+      const nav = navRef.current;
+      const pill = pillRef.current;
+      if (!row || !nav || !pill) return;
+      const top = row.getBoundingClientRect().top - nav.getBoundingClientRect().top + nav.scrollTop;
+      pill.style.transform = `translateY(${Math.round(top)}px)`;
+      setPillOn(true);
+    },
+    [pillEnabled],
+  );
+  const parkPill = React.useCallback(() => setPillOn(false), []);
+
   return (
     <nav
+      ref={navRef}
       aria-label="Primary"
       data-testid="rail-nav"
+      data-pill={pillEnabled ? 'true' : undefined}
+      onPointerOver={movePill}
+      onPointerLeave={parkPill}
       // The rail scrolls on its own so a long nav never scrolls the page with it, and the
       // scrollbar is hidden because the rail is chrome: `scrollbar-width: none` still
       // scrolls by wheel, drag and keyboard.
-      className="min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4 [scrollbar-width:none]"
+      className="rail-nav min-h-0 flex-1 space-y-1 overflow-y-auto overflow-x-hidden px-3 pb-4 [scrollbar-width:none]"
     >
+      {pillEnabled ? (
+        <span ref={pillRef} className="rail-pill" data-on={pillOn ? 'true' : 'false'} aria-hidden />
+      ) : null}
       {groups.map((group) => {
         const listId = `rail-group-${group.id}`;
         // Icon mode ignores folds: the heading that would undo them is not on screen.

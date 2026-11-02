@@ -48,7 +48,7 @@ const MENU_ITEM_SELECTOR = '[role^="menuitem"]';
  * is never drawn underneath the menu that opened it.
  */
 export const RAIL_MENU_SURFACE_CLASS = [
-  'absolute left-0 top-full z-[9990] mt-1 flex flex-col overflow-hidden',
+  'rail-menu absolute left-0 top-full z-[9990] mt-1 flex flex-col overflow-hidden',
   'rounded-md bg-surface p-1.5 text-fg shadow-lg',
   'animate-in fade-in-0 zoom-in-95',
 ].join(' ');

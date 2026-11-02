@@ -169,6 +169,7 @@ const Dashboard = () => {
   return (
     <Page>
       <PageHeader
+        mood="hero"
         breadcrumb={
           home.workspaceName
             ? [{ label: home.workspaceName, href: '/ade/dashboard' }, { label: 'Home' }]

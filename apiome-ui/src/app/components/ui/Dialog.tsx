@@ -182,7 +182,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn('text-xl font-semibold leading-snug tracking-[-0.01em] text-fg', className)}
+    className={cn('hive-display text-xl font-semibold leading-snug tracking-[-0.01em] text-fg', className)}
     {...props}
   />
 ));

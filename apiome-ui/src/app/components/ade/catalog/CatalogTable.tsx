@@ -40,6 +40,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Undo2 } from 'lucide-react';
 
+import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
 import { Avatar } from '@/app/components/ui/Avatar';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -370,6 +371,7 @@ export default function CatalogTable({
 
   return (
     <DataTable
+      rowAttributes={(item) => ({ 'data-fmt-tone': resolveCatalogFormat(item.sourceFormat)?.tone })}
       columns={columns}
       rows={items}
       getRowId={(item) => item.id}
