@@ -56,7 +56,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "204"
               }
             ],
             "name": "deleteTask",
@@ -95,7 +95,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -112,7 +114,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "listTasks",
@@ -170,7 +172,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -187,7 +191,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
                 "content_types": [],
@@ -202,7 +206,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "404"
               }
             ],
             "name": "getTask",
@@ -241,7 +245,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {},
                 "headers": [],
@@ -259,7 +265,9 @@
                 "status_code": null
               },
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "201"
@@ -276,7 +284,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "201"
               },
               {
                 "content_types": [],
@@ -291,7 +299,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "422"
               }
             ],
             "name": "createTask",
@@ -310,7 +318,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {},
                 "headers": [],
@@ -328,7 +338,9 @@
                 "status_code": null
               },
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -345,7 +357,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "replaceTask",
@@ -403,7 +415,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -421,7 +433,7 @@
               "extras": {},
               "item": null,
               "name": "bool",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -439,7 +451,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -457,7 +469,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -475,7 +487,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           }
         ],
@@ -502,7 +514,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:0c4cbdf412f11db79c9c1fdb37aeb702d531075f471cfc0b5d51943068a3c7a0",
+  "fingerprint": "sha256:84cb8c5423fb602103ae330e2dda17e73a4d6e9cab98d575282ba1ace25edced",
   "lint": {
     "findings": 20,
     "grade": "D",

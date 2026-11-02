@@ -178,7 +178,7 @@ WADL: converting a catalog item *is* the migration, through the pack below.
 | **Avro** (and Avro IDL) | Record schemas become `components.schemas`. | `high` | — |
 | **RAML** | Resources and methods convert directly; resource types and traits are applied. | `high` | — |
 | **API Blueprint** | Resources and actions convert directly; example transactions are not carried. | `high` | — |
-| **WADL** | Resources and methods convert directly. | `high` or `medium` | — |
+| **WADL** | Resources and methods convert directly; each method `id` becomes its `operationId` (see [Import WADL descriptions](./wadl-import.md#migrate-to-openapi)). | `high` or `medium` | — |
 
 What every pack does:
 

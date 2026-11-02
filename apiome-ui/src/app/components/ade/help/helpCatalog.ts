@@ -1195,6 +1195,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['sun rpc', 'sunrpc', 'rpcgen', 'rfc 4506', 'rfc 5531', 'program number', 'procedure', 'portmapper', 'nfs', 'grpc', 'lint', 'breaking change', 'migrate'],
   },
   {
+    id: 'wadl-import',
+    title: 'Import WADL descriptions',
+    summary: 'Catalog legacy WADL REST services with reuse resolved, lint and diff rules, then migrate to OpenAPI.',
+    page: 'apiome-docs/docs/bring-in/wadl-import.md',
+    section: 'reference',
+    keywords: ['web application description language', 'jersey', 'jax-rs', 'application.wadl', 'resource_type', 'href', 'xsd', 'grammars', 'operationid', 'lint', 'breaking change', 'migrate'],
+  },
+  {
     id: 'xmlrpc-import',
     title: 'Import XML-RPC method descriptions',
     summary: 'Catalog XML-RPC method calls, responses and faults, with lint and diff rules.',

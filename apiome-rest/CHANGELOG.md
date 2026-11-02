@@ -5,6 +5,54 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.608.0] - 2026-11-02
+
+### Added
+- **WADL: reuse resolved, richer normalization, a lint pack, the breaking-change classifier and method ids kept on
+  the migrate-to-OpenAPI path (MFI-21.3, #3993).** The parser, import source, emitter, conversion pack and corpus
+  fixtures already shipped; this makes the import describe what a WADL document says, and adds what versions, diffs
+  and lint need.
+  - `wadl_parser` resolves WADL's reuse in place: `method` / `param` / `representation` `href="#id"` and a
+    resource's `type="#rt …"` (the `resource_type`s' params, methods and child resources). A reference that names no
+    element (or an external WADL, which is not fetched) is recorded in `WadlDocument.unresolved_refs`; an `href`
+    cycle stops after eight hops. It also reads sequence elements' `minOccurs` / `maxOccurs` / `nillable`, named
+    `simpleType` restrictions (`WadlSimpleType`), a param's `style`, `repeating`, `default` and `option` values,
+    every representation's `mediaType`, and splits a `status` list (`"400 409"`) into one response per code.
+  - `WadlNormalizer`: an optional element (`minOccurs="0"` / `nillable`) is nullable, a required one is not; a
+    repeated element is a list with `min_items` / `max_items`; an enumerated simple type is an `ENUM`, any other
+    resolves to its base type; a param's options become an `enum` constraint, `repeating` a list, and `matrix` /
+    `plain` styles are kept in `extras["wadl_style"]`; messages carry `content_types` and `status_code`;
+    unresolved references are kept in `extras["wadl_unresolved_refs"]`. More XSD built-ins map to primitives
+    (`anyURI`, `base64Binary`, `token`, `nonNegativeInteger`, …). New `CANONICAL_PRIMITIVES` and
+    `explicit_method_id`.
+  - New `app/wadl_lint.py` (`wadl.*`, registered under `wadl`): `reference-resolved`, `template-param-declared`,
+    `method-id-unique` (error); `template-param-used`, `method-name-standard`, `body-on-safe-method`,
+    `response-declared`, `response-status-valid`, `type-resolved` (warning); `method-id-present`,
+    `representation-typed`, `representation-media-type`, `base-uri-present` (info). The three error rules carry
+    blocking-rule transparency metadata and scanner-evaluation fixtures.
+  - New `app/wadl_breaking.py` (`wadl-resources`): params (reusing RAML's grader, now prefix-aware), `option`
+    values, representation media types and elements, and the grammars' sequence elements graded with XML Schema
+    semantics — `element-reordered` (relative order changed) is breaking, `element-shifted` (moved only by an
+    insertion or removal) safe, `occurs-narrowed` breaking, `occurs-widened` dangerous; enumerated simple types
+    by value.
+  - The `wadl` conversion pack keeps each unique method `id` as the OpenAPI `operationId` (a shared id stays
+    synthesized). The task-tracker golden now converts at `high` (94) instead of `medium` (82).
+  - Version-diff fixtures `tests/fixtures/wadl_versions/library.{v1,v2-compatible,v3-breaking}.wadl`.
+
+### Fixed
+- A WADL `method href="#id"` was imported as a `GET` with no id, params or responses.
+- WADL export writes a representation that has a media type but no grammar element (a `text/plain` or form body),
+  one `representation` per media type, a param's `option` values, and `matrix` / `plain` param styles as read, so
+  those survive a WADL → WADL round trip.
+- The built-in "Apiome Recommended" style guide gains the thirteen `wadl.*` rules (apiome-db V345), so their
+  findings are kept.
+
+### Changed
+- `raml_breaking.grade_parameters` takes `prefix` and `type_extra` keyword arguments (defaults unchanged).
+- One-time version change: the first re-import of an existing WADL item records a changed version, because its model
+  gained nullability, media types, status codes and enums.
+- OpenAPI document version 1.472.0 (no endpoint changes).
+
 ## [1.607.0] - 2026-11-02
 
 ### Added

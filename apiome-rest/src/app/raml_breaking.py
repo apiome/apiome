@@ -73,12 +73,16 @@ def _label(parameter: Mapping[str, Any]) -> str:
     return f"{location} parameter {parameter.get('name')!r}"
 
 
-def grade_parameters(before: Any, after: Any) -> List[Grade]:
+def grade_parameters(before: Any, after: Any, *, prefix: str = "raml", type_extra: str = "raml_type") -> List[Grade]:
     """Grade every parameter added, removed or changed on one method.
+
+    Shared by the WADL classifier (:mod:`app.wadl_breaking`), whose params follow the same rules.
 
     Args:
         before: The base method's ``parameters`` (self-projection dicts).
         after: The target method's ``parameters``.
+        prefix: The rule-id namespace (``raml`` → ``raml.parameter-removed``).
+        type_extra: The parameter extra holding the source type name, quoted in rationales.
 
     Returns:
         One grade per parameter that moved.
@@ -91,17 +95,19 @@ def grade_parameters(before: Any, after: Any) -> List[Grade]:
             grades.append(
                 (
                     Severity.BREAKING,
-                    "raml.parameter-added-required",
+                    f"{prefix}.parameter-added-required",
                     f"required {_label(parameter)} was added; existing callers never send it",
                 )
             )
         else:
-            grades.append((Severity.SAFE, "raml.parameter-added-optional", f"optional {_label(parameter)} was added"))
+            grades.append(
+                (Severity.SAFE, f"{prefix}.parameter-added-optional", f"optional {_label(parameter)} was added")
+            )
     for key in sorted(old.keys() - new.keys()):
         grades.append(
             (
                 Severity.DANGEROUS,
-                "raml.parameter-removed",
+                f"{prefix}.parameter-removed",
                 f"{_label(old[key])} was removed; callers that still send it may be rejected or ignored",
             )
         )
@@ -111,21 +117,21 @@ def grade_parameters(before: Any, after: Any) -> List[Grade]:
             grades.append(
                 (
                     Severity.BREAKING,
-                    "raml.parameter-type-changed",
-                    f"{_label(now)} changed type ({was.get('extras', {}).get('raml_type')!r} → "
-                    f"{now.get('extras', {}).get('raml_type')!r})",
+                    f"{prefix}.parameter-type-changed",
+                    f"{_label(now)} changed type ({was.get('extras', {}).get(type_extra)!r} → "
+                    f"{now.get('extras', {}).get(type_extra)!r})",
                 )
             )
         if now.get("required") and not was.get("required"):
             grades.append(
                 (
                     Severity.BREAKING,
-                    "raml.parameter-made-required",
+                    f"{prefix}.parameter-made-required",
                     f"{_label(now)} became required; callers that omit it are rejected",
                 )
             )
         elif was.get("required") and not now.get("required"):
-            grades.append((Severity.SAFE, "raml.parameter-made-optional", f"{_label(now)} is no longer required"))
+            grades.append((Severity.SAFE, f"{prefix}.parameter-made-optional", f"{_label(now)} is no longer required"))
     return grades
 
 

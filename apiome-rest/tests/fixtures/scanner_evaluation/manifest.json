@@ -597,6 +597,27 @@
       ]
     },
     {
+      "id": "catalog/wadl-reference-resolved",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wadl.reference-resolved"
+      ]
+    },
+    {
+      "id": "catalog/wadl-template-param-declared",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wadl.template-param-declared"
+      ]
+    },
+    {
+      "id": "catalog/wadl-method-id-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "wadl.method-id-unique"
+      ]
+    },
+    {
       "id": "catalog/raml-shacl-violation",
       "kind": "catalog_raml_amf",
       "expected_blocking_rule_ids": [

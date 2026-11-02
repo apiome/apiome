@@ -807,4 +807,34 @@ class WadlPack(ConversionPack, register=True):
     label = "WADL"
     formats = frozenset({"wadl"})
     expected_tiers = (FidelityTier.HIGH, FidelityTier.MEDIUM)
-    documented_losses = ("Representations without an XML Schema type convert as untyped bodies.",)
+    documented_losses = (
+        "Representations without an XML Schema type convert as untyped bodies.",
+        "A method whose name is not a standard HTTP verb has no OpenAPI 3.1 slot and is dropped.",
+    )
+
+    def refine_model(self, api: CanonicalApi, source_text: Optional[str]) -> PackRefinement:
+        """Keep each WADL method ``id`` as its ``operationId`` (MFI-21.3, #3993).
+
+        The normalizer names a method by its id but records no ``operationId`` extra (the WADL
+        emitter treats operation extras as lossy), so without this the OpenAPI projection
+        synthesizes ids from verb and path. An id two methods share stays synthesized, so the
+        document keeps unique ``operationId`` s (``wadl.method-id-unique`` flags the clash).
+        """
+        from .wadl_normalizer import explicit_method_id
+
+        ids = [explicit_method_id(op) for service in api.services for op in service.operations]
+        unique = {method_id for method_id in ids if method_id is not None and ids.count(method_id) == 1}
+        if not unique:
+            return PackRefinement(api=api)
+        services = []
+        for service in api.services:
+            operations = []
+            for op in service.operations:
+                method_id = explicit_method_id(op)
+                if method_id in unique and "operationId" not in op.extras:
+                    op = op.model_copy(update={"extras": {**op.extras, "operationId": method_id}})
+                operations.append(op)
+            services.append(service.model_copy(update={"operations": operations}))
+        plural = "s" if len(unique) != 1 else ""
+        note = f"Kept {len(unique)} WADL method id{plural} as operationId{plural}."
+        return PackRefinement(api=api.model_copy(update={"services": services}), refinements=[note])

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WADL version fixture (MFI-21.3, #3993): a library lending service, v3 — breaking
+  against v1: two elements swapped, one made required, the renewal bound narrowed, an enum value
+  and a status option removed, a required param added and the create request switched from XML
+  to JSON.
+
+  Uses WADL's reuse: a `resource_type` applied with `type="#item"`, a method written once and
+  referenced with `href="#listLoans"`, a param referenced with `href`, an enumerated simple
+  type, `option` values, and optional / repeated sequence elements.
+-->
+<application xmlns="http://wadl.dev.java.net/2009/02"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             xmlns:tns="http://example.com/library">
+  <doc>Library lending API</doc>
+
+  <grammars>
+    <xsd:schema targetNamespace="http://example.com/library">
+      <xsd:element name="loan" type="tns:Loan"/>
+      <xsd:simpleType name="LoanStatus">
+        <xsd:restriction base="xsd:string">
+          <xsd:enumeration value="ACTIVE"/>
+          <xsd:enumeration value="RETURNED"/>
+        </xsd:restriction>
+      </xsd:simpleType>
+      <xsd:complexType name="Loan">
+        <xsd:sequence>
+          <xsd:element name="id" type="xsd:string"/>
+          <xsd:element name="member" type="xsd:string"/>
+          <xsd:element name="isbn" type="xsd:string"/>
+          <xsd:element name="status" type="tns:LoanStatus"/>
+          <xsd:element name="note" type="xsd:string"/>
+          <xsd:element name="renewal" type="xsd:date" minOccurs="0" maxOccurs="2"/>
+        </xsd:sequence>
+      </xsd:complexType>
+    </xsd:schema>
+  </grammars>
+
+  <resource_type id="item">
+    <param name="loanId" style="template" type="xsd:string"/>
+    <method name="GET" id="getLoan">
+      <response status="200">
+        <representation mediaType="application/xml" element="tns:loan"/>
+      </response>
+      <response status="404"/>
+    </method>
+  </resource_type>
+
+  <method name="GET" id="listLoans">
+    <doc>List loans, optionally by status.</doc>
+    <request>
+      <param href="#statusFilter"/>
+      <param name="branch" style="query" type="xsd:string" required="true"/>
+    </request>
+    <response status="200">
+      <representation mediaType="application/xml" element="tns:loan"/>
+    </response>
+  </method>
+
+  <param id="statusFilter" name="status" style="query" type="xsd:string" required="false">
+    <option value="ACTIVE"/>
+    <option value="RETURNED"/>
+  </param>
+
+  <resources base="https://library.example.com/api/">
+    <resource path="loans">
+      <method href="#listLoans"/>
+      <method name="POST" id="createLoan">
+        <request>
+          <representation mediaType="application/json" element="tns:loan"/>
+        </request>
+        <response status="201">
+          <representation mediaType="application/xml" element="tns:loan"/>
+        </response>
+        <response status="400 409"/>
+      </method>
+      <resource path="{loanId}" type="#item"/>
+    </resource>
+  </resources>
+</application>

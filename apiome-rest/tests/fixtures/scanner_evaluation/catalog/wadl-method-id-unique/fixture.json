@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/wadl-method-id-unique",
+  "source_format": "wadl",
+  "description": "WADL description with exactly one blocking defect: two methods share the id listLoans.",
+  "document": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<application xmlns=\"http://wadl.dev.java.net/2009/02\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:tns=\"http://example.com/library\">\n  <doc>Library lending API</doc>\n  <grammars>\n    <xsd:schema targetNamespace=\"http://example.com/library\">\n      <xsd:element name=\"loan\" type=\"tns:Loan\"/>\n      <xsd:complexType name=\"Loan\"><xsd:sequence><xsd:element name=\"id\" type=\"xsd:string\"/></xsd:sequence></xsd:complexType>\n    </xsd:schema>\n  </grammars>\n  <resources base=\"https://library.example.com/api/\">\n    <resource path=\"loans\">\n      <method name=\"GET\" id=\"listLoans\"><response status=\"200\"><representation mediaType=\"application/xml\" element=\"tns:loan\"/></response></method>\n      <method name=\"POST\" id=\"listLoans\"><request><representation mediaType=\"application/xml\" element=\"tns:loan\"/></request><response status=\"201\"><representation mediaType=\"application/xml\" element=\"tns:loan\"/></response></method>\n    </resource>\n  </resources>\n</application>\n"
+}

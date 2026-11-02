@@ -44,7 +44,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -61,10 +63,12 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "400"
@@ -81,7 +85,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "400"
               }
             ],
             "name": "search",
@@ -253,7 +257,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           }
         ],
@@ -290,7 +294,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -308,7 +312,7 @@
               "extras": {},
               "item": null,
               "name": "i64",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -326,7 +330,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -344,7 +348,7 @@
               "extras": {},
               "item": null,
               "name": "string",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -361,8 +365,8 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "anyURI",
-              "nullable": true
+              "name": "string",
+              "nullable": false
             }
           }
         ],
@@ -399,7 +403,7 @@
               "extras": {},
               "item": null,
               "name": "i32",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -417,7 +421,7 @@
               "extras": {},
               "item": null,
               "name": "i64",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -435,7 +439,7 @@
               "extras": {},
               "item": null,
               "name": "i32",
-              "nullable": true
+              "nullable": false
             }
           }
         ],
@@ -462,7 +466,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:672a42daf2561174bad99790d1e9ae8e5389dfad4e0ac4a8c29a24e95a413a44",
+  "fingerprint": "sha256:f98dff81d2fdedcc3143cda77291b034c4fcd737442ef1f398aff434b739b122",
   "lint": {
     "findings": 15,
     "grade": "C",

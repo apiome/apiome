@@ -56,7 +56,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "204"
               }
             ],
             "name": "cancelReindex",
@@ -75,7 +75,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -92,7 +94,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "GET /corpus/{collection};view",
@@ -122,6 +124,7 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "wadl_style": "matrix",
                   "wadl_type": "string"
                 },
                 "key": "GET /corpus/{collection};view#path.view",
@@ -150,7 +153,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "application/xml"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -167,7 +172,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               },
               {
                 "content_types": [],
@@ -182,7 +187,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "400"
               },
               {
                 "content_types": [],
@@ -197,7 +202,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "429"
               }
             ],
             "name": "search",
@@ -312,6 +317,21 @@
             "kind": "request_response",
             "messages": [
               {
+                "content_types": [
+                  "application/x-www-form-urlencoded"
+                ],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "POST /reindex#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "request",
+                "status_code": null
+              },
+              {
                 "content_types": [],
                 "description": null,
                 "extras": {
@@ -324,7 +344,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "202"
               },
               {
                 "content_types": [],
@@ -339,7 +359,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "409"
               }
             ],
             "name": "reindex",
@@ -350,6 +370,7 @@
                 "deprecated": false,
                 "description": null,
                 "extras": {
+                  "wadl_style": "plain",
                   "wadl_type": "string"
                 },
                 "key": "POST /reindex#query.priority",
@@ -397,7 +418,7 @@
               "extras": {},
               "item": null,
               "name": "i64",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -415,7 +436,7 @@
               "extras": {},
               "item": null,
               "name": "i64",
-              "nullable": true
+              "nullable": false
             }
           }
         ],
@@ -451,8 +472,8 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "anyURI",
-              "nullable": true
+              "name": "string",
+              "nullable": false
             }
           },
           {
@@ -470,7 +491,7 @@
               "extras": {},
               "item": null,
               "name": "i32",
-              "nullable": true
+              "nullable": false
             }
           },
           {
@@ -488,7 +509,7 @@
               "extras": {},
               "item": null,
               "name": "i64",
-              "nullable": true
+              "nullable": false
             }
           }
         ],
@@ -515,15 +536,15 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:2f7b9d38f87b5335580ffc9bbe147386a381ea2b5b64b12163ac53a90c5a5079",
+  "fingerprint": "sha256:2b4e5c4adb6df133115995739fb5db531f6cd5c06e39564f04f82824bd93f120",
   "lint": {
-    "findings": 17,
-    "grade": "C",
-    "report_fingerprint": "2ec46daf1866fdacc3db39d3924eb56bc5c2a6f7694a9ec28c2aab8d32bd77c4",
-    "score": 71,
+    "findings": 19,
+    "grade": "D",
+    "report_fingerprint": "e7461aac7a97d223e0426dded9019e60d148c344eb2e009256b9ce65d2ce02fc",
+    "score": 69,
     "severity_counts": {
       "error": 0,
-      "info": 13,
+      "info": 15,
       "warning": 4
     }
   },
