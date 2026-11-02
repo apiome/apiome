@@ -112,8 +112,13 @@ tell it apart by its source:
   and the npm, PyPI, NuGet, Cargo or OCI packages. A package is pinned only when the registry names
   an exact version.
 
-Each sync refreshes the server's name, URL, transport and description from the registry, and retires
-a source link the registry no longer lists. Links you added yourself stay. A server that only ships
+- **Registry metadata** (`registry_metadata` on the server in the API) records the entry's server
+  name, version, website, the registry's status (`active` or `deprecated`) and dates, and the
+  remote Apiome calls with the headers it declares. Secret header values are never stored. See
+  [What an MCP registry sync does](./connectors.mdx#what-an-mcp-registry-sync-does).
+
+Each sync refreshes the server's name, URL, transport, description and registry metadata from the
+registry, and retires a source link the registry no longer lists. Links you added yourself stay. A server that only ships
 packages, or whose remote resolves to a private address, is not added. A server whose remote does not
 answer is added, but its row on the connector stays **discovered** until it does. The connector's
 **Items** tab says why.
