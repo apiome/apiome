@@ -89,8 +89,19 @@ _OPAQUE_KEYS = frozenset(
 # edits — Avro's semantic hashes (MFI-12.1), which keep ``doc`` by design, and the canonical-XML
 # hash of a WSDL / XSD import (MFI-13.1), which keeps ``xs:documentation`` — or that name files
 # (the XML import graph) — and would otherwise mint a version for an edit the fingerprint is meant
-# to ignore.
-UNHASHED_EXTRAS = frozenset({"avro_semantic_hashes", "xml_c14n_sha256", "xml_c14n_algorithm", "xml_import_graph"})
+# to ignore. API Blueprint's Refract hash (MFI-16.1) exists only where drafter is installed, so it is
+# kept out too: the same blueprint must mint the same version on every server.
+UNHASHED_EXTRAS = frozenset(
+    {
+        "avro_semantic_hashes",
+        "xml_c14n_sha256",
+        "xml_c14n_algorithm",
+        "xml_import_graph",
+        "apib_refract_sha256",
+        "apib_refract_algorithm",
+        "apib_drafter_version",
+    }
+)
 
 
 def _scrub(node: Any) -> Any:

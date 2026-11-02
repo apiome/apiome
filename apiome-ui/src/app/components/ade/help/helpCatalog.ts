@@ -938,6 +938,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['zosconnect', 'cics', 'ims', 'mainframe', 'cobol', 'api requester', 'api provider', 'structure'],
   },
   {
+    id: 'apiblueprint-import',
+    title: 'Import an API Blueprint',
+    summary: 'Catalog an API Blueprint, checked and hashed by drafter, the reference parser.',
+    page: 'apiome-docs/docs/bring-in/apiblueprint-import.md',
+    section: 'reference',
+    keywords: ['apib', 'drafter', 'refract', 'api elements', 'mson', 'apiary', 'legacy'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

@@ -13,6 +13,10 @@ and reported by the ``apiblueprint`` lint pack (:mod:`app.apiblueprint_lint`).
 
 The check is best effort: without ``drafter`` on the server, or when it fails to run, the import is
 unaffected and simply carries no annotations.
+
+MFI-16.1 (#3804) keeps the whole parse result as well — the API Elements / Refract tree — from the
+same run: :func:`run_drafter_parse` returns it, and :mod:`app.apiblueprint_refract` hashes its
+contract.
 """
 
 from __future__ import annotations
@@ -27,8 +31,11 @@ __all__ = [
     "DRAFTER_TIMEOUT_SECONDS",
     "DRAFTER_TOOL_KEY",
     "drafter_available",
+    "annotations_of",
     "read_drafter_annotations",
+    "read_drafter_parse_result",
     "run_drafter",
+    "run_drafter_parse",
 ]
 
 logger = logging.getLogger(__name__)
@@ -68,16 +75,14 @@ def _start(annotation: Mapping[str, Any]) -> Dict[str, int]:
     return {}
 
 
-def read_drafter_annotations(stdout: Optional[str]) -> Optional[List[Dict[str, Any]]]:
-    """Read the annotations of a drafter Refract parse result.
+def read_drafter_parse_result(stdout: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Read a drafter ``-f json`` parse result (MFI-16.1).
 
     Args:
         stdout: ``drafter -f json`` output.
 
     Returns:
-        One dict per annotation, in document order: ``severity`` (``warning`` / ``error``),
-        ``code`` (drafter's annotation code), ``message`` and, when drafter located it, the 1-based
-        ``line`` / ``column``. ``None`` when the output is not a parse result.
+        The ``parseResult`` element, or ``None`` when the output is not one.
     """
     try:
         result = json.loads(stdout or "")
@@ -85,6 +90,20 @@ def read_drafter_annotations(stdout: Optional[str]) -> Optional[List[Dict[str, A
         return None
     if not isinstance(result, Mapping) or result.get("element") != "parseResult":
         return None
+    return dict(result)
+
+
+def annotations_of(result: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """The annotations of a parse result.
+
+    Args:
+        result: A ``parseResult`` element (:func:`read_drafter_parse_result`).
+
+    Returns:
+        One dict per annotation, in document order: ``severity`` (``warning`` / ``error``),
+        ``code`` (drafter's annotation code), ``message`` and, when drafter located it, the 1-based
+        ``line`` / ``column``.
+    """
     annotations: List[Dict[str, Any]] = []
     for element in result.get("content") or []:
         if not isinstance(element, Mapping) or element.get("element") != "annotation":
@@ -101,6 +120,56 @@ def read_drafter_annotations(stdout: Optional[str]) -> Optional[List[Dict[str, A
             }
         )
     return annotations
+
+
+def read_drafter_annotations(stdout: Optional[str]) -> Optional[List[Dict[str, Any]]]:
+    """Read the annotations of a drafter Refract parse result.
+
+    Args:
+        stdout: ``drafter -f json`` output.
+
+    Returns:
+        The annotations (:func:`annotations_of`), or ``None`` when the output is not a parse result.
+    """
+    result = read_drafter_parse_result(stdout)
+    return annotations_of(result) if result is not None else None
+
+
+def run_drafter_parse(text: str, *, strict: bool = False) -> Optional[Dict[str, Any]]:
+    """Run ``drafter -f json`` on a blueprint and return its parse result (MFI-16.1).
+
+    Args:
+        text: The API Blueprint document.
+        strict: Raise instead of returning ``None`` when drafter could not give an answer.
+
+    Returns:
+        The ``parseResult`` element. Without ``strict``, ``None`` when drafter is missing, fails to
+        run, or prints no parse result — the import does not depend on it.
+
+    Raises:
+        ToolchainError: With ``strict``, when drafter is missing (``ToolNotAvailableError``) or failed
+            to run (a timeout, a resource limit…).
+        ValueError: With ``strict``, when drafter printed no parse result.
+    """
+    try:
+        result = run_tool_blocking(
+            DRAFTER_TOOL_KEY, ["-f", "json"], stdin=text, timeout=DRAFTER_TIMEOUT_SECONDS, thread_name="drafter"
+        )
+        stdout = result.stdout
+    except ToolExecutionError as exc:
+        # drafter exits with its first error's code and still prints the parse result.
+        stdout = exc.stdout
+    except ToolchainError as exc:
+        if strict:
+            raise
+        logger.warning("drafter did not run; the blueprint is imported without its parse result: %s", exc)
+        return None
+    parsed = read_drafter_parse_result(stdout)
+    if parsed is None:
+        if strict:
+            raise ValueError("drafter printed no parse result")
+        logger.warning("drafter printed no parse result; the blueprint is imported without it")
+    return parsed
 
 
 def run_drafter(text: str, *, strict: bool = False) -> List[Dict[str, Any]]:
@@ -121,22 +190,5 @@ def run_drafter(text: str, *, strict: bool = False) -> List[Dict[str, Any]]:
             to run (a timeout, a resource limit…).
         ValueError: With ``strict``, when drafter printed no parse result.
     """
-    try:
-        result = run_tool_blocking(
-            DRAFTER_TOOL_KEY, ["-f", "json"], stdin=text, timeout=DRAFTER_TIMEOUT_SECONDS, thread_name="drafter"
-        )
-        stdout = result.stdout
-    except ToolExecutionError as exc:
-        stdout = exc.stdout
-    except ToolchainError as exc:
-        if strict:
-            raise
-        logger.warning("drafter did not run; the blueprint is imported without its annotations: %s", exc)
-        return []
-    annotations = read_drafter_annotations(stdout)
-    if annotations is None:
-        if strict:
-            raise ValueError("drafter printed no parse result")
-        logger.warning("drafter printed no parse result; the blueprint is imported without its annotations")
-        return []
-    return annotations
+    result = run_drafter_parse(text, strict=strict)
+    return annotations_of(result) if result is not None else []

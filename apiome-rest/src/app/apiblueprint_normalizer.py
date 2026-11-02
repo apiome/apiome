@@ -19,6 +19,7 @@ from .apiblueprint_parser import (
     ApiblueprintField,
     ApiblueprintParameter,
 )
+from .apiblueprint_refract import DRAFTER_VERSION, REFRACT_ALGORITHM, refract_sha256
 from .canonical_model import (
     ApiIdentity,
     ApiParadigm,
@@ -151,6 +152,22 @@ def _parameter(
 MAX_RECORDED_ANNOTATIONS = 50
 
 
+def _refract_extras(source: ApiblueprintDocument) -> Dict[str, Any]:
+    """The Refract contract hash drafter's parse result yields (MFI-16.1); empty without drafter.
+
+    Kept out of the version fingerprint (:data:`app.fingerprint.UNHASHED_EXTRAS`): a server with
+    drafter and one without must mint the same version for the same blueprint.
+    """
+    digest = refract_sha256(source.refract)
+    if digest is None:
+        return {}
+    return {
+        "apib_refract_sha256": digest,
+        "apib_refract_algorithm": REFRACT_ALGORITHM,
+        "apib_drafter_version": DRAFTER_VERSION,
+    }
+
+
 def _drafter_extras(source: ApiblueprintDocument) -> Dict[str, Any]:
     """drafter's annotations (MFI-16.3); empty when there are none, so a clean model is unchanged."""
     if not source.drafter_annotations:
@@ -277,12 +294,18 @@ class ApiblueprintNormalizer(Normalizer, register=True):
             servers=servers,
             services=services,
             types=types,
-            raw={"apiblueprint": source.raw} if include_raw else None,
+            raw=(
+                {"apiblueprint": source.raw, **({"refract": source.refract} if source.refract else {})}
+                if include_raw
+                else None
+            ),
             extras={
                 "apib_format_version": source.format_version,
                 "apib_host": source.host,
                 # MFI-16.3: drafter's annotations, for the `apiblueprint` lint pack (omitted when none).
                 **_drafter_extras(source),
+                # MFI-16.1: the hash of drafter's Refract tree, without prose and examples.
+                **_refract_extras(source),
             },
         )
         return normalize_ordering(api)
