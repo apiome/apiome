@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synthetic SAP Gateway-style OData v2 service metadata for `apiome import odata` tests (MFI-11.6). -->
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"
+           xmlns:sap="http://www.sap.com/Protocols/SAPData">
+  <edmx:DataServices xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"
+                     m:DataServiceVersion="2.0">
+    <Schema Namespace="ZSALES_SRV" xml:lang="en" sap:schema-version="1"
+            xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
+      <EntityType Name="SalesOrder" sap:content-version="1">
+        <Key>
+          <PropertyRef Name="SalesOrderID"/>
+        </Key>
+        <Property Name="SalesOrderID" Type="Edm.String" Nullable="false" MaxLength="10" sap:label="Sales Order"/>
+        <Property Name="CustomerID" Type="Edm.String" MaxLength="10" sap:label="Customer"/>
+        <Property Name="GrossAmount" Type="Edm.Decimal" Precision="15" Scale="2" sap:unit="CurrencyCode"/>
+        <Property Name="CurrencyCode" Type="Edm.String" MaxLength="5" sap:semantics="currency-code"/>
+        <Property Name="CreatedAt" Type="Edm.DateTime" Precision="7"/>
+        <NavigationProperty Name="ToItems" Relationship="ZSALES_SRV.OrderToItems"
+                            FromRole="FromRole_OrderToItems" ToRole="ToRole_OrderToItems"/>
+      </EntityType>
+      <EntityType Name="SalesOrderItem" sap:content-version="1">
+        <Key>
+          <PropertyRef Name="SalesOrderID"/>
+          <PropertyRef Name="ItemPosition"/>
+        </Key>
+        <Property Name="SalesOrderID" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="ItemPosition" Type="Edm.String" Nullable="false" MaxLength="10"/>
+        <Property Name="ProductID" Type="Edm.String" MaxLength="10"/>
+        <Property Name="Quantity" Type="Edm.Decimal" Precision="13" Scale="3"/>
+      </EntityType>
+      <Association Name="OrderToItems" sap:content-version="1">
+        <End Type="ZSALES_SRV.SalesOrder" Multiplicity="1" Role="FromRole_OrderToItems"/>
+        <End Type="ZSALES_SRV.SalesOrderItem" Multiplicity="*" Role="ToRole_OrderToItems"/>
+        <ReferentialConstraint>
+          <Principal Role="FromRole_OrderToItems">
+            <PropertyRef Name="SalesOrderID"/>
+          </Principal>
+          <Dependent Role="ToRole_OrderToItems">
+            <PropertyRef Name="SalesOrderID"/>
+          </Dependent>
+        </ReferentialConstraint>
+      </Association>
+      <EntityContainer Name="ZSALES_SRV_Entities" m:IsDefaultEntityContainer="true">
+        <EntitySet Name="SalesOrderSet" EntityType="ZSALES_SRV.SalesOrder" sap:pageable="true"/>
+        <EntitySet Name="SalesOrderItemSet" EntityType="ZSALES_SRV.SalesOrderItem"/>
+        <AssociationSet Name="OrderToItemsSet" Association="ZSALES_SRV.OrderToItems">
+          <End EntitySet="SalesOrderSet" Role="FromRole_OrderToItems"/>
+          <End EntitySet="SalesOrderItemSet" Role="ToRole_OrderToItems"/>
+        </AssociationSet>
+        <FunctionImport Name="ConfirmOrder" ReturnType="ZSALES_SRV.SalesOrder" EntitySet="SalesOrderSet"
+                        m:HttpMethod="POST">
+          <Parameter Name="SalesOrderID" Type="Edm.String" Mode="In" MaxLength="10"/>
+        </FunctionImport>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>

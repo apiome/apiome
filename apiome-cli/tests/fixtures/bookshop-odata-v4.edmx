@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic OData v4 service metadata for `apiome import odata` tests (MFI-11.6). -->
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+  <edmx:DataServices>
+    <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="Bookshop">
+      <EnumType Name="Genre">
+        <Member Name="Fiction" Value="0"/>
+        <Member Name="Science" Value="1"/>
+        <Member Name="History" Value="2"/>
+      </EnumType>
+      <EntityType Name="Author">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Name" Type="Edm.String" Nullable="false" MaxLength="120"/>
+        <NavigationProperty Name="Books" Type="Collection(Bookshop.Book)" Partner="Author"/>
+      </EntityType>
+      <EntityType Name="Book">
+        <Key>
+          <PropertyRef Name="ID"/>
+        </Key>
+        <Property Name="ID" Type="Edm.Int32" Nullable="false"/>
+        <Property Name="Title" Type="Edm.String" Nullable="false" MaxLength="200"/>
+        <Property Name="Genre" Type="Bookshop.Genre"/>
+        <Property Name="Price" Type="Edm.Decimal" Precision="9" Scale="2"/>
+        <NavigationProperty Name="Author" Type="Bookshop.Author" Partner="Books"/>
+      </EntityType>
+      <Function Name="BooksByGenre">
+        <Parameter Name="genre" Type="Bookshop.Genre" Nullable="false"/>
+        <ReturnType Type="Collection(Bookshop.Book)"/>
+      </Function>
+      <Action Name="Discount" IsBound="true">
+        <Parameter Name="book" Type="Bookshop.Book"/>
+        <Parameter Name="percent" Type="Edm.Int32" Nullable="false"/>
+        <ReturnType Type="Bookshop.Book"/>
+      </Action>
+      <EntityContainer Name="BookshopService">
+        <EntitySet Name="Authors" EntityType="Bookshop.Author">
+          <NavigationPropertyBinding Path="Books" Target="Books"/>
+        </EntitySet>
+        <EntitySet Name="Books" EntityType="Bookshop.Book">
+          <NavigationPropertyBinding Path="Author" Target="Authors"/>
+        </EntitySet>
+        <FunctionImport Name="BooksByGenre" Function="Bookshop.BooksByGenre" EntitySet="Books"/>
+      </EntityContainer>
+    </Schema>
+  </edmx:DataServices>
+</edmx:Edmx>
