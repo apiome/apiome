@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.612.0] - 2026-11-02
+
+### Fixed
+- **The image build failed fetching the kubeconform CRD schema** (MFX-21.6, #4345):
+  `yannh/kubernetes-json-schema` publishes no standalone schema for the apiextensions.k8s.io/v1
+  `CustomResourceDefinition` kind (only its sub-objects), so `master-standalone-strict/customresourcedefinition-apiextensions-v1.json`
+  answered 404. The Dockerfile now downloads the kind's non-standalone schema and `_definitions.json`, and the new
+  `toolchain/k8s-standalone-schema.mjs` builds the strict standalone file kubeconform reads (definition `$ref`s
+  inlined, a recursive definition cut to `{}`, `additionalProperties: false` on every object listing its properties).
+  The build's smoke test still runs `kubeconform -strict`; a CRD missing `names.plural` or carrying an unknown field is
+  still rejected.
+
+### Changed
+- OpenAPI document version 1.476.0 (no endpoint changes).
+
 ## [1.611.0] - 2026-11-02
 
 ### Added
