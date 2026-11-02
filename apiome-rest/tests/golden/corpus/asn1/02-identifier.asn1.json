@@ -71,10 +71,12 @@
         "extras": {
           "asn1_choice_members": [
             {
+              "asn1_type": "INTEGER",
               "name": "id",
               "type": "integer"
             },
             {
+              "asn1_type": "UTF8String",
               "name": "code",
               "type": "string"
             }
@@ -121,7 +123,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 1,
             "key": "IdentifierModule.Item.name",
             "name": "name",
@@ -156,15 +160,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:39b3c1d00e4bdcdf5f46138c0d9114e79539bfc131a6fbd704edbbae0e4c5c36",
+  "fingerprint": "sha256:3fbd6246be6e05ac7b3e78a8ffa509a3ff746b7d867427098e3eb310d9b55d47",
   "lint": {
-    "findings": 6,
+    "findings": 9,
     "grade": "B",
-    "report_fingerprint": "2a8d971ef19f32e8e21321c85b5366ba77666721def535da8ca5f7da02c307ab",
-    "score": 85,
+    "report_fingerprint": "62cc575b93ea95ba14dbbc7a6629d703de9280e2dc5329b8ccdcf7cf25b6edc0",
+    "score": 82,
     "severity_counts": {
       "error": 0,
-      "info": 3,
+      "info": 6,
       "warning": 3
     }
   },

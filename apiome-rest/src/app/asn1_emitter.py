@@ -35,7 +35,7 @@ module's object identifier), beside ``automatic_tags`` and ``include_comments``.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from pydantic import Field, field_validator
 
@@ -436,34 +436,41 @@ class _Asn1Writer:
         elif type_.kind is TypeKind.MAP:
             body = [self._map(type_)]
         elif type_.kind is TypeKind.ALIAS and type_.aliased is not None:
-            body = [self._constrained_ref(type_.aliased, type_.constraints, type_.key)]
+            body = [self._declared_builtin(type_.extras, type_.aliased, type_.constraints, type_.key)
+                    or self._constrained_ref(type_.aliased, type_.constraints, type_.key)]
         else:
             # SCALAR (and an ALIAS with no target): the type's own name is the scalar vocabulary.
             body = [self._constrained_ref(TypeRef(name=type_.name or type_.key), type_.constraints, type_.key,
                                           scalar_only=True)]
         self.tracker.record(type_.key, Provenance.SOURCE)
         lines = self._comment_lines(type_.description, "  ", type_.key) + self._note_lines(type_.key, "  ")
-        lines.append(f"  {name} ::= {body[0]}")
+        lines.append(f"  {name} ::= {_tag_prefix(type_.extras)}{body[0]}")
         lines += body[1:]
         return lines
 
     def _sequence(self, type_: Type) -> List[str]:
-        """A record's ``SEQUENCE { … }`` (first line, then one line per component)."""
+        """A record's ``SEQUENCE { … }`` (``SET`` for an imported SET), one line per component.
+
+        An ASN.1 item's tags, extension marker and extension additions are written back as read.
+        """
+        keyword = "SET" if type_.extras.get("asn1_kind") == "SET" else "SEQUENCE"
         names = Namer(identifier)
         members: List[List[str]] = []
-        for field in sorted(type_.fields, key=lambda f: f.field_number or 0):
+        fields = sorted(type_.fields, key=lambda f: f.field_number or 0)
+        for field in fields:
             component = names.name(field.name or field.key)
             self._renamed(field.name, component, field.key, "field")
             body = self._field(field)
             lines = self._comment_lines(field.description, "    ", field.key) + self._note_lines(field.key, "    ")
-            lines.append(f"    {component} {body}")
+            lines.append(f"    {component} {_tag_prefix(field.extras)}{body}")
             self.tracker.record(field.key, Provenance.SOURCE)
             members.append(lines)
+        members = _with_extension_marker(members, type_.extras, [f.extras for f in fields])
         if not members:
-            return ["SEQUENCE { }"]
+            return [f"{keyword} {{ }}"]
         for lines in members[:-1]:
             lines[-1] += ","
-        return ["SEQUENCE {", *[line for lines in members for line in lines], "  }"]
+        return [f"{keyword} {{", *[line for lines in members for line in lines], "  }"]
 
     def _enumerated(self, type_: Type) -> str:
         """``ENUMERATED { a(0), b(1) }`` — numbered only when every value is a distinct integer."""
@@ -480,8 +487,9 @@ class _Asn1Writer:
         for value, number in zip(type_.enum_values, numbers):
             item = names.name(value.name or str(value.value), key=value.name)
             self._renamed(value.name, item, value.key or type_.key, "enum value")
-            items.append(f"{item}({number})" if numbered else item)
-        return "ENUMERATED { " + ", ".join(items) + " }"
+            items.append([f"{item}({number})" if numbered else item])
+        marked = _with_extension_marker(items, type_.extras, [value.extras for value in type_.enum_values])
+        return "ENUMERATED { " + ", ".join(entry[0].strip() for entry in marked) + " }"
 
     def _choice(self, type_: Type) -> List[str]:
         """A union's ``CHOICE { … }``: alternatives named as imported, else after their member type."""
@@ -494,15 +502,22 @@ class _Asn1Writer:
         imported = type_.extras.get("asn1_choice_members")
         labels = [m.get("name") if isinstance(m, dict) else None for m in imported] if isinstance(
             imported, list) and len(imported) == len(members) else [None] * len(members)
+        extras = [m if isinstance(m, dict) else {} for m in imported] if isinstance(
+            imported, list) and len(imported) == len(members) else [{} for _ in members]
         names = Namer(identifier)
-        lines = ["CHOICE {"]
-        for index, (member, label) in enumerate(zip(members, labels)):
+        entries: List[List[str]] = []
+        for member, label, alt_extras in zip(members, labels, extras):
             target = self._resolve(member)
             source = label if isinstance(label, str) and label else (target.name if target else member.split(".")[-1])
             alternative = names.name(source)
-            expr = self._constrained_ref(TypeRef(name=member), None, type_.key)
-            lines.append(f"    {alternative} {expr}" + ("," if index < len(members) - 1 else ""))
-        return lines + ["  }"]
+            rules = alt_extras.get("constraints")
+            alt_constraints = Constraints(**rules) if isinstance(rules, dict) and rules else None
+            expr = self._declared_builtin(alt_extras, TypeRef(name=member), alt_constraints, type_.key) or (
+                self._constrained_ref(TypeRef(name=member), alt_constraints, type_.key))
+            entries.append([f"    {alternative} {_tag_prefix(alt_extras)}{expr}"])
+        entries = _with_extension_marker(entries, type_.extras, extras)
+        return ["CHOICE {", *[entry[0] + ("," if i < len(entries) - 1 else "") for i, entry in enumerate(entries)],
+                "  }"]
 
     def _map(self, type_: Type) -> str:
         """A map as a list of key / value pairs (ASN.1 has no map type)."""
@@ -518,9 +533,35 @@ class _Asn1Writer:
 
     # --- components ---------------------------------------------------------
 
+    def _declared_builtin(
+        self, extras: Mapping[str, Any], ref: TypeRef, constraints: Optional[Constraints], owner: str
+    ) -> Optional[str]:
+        """The ASN.1 built-in an ASN.1 import recorded (``asn1_type``), with its subtype constraints.
+
+        It keeps ``IA5String``, ``BIT STRING`` or ``UTCTime`` from being rewritten as the canonical
+        scalar's default ASN.1 type (``UTF8String``, ``OCTET STRING``, ``GeneralizedTime``).
+
+        Returns:
+            The written type, or ``None`` when there is no recorded built-in to honour.
+        """
+        declared = extras.get("asn1_type") if isinstance(extras, Mapping) else None
+        if not isinstance(declared, str) or ref.is_list():
+            return None
+        spec = _DECLARED_BUILTINS.get(declared)
+        if spec is None:
+            return None
+        base = declared
+        named = extras.get("asn1_named_numbers")
+        if declared in ("INTEGER", "BIT STRING") and isinstance(named, Mapping) and named:
+            # Named numbers (INTEGER) / named bits (BIT STRING), as the import read them.
+            items = ", ".join(f"{identifier(str(name))}({number_literal(int(value))})" for name, value in named.items())
+            base = f"{declared} {{ {items} }}"
+        return self._subtype(base, spec, None, constraints, owner)
+
     def _field(self, field: CanonicalField) -> str:
         """A component's type with its constraints, then ``DEFAULT …`` or ``OPTIONAL``."""
-        expr = self._constrained_ref(field.type, field.constraints, field.key)
+        expr = self._declared_builtin(field.extras, field.type, field.constraints, field.key) or self._constrained_ref(
+            field.type, field.constraints, field.key)
         if field.default is not None:
             default = self._default(field)
             if default is not None:
@@ -540,6 +581,12 @@ class _Asn1Writer:
             return None
         value = field.default
         target = self._resolve(field.type.name or "")
+        if isinstance(value, str):
+            # A named number of the component's INTEGER / BIT STRING type (`DEFAULT initial`).
+            named = {**(target.extras.get("asn1_named_numbers") or {} if target is not None else {}),
+                     **(field.extras.get("asn1_named_numbers") or {})}
+            if value in named:
+                return identifier(value)
         if target is not None and target.kind is TypeKind.ENUM:
             for member in target.enum_values:
                 if value in (member.name, member.value) and not isinstance(value, bool):
@@ -798,6 +845,56 @@ def _owning_construct(pointer: str, constructs: set) -> str:
 def _comment(text: str) -> str:
     """``text`` safe inside a ``--`` comment: a second ``--`` would end the comment early."""
     return re.sub(r"-{2,}", lambda m: " ".join("-" * len(m.group())), text)
+
+
+#: The ASN.1 built-ins an import records on a field (``asn1_type``) → the value kind that decides which
+#: subtype constraints they take. Written as themselves on an ASN.1 → ASN.1 export (MFI-21.5).
+_DECLARED_BUILTINS: Dict[str, str] = {
+    **{name: "string" for name in (
+        "UTF8String", "PrintableString", "IA5String", "VisibleString", "NumericString", "BMPString",
+        "UniversalString", "GeneralString", "GraphicString", "TeletexString", "T61String", "VideotexString",
+        "ISO646String",
+    )},
+    "OCTET STRING": "bytes",
+    "BIT STRING": "bytes",
+    "INTEGER": "integer",
+    "REAL": "real",
+    "BOOLEAN": "bool",
+    "NULL": "null",
+    "UTCTime": "time",
+    "GeneralizedTime": "time",
+    "OBJECT IDENTIFIER": "oid",
+    "RELATIVE-OID": "oid",
+}
+
+
+def _tag_prefix(extras: Mapping[str, Any]) -> str:
+    """``[APPLICATION 3] IMPLICIT `` for an imported tag (its kind always written, so the module's
+    tagging default cannot change its meaning), else ``""``."""
+    tag = extras.get("asn1_tag") if isinstance(extras, Mapping) else None
+    if not isinstance(tag, Mapping) or not isinstance(tag.get("number"), int):
+        return ""
+    tag_class = str(tag.get("class") or "CONTEXT").upper()
+    label = f"[{tag['number']}]" if tag_class == "CONTEXT" else f"[{tag_class} {tag['number']}]"
+    kind = tag.get("kind")
+    return f"{label} {kind} " if kind in ("EXPLICIT", "IMPLICIT") else f"{label} "
+
+
+def _with_extension_marker(
+    entries: List[List[str]], type_extras: Mapping[str, Any], member_extras: Sequence[Mapping[str, Any]]
+) -> List[List[str]]:
+    """``entries`` with the ``...`` extension marker an ASN.1 import recorded put back.
+
+    It goes before the first extension addition, or last when the type is extensible with none.
+    """
+    first = next((i for i, extras in enumerate(member_extras) if isinstance(extras, Mapping)
+                  and extras.get("asn1_extension")), None)
+    marker = ["    ..."]
+    if first is not None:
+        return [*entries[:first], marker, *entries[first:]]
+    if type_extras.get("asn1_extensible"):
+        return [*entries, marker]
+    return entries
 
 
 def _scalar_spec(name: str) -> Optional[Tuple[str, str, Optional[Tuple[int, int]]]]:

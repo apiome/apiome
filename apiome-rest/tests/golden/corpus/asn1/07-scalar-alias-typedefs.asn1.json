@@ -1,0 +1,252 @@
+{
+  "adapter": "asn1",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "asn1_module_name": "ScalarTypedefModule",
+      "asn1_tags": "AUTOMATIC"
+    },
+    "format": "asn1",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "ScalarTypedefModule",
+      "namespace": "ScalarTypedefModule"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "SchemaVersion",
+    "types": [
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "bytes",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "asn1_named_numbers": {
+            "admin": 2,
+            "read": 0,
+            "write": 1
+          },
+          "asn1_type": "BIT STRING"
+        },
+        "fields": [],
+        "key": "ScalarTypedefModule.AccessFlags",
+        "key_type": null,
+        "kind": "alias",
+        "name": "AccessFlags",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": {
+            "extras": {},
+            "item": null,
+            "name": "ScalarTypedefModule.HostName",
+            "nullable": false
+          },
+          "name": null,
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [],
+        "key": "ScalarTypedefModule.HostList",
+        "key_type": null,
+        "kind": "alias",
+        "name": "HostList",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 255,
+          "maximum": null,
+          "min_items": null,
+          "min_length": 1,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "asn1_type": "IA5String"
+        },
+        "fields": [],
+        "key": "ScalarTypedefModule.HostName",
+        "key_type": null,
+        "kind": "alias",
+        "name": "HostName",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {},
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 4,
+            "key": "ScalarTypedefModule.Registration.flags",
+            "name": "flags",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ScalarTypedefModule.AccessFlags",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 3,
+            "key": "ScalarTypedefModule.Registration.mirrors",
+            "name": "mirrors",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ScalarTypedefModule.HostList",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 2,
+            "key": "ScalarTypedefModule.Registration.primary",
+            "name": "primary",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ScalarTypedefModule.HostName",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": "initial",
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "field_number": 1,
+            "key": "ScalarTypedefModule.Registration.version",
+            "name": "version",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "ScalarTypedefModule.SchemaVersion",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ScalarTypedefModule.Registration",
+        "key_type": null,
+        "kind": "record",
+        "name": "Registration",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "integer",
+          "nullable": false
+        },
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "asn1_named_numbers": {
+            "extended": 1,
+            "initial": 0
+          },
+          "asn1_type": "INTEGER"
+        },
+        "fields": [],
+        "key": "ScalarTypedefModule.SchemaVersion",
+        "key_type": null,
+        "kind": "alias",
+        "name": "SchemaVersion",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "asn1/07-scalar-alias-typedefs.asn1",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 5
+  },
+  "detection": {
+    "confidence": 0.95,
+    "format": "asn1"
+  },
+  "fingerprint": "sha256:74c614636cd905510304b340134451b94b7f6749e958fe47b6d3b504c089bf34",
+  "lint": {
+    "findings": 11,
+    "grade": "C",
+    "report_fingerprint": "c495fbe43c91786c2ffe0eaaaaea18c1d0254a2fa4e81ee987406df9150636dc",
+    "score": 74,
+    "severity_counts": {
+      "error": 0,
+      "info": 6,
+      "warning": 5
+    }
+  },
+  "snapshot_version": 1
+}

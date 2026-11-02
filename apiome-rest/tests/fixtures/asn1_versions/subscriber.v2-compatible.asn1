@@ -1,0 +1,32 @@
+-- ASN.1 version fixture (MFI-21.5, #3995): a subscriber-provisioning module, v2 — compatible with v1: an
+-- extension addition, an ENUMERATED item after the marker and the SET components swapped.
+--
+-- Exercises what the ASN.1 diff grades: explicit tags, an extension marker with an extension
+-- addition, OPTIONAL and DEFAULT components, a value range and a SIZE constraint, an extensible
+-- ENUMERATED, a CHOICE, and a SET.
+Subscriber-Provisioning DEFINITIONS IMPLICIT TAGS ::= BEGIN
+
+  ServiceClass ::= ENUMERATED { basic(0), premium(1), ..., enterprise(2) }
+
+  Identity ::= CHOICE {
+    imsi    [0] OCTET STRING (SIZE (3..8)),
+    msisdn  [1] NumericString (SIZE (1..15))
+  }
+
+  Location ::= SET {
+    lac     [1] INTEGER (0..65535),
+    cellId  [0] INTEGER (0..65535)
+  }
+
+  Subscriber ::= SEQUENCE {
+    identity      [0] Identity,
+    serviceClass  [1] ServiceClass DEFAULT basic,
+    maxSessions   [2] INTEGER (1..16) DEFAULT 4,
+    displayName   [3] UTF8String (SIZE (1..64)) OPTIONAL,
+    location      [4] Location OPTIONAL,
+    ...,
+    roaming       [5] BOOLEAN OPTIONAL,
+    lastSeen      [6] GeneralizedTime OPTIONAL
+  }
+
+END

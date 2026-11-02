@@ -1,0 +1,37 @@
+---
+slug: asn1-modules
+title: ASN.1 modules keep their tags, constraints and extension markers, with lint and encoding-aware diffs
+description: X.509, telecom and PKI modules import completely, lint like an ASN.1 compiler and diff by encoding.
+authors: [apiome]
+---
+
+An ASN.1 module now imports with everything the catalog does for a modern contract: the whole
+type model, native lint rules that catch what an ASN.1 compiler would reject, and a comparison that
+asks how an old BER, DER or PER peer reads the new version.
+[Import ASN.1 modules](/bring-in/asn1-import).
+
+{/* truncate */}
+
+- **More modules import.** A top-level typedef (`Version ::= INTEGER { v1(0) }`,
+  `Names ::= SEQUENCE OF Name`, `Alias ::= Other`) made the import fail; it now imports as an
+  alias.
+- **More of the module kept.** Tags, value ranges and `SIZE` constraints, numeric `DEFAULT`s,
+  named numbers, `SET`, inline types and the `...` extension marker with the components after it.
+  Components after `...` used to be dropped.
+- **Lint.** The `asn1` pack flags:
+  - an unresolved type reference;
+  - CHOICE alternatives or SET components that share a tag, and an OPTIONAL component whose tag
+    a following component reuses;
+  - an out-of-range or unknown DEFAULT, and `ANY`;
+  - legacy string types and types with no extension marker (as info).
+- **Diff.**
+  - Breaking: a mandatory component added; a component removed, re-typed, re-tagged or moved in a
+    SEQUENCE; a DEFAULT changed; a narrowed constraint.
+  - Dangerous: an OPTIONAL component, ENUMERATED item or CHOICE alternative added to the root; a
+    widened constraint.
+  - Safe: additions after `...`.
+- **Export.** An ASN.1 → ASN.1 export keeps tags, extension markers, `SET`s, named numbers and
+  declared string types. An X.509 `Time` CHOICE used to come out with two `UTF8String`
+  alternatives.
+- **One-time version change.** The first re-import of an existing ASN.1 item is recorded as a
+  changed version.

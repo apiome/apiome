@@ -674,6 +674,34 @@
       ]
     },
     {
+      "id": "catalog/asn1-type-resolves",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "asn1.type-resolves"
+      ]
+    },
+    {
+      "id": "catalog/asn1-choice-tags-distinct",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "asn1.choice-tags-distinct"
+      ]
+    },
+    {
+      "id": "catalog/asn1-set-tags-distinct",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "asn1.set-tags-distinct"
+      ]
+    },
+    {
+      "id": "catalog/asn1-sequence-tags-unambiguous",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "asn1.sequence-tags-unambiguous"
+      ]
+    },
+    {
       "id": "catalog/raml-shacl-violation",
       "kind": "catalog_raml_amf",
       "expected_blocking_rule_ids": [

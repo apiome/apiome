@@ -34,7 +34,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "OBJECT IDENTIFIER"
+            },
             "field_number": 1,
             "key": "CertificateShapeModule.AlgorithmIdentifier.algorithm",
             "name": "algorithm",
@@ -50,7 +52,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "OCTET STRING"
+            },
             "field_number": 2,
             "key": "CertificateShapeModule.AlgorithmIdentifier.parameters",
             "name": "parameters",
@@ -83,7 +87,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "OBJECT IDENTIFIER"
+            },
             "field_number": 1,
             "key": "CertificateShapeModule.AttributeTypeAndValue.attrType",
             "name": "attrType",
@@ -99,7 +105,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 2,
             "key": "CertificateShapeModule.AttributeTypeAndValue.attrValue",
             "name": "attrValue",
@@ -189,7 +197,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "BIT STRING"
+            },
             "field_number": 3,
             "key": "CertificateShapeModule.Certificate.signatureValue",
             "name": "signatureValue",
@@ -235,10 +245,12 @@
         "fields": [
           {
             "constraints": null,
-            "default": null,
+            "default": false,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "BOOLEAN"
+            },
             "field_number": 2,
             "key": "CertificateShapeModule.Extension.critical",
             "name": "critical",
@@ -254,7 +266,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "OBJECT IDENTIFIER"
+            },
             "field_number": 1,
             "key": "CertificateShapeModule.Extension.extnID",
             "name": "extnID",
@@ -270,7 +284,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "OCTET STRING"
+            },
             "field_number": 3,
             "key": "CertificateShapeModule.Extension.extnValue",
             "name": "extnValue",
@@ -357,7 +373,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "BIT STRING"
+            },
             "field_number": 2,
             "key": "CertificateShapeModule.SubjectPublicKeyInfo.subjectPublicKey",
             "name": "subjectPublicKey",
@@ -390,7 +408,13 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 3
+              }
+            },
             "field_number": 10,
             "key": "CertificateShapeModule.TBSCertificate.extensions",
             "name": "extensions",
@@ -427,7 +451,14 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 1
+              },
+              "asn1_type": "BIT STRING"
+            },
             "field_number": 8,
             "key": "CertificateShapeModule.TBSCertificate.issuerUniqueID",
             "name": "issuerUniqueID",
@@ -443,7 +474,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "INTEGER"
+            },
             "field_number": 2,
             "key": "CertificateShapeModule.TBSCertificate.serialNumber",
             "name": "serialNumber",
@@ -507,7 +540,14 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 2
+              },
+              "asn1_type": "BIT STRING"
+            },
             "field_number": 9,
             "key": "CertificateShapeModule.TBSCertificate.subjectUniqueID",
             "name": "subjectUniqueID",
@@ -539,7 +579,13 @@
             "default": "v1",
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 0
+              }
+            },
             "field_number": 1,
             "key": "CertificateShapeModule.TBSCertificate.version",
             "name": "version",
@@ -568,10 +614,18 @@
         "extras": {
           "asn1_choice_members": [
             {
+              "asn1_type": "UTCTime",
+              "constraints": {
+                "format": "date-time"
+              },
               "name": "utcTime",
               "type": "string"
             },
             {
+              "asn1_type": "GeneralizedTime",
+              "constraints": {
+                "format": "date-time"
+              },
               "name": "generalTime",
               "type": "string"
             }
@@ -653,15 +707,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:1f6f3a9668018de51bb21bd175ab106e493a06532997410a48262f86ff9b34e2",
+  "fingerprint": "sha256:0fea8b8aaf10d7ae34a2120b3e3cfcc7e2703dd52e8efdc979a05a602582fc68",
   "lint": {
-    "findings": 36,
+    "findings": 46,
     "grade": "F",
-    "report_fingerprint": "200bf334d6ec2ffe772a7bb9c37b539d4d8749436b42400089e528b8824d138a",
-    "score": 59,
+    "report_fingerprint": "a2630fcb14a00194c86d5822d456b69d4c58af7267e947a28cc715b6af2a938a",
+    "score": 49,
     "severity_counts": {
       "error": 0,
-      "info": 26,
+      "info": 36,
       "warning": 10
     }
   },

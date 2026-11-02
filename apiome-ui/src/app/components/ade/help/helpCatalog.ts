@@ -1187,6 +1187,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'record layout', 'redefines', 'occurs', 'picture', 'comp-3', 'packed decimal', 'ebcdic', 'filler', 'lint', 'breaking change'],
   },
   {
+    id: 'asn1-import',
+    title: 'Import ASN.1 modules',
+    summary: 'Catalog ASN.1 modules with tags, constraints and extension markers, plus lint and encoding-aware diffs.',
+    page: 'apiome-docs/docs/bring-in/asn1-import.md',
+    section: 'reference',
+    keywords: ['x.680', 'x.509', 'certificate', 'pki', 'telecom', '5g', 'ber', 'der', 'per', 'sequence', 'choice', 'lint', 'breaking change'],
+  },
+  {
     id: 'corba-idl-import',
     title: 'Import CORBA IDL (OMG IDL) definitions',
     summary: 'Catalog CORBA interfaces with inheritance, attributes and oneway, plus lint and GIOP-aware diff rules.',

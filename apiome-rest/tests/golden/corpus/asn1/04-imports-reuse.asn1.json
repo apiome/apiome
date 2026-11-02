@@ -4,6 +4,15 @@
     "channels": [],
     "description": null,
     "extras": {
+      "asn1_imports": {
+        "CommonTypesModule": [
+          "CurrencyCode",
+          "Money"
+        ],
+        "PartyModule": [
+          "PartyIdentifier"
+        ]
+      },
       "asn1_module_name": "OrderModule",
       "asn1_tags": "AUTOMATIC"
     },
@@ -87,7 +96,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 1,
             "key": "OrderModule.Order.orderId",
             "name": "orderId",
@@ -152,7 +163,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "INTEGER"
+            },
             "field_number": 2,
             "key": "OrderModule.OrderLine.quantity",
             "name": "quantity",
@@ -168,7 +181,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 1,
             "key": "OrderModule.OrderLine.sku",
             "name": "sku",
@@ -268,15 +283,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:88ce971bb04eb008578b7dae6fd15036365b79cd5c794027a1c09f371ae8e35c",
+  "fingerprint": "sha256:56813f30877bc11385c7099220365228e9d0ecc38e3bfd736a95533d1dd7124a",
   "lint": {
-    "findings": 13,
+    "findings": 16,
     "grade": "C",
-    "report_fingerprint": "628b972b80feeeae0eb04a9f65b1539cd01243e5b6ab28134b30406c96510859",
-    "score": 78,
+    "report_fingerprint": "de66d42f183f3037cc45f1221c89fd277621ae9dbdfb9cef9ebf3c83903c0dc4",
+    "score": 75,
     "severity_counts": {
       "error": 0,
-      "info": 10,
+      "info": 13,
       "warning": 3
     }
   },

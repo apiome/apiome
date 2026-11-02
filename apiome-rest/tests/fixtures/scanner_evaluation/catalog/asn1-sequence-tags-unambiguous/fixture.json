@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/asn1-sequence-tags-unambiguous",
+  "source_format": "asn1",
+  "description": "ASN.1 module with exactly one blocking defect: an OPTIONAL INTEGER followed by a mandatory INTEGER, both untagged.",
+  "document": "-- ASN.1 scanner-evaluation fixture (MFI-21.5).\nSubscriber-Provisioning DEFINITIONS EXPLICIT TAGS ::= BEGIN\n  ServiceClass ::= ENUMERATED { basic(0), premium(1), ... }\n  Session ::= SEQUENCE {\n    retries  INTEGER OPTIONAL,\n    timeout  INTEGER,\n    ...\n  }\nEND\n"
+}

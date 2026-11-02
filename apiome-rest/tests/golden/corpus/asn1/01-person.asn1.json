@@ -34,7 +34,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 2,
             "key": "PersonModule.Address.city",
             "name": "city",
@@ -50,7 +52,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 4,
             "key": "PersonModule.Address.country",
             "name": "country",
@@ -66,7 +70,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 3,
             "key": "PersonModule.Address.postalCode",
             "name": "postalCode",
@@ -82,7 +88,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 1,
             "key": "PersonModule.Address.street",
             "name": "street",
@@ -146,7 +154,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "GeneralizedTime"
+            },
             "field_number": 7,
             "key": "PersonModule.Person.createdAt",
             "name": "createdAt",
@@ -162,7 +172,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 3,
             "key": "PersonModule.Person.email",
             "name": "email",
@@ -178,7 +190,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "INTEGER"
+            },
             "field_number": 1,
             "key": "PersonModule.Person.id",
             "name": "id",
@@ -194,7 +208,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 2,
             "key": "PersonModule.Person.name",
             "name": "name",
@@ -264,7 +280,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 2,
             "key": "PersonModule.PhoneNumber.number",
             "name": "number",
@@ -397,15 +415,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:4746c0744edd241f3a26d2d7ce48d57055e8505aedf4de59153b9ce4acb92059",
+  "fingerprint": "sha256:eb1f3fc9cf65468ecd167ce4110686c9803408810e672e1126e13c051e8ac192",
   "lint": {
-    "findings": 19,
+    "findings": 24,
     "grade": "D",
-    "report_fingerprint": "ab57ac6480018258b7d02cd9e4c8083faa7db6f50075a571b9140bbbc404693e",
-    "score": 66,
+    "report_fingerprint": "3f2cc171d934f628fbc84cc6578967772c6c4bedbfdd45cd2589432719966577",
+    "score": 61,
     "severity_counts": {
       "error": 0,
-      "info": 14,
+      "info": 19,
       "warning": 5
     }
   },

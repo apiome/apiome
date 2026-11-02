@@ -34,7 +34,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_type": "UTF8String"
+            },
             "field_number": 1,
             "key": "MinimalModule.Ping.message",
             "name": "message",
@@ -69,15 +71,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:6d8293d8a91b0422497a82716479aca09fd39e6b319370ffbe2fe2db790166de",
+  "fingerprint": "sha256:d21cba2afb20ae44ee0fa5b25bcb269b81360b4ca76672966ef8b22229b5628a",
   "lint": {
-    "findings": 3,
+    "findings": 4,
     "grade": "A",
-    "report_fingerprint": "47c9c60318df3b8dcb35cfcaccc4ad93a86a93f2c31d9275a79ff8f5d171c52c",
-    "score": 94,
+    "report_fingerprint": "cf3e675b7b73ee0ef1ee09ef2c5cc2ac4d76371568b3657566dfa7b24914c602",
+    "score": 93,
     "severity_counts": {
       "error": 0,
-      "info": 2,
+      "info": 3,
       "warning": 1
     }
   },
