@@ -1,0 +1,18 @@
+---
+slug: apiblueprint-cli-and-migrate
+title: API Blueprint from the CLI, and its move to OpenAPI
+description: Import API Blueprint files from the CLI, then convert them to OpenAPI.
+authors: [apiome]
+---
+
+API Blueprint imports and the move to OpenAPI now have a documented path end to end, in the wizard
+and the CLI. [How to move to OpenAPI](/bring-in/apiblueprint-import#move-to-openapi).
+
+{/* truncate */}
+
+- **`.apib` and `.md`.** `apiome import apiblueprint ./shelter.apib` sends a blueprint; one saved as
+  Markdown imports the same way.
+- **The conversion pack is named.** `apiome convert --dry-run` prints
+  `Conversion pack: API Blueprint (native projection).` with what the format is known to lose.
+- **API Blueprint fixtures.** The CLI's test fixtures include a blueprint with groups, headers and MSON
+  inheritance, and a minimal one saved as `.md`.

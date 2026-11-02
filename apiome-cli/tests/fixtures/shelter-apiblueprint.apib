@@ -1,0 +1,67 @@
+FORMAT: 1A
+HOST: https://shelter.example.com
+
+# Shelter API
+
+An animal shelter: pets and their adoption (MFI-16.4 fixture).
+
+# Group Pets
+
+## Pets Collection [/pets{?status}]
+
++ Parameters
+    + status (enum[string], optional) - Filter by adoption status.
+        + Members
+            + available
+            + adopted
+
+### List pets [GET]
+
++ Response 200 (application/json)
+    + Headers
+
+            X-Total-Count: 2
+
+    + Attributes (array[Pet])
+
+### Add a pet [POST]
+
++ Request Minimal (application/json)
+    + Attributes (Pet)
+
++ Response 201 (application/json)
+    + Attributes (Pet)
+
++ Response 422 (application/json)
+    + Attributes (Error)
+
+# Group Adoptions
+
+## Adoption [/pets/{id}/adoption]
+
++ Parameters
+    + id (number, required) - The pet's id.
+
+### Adopt a pet [POST]
+
++ Response 204
+
+# Data Structures
+
+## Pet (object)
++ id: 1 (number, required) - Unique pet id.
++ name: Rex (string, required) - The pet's name.
++ status (enum[string]) - Where the pet is.
+    + Members
+        + available
+        + adopted
+
+## Cat (Pet)
++ indoor: true (boolean) - Whether the cat stays inside.
+
+## Problem (object)
++ message: Invalid pet (string, required) - What went wrong.
+
+## Error (object)
++ Include Problem
++ code: 422 (number) - The status code.
