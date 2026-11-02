@@ -179166,19 +179166,30 @@
     },
     {
       "corpus_path": "odata-v2/02-typical-v2-orders.xml",
-      "diff_count": 20,
+      "diff_count": 23,
       "emit_format": "raml",
       "emit_key": "raml",
-      "loss_approx": 13,
-      "loss_drop": 6,
+      "loss_approx": 14,
+      "loss_drop": 7,
       "loss_ok": 0,
       "loss_synth": 5,
-      "matched_count": 20,
+      "matched_count": 21,
       "overclaims": [],
-      "reason": null,
+      "reason": "unexplained: removed operation 'FunctionImport OrdersContainer.CancelOrder(Edm.String,Edm.String)', added operation 'POST /CancelOrder' \u2014 MFI-11.2 (#3777) keys an OData function import by its signature; RAML writes it as an HTTP method on a resource and its re-import keys it by method and path, which the RAML fidelity report does not yet explain for a REST source. (observed: unexplained: removed operation 'FunctionImport OrdersContainer.CancelOrder(Edm.String,Edm.String)', added operation 'POST /CancelOrder')",
       "source_format": "odata-v2",
-      "status": "pass",
-      "unexplained": []
+      "status": "xfail",
+      "unexplained": [
+        {
+          "change": "removed",
+          "entity": "operation",
+          "key": "FunctionImport OrdersContainer.CancelOrder(Edm.String,Edm.String)"
+        },
+        {
+          "change": "added",
+          "entity": "operation",
+          "key": "POST /CancelOrder"
+        }
+      ]
     },
     {
       "corpus_path": "odata-v2/02-typical-v2-orders.xml",

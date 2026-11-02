@@ -340,6 +340,48 @@
         "shape": "Northbound.Orders.Order",
         "status": "201"
       }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Northbound.Orders.Order).",
+      "inputSchema": {
+        "properties": {
+          "OrderId": {
+            "type": "string"
+          },
+          "Reason": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "CancelOrder",
+      "operation": "FunctionImport OrdersContainer.CancelOrder(Edm.String,Edm.String)",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Currency": {
+              "type": "string"
+            },
+            "CustomerId": {
+              "type": "string"
+            },
+            "OrderId": {
+              "type": "string"
+            },
+            "OrderedOn": {
+              "type": "string"
+            },
+            "Total": {}
+          },
+          "required": [
+            "OrderId"
+          ],
+          "type": "object"
+        },
+        "shape": "Northbound.Orders.Order",
+        "status": "200"
+      }
     }
   ]
 }
