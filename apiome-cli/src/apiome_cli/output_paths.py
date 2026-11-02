@@ -37,61 +37,22 @@ def _media_types_from_contents(contents: object) -> str:
     return ", ".join(media_types)
 
 
-def emit_paths_inventory_table(
-    rows: list[dict[str, Any]],
-    *,
-    total: int | None = None,
-) -> None:
-    """Render flattened path/operation inventory rows."""
+def emit_paths_grouped_table(rows: list[dict[str, Any]], *, total: int | None = None) -> None:
+    """Render one row per path: its methods, operation ids and tags (``paths list``, #3237)."""
     columns: tuple[ListColumn, ...] = (
         ("Path", "pathname", None),
-        ("Method", "method", None),
-        ("Operation ID", "operationId", None),
+        ("Methods", "methods", _format_tags),
+        ("Operations", "operations", _format_tags),
         ("Tags", "tags", _format_tags),
-        ("Summary", "summary", None),
     )
-    emit_list_table(rows, columns, total=total, empty_message="No paths or operations.")
+    emit_list_table(rows, columns, total=total, empty_message="No paths.")
 
 
-def emit_path_show(
-    path_record: dict[str, Any],
-    operations: list[dict[str, Any]],
-) -> None:
-    """Render one path template and its operations."""
-    typer.echo(f"Path: {path_record.get('pathname', '')}")
-    typer.echo(f"  ID: {path_record.get('id', '')}")
-    if not operations:
-        typer.echo("  Operations: (none)")
-        return
+def emit_path_tree(full: dict[str, Any]) -> None:
+    """Render one path as a compact ASCII tree (``paths show``, #3237)."""
+    from apiome_cli.paths_view import render_tree
 
-    table = Table(show_header=True, header_style="bold")
-    table.add_column("Method")
-    table.add_column("Operation ID")
-    table.add_column("Tags")
-    table.add_column("Summary")
-    table.add_column("Deprecated")
-
-    for operation_row in operations:
-        description = operation_row.get("description")
-        op_id = ""
-        tags = ""
-        summary = ""
-        if isinstance(description, dict):
-            if isinstance(description.get("operation_id"), str):
-                op_id = description["operation_id"]
-            tags = _format_tags(description.get("tags"))
-            if isinstance(description.get("summary"), str):
-                summary = description["summary"]
-        deprecated = operation_row.get("deprecated")
-        table.add_row(
-            str(operation_row.get("operation", "")),
-            op_id,
-            tags,
-            summary,
-            "" if deprecated is None else str(deprecated),
-        )
-
-    make_console().print(table)
+    typer.echo("\n".join(render_tree(full)))
 
 
 def emit_operation_show(
@@ -233,11 +194,6 @@ def emit_workflow_show(
     make_console().print(table)
 
 
-def emit_paths_list_json(payload: dict[str, Any]) -> None:
-    """Emit the REST list envelope for ``paths list --json``."""
-    emit_json(payload)
-
-
 def emit_workflow_show_json(
     workflow_record: dict[str, Any],
     steps: list[dict[str, Any]],
@@ -267,18 +223,5 @@ def emit_operation_show_json(
             "parameters": parameters,
             "request_body": request_body,
             "responses": responses,
-        },
-    )
-
-
-def emit_path_show_json(
-    path_record: dict[str, Any],
-    operations: list[dict[str, Any]],
-) -> None:
-    """Emit path detail and operations for ``paths show --json``."""
-    emit_json(
-        {
-            "path": path_record,
-            "operations": {"total": len(operations), "items": operations},
         },
     )

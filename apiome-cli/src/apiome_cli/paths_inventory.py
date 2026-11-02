@@ -18,13 +18,14 @@ _WORKFLOW_NOT_SUPPORTED = (
 
 
 def normalize_pathname(value: str) -> str:
-    """Normalize a path template reference for comparison."""
-    text = value.strip()
-    if not text:
-        return text
-    if not text.startswith("/"):
-        return f"/{text}"
-    return text
+    """Normalize a path template reference for comparison.
+
+    Accepts the literal template, its URL-encoded form and its RFC 6901 JSON Pointer token
+    (``~1users~1{id}``); see :func:`apiome_cli.paths_view.decode_path_ref`.
+    """
+    from apiome_cli.paths_view import decode_path_ref
+
+    return decode_path_ref(value)
 
 
 def _encode_multi_params(
@@ -82,6 +83,19 @@ def fetch_path_operations(
         f"{base}/{path_id}/operations",
         params=params,
     )
+
+
+def fetch_path_full(
+    client: RestClient,
+    tenant_slug: str,
+    version_id: UUID,
+    path_id: UUID,
+) -> dict[str, Any]:
+    """``GET …/paths/{tenant}/{version}/{path_id}/full``: the path with each operation's description,
+    parameters, request body and responses, in one call."""
+    base = version_paths_base(tenant_slug, version_id)
+    record = client.get(f"{base}/{path_id}/full").json()
+    return record if isinstance(record, dict) else {}
 
 
 def resolve_path_record(

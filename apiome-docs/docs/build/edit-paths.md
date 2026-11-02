@@ -44,17 +44,72 @@ X-API-Key: <your-api-key>
 The CLI inspects paths, operations, and Arazzo workflows for a version (read-only):
 
 ```bash
-apiome paths      list --project <id-or-slug> --version <id-or-label>
-apiome paths      show <path-ref> --project <id-or-slug> --version <id-or-label>
+apiome paths      list <project> <version>
+apiome paths      show <project> <version> <path>
 apiome operations show <op-ref>   --project <id-or-slug> --version <id-or-label>
 apiome workflows  list --project <id-or-slug> --version <id-or-label>
 ```
 
-`paths list` accepts `--tag`, `--method`, and `--q` (text search) filters.
+The project is a slug or UUID and the version a label (`2.1.0`), slug or UUID. The older
+`--project <p> --version <v>` form still works for `paths list` and `paths show`.
+
+### List a version's paths
+
+```bash
+apiome paths list payments-api 2.1.0
+```
+
+```text
+┃ Path          ┃ Methods     ┃ Operations                ┃ Tags     ┃
+│ /charges      │ GET, POST   │ listCharges, createCharge │ public   │
+│ /charges/{id} │ GET, DELETE │ getCharge, deleteCharge   │ public   │
+│ /webhooks     │ POST        │ receiveWebhook            │ internal │
+```
+
+There is one row per path. Filter with:
+- `--method GET` and `--tag public` (both repeatable), which the server applies;
+- `--search <text>` (or `--q`), which matches the path, method, operation id, summary or tags.
+
+`--json` prints the API's array of path records, keeping only the ones `--search` matches when you
+pass it.
+
+### Show one path
+
+```bash
+apiome paths show payments-api 2.1.0 /charges/{id}
+```
+
+```text
+/charges/{id} — One charge
+├── GET getCharge — Fetch a charge  [public]
+│   ├── params
+│   │   ├── id (path, required) string
+│   │   └── expand (query) string[]
+│   └── responses
+│       ├── 200 application/json → Charge
+│       └── 404
+└── DELETE deleteCharge  [public]  (deprecated)
+    ├── params
+    │   └── id (path, required) string
+    └── responses
+        └── 204
+```
+
+The path can be:
+- the template (`/charges/{id}`, with or without the leading `/`);
+- its URL-encoded form (`/charges/%7Bid%7D`);
+- its JSON Pointer token (`~1charges~1{id}`, RFC 6901, as it appears after `#/paths/` in a `$ref`);
+- the path's UUID.
+
+Operations are listed in OpenAPI order (GET, PUT, POST, DELETE…). Each shows its parameters, request
+body and responses, with the class or inline type each one carries. `--method` and `--tag` narrow
+the operations shown. `--json` prints the API's full path object
+(`GET /v1/paths/{tenant}/{version}/{path_id}/full`).
 
 ## Verify
 
-- **CLI:** `apiome paths list --project <p> --version <v>` lists the path and its operations.
+- **CLI:** `apiome paths list <project> <version>` lists the path, and `apiome paths show <project>
+  <version> <path>` shows its operations.
 - **Export:** the path appears in the reconstructed OpenAPI document — see
   [Export a spec](../ship/export-a-spec.md).
 

@@ -1,0 +1,25 @@
+---
+slug: cli-paths-list-show
+title: "apiome paths list and show: one row per path, and a tree of each path"
+description: Paths list groups by path, paths show draws operations, parameters, bodies and responses.
+authors: [apiome]
+---
+
+`apiome paths` now reads like the API it describes.
+[Edit paths and operations](/build/edit-paths#with-the-cli).
+
+{/* truncate */}
+
+- **`apiome paths list <project> <version>`** prints one row per path with its methods, operation ids
+  and tags.
+  - `--method` and `--tag` filter on the server, and `--search` (or `--q`) filters the text.
+  - `--json` prints the API's array of path records.
+- **`apiome paths show <project> <version> <path>`** draws the path as a tree: each operation with its
+  parameters, request body and responses, and the class or type each one carries.
+  - The path can be the template, its URL-encoded form, its JSON Pointer token (`~1charges~1{id}`)
+    or its UUID.
+  - `--json` prints the API's full path object.
+- **Positional arguments.** Both commands take the project and version as arguments. The
+  `--project` / `--version` options still work.
+- **JSON shape change.** `paths list --json` used to wrap the array in `{total, offset, limit, items}`,
+  and `paths show --json` printed `{path, operations}`. Scripts that read those keys need updating.
