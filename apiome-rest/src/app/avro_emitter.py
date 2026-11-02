@@ -620,6 +620,12 @@ class _AvroWriter:
                 schema["namespace"] = namespace
             if type_.description:
                 schema["doc"] = type_.description
+            # A named ``fixed`` can carry the logical type itself (``decimal``, ``uuid``,
+            # ``duration``) — the normalizer records it on the type (MFI-12.2).
+            fixed_logical = type_.extras.get("logicalType")
+            if isinstance(fixed_logical, str) and fixed_logical:
+                schema["logicalType"] = fixed_logical
+                _attach_decimal_props(schema, type_.constraints, type_.extras)
             _attach_decoration(schema, type_.extras)
             return schema
         logical = _logical_from_extras(type_.extras) or _logical_from_constraints(type_.constraints)
@@ -1055,11 +1061,19 @@ def _logical_from_extras(extras: Dict[str, Any]) -> Optional[Tuple[str, str]]:
         return base, logical
     if logical in {"date", "time-millis"}:
         return "int", logical
-    if logical in {"time-micros", "timestamp-millis", "timestamp-micros", "local-timestamp-millis"}:
+    if logical in {
+        "time-micros",
+        "timestamp-millis",
+        "timestamp-micros",
+        "timestamp-nanos",
+        "local-timestamp-millis",
+        "local-timestamp-micros",
+        "local-timestamp-nanos",
+    }:
         return "long", logical
     if logical == "uuid":
         return "string", logical
-    if logical == "decimal":
+    if logical in {"decimal", "big-decimal"}:
         return "bytes", logical
     return "string", logical
 

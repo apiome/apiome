@@ -5,6 +5,38 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.594.0] - 2026-11-01
+
+### Added
+- **Avro → canonical model completed for Avro 1.12 (MFI-12.2, #3783).** New `app/avro_logical_types.py` holds every
+  logical type of the 1.12 specification — `decimal`, `big-decimal`, `uuid`, `date`, `time-millis`/`-micros`,
+  `timestamp-millis`/`-micros`/`-nanos`, `local-timestamp-millis`/`-micros`/`-nanos`, `duration` — with the underlying
+  types each may annotate, and `resolve_logical_type()`. A valid logical type projects onto `Constraints.format`; one
+  the specification says to ignore (unknown, on the wrong base type, a `decimal` with a missing/out-of-range
+  `precision`/`scale` or too wide for its `fixed`, a `uuid`/`duration` on a wrongly sized `fixed`) keeps its plain Avro
+  type and is marked `extras["avro_logical_type_ignored"]` = `unknown` | `invalid`, still recording `logicalType` so it
+  round-trips. Logical types are now read behind a nullable union (`["null", {"type": "long", "logicalType":
+  "timestamp-millis"}]` is a nullable `date-time`) and on a named `fixed` type (type-level `constraints` + extras).
+- The Avro emitter writes a named `fixed` type's `logicalType` (with `precision`/`scale`) back, and knows the base types
+  of the new 1.12 logical types.
+
+### Fixed
+- An Avro union branch that names a type declared elsewhere (`["Cat", "Dog"]`), a primitive written as an object
+  (`{"type": "long"}`) or a `map` resolved to `string`, collapsing distinct branches; each now resolves to its own member
+  key.
+- A `map` whose `values` is a schema object was keyed with the object's text (`Map_{'type': 'array', ...}`); it is now
+  named after the canonical type it resolves to (`Map_array_string`, `Map_Union_null_string_double`). Maps whose values
+  are written as a name keep their key.
+- A `fixed` `uuid` field kept no reference to its `fixed` type (it was forced to `string`); only a primitive base is.
+
+### Changed
+- `.avsc` imports now keep an enum's `default` (`avro_enum_default`), type and field `aliases` (`avro_aliases`) and a
+  field's `order` (`avro_order`) — previously IDL-only — so an alias or order edit mints a new version (a `doc`-only edit
+  still does not). User-defined properties remain IDL-only.
+- Corpus goldens `avro/05-stress-mixed-types.avsc`, `avro-idl/04-stress-grammar-corners.avdl` and the `avro`
+  conversion-pack golden are regenerated for the new map keys, aliases, order and logical types.
+- OpenAPI document version 1.457.0 → 1.458.0 (no schema change).
+
 ## [1.593.0] - 2026-11-01
 
 ### Added

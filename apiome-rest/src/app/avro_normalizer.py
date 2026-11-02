@@ -11,8 +11,14 @@ operations, so it normalizes to :attr:`~app.canonical_model.ApiParadigm.RPC` wit
 :class:`~app.canonical_model.Service` and one
 :class:`~app.canonical_model.Operation` per message.
 
-Everything the IDL surface contributes is additive and omitted when absent, so a
-``.avsc`` import produces byte-identical output to the one it produced before FMT-3.5.
+Everything the IDL surface contributes is additive and omitted when absent.
+
+MFI-12.2 (#3783) completes the mapping of Avro 1.12's data constructs on both surfaces:
+every logical type of the specification (:mod:`app.avro_logical_types`), honoured only
+when valid and also when it sits behind a nullable union; unions of named references,
+primitives written as objects and maps; and the evolution metadata — enum ``default``,
+``aliases`` and a field's ``order`` — which a ``.avsc`` import now keeps as well.
+User-defined annotation properties remain IDL-only.
 """
 
 from __future__ import annotations
@@ -21,6 +27,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .avro_fingerprint import fingerprint_types
 from .avro_hygiene import check_avro_document
+from .avro_logical_types import ResolvedLogicalType, resolve_logical_type
 from .avro_parser import AvroDocument, AvroNamedSchema
 from .canonical_model import (
     ApiIdentity,
@@ -83,16 +90,10 @@ _AVRO_TO_CANONICAL: Dict[str, str] = {
     "string": "string",
 }
 
-_LOGICAL_TO_FORMAT: Dict[str, str] = {
-    "date": "date",
-    "time-millis": "time",
-    "time-micros": "time",
-    "timestamp-millis": "date-time",
-    "timestamp-micros": "date-time",
-    "local-timestamp-millis": "date-time",
-    "uuid": "uuid",
-    "decimal": "decimal",
-}
+#: Canonical formats whose values are written as text everywhere else, so a primitive
+#: Avro field carrying one is referenced as ``string`` (its Avro base type and logical
+#: type stay in ``extras`` for the emitters).
+_TEXTUAL_FORMATS = frozenset({"date", "date-time", "time", "uuid"})
 
 
 def _type_key(name: str, namespace: Optional[str]) -> str:
@@ -112,11 +113,6 @@ def _resolve_named_key(name: str, namespace: Optional[str], known: frozenset[str
     if qualified in known:
         return qualified
     return _type_key(name, namespace)
-
-
-def _constraints_from_logical(logical_type: str) -> Optional[Constraints]:
-    fmt = _LOGICAL_TO_FORMAT.get(logical_type)
-    return Constraints(format=fmt) if fmt else None
 
 
 def _type_ref_from_avro(
@@ -147,18 +143,17 @@ def _type_ref_from_avro(
             if branch == "null":
                 members.append("null")
                 continue
-            if isinstance(branch, str) and branch in _AVRO_TO_CANONICAL:
-                members.append(_AVRO_TO_CANONICAL[branch])
-                continue
-            if isinstance(branch, dict):
-                branch_name = branch.get("name")
-                branch_ns = branch.get("namespace") or namespace
-                branch_type = branch.get("type")
-                if branch_type in _NAMED_TYPE_KEYWORDS and isinstance(branch_name, str):
-                    members.append(_resolve_named_key(branch_name, branch_ns, known_types))
-                    continue
-            members.append("string")
-        # The canonical union member list holds type *keys*, so an anonymous branch
+            # Every branch resolves the way a field type does (MFI-12.2): a primitive, a
+            # primitive written as an object (``{"type": "long", "logicalType": ...}``),
+            # a named type declared inline *or referenced by name*, or a map.
+            branch_ref = _type_ref_from_avro(
+                branch,
+                namespace=namespace,
+                known_types=known_types,
+                union_types=union_types,
+            )
+            members.append(branch_ref.name if branch_ref.name is not None else "string")
+        # The canonical union member list holds type *keys*, so an anonymous array branch
         # (``array<bytes>``) has no key and degrades to its scalar approximation. Two
         # branches can therefore collide, and Avro forbids repeating an unnamed branch —
         # so the duplicate is collapsed rather than emitted as an invalid union.
@@ -198,22 +193,25 @@ def _type_ref_from_avro(
         )
 
     if schema_type == "map":
-        map_key = _type_key(
-            f"Map_{schema.get('values', 'string')}".replace(".", "_"),
-            namespace,
+        values = schema.get("values", "string")
+        value_ref = _type_ref_from_avro(
+            values,
+            namespace=namespace,
+            known_types=known_types,
+            union_types=union_types,
         )
+        # A value written as a name keeps the key it always had (``Map_long``); a value
+        # written as a schema object is named after the canonical type it resolves to,
+        # so the key never embeds the object's text.
+        value_slug = values if isinstance(values, str) else _ref_slug(value_ref, union_types)
+        map_key = _type_key(f"Map_{value_slug}".replace(".", "_"), namespace)
         if map_key not in union_types:
             union_types[map_key] = Type(
                 key=map_key,
                 name=map_key.rsplit(".", 1)[-1],
                 kind=TypeKind.MAP,
                 namespace=namespace,
-                value_type=_type_ref_from_avro(
-                    schema.get("values"),
-                    namespace=namespace,
-                    known_types=known_types,
-                    union_types=union_types,
-                ),
+                value_type=value_ref,
                 extras={"avro_kind": "map"},
             )
         return TypeRef(name=map_key, nullable=False)
@@ -240,22 +238,62 @@ def _type_ref_from_avro(
     return TypeRef(name="string", nullable=False)
 
 
-def _field_constraints_and_extras(field_type: Any) -> Tuple[Optional[Constraints], Dict[str, Any]]:
-    if not isinstance(field_type, dict):
+def _ref_slug(ref: TypeRef, synthetic: Mapping[str, Type]) -> str:
+    """Return a key-safe name for an anonymous type reference.
+
+    Args:
+        ref: The reference a map's ``values`` schema object resolved to.
+        synthetic: The synthetic UNION/MAP types collected so far. They share the
+            enclosing namespace, so one is named by its local name
+            (``Union_null_double``); any other type keeps its full key.
+
+    Returns:
+        The slug, for example ``array_Union_null_double``.
+    """
+    if ref.item is not None:
+        return f"array_{_ref_slug(ref.item, synthetic)}"
+    if ref.name in synthetic:
+        return synthetic[ref.name].name
+    return ref.name or "string"
+
+
+def _nullable_branch(schema: Any) -> Any:
+    """Return the one non-null branch of a ``["null", X]`` union, else ``schema`` itself.
+
+    The canonical model carries that union as a nullable reference to ``X``, so whatever
+    ``X`` declares — a logical type above all — belongs to the field just as if the
+    field's type were ``X``.
+    """
+    if isinstance(schema, list):
+        non_null = [branch for branch in schema if branch != "null"]
+        if len(non_null) == 1:
+            return non_null[0]
+    return schema
+
+
+def _logical_constraints(logical: Optional[ResolvedLogicalType]) -> Optional[Constraints]:
+    """Return the canonical constraints a resolved logical type contributes, if any."""
+    if logical is None or logical.format is None:
+        return None
+    return Constraints(format=logical.format)
+
+
+def _field_constraints_and_extras(field_type: Any) -> Tuple[Optional[ResolvedLogicalType], Dict[str, Any]]:
+    """Read the logical type a field's type expression declares.
+
+    Args:
+        field_type: The field's Avro ``type`` — looked through when it is a nullable
+            union, so ``["null", {"type": "long", "logicalType": "timestamp-millis"}]``
+            is a nullable timestamp, not a bare ``long``.
+
+    Returns:
+        The resolved logical type (``None`` when there is none) and the ``extras`` that
+        record it.
+    """
+    logical = resolve_logical_type(_nullable_branch(field_type))
+    if logical is None:
         return None, {}
-    logical_type = field_type.get("logicalType")
-    if not isinstance(logical_type, str):
-        return None, {}
-    extras: Dict[str, Any] = {"logicalType": logical_type}
-    schema_type = field_type.get("type")
-    if isinstance(schema_type, str):
-        extras["avro_type"] = schema_type
-    if logical_type == "decimal":
-        if isinstance(field_type.get("precision"), int):
-            extras["precision"] = field_type["precision"]
-        if isinstance(field_type.get("scale"), int):
-            extras["scale"] = field_type["scale"]
-    return _constraints_from_logical(logical_type), extras
+    return logical, logical.extras()
 
 
 def _custom_properties(*schemas: Any) -> Dict[str, Any]:
@@ -301,20 +339,29 @@ def _canonical_field(
         known_types=known_types,
         union_types=union_types,
     )
-    constraints, logical_extras = _field_constraints_and_extras(field_type)
-    if constraints is not None and constraints.format in {"date", "date-time", "time", "uuid"}:
+    logical, logical_extras = _field_constraints_and_extras(field_type)
+    constraints = _logical_constraints(logical)
+    if (
+        logical is not None
+        and logical.format in _TEXTUAL_FORMATS
+        and logical.base in _AVRO_TO_CANONICAL
+    ):
+        # A primitive carrying a textual logical type is a string everywhere else. A
+        # ``fixed`` uuid keeps its reference to the fixed type, which is what it is.
         type_ref = TypeRef(name="string", nullable=type_ref.nullable, item=type_ref.item)
     default = field_schema.get("default") if "default" in field_schema else None
     extras: Dict[str, Any] = dict(logical_extras)
     if "default" in field_schema:
         extras["has_default"] = True
+    # Sort order and aliases are evolution-load-bearing on both surfaces (an alias is
+    # how a reader matches a renamed field), so ``.avsc`` keeps them too (MFI-12.2).
+    order = field_schema.get("order")
+    if isinstance(order, str) and order:
+        extras["avro_order"] = order
+    aliases = field_schema.get("aliases")
+    if isinstance(aliases, list) and aliases:
+        extras["avro_aliases"] = list(aliases)
     if capture_properties:
-        order = field_schema.get("order")
-        if isinstance(order, str) and order:
-            extras["avro_order"] = order
-        aliases = field_schema.get("aliases")
-        if isinstance(aliases, list) and aliases:
-            extras["avro_aliases"] = list(aliases)
         properties = _custom_properties(field_schema, field_type)
         if properties:
             extras["avro_properties"] = properties
@@ -345,9 +392,9 @@ def _canonical_type(
             resolve unqualified references.
         union_types: Accumulator for the synthetic UNION/MAP types Avro's anonymous
             constructs need; mutated in place.
-        capture_properties: Whether to preserve IDL-only decoration (``order``,
-            ``aliases``, user-defined annotation properties) in ``extras``. Off for
-            ``.avsc`` so a JSON-schema import is unchanged.
+        capture_properties: Whether to preserve user-defined annotation properties
+            (what an IDL ``@annotation`` compiles to) in ``extras``. Off for ``.avsc``;
+            ``aliases``, ``order`` and an enum ``default`` are kept on both surfaces.
 
     Returns:
         The canonical type.
@@ -356,13 +403,15 @@ def _canonical_type(
     type_key = _type_key(named.name, named.namespace)
     schema_type = schema.get("type")
     description = schema.get("doc") if isinstance(schema.get("doc"), str) else None
-    decoration = _type_decoration(schema) if capture_properties else {}
+    decoration = _type_decoration(schema, include_properties=capture_properties)
 
     if schema_type == "enum":
         symbols = schema.get("symbols") or []
         extras: Dict[str, Any] = {"avro_kind": "enum", **decoration}
         default_symbol = schema.get("default")
-        if capture_properties and isinstance(default_symbol, str) and default_symbol:
+        # The symbol a reader falls back to for one it does not know — what makes adding
+        # a symbol forward compatible — so it is kept on both surfaces (MFI-12.2).
+        if isinstance(default_symbol, str) and default_symbol:
             extras["avro_enum_default"] = default_symbol
         return Type(
             key=type_key,
@@ -378,14 +427,19 @@ def _canonical_type(
         )
 
     if schema_type == "fixed":
+        # A named ``fixed`` may itself carry the logical type (``decimal``, ``uuid``,
+        # ``duration``), which then holds wherever the type is referenced by name.
+        logical = resolve_logical_type(schema)
         return Type(
             key=type_key,
             name=named.name,
             kind=TypeKind.SCALAR,
             namespace=named.namespace,
             description=description,
+            constraints=_logical_constraints(logical),
             extras={
                 "avro_kind": "fixed",
+                **(logical.extras() if logical is not None else {}),
                 "avro_type": "fixed",
                 "avro_size": schema.get("size"),
                 **decoration,
@@ -420,23 +474,26 @@ def _canonical_type(
     )
 
 
-def _type_decoration(schema: Mapping[str, Any]) -> Dict[str, Any]:
-    """Return the IDL-only decoration of a named type declaration.
+def _type_decoration(schema: Mapping[str, Any], *, include_properties: bool) -> Dict[str, Any]:
+    """Return the decoration of a named type declaration.
 
     Args:
         schema: The named type's Avro schema dict.
+        include_properties: Whether to collect user-defined properties too — on for
+            IDL, where they are ``@annotations``; ``aliases`` are always collected.
 
     Returns:
-        ``extras`` additions for the type's ``aliases`` and user-defined properties;
-        empty when it carries neither.
+        ``extras`` additions for the type's ``aliases`` and (when asked) user-defined
+        properties; empty when it carries neither.
     """
     decoration: Dict[str, Any] = {}
     aliases = schema.get("aliases")
     if isinstance(aliases, list) and aliases:
         decoration["avro_aliases"] = list(aliases)
-    properties = _custom_properties(schema)
-    if properties:
-        decoration["avro_properties"] = properties
+    if include_properties:
+        properties = _custom_properties(schema)
+        if properties:
+            decoration["avro_properties"] = properties
     return decoration
 
 

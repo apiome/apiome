@@ -302,7 +302,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "com.example.stress.Map_{'type': 'array', 'items': ['null', 'double']}",
+              "name": "com.example.stress.Map_array_double",
               "nullable": false
             }
           },
@@ -459,16 +459,21 @@
           "avro_kind": "map"
         },
         "fields": [],
-        "key": "com.example.stress.Map_string",
+        "key": "com.example.stress.Map_array_double",
         "key_type": null,
         "kind": "map",
-        "name": "Map_string",
+        "name": "Map_array_double",
         "namespace": "com.example.stress",
         "union_members": [],
         "value_type": {
           "extras": {},
-          "item": null,
-          "name": "string",
+          "item": {
+            "extras": {},
+            "item": null,
+            "name": "double",
+            "nullable": true
+          },
+          "name": null,
           "nullable": false
         }
       },
@@ -482,21 +487,16 @@
           "avro_kind": "map"
         },
         "fields": [],
-        "key": "com.example.stress.Map_{'type': 'array', 'items': ['null', 'double']}",
+        "key": "com.example.stress.Map_string",
         "key_type": null,
         "kind": "map",
-        "name": "Map_{'type': 'array', 'items': ['null', 'double']}",
+        "name": "Map_string",
         "namespace": "com.example.stress",
         "union_members": [],
         "value_type": {
           "extras": {},
-          "item": {
-            "extras": {},
-            "item": null,
-            "name": "double",
-            "nullable": true
-          },
-          "name": null,
+          "item": null,
+          "name": "string",
           "nullable": false
         }
       },
@@ -793,6 +793,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "avro_logical_type_ignored": "invalid",
               "avro_type": "Digest",
               "logicalType": "duration"
             },
@@ -852,11 +853,11 @@
     "confidence": 0.95,
     "format": "avro-idl"
   },
-  "fingerprint": "sha256:a6835f5feafd1d1678ae96b4ba1b44934f7acc255706581f9e78cd02412218b5",
+  "fingerprint": "sha256:9a140c5eb4a3e654c2a4ac9bbd9b11befa84a13e3c1498f69ccbaed55b874afb",
   "lint": {
     "findings": 27,
     "grade": "F",
-    "report_fingerprint": "f204a3858a7fee8a7890b3fb0c4590514ca37f6775e87ba9b85aec95690786ee",
+    "report_fingerprint": "a1a9dd268a071b97df20269654d9641c107cc24d912d8e1396eba947fc7167e3",
     "score": 59,
     "severity_counts": {
       "error": 0,
