@@ -1,0 +1,22 @@
+---
+slug: flatbuffers-capnproto-evolution
+title: FlatBuffers and Cap'n Proto versions compared by field id
+description: Breaking-change rules and lint packs for FlatBuffers and Cap'n Proto schemas.
+authors: [apiome]
+---
+
+Comparing two versions of a FlatBuffers or Cap'n Proto catalog item now follows the format's own
+field numbers, and both formats get a lint pack.
+[How versions are compared](/bring-in/flatbuffers-capnproto-import#breaking-changes-between-versions).
+
+{/* truncate */}
+
+- **FlatBuffers.** A table field is identified by its id. A renamed field is dangerous rather than a
+  removal, a `(deprecated)` field is safe, and a field inserted before others, a reused id, a changed
+  default or any change to a `struct` is reported for what it does to buffers already written.
+- **Cap'n Proto.** Members are identified by their `@N` ordinal: renaming a field or method is safe,
+  while removing or renumbering one is breaking.
+- **Lint.** The `flatbuffers` and `capnproto` packs catch what `flatc` and the Cap'n Proto compiler
+  refuse: duplicate ids or ordinals, mixed explicit ids, gaps in ordinals and a missing file id.
+- **A parser fix.** A Cap'n Proto method returning a type such as `List(Person)` is now read; it was
+  dropped before.

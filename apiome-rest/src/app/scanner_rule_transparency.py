@@ -204,7 +204,72 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         scan_modes=("lint",),
         fixture_id="catalog/thrift-oneway-void",
         docs_page=LINT_RULE_DOCS_PAGE,
+    ),    # FlatBuffers lint pack (MFI-19.4).
+    "flatbuffers.unique-field-ids": _meta(
+        "flatbuffers.unique-field-ids",
+        ENGINE_SCHEMA,
+        rationale="Field ids, deprecated slots included, must be unique within a table.",
+        reference="https://flatbuffers.dev/schema/#tables",
+        remediation="Give each field of the table its own `(id: N)`; keep a removed field as "
+        "`(deprecated)` so its id stays taken.",
+        false_positive_guidance="Not a false positive: flatc rejects a table whose fields share an "
+        "id, so the schema cannot be compiled as written.",
+        scan_modes=("lint",),
+        fixture_id="catalog/flatbuffers-unique-field-ids",
+        docs_page=LINT_RULE_DOCS_PAGE,
     ),
+    "flatbuffers.explicit-ids-all-or-none": _meta(
+        "flatbuffers.explicit-ids-all-or-none",
+        ENGINE_SCHEMA,
+        rationale="A table declares `(id: N)` on every field or on none.",
+        reference="https://flatbuffers.dev/schema/#attributes",
+        remediation="Add `(id: N)` to the table's remaining fields (keeping the ids they have "
+        "today), or remove it from all of them.",
+        false_positive_guidance="Not a false positive: flatc rejects a table where only some "
+        "fields declare an id.",
+        scan_modes=("lint",),
+        fixture_id="catalog/flatbuffers-explicit-ids-all-or-none",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    # Cap'n Proto lint pack (MFI-19.4).
+    "capnproto.file-id-declared": _meta(
+        "capnproto.file-id-declared",
+        ENGINE_SCHEMA,
+        rationale="A Cap'n Proto schema declares its `@0x…;` file id.",
+        reference="https://capnproto.org/language.html#unique-ids",
+        remediation="Run `capnp id` and add the id it prints, followed by `;`, at the top of the file.",
+        false_positive_guidance="Not a false positive: the Cap'n Proto compiler rejects a file "
+        "without an id.",
+        scan_modes=("lint",),
+        fixture_id="catalog/capnproto-file-id-declared",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "capnproto.unique-ordinals": _meta(
+        "capnproto.unique-ordinals",
+        ENGINE_SCHEMA,
+        rationale="Ordinals must be unique within a struct, interface or enum.",
+        reference="https://capnproto.org/language.html#structs",
+        remediation="Give each member its own `@N`; never reuse the ordinal of another member.",
+        false_positive_guidance="Not a false positive: the Cap'n Proto compiler rejects duplicate "
+        "ordinals.",
+        scan_modes=("lint",),
+        fixture_id="catalog/capnproto-unique-ordinals",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+    "capnproto.contiguous-ordinals": _meta(
+        "capnproto.contiguous-ordinals",
+        ENGINE_SCHEMA,
+        rationale="Ordinals run from @0 without a gap within a struct, interface or enum.",
+        reference="https://capnproto.org/language.html#structs",
+        remediation="Renumber the members so their ordinals run @0, @1, @2…; to retire a member, "
+        "keep it and rename it (obsolete…) rather than leaving a gap.",
+        false_positive_guidance="Not a false positive: the Cap'n Proto compiler requires ordinals "
+        "to be sequential from zero.",
+        scan_modes=("lint",),
+        fixture_id="catalog/capnproto-contiguous-ordinals",
+        docs_page=LINT_RULE_DOCS_PAGE,
+    ),
+
     "openrpc.unique-method-names": _meta(
         "openrpc.unique-method-names",
         ENGINE_SCHEMA,

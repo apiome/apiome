@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/flatbuffers-unique-field-ids",
+  "source_format": "flatbuffers",
+  "description": "FlatBuffers schema with exactly one blocking defect: two fields of `Monster` share id 0.",
+  "document": "namespace Game;\n\ntable Monster {\n  hp: short (id: 0);\n  mana: short (id: 0);\n}\n\nroot_type Monster;\n"
+}

@@ -373,6 +373,11 @@ def load_format_breaking_change_classifiers() -> None:
     # pairs fields by wire id (renames, reused ids, requiredness).
     from . import thrift_breaking as _thrift_breaking  # noqa: F401
 
+    # FlatBuffers and Cap'n Proto breaking-change classifiers (MFI-19.4): register under
+    # ``flatbuffers`` / ``capnproto`` and pair fields (and Cap'n Proto methods) by wire id / ordinal.
+    from . import capnproto_breaking as _capnproto_breaking  # noqa: F401
+    from . import flatbuffers_breaking as _flatbuffers_breaking  # noqa: F401
+
     # OpenRPC breaking-change classifier (MFI-19.1): registers under ``openrpc`` and grades
     # parameter position, name and requiredness against ``paramStructure``.
     from . import openrpc_breaking as _openrpc_breaking  # noqa: F401

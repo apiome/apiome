@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/flatbuffers-explicit-ids-all-or-none",
+  "source_format": "flatbuffers",
+  "description": "FlatBuffers schema with exactly one blocking defect: `Monster` gives `(id: N)` to one field but not the other.",
+  "document": "namespace Game;\n\ntable Monster {\n  hp: short (id: 0);\n  mana: short;\n}\n\nroot_type Monster;\n"
+}

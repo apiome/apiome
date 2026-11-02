@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Binary, BookMarked, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, FileText, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Binary, BookMarked, Bot, BotMessageSquare, Boxes, Cloud, Database, FileCode, FileJson, FileText, Globe, Hammer, Network, Radio, Send, Share2, Waypoints, Zap } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -844,6 +844,78 @@ describe('API Blueprint source card (MFI-16.4)', () => {
 
   it('draws no alternate intake card', () => {
     expect(alternateIntakeTiles([APIBLUEPRINT_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/** The FlatBuffers source as the REST registry advertises it (MFI-19.4, #3982). */
+const FLATBUFFERS_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'flatbuffers',
+  label: "FlatBuffers",
+  description: "Import a FlatBuffers schema (.fbs) with tables, structs, enums, and root types.",
+  icon: 'boxes',
+  paradigm: 'data_schema',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['flatbuffers', 'fbs'],
+  file_extensions: ['.fbs', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe("FlatBuffers source card (MFI-19.4)", () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([FLATBUFFERS_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'flatbuffers');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe("FlatBuffers");
+    expect(card?.icon).toBe(Boxes);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('flatbuffers')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('flatbuffers');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('flatbuffers');
+  });
+
+  it('offers .fbs and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([FLATBUFFERS_DESCRIPTOR])).toEqual(['.fbs', '.zip', '.tar.gz', '.tgz', '.tar']);
+  });
+
+  it('draws no alternate intake card', () => {
+    expect(alternateIntakeTiles([FLATBUFFERS_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/** The Cap'n Proto source as the REST registry advertises it (MFI-19.4, #3982). */
+const CAPNPROTO_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'capnproto',
+  label: "Cap'n Proto",
+  description: "Import a Cap'n Proto schema (.capnp) with structs, enums, and RPC interfaces.",
+  icon: 'zap',
+  paradigm: 'rpc',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['capnproto', 'capnp'],
+  file_extensions: ['.capnp', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe("Cap'n Proto source card (MFI-19.4)", () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([CAPNPROTO_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'capnproto');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe("Cap'n Proto");
+    expect(card?.icon).toBe(Zap);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('capnproto')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('capnproto');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('capnproto');
+  });
+
+  it('offers .capnp and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([CAPNPROTO_DESCRIPTOR])).toEqual(['.capnp', '.zip', '.tar.gz', '.tgz', '.tar']);
+  });
+
+  it('draws no alternate intake card', () => {
+    expect(alternateIntakeTiles([CAPNPROTO_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 

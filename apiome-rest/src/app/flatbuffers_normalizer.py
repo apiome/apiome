@@ -9,7 +9,8 @@ field numbers preserved on :class:`~app.canonical_model.CanonicalField.field_num
 Field ids (MFX-30.1): a ``(deprecated)`` field is a slot kept only for its id, so it is not a field of
 the model; a table records ``{id: name}`` of those in ``extras["fbs_deprecated"]``. A field whose id is
 not the one its position implies (``(id: N)`` out of order, or after a deprecated slot) keeps it in
-``extras["fbs_id"]``, so the FlatBuffers export writes the same ids.
+``extras["fbs_id"]``, so the FlatBuffers export writes the same ids. A table that writes ``(id: N)`` on
+some of its fields but not all records ``extras["fbs_mixed_ids"]`` (MFI-19.4; ``flatc`` refuses it).
 """
 
 from __future__ import annotations
@@ -191,6 +192,10 @@ class FlatBuffersNormalizer(Normalizer, register=True):
             type_extras: Dict[str, Any] = {"fbs_kind": typedef.kind}
             if deprecated:
                 type_extras["fbs_deprecated"] = deprecated
+            # MFI-19.4: a table that writes `(id: N)` on some fields but not all, which flatc refuses.
+            explicit = [field.field_id is not None for field in typedef.fields]
+            if typedef.kind == "table" and any(explicit) and not all(explicit):
+                type_extras["fbs_mixed_ids"] = True
             types.append(
                 Type(
                     key=type_key,

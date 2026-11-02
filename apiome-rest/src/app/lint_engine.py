@@ -413,6 +413,10 @@ def load_format_rule_packs() -> None:
     # Apache Thrift lint pack (MFI-19.3): registers under ``thrift``.
     from . import thrift_lint as _thrift_lint  # noqa: F401
 
+    # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
+    from . import capnproto_lint as _capnproto_lint  # noqa: F401
+    from . import flatbuffers_lint as _flatbuffers_lint  # noqa: F401
+
     # OpenRPC lint pack (MFI-19.1): registers under ``openrpc``.
     from . import openrpc_lint as _openrpc_lint  # noqa: F401
 

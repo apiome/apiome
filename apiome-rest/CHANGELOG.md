@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.600.0] - 2026-11-01
+
+### Added
+- **FlatBuffers and Cap'n Proto: evolution-aware breaking changes and lint (MFI-19.4, #3982).** Both adapters already
+  parsed, normalized and fingerprinted; this adds what versioning and lint need.
+  - New `app/numbered_field_breaking.py`: pairs the two sides of a diff by **wire number** instead of name
+    (`numbered_field_index`, `id_counterpart`; `flatbuffers_wire_ids` derives a FlatBuffers table field's id from
+    `fbs_id` or its compact position, a union taking two).
+  - New `app/flatbuffers_breaking.py` (`fbs.*`, registered under `flatbuffers`): `field-renamed` (dangerous),
+    `field-id-reused` / `field-id-changed` / `field-removed` / `struct-changed` / `enum-value-changed` /
+    `enum-value-removed` / `union-member-removed` (breaking), `field-deprecated` / `field-added` /
+    `field-id-unchanged` (safe), `default-changed` (dangerous).
+  - New `app/capnproto_breaking.py` (`capnp.*`, registered under `capnproto`): pairs struct fields and interface
+    methods by `@N` ordinal — `field-renamed` / `method-renamed` / `field-added` / `method-added` (safe; a renamed
+    method's request / response messages are graded with it), `ordinal-reused` / `ordinal-changed` / `field-removed` /
+    `method-removed` / `enum-value-changed` / `enum-value-removed` (breaking).
+  - New lint packs: `app/flatbuffers_lint.py` (`flatbuffers.root-type-declared`, `.namespace-declared` — info;
+    `.unique-field-ids`, `.explicit-ids-all-or-none` — error) and `app/capnproto_lint.py`
+    (`capnproto.file-id-declared`, `.unique-ordinals`, `.contiguous-ordinals` — error), with transparency metadata,
+    scanner-evaluation fixtures, and the `apiome-db` V343 style-guide reseed.
+  - The FlatBuffers normalizer records `extras["fbs_mixed_ids"]` on a table that gives `(id: N)` to some fields but
+    not all.
+
+### Fixed
+- The Cap'n Proto reader stopped a method's parameter / result list at the first `)`, so a method returning a
+  parenthesized type (`-> (people :List(Person))`) was silently dropped. It now matches the balanced group; corpus golden
+  `capnproto/04-event-stress.capnp` gains its `drain` method (and the emitter test that filled the gap it left now
+  asserts there is none).
+
+### Changed
+- Corpus golden `flatbuffers/02-minimal-ping.fbs` gains the `flatbuffers.namespace-declared` info finding.
+- OpenAPI document version 1.463.0 → 1.464.0 (no schema change).
+
 ## [1.599.0] - 2026-11-01
 
 ### Added

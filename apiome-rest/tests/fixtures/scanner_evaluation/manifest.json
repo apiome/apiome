@@ -616,6 +616,41 @@
       "expected_blocking_rule_ids": [
         "smithy.validation-error"
       ]
+    },
+    {
+      "id": "catalog/flatbuffers-unique-field-ids",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "flatbuffers.unique-field-ids"
+      ]
+    },
+    {
+      "id": "catalog/flatbuffers-explicit-ids-all-or-none",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "flatbuffers.explicit-ids-all-or-none"
+      ]
+    },
+    {
+      "id": "catalog/capnproto-file-id-declared",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "capnproto.file-id-declared"
+      ]
+    },
+    {
+      "id": "catalog/capnproto-unique-ordinals",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "capnproto.unique-ordinals"
+      ]
+    },
+    {
+      "id": "catalog/capnproto-contiguous-ordinals",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "capnproto.contiguous-ordinals"
+      ]
     }
   ]
 }

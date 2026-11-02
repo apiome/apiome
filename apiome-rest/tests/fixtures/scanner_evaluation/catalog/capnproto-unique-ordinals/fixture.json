@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/capnproto-unique-ordinals",
+  "source_format": "capnproto",
+  "description": "Cap'n Proto schema with exactly one blocking defect: two fields of `Person` share @1.",
+  "document": "@0xbf5147cbbecf40c1;\n\nstruct Person {\n  name @0 :Text;\n  email @1 :Text;\n  phone @1 :Text;\n}\n"
+}

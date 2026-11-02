@@ -383,6 +383,42 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** An Avro alias should differ from the name it aliases.
 
 
+## Pack: `capnproto`
+
+### `capnproto.contiguous-ordinals` {#capnproto-contiguous-ordinals}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Ordinals run from @0 without a gap.
+- **Reference:** https://capnproto.org/language.html#structs
+- **Remediation:** Renumber the members so their ordinals run @0, @1, @2…; to retire a member, keep it and rename it (obsolete…) rather than leaving a gap.
+- **False-positive guidance:** Not a false positive: the Cap'n Proto compiler requires ordinals to be sequential from zero.
+- **Fixture:** `catalog/capnproto-contiguous-ordinals`
+- **Scan modes:** `lint`
+
+### `capnproto.file-id-declared` {#capnproto-file-id-declared}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A Cap'n Proto schema declares its @0x… file id.
+- **Reference:** https://capnproto.org/language.html#unique-ids
+- **Remediation:** Run `capnp id` and add the id it prints, followed by `;`, at the top of the file.
+- **False-positive guidance:** Not a false positive: the Cap'n Proto compiler rejects a file without an id.
+- **Fixture:** `catalog/capnproto-file-id-declared`
+- **Scan modes:** `lint`
+
+### `capnproto.unique-ordinals` {#capnproto-unique-ordinals}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Ordinals must be unique within a struct, interface or enum.
+- **Reference:** https://capnproto.org/language.html#structs
+- **Remediation:** Give each member its own `@N`; never reuse the ordinal of another member.
+- **False-positive guidance:** Not a false positive: the Cap'n Proto compiler rejects duplicate ordinals.
+- **Fixture:** `catalog/capnproto-unique-ordinals`
+- **Scan modes:** `lint`
+
+
 ## Pack: `common`
 
 ### `common.api-missing-description` {#common-api-missing-description}
@@ -601,6 +637,43 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** warning
 - **Rationale:** A FHIR profile should say which fhirVersion (R4, R5, R6) it targets.
+
+
+## Pack: `flatbuffers`
+
+### `flatbuffers.explicit-ids-all-or-none` {#flatbuffers-explicit-ids-all-or-none}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A table declares an id on every field or on none.
+- **Reference:** https://flatbuffers.dev/schema/#attributes
+- **Remediation:** Add `(id: N)` to the table's remaining fields (keeping the ids they have today), or remove it from all of them.
+- **False-positive guidance:** Not a false positive: flatc rejects a table where only some fields declare an id.
+- **Fixture:** `catalog/flatbuffers-explicit-ids-all-or-none`
+- **Scan modes:** `lint`
+
+### `flatbuffers.namespace-declared` {#flatbuffers-namespace-declared}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** A FlatBuffers schema should declare a namespace.
+
+### `flatbuffers.root-type-declared` {#flatbuffers-root-type-declared}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A FlatBuffers schema should declare its root_type.
+
+### `flatbuffers.unique-field-ids` {#flatbuffers-unique-field-ids}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Field ids must be unique within a table.
+- **Reference:** https://flatbuffers.dev/schema/#tables
+- **Remediation:** Give each field of the table its own `(id: N)`; keep a removed field as `(deprecated)` so its id stays taken.
+- **False-positive guidance:** Not a false positive: flatc rejects a table whose fields share an id, so the schema cannot be compiled as written.
+- **Fixture:** `catalog/flatbuffers-unique-field-ids`
+- **Scan modes:** `lint`
 
 
 ## Pack: `graphql`
