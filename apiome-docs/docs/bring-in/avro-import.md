@@ -2,7 +2,7 @@
 title: "Import an Apache Avro schema"
 description: "Catalog Avro schemas and IDL, with fingerprints and Confluent-style compatibility checks."
 sidebar_position: 45
-tags: [import, avro, avdl, schema-registry, fingerprint, pcf, compatibility, breaking-changes]
+tags: [import, avro, avdl, schema-registry, fingerprint, pcf, compatibility, breaking-changes, logical-types]
 ---
 
 The **Avro** importer (`avro`) reads Apache Avro schemas into the [Catalog](./catalog.mdx). It
@@ -26,6 +26,60 @@ apiome import avro ./orders.avdl
 - **A file set.** Upload a `.zip`, `.tar.gz` or `.tar` holding an IDL file and the files it
   `import`s.
 
+## What the catalog item holds
+
+Both surfaces map the same way. Each named type becomes a catalog type, keyed by its full name
+(`com.example.User`).
+
+| Avro | Catalog item |
+| --- | --- |
+| `record` (and IDL `error`) | A record type, one field per Avro field, in order |
+| A field's `default` | The field's default; an explicit `null` default counts as a default |
+| `enum` | An enum type, one value per symbol, in order; its `default` symbol is kept |
+| `fixed` | A scalar type that keeps its `size` |
+| `["null", X]` | A nullable reference to `X` |
+| Any other union | A union type, one member per branch |
+| `map` | A map type, named after its values: `Map_long`, `Map_array_string` |
+| `array` | A list of its `items` |
+| `aliases` of a type or field, a field's `order` | Kept as written |
+
+A union branch can be a type named elsewhere (`["Cat", "Dog"]`), a type declared inline, a map or
+a primitive written as an object (`{"type": "long"}`). Each one becomes a member. An `array` branch
+has no name of its own, so it is listed as `string`.
+
+Custom attributes (`"x-owner": "team"`) are kept only from Avro IDL, where they are `@annotations`.
+
+### Logical types
+
+Every logical type in Avro 1.12 is read, on a field, behind `["null", X]`, or on a named `fixed`:
+
+| Logical type | Written on | Read as |
+| --- | --- | --- |
+| `date` | `int` | `date` |
+| `time-millis` / `time-micros` | `int` / `long` | `time` |
+| `timestamp-millis` / `-micros` / `-nanos` | `long` | `date-time` |
+| `local-timestamp-millis` / `-micros` / `-nanos` | `long` | `date-time` |
+| `uuid` | `string`, or `fixed` of 16 bytes | `uuid` |
+| `decimal` | `bytes` or `fixed`, with `precision` and `scale` | `decimal` |
+| `big-decimal` | `bytes` | `decimal` |
+| `duration` | `fixed` of 12 bytes | `duration` |
+
+The exact logical type is kept beside the format, so a `timestamp-micros` field is exported back as
+`timestamp-micros`, not as `timestamp-millis`.
+
+The [Avro specification](https://avro.apache.org/docs/1.12.0/specification/#logical-types) says a
+reader ignores a logical type it does not know, or one written on the wrong type. Apiome does the
+same: it reads the field as its plain Avro type and marks the logical type `unknown` or `invalid`.
+These count as invalid:
+
+- A logical type on the wrong type, such as `{"type": "string", "logicalType": "date"}`.
+- A `decimal` with no `precision`, or a `scale` below 0 or above its `precision`.
+- A `decimal` on a `fixed` too small for its `precision`.
+- A `uuid` or `duration` on a `fixed` of the wrong size.
+
+The mark is a field's (or `fixed` type's) `avro_logical_type_ignored` key. The logical type itself
+is still kept, so an export writes it back as it was.
+
 ## Fingerprints
 
 Every Avro catalog item records two hashes for each named type it declares. Each type is hashed
@@ -48,13 +102,13 @@ together with the named types it uses.
 | A `doc` edited | Same | Changes | No |
 | Key order or whitespace | Same | Same | No |
 | A field's `default` | Same | Changes | Yes |
-| A field's `aliases` or `order` | Same | Changes | No |
+| A field's `aliases` or `order` | Same | Changes | Yes |
 | A field's type, a field added or removed, fields reordered | Changes | Changes | Yes |
 | A type renamed, an enum symbol added | Changes | Changes | Yes |
 
 A `doc`-only edit is not a change to the contract: it creates no new version, and a diff between
-the two shows nothing breaking. The catalog's version check does not read `aliases` or `order` yet,
-so compare the semantic hashes to spot those edits.
+the two shows nothing breaking. An `aliases` or `order` edit does create one, because the catalog
+item keeps them.
 
 The catalog item keeps the hashes under these keys:
 

@@ -54,10 +54,10 @@
           "avro_kind": "map"
         },
         "fields": [],
-        "key": "com.example.telemetry.Map_['null', 'string', 'double']",
+        "key": "com.example.telemetry.Map_Union_null_string_double",
         "key_type": null,
         "kind": "map",
-        "name": "Map_['null', 'string', 'double']",
+        "name": "Map_Union_null_string_double",
         "namespace": "com.example.telemetry",
         "union_members": [],
         "value_type": {
@@ -94,6 +94,9 @@
         "description": "A telemetry envelope exercising unions, maps, fixed, aliases, and logical types.",
         "enum_values": [],
         "extras": {
+          "avro_aliases": [
+            "SensorEnvelope"
+          ],
           "avro_kind": "record"
         },
         "fields": [
@@ -111,7 +114,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "com.example.telemetry.Map_['null', 'string', 'double']",
+              "name": "com.example.telemetry.Map_Union_null_string_double",
               "nullable": false
             }
           },
@@ -337,6 +340,9 @@
         "description": "A monotonically increasing counter.",
         "enum_values": [],
         "extras": {
+          "avro_aliases": [
+            "TickReading"
+          ],
           "avro_kind": "record"
         },
         "fields": [
@@ -345,7 +351,9 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "avro_order": "descending"
+            },
             "field_number": 1,
             "key": "com.example.telemetry.readings.CounterReading.count",
             "name": "count",
@@ -357,12 +365,29 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": "date-time",
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
             "extras": {
-              "has_default": true
+              "avro_type": "long",
+              "has_default": true,
+              "logicalType": "timestamp-micros"
             },
             "field_number": 2,
             "key": "com.example.telemetry.readings.CounterReading.resetAt",
@@ -370,7 +395,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "int64",
+              "name": "string",
               "nullable": true
             }
           }
@@ -399,6 +424,7 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "avro_order": "ignore",
               "has_default": true
             },
             "field_number": 2,
@@ -451,11 +477,11 @@
     "confidence": 0.95,
     "format": "avro"
   },
-  "fingerprint": "sha256:b5519524e4ccce87c59747b6b89b410707e7dae4e7d5a62e201bcad1f2f06b28",
+  "fingerprint": "sha256:2064f42ab873ad2bac32b10980d237729f4e1696ebce9b48f80117f978fc02ea",
   "lint": {
     "findings": 8,
     "grade": "B",
-    "report_fingerprint": "448aca69c66176f2820a59e4361938148692986ef298ed21ddf5a57532f6949c",
+    "report_fingerprint": "20784ee6ef0f6f98db31736c6f2731900d6d4ba06d53de33fa0e09ac3bf5215d",
     "score": 80,
     "severity_counts": {
       "error": 0,

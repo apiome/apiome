@@ -1,0 +1,22 @@
+---
+slug: avro-canonical-model
+title: Avro logical types, unions and aliases are kept
+description: An Avro import reads every Avro 1.12 logical type and keeps unions and aliases.
+authors: [apiome]
+---
+
+An Avro catalog item now holds the whole of an Avro 1.12 schema's types: every **logical type**,
+every **union** member, and the **aliases**, **sort order** and **enum default** a schema evolves by.
+[What the catalog item holds](/bring-in/avro-import#what-the-catalog-item-holds).
+
+{/* truncate */}
+
+- **Every logical type.** `timestamp-nanos`, `local-timestamp-micros`, `big-decimal` and `duration`
+  join `date`, `uuid`, `decimal` and the rest, on a plain field, on a nullable one
+  (`["null", {"type": "long", "logicalType": "timestamp-millis"}]`) and on a named `fixed`.
+- **Ignored when invalid.** A logical type Avro does not know, or one written on the wrong type, is read
+  as its plain type and marked, as the Avro specification requires.
+- **Unions keep their members.** `["Cat", "Dog"]`, `{"type": "long"}` and map branches each become their own
+  member instead of `string`.
+- **Evolution metadata on `.avsc`.** An enum's `default`, `aliases` and a field's `order` are kept, so editing
+  them creates a new version and an Avro export writes them back.
