@@ -1,14 +1,29 @@
-"""CORBA / OMG IDL → canonical model normalizer — MFI-21.7.
+"""CORBA / OMG IDL → canonical model normalizer — MFI-21.7, extended by MFI-21.4 (#3994).
 
 Maps a parsed :class:`~app.corbaidl_parser.CorbaIdlDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
-:attr:`~app.canonical_model.ApiParadigm.RPC`.
+:attr:`~app.canonical_model.ApiParadigm.RPC`:
+
+* each ``interface`` → a :class:`~app.canonical_model.Service`; its operations → operations
+  keyed ``<module>.<Interface>.<operation>`` with a request message (the ``in`` / ``inout``
+  parameters), a response (the return value) and an error message per ``raises`` exception;
+* a ``oneway`` operation → :attr:`~app.canonical_model.OperationKind.ONE_WAY` with no response;
+* an attribute → the operations CORBA's GIOP mapping gives it: ``_get_<name>`` returning its
+  type and, unless ``readonly``, ``_set_<name>`` taking it;
+* the operations and attributes an interface **inherits** are flattened into its service (a
+  client calls them on the derived object); ``extras["corbaidl_bases"]`` lists the bases and
+  ``extras["corbaidl_inherited"]`` which base each inherited operation comes from;
+* each ``struct`` / ``exception`` → a RECORD, each ``enum`` → an ENUM.
+
+``extras["corbaidl_interfaces"]`` keeps every interface as declared (own operations with their
+signatures and ``oneway`` flag, attributes, bases) — the lint pack (:mod:`app.corbaidl_lint`),
+the breaking-change classifier (:mod:`app.corbaidl_breaking`) and the IDL emitter read it.
 """
 
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -27,10 +42,10 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
-from .corbaidl_parser import CorbaIdlDocument, CorbaIdlField, CorbaIdlParameter
+from .corbaidl_parser import CorbaIdlDocument, CorbaIdlField, CorbaIdlInterface, CorbaIdlParameter
 from .normalizer import Keys, Normalizer, normalize_ordering
 
-__all__ = ["CorbaIdlNormalizer"]
+__all__ = ["CorbaIdlNormalizer", "attribute_operations", "inherited_members", "member_sources"]
 
 _FORMAT_KEY = "corbaidl"
 
@@ -200,6 +215,163 @@ def _parameter_messages(
     ]
 
 
+def member_sources(entry: Mapping[str, Any]) -> List[Dict[str, Any]]:
+    """An interface entry's operations, then each attribute's accessors as operation entries.
+
+    ``_get_<name>`` returns the attribute's type; ``_set_<name>`` takes it as its one ``in``
+    parameter and returns nothing.
+    """
+    sources: List[Dict[str, Any]] = [dict(op) for op in entry.get("operations") or []]
+    for attribute in entry.get("attributes") or []:
+        name, type_expr = str(attribute.get("name")), str(attribute.get("type"))
+        for accessor in attribute_operations(name, bool(attribute.get("readonly"))):
+            if accessor.startswith("_get_"):
+                sources.append({"name": accessor, "return_type": type_expr, "parameters": [], "raises": []})
+            else:
+                sources.append(
+                    {
+                        "name": accessor,
+                        "return_type": "void",
+                        "parameters": [{"name": name, "type": type_expr, "direction": "in"}],
+                        "raises": [],
+                    }
+                )
+    return sources
+
+
+def _operation(service_key: str, entry: Mapping[str, Any], refs: Mapping[str, Any]) -> Operation:
+    """One operation (declared or an attribute accessor) of a service.
+
+    Args:
+        service_key: The owning service's key.
+        entry: The operation entry (``name`` / ``return_type`` / ``parameters`` / ``raises`` /
+            ``oneway``).
+        refs: The keyword arguments :func:`_type_ref_from_expr` resolves names with.
+
+    Returns:
+        The operation: a ``oneway`` one is ONE_WAY with no response message.
+    """
+    op_key = Keys.operation_rpc(service_key, str(entry["name"]))
+    parameters = tuple(
+        CorbaIdlParameter(name=str(p["name"]), type_expr=str(p["type"]), direction=str(p.get("direction", "in")))
+        for p in entry.get("parameters") or []
+    )
+    messages = _parameter_messages(op_key, parameters, **refs)
+    oneway = bool(entry.get("oneway"))
+    return_type = str(entry.get("return_type") or "void")
+    if return_type != "void" and not oneway:
+        messages.append(
+            Message(
+                key=f"{op_key}#response",
+                role=MessageRole.RESPONSE,
+                payload=_type_ref_from_expr(return_type, **refs),
+            )
+        )
+    for index, exc_name in enumerate(entry.get("raises") or [], start=1):
+        messages.append(
+            Message(
+                key=f"{op_key}#error.{exc_name}",
+                role=MessageRole.ERROR,
+                name=exc_name,
+                payload=TypeRef(name=_type_key(exc_name, refs["namespace"])),
+                extras={"corbaidl_raise_index": index},
+            )
+        )
+    return Operation(
+        key=op_key,
+        name=str(entry["name"]),
+        kind=OperationKind.ONE_WAY if oneway else OperationKind.REQUEST_RESPONSE,
+        streaming=StreamingMode.NONE,
+        messages=messages,
+    )
+
+
+def attribute_operations(name: str, readonly: bool) -> List[str]:
+    """The GIOP operation names of an attribute: ``_get_<name>`` and, unless read-only, ``_set_<name>``.
+
+    Args:
+        name: The attribute name.
+        readonly: Whether it is ``readonly``.
+
+    Returns:
+        The accessor operation names, getter first.
+    """
+    return [f"_get_{name}"] if readonly else [f"_get_{name}", f"_set_{name}"]
+
+
+def inherited_members(
+    interface: str, interfaces: Mapping[str, Mapping[str, Any]]
+) -> List[Tuple[str, str]]:
+    """``(member name, base)`` for every operation and attribute accessor ``interface`` inherits.
+
+    Bases are walked depth-first in declaration order; a member already reached (its own, or
+    from an earlier base — the diamond case) is not repeated, and an inheritance cycle or an
+    undeclared base stops the walk on that branch rather than looping (``corbaidl.inheritance-*``
+    lint rules report them).
+
+    Args:
+        interface: The interface's name.
+        interfaces: Interface name → its ``corbaidl_interfaces`` entry (``operations`` /
+            ``attributes`` / ``bases``).
+
+    Returns:
+        The inherited members in walk order, each with the base that declares it.
+    """
+    seen = set(_own_members(interfaces.get(interface) or {}))
+    found: List[Tuple[str, str]] = []
+    visited = {interface}
+
+    def walk(name: str) -> None:
+        for base in (interfaces.get(name) or {}).get("bases") or []:
+            if base in visited or base not in interfaces:
+                continue
+            visited.add(base)
+            for member in _own_members(interfaces[base]):
+                if member not in seen:
+                    seen.add(member)
+                    found.append((member, base))
+            walk(base)
+
+    walk(interface)
+    return found
+
+
+def _own_members(entry: Mapping[str, Any]) -> List[str]:
+    """The operation names an interface entry declares itself (attribute accessors included)."""
+    names = [str(op.get("name")) for op in entry.get("operations") or []]
+    for attribute in entry.get("attributes") or []:
+        names.extend(attribute_operations(str(attribute.get("name")), bool(attribute.get("readonly"))))
+    return names
+
+
+def _interface_entry(interface: CorbaIdlInterface) -> Dict[str, Any]:
+    """An interface as declared, for ``extras["corbaidl_interfaces"]``."""
+    entry: Dict[str, Any] = {
+        "name": interface.name,
+        "operations": [
+            {
+                "name": operation.name,
+                "return_type": operation.return_type,
+                "parameters": [
+                    {"name": param.name, "type": param.type_expr, "direction": param.direction}
+                    for param in operation.parameters
+                ],
+                "raises": list(operation.raises),
+                **({"oneway": True} if operation.oneway else {}),
+            }
+            for operation in interface.operations
+        ],
+    }
+    if interface.bases:
+        entry["bases"] = list(interface.bases)
+    if interface.attributes:
+        entry["attributes"] = [
+            {"name": a.name, "type": a.type_expr, **({"readonly": True} if a.readonly else {})}
+            for a in interface.attributes
+        ]
+    return entry
+
+
 class CorbaIdlNormalizer(Normalizer, register=True):
     """Normalize a parsed CORBA IDL document into a :class:`CanonicalApi`."""
 
@@ -261,54 +433,30 @@ class CorbaIdlNormalizer(Normalizer, register=True):
                 )
             )
 
+        refs = dict(namespace=namespace, typedefs=typedefs, enum_names=enum_names, struct_names=struct_names)
+        entries = {interface.name: _interface_entry(interface) for interface in source.interfaces}
         services: List[Service] = []
         for interface in source.interfaces:
             service_key = Keys.type(interface.name, namespace)
+            members = [(entry, None) for entry in member_sources(entries[interface.name])]
+            inherited: Dict[str, str] = {}
+            for member, base in inherited_members(interface.name, entries):
+                inherited[member] = base
+                members.extend(
+                    (entry, base) for entry in member_sources(entries[base]) if entry["name"] == member
+                )
             operations: List[Operation] = []
-            for operation in interface.operations:
-                op_key = Keys.operation_rpc(service_key, operation.name)
-                messages = _parameter_messages(
-                    op_key,
-                    operation.parameters,
-                    namespace=namespace,
-                    typedefs=typedefs,
-                    enum_names=enum_names,
-                    struct_names=struct_names,
-                )
-                if operation.return_type != "void":
-                    messages.append(
-                        Message(
-                            key=f"{op_key}#response",
-                            role=MessageRole.RESPONSE,
-                            payload=_type_ref_from_expr(
-                                operation.return_type,
-                                namespace=namespace,
-                                typedefs=typedefs,
-                                enum_names=enum_names,
-                                struct_names=struct_names,
-                            ),
-                        )
-                    )
-                for index, exc_name in enumerate(operation.raises, start=1):
-                    messages.append(
-                        Message(
-                            key=f"{op_key}#error.{exc_name}",
-                            role=MessageRole.ERROR,
-                            name=exc_name,
-                            payload=TypeRef(name=_type_key(exc_name, namespace)),
-                            extras={"corbaidl_raise_index": index},
-                        )
-                    )
-                operations.append(
-                    Operation(
-                        key=op_key,
-                        name=operation.name,
-                        kind=OperationKind.REQUEST_RESPONSE,
-                        streaming=StreamingMode.NONE,
-                        messages=messages,
-                    )
-                )
-            services.append(Service(key=service_key, name=interface.name, operations=operations))
+            for entry, _ in members:
+                operation = _operation(service_key, entry, refs)
+                # IDL forbids overloading (`corbaidl.operation-names-unique`); keep the first.
+                if all(existing.key != operation.key for existing in operations):
+                    operations.append(operation)
+            extras: Dict[str, Any] = {}
+            if interface.bases:
+                extras["corbaidl_bases"] = list(interface.bases)
+            if inherited:
+                extras["corbaidl_inherited"] = inherited
+            services.append(Service(key=service_key, name=interface.name, operations=operations, extras=extras))
 
         api = CanonicalApi(
             paradigm=self.paradigm,
@@ -320,28 +468,7 @@ class CorbaIdlNormalizer(Normalizer, register=True):
             extras={
                 "corbaidl_module": source.module,
                 "corbaidl_typedefs": typedefs,
-                "corbaidl_interfaces": [
-                    {
-                        "name": interface.name,
-                        "operations": [
-                            {
-                                "name": operation.name,
-                                "return_type": operation.return_type,
-                                "parameters": [
-                                    {
-                                        "name": param.name,
-                                        "type": param.type_expr,
-                                        "direction": param.direction,
-                                    }
-                                    for param in operation.parameters
-                                ],
-                                "raises": list(operation.raises),
-                            }
-                            for operation in interface.operations
-                        ],
-                    }
-                    for interface in source.interfaces
-                ],
+                "corbaidl_interfaces": [entries[interface.name] for interface in source.interfaces],
             },
         )
         return normalize_ordering(api)

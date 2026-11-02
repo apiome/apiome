@@ -618,6 +618,62 @@
       ]
     },
     {
+      "id": "catalog/corbaidl-type-resolves",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.type-resolves"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-raises-declared",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.raises-declared"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-exception-as-type",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.exception-as-type"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-oneway-signature",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.oneway-signature"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-operation-names-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.operation-names-unique"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-member-names-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.member-names-unique"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-identifier-not-keyword",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.identifier-not-keyword"
+      ]
+    },
+    {
+      "id": "catalog/corbaidl-inheritance-acyclic",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "corbaidl.inheritance-acyclic"
+      ]
+    },
+    {
       "id": "catalog/raml-shacl-violation",
       "kind": "catalog_raml_amf",
       "expected_blocking_rule_ids": [

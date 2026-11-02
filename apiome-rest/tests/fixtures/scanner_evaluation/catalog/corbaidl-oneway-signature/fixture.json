@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/corbaidl-oneway-signature",
+  "source_format": "corbaidl",
+  "description": "OMG IDL definition with exactly one blocking defect: a oneway operation that returns a value.",
+  "document": "// CORBA IDL scanner-evaluation fixture (MFI-21.4).\nmodule Brokerage {\n  enum Side { BUY, SELL };\n  struct Order { string symbol; Side side; long quantity; };\n  exception Rejected { string reason; };\n  interface Account {\n    string place(in Order order) raises (Rejected);\n    oneway long ping(in long seq);\n  };\n};\n"
+}

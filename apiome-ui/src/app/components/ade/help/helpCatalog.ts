@@ -1187,6 +1187,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'record layout', 'redefines', 'occurs', 'picture', 'comp-3', 'packed decimal', 'ebcdic', 'filler', 'lint', 'breaking change'],
   },
   {
+    id: 'corba-idl-import',
+    title: 'Import CORBA IDL (OMG IDL) definitions',
+    summary: 'Catalog CORBA interfaces with inheritance, attributes and oneway, plus lint and GIOP-aware diff rules.',
+    page: 'apiome-docs/docs/bring-in/corba-idl-import.md',
+    section: 'reference',
+    keywords: ['giop', 'iiop', 'cdr', 'oneway', 'raises', 'cosnaming', 'idlj', 'omniidl', 'lint', 'breaking change'],
+  },
+  {
     id: 'oncrpc-import',
     title: 'Import ONC RPC (XDR) definitions',
     summary: 'Catalog rpcgen .x files: programs, versions, procedures and XDR types, with lint and diff rules.',

@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/corbaidl-exception-as-type",
+  "source_format": "corbaidl",
+  "description": "OMG IDL definition with exactly one blocking defect: an operation returns the exception Rejected as a value.",
+  "document": "// CORBA IDL scanner-evaluation fixture (MFI-21.4).\nmodule Brokerage {\n  enum Side { BUY, SELL };\n  struct Order { string symbol; Side side; long quantity; };\n  exception Rejected { string reason; };\n  interface Account {\n    string place(in Order order) raises (Rejected);\n    Rejected lastRejection();\n  };\n};\n"
+}

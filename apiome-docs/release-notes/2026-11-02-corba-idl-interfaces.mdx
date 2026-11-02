@@ -1,0 +1,31 @@
+---
+slug: corba-idl-interfaces
+title: CORBA IDL items read inheritance, attributes and oneway, with lint and GIOP-aware diff rules
+description: OMG IDL interfaces import completely, lint like an IDL compiler, and compare with CDR's positional rules.
+authors: [apiome]
+---
+
+A CORBA IDL file now imports with everything the catalog does for a modern contract: the whole
+interface set, native lint rules that catch what an IDL compiler would reject, and a comparison
+that follows how CORBA calls and encodes.
+[Import CORBA IDL (OMG IDL) definitions](/bring-in/corba-idl-import).
+
+{/* truncate */}
+
+- **Inheritance.** An interface that inherits from another (`interface Account : Auditable`)
+  was dropped before; it now imports, with the operations and attributes it inherits.
+- **Attributes and oneway.** An `attribute` becomes the `_get_` / `_set_` operations CORBA calls
+  (only `_get_` when it is `readonly`), and a `oneway` operation is one-way with no reply. Before,
+  attributes were skipped and `oneway` ended up in the return type.
+- **Lint.** The `corbaidl` pack flags:
+  - an undeclared type, and a `raises` that names something other than an exception;
+  - an exception used as a value, and a `oneway` operation that returns a value or raises;
+  - operation, member or parameter names that differ only in case, and IDL keywords used as names;
+  - inheritance cycles and undeclared base interfaces;
+  - `any` and untyped `Object` values (as info).
+- **Diff.** CORBA encodes by position, so a parameter or struct member added, removed, moved
+  or re-typed is breaking, as are a changed direction, a narrowed bound, a shifted enum ordinal
+  and a removed base interface. A new `raises` exception or an enumerator appended at the end
+  is dangerous, and a renamed parameter is safe.
+- **One-time version change.** The first re-import of an existing CORBA item that uses
+  inheritance, attributes or `oneway` is recorded as a changed version.
