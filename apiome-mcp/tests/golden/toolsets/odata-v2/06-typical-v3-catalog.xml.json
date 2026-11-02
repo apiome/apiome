@@ -2,6 +2,23 @@
   "mappingVersion": 1,
   "tools": [
     {
+      "description": "Returns HTTP 204 with no body.",
+      "inputSchema": {
+        "properties": {
+          "Percent": {},
+          "Sku": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "Discount",
+      "operation": "FunctionImport CatalogContainer.Discount(Edm.String,Edm.Int16)",
+      "output": {
+        "status": "204"
+      }
+    },
+    {
       "description": "Returns HTTP 200 application/json (Catalog.Category).",
       "inputSchema": {
         "properties": {

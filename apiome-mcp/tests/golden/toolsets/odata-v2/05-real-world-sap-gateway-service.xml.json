@@ -456,6 +456,45 @@
         "shape": "ZBP_SRV.SalesOrder",
         "status": "201"
       }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (ZBP_SRV.SalesOrder).",
+      "inputSchema": {
+        "properties": {
+          "SalesOrderID": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "ConfirmSalesOrder",
+      "operation": "FunctionImport ZBP_SRV_Entities.ConfirmSalesOrder(Edm.String)",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "BusinessPartnerID": {
+              "type": "string"
+            },
+            "CurrencyCode": {
+              "type": "string"
+            },
+            "GrossAmount": {},
+            "LifecycleStatus": {
+              "type": "string"
+            },
+            "SalesOrderID": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "SalesOrderID"
+          ],
+          "type": "object"
+        },
+        "shape": "ZBP_SRV.SalesOrder",
+        "status": "200"
+      }
     }
   ]
 }

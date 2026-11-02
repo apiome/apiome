@@ -200,6 +200,77 @@
         "shape": "Example.Warehouse.Bin",
         "status": "201"
       }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (i32).",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "Recount",
+      "operation": "Action Example.Warehouse.Recount(Example.Warehouse.Bin,Edm.String)",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {},
+        "shape": "i32",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Example.Warehouse.Bin).",
+      "inputSchema": {
+        "properties": {
+          "point": {}
+        },
+        "type": "object"
+      },
+      "name": "NearestBin",
+      "operation": "Function Example.Warehouse.NearestBin(Collection(Example.Warehouse.Bin),Edm.GeographyPoint)",
+      "output": {
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "Code": {
+              "type": "string"
+            },
+            "Flags": {
+              "enum": [
+                0,
+                1,
+                2,
+                4,
+                8
+              ],
+              "type": "integer"
+            },
+            "Location": {},
+            "Sku": {},
+            "Slots": {
+              "items": {
+                "properties": {
+                  "Height": {},
+                  "Length": {},
+                  "Width": {}
+                },
+                "required": [
+                  "Height",
+                  "Length",
+                  "Width"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "Code",
+            "Slots"
+          ],
+          "type": "object"
+        },
+        "shape": "Example.Warehouse.Bin",
+        "status": "200"
+      }
     }
   ]
 }
