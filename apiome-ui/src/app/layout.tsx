@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { interSans, jetbrainsMono } from "./fonts";
+import { interSans, jetbrainsMono, manropeDisplay } from "./fonts";
 import "./globals.css";
 import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${interSans.variable} ${jetbrainsMono.variable}`}
+      className={`${interSans.variable} ${jetbrainsMono.variable} ${manropeDisplay.variable}`}
       suppressHydrationWarning
     >
       <head>

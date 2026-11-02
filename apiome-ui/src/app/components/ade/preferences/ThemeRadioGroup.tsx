@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { Theme } from '../../../config/themes';
 import {
   DARK_THEME_ID,
@@ -8,6 +9,20 @@ import {
   SYSTEM_THEME_ID,
   getThemeById,
 } from '../../../config/themes';
+import { ICON_SIZE } from '@/app/components/ui/iconSizes';
+import { cn } from '@lib/utils';
+
+/**
+ * The themes the picker shows at once (facelift "themes", PROPOSALS_FACELIFT.md §2): follow
+ * system, the two brand palettes and High contrast. Every other theme folds under
+ * **More themes** — one click away, never gone — so the brand's own palettes carry the pane.
+ */
+const PRIMARY_THEME_IDS: ReadonlySet<string> = new Set([
+  SYSTEM_THEME_ID,
+  LIGHT_THEME_ID,
+  DARK_THEME_ID,
+  'high-contrast',
+]);
 
 /**
  * The theme picker inside the preferences pane (HIVE-1.4, #5277; `DESIGN.md` §4.1 item 1).
@@ -55,8 +70,14 @@ export default function ThemeRadioGroup({
   systemResolvedName,
   onSelect,
 }: ThemeRadioGroupProps) {
-  /** The card buttons, indexed as `themes` is, so a key press can focus its neighbour. */
+  /** The card buttons, indexed as `visible` is, so a key press can focus its neighbour. */
   const cardRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const primary = themes.filter((theme) => PRIMARY_THEME_IDS.has(theme.id));
+  const more = themes.filter((theme) => !PRIMARY_THEME_IDS.has(theme.id));
+  /* Open from the start when the current choice is a folded theme: a card that is checked
+     must be on screen, or the group has a selection the reader cannot see. */
+  const [showMore, setShowMore] = useState(() => more.some((theme) => theme.id === value));
+  const visible = showMore ? [...primary, ...more] : primary;
 
   /**
    * Move selection with the keyboard.
@@ -73,17 +94,17 @@ export default function ThemeRadioGroup({
       if (!NAVIGATION_KEYS.includes(event.key)) return;
       event.preventDefault();
 
-      const last = themes.length - 1;
+      const last = visible.length - 1;
       let next = index;
       if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = index === last ? 0 : index + 1;
       else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = index === 0 ? last : index - 1;
       else if (event.key === 'Home') next = 0;
       else next = last;
 
-      onSelect(themes[next].id);
+      onSelect(visible[next].id);
       cardRefs.current[next]?.focus();
     },
-    [onSelect, themes],
+    [onSelect, visible],
   );
 
   return (
@@ -93,7 +114,7 @@ export default function ThemeRadioGroup({
       data-testid="preferences-theme-group"
       className="grid grid-cols-2 gap-2.5 sm:grid-cols-3"
     >
-      {themes.map((theme, index) => {
+      {visible.map((theme, index) => {
         const selected = theme.id === value;
         /**
          * Whether this is the `system` card *and* the OS is currently in charge.
@@ -136,6 +157,25 @@ export default function ThemeRadioGroup({
           </button>
         );
       })}
+      {more.length > 0 ? (
+        <button
+          type="button"
+          data-testid="preferences-more-themes"
+          aria-expanded={showMore}
+          onClick={() => setShowMore((open) => !open)}
+          className={cn(
+            'col-span-full inline-flex w-fit items-center gap-1.5 rounded-sm py-1.5 text-sm text-fg-muted',
+            'transition-colors duration-[var(--dur-fast)] hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
+          )}
+        >
+          <ChevronDown
+            size={ICON_SIZE.button}
+            aria-hidden
+            className={cn('transition-transform duration-[var(--dur-base)]', showMore && 'rotate-180')}
+          />
+          {showMore ? 'Fewer themes' : `More themes (${more.length})`}
+        </button>
+      ) : null}
     </div>
   );
 }

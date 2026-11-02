@@ -51,10 +51,10 @@ The mark is a bee on a honeycomb (navy `#16265C`, azure `#1E90E8`, honey
 
 | Element | Use |
 | --- | --- |
-| **Navy ink** | primary buttons (light theme), page titles, selected text |
-| **Azure accent** | links, focus rings, selected states, info, charts |
-| **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight. Never used to mean *warning* (warnings are amber with an icon). |
-| **Hexagon** | workspace avatars (`.avatar--hex`), empty-state art, the faint canvas pattern on auth/launcher pages (`.hex-bg`). |
+| **Navy ink** | primary buttons (light theme), page titles, selected text, **the rail** (round 3: the navigation rail is the mark's navy with white type, so the brand is on every page, not only the launcher) |
+| **Azure accent** | links, focus rings, selected states, info, charts, the underline of the active tab |
+| **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight, **the active rail marker, the HEAD node on the Versions timeline, and the primary button in the signature Dark theme** (round 3). Never used to mean *warning* (warnings are amber with an icon). |
+| **Hexagon** | workspace avatars (`.avatar--hex`), **item avatars filled with the item's format colour** (catalog items, projects; round 3), empty-state art, the faint canvas pattern on auth/launcher pages (`.hex-bg`) and behind the Home hero band. People stay round. |
 
 Voice: confident, brief, kind. “Nothing published yet — publish a version to see it
 here.” not “No records found.”
@@ -82,6 +82,15 @@ All values live in `assets/hive.css :root`. Production maps them to Tailwind v4
 | `--honey` / `--honey-soft` / `--honey-fg` | `#F5B301` / `#FFF3C4` / `#6B4E00` | brand ornament |
 | `--ok` `--warn` `--danger` (+ `-soft`, `-fg`) | `#0E8A5F` `#C77700` `#D43F3A` | semantic |
 | `--violet` `--orange` `--rose` `--neutral` (+ `-soft`, `-fg`) | | extended status vocab |
+
+Round 3 (2026-11-02) adds three tokens that are not colours, so they sit outside the table the
+token test reads: **`--font-display`** (Manrope 700/800 — the display voice for page titles,
+greetings, section and dialog titles and the big tabular numbers; Inter stays the text face),
+**`--shadow-card` / `--shadow-card-hover`** (the raised card and its hover lift, soft and warm with
+no hairline; dark themes restate both as an inset highlight over a deeper drop), and
+**`--fmtc`**, set by `[data-fmt-tone]` to the solid hue behind each `.fmt--*` pill, which puts a
+format's colour on the item itself: the hex avatar's fill, the 3 px rule on a card or row, the
+identity wash on a detail header.
 
 **Status vocabulary → color** (used by `.badge[data-status]`, must match the app’s
 enum strings):
@@ -143,10 +152,11 @@ Right drawer (520 px) with tabs **Appearance · Account · Notifications · Shor
 Appearance contains, in order:
 
 1. **Theme** — 3-column grid of theme cards (preview swatch, name, one-line
-   description), radio semantics, applies immediately. The nine existing themes
-   map 1:1: `system, light, dark, high-contrast, blueprint, whiteboard, solarized,
-   nord, darcula`. Each is a token swap on `html[data-theme]`; layout/typography
-   never change between themes.
+   description), radio semantics, applies immediately. Four show at once —
+   `system, light, dark, high-contrast` — and the other five (`blueprint, whiteboard,
+   solarized, nord, darcula`) fold under **More themes**, one click away, so the brand's
+   own palettes carry the pane (round 3). Each is a token swap on `html[data-theme]`;
+   layout/typography never change between themes.
 2. **Font size** — 6-stop slider (`xs 14 · sm 15 · md 16 · lg 17 · xl 18 · 2xl 20 px`
    root size) with a live preview card. Implemented as
    `html[data-font-scale]{font-size:%}`; because every dimension is `rem`, the
@@ -168,7 +178,11 @@ during migration so users don’t lose their theme.
 ### 4.2 Theme behaviour
 * “Follow system” listens to `prefers-color-scheme` and re-resolves live.
 * Dark-based themes flip `--ink` to light so the primary button stays highest
-  contrast (`dark, high-contrast, blueprint, solarized, nord, darcula`).
+  contrast (`high-contrast, blueprint, solarized, nord, darcula`). **Dark** is the
+  signature theme (round 3): navy-black surfaces that carry the brand's navy, honey as
+  the primary (`--ink`), azure for links.
+* The rail keeps a navy cast on every dark-based theme (`--color-rail-navy-mix`) and
+  stays black with a white hairline in High contrast.
 * Format pills / method chips keep fixed hues in every theme (identity > tint).
 
 ---
@@ -198,8 +212,11 @@ tenant pill + version badge + theme + profile) is **retired**. Its jobs move to:
 264 px expanded / 64 px collapsed (`⌘\`, chevron on hover, or Preferences).
 Top-to-bottom: brand (mark + “apiome / Platform”), workspace switcher, search
 trigger (`⌘K`), grouped nav, footer (Help & docs · Preferences · user).
-Nav item: 34 px, icon 18 px + 13 px label; hover = 5 % ink tint; **active = white
-raised pill** (`--shadow-raised`) with an azure icon. Group labels are 11 px caps.
+Round 3: the rail is the mark's navy (a gradient mixed from `--brand-navy`) with white
+type; the bee sits in a honey hexagon; the content stays on warm paper. Nav item: 34 px,
+icon 18 px + 13 px label; hover = a white tint, and one pill slides between rows after
+the pointer (`.rail-pill`, parked under Reduce motion); **active = a white tint with a
+3 px honey marker** on the rail's edge and a honey icon. Group labels are 11 px caps.
 Gated items (no current tenant) render at 45 % with a tooltip. Collapsed rail shows
 tooltips on hover and hairlines between groups.
 
@@ -261,12 +278,12 @@ stand-in for `lib/platform-nav.ts`).
 | Class (hive.css) | Purpose | Production |
 | --- | --- | --- |
 | `.btn` `--primary --accent --ghost --soft --danger --danger-soft --link --sm --lg --icon --pill` | buttons; primary = ink | `components/ui/Button` variants |
-| `.input .select .textarea .input-wrap .field .hint .error` | forms; 36 px controls, inset hairline, azure focus | `Input`, `Select`, `Textarea`, `FormField` |
+| `.input .select .textarea .input-wrap .field .hint .error` | forms; 36 px controls, inset hairline, azure focus; a JSON field is an **editor pane** with a caps bar naming what it holds (round 3 "forms") | `Input`, `Select`, `Textarea`, `FormField`, `.vdlg-editor` |
 | `.check .radio .switch .switch-row .slider .segmented` | choice controls | `Checkbox`, `RadioGroup`, `Switch`, `Segmented` |
 | `.tabs .tab .count` `--pills` `.vtabs` | underline tabs with counts | `Tabs` + `tabStyles` |
 | `.badge[data-status] .badge--*` `.fmt--*` `.method--*` `.chip` `.tag` `.dot` | status vocab, format & method pills, filter chips | `Badge`, `ui/catalog/FormatPill`, `ui/mcp/*Pill` |
 | `.card .card__header/body/footer` `--hover --flat --soft --honey --link --selected` | panels | `Card` |
-| `.stat` `.stat-grid` `.ring` `.sparkline` `.bars` `.meter` `.progress` | metrics | new `Stat`, `Ring`, `Sparkline` |
+| `.stat` `.stat-grid` `.ring` `.sparkline` `.bars` `.meter` `.progress` | metrics; a stat strip is separate raised tiles, a share draws a ring beside the figure, a history a sparkline under it, and the figure counts up once (round 3 "layers" / "viz" / "motion") | `Stat` (`aside`, `trend`), `Ring`, `Sparkline`, `CountUp` |
 | `.table-wrap .table-toolbar .table .table-foot .pager .bulk-bar` | data tables: sticky caps header, hover, selection, dense variant, sticky bulk bar | new `DataTable` (replaces `dashboardScreenClasses.ts`) |
 | `.empty` `--inline --dashed` | empty states with hex art, title, desc, CTA | `EmptyState` |
 | `.skeleton .spinner` | loading | `Skeleton`, `Spinner` |
@@ -306,6 +323,15 @@ fails CI when a `components/ui` component ships without a specimen on the route.
   `G P/C/L…` jumps · `N` new · `I` import · `/` focus search · `Esc` close.
 * **Loading** = skeletons shaped like the final content (never spinners in
   tables) · **Error** = inline banner with retry.
+* **Empty pane** (round 3 "voids") = never a bare sentence in a viewport of white: it
+  names the object, says why it is empty, offers one primary and at most one secondary
+  action, and — where the pane fills in steps — says how (the Changes tab's three steps).
+  The art takes the item's format colour.
+* **Timeline list** (round 3 "timeline") = a spine with a node per entry whose colour is
+  the entry's state (draft hollow, published green, deprecated orange with its sunset
+  flag, archived grey, beta azure, HEAD honey), the message and log as the body, who and
+  when beside, hover actions as in a table, and a Timeline / Table segment that keeps the
+  table one click away (`.vt`, `VersionsTimeline`).
 * **Copy** = sentence case; buttons are verbs (“Create key”, not “OK”); numbers
   are tabular; relative times with absolute tooltip.
 
@@ -421,7 +447,7 @@ If adopted, they amend §2 (honey never marks flags or filters), §5.2–5.4 (de
 groups, header action cap, status strip), §8 (list-page anatomy), §10 (“coming soon” rule)
 and add **P8 — Quiet pass** to §12. Until then, the sections above stand as written.
 
-## 15. Round-3 proposals (2026-10-30) — the facelift, *proposed, not yet adopted*
+## 15. Round-3 proposals (2026-10-30) — the facelift, *adopted 2026-11-02*
 
 After the quiet pass (HIVE-11/12/13) the app reads as designed but **plain**: every page is
 the same shape, brand lives only on the launcher and login, every surface is a 1 px-bordered
@@ -430,8 +456,10 @@ the twelve ideas and the way to compare them are in **`PROPOSALS_FACELIFT.md`**,
 mockup per screen under `proposals/facelift-*.html` and a before / after viewer at
 `proposals/facelift-compare.html`. Each idea is a token in `<html data-fx="…">`
 (`assets/facelift.css`), so a mockup renders the shipped look and the proposal from the same
-markup. Sections this would amend once adopted: §2 (honey as the Dark primary; hexagons for
-item avatars), §3.1 (a display face and the layered shadow tokens), §4 (the signature Dark;
-four themes shown, five folded), §5.2 (the navy rail), §7 (forms: labels, editor panes,
-footer actions), §8 (empty states always name the object and offer a next step; the Versions
-timeline pattern).
+markup. Adopted on 2026-11-02 (apiome-ui 0.578.0): §2 (honey as the Dark primary; hexagons
+for item avatars), §3.1 (a display face and the layered shadow tokens), §4 (the signature
+Dark; four themes shown, five folded), §5.2 (the navy rail), §7 (forms: editor panes),
+§8 (empty states always name the object and offer a next step; the Versions timeline pattern)
+carry the amendments. Two things the mockups show stayed open: the console on the Hive shell
+(idea **admin**) is HIVE-EPIC-9's own ticket, and motion runs at `--dur-slow` (260 ms) rather
+than the mockups' 420 ms, because §3.4 caps every one-shot motion there.

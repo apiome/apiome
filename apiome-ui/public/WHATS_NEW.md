@@ -6,6 +6,13 @@ We continue to improve the platform based on your feedback with improvements and
 
 ## Features/Improvements
 
+- Look and feel:
+  - A facelift across the Control Panel: the navigation rail is Apiome's navy with a honey marker on the current page, page titles and the big numbers use a display face, cards sit on a soft shadow instead of a hairline and lift under the pointer, and a catalog item, project or table row carries its format's colour as a hexagon avatar and a rule on its edge. Content rises in when a page opens and figures count up once; **Reduce motion** in Preferences turns all of it off
+  - **Versions** now opens as a **Timeline**: a spine with a node per version coloured by its state (published green, deprecated orange with its sunset flag, archived grey, beta blue, HEAD in honey), the revision message and changelog as the body, and the same actions as before on hover. A **Timeline** / **Table** switch on the toolbar keeps the table one click away and remembers your choice on this device
+  - **Home** — a ring beside **Published** shows the share of versions that are published and a sparkline under **Versions** draws the last twelve weeks of publishing
+  - **Export** targets are compact tiles with a three-segment **fidelity meter** and the tier under each name; the **Changes** tab of a version with no classified changelog yet explains the three steps that fill it
+  - **Mock scenarios** — the headers, body and match-rules fields are editor panes that name what they hold, and the advanced match rules fold away until an operation has some
+  - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
 - Version:

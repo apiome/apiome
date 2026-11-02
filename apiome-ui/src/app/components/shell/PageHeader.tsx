@@ -137,6 +137,14 @@ export interface PageHeaderProps {
   tabs?: React.ReactNode;
   /** Something to the left of the whole title block — a detail page's hex avatar. */
   leading?: React.ReactNode;
+  /**
+   * The header's mood (facelift "color", PROPOSALS_FACELIFT.md §2). `hero` is the brand band —
+   * honey and azure glows behind the greeting — for Home and the launcher only; `identity`
+   * is a soft wash of the item's format colour on a detail page. Everything else stays quiet.
+   */
+  mood?: 'hero' | 'identity';
+  /** The format hue an `identity` header washes with — a catalog pill tone (`sky`, `violet`…). */
+  formatTone?: string;
   /** A row beneath the description, for format pills and other page-level metadata. */
   meta?: React.ReactNode;
   /**
@@ -271,6 +279,8 @@ export default function PageHeader({
   crumbSwitcher,
   tabs,
   leading,
+  mood,
+  formatTone,
   meta,
   truncateTitle = false,
   titleId,
@@ -301,6 +311,8 @@ export default function PageHeader({
   return (
     <header
       data-testid="page-header"
+      data-mood={mood}
+      data-fmt-tone={mood === 'identity' ? formatTone : undefined}
       className={cn('page-header', tabs && 'page-header--with-tabs', className)}
     >
       <div className="page-header__inner">

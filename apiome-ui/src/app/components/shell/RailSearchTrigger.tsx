@@ -66,7 +66,7 @@ export default function RailSearchTrigger({ iconRail }: RailSearchTriggerProps) 
         className={cn(
           // `min-h-9` rather than a fixed 34 px: the row carries type, so it grows with the
           // font-size preference instead of clipping it (HIVE-1.6).
-          'rail-item flex min-h-9 w-full items-center gap-2 rounded-md border border-border',
+          'rail-item rail-search flex min-h-9 w-full items-center gap-2 rounded-md border border-border',
           // `--fg-muted`, not the mockup's `--fg-subtle`: this is quiet text a reader
           // has to read, and `--fg-subtle` measures 2.8–4.0:1 on the rail in every
           // theme (the finding HIVE-3.3 and HIVE-3.5 both landed on).

@@ -106,6 +106,7 @@ import {
 // The metrics set (HIVE-2.6, #5285) is imported by path rather than from the `ui` barrel — see
 // the note in `components/ui/metrics/index.ts` about the MCP chart kit's same-named `Sparkline`.
 import {
+  CountUp,
   Meter,
   Progress,
   Ring,
@@ -965,19 +966,23 @@ export function HiveGallery() {
           description="Inline SVG and tokens — no charting dependency. A caller passes a number; the kit picks the band. Rings colour ≥90 ok · 75–89 accent · 60–74 warn · <60 danger; a quota meter warns at 80% and turns danger at its cap."
         >
           <StatGrid columns={4}>
+            {/* The facelift ("viz", "motion"): the figure counts up once as the page lands, a
+                history runs as a sparkline under it, and a share draws a ring beside it. */}
             <Stat
               label="Projects"
               icon={<FolderOpen />}
-              value={128}
+              value={<CountUp value={128} />}
               delta={12}
               footnote="vs last week"
+              trend={<Sparkline data={[96, 101, 104, 110, 112, 118, 121, 128]} label="Projects over eight weeks" />}
             />
             <Stat
               label="Published versions"
               icon={<UploadCloud />}
-              value="1,204"
+              value={<CountUp value={1204} />}
               delta={0}
               footnote="no change"
+              aside={<Ring score={62} label="Published share" size="sm" />}
             />
             <Stat
               label="Open findings"

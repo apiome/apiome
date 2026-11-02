@@ -37,6 +37,10 @@ import { Ellipsis, Pencil, Pin, PinOff, Plus, Trash2, Undo2, Users } from 'lucid
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Avatar } from '@/app/components/ui/Avatar';
+import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
+
+/** The hue of OpenAPI in the format registry — what every project is. */
+const PROJECT_FORMAT_TONE = resolveCatalogFormat('openapi')?.tone;
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyStateArt } from '@/app/components/ui/EmptyState';
@@ -132,10 +136,13 @@ export default function ProjectCard({
       data-lifecycle={lifecycle}
       data-testid="project-card"
       data-project-id={project.id}
+      // A project is an OpenAPI document, so its card and avatar carry the OpenAPI hue
+      // (facelift "hex" / "color": the format colour on the item, not only on a pill).
+      data-fmt-tone={PROJECT_FORMAT_TONE}
     >
       <div className="prj-card__body">
         <div className="prj-card__head">
-          <Avatar shape="hex" size="lg" name={project.name} id={project.id} />
+          <Avatar shape="hex" size="lg" name={project.name} id={project.id} data-fmt-tone={PROJECT_FORMAT_TONE} />
           <div className="prj-card__identity">
             <div className="prj-card__title-line">
               <h3 className="prj-card__name">

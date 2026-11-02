@@ -48,6 +48,7 @@ import {
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { Avatar } from '@/app/components/ui/Avatar';
+import { resolveCatalogFormat } from '@/app/utils/catalog-format-registry';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Checkbox } from '@/app/components/ui/Checkbox';
@@ -160,6 +161,9 @@ export default function CatalogCard({
   const actions = catalogRowActions(item, can);
   const scores = catalogScores(item, qualityHistory);
   const updated = formatRelativeTime(item.updated_at);
+  // The format's hue carries the card: a rule on its edge, the hex avatar's fill and a
+  // faint cell in its corner (facelift "hex" / "color", PROPOSALS_FACELIFT.md §2).
+  const formatTone = resolveCatalogFormat(item.sourceFormat)?.tone;
 
   return (
     <article
@@ -168,6 +172,7 @@ export default function CatalogCard({
       data-selected={selected ? 'true' : undefined}
       data-testid="catalog-card"
       data-catalog-id={item.id}
+      data-fmt-tone={formatTone}
     >
       <div className="cat-card__body">
         <div className="cat-card__head">
@@ -183,7 +188,7 @@ export default function CatalogCard({
               />
             </span>
           ) : null}
-          <Avatar shape="hex" size="lg" name={item.name} id={item.id} />
+          <Avatar shape="hex" size="lg" name={item.name} id={item.id} data-fmt-tone={formatTone} />
           <div className="cat-card__identity">
             <h3 className="cat-card__name">
               {isDeleted ? (

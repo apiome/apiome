@@ -315,6 +315,14 @@ export interface DataTableProps<Row>
    * @returns Classes to merge onto its `<tr>`.
    */
   rowClassName?: (row: Row) => string | undefined;
+  /**
+   * Extra `data-*` attributes for one row — `data-fmt-tone` for the format rule a catalog row
+   * carries on its leading edge (facelift "color"). Keys are spread onto the `<tr>` as given.
+   *
+   * @param row The row.
+   * @returns Attributes to spread onto its `<tr>`; an `undefined` value draws nothing.
+   */
+  rowAttributes?: (row: Row) => Record<`data-${string}`, string | undefined>;
 
   /** Draw skeleton rows instead of `rows`. */
   loading?: boolean;
@@ -379,6 +387,7 @@ function DataTable<Row>({
   bulkNoun,
   onRowActivate,
   rowClassName,
+  rowAttributes,
   loading,
   skeletonRows = DEFAULT_SKELETON_ROWS,
   loadingLabel = 'Loading…',
@@ -652,6 +661,7 @@ function DataTable<Row>({
                     return (
                       <tr
                         key={id}
+                        {...rowAttributes?.(row)}
                         data-row-id={id}
                         data-selected={isSelected || undefined}
                         tabIndex={tabStopId === id ? 0 : -1}

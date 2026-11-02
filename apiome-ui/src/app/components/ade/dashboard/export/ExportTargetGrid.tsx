@@ -188,30 +188,48 @@ export function ExportTargetGrid({
                     title={cardTitle(card, target)}
                     className="vdlg-export__target"
                     data-selected={isSelected || undefined}
+                    data-tier={card.entry.fidelity.tier}
                   >
-                    <Badge
-                      variant={tierTone(card.entry.fidelity.tier)}
-                      className="vdlg-export__target-tier"
-                    >
-                      {tierLabel(card.entry.fidelity.tier)}
-                    </Badge>
-                    {target && (
+                    {/* The compact tile (facelift "voids", PROPOSALS_FACELIFT.md §2): the format's
+                        glyph in a hex tile, the name and paradigm beside it, the readiness band
+                        on the right, and a three-segment fidelity meter underneath instead of a
+                        large blank box with a lone icon. */}
+                    <span className="vdlg-export__target-top">
+                      <span className="vdlg-export__target-tile" aria-hidden>
+                        <Icon className="vdlg-export__target-icon" aria-hidden />
+                      </span>
+                      <span className="vdlg-export__target-text">
+                        <span className="vdlg-export__target-label">
+                          {card.entry.descriptor.label}
+                        </span>
+                        <span className="vdlg-quiet">
+                          {card.entry.descriptor.paradigm}
+                          {card.entry.descriptor.multi_file ? ' · multi-file' : ''}
+                        </span>
+                      </span>
+                      {target && (
+                        <Badge
+                          variant={bandTone(target.band)}
+                          data-testid={`export-target-band-${card.key}`}
+                          className="vdlg-export__target-band"
+                        >
+                          {bandLabel(target.band)}
+                        </Badge>
+                      )}
+                    </span>
+                    <span className="vdlg-export__target-fidelity">
+                      <span className="vdlg-export__meter" aria-hidden>
+                        <span />
+                        <span />
+                        <span />
+                      </span>
                       <Badge
-                        variant={bandTone(target.band)}
-                        data-testid={`export-target-band-${card.key}`}
-                        className="vdlg-export__target-band"
+                        variant={tierTone(card.entry.fidelity.tier)}
+                        className="vdlg-export__target-tier"
                       >
-                        {bandLabel(target.band)}
+                        {tierLabel(card.entry.fidelity.tier)}
                       </Badge>
-                    )}
-                    <Icon className="vdlg-export__target-icon" aria-hidden />
-                    <div className="vdlg-export__target-label">
-                      {card.entry.descriptor.label}
-                    </div>
-                    <div className="vdlg-quiet">
-                      {card.entry.descriptor.paradigm}
-                      {card.entry.descriptor.multi_file ? ' · multi-file' : ''}
-                    </div>
+                    </span>
                     {isSelected && dialect && (
                       <Badge
                         variant={dialect.tone}

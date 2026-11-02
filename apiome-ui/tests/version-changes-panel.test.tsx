@@ -203,7 +203,8 @@ describe('VersionChangesPanel', () => {
     detailResponses[REV_2] = { body: { success: false, error: 'No changelog stored' }, status: 404 };
     render(<VersionChangesPanel projectId={PROJECT_ID} versions={VERSIONS} onOpenDiff={jest.fn()} />);
 
-    await screen.findByText(/Changelog not available yet/);
+    // The facelift's empty state names the version ("voids", PROPOSALS_FACELIFT.md §2).
+    await screen.findByText(/No changelog for .* yet/);
     expect(screen.queryByText('No changelog stored')).not.toBeInTheDocument();
   });
 

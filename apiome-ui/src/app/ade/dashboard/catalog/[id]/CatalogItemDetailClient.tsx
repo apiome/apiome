@@ -137,7 +137,7 @@ import { driftVersionsSearch, type CatalogDriftBadgeData } from '@/app/component
 import { exportStudioHref } from '@/app/components/ade/dashboard/export/exportStudioLink';
 import { CATALOG_EXPORT_VS_CONVERT_COPY, type CatalogConversion } from '@/app/utils/catalog-conversion';
 import { catalogEntityAnchorId } from '@/app/utils/catalog-lint-panel';
-import { resolveCatalogSource } from '@/app/utils/catalog-format-registry';
+import { resolveCatalogFormat, resolveCatalogSource } from '@/app/utils/catalog-format-registry';
 import type { CatalogProvenanceSummary } from '@/app/utils/catalog-provenance';
 import { getProjectQualityHistory } from '@/app/utils/project-quality-score-history';
 import type { AnalysisSummary } from '@/app/utils/catalog-payload-analysis';
@@ -605,6 +605,8 @@ export function CatalogItemDetailClient({
   const actions = catalogDetailActions(item, permissions.can);
   const source = item.source ?? null;
   const resolvedSource = resolveCatalogSource(item.formatMetadata, item.metadata);
+  // The item's format hue washes the header and fills the avatar (facelift "color" / "hex").
+  const formatTone = resolveCatalogFormat(item.sourceFormat)?.tone;
   const summary = item.summary ?? EMPTY_SUMMARY;
   const parsed = item.parsed ?? [];
   const entityNames = parsed.flatMap((group) => group.entities.map((entity) => entity.name));
@@ -613,7 +615,9 @@ export function CatalogItemDetailClient({
   return (
     <Page>
       <PageHeader
-        leading={<Avatar shape="hex" size="xl" name={item.name} seed={item.id} />}
+        mood="identity"
+        formatTone={formatTone}
+        leading={<Avatar shape="hex" size="xl" name={item.name} seed={item.id} data-fmt-tone={formatTone} />}
         breadcrumb={catalogDetailBreadcrumb(item)}
         title={item.name}
         truncateTitle

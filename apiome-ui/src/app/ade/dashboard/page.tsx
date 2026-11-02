@@ -169,6 +169,7 @@ const Dashboard = () => {
   return (
     <Page>
       <PageHeader
+        mood="hero"
         breadcrumb={
           home.workspaceName
             ? [{ label: home.workspaceName, href: '/ade/dashboard' }, { label: 'Home' }]
@@ -206,7 +207,7 @@ const Dashboard = () => {
             incomplete steps to a reader who has finished them all. */}
         {!isLoading && <FirstRunChecklist stats={stats} />}
 
-        <HomeStatStrip stats={stats} loading={isLoading} />
+        <HomeStatStrip stats={stats} loading={isLoading} pulse={home.pulse} />
 
         <div className="home-grid">
           <div className="home-grid__main">

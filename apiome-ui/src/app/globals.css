@@ -133,6 +133,16 @@
   /* ---- Surfaces — warm neutrals ("paper"), never pure grey ------------ */
   --color-canvas: #F6F5F2;
   --color-rail: #EFEEEA;
+  /* How much of the brand navy the rail carries (facelift "rail"): the light themes the whole
+     hue, a dark theme a cast of it, High contrast none; and whether a hairline edges it.
+     Percentages rather than colours so a theme steers the one `.rail` rule without a rule
+     of its own. */
+  --color-rail-navy-mix: 100%;
+  --color-rail-edge-mix: 0%;
+  /* The active pill tab and filter chip (facelift "color"): brand navy under white on a light
+     base; a dark theme restates it as its ink under its surface, as before. */
+  --color-pill-active: var(--color-brand-navy);
+  --color-pill-active-fg: #FFFFFF;
   --color-surface: #FFFFFF;
   --color-subtle: #F3F2EE;
   --color-inset: #E9E8E3;
@@ -212,6 +222,11 @@
      indicator; `--accent` clears 3:1 in every theme (tests/a11y-token-contrast.test.ts). */
   --shadow-focus: 0 0 0 1px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
   --shadow-raised: 0 1px 2px rgba(20, 18, 14, 0.08), 0 0 0 1px rgba(20, 18, 14, 0.06);
+  /* Facelift "layers" (PROPOSALS_FACELIFT.md §2): a card is a surface that sits *above* the
+     canvas — a soft, slightly warm shadow with no hairline — and lifts further on hover.
+     Dark themes restate both as an inset highlight over a deeper drop. */
+  --shadow-card: 0 1px 2px rgba(20, 18, 14, 0.05), 0 6px 18px -10px rgba(20, 18, 14, 0.14);
+  --shadow-card-hover: 0 2px 4px rgba(20, 18, 14, 0.06), 0 14px 32px -14px rgba(20, 18, 14, 0.22);
 
   /* ---- Control chrome (HIVE-2.1, DESIGN.md §7) -----------------------
      A Hive control is not drawn with a `border`: it is a surface carrying a
@@ -278,6 +293,10 @@
   --app-font-sans: var(--app-webfont-sans, "Inter", "Aptos", "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
   --app-font-mono: var(--app-webfont-mono, "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
   --font-inter: var(--app-font-sans);
+  /* The display voice (facelift "type"): Manrope, self-hosted via next/font like the two
+     above, for titles and the big numbers; the sans stack is its fallback. */
+  --app-font-display: var(--app-webfont-display, var(--app-font-sans));
+  --font-display: var(--app-font-display);
 
   /* ======================================================================
      Hive token aliases — the DESIGN.md §3.1 spellings.
@@ -521,37 +540,45 @@ html .radix-themes {
 html[data-theme="dark"],
 html.dark:not([data-theme]) {
   color-scheme: dark;
+  /* The rail (facelift "rail") keeps a navy cast on a dark base rather than the light
+     themes' full navy. */
+  --color-rail-navy-mix: 52%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
 
-  --color-canvas: #141311;
-  --color-rail: #100F0E;
-  --color-surface: #1B1A18;
-  --color-subtle: #23221F;
-  --color-inset: #2A2825;
-  --color-overlay: rgba(0, 0, 0, 0.6);
+  /* The signature Dark (facelift "themes", PROPOSALS_FACELIFT.md §2): navy-black surfaces
+     that carry the brand's navy, honey as the primary, azure for links. */
+  --color-canvas: #0C0F1F;
+  --color-rail: #090C19;
+  --color-surface: #141931;
+  --color-subtle: #1A203C;
+  --color-inset: #0E1226;
+  --color-overlay: rgba(2, 4, 14, 0.66);
 
-  --color-fg: #EDEBE6;
-  --color-fg-muted: #A8A49C;
-  --color-fg-subtle: #8D8983;
-  --color-fg-faint: #57544E;
+  --color-fg: #EEF0FA;
+  --color-fg-muted: #AAB1CF;
+  --color-fg-subtle: #828BAE;
+  --color-fg-faint: #4C5478;
 
-  --color-border: rgba(255, 250, 240, 0.09);
-  --color-border-strong: rgba(255, 250, 240, 0.18);
+  --color-border: rgba(176, 190, 255, 0.10);
+  --color-border-strong: rgba(176, 190, 255, 0.22);
 
-  --color-accent: #5AA6F2;
-  --color-accent-hover: #79B7F5;
-  --color-accent-soft: rgba(90, 166, 242, 0.14);
-  --color-accent-fg: #9CCBF8;
-  --color-ink: #EDEBE6;
-  --color-ink-hover: #FFFFFF;
-  --color-ink-fg: #16150F;
+  --color-accent: #74B6FF;
+  --color-accent-hover: #93C6FF;
+  --color-accent-soft: rgba(116, 182, 255, 0.14);
+  --color-accent-fg: #ADD3FF;
+  /* Honey is the primary in Dark — the one place the brand hue fills a button (DESIGN.md §2). */
+  --color-ink: #F5B301;
+  --color-ink-hover: #FFC32E;
+  --color-ink-fg: #1A1200;
 
   /* Brand (HIVE-1.5): the bee's line colour takes the palette's primary ink — the
      highest-contrast ink it has — and the wordmark switches to its dark artwork. */
-  --color-brand-ink: var(--color-ink);
+  --color-brand-ink: var(--color-fg);
   --brand-on-dark: 1;
   --color-honey: #F5B301;
-  --color-honey-soft: rgba(245, 179, 1, 0.14);
-  --color-honey-fg: #F8CB4F;
+  --color-honey-soft: rgba(245, 179, 1, 0.16);
+  --color-honey-fg: #FFD35C;
 
   --color-ok: #34C08A;
   --color-ok-soft: rgba(52, 192, 138, 0.14);
@@ -562,9 +589,9 @@ html.dark:not([data-theme]) {
   --color-danger: #F26A63;
   --color-danger-soft: rgba(242, 106, 99, 0.14);
   --color-danger-fg: #FF9A94;
-  --color-neutral: #A8A49C;
+  --color-neutral: #AAB1CF;
   --color-neutral-soft: rgba(255, 255, 255, 0.07);
-  --color-neutral-fg: #CFCBC3;
+  --color-neutral-fg: #CFD4EA;
   --color-violet: #9C84EE;
   --color-violet-soft: rgba(156, 132, 238, 0.16);
   --color-violet-fg: #C1B0FA;
@@ -577,11 +604,13 @@ html.dark:not([data-theme]) {
 
   /* Elevation inverts: a dark surface reads as raised through a lighter hairline,
      not through a heavier drop shadow. */
-  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.07);
-  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(176, 190, 255, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(176, 190, 255, 0.08);
+  --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(176, 190, 255, 0.09);
+  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(176, 190, 255, 0.10);
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(176, 190, 255, 0.10);
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
+  --shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 16px 36px -14px rgba(0, 0, 0, 0.8);
   --color-fg-on-accent: #0B0B0C;
 }
 
@@ -589,6 +618,11 @@ html.dark:not([data-theme]) {
    opaque enough to survive without a shadow — every elevation is a white hairline. */
 html[data-theme="high-contrast"] {
   color-scheme: dark;
+  /* The rail (facelift "rail") stays black, edged by the white hairline every elevation is. */
+  --color-rail-navy-mix: 0%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
+  --color-rail-edge-mix: 100%;
 
   --color-canvas: #000000;
   --color-rail: #000000;
@@ -654,6 +688,9 @@ html[data-theme="high-contrast"] {
 
 html[data-theme="blueprint"] {
   color-scheme: dark;
+  --color-rail-navy-mix: 52%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
 
   --color-canvas: #0C1E3A;
   --color-rail: #0A1830;
@@ -738,6 +775,9 @@ html[data-theme="whiteboard"] {
 
 html[data-theme="solarized"] {
   color-scheme: dark;
+  --color-rail-navy-mix: 52%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
 
   --color-canvas: #002B36;
   --color-rail: #00252E;
@@ -800,6 +840,9 @@ html[data-theme="solarized"] {
 
 html[data-theme="nord"] {
   color-scheme: dark;
+  --color-rail-navy-mix: 52%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
 
   --color-canvas: #2E3440;
   --color-rail: #272C36;
@@ -862,6 +905,9 @@ html[data-theme="nord"] {
 
 html[data-theme="darcula"] {
   color-scheme: dark;
+  --color-rail-navy-mix: 52%;
+  --color-pill-active: var(--color-fg);
+  --color-pill-active-fg: var(--color-surface);
 
   --color-canvas: #2B2B2B;
   --color-rail: #242424;
@@ -984,6 +1030,14 @@ html[data-font-scale="xl"] {
 
 html[data-font-scale="2xl"] {
   font-size: 125%; /* 20px */
+}
+
+/* The figure a stat counts up to (facelift "motion", `.hive-stat__figure` in the metrics set): a
+   registered integer so a transition can run it from zero. */
+@property --count-figure {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
 }
 
 /* ---- Motion (DESIGN.md §3.4) --------------------------------------------
@@ -1218,17 +1272,20 @@ html[data-rail="collapsed"] {
   min-width: 0;
   align-items: center;
   gap: calc(var(--space-1) * 2.5);
-  font-size: var(--fs-3xl);
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: var(--track-tight);
+  /* The display voice (facelift "type", PROPOSALS_FACELIFT.md §2): Manrope 800 at the stat
+     step, tracked tighter than the text face — the one line a reader orients the page by. */
+  font-family: var(--font-display);
+  font-size: var(--fs-4xl);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: calc(var(--track-tight) * 1.5);
   color: var(--fg);
 }
 
 .page-header__desc {
   margin-top: var(--space-1);
   max-width: 72ch;
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   color: var(--fg-muted);
 }
 
@@ -2405,11 +2462,14 @@ html[data-kbd-hints="off"] .kbd-group {
 }
 
 .hive-stat__value {
+  /* The display voice (facelift "type"): Manrope 800, tracked tighter than the text face. */
+  font-family: var(--font-display);
   font-size: var(--fs-4xl);
-  font-weight: 600;
+  font-weight: 800;
   line-height: var(--lh-tight);
-  letter-spacing: var(--track-tight);
+  letter-spacing: calc(var(--track-tight) * 1.5);
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
   color: var(--fg);
 }
 
@@ -2439,6 +2499,36 @@ html[data-kbd-hints="off"] .kbd-group {
   flex: none;
 }
 
+/* Facelift "motion": the figure counts up through a registered custom property (declared
+   with the motion tokens above, printed by `[data-count-figure]` in the facelift section).
+   The real number sits in the DOM, visually hidden. */
+.hive-stat__figure {
+  display: inline;
+}
+
+/* Facelift "viz": a ring beside the figure, a sparkline under it. */
+.hive-stat__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hive-stat__row > :first-child {
+  flex: none;
+}
+
+.hive-stat__trend {
+  display: block;
+  inline-size: 100%;
+  block-size: calc(var(--space-6) + var(--space-1));
+  margin-block-start: calc(var(--space-1) / 2);
+}
+
+.hive-stat__trend > svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 .hive-stat__foot {
   display: flex;
   align-items: center;
@@ -2453,17 +2543,21 @@ html[data-kbd-hints="off"] .kbd-group {
    object with rules between it, not as N cards that happen to be adjacent —
    and there is no border to double up where two cells meet. */
 .hive-stat-grid {
+  /* Separate tiles (facelift "layers"): each stat is a raised card of its own rather than a
+     cell behind hairlines, so the strip reads as six measurements, not one bordered box. */
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9.375rem, 1fr));
-  gap: 1px;
-  background: var(--border);
+  gap: var(--space-3);
+  background: transparent;
   border-radius: var(--r-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  overflow: visible;
+  box-shadow: none;
 }
 
 .hive-stat-grid > * {
   background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
 }
 
 .hive-stat-grid[data-columns="3"] {
@@ -2574,6 +2668,24 @@ html[data-kbd-hints="off"] .kbd-group {
 .fmt--lime { background: #ECFCCB; color: #3F6212; }
 .fmt--stone { background: #F5F5F4; color: #292524; }
 .fmt--neutral { background: #F3F4F6; color: #374151; }
+/* The same hues as solid fills — the facelift's hex avatars, format rules and identity
+   washes (PROPOSALS_FACELIFT.md "hex" / "color"). An element carrying `data-fmt-tone`
+   resolves `--fmtc` to its format's hue; anything it contains reads the one token. */
+[data-fmt-tone="sky"] { --fmtc: #0EA5E9; }
+[data-fmt-tone="emerald"] { --fmtc: #10B981; }
+[data-fmt-tone="violet"] { --fmtc: #8B5CF6; }
+[data-fmt-tone="pink"] { --fmtc: #EC4899; }
+[data-fmt-tone="orange"] { --fmtc: #F97316; }
+[data-fmt-tone="slate"] { --fmtc: #64748B; }
+[data-fmt-tone="amber"] { --fmtc: #D97706; }
+[data-fmt-tone="red"] { --fmtc: #EF4444; }
+[data-fmt-tone="blue"] { --fmtc: #3B82F6; }
+[data-fmt-tone="cyan"] { --fmtc: #06B6D4; }
+[data-fmt-tone="indigo"] { --fmtc: #6366F1; }
+[data-fmt-tone="teal"] { --fmtc: #14B8A6; }
+[data-fmt-tone="lime"] { --fmtc: #65A30D; }
+[data-fmt-tone="stone"] { --fmtc: #78716C; }
+[data-fmt-tone="neutral"] { --fmtc: #6B7280; }
 /* hex-allow-end */
 
 /* A pale pill on a dark canvas glares. `hive.css` §11's answer — take the
@@ -14829,6 +14941,236 @@ button.tfa-reset-notice__close > svg {
   font-weight: 400;
 }
 
+/* ---- The revisions timeline (facelift "timeline") ------------------------
+   One row per revision on a spine: the node says the state (draft hollow, published green,
+   deprecated orange, archived grey, beta azure, HEAD honey), the version line and the message
+   / changelog read across, who and when sit beside, and the actions appear on hover as in
+   the table. The table stays one segment away. Every length is a token or a rem; every hue is
+   a token (the honey HEAD is brand, never a warning — DESIGN.md §2). */
+.ver-timeline {
+  overflow: hidden;
+}
+
+.vt {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vt__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(var(--space-7) + var(--space-3)) minmax(0, 13.75rem) minmax(0, 1fr) minmax(0, 12.5rem) auto;
+  gap: 0 var(--space-3);
+  align-items: start;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
+}
+
+.vt__row + .vt__row {
+  border-top: 1px solid var(--border);
+}
+
+.vt__row:hover,
+.vt__row:focus-within {
+  background: color-mix(in srgb, var(--fg) 2.5%, transparent);
+}
+
+.vt__row--head {
+  background: color-mix(in srgb, var(--honey) 7%, transparent);
+}
+
+.vt__spine {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-self: stretch;
+}
+
+.vt__spine::before {
+  content: "";
+  position: absolute;
+  inset-block: calc(var(--space-3) * -1);
+  inline-size: calc(var(--space-1) / 2);
+  background: var(--border-strong);
+}
+
+.vt__row:first-child .vt__spine::before {
+  inset-block-start: var(--space-4);
+}
+
+.vt__row:last-child .vt__spine::before {
+  inset-block-end: auto;
+  block-size: var(--space-7);
+}
+
+.vt__node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  margin-block-start: var(--space-1);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  box-shadow: 0 0 0 calc(var(--space-1) / 2) var(--fg-faint);
+  color: var(--fg-subtle);
+}
+
+.vt__node > svg {
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+}
+
+.vt__node--published {
+  background: var(--ok);
+  box-shadow: 0 0 0 calc(var(--space-1) / 2) var(--ok);
+  color: var(--fg-on-accent);
+}
+
+.vt__node--head {
+  background: var(--honey);
+  box-shadow:
+    0 0 0 calc(var(--space-1) / 2) var(--honey),
+    0 0 0 calc(var(--space-1) * 1.5) color-mix(in srgb, var(--honey) 22%, transparent);
+  color: var(--brand-navy);
+}
+
+.vt__node--deprecated {
+  background: var(--orange);
+  box-shadow: 0 0 0 calc(var(--space-1) / 2) var(--orange);
+  color: var(--fg-on-accent);
+}
+
+.vt__node--archived {
+  background: var(--bg-inset);
+  box-shadow: 0 0 0 calc(var(--space-1) / 2) var(--bg-inset);
+  color: var(--fg-subtle);
+}
+
+.vt__node--beta {
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 calc(var(--space-1) / 2) var(--accent);
+  color: var(--accent-fg);
+}
+
+.vt__ver {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.vt__sunset {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  inline-size: fit-content;
+  block-size: var(--space-5);
+  padding-inline: var(--space-2);
+  border-radius: var(--r-full);
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+}
+
+.vt__sunset > svg {
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+}
+
+.vt__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.vt__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.vt__title--none {
+  font-weight: 400;
+  color: var(--fg-muted);
+}
+
+.vt__log {
+  margin: 0;
+  max-block-size: 6.5rem;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  white-space: pre-line;
+}
+
+.vt__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: calc(var(--space-1) / 2);
+}
+
+.vt__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.vt__who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.vt__when {
+  font-variant-numeric: tabular-nums;
+}
+
+.vt__published {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--fg-muted);
+}
+
+.vt__published > svg {
+  stroke: var(--ok);
+}
+
+.vt__published > svg {
+  inline-size: var(--space-3);
+  block-size: var(--space-3);
+}
+
+.vt__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(var(--space-1) / 2);
+}
+
+@media (max-width: 64rem) {
+  .vt__row {
+    grid-template-columns: calc(var(--space-7) + var(--space-3)) minmax(0, 1fr) auto;
+  }
+
+  .vt__body,
+  .vt__meta {
+    grid-column: 2;
+  }
+}
+
 /* ==========================================================================
    Z/OS CONNECT BINDING  (MFI-21.2, #3992)
    --------------------------------------------------------------------------
@@ -16255,6 +16597,61 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg-muted);
 }
 
+/* The not-yet-classified pane (facelift "voids"): the empty state, then three numbered
+   steps in inset wells. */
+.vdlg-changes__void {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-block: var(--space-2) var(--space-4);
+}
+
+.vdlg-changes__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vdlg-changes__steps > li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-changes__steps b {
+  display: block;
+  margin-block-end: 1px;
+  color: var(--fg);
+}
+
+.vdlg-changes__step-n {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  border-radius: var(--r-full);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  color: var(--fg);
+}
+
+@media (max-width: 48rem) {
+  .vdlg-changes__steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .vdlg-changes__initial {
   display: flex;
   flex-direction: column;
@@ -17256,6 +17653,113 @@ button.tfa-reset-notice__close > svg {
   background: var(--bg-subtle);
 }
 
+/* ---- Editor panes and the advanced disclosure (facelift round 3, "forms") -----
+   A JSON field is an editor, not a textarea: a caps bar names what it holds and
+   how it is read (`Headers · JSON`, `optional`), the control drops its own chrome
+   and the pane carries the hover and focus rings. The rules of an operation fold
+   behind a native `<details>`, open only when they already have content. */
+.vdlg-editor {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-control);
+  overflow: hidden;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.vdlg-editor:hover {
+  box-shadow: var(--shadow-control-hover);
+}
+
+.vdlg-editor:focus-within {
+  box-shadow: var(--shadow-control-focus);
+}
+
+.vdlg-editor__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-subtle);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.vdlg-editor__lang {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.vdlg-editor__hint {
+  font-size: var(--fs-2xs);
+  color: var(--fg-faint);
+}
+
+.vdlg-editor > .hive-control.vdlg-textarea,
+.vdlg-editor > .hive-control.vdlg-textarea:hover,
+.vdlg-editor > .hive-control.vdlg-textarea:focus-visible {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.vdlg-disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vdlg-disclosure__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--r-sm);
+}
+
+.vdlg-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.vdlg-disclosure__chevron {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.vdlg-disclosure[open] > .vdlg-disclosure__summary > .vdlg-disclosure__chevron {
+  transform: rotate(90deg);
+}
+
+.vdlg-disclosure__tag {
+  padding-inline: var(--space-2);
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-disclosure__hint {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-disclosure__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .vdlg-mock__step {
   display: flex;
   flex-direction: column;
@@ -18019,31 +18523,89 @@ button.tfa-reset-notice__close > svg {
 
 .vdlg-export__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
-  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fit, minmax(min(13.5rem, 100%), 1fr));
+  gap: var(--space-3);
 }
 
+/* The compact target tile (facelift "voids"): glyph, name, band and a fidelity meter in a
+   card-height row, left-aligned, raised like every other card. */
 .vdlg-export__target {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
+  align-items: stretch;
+  gap: var(--space-2);
   padding: var(--space-3);
   border-radius: var(--r-md);
   background: var(--bg-surface);
-  text-align: center;
-  box-shadow: inset 0 0 0 1px var(--border);
-  transition: box-shadow var(--dur-fast) var(--ease-out);
+  text-align: left;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+}
+
+.vdlg-export__target-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.vdlg-export__target-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: calc(var(--space-6) + var(--space-2));
+  block-size: calc(var(--space-6) + var(--space-2));
+  clip-path: var(--hex-clip);
+  background: var(--bg-subtle);
+}
+
+.vdlg-export__target-text {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  min-inline-size: 0;
+}
+
+.vdlg-export__target-fidelity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Three segments: all green for lossless, two amber for lossy, one rose for types only. */
+.vdlg-export__meter {
+  display: inline-flex;
+  gap: calc(var(--space-1) / 2);
+}
+
+.vdlg-export__meter > span {
+  inline-size: var(--space-3);
+  block-size: calc(var(--space-1) * 1.25);
+  border-radius: var(--r-full);
+  background: var(--bg-inset);
+}
+
+.vdlg-export__target[data-tier="lossless"] .vdlg-export__meter > span {
+  background: var(--ok);
+}
+
+.vdlg-export__target[data-tier="lossy"] .vdlg-export__meter > span:nth-child(-n + 2) {
+  background: var(--warn);
+}
+
+.vdlg-export__target[data-tier="types-only"] .vdlg-export__meter > span:first-child {
+  background: var(--rose);
 }
 
 .vdlg-export__target:hover:not(:disabled) {
-  box-shadow: inset 0 0 0 1px var(--border-strong);
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(calc(var(--space-1) * -0.5));
 }
 
 .vdlg-export__target[data-selected] {
   background: var(--accent-soft);
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card);
 }
 
 .vdlg-export__target:disabled {
@@ -18052,21 +18614,17 @@ button.tfa-reset-notice__close > svg {
 }
 
 .vdlg-export__target-tier {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-end: var(--space-2);
+  flex: none;
 }
 
 .vdlg-export__target-band {
-  position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-start: var(--space-2);
+  flex: none;
+  margin-inline-start: auto;
 }
 
 .vdlg-export__target-icon {
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
-  margin-block: var(--space-4) var(--space-1);
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
   color: var(--fg-muted);
 }
 
@@ -23019,8 +23577,11 @@ button.cid-orb:focus-visible {
    below `--page-narrow` the aside drops under the strip rather than squeezing
    it, which is what keeps the document from scrolling sideways. */
 .cid-top {
+  /* One column (facelift "voids"): the conversion strip runs the full width and Related
+     artifacts sits under it, where the two-column layout left a tall empty band beside a
+     short banner. */
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 23.75rem);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
 }
@@ -39059,4 +39620,362 @@ a.tm-list__name {
   align-items: center;
   gap: var(--space-2);
   font-size: var(--fs-sm);
+}
+
+/* ==========================================================================
+   FACELIFT (round 3) — PROPOSALS_FACELIFT.md, the twelve ideas adopted
+   --------------------------------------------------------------------------
+   Authority: `docs/mockups/PROPOSALS_FACELIFT.md` §2 and `docs/mockups/assets/facelift.css`,
+   which gated every idea on `html[data-fx~=…]` so a mockup could render before and after.
+   Adopted, the ideas are the look: nothing here is gated. Each block below names its idea.
+
+   Rules of this section: colour is a token or a `color-mix()` of tokens — the only raw hues
+   are the solid format fills inside the `.fmt--*` fence above — every duration is a `--dur-*`
+   token at or under `--dur-slow`, every easing is `--ease-out`, and nothing changes a route,
+   a feature or a first-row budget (HIVE-13.3). The rail block is unlayered on purpose: the
+   rows set their ink with Tailwind utilities, which these rules must outrank.
+   ========================================================================== */
+
+/* ---- rail — the navy brand spine ------------------------------------------
+   The rail is the mark's navy with white type, a honey marker on the active row and the
+   bee in a honey hexagon; the page stays on warm paper. Every tint is mixed from
+   `--brand-navy`, and a theme steers the mix through two tokens it may swap at the root
+   (`--color-rail-navy-mix`, `--color-rail-edge-mix`): a dark theme keeps a navy cast, High
+   contrast keeps its black and its white hairline. No rule here reaches into a theme. */
+.rail {
+  --rail-ink: color-mix(in srgb, var(--brand-navy) var(--color-rail-navy-mix), var(--bg-rail));
+  --rail-ink-top: color-mix(in srgb, var(--rail-ink) 86%, white);
+  --rail-ink-deep: color-mix(in srgb, var(--rail-ink) 82%, black);
+  --rail-fg-resolved: color-mix(in srgb, white 94%, transparent);
+  --rail-fg-muted-resolved: color-mix(in srgb, white 70%, transparent);
+  --rail-fg-subtle-resolved: color-mix(in srgb, white 48%, transparent);
+  --rail-line-resolved: color-mix(in srgb, white 12%, transparent);
+  --rail-hover-resolved: color-mix(in srgb, white 8%, transparent);
+  --rail-active-resolved: color-mix(in srgb, white 14%, transparent);
+  background: linear-gradient(180deg, var(--rail-ink-top) 0%, var(--rail-ink) 42%, var(--rail-ink-deep) 100%);
+  color: var(--rail-fg-resolved);
+  border-right-color: color-mix(in srgb, var(--border-strong) var(--color-rail-edge-mix), transparent);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, black 18%, transparent);
+}
+
+/* Rows: the ink of the rail, not of the page. Menus that open from a row are surfaces
+   of their own and get the page's ink back (`.rail-menu`). */
+.rail .rail-item,
+.rail .rail-label,
+.rail .brand-lockup__name {
+  color: var(--rail-fg-muted-resolved);
+}
+.rail .rail-item:hover,
+.rail .rail-item:hover .rail-label,
+.rail .rail-item:hover > svg,
+.rail .rail-item:focus-visible {
+  color: var(--rail-fg-resolved);
+}
+.rail .rail-item > svg {
+  color: var(--rail-fg-subtle-resolved);
+}
+.rail .rail-item:hover {
+  background: var(--rail-hover-resolved);
+}
+.rail .rail-item[aria-current="page"] {
+  position: relative;
+  background: var(--rail-active-resolved);
+  color: var(--rail-fg-resolved);
+  box-shadow: none;
+}
+.rail .rail-item[aria-current="page"] .rail-label {
+  color: var(--rail-fg-resolved);
+}
+/* The honey marker: brand-only, never a warning (DESIGN.md §2). */
+.rail .rail-item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: calc(var(--space-3) * -1);
+  top: calc(var(--space-1) * 1.5);
+  bottom: calc(var(--space-1) * 1.5);
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--brand-honey);
+}
+.rail .rail-item[aria-current="page"] > svg {
+  color: var(--brand-honey);
+}
+.rail .rail-group button,
+.rail .rail-group button:hover {
+  color: var(--rail-fg-subtle-resolved);
+}
+.rail .rail-group button:hover {
+  color: var(--rail-fg-muted-resolved);
+}
+.rail .rail-group + .rail-group {
+  border-top-color: var(--rail-line-resolved);
+}
+.rail .brand-lockup__name {
+  color: var(--rail-fg-resolved);
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: var(--track-tight);
+}
+.rail .brand-lockup__sub {
+  color: var(--rail-fg-subtle-resolved);
+}
+/* The bee sits in a honey hexagon on the navy. */
+.rail .brand-lockup > :first-child {
+  color: var(--brand-navy);
+  background: var(--brand-honey);
+  clip-path: var(--hex-clip);
+  padding: 2px;
+}
+.rail .rail-footer {
+  border-top-color: var(--rail-line-resolved);
+}
+.rail .text-fg,
+.rail .text-fg-muted,
+.rail .text-fg-subtle {
+  color: inherit;
+}
+.rail .rail-item .text-fg-subtle,
+.rail .rail-item .text-fg-muted {
+  color: var(--rail-fg-subtle-resolved);
+}
+.rail .rail-item .text-fg {
+  color: var(--rail-fg-resolved);
+}
+.rail .rail-item[aria-current="page"] .text-fg-subtle,
+.rail .rail-item[aria-current="page"] .text-fg-muted {
+  color: var(--rail-fg-muted-resolved);
+}
+.rail .rail-item:hover .text-fg-subtle,
+.rail .rail-item:hover .text-fg-muted {
+  color: var(--rail-fg-muted-resolved);
+}
+/* Search trigger and shortcut hints read as cut into the navy. */
+.rail .rail-search {
+  background: color-mix(in srgb, black 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 6%, transparent);
+  color: var(--rail-fg-subtle-resolved);
+}
+.rail .rail-search:hover {
+  color: var(--rail-fg-muted-resolved);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
+}
+.rail .hive-kbd,
+.rail kbd {
+  background: color-mix(in srgb, white 10%, transparent);
+  color: var(--rail-fg-muted-resolved);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+  border-color: transparent;
+}
+/* The nav fades out at the bottom rather than stopping dead. */
+.rail .rail-nav {
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--space-7)), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - var(--space-7)), transparent);
+}
+/* The collapse handle and every menu are page surfaces, not rail ink. */
+.rail .rail-handle,
+.rail .rail-menu {
+  color: var(--fg-subtle);
+}
+.rail .rail-menu,
+.rail .rail-menu .text-fg {
+  color: var(--fg);
+}
+.rail .rail-menu .text-fg-muted {
+  color: var(--fg-muted);
+}
+.rail .rail-menu .text-fg-subtle {
+  color: var(--fg-subtle);
+}
+
+/* ---- type — a display voice for titles and numbers -------------------------
+   Manrope 700/800 with tight tracking for the things a reader orients by: page titles,
+   greetings, section and dialog titles, the big numbers (tabular). Inter stays the text face.
+   Sizes stay on the scale tokens, so the font-scale preference reaches them. */
+.hive-display,
+.brand-lockup__name {
+  font-family: var(--font-display);
+}
+.hive-display {
+  font-weight: 700;
+  letter-spacing: var(--track-tight);
+}
+.hive-display--xl {
+  font-size: var(--fs-5xl);
+  font-weight: 800;
+  letter-spacing: calc(var(--track-tight) * 1.75);
+}
+
+/* ---- layers — surfaces by depth, not borders --------------------------------
+   Three levels: the canvas, a raised card (soft shadow, no ring) and an inset well. The
+   stat strip becomes separate tiles; a table's toolbar folds into a tinted band inside the
+   card. `.hive-well` is the inset level for a panel inside a panel. */
+.hive-well {
+  background: color-mix(in srgb, var(--bg-subtle) 80%, var(--bg-surface));
+  border-radius: var(--r-md);
+}
+.hive-table-toolbar {
+  background: color-mix(in srgb, var(--bg-subtle) 60%, var(--bg-surface));
+}
+
+/* ---- color — format and status colour carry the page -------------------------
+   A 3 px rule in the item's format colour on cards and rows; a hex avatar filled with it;
+   an identity wash on a detail page's header; a hero band on Home; the selection in azure. */
+.cat-card[data-fmt-tone],
+.prj-card[data-fmt-tone] {
+  position: relative;
+  overflow: clip;
+}
+.cat-card[data-fmt-tone]::after,
+.prj-card[data-fmt-tone]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--space-3);
+  bottom: var(--space-3);
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--fmtc);
+  pointer-events: none;
+}
+/* hex: a faint cell behind the card's leading corner, in the format colour. */
+.cat-card[data-fmt-tone]::before,
+.prj-card[data-fmt-tone]::before {
+  content: "";
+  position: absolute;
+  right: calc(var(--space-6) * -1);
+  top: calc(var(--space-7) * -1);
+  width: calc(var(--space-12) * 2);
+  height: calc(var(--space-12) * 2.2);
+  background: color-mix(in srgb, var(--fmtc) 9%, transparent);
+  clip-path: var(--hex-clip);
+  pointer-events: none;
+}
+.avatar-hex[data-fmt-tone] {
+  background: var(--fmtc);
+  color: white;
+  font-weight: 700;
+}
+tr[data-fmt-tone] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--fmtc);
+}
+tr[data-selected="true"] > td {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+tr[data-selected="true"] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+/* A detail page's header takes a soft wash of the item's format colour. */
+.page-header[data-mood="identity"] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--fmtc, var(--accent)) 7%, var(--bg-canvas)), color-mix(in srgb, var(--bg-canvas) 86%, transparent));
+}
+/* Home (and the launcher) get the brand's hero band: honey and azure glows behind the
+   greeting and a faint honeycomb fading in from the right. Page titles elsewhere stay quiet. */
+.page-header[data-mood="hero"] {
+  position: sticky;
+  background:
+    radial-gradient(40rem 14rem at 92% -2.5rem, color-mix(in srgb, var(--honey) 26%, transparent), transparent 70%),
+    radial-gradient(32rem 12rem at 8% 110%, color-mix(in srgb, var(--brand-azure) 16%, transparent), transparent 70%),
+    color-mix(in srgb, var(--bg-canvas) 92%, transparent);
+}
+.page-header[data-mood="hero"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'><path d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100' fill='none' stroke='rgba(120,110,80,0.10)' stroke-width='1'/></svg>");
+  -webkit-mask-image: linear-gradient(to left, black 20%, transparent 70%);
+  mask-image: linear-gradient(to left, black 20%, transparent 70%);
+}
+.page-header[data-mood="hero"] > * {
+  position: relative;
+}
+.page-header[data-mood="hero"] .page-header__inner {
+  padding-top: calc(var(--space-5) + var(--space-2));
+}
+.page-header[data-mood="hero"] .page-header__row {
+  padding-bottom: calc(var(--space-4) + var(--space-2));
+}
+
+/* The stat figure's counter (facelift "motion"; `CountUp` in the metrics set): the registered
+   `--count-figure` transitions from zero, and the pseudo-element prints it. */
+[data-count-figure] {
+  /* The counter is reset on the element, not on the pseudo-element that prints it: the
+     property is registered as non-inheriting, so `::before` would only ever see its initial 0. */
+  counter-reset: figure var(--count-figure);
+  transition: --count-figure var(--dur-slow) var(--ease-out);
+}
+
+/* The figure's starting value: zero as the element enters, so the transition above has
+   somewhere to count up from while the DOM holds the real number. */
+@starting-style {
+  [data-count-figure] {
+    --count-figure: 0;
+  }
+}
+
+[data-count-figure]::before {
+  content: counter(figure);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- motion — motion that explains -------------------------------------------
+   Content rises in with a short stagger, a clickable card lifts, a pressed button settles.
+   Every step is a `--dur-*` token (nothing over `--dur-slow`), and both reduce-motion blocks
+   above zero it all. The rail pill that follows the pointer is `RailNav`'s `.rail-pill`. */
+@keyframes hive-rise {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.page-body > * {
+  animation: hive-rise var(--dur-slow) var(--ease-out) both;
+}
+.page-body > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.page-body > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.page-body > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.page-body > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.page-body > :nth-child(n + 6) {
+  animation-delay: 200ms;
+}
+.page-header .page-header__row > * {
+  animation: hive-rise var(--dur-slow) var(--ease-out) both;
+}
+.rail-pill {
+  position: absolute;
+  left: var(--space-3);
+  right: var(--space-3);
+  height: var(--nav-item-h);
+  border-radius: var(--r-md);
+  background: var(--rail-hover-resolved, color-mix(in srgb, var(--fg) 6%, transparent));
+  pointer-events: none;
+  opacity: 0;
+  transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+  z-index: 0;
+}
+.rail-pill[data-on="true"] {
+  opacity: 1;
+}
+.rail .rail-nav {
+  position: relative;
+}
+.rail .rail-nav .rail-item {
+  position: relative;
+  z-index: 1;
+}
+.rail .rail-nav[data-pill="true"] .rail-item:hover {
+  background: transparent;
 }

@@ -78,7 +78,7 @@ export default function RailFooter({
   signOutTo,
 }: RailFooterProps) {
   return (
-    <div className="shrink-0 space-y-0.5 border-t border-border px-3 py-2">
+    <div className="rail-footer shrink-0 space-y-0.5 border-t border-border px-3 py-2">
       <NotificationsMenu currentTenantId={currentTenantId} iconRail={iconRail} />
 
       <RailTooltip label="Help & docs" when={iconRail}>

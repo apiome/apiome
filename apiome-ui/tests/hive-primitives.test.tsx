@@ -317,8 +317,16 @@ describe('Card', () => {
     const { container } = render(<Card>body</Card>);
     const classes = classesOf(container.firstElementChild as Element);
     expect(classes).toContain('bg-surface');
-    expect(classes).toContain('shadow-sm');
+    // The raised card of the facelift ("layers"): a soft shadow token, no hairline.
+    expect(classes).toContain('shadow-card');
     expect([...classes].some((c) => c.startsWith('border-'))).toBe(false);
+  });
+
+  it('lifts a hover card onto the deeper shadow', () => {
+    const { container } = render(<Card hover>body</Card>);
+    const classes = classesOf(container.firstElementChild as Element);
+    expect(classes).toContain('hover:shadow-card-hover');
+    expect(classes).toContain('hover:-translate-y-0.5');
   });
 
   it('swaps elevation for a hairline when flat', () => {
@@ -447,15 +455,18 @@ describe('Dialog', () => {
 });
 
 describe('Tabs', () => {
-  it('inks the selected underline tab in --fg, not in a brand palette colour', () => {
-    expect(tabTriggerClass({ active: true })).toContain('border-fg');
+  it('rules the selected underline tab in --accent and inks its label in --fg (facelift "color")', () => {
+    expect(tabTriggerClass({ active: true })).toContain('border-accent');
     expect(tabTriggerClass({ active: true })).toContain('text-fg');
-    expect(tabTriggerRadixClass()).toContain('data-[state=active]:border-fg');
+    expect(tabTriggerRadixClass()).toContain('data-[state=active]:border-accent');
+    expect(tabTriggerRadixClass()).toContain('data-[state=active]:text-fg');
   });
 
   it('offers the pills and vertical shapes the mockups use', () => {
     expect(tabListClass('pills')).not.toContain('border-b');
-    expect(tabTriggerClass({ active: true, variant: 'pills' })).toContain('bg-fg');
+    // The selected pill fills with the theme's pill token: navy in Light, the ink in the dark themes.
+    expect(tabTriggerClass({ active: true, variant: 'pills' })).toContain('bg-pill-active');
+    expect(tabTriggerClass({ active: true, variant: 'pills' })).toContain('text-pill-active-fg');
     expect(tabListClass('vertical')).toContain('flex-col');
     expect(tabTriggerClass({ active: true, variant: 'vertical' })).toContain('bg-subtle');
   });

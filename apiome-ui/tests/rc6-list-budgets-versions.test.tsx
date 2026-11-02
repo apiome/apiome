@@ -186,6 +186,8 @@ beforeAll(() => {
 beforeEach(() => {
   mockRole = 'owner';
   mockSearch = new URLSearchParams();
+  // These suites exercise the table; the timeline is the default view (facelift "timeline").
+  window.localStorage.setItem('hive.versions.view', 'table');
   window.sessionStorage.clear();
   global.fetch = jest.fn(async (input: RequestInfo | URL) => {
     const url = String(input);

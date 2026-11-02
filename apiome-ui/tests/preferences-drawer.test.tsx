@@ -250,6 +250,9 @@ describe('the theme picker', () => {
     await openPane(user);
 
     const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    // Four themes show at once; the rest fold under "More themes" (facelift "themes").
+    expect(within(group).getAllByRole('radio')).toHaveLength(4);
+    await user.click(screen.getByTestId('preferences-more-themes'));
     const radios = within(group).getAllByRole('radio');
 
     expect(radios).toHaveLength(themes.length);
@@ -275,6 +278,7 @@ describe('the theme picker', () => {
     renderHost();
     await openPane(user);
 
+    await user.click(screen.getByTestId('preferences-more-themes'));
     await user.click(themeCard('nord'));
 
     expect(html().getAttribute('data-theme')).toBe('nord');
@@ -292,6 +296,7 @@ describe('the theme picker', () => {
     // Following the system, which reports light here.
     expect(themeCard('system')).toHaveTextContent('Currently: Light');
 
+    await user.click(screen.getByTestId('preferences-more-themes'));
     await user.click(themeCard('nord'));
 
     // Nord is the user's choice, not the OS's — the card must not claim otherwise.
@@ -302,6 +307,8 @@ describe('the theme picker', () => {
     const user = userEvent.setup();
     renderHost();
     await openPane(user);
+    // The folded themes are part of the cycle once the fold is open (facelift "themes").
+    await user.click(screen.getByTestId('preferences-more-themes'));
 
     themeCard('system').focus();
 
@@ -321,6 +328,8 @@ describe('the theme picker', () => {
     const user = userEvent.setup();
     renderHost();
     await openPane(user);
+    // The folded themes are part of the cycle once the fold is open (facelift "themes").
+    await user.click(screen.getByTestId('preferences-more-themes'));
 
     themeCard('system').focus();
 
@@ -611,6 +620,7 @@ describe('persistence', () => {
     const first = renderHost();
 
     await openPane(user);
+    await user.click(screen.getByTestId('preferences-more-themes'));
     await user.click(themeCard('darcula'));
     fireEvent.change(screen.getByTestId('preferences-font-scale'), { target: { value: '5' } });
     await user.click(switchFor('monoIds'));

@@ -470,6 +470,8 @@ beforeAll(() => {
 beforeEach(() => {
   installFetch();
   mockSearch = new URLSearchParams();
+  // These suites exercise the table; the timeline is the default view (facelift "timeline").
+  window.localStorage.setItem('hive.versions.view', 'table');
   // The status strip remembers its open chip per project for the session.
   window.sessionStorage.clear();
   mockConfirm.mockClear();
@@ -1669,7 +1671,13 @@ describe('the browser fixtures', () => {
     await renderVersions();
     await statusChips();
     await screen.findByTestId('catalog-detail-related-artifacts');
+    // The `timeline` fixture is the page as a reader first sees it: the Timeline view (facelift
+    // "timeline"), not the table this file pins; the rest of the dumps come from the table.
+    fireEvent.click(screen.getByTestId('versions-view-timeline'));
+    await screen.findByTestId(`versions-timeline-row-${HEAD_ID}`);
     write('timeline', (document.querySelector('.page') as HTMLElement).outerHTML);
+    fireEvent.click(screen.getByTestId('versions-view-table'));
+    await screen.findByTestId('versions-table');
 
     const menu = await openRowMenu(HEAD_ID);
     write('menu', menu.outerHTML);

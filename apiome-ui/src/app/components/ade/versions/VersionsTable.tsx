@@ -403,7 +403,7 @@ export default function VersionsTable({
 }
 
 /** Props for {@link VersionCell}. */
-interface VersionCellProps {
+export interface VersionCellProps {
   version: Version;
   projectId: string;
   isHead: boolean;
@@ -417,7 +417,7 @@ interface VersionCellProps {
  * @param props See {@link VersionCellProps}.
  * @returns The cell.
  */
-function VersionCell({ version, projectId, isHead, tags, onView }: VersionCellProps) {
+export function VersionCell({ version, projectId, isHead, tags, onView }: VersionCellProps) {
   const lifecycle = versionLifecycle(version);
   const label = versionLabel(version);
   return (
