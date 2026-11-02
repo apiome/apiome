@@ -742,6 +742,11 @@ def version_compatibility(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/versions/{tenant_slug}/{project_id}/compatibility"
 
 
+def version_branches(tenant_slug: str, project_id: str | UUID) -> str:
+    """``GET`` a project's named version branches (each with its ``tip_version_id``)."""
+    return f"{versions(tenant_slug, project_id)}/version-branches"
+
+
 def version_tags(tenant_slug: str, project_id: str | UUID) -> str:
     """The project's version tags (named refs to revisions)."""
     return f"{V1}/version-tags/{tenant_slug}/{project_id}"

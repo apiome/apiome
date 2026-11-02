@@ -1,4 +1,4 @@
-"""Project versions list and get commands (read-only)."""
+"""``apiome versions``: list, show, get, create, publish, unpublish, freeze, compatibility, delete and fork."""
 
 from __future__ import annotations
 
@@ -67,6 +67,7 @@ from apiome_cli.version_compat import (
     to_sarif,
 )
 from apiome_cli.version_compat import render_result as render_compat_result
+from apiome_cli import version_create, version_show
 from apiome_cli.version_delete import DeleteRefused, DeleteUsageError, plan_delete
 from apiome_cli.version_delete import json_result as delete_json_result
 from apiome_cli.version_delete import render_plan as render_delete_plan
@@ -88,7 +89,7 @@ from apiome_cli.version_unpublish import (
 
 app = typer.Typer(
     name="versions",
-    help="List, publish, unpublish, freeze, fork, compare and delete versions.",
+    help="List, show, create, publish, fork, compare and delete versions.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -264,6 +265,201 @@ def get_version(
         _VERSION_RECORD_FIELDS + (_VERSION_UNPUBLISH_FIELDS if unpublished else ()),
         json_mode=json_mode_from_context(ctx),
     )
+
+
+@app.command("show")
+def show_version(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    version_ref: str = typer.Argument(
+        ..., metavar="VERSION", help="Version label (2.1.0 or v2.1.0), revision UUID, or version tag (stable, latest)."
+    ),
+) -> None:
+    """Show one version: state, dates, notes, tags, what changed, compatibility and spec URLs.
+
+    Classes and paths are counted, with what was added, removed and modified against the previous
+    version (the most recent published version before it). The compatibility summary comes from
+    POST /v1/versions/{tenant}/{project}/compatibility and is skipped when there is no previous
+    version. --json returns the version record plus compatibility_summary and spec_urls.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    versions = list_versions(client, tenant_slug, project_id)
+    tags = client.get(api_paths.version_tags(tenant_slug, project_id)).json() or []
+    tags = tags if isinstance(tags, list) else []
+    try:
+        match = find_source_version(versions, tags, version_ref)
+    except ForkError as exc:
+        typer.echo(f"No version or version tag {version_ref!r} in this project.", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    version = client.get(api_paths.version_record(tenant_slug, project_id, match.version["id"])).json()
+    version_id = str(version.get("id"))
+    previous = version_show.previous_version(versions, version)
+
+    classes = client.get(api_paths.classes_with_properties_tags(tenant_slug, version_id)).json() or []
+    paths, _total = fetch_list(client, api_paths.paths(tenant_slug, version_id))
+    previous_classes = previous_paths = None
+    report = None
+    if previous is not None:
+        previous_id = str(previous["id"])
+        previous_classes = client.get(api_paths.classes_with_properties_tags(tenant_slug, previous_id)).json() or []
+        previous_paths, _total = fetch_list(client, api_paths.paths(tenant_slug, previous_id))
+        compat = client.post_raw(
+            api_paths.version_compatibility(tenant_slug, project_id),
+            json={"baseRevisionId": previous_id, "headRevisionId": version_id},
+        )
+        report = compat.json() if compat.is_success else None
+    frozen_response = client.get_raw(api_paths.version_freeze(tenant_slug, project_id, version_id))
+    frozen = bool(frozen_response.json().get("frozen")) if frozen_response.is_success else None
+
+    settings = settings_from_context(ctx)
+    project_slug = str(version.get("project_slug") or project_ref)
+    label = str(version.get("version_id") or "")
+    urls = version_show.spec_urls(str(settings.base_url), tenant_slug, project_slug, label)
+    version_tags = version_show.tags_for(tags, version_id)
+    class_changes = version_show.class_delta(classes, previous_classes)
+    path_changes = version_show.path_delta(paths, previous_paths)
+    summary = version_show.compatibility_summary(report, previous)
+
+    if json_mode_from_context(ctx):
+        emit_json(
+            version_show.to_json(
+                version=version,
+                tags=version_tags,
+                frozen=frozen,
+                classes=class_changes,
+                paths=path_changes,
+                compatibility=summary,
+                urls=urls,
+                matched_by=match.matched_by,
+            )
+        )
+        return
+    typer.echo(
+        version_show.render_show(
+            project_name=str(version.get("project_name") or project_ref),
+            version=version,
+            tags=version_tags,
+            frozen=frozen,
+            classes=class_changes,
+            paths=path_changes,
+            compatibility=summary,
+            urls=urls,
+            matched_tag=version_ref.strip() if match.matched_by == "tag" else None,
+        )
+    )
+
+
+@app.command("create")
+def create_version(
+    ctx: typer.Context,
+    project_ref: str = typer.Argument(..., metavar="PROJECT", help="Project slug or UUID."),
+    version: str = typer.Option(..., "--version", help="New version label, e.g. 1.2.0 (MAJOR.MINOR.PATCH)."),
+    notes: Optional[str] = typer.Option(None, "--notes", help="Short revision note."),
+    notes_file: Optional[Path] = typer.Option(
+        None, "--notes-file", help="UTF-8 markdown file used as the version's changelog (instead of --notes)."
+    ),
+    base: Optional[str] = typer.Option(
+        None,
+        "--base",
+        help="Version to copy classes from: label, revision UUID or tag. Default: the latest published version.",
+    ),
+    empty: bool = typer.Option(False, "--empty", help="Start the draft with no classes (do not copy from a base)."),
+    copy_paths: bool = typer.Option(False, "--copy-paths", help="Also copy the base version's paths."),
+    branch: Optional[str] = typer.Option(
+        None, "--branch", help="Branch to advance; required when the project has several branches."
+    ),
+    from_file: Optional[Path] = typer.Option(
+        None, "--from-file", help="JSON file holding a full request body; the flags above override its fields."
+    ),
+) -> None:
+    """Create a draft version (POST /v1/versions/{tenant}/{project}).
+
+    The new version is always a draft; publish it with `apiome versions publish`. Its classes are
+    copied from --base (default: the latest published version), unless --empty. The command looks
+    up the project's head itself, so the push is accepted only if nobody advanced it meanwhile.
+
+    Exit codes: 0 created, 6 the version already exists, 2 a bad argument, 1 the server refused it
+    (including a head that moved during the call — re-run).
+    """
+    if empty and base:
+        typer.echo("Pass --base or --empty, not both.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if copy_paths and empty:
+        typer.echo("--copy-paths needs a base version to copy from; drop --empty.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    client, tenant_slug = tenant_scoped_client(ctx)
+    project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+    versions = list_versions(client, tenant_slug, project_id)
+    try:
+        label = version_create.check_label(version, versions)
+        short_message, changelog = version_create.read_notes(notes, notes_file)
+        body_from_file = version_create.load_body(from_file)
+    except version_create.VersionExists as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_VERSION_EXISTS) from exc
+    except version_create.CreateError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    source: Optional[dict[str, Any]] = None
+    if base:
+        tags = client.get(api_paths.version_tags(tenant_slug, project_id)).json() or []
+        try:
+            source = find_source_version(versions, tags if isinstance(tags, list) else [], base).version
+        except ForkError as exc:
+            typer.echo(f"No version or version tag {base!r} in this project (--base).", err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+    elif not empty:
+        source = version_create.default_base(versions)  # type: ignore[assignment]
+    if copy_paths and source is None:
+        typer.echo("--copy-paths needs a base version, and the project has no published version; pass --base.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+
+    branches = client.get(api_paths.version_branches(tenant_slug, project_id)).json() or []
+    try:
+        head = version_create.expected_head(versions, branches if isinstance(branches, list) else [], branch)
+    except version_create.CreateError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+
+    body = version_create.build_body(
+        from_file=body_from_file,
+        label=label,
+        head=head,
+        short_message=short_message,
+        changelog=changelog,
+        source_id=str(source["id"]) if source else None,
+        copy_paths=copy_paths,
+        branch=branch,
+    )
+    response = client.post_raw(api_paths.versions(tenant_slug, project_id), json=body)
+    if response.status_code == 409:
+        detail = _error_detail(response)
+        if detail.get("code") == "STALE_HEAD":
+            typer.echo(version_create.stale_head_message(detail), err=True)
+            raise typer.Exit(EXIT_ERROR)
+        if _version_exists_conflict(response):
+            typer.echo(f"Version {label} already exists in this project; pick another --version.", err=True)
+            raise typer.Exit(EXIT_VERSION_EXISTS)
+    exit_on_api_error(response)
+    created = response.json()
+    if json_mode_from_context(ctx):
+        emit_json(created)
+        return
+    copied = f", copied {created.get('copied_classes') or 0} classes from v{source.get('version_id')}" if source else ""
+    typer.echo(f"Created draft {label} ({created.get('id')}){copied}.")
+    if created.get("copy_warning"):
+        typer.echo(f"Warning: {created['copy_warning']}", err=True)
+
+
+def _error_detail(response: Any) -> dict[str, Any]:
+    """``detail`` of an error response as a dict (``{}`` when it is not one)."""
+    try:
+        detail = response.json().get("detail")
+    except (ValueError, AttributeError):
+        return {}
+    return detail if isinstance(detail, dict) else {}
 
 
 @app.command("publish")

@@ -51,6 +51,11 @@ def _newest_first(versions: Iterable[Mapping[str, Any]]) -> list[Mapping[str, An
     return sorted(versions, key=lambda v: _instant(v.get("created_at")), reverse=True)
 
 
+#: Public names for the ordering helpers ``versions show`` shares (#3177).
+instant = _instant
+newest_first = _newest_first
+
+
 def default_head(versions: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
     """The latest version (most recently created, published or not).
 

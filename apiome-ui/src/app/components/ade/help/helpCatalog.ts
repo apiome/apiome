@@ -116,6 +116,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['coverage', 'weighting', 'band', 'evidence', 'grade', 'rollup'],
   },
   {
+    id: 'manage-versions-from-the-cli',
+    title: 'Manage versions from the CLI',
+    summary: 'Cut, inspect, publish, freeze, compare and delete versions with apiome versions, in a terminal or CI job.',
+    page: 'apiome-docs/docs/ship/manage-versions-from-the-cli.md',
+    section: 'reference',
+    keywords: ['create', 'show', 'draft', 'release', 'pipeline', 'exit code', 'semver', 'tag', 'compatibility gate'],
+  },
+  {
     id: 'cut-a-version',
     title: 'Cut a version',
     summary:

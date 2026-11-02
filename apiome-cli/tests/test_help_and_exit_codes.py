@@ -138,7 +138,7 @@ _COMMAND_GROUPS: tuple[tuple[str, str], ...] = (
     ("classes", "List a version's classes and create new ones"),
     ("schemas", "List and fetch tenant schemas"),
     ("types", "Browse tenant JSON Schema primitive types"),
-    ("versions", "List, publish, unpublish, freeze, fork, compare and delete versions"),
+    ("versions", "List, show, create, publish, fork, compare and delete versions"),
     ("tags", "List, inspect, create, move and delete version tags"),
     ("browse", "Open published projects and versions in the browse app"),
     ("paths", "List and inspect OpenAPI path templates"),

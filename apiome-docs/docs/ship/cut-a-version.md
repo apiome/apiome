@@ -25,24 +25,38 @@ unit you later **publish** ([Publish a version](./publish-a-version.md)).
 POST /v1/versions/{tenant_slug}/{project_id}
 X-API-Key: <your-api-key>
 
-{ "version": "1.1.0", "description": "Add the orders endpoint", "notes": "…" }
+{
+  "version_id": "1.1.0",
+  "shortMessage": "Add the orders endpoint",
+  "changelog": "…",
+  "baseRevisionId": "<the project's current head revision id>",
+  "source_version_id": "<the version to copy classes from>"
+}
 ```
 
-Returns the newly created version record (unpublished).
+`version_id` is a plain `MAJOR.MINOR.PATCH` (leave it out to bump the latest version). The push
+is locked to the head you name in `baseRevisionId`: the branch tip, or the newest revision of a
+project without branches, or empty for a project's first version. If someone advanced the head
+meanwhile, the API answers **409** with `code: STALE_HEAD`. Returns the newly created version
+record (unpublished).
 
 ## With the CLI
 
-The CLI inspects versions (authoring/cutting happens in the UI/REST):
+`apiome versions create` looks the head up for you, so a CI job can cut a version in one line:
 
 ```bash
-apiome versions list --project-id <id>
-apiome versions get <version_id> --project-id <id>
+apiome versions create payments-api --version 1.1.0 --notes 'Add the orders endpoint'
+apiome versions show payments-api 1.1.0
 ```
+
+Classes are copied from the latest published version unless you pass `--base <version>` (or
+`--empty`); add `--copy-paths` to copy its paths too. See
+[Manage versions from the CLI](./manage-versions-from-the-cli.md) for every option and exit code.
 
 ## Verify
 
 - **UI:** the new revision appears in the Versions list as unpublished.
-- **CLI:** `apiome versions list --project-id <id>` shows it.
+- **CLI:** `apiome versions show <project> <version>` prints it with the state `draft`.
 
 ## Related
 

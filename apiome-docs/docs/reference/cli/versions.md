@@ -1,6 +1,6 @@
 ---
 title: "apiome versions"
-description: "List, publish, unpublish, freeze, fork, compare and delete versions."
+description: "List, show, create, publish, fork, compare and delete versions."
 sidebar_position: 39
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome versions {#versions}
 
-List, publish, unpublish, freeze, fork, compare and delete versions.
+List, show, create, publish, fork, compare and delete versions.
 
 ```text
 apiome versions [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`compatibility`](#versions-compatibility), [`delete`](#versions-delete), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`unpublish`](#versions-unpublish).
+Subcommands: [`compatibility`](#versions-compatibility), [`create`](#versions-create), [`delete`](#versions-delete), [`fork`](#versions-fork), [`freeze`](#versions-freeze), [`get`](#versions-get), [`list`](#versions-list), [`publish`](#versions-publish), [`show`](#versions-show), [`unpublish`](#versions-unpublish).
 
 ## apiome versions compatibility {#versions-compatibility}
 
@@ -46,6 +46,37 @@ apiome versions compatibility [OPTIONS] PROJECT
 | `--allow-removals` | flag |  |  | Treat breaking removals as warnings, so they do not fail the gate. |
 | `--ignore` | text (repeatable) |  |  | Rule id to skip, e.g. path_removed (repeat, or comma-separate). removed-path spelling is accepted. |
 | `--sarif` | flag |  |  | Print SARIF 2.1.0 (for GitHub code scanning) instead of the table. |
+
+## apiome versions create {#versions-create}
+
+Create a draft version (POST /v1/versions/{tenant}/{project}).
+
+The new version is always a draft; publish it with `apiome versions publish`. Its classes are copied from --base (default: the latest published version), unless --empty. The command looks up the project's head itself, so the push is accepted only if nobody advanced it meanwhile.
+
+Exit codes: 0 created, 6 the version already exists, 2 a bad argument, 1 the server refused it (including a head that moved during the call — re-run).
+
+```text
+apiome versions create [OPTIONS] PROJECT
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--version` | text |  | yes | New version label, e.g. 1.2.0 (MAJOR.MINOR.PATCH). |
+| `--notes` | text |  |  | Short revision note. |
+| `--notes-file` | path |  |  | UTF-8 markdown file used as the version's changelog (instead of --notes). |
+| `--base` | text |  |  | Version to copy classes from: label, revision UUID or tag. Default: the latest published version. |
+| `--empty` | flag |  |  | Start the draft with no classes (do not copy from a base). |
+| `--copy-paths` | flag |  |  | Also copy the base version's paths. |
+| `--branch` | text |  |  | Branch to advance; required when the project has several branches. |
+| `--from-file` | path |  |  | JSON file holding a full request body; the flags above override its fields. |
 
 ## apiome versions delete {#versions-delete}
 
@@ -181,6 +212,23 @@ apiome versions publish [OPTIONS] VERSION
 | --- | --- | --- | --- | --- |
 | `--project` | text |  | yes | Project UUID or slug. |
 | `--visibility`, `-v` | text | `public` |  | Publish visibility: 'public' (catalog) or 'private' (tenant-protected). |
+
+## apiome versions show {#versions-show}
+
+Show one version: state, dates, notes, tags, what changed, compatibility and spec URLs.
+
+Classes and paths are counted, with what was added, removed and modified against the previous version (the most recent published version before it). The compatibility summary comes from POST /v1/versions/{tenant}/{project}/compatibility and is skipped when there is no previous version. --json returns the version record plus compatibility_summary and spec_urls.
+
+```text
+apiome versions show [OPTIONS] PROJECT VERSION
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT_REF` | text | yes | Project slug or UUID. |
+| `VERSION_REF` | text | yes | Version label (2.1.0 or v2.1.0), revision UUID, or version tag (stable, latest). |
 
 ## apiome versions unpublish {#versions-unpublish}
 
