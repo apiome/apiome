@@ -102,6 +102,7 @@ not indexed yet.
 
 ## Related
 
+- [Find APIs across formats](./find-apis-across-formats.md) — every way to find an API by protocol, format, domain and tag
 - [Catalog](./catalog.mdx) — browse and filter catalog items
 - [Supported formats](./supported-formats.md)
 - [Search reference](../reference/rest/search.md)
