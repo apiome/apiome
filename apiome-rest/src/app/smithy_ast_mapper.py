@@ -27,10 +27,20 @@ shared. How names are written:
 
 The model's identity — its ``$version`` (the AST's ``smithy`` key) and every namespace it
 defines shapes in — is recorded on the document.
+
+**Traits, errors and resources** (MFI-17.2, #3809). Every trait's *value* is kept beside its name
+(:func:`_trait_values`: ``smithy.api#length`` → ``length: {"min": 1}``; a trait from another
+namespace keeps its absolute id). A member that targets a simple shape (``CityId: string`` with a
+``@pattern``) also carries that shape's constraint traits, its own winning. Operations and services
+keep the errors they declare, a service its resources, a resource its identifiers, properties,
+lifecycle operations and child resources, and an ``enum`` / ``intEnum`` each member's
+``@enumValue``. Each shape is hashed too (:func:`shape_sha256`), keyed by its absolute id.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections import Counter
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
@@ -46,7 +56,13 @@ from .smithy_parser import (
     SmithyStructure,
 )
 
-__all__ = ["PRELUDE_NAMESPACE", "document_from_ast", "is_smithy_ast_document", "shape_namespace"]
+__all__ = [
+    "PRELUDE_NAMESPACE",
+    "document_from_ast",
+    "is_smithy_ast_document",
+    "shape_namespace",
+    "shape_sha256",
+]
 
 #: The namespace of Smithy's built-in shapes and traits.
 PRELUDE_NAMESPACE = "smithy.api"
@@ -72,6 +88,34 @@ _SIMPLE_TYPES = frozenset(
 
 #: Resource properties that bind operations to it (each one target, or a list of targets).
 _RESOURCE_OPERATION_KEYS = ("create", "put", "read", "update", "delete", "list")
+
+#: Constraint traits a member inherits from the simple shape it targets (MFI-17.2).
+_INHERITED_TRAITS = ("length", "range", "pattern", "timestampFormat", "mediaType")
+
+
+def shape_sha256(shape: Mapping[str, Any]) -> str:
+    """SHA-256 of one JSON AST shape, serialized with sorted keys (MFI-17.2).
+
+    Args:
+        shape: The shape's JSON AST node.
+
+    Returns:
+        64 lowercase hex digits; the same shape gives the same hash however its keys are ordered.
+    """
+    blob = json.dumps(shape, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _trait_key(trait_id: str) -> str:
+    """A trait's key: its local name for a prelude trait, its absolute id otherwise."""
+    return _local_name(trait_id) if shape_namespace(trait_id) == PRELUDE_NAMESPACE else trait_id
+
+
+def _trait_values(traits: Any) -> Dict[str, Any]:
+    """A shape's or member's traits, keyed like :func:`_trait_key`, values as the AST gives them."""
+    if not isinstance(traits, Mapping):
+        return {}
+    return {_trait_key(str(trait_id)): value for trait_id, value in traits.items()}
 
 
 def is_smithy_ast_document(value: Any) -> bool:
@@ -118,6 +162,11 @@ def _trait_names(traits: Any) -> Tuple[str, ...]:
     if not isinstance(traits, Mapping):
         return ()
     return tuple(_local_name(trait_id) for trait_id in traits)
+
+
+def _string(value: Any) -> Optional[str]:
+    """``value`` when it is a non-blank string, else ``None``."""
+    return value if isinstance(value, str) and value.strip() else None
 
 
 def _documentation(node: Mapping[str, Any]) -> Optional[str]:
@@ -178,15 +227,60 @@ class _Model:
             if not isinstance(member, Mapping):
                 continue
             traits = _trait_names(member.get("traits"))
+            values = {**self.inherited_traits(_target(member)), **_trait_values(member.get("traits"))}
             fields.append(
                 SmithyField(
                     name=str(member_name),
                     type_name=self.ref(_target(member)) or "Unit",
                     required="required" in traits,
                     traits=traits,
+                    documentation=_string(values.pop("documentation", None)),
+                    trait_values=values,
                 )
             )
         return tuple(fields)
+
+    def inherited_traits(self, target: Optional[str]) -> Dict[str, Any]:
+        """The constraint traits of the simple shape ``target`` names, which a member inherits.
+
+        Args:
+            target: The member's target shape id.
+
+        Returns:
+            Its ``length`` / ``range`` / ``pattern`` / ``timestampFormat`` / ``mediaType`` values;
+            empty for an aggregate shape, a prelude shape or no target.
+        """
+        shape = self.shapes.get(target) if target else None
+        if not isinstance(shape, Mapping) or shape.get("type") not in _SIMPLE_TYPES:
+            return {}
+        values = _trait_values(shape.get("traits"))
+        return {key: values[key] for key in _INHERITED_TRAITS if key in values}
+
+    def names(self, value: Any) -> Tuple[str, ...]:
+        """The names a reference or list of references is written with."""
+        return tuple(self.name(target) for target in _targets(value))
+
+    def resource(self, shape: Mapping[str, Any]) -> Dict[str, Any]:
+        """A resource's identifiers, properties, lifecycle, operations and child resources."""
+        identifiers = {
+            str(key): self.ref(_target(ref)) or "String" for key, ref in (shape.get("identifiers") or {}).items()
+        }
+        properties = {
+            str(key): self.ref(_target(ref)) or "Unit" for key, ref in (shape.get("properties") or {}).items()
+        }
+        lifecycle = {
+            key: self.name(target)
+            for key in _RESOURCE_OPERATION_KEYS
+            if (target := _target(shape.get(key)))
+        }
+        return {
+            "identifiers": identifiers,
+            "properties": properties,
+            "lifecycle": lifecycle,
+            "operations": list(self.names(shape.get("operations") or [])),
+            "collection_operations": list(self.names(shape.get("collectionOperations") or [])),
+            "resources": list(self.names(shape.get("resources") or [])),
+        }
 
     def bound_operations(self, shape: Mapping[str, Any], seen: Set[str]) -> List[str]:
         """The operations a service or resource binds, its resources' included, in order."""
@@ -260,9 +354,13 @@ def document_from_ast(
         shape_type = shape.get("type")
         name = model.name(shape_id)
         doc = _documentation(shape)
+        traits = _trait_values(shape.get("traits"))
+        traits.pop("documentation", None)
         if shape_type in ("structure", "union"):
             fields = model.fields(shape.get("members"))
-            structures.append(SmithyStructure(name=name, kind=shape_type, fields=fields, documentation=doc))
+            structures.append(
+                SmithyStructure(name=name, kind=shape_type, fields=fields, documentation=doc, trait_values=traits)
+            )
         elif shape_type == "resource":
             identifiers = {
                 key: {"target": target, "traits": {f"{PRELUDE_NAMESPACE}#required": {}}}
@@ -271,12 +369,40 @@ def document_from_ast(
                 )
                 if target
             }
-            fields = model.fields(identifiers)
-            structures.append(SmithyStructure(name=name, kind="resource", fields=fields, documentation=doc))
+            # MFI-17.2: a resource's properties are its fields too, after its identifiers.
+            properties = {
+                key: {"target": target}
+                for key, target in ((key, _target(ref)) for key, ref in (shape.get("properties") or {}).items())
+                if target and key not in identifiers
+            }
+            fields = model.fields({**identifiers, **properties})
+            structures.append(
+                SmithyStructure(
+                    name=name,
+                    kind="resource",
+                    fields=fields,
+                    documentation=doc,
+                    trait_values=traits,
+                    resource=model.resource(shape),
+                )
+            )
         elif shape_type in ("enum", "intEnum"):
-            values = tuple(str(member) for member in (shape.get("members") or {}))
+            members = shape.get("members") or {}
+            values = tuple(str(member) for member in members)
             if values:
-                enums.append(SmithyEnum(name=name, values=values, documentation=doc))
+                enum_values = tuple(
+                    _trait_values(member.get("traits")).get("enumValue") if isinstance(member, Mapping) else None
+                    for member in members.values()
+                )
+                enums.append(
+                    SmithyEnum(
+                        name=name,
+                        values=values,
+                        documentation=doc,
+                        enum_values=enum_values,
+                        int_enum=shape_type == "intEnum",
+                    )
+                )
         elif shape_type in ("list", "set"):
             member = model.ref(_target(shape.get("member")))
             if member:
@@ -292,6 +418,8 @@ def document_from_ast(
                     input_type=model.ref(_target(shape.get("input"))),
                     output_type=model.ref(_target(shape.get("output"))),
                     documentation=doc,
+                    errors=model.names(shape.get("errors") or []),
+                    trait_values=traits,
                 )
             )
         elif shape_type == "service":
@@ -303,6 +431,9 @@ def document_from_ast(
                     version=version if isinstance(version, str) else None,
                     operations=tuple(model.name(op) for op in bound),
                     documentation=doc,
+                    errors=model.names(shape.get("errors") or []),
+                    resources=model.names(shape.get("resources") or []),
+                    trait_values=traits,
                 )
             )
 
@@ -326,4 +457,5 @@ def document_from_ast(
         namespaces=namespaces,
         model_sha256=model_sha256,
         source_files=source_files,
+        shape_hashes={shape_id: shape_sha256(shapes[shape_id]) for shape_id in sorted(shapes)},
     )

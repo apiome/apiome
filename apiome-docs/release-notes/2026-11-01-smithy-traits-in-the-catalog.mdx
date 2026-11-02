@@ -1,0 +1,24 @@
+---
+slug: smithy-traits-in-the-catalog
+title: Smithy HTTP bindings, errors, resources and traits in the catalog
+description: A Smithy item keeps its routes, errors, resources and trait values.
+authors: [apiome]
+---
+
+A Smithy catalog item now keeps what its traits say, not only their names: each operation's HTTP
+route and parameters, its errors, the service's resources and every member's documentation and
+constraints. [What the catalog item holds](/bring-in/smithy-import#what-the-catalog-item-holds).
+
+{/* truncate */}
+
+- **HTTP bindings.** `@http` gives each operation its method and path, and `@httpLabel`,
+  `@httpQuery` and `@httpHeader` members become its parameters. A model read from its JSON AST now
+  converts to OpenAPI with its own routes.
+- **Errors.** An operation's errors, and its service's, are error messages with their `@httpError`
+  status.
+- **Resources.** A resource keeps its identifiers, properties, lifecycle and children, and each
+  operation it binds is tagged with its name.
+- **Traits.** Member documentation, defaults and `@length` / `@range` / `@pattern` constraints are
+  kept, a member inherits the constraints of the shape it targets, and enums keep their
+  `@enumValue`s.
+- **Per-shape hashes.** Each shape is hashed on its own, so you can see which shapes changed.

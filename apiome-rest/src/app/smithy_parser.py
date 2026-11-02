@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 __all__ = [
     "SmithyParseError",
@@ -49,6 +49,11 @@ class SmithyField:
     type_name: str
     required: bool = False
     traits: Tuple[str, ...] = ()
+    #: The member's ``@documentation`` (MFI-17.2; the JSON AST path only).
+    documentation: Optional[str] = None
+    #: Every trait's value, keyed like :attr:`traits` (``length`` → ``{"min": 1}``); a member that
+    #: targets a simple shape also carries that shape's constraint traits (MFI-17.2).
+    trait_values: Mapping[str, Any] = field(default_factory=dict, compare=False)
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,12 @@ class SmithyStructure:
     kind: str  # structure | union | resource
     fields: Tuple[SmithyField, ...]
     documentation: Optional[str] = None
+    #: The shape's trait values (``error`` → ``"client"``, ``httpError`` → ``404``) (MFI-17.2).
+    trait_values: Mapping[str, Any] = field(default_factory=dict, compare=False)
+    #: For a resource (MFI-17.2): ``identifiers`` (name → type), ``properties`` (name → type),
+    #: ``lifecycle`` (``read`` / ``list`` / … → operation), ``operations``,
+    #: ``collection_operations`` and child ``resources`` (names).
+    resource: Optional[Mapping[str, Any]] = field(default=None, compare=False)
 
 
 @dataclass(frozen=True)
@@ -64,6 +75,10 @@ class SmithyEnum:
     name: str
     values: Tuple[str, ...]
     documentation: Optional[str] = None
+    #: Each member's ``@enumValue``, parallel to :attr:`values` (``None`` where it has none) (MFI-17.2).
+    enum_values: Tuple[Any, ...] = ()
+    #: Whether the shape is an ``intEnum`` (MFI-17.2).
+    int_enum: bool = False
 
 
 @dataclass(frozen=True)
@@ -87,6 +102,10 @@ class SmithyOperation:
     input_type: Optional[str]
     output_type: Optional[str]
     documentation: Optional[str] = None
+    #: The error structures the operation declares (MFI-17.2).
+    errors: Tuple[str, ...] = ()
+    #: The operation's trait values (``http``, ``readonly``, ``paginated`` …) (MFI-17.2).
+    trait_values: Mapping[str, Any] = field(default_factory=dict, compare=False)
 
 
 @dataclass(frozen=True)
@@ -95,6 +114,12 @@ class SmithyService:
     version: Optional[str]
     operations: Tuple[str, ...]
     documentation: Optional[str] = None
+    #: The error structures every operation of the service can return (MFI-17.2).
+    errors: Tuple[str, ...] = ()
+    #: The resources the service binds directly (MFI-17.2).
+    resources: Tuple[str, ...] = ()
+    #: The service's trait values (protocols such as ``aws.protocols#restJson1``) (MFI-17.2).
+    trait_values: Mapping[str, Any] = field(default_factory=dict, compare=False)
 
 
 @dataclass(frozen=True)
@@ -123,6 +148,9 @@ class SmithyDocument:
     #: The assembled JSON AST when the model came through the Smithy CLI (MFI-17.4): the whole
     #: model that ``smithy diff`` compares when a later version is classified.
     ast: Optional[Dict[str, Any]] = field(default=None, compare=False, repr=False)
+    #: SHA-256 of each shape of the JSON AST, keyed by absolute shape id (MFI-17.2); empty for the
+    #: IDL reader.
+    shape_hashes: Mapping[str, str] = field(default_factory=dict, compare=False, repr=False)
 
 
 def is_smithy(content: str) -> bool:
