@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 __all__ = [
     "OncRpcParseError",
@@ -170,19 +170,52 @@ def _parse_enum_values(inner: str) -> Tuple[Tuple[str, Optional[int]], ...]:
     return tuple(values)
 
 
+#: One XDR declaration (RFC 4506 §6.3 ``declaration``), without its ``;``: an optional
+#: ``unsigned`` qualifier, the type, an optional ``*`` (optional-data), the identifier and an
+#: optional ``<N>`` / ``<>`` (variable-length, bounded or not) or ``[N]`` (fixed-length) suffix.
+_DECLARATION = re.compile(
+    r"^((?:unsigned\s+)?[\w.]+)\s*(\*)?\s*(\w+)\s*(?:<(\d*)>|\[(\d+)\])?\s*$"
+)
+
+
+def _declaration(chunk: str) -> Optional[Tuple[str, str]]:
+    """Parse one declaration into ``(name, type_expr)``.
+
+    The type expression keeps the declaration's shape so the normalizer and the lint pack can
+    read it back: ``string<256>`` (bounded), ``opaque<>`` (unbounded), ``int[4]`` (fixed-length
+    array), ``node*`` (optional-data pointer), ``unsigned int``.
+
+    Args:
+        chunk: The declaration text, ``;`` and surrounding whitespace removed.
+
+    Returns:
+        ``(identifier, type_expr)``, or ``None`` when the text is not a declaration.
+    """
+    match = _DECLARATION.match(chunk.strip())
+    if not match:
+        return None
+    base, pointer, name, var_bound, fixed_size = match.groups()
+    type_expr = re.sub(r"\s+", " ", base.strip())
+    if pointer:
+        type_expr += "*"
+    if var_bound is not None:
+        type_expr += f"<{var_bound}>"
+    elif fixed_size is not None:
+        type_expr += f"[{fixed_size}]"
+    return name, type_expr
+
+
 def _parse_struct_fields(inner: str) -> Tuple[OncRpcField, ...]:
     fields: List[OncRpcField] = []
     for part in inner.split(";"):
         chunk = part.strip()
         if not chunk:
             continue
-        match = re.match(r"([\w.<>, \t]+?)\s+(\w+)(?:\s*<(\d+)>)?\s*$", chunk)
-        if not match:
+        parsed = _declaration(chunk)
+        if parsed is None:
             continue
-        base_type = match.group(1).strip()
-        bound = match.group(3)
-        type_expr = f"{base_type}<{bound}>" if bound else base_type
-        fields.append(OncRpcField(name=match.group(2), type_expr=type_expr))
+        name, type_expr = parsed
+        fields.append(OncRpcField(name=name, type_expr=type_expr))
     return tuple(fields)
 
 
@@ -197,18 +230,11 @@ def _parse_union_cases(inner: str) -> Tuple[OncRpcUnionCase, ...]:
         if body == "void" or not body:
             cases.append(OncRpcUnionCase(label=label, fields=()))
             continue
-        field_match = re.match(r"([\w.<>, \t]+?)\s+(\w+)\s*;?\s*$", body)
-        if field_match:
+        parsed = _declaration(body.rstrip(";")) if ";" not in body.rstrip(";") else None
+        if parsed is not None:
+            name, type_expr = parsed
             cases.append(
-                OncRpcUnionCase(
-                    label=label,
-                    fields=(
-                        OncRpcField(
-                            name=field_match.group(2),
-                            type_expr=field_match.group(1).strip(),
-                        ),
-                    ),
-                )
+                OncRpcUnionCase(label=label, fields=(OncRpcField(name=name, type_expr=type_expr),))
             )
         else:
             cases.append(OncRpcUnionCase(label=label, fields=_parse_struct_fields(body)))
@@ -234,14 +260,11 @@ def _parse_procedures(inner: str) -> Tuple[OncRpcProcedure, ...]:
 
 def _parse_typedefs(cleaned: str) -> Tuple[OncRpcTypedef, ...]:
     typedefs: List[OncRpcTypedef] = []
-    for match in re.finditer(
-        r"typedef\s+(\w+)\s+(\w+)(?:\s*<(\d+)>)?\s*;",
-        cleaned,
-    ):
-        base = match.group(1)
-        name = match.group(2)
-        bound = match.group(3)
-        type_expr = f"{base}<{bound}>" if bound else base
+    for match in re.finditer(r"typedef\s+([^;{}]+?)\s*;", cleaned):
+        parsed = _declaration(match.group(1))
+        if parsed is None:
+            continue
+        name, type_expr = parsed
         typedefs.append(OncRpcTypedef(name=name, type_expr=type_expr))
     return tuple(typedefs)
 

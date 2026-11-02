@@ -4,6 +4,64 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "INV_LOOKUP",
+            "number": 1,
+            "program": "INV_PROG",
+            "proto3": "rpc INV_LOOKUP (string) returns (inv_lookup_res);",
+            "version": "INV_VERS"
+          },
+          {
+            "name": "INV_ADJUST",
+            "number": 2,
+            "program": "INV_PROG",
+            "proto3": "rpc INV_ADJUST (inv_adjust_args) returns (inv_status);",
+            "version": "INV_VERS"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "inv_status",
+            "proto3": "enum inv_status",
+            "xdr": "enum"
+          },
+          {
+            "name": "inv_lookup_res",
+            "proto3": "message inv_lookup_res { oneof status { … } }",
+            "xdr": "union switch (inv_status status)"
+          },
+          {
+            "name": "inv_location",
+            "proto3": "message inv_location { string warehouse, uint32 shelf }",
+            "xdr": "struct"
+          },
+          {
+            "name": "inv_item",
+            "proto3": "message inv_item { string code, uint32 quantity, inv_location location }",
+            "xdr": "struct"
+          },
+          {
+            "name": "inv_adjust_args",
+            "proto3": "message inv_adjust_args { string code, int32 delta }",
+            "xdr": "struct"
+          },
+          {
+            "name": "sku",
+            "proto3": "string (inlined; proto3 has no typedef)",
+            "xdr": "typedef string<64>"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "INV_PROG",
@@ -48,7 +106,12 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 536870915,
+          "oncrpc_versions": {
+            "INV_VERS": 1
+          }
+        },
         "key": "INV_PROG.INV_PROG",
         "name": "INV_PROG",
         "operations": [
@@ -57,7 +120,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "inv_adjust_args",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "inv_status",
+              "oncrpc_version_name": "INV_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -111,7 +178,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "sku",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "inv_lookup_res",
+              "oncrpc_version_name": "INV_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -411,8 +482,10 @@
               "type": "inv_item"
             },
             {
+              "canonical_type": "voi",
+              "field": "d",
               "label": "default",
-              "type": "void"
+              "type": "voi"
             }
           ]
         },
@@ -424,7 +497,7 @@
         "namespace": null,
         "union_members": [
           "INV_PROG.inv_item",
-          "void"
+          "voi"
         ],
         "value_type": null
       },
@@ -486,15 +559,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:7906f77617709fdb35fbf893c138460ef1212fdfd0e2bc531d88cbbf485ba726",
+  "fingerprint": "sha256:7e40569932e31002c4e10c44f38bc9d01808612a6bd91c345d90af7f3aec702a",
   "lint": {
-    "findings": 19,
-    "grade": "D",
-    "report_fingerprint": "6a919a00597471ef7f5f79fb94b6a8e080d623d26fd3819df19583398764c4c1",
-    "score": 60,
+    "findings": 20,
+    "grade": "F",
+    "report_fingerprint": "bfb1adf047ea418535e5321dd8665f270536aa9c8e35dfd0f0a199f2fa922a8a",
+    "score": 59,
     "severity_counts": {
       "error": 0,
-      "info": 12,
+      "info": 13,
       "warning": 7
     }
   },

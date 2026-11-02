@@ -4,6 +4,70 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "PMAPPROC_NULL",
+            "number": 0,
+            "program": "PMAP_PROG",
+            "proto3": "rpc PMAPPROC_NULL (google.protobuf.Empty) returns (google.protobuf.Empty);",
+            "version": "PMAP_VERS"
+          },
+          {
+            "name": "PMAPPROC_SET",
+            "number": 1,
+            "program": "PMAP_PROG",
+            "proto3": "rpc PMAPPROC_SET (mapping) returns (bool);",
+            "version": "PMAP_VERS"
+          },
+          {
+            "name": "PMAPPROC_UNSET",
+            "number": 2,
+            "program": "PMAP_PROG",
+            "proto3": "rpc PMAPPROC_UNSET (mapping) returns (bool);",
+            "version": "PMAP_VERS"
+          },
+          {
+            "name": "PMAPPROC_GETPORT",
+            "number": 3,
+            "program": "PMAP_PROG",
+            "proto3": "rpc PMAPPROC_GETPORT (mapping) returns (uint32);",
+            "version": "PMAP_VERS"
+          },
+          {
+            "name": "PMAPPROC_CALLIT",
+            "number": 5,
+            "program": "PMAP_PROG",
+            "proto3": "rpc PMAPPROC_CALLIT (call_args) returns (call_result);",
+            "version": "PMAP_VERS"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "mapping",
+            "proto3": "message mapping { uint32 prog, uint32 vers, uint32 prot, uint32 port }",
+            "xdr": "struct"
+          },
+          {
+            "name": "call_args",
+            "proto3": "message call_args { uint32 prog, uint32 vers, uint32 proc, bytes args }",
+            "xdr": "struct"
+          },
+          {
+            "name": "call_result",
+            "proto3": "message call_result { uint32 port, bytes res }",
+            "xdr": "struct"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "PMAP_PROG",
@@ -64,7 +128,12 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 100000,
+          "oncrpc_versions": {
+            "PMAP_VERS": 2
+          }
+        },
         "key": "PMAP_PROG.PMAP_PROG",
         "name": "PMAP_PROG",
         "operations": [
@@ -73,7 +142,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 5
+              "oncrpc_arg_type": "call_args",
+              "oncrpc_procedure_number": 5,
+              "oncrpc_return_type": "call_result",
+              "oncrpc_version_name": "PMAP_VERS",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -127,7 +200,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 3
+              "oncrpc_arg_type": "mapping",
+              "oncrpc_procedure_number": 3,
+              "oncrpc_return_type": "unsigned int",
+              "oncrpc_version_name": "PMAP_VERS",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -181,7 +258,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 0
+              "oncrpc_arg_type": "void",
+              "oncrpc_procedure_number": 0,
+              "oncrpc_return_type": "void",
+              "oncrpc_version_name": "PMAP_VERS",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -198,7 +279,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "mapping",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "bool",
+              "oncrpc_version_name": "PMAP_VERS",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -252,7 +337,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "mapping",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "bool",
+              "oncrpc_version_name": "PMAP_VERS",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -588,15 +677,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:e1f3101bc72320be84b8196df931a18acafb32077efc71b5ccea8f9f194725ae",
+  "fingerprint": "sha256:8c0fae8b17cc93d59a3c36d143720c5dcbfc62526ce50ce2f54fc932e04a7aed",
   "lint": {
-    "findings": 27,
+    "findings": 28,
     "grade": "F",
-    "report_fingerprint": "a494edced5db450213e1ac9a8597c6626189c374b4554c7b5dd80921993e120b",
-    "score": 49,
+    "report_fingerprint": "d804b9286f7d26d682caf52d40def7f2b80c2f48a63e30013c1cc410020cf873",
+    "score": 48,
     "severity_counts": {
       "error": 0,
-      "info": 19,
+      "info": 20,
       "warning": 8
     }
   },

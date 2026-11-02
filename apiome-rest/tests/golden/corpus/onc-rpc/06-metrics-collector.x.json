@@ -4,6 +4,64 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "METRICS_REPORT",
+            "number": 1,
+            "program": "METRICS_PROG",
+            "proto3": "rpc METRICS_REPORT (report_args) returns (report_res);",
+            "version": "METRICS_VERS"
+          },
+          {
+            "name": "METRICS_QUERY",
+            "number": 2,
+            "program": "METRICS_PROG",
+            "proto3": "rpc METRICS_QUERY (query_args) returns (query_res);",
+            "version": "METRICS_VERS"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "metric_kind",
+            "proto3": "enum metric_kind",
+            "xdr": "enum"
+          },
+          {
+            "name": "metric_sample",
+            "proto3": "message metric_sample { string name, metric_kind kind, int64 value, uint32 timestamp }",
+            "xdr": "struct"
+          },
+          {
+            "name": "report_args",
+            "proto3": "message report_args { string hostname, repeated metric_sample samples }",
+            "xdr": "struct"
+          },
+          {
+            "name": "report_res",
+            "proto3": "message report_res { uint32 accepted, uint32 rejected }",
+            "xdr": "struct"
+          },
+          {
+            "name": "query_args",
+            "proto3": "message query_args { string hostname, string name_prefix }",
+            "xdr": "struct"
+          },
+          {
+            "name": "query_res",
+            "proto3": "message query_res { repeated metric_sample matches }",
+            "xdr": "struct"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "METRICS_PROG",
@@ -46,7 +104,12 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 536871169,
+          "oncrpc_versions": {
+            "METRICS_VERS": 1
+          }
+        },
         "key": "METRICS_PROG.METRICS_PROG",
         "name": "METRICS_PROG",
         "operations": [
@@ -55,7 +118,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "query_args",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "query_res",
+              "oncrpc_version_name": "METRICS_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -109,7 +176,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "report_args",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "report_res",
+              "oncrpc_version_name": "METRICS_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -400,7 +471,22 @@
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 64,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
@@ -412,8 +498,13 @@
             "name": "matches",
             "type": {
               "extras": {},
-              "item": null,
-              "name": "METRICS_PROG.metric_sample",
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "METRICS_PROG.metric_sample",
+                "nullable": false
+              },
+              "name": null,
               "nullable": false
             }
           }
@@ -470,7 +561,22 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 32,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
@@ -482,8 +588,13 @@
             "name": "samples",
             "type": {
               "extras": {},
-              "item": null,
-              "name": "METRICS_PROG.metric_sample",
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "METRICS_PROG.metric_sample",
+                "nullable": false
+              },
+              "name": null,
               "nullable": false
             }
           }
@@ -566,15 +677,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:79f61567409a300c0e70c3471b67517e01c3d16bf9313fecd412ad0ccd8e3d28",
+  "fingerprint": "sha256:a749f1223c80b19aaf01aeba69f1d9f9325a661d65b3d166855d546c93126de0",
   "lint": {
-    "findings": 24,
+    "findings": 25,
     "grade": "F",
-    "report_fingerprint": "4c0c432633cf310c27391e85fbc9860b4db4f47801afd5bae9dc1a3dba08f37b",
-    "score": 56,
+    "report_fingerprint": "9fc7ea5153b92517160fc0f5234a1d8e146cec31dc4728ac3a95a29c98213a58",
+    "score": 55,
     "severity_counts": {
       "error": 0,
-      "info": 16,
+      "info": 17,
       "warning": 8
     }
   },

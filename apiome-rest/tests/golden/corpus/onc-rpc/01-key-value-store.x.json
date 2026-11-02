@@ -4,6 +4,66 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "KV_GET",
+            "number": 1,
+            "program": "KV_PROG",
+            "proto3": "rpc KV_GET (string) returns (kv_get_res);",
+            "version": "KV_VERS"
+          },
+          {
+            "name": "KV_PUT",
+            "number": 2,
+            "program": "KV_PROG",
+            "proto3": "rpc KV_PUT (kv_put_args) returns (kv_status);",
+            "version": "KV_VERS"
+          },
+          {
+            "name": "KV_DELETE",
+            "number": 3,
+            "program": "KV_PROG",
+            "proto3": "rpc KV_DELETE (string) returns (kv_status);",
+            "version": "KV_VERS"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "kv_status",
+            "proto3": "enum kv_status",
+            "xdr": "enum"
+          },
+          {
+            "name": "kv_get_res",
+            "proto3": "message kv_get_res { oneof status { … } }",
+            "xdr": "union switch (kv_status status)"
+          },
+          {
+            "name": "kv_entry",
+            "proto3": "message kv_entry { string key, bytes value }",
+            "xdr": "struct"
+          },
+          {
+            "name": "kv_put_args",
+            "proto3": "message kv_put_args { string key, bytes value }",
+            "xdr": "struct"
+          },
+          {
+            "name": "kv_key",
+            "proto3": "string (inlined; proto3 has no typedef)",
+            "xdr": "typedef string<256>"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "KV_PROG",
@@ -54,7 +114,12 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 536870913,
+          "oncrpc_versions": {
+            "KV_VERS": 1
+          }
+        },
         "key": "KV_PROG.KV_PROG",
         "name": "KV_PROG",
         "operations": [
@@ -63,7 +128,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 3
+              "oncrpc_arg_type": "kv_key",
+              "oncrpc_procedure_number": 3,
+              "oncrpc_return_type": "kv_status",
+              "oncrpc_version_name": "KV_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -117,7 +186,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "kv_key",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "kv_get_res",
+              "oncrpc_version_name": "KV_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -171,7 +244,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "kv_put_args",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "kv_status",
+              "oncrpc_version_name": "KV_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -328,8 +405,10 @@
               "type": "kv_entry"
             },
             {
+              "canonical_type": "voi",
+              "field": "d",
               "label": "default",
-              "type": "void"
+              "type": "voi"
             }
           ]
         },
@@ -341,7 +420,7 @@
         "namespace": null,
         "union_members": [
           "KV_PROG.kv_entry",
-          "void"
+          "voi"
         ],
         "value_type": null
       },
@@ -488,15 +567,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:3c3e675f5c9bab4ccca54e0c93775759233776626229066e44065756babd38e8",
+  "fingerprint": "sha256:66875ccf05dec5cb12365240428d82166e1cd0cd5cad24061ea1329942ecc583",
   "lint": {
-    "findings": 18,
+    "findings": 19,
     "grade": "D",
-    "report_fingerprint": "514d890c30d1f365c46115facec83b997f1fae6fe95dd7c0d51ff6757e7c76c1",
-    "score": 61,
+    "report_fingerprint": "441f6b3124f267f421a81faeba8d43973e9895437367decfe82025056adcd65b",
+    "score": 60,
     "severity_counts": {
       "error": 0,
-      "info": 11,
+      "info": 12,
       "warning": 7
     }
   },

@@ -1179,6 +1179,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['adt', 'oru', 'orm', 'vxu', 'ack', 'segment', 'pipe', 'msh', 'fhir', 'healthcare', 'clinical', 'lint', 'migrate'],
   },
   {
+    id: 'oncrpc-import',
+    title: 'Import ONC RPC (XDR) definitions',
+    summary: 'Catalog rpcgen .x files: programs, versions, procedures and XDR types, with lint and diff rules.',
+    page: 'apiome-docs/docs/bring-in/oncrpc-import.md',
+    section: 'reference',
+    keywords: ['sun rpc', 'sunrpc', 'rpcgen', 'rfc 4506', 'rfc 5531', 'program number', 'procedure', 'portmapper', 'nfs', 'grpc', 'lint', 'breaking change', 'migrate'],
+  },
+  {
+    id: 'xmlrpc-import',
+    title: 'Import XML-RPC method descriptions',
+    summary: 'Catalog XML-RPC method calls, responses and faults, with lint and diff rules.',
+    page: 'apiome-docs/docs/bring-in/xmlrpc-import.md',
+    section: 'reference',
+    keywords: ['methodcall', 'methodresponse', 'fault', 'multicall', 'wordpress', 'json-rpc', 'openrpc', 'lint', 'breaking change', 'migrate'],
+  },
+  {
     id: 'hl7v3-cda-import',
     title: 'Import HL7 v3 / CDA documents',
     summary: 'Catalog CCDs, discharge summaries and other C-CDA clinical documents.',

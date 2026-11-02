@@ -4,6 +4,80 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "JOB_SUBMIT",
+            "number": 1,
+            "program": "JOB_PROG",
+            "proto3": "rpc JOB_SUBMIT (job_spec) returns (job_state);",
+            "version": "JOB_VERS_1"
+          },
+          {
+            "name": "JOB_STATUS",
+            "number": 2,
+            "program": "JOB_PROG",
+            "proto3": "rpc JOB_STATUS (string) returns (job_status_res);",
+            "version": "JOB_VERS_1"
+          },
+          {
+            "name": "JOB_SUBMIT2",
+            "number": 1,
+            "program": "JOB_PROG",
+            "proto3": "rpc JOB_SUBMIT2 (job_spec) returns (job_state);",
+            "version": "JOB_VERS_2"
+          },
+          {
+            "name": "JOB_STATUS2",
+            "number": 2,
+            "program": "JOB_PROG",
+            "proto3": "rpc JOB_STATUS2 (string) returns (job_status_res);",
+            "version": "JOB_VERS_2"
+          },
+          {
+            "name": "JOB_CANCEL",
+            "number": 3,
+            "program": "JOB_PROG",
+            "proto3": "rpc JOB_CANCEL (string) returns (google.protobuf.Empty);",
+            "version": "JOB_VERS_2"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "job_state",
+            "proto3": "enum job_state",
+            "xdr": "enum"
+          },
+          {
+            "name": "job_status_res",
+            "proto3": "message job_status_res { oneof state { … } }",
+            "xdr": "union switch (job_state state)"
+          },
+          {
+            "name": "job_spec",
+            "proto3": "message job_spec { string id, string command, uint64 submitted_at, bool urgent }",
+            "xdr": "struct"
+          },
+          {
+            "name": "job_error",
+            "proto3": "message job_error { int32 code, string detail }",
+            "xdr": "struct"
+          },
+          {
+            "name": "job_id",
+            "proto3": "string (inlined; proto3 has no typedef)",
+            "xdr": "typedef string<36>"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "JOB_PROG",
@@ -72,7 +146,13 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 536870916,
+          "oncrpc_versions": {
+            "JOB_VERS_1": 1,
+            "JOB_VERS_2": 2
+          }
+        },
         "key": "JOB_PROG.JOB_PROG",
         "name": "JOB_PROG",
         "operations": [
@@ -81,7 +161,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 3
+              "oncrpc_arg_type": "job_id",
+              "oncrpc_procedure_number": 3,
+              "oncrpc_return_type": "void",
+              "oncrpc_version_name": "JOB_VERS_2",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -117,7 +201,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "job_id",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "job_status_res",
+              "oncrpc_version_name": "JOB_VERS_1",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -171,7 +259,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 2
+              "oncrpc_arg_type": "job_id",
+              "oncrpc_procedure_number": 2,
+              "oncrpc_return_type": "job_status_res",
+              "oncrpc_version_name": "JOB_VERS_2",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -225,7 +317,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "job_spec",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "job_state",
+              "oncrpc_version_name": "JOB_VERS_1",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -279,7 +375,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "job_spec",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "job_state",
+              "oncrpc_version_name": "JOB_VERS_2",
+              "oncrpc_version_number": 2
             },
             "http_method": null,
             "http_path": null,
@@ -641,15 +741,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:4f78bb35ae53e52077be2d11f5be7b314e1c016c79bd8afbcbcce08d74978dfe",
+  "fingerprint": "sha256:0d724eef659a4022bb5dd665ec89d2b9f73b84ec5ceeb04140c1854896283349",
   "lint": {
-    "findings": 25,
+    "findings": 27,
     "grade": "F",
-    "report_fingerprint": "1c00d8b31ae2e0e45e39683ce625ac3407fef0fd511fce1e7fa1728b697109ae",
-    "score": 48,
+    "report_fingerprint": "805ed5d0068fe8ae163b56e95787eb63b7d979df17f7ef14c6c44e7469b86094",
+    "score": 46,
     "severity_counts": {
       "error": 0,
-      "info": 16,
+      "info": 18,
       "warning": 9
     }
   },

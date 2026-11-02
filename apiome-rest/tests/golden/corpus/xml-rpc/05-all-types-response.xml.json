@@ -4,7 +4,108 @@
     "channels": [],
     "description": null,
     "extras": {
-      "xmlrpc_kind": "methodResponse"
+      "xmlrpc_kind": "methodResponse",
+      "xmlrpc_migration": {
+        "caveats": [
+          "JSON-RPC params are positional or named; XML-RPC's are positional only, so keep the order and name each param in the OpenRPC description.",
+          "dateTime.iso8601 carries no time zone; the JSON-RPC rewrite should state one.",
+          "base64 becomes a base64-encoded string; the client decodes it.",
+          "A fault's faultCode and faultString become the JSON-RPC error's code and message."
+        ],
+        "response": {
+          "jsonrpc": "2.0",
+          "result": {
+            "properties": {
+              "bigI8": {
+                "type": "integer"
+              },
+              "deprecatedField": {
+                "type": "null"
+              },
+              "enabled": {
+                "type": "boolean"
+              },
+              "generatedAt": {
+                "format": "date-time",
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "legacyI4": {
+                "type": "integer"
+              },
+              "lineItems": {
+                "items": {
+                  "properties": {
+                    "quantity": {
+                      "type": "integer"
+                    },
+                    "sku": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "matrix": {
+                "items": {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              "plainInt": {
+                "type": "integer"
+              },
+              "ratio": {
+                "type": "number"
+              },
+              "thumbnail": {
+                "contentEncoding": "base64",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "summary": "Rewrite the method as a JSON-RPC 2.0 method described by OpenRPC: positional params become `params` by position, a struct becomes an object, a fault becomes a JSON-RPC error.",
+        "target": "openrpc",
+        "value_types": {
+          "array": {
+            "type": "array"
+          },
+          "base64": {
+            "contentEncoding": "base64",
+            "type": "string"
+          },
+          "boolean": {
+            "type": "boolean"
+          },
+          "dateTime.iso8601": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "double": {
+            "type": "number"
+          },
+          "int": {
+            "type": "integer"
+          },
+          "nil": {
+            "type": "null"
+          },
+          "string": {
+            "type": "string"
+          },
+          "struct": {
+            "type": "object"
+          }
+        }
+      }
     },
     "format": "xmlrpc",
     "identity": {
@@ -405,15 +506,15 @@
     "confidence": 0.98,
     "format": "xmlrpc"
   },
-  "fingerprint": "sha256:0a8559e496a9d59b3fad1cc4c5add5b3f781f1f942aa17dc3027e6456a8ff115",
+  "fingerprint": "sha256:70dbd3f9b9647cb15ab9a7a4af007f22cd88fdeb48a8e87ede5ab5ae3980c464",
   "lint": {
-    "findings": 18,
+    "findings": 19,
     "grade": "C",
-    "report_fingerprint": "697e472b9fc227ad174cce06ccc079ed714239ba3be50958c2a81724fa52c56b",
-    "score": 73,
+    "report_fingerprint": "0c81134e4fc0443f5333c6651f9a95ba882dd3766c6d5f4ba874b7b1bf663f96",
+    "score": 72,
     "severity_counts": {
       "error": 0,
-      "info": 15,
+      "info": 16,
       "warning": 3
     }
   },

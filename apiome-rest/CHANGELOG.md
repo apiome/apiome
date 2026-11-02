@@ -5,6 +5,42 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.606.0] - 2026-11-02
+
+### Added
+- **XML-RPC and ONC RPC / XDR: lint packs, breaking-change rules, migrate notes and complete XDR declarations
+  (MFI-21.6, #3996).** The parsers, normalizers, emitters, import sources and corpus fixtures of both formats already
+  shipped; this adds what versions, diffs and lint need, and the "how do I leave" note each cheap adapter owes.
+  - `app/oncrpc_parser.py` now reads every RFC 4506 §6.3 declaration shape: unbounded `string<>` / `opaque<>` /
+    array `<>`, fixed-length `[N]`, optional-data `*` and the `unsigned` qualifier (they were silently dropped).
+    `OncRpcNormalizer` maps them (a `<N>` on a non-length type is a list with `max_items`, `[N]` a list with
+    `min_items` = `max_items`, `*` a nullable field, a stacked `name_t<10>` a list of the typedef) and records the
+    program number and version numbers on the service and each procedure's version, argument and result types on the
+    operation.
+  - New `app/oncrpc_lint.py` (`oncrpc.*`, registered under `oncrpc`): `version-numbers-unique`,
+    `procedure-numbers-unique`, `procedure-names-unique`, `type-resolves`, `enum-values-unique` (error);
+    `program-number-reserved`, `null-procedure-void` (warning); `program-number-assigned`,
+    `null-procedure-declared`, `variable-length-bounded`, `union-has-default` (info). It publishes
+    `PROTO3_FOR_XDR` and `migration_note`, which the normalizer records as `extras["oncrpc_migration"]`: each type
+    as its proto3 construct, each procedure as its `rpc` line, and the caveats (numbers have no counterpart).
+  - New `app/oncrpc_breaking.py` (`oncrpc.*`, registered under `oncrpc`): `program-renumbered`,
+    `version-renumbered`, `version-removed`, `procedure-renumbered`, `procedure-signature-changed`,
+    `procedure-removed`, `field-added`, `field-removed`, `field-reordered`, `field-type-changed`,
+    `bound-narrowed`, `union-discriminant-changed`, `union-arm-removed`, `enum-value-removed`,
+    `enum-value-renumbered` breaking; `bound-widened`, `union-arm-added` dangerous; `version-added`,
+    `procedure-added`, `enum-value-added` safe. Everything else falls back to the baseline.
+  - New `app/xmlrpc_lint.py` (`xmlrpc.*`, registered under `xmlrpc`): `system-method-known`, `response-has-value`,
+    `fault-described`, `multicall-calls-wellformed` (warning); `method-name-namespaced`, `nil-extension`,
+    `array-item-type-known` (info). It publishes `JSON_SCHEMA_FOR_VALUE` and `migration_note`, which the
+    normalizer records as `extras["xmlrpc_migration"]`: the JSON-RPC 2.0 request / response / error the document
+    becomes (the `openrpc` target) and each value kind's JSON type.
+  - New `app/xmlrpc_breaking.py` (`xmlrpc.*`, registered under `xmlrpc`): `param-removed`, `param-added`,
+    `param-type-changed`, `member-removed`, `member-type-changed` breaking; `result-type-changed`,
+    `member-added-to-call` dangerous; `member-added-to-response`, `sample-changed`, `fault-changed` safe.
+  - The twelve `onc-rpc` and `xml-rpc` corpus goldens regenerated (fingerprints change once because the models
+    gained the migrate note and the ONC RPC service / operation extras; lint counts gained the native rules).
+  - `examples/corpus.manifest.json` entries put back in sorted order (the FIX Orchestra dialect fixture, #3988).
+
 ## [1.605.0] - 2026-11-02
 
 ### Added

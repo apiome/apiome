@@ -4,7 +4,31 @@
     "channels": [],
     "description": null,
     "extras": {
-      "xmlrpc_kind": "methodCall"
+      "xmlrpc_kind": "methodCall",
+      "xmlrpc_migration": {
+        "caveats": [
+          "JSON-RPC params are positional or named; XML-RPC's are positional only, so keep the order and name each param in the OpenRPC description.",
+          "dateTime.iso8601 carries no time zone; the JSON-RPC rewrite should state one.",
+          "base64 becomes a base64-encoded string; the client decodes it.",
+          "A fault's faultCode and faultString become the JSON-RPC error's code and message."
+        ],
+        "request": {
+          "jsonrpc": "2.0",
+          "method": "system.ping",
+          "params": [
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "summary": "Rewrite the method as a JSON-RPC 2.0 method described by OpenRPC: positional params become `params` by position, a struct becomes an object, a fault becomes a JSON-RPC error.",
+        "target": "openrpc",
+        "value_types": {
+          "string": {
+            "type": "string"
+          }
+        }
+      }
     },
     "format": "xmlrpc",
     "identity": {
@@ -88,16 +112,16 @@
     "confidence": 0.98,
     "format": "xmlrpc"
   },
-  "fingerprint": "sha256:b66e4dd8e81e41b5203679f1fe053ea4d12e7a5dfff88e35d89da284ac8a8474",
+  "fingerprint": "sha256:a04b9d22b846baf616d84284c3ff4945265c02448ac7d8312fba4dd858a27c4f",
   "lint": {
-    "findings": 3,
+    "findings": 4,
     "grade": "A",
-    "report_fingerprint": "0d977307d672296acdf9c0b7bdbbb67f1cc4e848ccda784304f7e9bf8d09a52e",
-    "score": 94,
+    "report_fingerprint": "7a2f90fe9a87cb3009d851834fb13de9774c058d763d8b5045b04d5e49dc1777",
+    "score": 90,
     "severity_counts": {
       "error": 0,
       "info": 2,
-      "warning": 1
+      "warning": 2
     }
   },
   "snapshot_version": 1

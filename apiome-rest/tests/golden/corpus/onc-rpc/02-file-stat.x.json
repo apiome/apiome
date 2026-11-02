@@ -4,6 +4,42 @@
     "channels": [],
     "description": null,
     "extras": {
+      "oncrpc_migration": {
+        "caveats": [
+          "Program, version and procedure numbers have no proto3 counterpart; gRPC routes by service and method name. Keep them in the service's documentation for the cut-over.",
+          "A string<N> or opaque<N> bound is not enforced by proto3; validate it in the handler.",
+          "A fixed-length array ([N]) becomes repeated with no length guarantee.",
+          "XDR optional-data (*) becomes proto3 optional; a recursive list via a pointer becomes a repeated field."
+        ],
+        "procedures": [
+          {
+            "name": "FILE_STAT",
+            "number": 1,
+            "program": "FILE_PROG",
+            "proto3": "rpc FILE_STAT (file_stat_args) returns (file_stat_res);",
+            "version": "FILE_VERS"
+          }
+        ],
+        "summary": "Rewrite each program version as a proto3 service: every procedure becomes an rpc with its argument and result as messages, XDR structs become messages, unions become oneofs, enums stay enums.",
+        "target": "protobuf",
+        "types": [
+          {
+            "name": "file_kind",
+            "proto3": "enum file_kind",
+            "xdr": "enum"
+          },
+          {
+            "name": "file_stat_args",
+            "proto3": "message file_stat_args { string path }",
+            "xdr": "struct"
+          },
+          {
+            "name": "file_stat_res",
+            "proto3": "message file_stat_res { file_kind kind, int64 size }",
+            "xdr": "struct"
+          }
+        ]
+      },
       "oncrpc_programs": [
         {
           "name": "FILE_PROG",
@@ -40,7 +76,12 @@
     "services": [
       {
         "description": null,
-        "extras": {},
+        "extras": {
+          "oncrpc_program_number": 536870914,
+          "oncrpc_versions": {
+            "FILE_VERS": 1
+          }
+        },
         "key": "FILE_PROG.FILE_PROG",
         "name": "FILE_PROG",
         "operations": [
@@ -49,7 +90,11 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "oncrpc_procedure_number": 1
+              "oncrpc_arg_type": "file_stat_args",
+              "oncrpc_procedure_number": 1,
+              "oncrpc_return_type": "file_stat_res",
+              "oncrpc_version_name": "FILE_VERS",
+              "oncrpc_version_number": 1
             },
             "http_method": null,
             "http_path": null,
@@ -260,15 +305,15 @@
     "confidence": 0.95,
     "format": "oncrpc"
   },
-  "fingerprint": "sha256:9f7cca5bf6af52b32fa332168c1f84d5d9139aa3f9f3cb214f9258ac7caffc6b",
+  "fingerprint": "sha256:723846b473e1ea589802ab46804c15a223c3e2292c8350da9e2929f0e99a4f39",
   "lint": {
-    "findings": 10,
+    "findings": 11,
     "grade": "C",
-    "report_fingerprint": "eefab191a8e6c9e3d2ad7582dd58ccc3708ac3f0b73da5c4512a948c9ec81c81",
-    "score": 78,
+    "report_fingerprint": "5870cc9923b9a90f941ba04133099dfb1c05227e2a0843eb5b221cfd9d44492b",
+    "score": 77,
     "severity_counts": {
       "error": 0,
-      "info": 6,
+      "info": 7,
       "warning": 4
     }
   },
