@@ -594,6 +594,21 @@
     "diff": [
       [
         "operation",
+        "Action example.catalog.v1.CreateProduct(example.catalog.v1.CreateProductRequest)",
+        "added"
+      ],
+      [
+        "operation",
+        "Action example.catalog.v1.GetProduct(example.catalog.v1.GetProductRequest)",
+        "added"
+      ],
+      [
+        "operation",
+        "Action example.catalog.v1.ListProducts(example.catalog.v1.ListProductsRequest)",
+        "added"
+      ],
+      [
+        "operation",
         "example.catalog.v1.ProductService.CreateProduct",
         "removed"
       ],
@@ -611,6 +626,11 @@
         "root",
         "",
         "changed"
+      ],
+      [
+        "service",
+        "example.catalog.v1.Container",
+        "added"
       ],
       [
         "service",
@@ -661,6 +681,21 @@
     "unexplained": [
       [
         "operation",
+        "Action example.catalog.v1.CreateProduct(example.catalog.v1.CreateProductRequest)",
+        "added"
+      ],
+      [
+        "operation",
+        "Action example.catalog.v1.GetProduct(example.catalog.v1.GetProductRequest)",
+        "added"
+      ],
+      [
+        "operation",
+        "Action example.catalog.v1.ListProducts(example.catalog.v1.ListProductsRequest)",
+        "added"
+      ],
+      [
+        "operation",
         "example.catalog.v1.ProductService.CreateProduct",
         "removed"
       ],
@@ -673,6 +708,11 @@
         "operation",
         "example.catalog.v1.ProductService.ListProducts",
         "removed"
+      ],
+      [
+        "service",
+        "example.catalog.v1.Container",
+        "added"
       ],
       [
         "service",
@@ -704,6 +744,21 @@
     "diff": [
       [
         "operation",
+        "Function GraphQL.Schema.paymentMethods()",
+        "added"
+      ],
+      [
+        "operation",
+        "Function GraphQL.Schema.search(Edm.String)",
+        "added"
+      ],
+      [
+        "operation",
+        "Function GraphQL.Schema.timeline(Edm.String)",
+        "added"
+      ],
+      [
+        "operation",
         "Query.paymentMethods",
         "removed"
       ],
@@ -721,6 +776,11 @@
         "root",
         "",
         "changed"
+      ],
+      [
+        "service",
+        "GraphQL.Schema.Container",
+        "added"
       ],
       [
         "service",
@@ -881,6 +941,21 @@
     "unexplained": [
       [
         "operation",
+        "Function GraphQL.Schema.paymentMethods()",
+        "added"
+      ],
+      [
+        "operation",
+        "Function GraphQL.Schema.search(Edm.String)",
+        "added"
+      ],
+      [
+        "operation",
+        "Function GraphQL.Schema.timeline(Edm.String)",
+        "added"
+      ],
+      [
+        "operation",
         "Query.paymentMethods",
         "removed"
       ],
@@ -893,6 +968,11 @@
         "operation",
         "Query.timeline",
         "removed"
+      ],
+      [
+        "service",
+        "GraphQL.Schema.Container",
+        "added"
       ],
       [
         "service",

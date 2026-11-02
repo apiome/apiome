@@ -43,8 +43,10 @@ cope with a break, it does not undo it.
 Facts the canonical model does not carry — a property's ``$DefaultValue``, a v4 navigation
 property's ``$Nullable``, the schema version — are read from the target model's canonical CSDL JSON
 (``raw["csdl_json"]``, v4 only) when it is present. v2/v3 navigation nullability comes from the
-association end's multiplicity (``0..1`` / ``1`` / ``*``). Operation parameter rules of §5.2 are not
-graded here: the canonical model does not carry v4 action / function parameters.
+association end's multiplicity (``0..1`` / ``1`` / ``*``). Functions and actions are canonical operations
+(MFI-11.2, :mod:`app.odata_operations`) keyed by their ordered parameter signature, so the standard rules
+grade them: a removed overload is breaking, an added one safe, and a changed signature reads as both.
+§5.2's finer parameter rules (for example a nullable parameter added to a function) are not graded here.
 """
 
 from __future__ import annotations

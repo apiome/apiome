@@ -16,6 +16,11 @@ rather than dropped.
 **v4 documents parse exactly as they did before FMT-3.4.** Every construct added here is
 reached only when :func:`~app.odata_csdl_versions.uses_association_model` says the document
 predates v4, which is what keeps the v4 canonical goldens byte-identical.
+
+v4 schema-level ``<Function>`` / ``<Action>`` overloads and the container's
+``<FunctionImport>`` / ``<ActionImport>`` bindings are read too (MFI-11.2), into
+:class:`ODataOperation` and :class:`ODataOperationImport`; a v4 document that declares
+neither parses exactly as before.
 """
 
 from __future__ import annotations
@@ -55,6 +60,9 @@ __all__ = [
     "ODataComplexType",
     "ODataFunctionImportParameter",
     "ODataFunctionImport",
+    "ODataOperationParameter",
+    "ODataOperation",
+    "ODataOperationImport",
     "ODataEntityContainer",
     "ODataReference",
     "ODataSchema",
@@ -217,14 +225,85 @@ class ODataFunctionImport:
 
 
 @dataclass(frozen=True)
+class ODataOperationParameter:
+    """One ``<Parameter>`` of a v4 ``<Function>`` or ``<Action>`` (MFI-11.2).
+
+    Attributes:
+        name: The parameter name.
+        type_expr: The declared type expression, e.g. ``Edm.Int32`` or
+            ``Collection(Example.Bin)``.
+        nullable: Whether the parameter is nullable, with the source format's default
+            applied by the reader (CSDL XML: nullable; CSDL JSON: not nullable). ``None``
+            only for a parameter built without a reader.
+    """
+
+    name: str
+    type_expr: str
+    nullable: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class ODataOperation:
+    """One overload of a v4 schema-level ``<Function>`` or ``<Action>`` (MFI-11.2).
+
+    Overloads share ``name`` and are told apart by their ordered parameter types, which is
+    what the canonical key is built from (:mod:`app.odata_normalizer`).
+
+    Attributes:
+        kind: ``"Function"`` (side-effect free, invoked with ``GET``) or ``"Action"``
+            (``POST``).
+        name: The simple name.
+        namespace: The declaring schema's namespace.
+        is_bound: Whether the first parameter is the binding parameter.
+        is_composable: A function's ``IsComposable``; always ``False`` for an action.
+        entity_set_path: The ``EntitySetPath`` a bound operation returns into, if any.
+        parameters: Every parameter, the binding parameter first when ``is_bound``.
+        return_type: The ``<ReturnType>`` type expression, or ``None`` for an action with
+            no result.
+        return_nullable: Whether the return value is nullable, defaulted as for a
+            parameter; ``None`` when there is no return type.
+    """
+
+    kind: str
+    name: str
+    namespace: str
+    is_bound: bool = False
+    is_composable: bool = False
+    entity_set_path: Optional[str] = None
+    parameters: Tuple[ODataOperationParameter, ...] = ()
+    return_type: Optional[str] = None
+    return_nullable: Optional[bool] = None
+
+
+@dataclass(frozen=True)
+class ODataOperationImport:
+    """A v4 ``<FunctionImport>`` / ``<ActionImport>``: an unbound operation exposed at the
+    service root (MFI-11.2).
+
+    Attributes:
+        kind: ``"Function"`` or ``"Action"`` — the kind of operation imported.
+        name: The import's name, the path segment it is invoked at (``/NearestBin``).
+        operation: The qualified name of the imported operation (``Example.NearestBin``).
+        entity_set: The entity set the result belongs to, if declared.
+    """
+
+    kind: str
+    name: str
+    operation: str
+    entity_set: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class ODataEntityContainer:
-    """The service surface: entity sets, plus the v2/v3 association sets and function imports."""
+    """The service surface: entity sets, the v2/v3 association sets and function imports,
+    and the v4 function / action imports."""
 
     name: str
     entity_sets: Tuple[ODataEntitySet, ...]
     association_sets: Tuple[ODataAssociationSet, ...] = ()
     function_imports: Tuple[ODataFunctionImport, ...] = ()
     annotations: Tuple[Tuple[str, str], ...] = ()
+    operation_imports: Tuple[ODataOperationImport, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -258,6 +337,7 @@ class ODataSchema:
     associations: Tuple[ODataAssociation, ...] = ()
     annotations: Tuple[Tuple[str, str], ...] = ()
     alias: Optional[str] = None
+    operations: Tuple[ODataOperation, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -626,6 +706,97 @@ def _parse_function_imports(container: ET.Element) -> Tuple[ODataFunctionImport,
     return tuple(function_imports)
 
 
+def _xml_nullable(element: ET.Element) -> bool:
+    """A type-bearing element's ``Nullable`` with CSDL XML's default applied.
+
+    Unstated means nullable — except for a collection, where the facet describes the items and
+    is honoured only when written, exactly as :func:`app.odata_csdl_json._typed` converts it.
+    Operation parameters and return types record this resolved value rather than ``None``, so the
+    XML reader and the CSDL JSON reader (whose default is the opposite) describe the same
+    operation identically.
+    """
+    declared = _nullable(element.get("Nullable"))
+    if declared is not None:
+        return declared
+    return not (element.get("Type") or "").strip().startswith("Collection(")
+
+
+def _parse_operations(schema: ET.Element, namespace: str) -> Tuple[ODataOperation, ...]:
+    """Parse the v4 schema-level ``<Function>`` and ``<Action>`` overloads (MFI-11.2).
+
+    Only reached for v4 documents; v2/v3 carry their operations as container-level
+    ``<FunctionImport>`` signatures instead (:func:`_parse_function_imports`).
+
+    Args:
+        schema: The ``<Schema>`` element.
+        namespace: Its namespace.
+
+    Returns:
+        Every overload, functions then actions, each in document order. An overload with no
+        name is skipped, and so is a parameter with no name or no type.
+    """
+    operations: List[ODataOperation] = []
+    for kind in ("Function", "Action"):
+        for element in _children(schema, kind):
+            name = element.get("Name")
+            if not name:
+                continue
+            return_elements = _children(element, "ReturnType")
+            return_element = return_elements[0] if return_elements else None
+            operations.append(
+                ODataOperation(
+                    kind=kind,
+                    name=name,
+                    namespace=namespace,
+                    is_bound=_nullable(element.get("IsBound")) is True,
+                    is_composable=kind == "Function"
+                    and _nullable(element.get("IsComposable")) is True,
+                    entity_set_path=element.get("EntitySetPath"),
+                    parameters=tuple(
+                        ODataOperationParameter(
+                            name=parameter.get("Name", ""),
+                            type_expr=parameter.get("Type", ""),
+                            nullable=_xml_nullable(parameter),
+                        )
+                        for parameter in _children(element, "Parameter")
+                        if parameter.get("Name") and parameter.get("Type")
+                    ),
+                    return_type=return_element.get("Type") if return_element is not None else None,
+                    return_nullable=(
+                        _xml_nullable(return_element)
+                        if return_element is not None
+                        else None
+                    ),
+                )
+            )
+    return tuple(operations)
+
+
+def _parse_operation_imports(container: ET.Element) -> Tuple[ODataOperationImport, ...]:
+    """Parse a v4 container's ``<FunctionImport>`` and ``<ActionImport>`` bindings (MFI-11.2).
+
+    Args:
+        container: The ``<EntityContainer>`` element.
+
+    Returns:
+        The imports, function imports then action imports, each in document order. An import
+        with no name or no target operation is skipped.
+    """
+    imports: List[ODataOperationImport] = []
+    for kind in ("Function", "Action"):
+        for element in _children(container, f"{kind}Import"):
+            name = element.get("Name")
+            target = element.get(kind)
+            if not name or not target:
+                continue
+            imports.append(
+                ODataOperationImport(
+                    kind=kind, name=name, operation=target, entity_set=element.get("EntitySet")
+                )
+            )
+    return tuple(imports)
+
+
 def _parse_entity_container(
     schema: ET.Element, *, legacy: bool
 ) -> Optional[ODataEntityContainer]:
@@ -651,6 +822,7 @@ def _parse_entity_container(
             association_sets=_parse_association_sets(container) if legacy else (),
             function_imports=_parse_function_imports(container) if legacy else (),
             annotations=_annotations(container) if legacy else (),
+            operation_imports=() if legacy else _parse_operation_imports(container),
         )
     return None
 
@@ -668,6 +840,7 @@ def _parse_schema(schema: ET.Element, *, legacy: bool) -> Optional[ODataSchema]:
         associations=_parse_associations(schema, namespace) if legacy else (),
         annotations=_annotations(schema) if legacy else (),
         alias=schema.get("Alias") if legacy else None,
+        operations=() if legacy else _parse_operations(schema, namespace),
     )
 
 

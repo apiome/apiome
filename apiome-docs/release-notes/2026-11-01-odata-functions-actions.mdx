@@ -1,0 +1,21 @@
+---
+slug: odata-functions-actions
+title: OData functions and actions are imported
+description: An OData import keeps every function, action and function import as an operation.
+authors: [apiome]
+---
+
+An OData catalog item now lists its **functions and actions**, not only its entity sets. Each one is
+imported as an operation, with its parameters, its return type and the route it is called at.
+[How they are read](/bring-in/odata-import#functions-and-actions).
+
+{/* truncate */}
+
+- **Bound and unbound.** A bound operation is called through an entity set of its binding type
+  (`/Products({key})/Shop.Discount`); an unbound one through its function or action import (`/Search`).
+- **Overloads stay apart.** Each overload is identified by its kind, its qualified name and its parameter
+  types in order, so two signatures of one name never merge and a diff can follow each one.
+- **v2 and v3 too.** A `<FunctionImport>` in older metadata, such as an SAP Gateway service, becomes an
+  operation called with its `m:HttpMethod`.
+- **Back out unchanged.** Exporting the item to OData writes its functions and actions back as they were
+  imported — bound, with the same parameters and return types.

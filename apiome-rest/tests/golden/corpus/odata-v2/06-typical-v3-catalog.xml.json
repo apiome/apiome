@@ -205,6 +205,91 @@
       {
         "description": null,
         "extras": {},
+        "key": "Catalog.CatalogContainer",
+        "name": "CatalogContainer",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_kind": "function_import",
+              "odata_parameter_signature": [
+                {
+                  "name": "Sku",
+                  "type": "Edm.String"
+                },
+                {
+                  "name": "Percent",
+                  "type": "Edm.Int16"
+                }
+              ],
+              "odata_qualified_name": "CatalogContainer.Discount"
+            },
+            "http_method": "POST",
+            "http_path": "/Discount",
+            "key": "FunctionImport CatalogContainer.Discount(Edm.String,Edm.Int16)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "FunctionImport CatalogContainer.Discount(Edm.String,Edm.Int16)#response",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
+            "name": "Discount",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "FunctionImport CatalogContainer.Discount(Edm.String,Edm.Int16)#query.Percent",
+                "location": "query",
+                "name": "Percent",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i16",
+                  "nullable": true
+                }
+              },
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "FunctionImport CatalogContainer.Discount(Edm.String,Edm.Int16)#query.Sku",
+                "location": "query",
+                "name": "Sku",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
         "key": "Catalog.Categories",
         "name": "Categories",
         "operations": [
@@ -727,25 +812,25 @@
   "corpus_path": "odata-v2/06-typical-v3-catalog.xml",
   "counts": {
     "channels": 0,
-    "operations": 6,
+    "operations": 7,
     "servers": 0,
-    "services": 2,
+    "services": 3,
     "types": 2
   },
   "detection": {
     "confidence": 0.98,
     "format": "odata-v3"
   },
-  "fingerprint": "sha256:ab9ad7a5a8c52e64214aec9356e7d15d90eb2c4189b858c49965c6f66d9f16a1",
+  "fingerprint": "sha256:e221d7136e8869d8f83aef291b79d0e88dd2090bb73d7099f097c2a41984684b",
   "lint": {
-    "findings": 23,
+    "findings": 25,
     "grade": "F",
-    "report_fingerprint": "b6f5298c690b7f9118f233e61f7b0f3635b82ce27afb994880181411672d64dc",
-    "score": 57,
+    "report_fingerprint": "e32210e3f384e8d44f5d379d3beffde079c4eb2c61eecdecbc041e625975ab81",
+    "score": 56,
     "severity_counts": {
       "error": 0,
-      "info": 15,
-      "warning": 8
+      "info": 16,
+      "warning": 9
     }
   },
   "snapshot_version": 1

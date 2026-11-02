@@ -968,6 +968,81 @@
             "tags": []
           }
         ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "key": "ZBP_SRV.ZBP_SRV_Entities",
+        "name": "ZBP_SRV_Entities",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_import_entity_set": "SalesOrderSet",
+              "odata_kind": "function_import",
+              "odata_parameter_signature": [
+                {
+                  "name": "SalesOrderID",
+                  "type": "Edm.String"
+                }
+              ],
+              "odata_qualified_name": "ZBP_SRV_Entities.ConfirmSalesOrder"
+            },
+            "http_method": "POST",
+            "http_path": "/ConfirmSalesOrder",
+            "key": "FunctionImport ZBP_SRV_Entities.ConfirmSalesOrder(Edm.String)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "odata_return_nullable": null,
+                  "odata_return_type": "ZBP_SRV.SalesOrder"
+                },
+                "headers": [],
+                "key": "FunctionImport ZBP_SRV_Entities.ConfirmSalesOrder(Edm.String)#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "ZBP_SRV.SalesOrder",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "ConfirmSalesOrder",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "FunctionImport ZBP_SRV_Entities.ConfirmSalesOrder(Edm.String)#query.SalesOrderID",
+                "location": "query",
+                "name": "SalesOrderID",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
       }
     ],
     "title": null,
@@ -1551,25 +1626,25 @@
   "corpus_path": "odata-v2/05-real-world-sap-gateway-service.xml",
   "counts": {
     "channels": 0,
-    "operations": 9,
+    "operations": 10,
     "servers": 0,
-    "services": 3,
+    "services": 4,
     "types": 4
   },
   "detection": {
     "confidence": 0.98,
     "format": "odata-v2"
   },
-  "fingerprint": "sha256:afa8f3d7de499e807cb575b9aef4307d94d444caa4cee54b19a48c9680d0665f",
+  "fingerprint": "sha256:42ddde33de58eae24d8773466d77fafe864307b38d99dbf40771b3aca0ffd939",
   "lint": {
-    "findings": 46,
+    "findings": 48,
     "grade": "F",
-    "report_fingerprint": "ccf8406d81c924af17037394f10a824f849f7c0d43b2d3f6cfacab4e53b9c9b7",
-    "score": 31,
+    "report_fingerprint": "f1815454d8f046596b5616e105edbeb05b2b763d78280dfbb3df4955a08865d8",
+    "score": 30,
     "severity_counts": {
       "error": 0,
-      "info": 33,
-      "warning": 13
+      "info": 34,
+      "warning": 14
     }
   },
   "snapshot_version": 1

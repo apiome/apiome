@@ -417,6 +417,142 @@
       {
         "description": null,
         "extras": {},
+        "key": "Feeds.FeedContainer",
+        "name": "FeedContainer",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_import_entity_set": "Articles",
+              "odata_kind": "function_import",
+              "odata_parameter_signature": [
+                {
+                  "name": "Days",
+                  "type": "Edm.Int32"
+                }
+              ],
+              "odata_qualified_name": "FeedContainer.MostRead"
+            },
+            "http_method": "GET",
+            "http_path": "/MostRead",
+            "key": "FunctionImport FeedContainer.MostRead(Edm.Int32)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "odata_return_nullable": null,
+                  "odata_return_type": "Collection(Feeds.Article)"
+                },
+                "headers": [],
+                "key": "FunctionImport FeedContainer.MostRead(Edm.Int32)#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": {
+                    "extras": {},
+                    "item": null,
+                    "name": "Feeds.Article",
+                    "nullable": true
+                  },
+                  "name": "Feeds.Article",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "MostRead",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "FunctionImport FeedContainer.MostRead(Edm.Int32)#query.Days",
+                "location": "query",
+                "name": "Days",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_kind": "function_import",
+              "odata_parameter_signature": [
+                {
+                  "name": "ArticleId",
+                  "type": "Edm.String"
+                }
+              ],
+              "odata_qualified_name": "FeedContainer.Publish"
+            },
+            "http_method": "POST",
+            "http_path": "/Publish",
+            "key": "FunctionImport FeedContainer.Publish(Edm.String)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "FunctionImport FeedContainer.Publish(Edm.String)#response",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "204"
+              }
+            ],
+            "name": "Publish",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "FunctionImport FeedContainer.Publish(Edm.String)#query.ArticleId",
+                "location": "query",
+                "name": "ArticleId",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "string",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
+      },
+      {
+        "description": null,
+        "extras": {},
         "key": "Feeds.Tags",
         "name": "Tags",
         "operations": [
@@ -894,25 +1030,25 @@
   "corpus_path": "odata-v2/04-stress-v2-customizable-feeds.xml",
   "counts": {
     "channels": 0,
-    "operations": 6,
+    "operations": 8,
     "servers": 0,
-    "services": 2,
+    "services": 3,
     "types": 2
   },
   "detection": {
     "confidence": 0.98,
     "format": "odata-v2"
   },
-  "fingerprint": "sha256:fc2683f23cd75cd3668db57a651c647e95f5707013c40129356f770c3f7ab9e0",
+  "fingerprint": "sha256:b9a29236f7ca70aba511d2db0103aee98ca380432bfda3397eab4963d2b2b0aa",
   "lint": {
-    "findings": 29,
+    "findings": 33,
     "grade": "F",
-    "report_fingerprint": "77d20972f7c43e3aa9ce39c6142dc7795fe63010bcb8e2a6cacac692cfc44796",
-    "score": 51,
+    "report_fingerprint": "746ee57479bef1bce649cf6d18501492a2d013f5178312fb03626b1eca2fcb83",
+    "score": 49,
     "severity_counts": {
       "error": 0,
-      "info": 21,
-      "warning": 8
+      "info": 23,
+      "warning": 10
     }
   },
   "snapshot_version": 1
