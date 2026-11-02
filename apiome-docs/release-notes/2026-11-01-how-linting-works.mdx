@@ -1,0 +1,22 @@
+---
+slug: how-linting-works
+title: How linting works, on one page
+description: A new page explains rule packs, the score formula and stored scores.
+authors: [apiome]
+---
+
+A new page, [How linting works](/build/how-linting-works), explains how Apiome lints every format
+with one engine, so a GraphQL schema and an OpenAPI document are graded on the same scale.
+
+{/* truncate */}
+
+- **Rule packs.** The `common`, `examples` and `provenance` packs that run for every item, the
+  format pack for each format and the family packs such as `data-contract`.
+- **Linters a format's community uses.** Spectral for AsyncAPI and drafter for API Blueprint add
+  findings; `buf lint` and `graphql-eslint` are recorded as evidence, and a missing tool never fails
+  an import.
+- **The score.** The penalty per severity, the cap per rule, the grade bands and what the
+  fingerprint is.
+- **Stored or live.** How the score captured at import compares with a report computed now, and
+  what the Versions report, the catalog's **Lint & score** tab, `apiome lint` and the REST API say
+  when it is out of date.
