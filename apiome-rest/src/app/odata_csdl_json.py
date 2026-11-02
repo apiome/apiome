@@ -34,6 +34,9 @@ from .odata_parser import (
     ODataEnumMember,
     ODataEnumType,
     ODataNavigationProperty,
+    ODataOperation,
+    ODataOperationImport,
+    ODataOperationParameter,
     ODataParseError,
     ODataProperty,
     ODataSchema,
@@ -550,13 +553,86 @@ def _key(type_member: Mapping[str, Any]) -> Tuple[str, ...]:
     return tuple(names)
 
 
+def _json_operations(namespace: str, name: str, overloads: List[Any]) -> List[ODataOperation]:
+    """A ``Function`` / ``Action`` member — a list of overloads — as :class:`ODataOperation`\\ s.
+
+    CSDL JSON writes a missing ``$Nullable`` as ``false`` (the XML default is ``true``), so a
+    parameter or return type is nullable only when it says so, as for properties.
+
+    Args:
+        namespace: The declaring schema's namespace.
+        name: The operation's simple name.
+        overloads: The member's value; anything that is not an overload object is skipped.
+
+    Returns:
+        One operation per overload, in document order.
+    """
+    operations: List[ODataOperation] = []
+    for overload in overloads:
+        if not isinstance(overload, Mapping) or overload.get("$Kind") not in ("Function", "Action"):
+            continue
+        kind = str(overload["$Kind"])
+        return_type = overload.get("$ReturnType")
+        operations.append(
+            ODataOperation(
+                kind=kind,
+                name=name,
+                namespace=namespace,
+                is_bound=overload.get("$IsBound") is True,
+                is_composable=kind == "Function" and overload.get("$IsComposable") is True,
+                entity_set_path=overload.get("$EntitySetPath"),
+                parameters=tuple(
+                    ODataOperationParameter(
+                        name=str(parameter["$Name"]),
+                        type_expr=_type_expr(parameter),
+                        nullable=parameter.get("$Nullable") is True,
+                    )
+                    for parameter in overload.get("$Parameter") or []
+                    if isinstance(parameter, Mapping) and parameter.get("$Name")
+                ),
+                return_type=_type_expr(return_type) if isinstance(return_type, Mapping) else None,
+                return_nullable=(
+                    return_type.get("$Nullable") is True if isinstance(return_type, Mapping) else None
+                ),
+            )
+        )
+    return operations
+
+
+def _json_operation_imports(container: Mapping[str, Any]) -> Tuple[ODataOperationImport, ...]:
+    """A container's function and action imports (``$Function`` / ``$Action`` members).
+
+    Ordered function imports then action imports, as the XML reader orders them.
+    """
+    imports: List[ODataOperationImport] = []
+    for kind in ("Function", "Action"):
+        for import_name, value in container.items():
+            if not _is_member(import_name) or not isinstance(value, Mapping):
+                continue
+            target = value.get(f"${kind}")
+            if isinstance(target, str) and target:
+                imports.append(
+                    ODataOperationImport(
+                        kind=kind,
+                        name=import_name,
+                        operation=target,
+                        entity_set=value.get("$EntitySet"),
+                    )
+                )
+    return tuple(imports)
+
+
 def _json_schema(namespace: str, body: Mapping[str, Any]) -> ODataSchema:
     """One namespace object as an :class:`ODataSchema`."""
     entity_types: List[ODataEntityType] = []
     complex_types: List[ODataComplexType] = []
     enum_types: List[ODataEnumType] = []
+    operations: List[ODataOperation] = []
     container: Optional[ODataEntityContainer] = None
     for name, member in body.items():
+        if _is_member(name) and isinstance(member, list):
+            operations.extend(_json_operations(namespace, name, member))
+            continue
         if not _is_member(name) or not isinstance(member, Mapping):
             continue
         kind = member.get("$Kind")
@@ -595,13 +671,18 @@ def _json_schema(namespace: str, body: Mapping[str, Any]) -> ODataSchema:
                     and value.get("$Collection") is True
                     and value.get("$Type")
                 ),
+                operation_imports=_json_operation_imports(member),
             )
+    # The XML reader lists functions before actions; keep the same order so both inputs
+    # normalize to the same canonical document.
+    operations.sort(key=lambda operation: 0 if operation.kind == "Function" else 1)
     return ODataSchema(
         namespace=namespace,
         entity_types=tuple(entity_types),
         complex_types=tuple(complex_types),
         enum_types=tuple(enum_types),
         entity_container=container,
+        operations=tuple(operations),
     )
 
 

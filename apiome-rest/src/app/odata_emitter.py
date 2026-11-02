@@ -64,6 +64,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
+from .normalizer import Keys
 from .scalar_aliases import scalar_kind
 from .writer_loss_rulepack import WriterLossRulePack
 
@@ -105,6 +106,9 @@ _STRING_LIKE = frozenset({"id", "email", "uri", "url", "hostname", "ipv4", "ipv6
 _NUMERIC = frozenset({"Edm.Byte", "Edm.SByte", "Edm.Int16", "Edm.Int32", "Edm.Int64", "Edm.Single", "Edm.Double",
                       "Edm.Decimal"})
 _EVENT_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+#: ``extras["odata_kind"]`` of the operations :mod:`app.odata_operations` builds from an OData
+#: source's functions, actions and v2/v3 function imports (MFI-11.2).
+_ODATA_OPERATION_KINDS = frozenset({"function", "action", "function_import"})
 #: v2/v3 primitives v4 removed, and their v4 replacement.
 _LEGACY_EDM = {"Edm.DateTime": "Edm.DateTimeOffset", "Edm.Time": "Edm.TimeOfDay"}
 #: v2/v3 source annotations written back as CSDL facets.
@@ -333,6 +337,9 @@ class _ODataWriter:
         for type_ in api.types:
             self._types_by_name.setdefault(type_.name, type_)
         self._scope = _Scope()
+        # MFI-11.2: the name each OData-sourced function / action was written under, by qualified
+        # name, so every overload of one operation lands in the same overload list.
+        self._source_operation_names: Dict[str, str] = {}
         #: Field key → its property name.
         self._prop_names: Dict[str, str] = {}
         #: Type key → declared name, and the CSDL kind it is written as.
@@ -879,6 +886,9 @@ class _ODataWriter:
             self.losses.record(LossKind.INFERRED, "stream-as-collection",
                                f"OData has no streams; the server stream of {operation.key!r} is written as a result "
                                "returning a collection of its messages.", pointer=operation.key)
+        if self._odata_source and operation.extras.get("odata_kind") in ("function", "action"):
+            self._source_operation(operation, schema, container, scope)
+            return
         crud = self._crud(operation, sets)
         if crud is not None:
             set_name, verb = crud
@@ -899,6 +909,10 @@ class _ODataWriter:
         """``(entity set, read | create | update | delete | query)`` when the entity set serves the operation."""
         if self._odata_source and operation.extras.get("odata_entity_set"):
             return str(operation.extras["odata_entity_set"]), str(operation.extras.get("odata_operation", "read"))
+        if self._odata_source and operation.extras.get("odata_kind") in _ODATA_OPERATION_KINDS:
+            # MFI-11.2: an imported function, action or v2/v3 function import is an operation, never
+            # an entity set's CRUD, even when its route and result look like one (`GET /MostRead`).
+            return None
         method = (operation.http_method or "").upper()
         if not method or not operation.http_path:
             return None
@@ -925,6 +939,79 @@ class _ODataWriter:
                  ("PATCH", True): "update", ("DELETE", True): "delete"}
         verb = verbs.get((method, by_key))
         return (set_name, verb) if verb else None
+
+    def _source_type(self, type_expr: str) -> Dict[str, Any]:
+        """A source CSDL type expression as CSDL JSON ``$Type`` / ``$Collection`` members (MFI-11.2).
+
+        ``Edm.*`` primitives are kept as written; a model type is written under the name this export
+        gave it, so the operation still resolves when a type was renamed.
+        """
+        stripped = type_expr.strip()
+        collection = stripped.startswith("Collection(") and stripped.endswith(")")
+        inner = stripped[len("Collection("):-1].strip() if collection else stripped
+        if not inner.startswith("Edm."):
+            target = self._lookup(Keys.type(inner.rsplit(".", 1)[-1], self._api.identity.namespace)) \
+                or self._lookup(inner.rsplit(".", 1)[-1])
+            if target is not None and target.key in self._names:
+                inner = f"{self.namespace}.{self._names[target.key]}"
+        value: Dict[str, Any] = {}
+        if inner != "Edm.String":
+            value["$Type"] = inner
+        if collection:
+            value["$Collection"] = True
+        return value
+
+    def _source_operation(self, operation: Operation, schema: Dict[str, Any], container: Dict[str, Any],
+                          scope: _Scope) -> None:
+        """Write an OData source's function or action back as itself (MFI-11.2).
+
+        The import keeps the whole overload — kind, binding, composability, ``EntitySetPath``, the ordered
+        parameter signature, the return type and the container import — so an OData → OData export writes
+        it unchanged instead of reframing it as an unbound operation, and its re-import has the same key.
+        """
+        extras = operation.extras
+        kind = "Function" if extras.get("odata_kind") == "function" else "Action"
+        qualified = str(extras.get("odata_qualified_name") or operation.name)
+        name = self._source_operation_names.get(qualified)
+        if name is None:
+            name = self._scope.claim(operation.name, "Operation")
+            self._source_operation_names[qualified] = name
+            if name != operation.name:
+                self.losses.record(LossKind.INFERRED, "renamed-element",
+                                   f"CSDL operation names are simple identifiers unique in the namespace; "
+                                   f"{operation.name!r} is written as {name!r}.", pointer=operation.key)
+        member: Dict[str, Any] = {"$Kind": kind}
+        if extras.get("odata_bound"):
+            member["$IsBound"] = True
+        if extras.get("odata_entity_set_path"):
+            member["$EntitySetPath"] = extras["odata_entity_set_path"]
+        if kind == "Function" and extras.get("odata_composable"):
+            member["$IsComposable"] = True
+        params: List[Dict[str, Any]] = []
+        for parameter in extras.get("odata_parameter_signature") or []:
+            entry: Dict[str, Any] = {"$Name": parameter["name"], **self._source_type(str(parameter["type"]))}
+            if parameter.get("nullable"):
+                entry["$Nullable"] = True
+            params.append(entry)
+        if params:
+            member["$Parameter"] = params
+        response = next((m for m in operation.messages if m.role is MessageRole.RESPONSE
+                         and m.extras.get("odata_return_type")), None)
+        if response is not None:
+            returns = self._source_type(str(response.extras["odata_return_type"]))
+            if response.extras.get("odata_return_nullable"):
+                returns["$Nullable"] = True
+            member["$ReturnType"] = returns
+        self._annotate(member, operation.description, operation.deprecated)
+        schema.setdefault(name, []).append(member)
+        import_name = extras.get("odata_import")
+        if import_name and import_name not in container:
+            imported: Dict[str, Any] = {f"${kind}": f"{self.namespace}.{name}"}
+            if extras.get("odata_import_entity_set"):
+                imported["$EntitySet"] = extras["odata_import_entity_set"]
+            container[scope.claim(str(import_name), "Import")] = imported
+        self._written[operation.key] = f"{kind} {name}"
+        self.tracker.record(operation.key, Provenance.SOURCE)
 
     def _unbound(self, operation: Operation, schema: Dict[str, Any], container: Dict[str, Any], scope: _Scope) -> None:
         """An operation an entity set does not serve: an unbound Function (a GET or query with a result) or Action."""
@@ -1065,10 +1152,12 @@ class _ODataWriter:
         for name, value in container.items():
             if name.startswith("$"):
                 continue
-            if "$Function" in value:
-                ET.SubElement(container_el, f"{{{_EDM_NS}}}FunctionImport", Name=name, Function=value["$Function"])
-            elif "$Action" in value:
-                ET.SubElement(container_el, f"{{{_EDM_NS}}}ActionImport", Name=name, Action=value["$Action"])
+            if "$Function" in value or "$Action" in value:
+                kind = "Function" if "$Function" in value else "Action"
+                import_el = ET.SubElement(container_el, f"{{{_EDM_NS}}}{kind}Import", Name=name,
+                                          **{kind: value[f"${kind}"]})
+                if value.get("$EntitySet"):
+                    import_el.set("EntitySet", str(value["$EntitySet"]))
             else:
                 ET.SubElement(container_el, f"{{{_EDM_NS}}}EntitySet", Name=name, EntityType=value["$Type"])
         ET.indent(edmx, space="  ")
@@ -1081,12 +1170,24 @@ class _ODataWriter:
 
     def _xml_operation(self, schema_el: ET.Element, name: str, member: Dict[str, Any]) -> None:
         el = ET.SubElement(schema_el, f"{{{_EDM_NS}}}{member['$Kind']}", Name=name)
+        # The binding of an operation written back from an OData source (MFI-11.2).
+        if member.get("$IsBound"):
+            el.set("IsBound", "true")
+        if member.get("$EntitySetPath"):
+            el.set("EntitySetPath", str(member["$EntitySetPath"]))
+        if member.get("$IsComposable"):
+            el.set("IsComposable", "true")
         for param in member.get("$Parameter", []):
             param_el = ET.SubElement(el, f"{{{_EDM_NS}}}Parameter", Name=param["$Name"], Type=_xml_type(param),
                                      Nullable="true" if param.get("$Nullable") else "false")
             _xml_annotations(param_el, param)
         if "$ReturnType" in member:
-            ET.SubElement(el, f"{{{_EDM_NS}}}ReturnType", Type=_xml_type(member["$ReturnType"]))
+            # Nullable is written explicitly, as for a parameter: CSDL JSON's default is
+            # non-nullable and CSDL XML's is nullable, so omitting it would make the two
+            # documents of an `output: both` export describe different return types.
+            returns = member["$ReturnType"]
+            ET.SubElement(el, f"{{{_EDM_NS}}}ReturnType", Type=_xml_type(returns),
+                          Nullable="true" if returns.get("$Nullable") else "false")
         _xml_annotations(el, member)
 
 

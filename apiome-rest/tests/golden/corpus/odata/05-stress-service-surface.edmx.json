@@ -326,6 +326,168 @@
             "tags": []
           }
         ]
+      },
+      {
+        "description": null,
+        "extras": {},
+        "key": "Example.Warehouse.WarehouseService",
+        "name": "WarehouseService",
+        "operations": [
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_binding_set": "Bins",
+              "odata_bound": true,
+              "odata_kind": "action",
+              "odata_parameter_signature": [
+                {
+                  "name": "bindingParameter",
+                  "nullable": true,
+                  "type": "Example.Warehouse.Bin"
+                },
+                {
+                  "name": "auditor",
+                  "nullable": true,
+                  "type": "Edm.String"
+                }
+              ],
+              "odata_qualified_name": "Example.Warehouse.Recount"
+            },
+            "http_method": "POST",
+            "http_path": "/Bins({key})/Example.Warehouse.Recount",
+            "key": "Action Example.Warehouse.Recount(Example.Warehouse.Bin,Edm.String)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "odata_parameters": [
+                    {
+                      "name": "auditor",
+                      "nullable": true,
+                      "type": "Edm.String"
+                    }
+                  ]
+                },
+                "headers": [],
+                "key": "Action Example.Warehouse.Recount(Example.Warehouse.Bin,Edm.String)#request",
+                "name": null,
+                "payload": null,
+                "payload_schema": null,
+                "required": true,
+                "role": "request",
+                "status_code": null
+              },
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "odata_return_nullable": true,
+                  "odata_return_type": "Edm.Int32"
+                },
+                "headers": [],
+                "key": "Action Example.Warehouse.Recount(Example.Warehouse.Bin,Edm.String)#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "i32",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "Recount",
+            "parameters": [],
+            "streaming": "none",
+            "tags": []
+          },
+          {
+            "channel_ref": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "odata_binding_set": "Bins",
+              "odata_bound": true,
+              "odata_composable": true,
+              "odata_kind": "function",
+              "odata_parameter_signature": [
+                {
+                  "name": "bindingParameter",
+                  "nullable": false,
+                  "type": "Collection(Example.Warehouse.Bin)"
+                },
+                {
+                  "name": "point",
+                  "nullable": true,
+                  "type": "Edm.GeographyPoint"
+                }
+              ],
+              "odata_qualified_name": "Example.Warehouse.NearestBin"
+            },
+            "http_method": "GET",
+            "http_path": "/Bins/Example.Warehouse.NearestBin",
+            "key": "Function Example.Warehouse.NearestBin(Collection(Example.Warehouse.Bin),Edm.GeographyPoint)",
+            "kind": "request_response",
+            "messages": [
+              {
+                "content_types": [
+                  "application/json"
+                ],
+                "description": null,
+                "extras": {
+                  "odata_return_nullable": true,
+                  "odata_return_type": "Example.Warehouse.Bin"
+                },
+                "headers": [],
+                "key": "Function Example.Warehouse.NearestBin(Collection(Example.Warehouse.Bin),Edm.GeographyPoint)#response",
+                "name": null,
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Example.Warehouse.Bin",
+                  "nullable": true
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "response",
+                "status_code": "200"
+              }
+            ],
+            "name": "NearestBin",
+            "parameters": [
+              {
+                "constraints": null,
+                "default": null,
+                "deprecated": false,
+                "description": null,
+                "extras": {},
+                "key": "Function Example.Warehouse.NearestBin(Collection(Example.Warehouse.Bin),Edm.GeographyPoint)#query.point",
+                "location": "query",
+                "name": "point",
+                "required": false,
+                "type": {
+                  "extras": {},
+                  "item": null,
+                  "name": "Example.Warehouse.GeographyPoint",
+                  "nullable": true
+                }
+              }
+            ],
+            "streaming": "none",
+            "tags": []
+          }
+        ]
       }
     ],
     "title": null,
@@ -705,25 +867,25 @@
   "corpus_path": "odata/05-stress-service-surface.edmx",
   "counts": {
     "channels": 0,
-    "operations": 3,
+    "operations": 5,
     "servers": 0,
-    "services": 1,
+    "services": 2,
     "types": 4
   },
   "detection": {
     "confidence": 0.98,
     "format": "odata"
   },
-  "fingerprint": "sha256:8d04ae5f86b4cfb38313a7310cb8c6fa7e9e55dcd5a5c2baf6f9e5850fbce0c7",
+  "fingerprint": "sha256:d26c20956a64853c091b62103962b856fd0a9c1d8ce561c5f225d2f8018e8166",
   "lint": {
-    "findings": 25,
+    "findings": 30,
     "grade": "F",
-    "report_fingerprint": "8b9b2647e4ac75d291f5e30d784f0f1a1d3c973a81dfd7dd367771f8f8d0158a",
-    "score": 54,
+    "report_fingerprint": "f72280edbdd614f256a53cd470c70c1868d9aeae79812ef9584a98a644f38d00",
+    "score": 43,
     "severity_counts": {
       "error": 0,
-      "info": 18,
-      "warning": 7
+      "info": 21,
+      "warning": 9
     }
   },
   "snapshot_version": 1

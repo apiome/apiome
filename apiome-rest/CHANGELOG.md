@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.593.0] - 2026-11-01
+
+### Added
+- **OData functions and actions in the canonical model (MFI-11.2, #3777).** An OData import now maps every v4
+  `<Function>` / `<Action>` overload (CSDL XML and CSDL JSON) and every v2/v3 `<FunctionImport>` onto a canonical
+  operation, in one service named after the entity container. Keys are `(kind, fully-qualified name, ordered parameter
+  types)` — `Function Shop.Search(Edm.String,Edm.Int32)` — so overloads stay distinct and a key changes only with the
+  signature. A function is `GET` with query parameters (required when `Nullable="false"`); an action is `POST` with its
+  parameters on the request message's `extras["odata_parameters"]`; a bound operation routes through an entity set of
+  its binding type (`/Products({key})/Shop.Discount`), an unbound one through its container import; a missing return
+  type answers `204`. v2/v3 imports take `m:HttpMethod` (else `POST` when side-effecting, else `GET`). New
+  `app/odata_operations.py`; the parser gains `ODataOperation` / `ODataOperationParameter` / `ODataOperationImport`,
+  read for v4 only, so a v4 document with no operations and every v2/v3 extras record are unchanged.
+- **OData export writes an OData source's operations back as themselves.** Kind, binding, `IsComposable`,
+  `EntitySetPath`, the ordered signature, the return type, overload lists and the container import (with its
+  `EntitySet`) are kept, so an OData → OData export re-imports with the same operation keys; an imported function is
+  never folded into an entity set's CRUD. The XML rendering now writes `IsBound`, `IsComposable`, `EntitySetPath`, an
+  import's `EntitySet`, and `ReturnType`'s `Nullable` explicitly, so an `output: both` export's two documents describe
+  the same return types.
+
+### Changed
+- Corpus goldens for the OData examples with functions, actions or function imports
+  (`odata/05-stress-service-surface`, `odata-v2/02`, `04`, `05`, `06`) and the OData round-trip measurements fixture
+  are regenerated: they gain the new operations (and the `common.*-missing-description` findings on them).
+- OpenAPI document version 1.456.0 → 1.457.0 (no schema change).
+
 ## [1.592.0] - 2026-11-01
 
 ### Added

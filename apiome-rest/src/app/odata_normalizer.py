@@ -11,6 +11,10 @@ differs is provenance and the constructs v4 has no place for — the source CSDL
 the association declarations, association sets, function-import signatures and the
 ``m:``/``sap:`` annotation bags — which are carried in ``extras``.
 
+Functions, actions and v2/v3 function imports become canonical operations of one service named
+after the entity container (MFI-11.2, :mod:`app.odata_operations`), keyed by kind,
+fully-qualified name and ordered parameter types so overloads stay distinct.
+
 Those extras keys are **only emitted for a pre-v4 document**. A v4 import produces exactly
 the bytes it produced before FMT-3.4, which is that ticket's third acceptance criterion and
 what keeps the committed v4 corpus goldens valid.
@@ -19,7 +23,7 @@ what keeps the committed v4 corpus goldens valid.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -42,6 +46,7 @@ from .canonical_model import (
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
 from .odata_associations import ODataAssociation, ODataAssociationSet
+from .odata_operations import function_import_operations, schema_operations
 from .odata_parser import (
     ODataComplexType,
     ODataDocument,
@@ -257,6 +262,56 @@ def _entity_set_operations(
     )
 
     return operations
+
+
+def _with_container_operations(
+    services: List[Service],
+    source: ODataDocument,
+    *,
+    namespace: Optional[str],
+    resolve: Callable[[str], TypeRef],
+) -> List[Service]:
+    """Add the document's functions, actions and v2/v3 function imports (MFI-11.2).
+
+    They are served by the entity container rather than by an entity set, so they go into one
+    service named after the container — merged into an entity-set service that happens to
+    share its key. A document with none of them returns ``services`` unchanged, which keeps
+    every such import byte-identical to before.
+
+    Args:
+        services: The entity-set services built so far.
+        source: The parsed document.
+        namespace: The primary schema's namespace, which every canonical key uses.
+        resolve: The normalizer's type resolver, so operation types match the model's types.
+
+    Returns:
+        The services, with the container's operations added.
+    """
+    container = next(
+        (schema.entity_container for schema in source.schemas if schema.entity_container is not None),
+        None,
+    )
+    if container is None:
+        return services
+    operations = schema_operations(
+        [operation for schema in source.schemas for operation in schema.operations],
+        container=container,
+        resolve=resolve,
+    )
+    for schema in source.schemas:
+        if schema.entity_container is not None:
+            operations.extend(function_import_operations(schema.entity_container, resolve=resolve))
+    if not operations:
+        return services
+
+    service_key = Keys.type(container.name, namespace)
+    for index, service in enumerate(services):
+        if service.key == service_key:
+            services[index] = service.model_copy(
+                update={"operations": [*service.operations, *operations]}
+            )
+            return services
+    return [*services, Service(key=service_key, name=container.name, operations=operations)]
 
 
 # ---------------------------------------------------------------------------
@@ -697,6 +752,18 @@ class ODataNormalizer(Normalizer, register=True):
                         ),
                     )
                 )
+
+        def resolve(type_expr: str) -> TypeRef:
+            return _type_ref_from_expr(
+                type_expr,
+                namespace=namespace,
+                type_names=type_names,
+                qualified_names=qualified_names,
+            )
+
+        services = _with_container_operations(
+            services, source, namespace=namespace, resolve=resolve
+        )
 
         api = CanonicalApi(
             paradigm=self.paradigm,

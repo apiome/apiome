@@ -6,12 +6,13 @@ tags: [import, odata, csdl, edmx, validation, breaking-changes]
 ---
 
 The **OData** importer (`odata`) reads an OData service's metadata into the
-[Catalog](./catalog.mdx). Entity types and complex types become types, enums become enums, and each
-entity set becomes a set of operations. You can then search, version, diff, lint and convert it like
-any other catalog item.
+[Catalog](./catalog.mdx). Entity types and complex types become types, enums become enums, each
+entity set becomes a set of operations, and every function and action becomes an operation of its
+own. You can then search, version, diff, lint and convert it like any other catalog item.
 
 
-An item imported from OData exports back to OData with its entity sets, keys and types unchanged. See
+An item imported from OData exports back to OData with its entity sets, keys, types, functions and
+actions unchanged. See
 [OData (CSDL) from any source](../ship/export-a-spec.md#odata-csdl-from-any-source).
 
 ## Import it
@@ -24,6 +25,28 @@ Import the metadata like any other catalog format: in the [import wizard](./impo
 | --- | --- |
 | CSDL XML: a `$metadata` document or `.edmx` file, OData v4, v3 or v2 | Read by the CSDL XML reader. v2 and v3 associations become v4-style navigation properties. |
 | CSDL JSON: the OData v4 JSON metadata format (`.json`, `"$Version": "4.0"` or `"4.01"`) | Read into the same model as CSDL XML, so both forms of one service import alike. |
+
+## Functions and actions
+
+Every function and action the metadata declares is imported as an operation, with its parameters and
+return type. They are grouped under one service named after the entity container (for example
+**ShopService**), beside the entity sets.
+
+| What the metadata declares | What the import keeps |
+| --- | --- |
+| A **function** (`<Function>`, or `"$Kind": "Function"` in CSDL JSON) | A `GET` operation. Its parameters are query parameters, required when declared `Nullable="false"`. A composable function is recorded as composable. |
+| An **action** (`<Action>`) | A `POST` operation. Its parameters are listed as the request body, since an action takes them in the body. An action with no return type answers `204`. |
+| A **bound** operation (`IsBound="true"`) | Called through an entity set of its binding type: `/Products/Shop.Cheapest` for a collection, `/Products({key})/Shop.Discount` for one entity. The binding parameter is the path, not a request parameter. |
+| A **function import** or **action import** in the entity container | The route of the unbound operation it names (`/Search`) and the entity set its result belongs to. An unbound operation nothing imports is kept, with no route. |
+| A v2 or v3 **`<FunctionImport>`** | An operation at `/{Name}`, called with its `m:HttpMethod` (`POST` when a v3 import is side-effecting, otherwise `GET`). Every parameter is a query parameter. |
+
+**Overloads.** OData lets one name have several signatures. Each overload is kept separately, named
+by its kind, its fully-qualified name and its parameter types in order — for example
+`Function Shop.Search(Edm.String,Edm.Int32)` — so two overloads never merge, and an overload keeps its
+identity from one version to the next as long as its signature does.
+
+CSDL XML and CSDL JSON give the same operations: an unstated `Nullable` means nullable in XML (except
+on a collection, where it is about the items) and not nullable in JSON, and both are read that way.
 
 ## Discover a live service
 
@@ -142,8 +165,10 @@ When you compare two versions of an OData catalog item, each change is graded by
 | Annotations added | Safe | `odata.annotation-added` |
 | An annotation changed or removed | Dangerous | `odata.annotation-changed` |
 
-New entity types, complex types, enumerations and entity sets are safe; anything removed is
-breaking. Every other change is graded by the standard rules. A v2 or v3 navigation property's
+New entity types, complex types, enumerations, entity sets, functions and actions are safe; anything
+removed is breaking. Because an overload is identified by its signature, changing a function's or
+action's parameters reads as the old overload removed (breaking) and a new one added (safe). Every
+other change is graded by the standard rules. A v2 or v3 navigation property's
 nullability comes from its association end (`0..1` is nullable, `1` is not).
 
 **Schema version.** Section 5.2 asks a service that makes a breaking change to version its metadata
