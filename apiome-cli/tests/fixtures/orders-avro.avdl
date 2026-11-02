@@ -1,0 +1,31 @@
+/** Orders placed and looked up over Avro RPC. */
+@namespace("com.example.orders")
+protocol OrderService {
+  /** Where the order is. */
+  enum OrderStatus {
+    UNKNOWN, PLACED, SHIPPED
+  } = UNKNOWN;
+
+  /** An order. */
+  record Order {
+    /** Order id. */
+    uuid id;
+    /** When the order was placed. */
+    timestamp_ms placedAt;
+    /** Order status. */
+    OrderStatus status;
+    /** Order total. */
+    decimal(12, 2) total;
+    /** Optional note. */
+    union { null, string } note = null;
+  }
+
+  /** No order has that id. */
+  error OrderNotFound {
+    /** The id that was looked up. */
+    string id;
+  }
+
+  /** Look up one order. */
+  Order getOrder(string id) throws OrderNotFound;
+}

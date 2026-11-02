@@ -18,7 +18,7 @@ Import OpenAPI, Swagger, Arazzo, JSON Schema, and JSON Schema type documents int
 apiome import [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`agents-manifest`](#import-agents-manifest), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`odata`](#import-odata), [`openapi`](#import-openapi), [`openrpc`](#import-openrpc), [`preflight`](#import-preflight), [`swagger`](#import-swagger), [`wsdl`](#import-wsdl).
+Subcommands: [`a2a`](#import-a2a), [`acp`](#import-acp), [`agents-manifest`](#import-agents-manifest), [`arazzo`](#import-arazzo), [`auto`](#import-auto), [`avro`](#import-avro), [`git`](#import-git), [`json-schema`](#import-json-schema), [`json-schema-type`](#import-json-schema-type), [`odata`](#import-odata), [`openapi`](#import-openapi), [`openrpc`](#import-openrpc), [`preflight`](#import-preflight), [`swagger`](#import-swagger), [`wsdl`](#import-wsdl).
 
 **Options**
 
@@ -187,6 +187,44 @@ apiome import auto [OPTIONS] PATH
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
 | `--bulk` | flag |  |  | Import every independent spec in an archive or directory (MFI-29.5): auto-detect each one, group the files that compile together, and start one import per spec. PATH must be a .zip/.tar.gz archive or a directory. |
 | `--override` | text (repeatable) |  |  | Override where one item goes, as KEY=SPEC (repeatable). SPEC is 'new' (create a project), 'existing' (append to the item's matched project), 'existing:PROJECT_ID' (append to that project), and may end in '@VERSION' to name the version created. '@VERSION' alone keeps the plan's choice and only sets the label. Items with no override apply the plan as reviewed. (--bulk only) |
+
+## apiome import avro {#import-avro}
+
+Import an Avro schema from a file, URL, stdin, archive, or a Confluent schema registry.
+
+Exactly one of INPUT, ``--file``, ``--url`` or ``--registry`` names the document. With ``--registry`` the schema is read from the registry's raw-schema route (``…/subjects/<subject>/versions/<version>/schema`` or ``…/schemas/ids/<id>/schema``) and imported through the registered ``avro`` adapter like any other source (MFI-12.6). The subject is ``--subject``, or is named from ``--topic`` / ``--record`` by ``--strategy``.
+
+```text
+apiome import avro [OPTIONS] [INPUT]
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SOURCE` | text |  | Avro schema (``.avsc``) or Avro IDL (``.avdl``): path, ``http``/``https`` URL, or ``-``. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--file` | text |  |  | Local document path to import (alternative to the INPUT argument). |
+| `--url` | text |  |  | http/https document URL to import (alternative to the INPUT argument). |
+| `--registry` | text |  |  | Confluent-compatible schema registry base URL (for example ``https://registry.example.com:8081``) to read the schema from; name it with --subject, --topic / --record, or --schema-id. |
+| `--subject` | text |  |  | Registry subject to import, for example ``orders-value``. |
+| `--topic` | text |  |  | Kafka topic whose subject to import, named by --strategy (``<topic>-value`` by default). |
+| `--strategy` | text |  |  | Subject naming strategy: ``topic`` (``<topic>-value``, the default), ``record`` (``<record>``) or ``topic_record`` (``<topic>-<record>``). |
+| `--record` | text |  |  | Record full name (``com.example.Order``) for the record and topic_record strategies. |
+| `--key` | flag |  |  | Import the topic's key schema (``<topic>-key``). |
+| `--version` | text |  |  | Subject version: ``latest`` (the default) or a number. |
+| `--schema-id` | integer |  |  | Global schema id to import instead of a subject version. |
+| `--root` | text |  |  | Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1). |
+| `--dry-run` | flag |  |  | Validate and preview the import without persisting changes. |
+| `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
+| `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
+| `--poll-interval` | float range | `1.0` |  | Seconds between import job-status polls when waiting. |
+| `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
+| `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
 
 ## apiome import git {#import-git}
 

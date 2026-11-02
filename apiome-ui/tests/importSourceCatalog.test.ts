@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Binary, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -662,6 +662,56 @@ describe('OData source card (MFI-11.6)', () => {
 
   it('draws no alternate intake card, since the service root goes through URL Import', () => {
     expect(alternateIntakeTiles([ODATA_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/**
+ * The Avro source as the REST registry advertises it (MFI-12.6, #3787). A `.avsc` schema or `.avdl`
+ * IDL file arrives as a file, an archive of IDL imports, or a URL — a Confluent schema registry's
+ * subject or schema-id route included, which the URL intake follows to the raw schema — so the card
+ * opens the file panel and the picker offers all of them.
+ */
+const AVRO_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'avro',
+  label: 'Avro',
+  description: 'Import an Apache Avro schema (.avsc) or Avro IDL protocol (.avdl) as a catalog source.',
+  icon: 'binary',
+  paradigm: 'data_schema',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['avro', 'avsc', 'avro-idl'],
+  file_extensions: ['.avsc', '.avro', '.avdl', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('Avro source card (MFI-12.6)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([AVRO_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'avro');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('Avro');
+    expect(card?.icon).toBe(Binary);
+    expect(resolveLucideIcon(AVRO_DESCRIPTOR.icon)).toBe(Binary);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('avro')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('avro');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('avro');
+  });
+
+  it('offers .avsc, .avdl and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([AVRO_DESCRIPTOR])).toEqual([
+      '.avsc',
+      '.avro',
+      '.avdl',
+      '.zip',
+      '.tar.gz',
+      '.tgz',
+      '.tar',
+    ]);
+  });
+
+  it('draws no alternate intake card, since a registry URL goes through URL Import', () => {
+    expect(alternateIntakeTiles([AVRO_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 

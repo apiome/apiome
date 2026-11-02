@@ -87,6 +87,7 @@ from apiome_cli.import_.sources import (
 )
 from apiome_cli.import_.a2a import discover_agent_card_url
 from apiome_cli.import_.acp import acp_agents_url
+from apiome_cli.import_.avro_registry import avro_registry_schema_url, avro_subject_name
 from apiome_cli.import_.odata import odata_metadata_url
 from apiome_cli.import_.wsdl import discover_wsdl_url
 from apiome_cli.import_.openrpc import discover_openrpc_document
@@ -2074,6 +2075,143 @@ def import_odata(
     _run_generic_adapter_import(
         ctx,
         source_format="odata",
+        source=source,
+        file_path=file_path,
+        url=url,
+        archive_root=archive_root,
+        dry_run=dry_run,
+        import_timeout_override=import_timeout,
+        wait=wait,
+        poll_interval=poll_interval,
+        min_grade=min_grade,
+        fail_on=fail_on,
+    )
+
+
+@app.command("avro")
+def import_avro(
+    ctx: typer.Context,
+    source: str | None = typer.Argument(
+        None,
+        metavar="INPUT",
+        help="Avro schema (``.avsc``) or Avro IDL (``.avdl``): path, ``http``/``https`` URL, or ``-``.",
+    ),
+    file_path: str | None = typer.Option(None, "--file", metavar="PATH", help=_GENERIC_FILE_HELP),
+    url: str | None = typer.Option(None, "--url", metavar="URL", help=_GENERIC_URL_HELP),
+    registry: str | None = typer.Option(
+        None,
+        "--registry",
+        metavar="REGISTRY_URL",
+        help=(
+            "Confluent-compatible schema registry base URL (for example "
+            "``https://registry.example.com:8081``) to read the schema from; name it with "
+            "--subject, --topic / --record, or --schema-id."
+        ),
+    ),
+    subject: str | None = typer.Option(
+        None, "--subject", metavar="NAME", help="Registry subject to import, for example ``orders-value``."
+    ),
+    topic: str | None = typer.Option(
+        None,
+        "--topic",
+        metavar="NAME",
+        help="Kafka topic whose subject to import, named by --strategy (``<topic>-value`` by default).",
+    ),
+    strategy: str | None = typer.Option(
+        None,
+        "--strategy",
+        metavar="STRATEGY",
+        help=(
+            "Subject naming strategy: ``topic`` (``<topic>-value``, the default), ``record`` "
+            "(``<record>``) or ``topic_record`` (``<topic>-<record>``)."
+        ),
+    ),
+    record: str | None = typer.Option(
+        None,
+        "--record",
+        metavar="FULL_NAME",
+        help="Record full name (``com.example.Order``) for the record and topic_record strategies.",
+    ),
+    key: bool = typer.Option(False, "--key", help="Import the topic's key schema (``<topic>-key``)."),
+    version: str | None = typer.Option(
+        None, "--version", metavar="VERSION", help="Subject version: ``latest`` (the default) or a number."
+    ),
+    schema_id: int | None = typer.Option(
+        None, "--schema-id", metavar="ID", help="Global schema id to import instead of a subject version."
+    ),
+    archive_root: str | None = typer.Option(
+        None,
+        "--root",
+        metavar="PATH",
+        help="Root document path inside a .zip/.tar.gz archive or a directory (MFI-29.1).",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help=_GENERIC_DRY_RUN_HELP),
+    import_timeout: float | None = typer.Option(
+        None,
+        "--import-timeout",
+        min=1.0,
+        help=_IMPORT_TIMEOUT_HELP,
+    ),
+    wait: bool = typer.Option(
+        True,
+        "--wait/--no-wait",
+        help="Poll async imports until complete (default: wait).",
+    ),
+    poll_interval: float = typer.Option(
+        DEFAULT_POLL_INTERVAL,
+        "--poll-interval",
+        min=0.1,
+        help="Seconds between import job-status polls when waiting.",
+    ),
+    min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
+    fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+) -> None:
+    """Import an Avro schema from a file, URL, stdin, archive, or a Confluent schema registry.
+
+    Exactly one of INPUT, ``--file``, ``--url`` or ``--registry`` names the document. With
+    ``--registry`` the schema is read from the registry's raw-schema route
+    (``…/subjects/<subject>/versions/<version>/schema`` or ``…/schemas/ids/<id>/schema``) and
+    imported through the registered ``avro`` adapter like any other source (MFI-12.6). The subject
+    is ``--subject``, or is named from ``--topic`` / ``--record`` by ``--strategy``.
+    """
+    registry_only = (subject, topic, strategy, record, version, schema_id)
+    if registry is None:
+        if key or any(value is not None for value in registry_only):
+            typer.echo(
+                "--subject, --topic, --strategy, --record, --key, --version and --schema-id need --registry.",
+                err=True,
+            )
+            raise typer.Exit(EXIT_USAGE)
+    else:
+        if any((source, file_path, url)):
+            typer.echo(
+                "Provide only one input: --registry, or INPUT / --file / --url (not more than one).",
+                err=True,
+            )
+            raise typer.Exit(EXIT_USAGE)
+        try:
+            chosen_subject = (
+                None
+                if schema_id is not None and not any((subject, topic, strategy, record, key))
+                else avro_subject_name(subject=subject, topic=topic, strategy=strategy, record=record, key=key)
+            )
+        except ValueError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
+        label = f"schema id {schema_id}" if chosen_subject is None else f"subject {chosen_subject}"
+        url = _resolve_discover_url(
+            ctx,
+            registry,
+            other_inputs=(source, file_path, url),
+            resolve=lambda base: avro_registry_schema_url(
+                base, subject=chosen_subject, version=version, schema_id=schema_id
+            ),
+            found_label=f"Avro schema ({label})",
+        )
+
+    _run_generic_adapter_import(
+        ctx,
+        source_format="avro",
         source=source,
         file_path=file_path,
         url=url,

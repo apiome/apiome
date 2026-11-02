@@ -25,6 +25,77 @@ apiome import avro ./orders.avdl
 - **One file.** Upload, paste or link the `.avsc` or `.avdl` file.
 - **A file set.** Upload a `.zip`, `.tar.gz` or `.tar` holding an IDL file and the files it
   `import`s.
+- **A schema registry.** Read one schema from a Confluent-compatible schema registry. See
+  [Import from a schema registry](#import-from-a-schema-registry).
+
+The CLI's test fixtures include the same orders schema in each of Avro's surfaces:
+`orders-avro.avsc` and `orders-avro.avdl`, in `apiome-cli/tests/fixtures/`. They are a quick way to
+try an import:
+
+```bash
+apiome import avro apiome-cli/tests/fixtures/orders-avro.avdl
+```
+
+## Import from a schema registry
+
+A Confluent-compatible schema registry serves each schema it holds at a *raw-schema* route:
+
+- `<registry>/subjects/<subject>/versions/<version>/schema`, for one version of a subject.
+- `<registry>/schemas/ids/<id>/schema`, for a schema by its global id.
+
+The wizard and the CLI both import the schema from that route, so the catalog item records it as
+its source. This imports one schema. To keep a whole registry in the catalog, with its credentials
+and every subject's history, [mirror the registry](./schema-registry-connector.md) instead.
+
+### In the import wizard
+
+1. On the [Catalog](./catalog.mdx), **click “Import to catalog”** and choose **URL Import**.
+2. Enter a registry URL as the **Document URL**:
+   - `…/subjects/orders-value/versions/3`, for one version.
+   - `…/subjects/orders-value/versions`, for the subject's latest version.
+   - `…/schemas/ids/21`, for a schema by id.
+   - A raw-schema URL ending in `/schema` works too.
+3. **Click “Fetch and detect”**.
+
+The first three routes answer with JSON *about* the schema: the schema wrapped in an envelope, or a
+list of version numbers. The wizard recognizes that answer, fetches the raw-schema route instead,
+and continues with the schema. An envelope for a JSON Schema or Protobuf schema is not followed.
+
+The fetch runs in your browser, so the registry must allow requests from Apiome (CORS) and must not
+need a sign-in. If it does, use the CLI, or mirror the registry.
+
+### From the CLI
+
+Give the registry's base URL to `--registry`, and name the schema:
+
+```bash
+apiome import avro --registry https://registry.example.com:8081 --subject orders-value
+apiome import avro --registry https://registry.example.com:8081 --subject orders-value --version 3
+apiome import avro --registry https://registry.example.com:8081 --schema-id 21
+```
+
+`--version` is `latest` (the default) or a version number. The base URL may carry a path prefix,
+such as `https://host/apis/ccompat/v7`.
+
+You can also name the subject the way a Kafka producer does, from its topic or record, with
+`--strategy`:
+
+| `--strategy` | Subject | Example |
+| --- | --- | --- |
+| `topic` (the default) | `<topic>-value`, or `<topic>-key` with `--key` | `--topic orders` → `orders-value` |
+| `record` | The record's full name | `--record com.example.orders.Order` |
+| `topic_record` | `<topic>-<record>` | `--topic orders --record com.example.orders.Order` → `orders-com.example.orders.Order` |
+
+```bash
+apiome import avro --registry https://registry.example.com:8081 --topic orders --key
+apiome import avro --registry https://registry.example.com:8081 \
+  --strategy topic_record --topic orders --record com.example.orders.Order
+```
+
+These are Confluent's `TopicNameStrategy`, `RecordNameStrategy` and `TopicRecordNameStrategy`, the
+same names a mirrored registry records for each subject. `--registry` replaces the file or URL
+input: use one or the other. See the [CLI reference](../reference/cli/import.md#import-avro) for every
+option.
 
 ## What the catalog item holds
 
