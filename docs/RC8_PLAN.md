@@ -4,8 +4,16 @@ _Drafted 2026-10-28 against `main` @ `844cb2240`. RC8 is the release after RC7. 
 everything [`RC7_SHIP_PLAN.md`](RC7_SHIP_PLAN.md) leaves out, and RC8's other features are added
 here as they are planned._
 
-**Status: plan only.** No ticket has been moved or filed and no milestone exists yet. §8 lists the
-milestone moves.
+**Tracking:** every ticket below is on the [**RC8** GitHub Project](https://github.com/orgs/apiome/projects/1).
+The project is the source of truth for status (Todo / In Progress / Done). This plan holds the scope and
+the reason each ticket is in. Project fields:
+
+- **Plan section:** the section of this plan the ticket comes from.
+- **Planning:** *Committed* (§2, §3, §5), *Needs triage* (§6), *Proposed close* (§4), *Umbrella* (§7) or *Shipped*.
+- **Rank** and **Effort:** from the §2 table.
+
+A ticket listed in both §3.1 and §4 is filed under §4 (*Proposed close*) until RC8 decides. #6274 stays in RC7.
+No milestone exists yet; §8 lists the milestone moves.
 
 ---
 
