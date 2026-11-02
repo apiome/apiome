@@ -7,6 +7,13 @@ Maps a parsed :class:`~app.apiblueprint_parser.ApiblueprintDocument` into a
 An ``array[T]`` body is an array of ``T``; a response's status is its ``status_code``. A
 ``+ Default:`` value is read as the member's type says (``5`` for a ``number``, ``true`` for a
 ``boolean``).
+
+MFI-16.2 (#3805): a resource group is each of its operations' tag (and ``extras["apib_group"]``);
+request and response ``+ Headers`` become the message's headers; an inline body is a type of its own
+(``extras["apib_inline"]``); MSON inheritance and ``+ Include`` mixins are flattened — a type lists
+its base's members, then each mixin's, then its own (a later member of the same name wins) — with
+the base and mixins recorded in ``extras``; an inline enum member or parameter is a ``string`` with
+``Constraints.enum``; ``nullable`` makes a reference nullable even when it is required.
 """
 
 from __future__ import annotations
@@ -18,6 +25,7 @@ from .apiblueprint_parser import (
     ApiblueprintDocument,
     ApiblueprintField,
     ApiblueprintParameter,
+    ApiblueprintType,
 )
 from .apiblueprint_refract import DRAFTER_VERSION, REFRACT_ALGORITHM, refract_sha256
 from .canonical_model import (
@@ -25,6 +33,7 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Constraints,
     EnumValue,
     Message,
     MessageRole,
@@ -101,6 +110,22 @@ def default_value(raw: Optional[str], type_expr: str) -> Any:
     return raw
 
 
+def _enum_constraints(type_expr: str, values: tuple) -> Optional[Constraints]:
+    """``Constraints.enum`` for an inline ``enum[…]`` member or parameter with ``+ Members``."""
+    if not values:
+        return None
+    return Constraints(enum=list(values))
+
+
+def _enum_ref(type_expr: str, values: tuple, ref: TypeRef) -> TypeRef:
+    """An inline enum is its member type (``enum[string]`` → ``string``); anything else is ``ref``."""
+    match = re.fullmatch(r"enum\[(.+)\]", type_expr.strip(), re.IGNORECASE)
+    if not match:
+        return TypeRef(name="string", nullable=False) if values and type_expr.strip().lower() == "enum" else ref
+    inner = _APIB_TO_CANONICAL.get(match.group(1).strip().lower(), "string")
+    return TypeRef(name=inner, nullable=False)
+
+
 def _canonical_field(
     field: ApiblueprintField,
     *,
@@ -108,24 +133,63 @@ def _canonical_field(
     type_names: frozenset[str],
     field_number: int,
 ) -> CanonicalField:
-    ref = _type_ref_from_expr(field.type_expr, type_names=type_names)
+    ref = _enum_ref(
+        field.type_expr, field.enum_values, _type_ref_from_expr(field.type_expr, type_names=type_names)
+    )
     extras: Dict[str, Any] = {"apib_type": field.type_expr}
     if field.sample is not None:
         extras["apib_sample"] = field.sample
+    if field.nullable:
+        extras["apib_nullable"] = True
     return CanonicalField(
         key=Keys.field(type_key, field.name),
         name=field.name,
         type=TypeRef(
             name=ref.name,
             item=ref.item,
-            nullable=not field.required,
+            nullable=field.nullable or not field.required,
             extras=ref.extras,
         ),
         field_number=field_number,
         default=default_value(field.default, field.type_expr),
+        constraints=_enum_constraints(field.type_expr, field.enum_values),
         description=field.description,
         extras=extras,
     )
+
+
+def flattened_fields(
+    apib_type: ApiblueprintType, types_by_name: Dict[str, ApiblueprintType]
+) -> List[ApiblueprintField]:
+    """A type's members with its base's and its mixins' flattened in (MFI-16.2).
+
+    MSON inheritance (``## Cat (Pet)``) and mixins (``+ Include Problem``) both give a type the
+    members of another: the base's first, then each mixin's in order, then its own. A member named
+    again later replaces the earlier one in place. A cycle (``A`` includes ``B`` includes ``A``) or a
+    type the document does not define contributes nothing.
+
+    Args:
+        apib_type: The type.
+        types_by_name: Every named type of the document.
+
+    Returns:
+        Its effective members, in order.
+    """
+
+    def collect(current: ApiblueprintType, seen: frozenset) -> List[ApiblueprintField]:
+        members: Dict[str, ApiblueprintField] = {}
+        parents = ([current.base] if current.base else []) + list(current.includes)
+        for parent_name in parents:
+            parent = types_by_name.get(parent_name)
+            if parent is None or parent.name in seen:
+                continue
+            for member in collect(parent, seen | {parent.name}):
+                members[member.name] = member
+        for member in current.fields:
+            members[member.name] = member
+        return list(members.values())
+
+    return collect(apib_type, frozenset({apib_type.name}))
 
 
 def _parameter(
@@ -142,9 +206,26 @@ def _parameter(
         required=param.required,
         default=default_value(param.default, param.type_expr),
         description=param.description,
-        type=_type_ref_from_expr(param.type_expr, type_names=type_names),
+        type=_enum_ref(
+            param.type_expr, param.enum_values, _type_ref_from_expr(param.type_expr, type_names=type_names)
+        ),
+        constraints=_enum_constraints(param.type_expr, param.enum_values),
         extras={"apib_type": param.type_expr},
     )
+
+
+def _headers(owner_key: str, headers: tuple) -> List[CanonicalField]:
+    """``+ Headers`` lines as message headers: a ``string`` each, its example value in extras."""
+    return [
+        CanonicalField(
+            key=Keys.field(owner_key, name),
+            name=name,
+            type=TypeRef(name="string", nullable=False),
+            field_number=index + 1,
+            extras={"apib_sample": value} if value else {},
+        )
+        for index, (name, value) in enumerate(headers)
+    ]
 
 
 
@@ -191,6 +272,7 @@ class ApiblueprintNormalizer(Normalizer, register=True):
             )
 
         type_names = frozenset(item.name for item in source.types)
+        types_by_name = {item.name: item for item in source.types}
         types: List[Type] = []
 
         for apib_type in source.types:
@@ -222,8 +304,15 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                     type_names=type_names,
                     field_number=index + 1,
                 )
-                for index, field in enumerate(apib_type.fields)
+                for index, field in enumerate(flattened_fields(apib_type, types_by_name))
             ]
+            extras: Dict[str, Any] = {"apib_kind": apib_type.kind}
+            if apib_type.base:
+                extras["apib_base"] = apib_type.base
+            if apib_type.includes:
+                extras["apib_includes"] = list(apib_type.includes)
+            if apib_type.inline:
+                extras["apib_inline"] = True
             types.append(
                 Type(
                     key=type_key,
@@ -231,7 +320,7 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                     kind=TypeKind.RECORD,
                     description=apib_type.description,
                     fields=fields,
-                    extras={"apib_kind": apib_type.kind},
+                    extras=extras,
                 )
             )
 
@@ -249,16 +338,19 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                         content_types=[endpoint.request_media_type]
                         if endpoint.request_media_type
                         else [],
+                        headers=_headers(Keys.request_message(op_key), endpoint.request_headers),
                     )
                 )
-            for status, media_type, response_type in endpoint.responses:
+            for status, media_type, response_type, headers in endpoint.responses:
+                response_key = Keys.response_message(op_key, status)
                 messages.append(
                     Message(
-                        key=Keys.response_message(op_key, status),
+                        key=response_key,
                         role=MessageRole.RESPONSE,
                         payload=_type_ref_from_expr(response_type, type_names=type_names) if response_type else None,
                         content_types=[media_type] if media_type else [],
                         status_code=status,
+                        headers=_headers(response_key, headers),
                     )
                 )
             operations.append(
@@ -275,6 +367,8 @@ class ApiblueprintNormalizer(Normalizer, register=True):
                         for param in endpoint.parameters
                     ],
                     messages=messages,
+                    tags=[endpoint.group] if endpoint.group else [],
+                    extras={"apib_group": endpoint.group} if endpoint.group else {},
                 )
             )
 

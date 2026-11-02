@@ -20,8 +20,33 @@ Import the blueprint like any other catalog format: in the [import wizard](./imp
 apiome import apiblueprint ./shelter.apib
 ```
 
-Apiome's own reader builds the catalog item: its resource groups, resources, actions, parameters,
-requests, responses and data structures.
+Apiome's own reader builds the catalog item, so it imports the same way on every server.
+
+## What the catalog item holds
+
+| API Blueprint | Catalog item |
+| --- | --- |
+| `# Group Pets` | The tag of every action in the group (`apib_group`) |
+| A resource and its actions (`## Pets [/pets]`, `### List pets [GET]`) | One operation per action, with the action's own URI when it gives one |
+| `+ Parameters`, and a URI template's query (`{?status,limit}`) | Path and query parameters, with each `+ Default:` value |
+| `+ Members` under an `enum[…]` parameter or member | The allowed values |
+| The first `+ Request` of an action, named or not (`+ Request Minimal (application/json)`) | The request body, its media type and its `+ Headers` |
+| Each `+ Response 200 (…)` | A response with that status, its body and its `+ Headers` |
+| `+ Attributes (Pet)`, `+ Attributes (array[Pet])` | The body's type |
+| An inline `+ Attributes` body (members, no named type) | A type of its own, named after the action: `Get owner 200 Response` (`apib_inline`) |
+| `# Data Structures`, `## Pet (object)` | A type with one field per member; a name may contain spaces (`## Owner Summary (object)`) |
+| `## Cat (Pet)` | A type with `Pet`'s members, then its own (`apib_base`) |
+| `+ Include Problem` | The members of `Problem` added to the type (`apib_includes`) |
+| A member typed `object` with deeper members | A nested type, named after its parent: `Pet.address` |
+| `required`, `optional`, `nullable` | Whether the field is required, and whether it may be null |
+
+A member named again in a subtype or after an `+ Include` replaces the inherited one. An action's
+further requests (`+ Request Invalid`) are other transactions: their responses are kept, but only the
+first request is the operation's body.
+
+Exporting the item back to API Blueprint writes `## Cat (Pet)` and `+ Include` lines again, with the
+inherited members restated under them. A type whose name has spaces or dots is written with
+underscores (`Owner_Summary`), because the export keeps names to letters, digits and `_`.
 
 ## What drafter adds
 

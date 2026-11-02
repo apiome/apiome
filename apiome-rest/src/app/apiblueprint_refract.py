@@ -21,8 +21,9 @@ contract by dropping what the issue calls prose and examples, and what is not pa
 editing an example body, re-indenting the blueprint or fixing a warning keeps the hash, and adding a
 resource, changing a method, a status code, a header or an MSON property moves it.
 
-The built-in reader (:mod:`app.apiblueprint_parser`) still builds the catalog model — mapping the
-Refract tree onto the canonical model is MFI-16.2 — and an import never depends on ``drafter``.
+The built-in reader (:mod:`app.apiblueprint_parser`) builds the catalog model — MFI-16.2 extended it
+to groups, transactions and MSON rather than mapping this tree — so an import never depends on
+``drafter``.
 """
 
 from __future__ import annotations

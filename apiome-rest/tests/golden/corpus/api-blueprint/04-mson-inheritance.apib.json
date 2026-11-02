@@ -240,9 +240,67 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "apib_kind": "user"
+          "apib_base": "User",
+          "apib_kind": "object"
         },
         "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Preferred display name.",
+            "extras": {
+              "apib_sample": "Kai",
+              "apib_type": "string"
+            },
+            "field_number": 3,
+            "key": "AdminUser.displayName",
+            "name": "displayName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": true
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Login email address.",
+            "extras": {
+              "apib_sample": "kai@example.com",
+              "apib_type": "string"
+            },
+            "field_number": 2,
+            "key": "AdminUser.email",
+            "name": "email",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "Unique user identifier.",
+            "extras": {
+              "apib_sample": "u-1001",
+              "apib_type": "string"
+            },
+            "field_number": 1,
+            "key": "AdminUser.id",
+            "name": "id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
           {
             "constraints": null,
             "default": null,
@@ -252,7 +310,7 @@
               "apib_sample": "true",
               "apib_type": "boolean"
             },
-            "field_number": 2,
+            "field_number": 5,
             "key": "AdminUser.mfaEnrolled",
             "name": "mfaEnrolled",
             "type": {
@@ -271,7 +329,7 @@
               "apib_sample": "billing",
               "apib_type": "string"
             },
-            "field_number": 1,
+            "field_number": 4,
             "key": "AdminUser.scope",
             "name": "scope",
             "type": {
@@ -381,7 +439,7 @@
     "confidence": 0.98,
     "format": "api-blueprint"
   },
-  "fingerprint": "sha256:ec3d673337ed06dfbc661f55ab277ec5615b7a3e4b9f97b428a9f095cb02ed8c",
+  "fingerprint": "sha256:95489ebb97af73103c217859a8bf1d5e603f333c090884fff7fa9b379df6a2a3",
   "lint": {
     "findings": 12,
     "grade": "C",
