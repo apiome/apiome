@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "typespec_compiled_via": "reader",
       "typespec_enums": [
         {
           "documentation": "Lifecycle status of a pet listing.",
@@ -609,7 +610,7 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:1cfdb76d0d73bad8b7d5a7cd8db50643440a9d71de5eddf31ddac2f0948543b9",
+  "fingerprint": "sha256:fccbf80059b52026d401c167cdadaffc0f85ccba4226723d1b27681fceb46140",
   "lint": {
     "findings": 8,
     "grade": "A",

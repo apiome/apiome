@@ -1,0 +1,21 @@
+---
+slug: typespec-single-file-compile
+title: A single TypeSpec file is cataloged from its OpenAPI
+description: One .tsp file now compiles to OpenAPI, like a TypeSpec project.
+authors: [apiome]
+---
+
+A single `.tsp` file is now compiled by the TypeSpec compiler and cataloged from the OpenAPI it
+emits, the same way a multi-file project is. [How it is read](/bring-in/typespec-import#import-it).
+
+{/* truncate */}
+
+- **One path for files and projects.** A file and a project built from the same TypeSpec have the
+  same operations and types, and the same OpenAPI diff and lint.
+- **Reader fallback.** A server without the compiler still reads a single file with the built-in
+  reader. The item records which one ran in `typespec_compiled_via` (`tsp` or `reader`).
+- **One new version on re-import.** An item read by the reader gets one new version the first time
+  it is re-imported with the compiler, because the compiler names some operations and types
+  differently.
+- **Imports need their files.** A single file that imports another `.tsp` file must be uploaded with
+  it, as a project.

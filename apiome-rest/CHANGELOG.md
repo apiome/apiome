@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.596.0] - 2026-11-01
+
+### Changed
+- **A single TypeSpec file normalizes through its emitted OpenAPI (MFI-14.2, #3795).** `TypeSpecImportSource.parse`
+  now compiles one `.tsp` file with the bundled `tsp` compiler, as a one-file project staged under its own file name
+  (`main.tsp` for a paste), and the item is built by the OpenAPI normalizer — the integration surface a multi-file
+  project already used (MFI-14.1), so its diff, lint and conversion are the OpenAPI ones. The file is still read by the
+  built-in reader first, so non-TypeSpec text fails as before; when the compiler is not available
+  (`ADAPTER_UNAVAILABLE`) the reader's document is used. Other compile refusals surface as for a project — an import of
+  a file that was not uploaded is `INPUT_REFERENCE_UNRESOLVED`, a compile error `INPUT_SEMANTIC_INVALID`.
+- Reader-built items record `extras["typespec_compiled_via"] = "reader"` (compiled ones already record `tsp`).
+- New `APIOME_TYPESPEC_COMPILE_SINGLE_FILES` (default on; `0` / `false` / `off` pins the reader). The test suite pins
+  the reader (`tests/conftest.py`) so corpus goldens do not depend on whether `tsp` is installed; the six `typespec`
+  corpus goldens gain `typespec_compiled_via: "reader"`.
+- A single-file item read by the reader and re-imported on a server with the compiler mints one new version (the
+  OpenAPI normalizer keys some operations and types differently).
+- OpenAPI document version 1.459.0 → 1.460.0 (no schema change).
+
 ## [1.595.0] - 2026-11-01
 
 ### Added

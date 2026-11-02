@@ -289,7 +289,10 @@ def test_the_fingerprint_does_not_depend_on_member_order(monkeypatch, libraries)
     assert source.fingerprint(forward) == source.fingerprint(backward)
 
 
-def test_a_single_file_keeps_the_built_in_reader(monkeypatch):
+def test_a_single_file_keeps_the_built_in_reader_when_compiling_single_files_is_off(monkeypatch):
+    # The suite pins the reader (tests/conftest.py); MFI-14.2's compiled path has its own tests in
+    # tests/test_typespec_single_file.py.
+    monkeypatch.setenv("APIOME_TYPESPEC_COMPILE_SINGLE_FILES", "0")
     calls = _replay(monkeypatch, "petstore")
     members = {"main.tsp": 'import "@typespec/http";\nnamespace A;\nmodel Pet { id: int32; }\n', "package.json": "{}"}
     doc = TypeSpecImportSource().parse_fileset(IntakeFileset.from_members(members, root="main.tsp"))

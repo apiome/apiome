@@ -3,15 +3,22 @@
 The :class:`~app.import_source.ImportSource` adapter that makes TypeSpec ``.tsp``
 documents importable into the catalog.
 
-* **One ``.tsp`` file** is read by the built-in reader (:mod:`app.typespec_parser`).
 * **A set of several ``.tsp`` files** is compiled by the bundled TypeSpec compiler to OpenAPI
   (MFI-14.1, :mod:`app.typespec_compile`), and the emitted OpenAPI — the epic's integration
   surface — is normalized by the OpenAPI normalizer, so the catalog item's diff and lint are the
   OpenAPI ones. The item stays a ``typespec`` item and records how it was built.
+* **One ``.tsp`` file** is compiled the same way (MFI-14.2) when the compiler is available, so a
+  single file and a project normalize alike. Without the compiler (``ADAPTER_UNAVAILABLE``) it is
+  read by the built-in reader (:mod:`app.typespec_parser`) instead, and the item records which path
+  ran in ``extras["typespec_compiled_via"]`` (``tsp`` or ``reader``). Setting
+  :data:`COMPILE_SINGLE_FILES_ENV` to ``0`` pins the reader — the test suite does, so the corpus
+  goldens do not depend on whether ``tsp`` is installed.
 """
 
 from __future__ import annotations
 
+import os
+import posixpath
 from typing import Any, Optional, Union
 
 from . import (
@@ -33,10 +40,36 @@ from .typespec_config import find_tspconfig
 from .typespec_parser import TypeSpecDocument, TypeSpecParseError, is_typespec, parse_typespec
 from .typespec_versioning import version_changes
 
-__all__ = ["MAX_RECORDED_DIAGNOSTICS", "TypeSpecImportSource"]
+__all__ = ["COMPILE_SINGLE_FILES_ENV", "MAX_RECORDED_DIAGNOSTICS", "TypeSpecImportSource"]
 
 #: Most compile diagnostics recorded on a catalog item (the rest are counted, not listed).
 MAX_RECORDED_DIAGNOSTICS = 50
+
+#: Environment switch for MFI-14.2: ``0`` / ``false`` / ``off`` reads a single ``.tsp`` file with the
+#: built-in reader even when the compiler is available. On by default.
+COMPILE_SINGLE_FILES_ENV = "APIOME_TYPESPEC_COMPILE_SINGLE_FILES"
+
+#: The entry-point name a single file is staged under when its own name is not a ``.tsp`` path.
+_SINGLE_FILE_ROOT = "main.tsp"
+
+
+def compile_single_files() -> bool:
+    """Whether a single ``.tsp`` file is compiled through ``tsp`` (see :data:`COMPILE_SINGLE_FILES_ENV`).
+
+    Returns:
+        ``False`` when the switch is set to ``0``, ``false``, ``no`` or ``off``; ``True`` otherwise.
+    """
+    return os.environ.get(COMPILE_SINGLE_FILES_ENV, "1").strip().lower() not in {"0", "false", "no", "off"}
+
+
+def _single_file_root(source_label: Optional[str]) -> str:
+    """The name a single file is compiled under: its own file name when it is a ``.tsp``, else ``main.tsp``.
+
+    Only the base name is kept, so a label such as ``specs/pets.tsp`` or a URL path never becomes
+    a staged directory.
+    """
+    name = posixpath.basename((source_label or "").replace("\\", "/").split("?", 1)[0])
+    return name if name.endswith(".tsp") and name != ".tsp" else _SINGLE_FILE_ROOT
 
 
 class TypeSpecImportSource(ImportSource, register=True):
@@ -82,7 +115,41 @@ class TypeSpecImportSource(ImportSource, register=True):
             )
         return NO_MATCH
 
-    def parse(self, raw: str, *, source_label: Optional[str] = None) -> TypeSpecDocument:
+    def parse(
+        self, raw: str, *, source_label: Optional[str] = None
+    ) -> Union[TypeSpecDocument, TypeSpecCompiled]:
+        """Parse one ``.tsp`` file: compile it through ``tsp`` when possible (MFI-14.2).
+
+        The file is read by the built-in reader first, so text that is not TypeSpec fails exactly
+        as it always has. It is then compiled like a one-file project; when the compiler is not
+        available on this server, the reader's document is returned instead.
+
+        Args:
+            raw: The file's text.
+            source_label: Its name, which the compile stages it under when it is a ``.tsp`` path.
+
+        Returns:
+            The compiled file, or the reader's document without the compiler (or with
+            :data:`COMPILE_SINGLE_FILES_ENV` off).
+
+        Raises:
+            ImportSourceError: When the text is not TypeSpec, or the compile refuses it (an import
+                of a file that was not uploaded, a compile error, a timeout); see
+                :func:`app.typespec_compile.compile_typespec_set`.
+        """
+        document = self._read(raw, source_label=source_label)
+        if not compile_single_files():
+            return document
+        root = _single_file_root(source_label)
+        try:
+            return compile_typespec_set({root: raw}, root, source_label=source_label)
+        except ImportSourceError as exc:
+            if exc.code == "ADAPTER_UNAVAILABLE":
+                return document
+            raise
+
+    def _read(self, raw: str, *, source_label: Optional[str] = None) -> TypeSpecDocument:
+        """Read one file with the built-in reader (:mod:`app.typespec_parser`)."""
         try:
             return parse_typespec(raw, source_label=source_label)
         except TypeSpecParseError as exc:
@@ -117,7 +184,9 @@ class TypeSpecImportSource(ImportSource, register=True):
             raise ImportSourceError(
                 "TypeSpec source must be a TypeSpecDocument (see app.typespec_parser.parse_typespec)"
             )
-        return self._normalize_via_registry("typespec", native_ast, include_raw=include_raw)
+        api = self._normalize_via_registry("typespec", native_ast, include_raw=include_raw)
+        # MFI-14.2: say which path built the item; the compiled path records ``tsp``.
+        return api.model_copy(update={"extras": {**api.extras, "typespec_compiled_via": "reader"}})
 
     def _normalize_compiled(self, compiled: TypeSpecCompiled, *, include_raw: bool) -> CanonicalApi:
         """Normalize a compiled set through the OpenAPI normalizer, keeping its TypeSpec identity.

@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "typespec_compiled_via": "reader",
       "typespec_enums": [
         {
           "documentation": null,
@@ -605,7 +606,7 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:9a1c8d8fe14285914cd273c7f25370f74705c9eceec0cf433e1a525d793f4505",
+  "fingerprint": "sha256:f9a4262ce58e153f7b3ce6527492fe692587159c08092035047071d04e42bcf1",
   "lint": {
     "findings": 17,
     "grade": "D",

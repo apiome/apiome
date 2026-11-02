@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "typespec_compiled_via": "reader",
       "typespec_enums": [
         {
           "documentation": "Operational state reported by a device.",
@@ -1148,7 +1149,7 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:a8c1179a9954e51d4f428aeb027d2fc91be8b08a4e6976468408a017bfbd80b7",
+  "fingerprint": "sha256:3352ad7336dc11f4028b0fc7522d4b15373b0901356a4932f5aec7faf0bdde68",
   "lint": {
     "findings": 23,
     "grade": "C",
