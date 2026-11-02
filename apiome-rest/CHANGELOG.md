@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.599.0] - 2026-11-01
+
+### Added
+- **Smithy → canonical model: services, operations, resources, shapes, traits (MFI-17.2, #3809).** The JSON AST mapper
+  (`app.smithy_ast_mapper`, used with the Smithy CLI and for an uploaded JSON AST) keeps every trait's value
+  (`SmithyField` / `SmithyStructure` / `SmithyOperation` / `SmithyService.trait_values`), operation and service
+  `errors`, a service's `resources`, a resource's identifiers / properties / lifecycle / operations / children, and
+  each enum member's `@enumValue`; a member targeting a simple shape inherits its `length` / `range` / `pattern` /
+  `timestampFormat` / `mediaType`. The normalizer maps them:
+  - `@http` → `Operation.http_method` / `http_path` and `extras["http"]` (the binding the OpenAPI projection reads, so
+    a JSON-AST model now converts with its routes), the code in `smithy_http_code`;
+  - `@httpLabel` / `@httpQuery` / `@httpHeader` input members → path / query / header `Parameter`s (named by the
+    trait value);
+  - declared and service-wide errors → `ERROR` messages (status from `@httpError`, description from the error's
+    documentation); error structures record `smithy_error`, `smithy_http_error`, `smithy_retryable`;
+  - `@readonly` / `@idempotent` / `@paginated` / `@deprecated` → `extras` and `Operation.deprecated`;
+  - resources → `extras["smithy_resource"]` on the resource type (properties become fields after the identifiers),
+    and every operation a resource binds is tagged with it; services record `smithy_errors`, `smithy_resources`,
+    `smithy_service_traits`;
+  - member `@documentation` / `@default` / `@length` / `@range` / `@pattern` / `@deprecated` → description, default,
+    `Constraints` (a list's `@length` → `min_items` / `max_items`) and `deprecated`; other trait values →
+    `extras["smithy_trait_values"]`;
+  - `@enumValue` → `EnumValue.value` (positions stay where there is none); `intEnum` → `smithy_kind: "intEnum"`.
+- **Per-shape AST hashes:** `extras["smithy_shape_hashes"]` maps each absolute shape id to
+  `smithy_ast_mapper.shape_sha256` of its JSON AST node (sorted keys); kept out of the version fingerprint
+  (`UNHASHED_EXTRAS`).
+
+### Changed
+- Corpus golden `smithy/07-json-ast-weather.json` regenerated (additions above; its enum values are now their
+  `@enumValue`s; one more `common.message-missing-description` info finding, on the new undocumented error message).
+- The IDL reader (no Smithy CLI) is unchanged: it reads trait names only.
+- OpenAPI document version 1.462.0 → 1.463.0 (no schema change).
+
 ## [1.598.0] - 2026-11-01
 
 ### Added

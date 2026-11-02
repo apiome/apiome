@@ -24,6 +24,32 @@ You can bring the model in three ways:
 | One JSON AST file (`.json`) | Read as is. A JSON AST already holds every shape by its absolute id. |
 | Several model files (a `.zip`, `.tar.gz` or `.tar`) | Assembled by the **Smithy CLI** into one JSON AST, then read. |
 
+## What the catalog item holds
+
+A model read from its JSON AST (with the Smithy CLI, or uploaded as a JSON AST) keeps its traits:
+
+| Smithy | Catalog item |
+| --- | --- |
+| `@http(method: "GET", uri: "/cities/{cityId}", code: 200)` | The operation's method and path, and the binding **Convert to OpenAPI** uses; the code in `smithy_http_code` |
+| `@httpLabel`, `@httpQuery("pageSize")`, `@httpHeader("X-Request-Id")` on an input member | A path, query or header parameter, named as the request names it |
+| An operation's `errors`, and the service's `errors` | An **error** message on the operation, for each one, with the error's `@httpError` status |
+| `@error("client")`, `@httpError(404)`, `@retryable` | Recorded on the error structure (`smithy_error`, `smithy_http_error`, `smithy_retryable`) |
+| `@readonly`, `@idempotent`, `@paginated(…)` | Recorded on the operation (`smithy_readonly`, `smithy_idempotent`, `smithy_paginated`) |
+| `@deprecated` | The operation or member is marked deprecated |
+| A resource: identifiers, properties, `read` / `list` / `create` / …, child `resources` | A type with the identifiers and properties as fields, its lifecycle in `smithy_resource`; each operation it binds is tagged with the resource's name |
+| `@documentation` on a member | The field's description |
+| `@default`, `@length`, `@range`, `@pattern` | The field's default and constraints; a list's `@length` bounds its items |
+| A member targeting a simple shape with constraints (`CityId` with a `@pattern`) | The member gets those constraints too, its own winning |
+| `@enumValue("capital")`, an `intEnum`'s numbers | Each enum value's wire value |
+| Any other trait (`@timestampFormat`, `@jsonName` …) | Kept in the field's `smithy_trait_values` |
+
+Each shape of the JSON AST is also hashed on its own: `smithy_shape_hashes` maps every absolute
+shape id (`example.weather#City`) to a SHA-256 of that shape, so a tool can see which shapes
+changed between two imports. The hashes do not decide whether a new catalog version is created.
+
+The built-in Smithy reader, used for a single `.smithy` file when the server has no Smithy CLI,
+reads shape names, members and their trait names only, none of the above.
+
 ## Multi-file models
 
 A Smithy model is often split across files. A namespace can span several files, and shapes target

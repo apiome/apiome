@@ -10,6 +10,24 @@
         "example.common",
         "example.weather"
       ],
+      "smithy_shape_hashes": {
+        "example.common#Money": "a51f3a76bb256469e360d925ae201e6d6ae3a8f95f375203735cd3b2d21013a6",
+        "example.common#Region": "289837d3c9754d2bfb0231ffe9ee1d622a7f928ccb445af689d6cef87108a126",
+        "example.weather#City": "03e9ff14bb3fc49ff8919c108ec78bbba015b4b46b1bcf306e09ffbf388c96a1",
+        "example.weather#CityId": "98095244263cc1f2f55a6ecf29800704e5ae559877d8b5a29b3bef2cf05b39be",
+        "example.weather#Condition": "e154930a757cbcde845fb2aa9a17032fff351654f54862358f1df9036561fd05",
+        "example.weather#ConditionList": "a8ea5933c681dddb7946dc47102c40d9b7c24f2725ca84b6ca8ef03e2577866c",
+        "example.weather#GetCity": "eca161072069d10a7419da8806e803c8409820477b4650b47b45efd71b3b15ac",
+        "example.weather#GetCityInput": "4943e6f713fb12f24324a742a922fb3cb5d9e0e233d11424f50d1a726938890c",
+        "example.weather#GetCityOutput": "20c2657b727b4a7040b9cac420e0cba4a75fdff48dd26b6a72e4058a6940d421",
+        "example.weather#GetCurrentTime": "a6f4987ca240181b0a1edffb9cc4374503846ca1dfd5e8c043a3660457383d09",
+        "example.weather#GetCurrentTimeOutput": "63cd49fc0d7d29a7e0d7e81ed66c14aa2ed11a8b4d3410feea1596ac548ea4d8",
+        "example.weather#GetForecast": "a98c22a8360771c7450ea496c8fb83ab7dea5e18d9578781552abfdeac1e7c5f",
+        "example.weather#GetForecastInput": "4943e6f713fb12f24324a742a922fb3cb5d9e0e233d11424f50d1a726938890c",
+        "example.weather#GetForecastOutput": "c9c4d54816e98ad7318944e4e5c4cffc616a6357c85de8aeb0ef3ee7e4603a37",
+        "example.weather#NoSuchResource": "855ea5def5977bc18e6d6314ef6f7c1dfb5dd17e847770433cda73cc32333180",
+        "example.weather#Weather": "9acccebab48314d1e9b2080fc98dbbfb490553de0fe4b6dee670b6d95b1396d5"
+      },
       "smithy_version": "2.0"
     },
     "format": "smithy",
@@ -32,6 +50,9 @@
             "GetForecast",
             "GetCity"
           ],
+          "smithy_resources": [
+            "City"
+          ],
           "smithy_version": "2006-03-01"
         },
         "key": "example.weather.Weather",
@@ -41,12 +62,32 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "smithy_resource": "City"
+            },
             "http_method": null,
             "http_path": null,
             "key": "example.weather.Weather.GetCity",
             "kind": "request_response",
             "messages": [
+              {
+                "content_types": [],
+                "description": null,
+                "extras": {},
+                "headers": [],
+                "key": "example.weather.Weather.GetCity#error.NoSuchResource",
+                "name": "NoSuchResource",
+                "payload": {
+                  "extras": {},
+                  "item": null,
+                  "name": "example.weather.NoSuchResource",
+                  "nullable": false
+                },
+                "payload_schema": null,
+                "required": false,
+                "role": "error",
+                "status_code": null
+              },
               {
                 "content_types": [],
                 "description": null,
@@ -87,7 +128,9 @@
             "name": "GetCity",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "City"
+            ]
           },
           {
             "channel_ref": null,
@@ -127,7 +170,9 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "smithy_resource": "City"
+            },
             "http_method": null,
             "http_path": null,
             "key": "example.weather.Weather.GetForecast",
@@ -173,7 +218,9 @@
             "name": "GetForecast",
             "parameters": [],
             "streaming": "none",
-            "tags": []
+            "tags": [
+              "City"
+            ]
           }
         ]
       }
@@ -274,11 +321,37 @@
         "description": null,
         "enum_values": [],
         "extras": {
-          "smithy_kind": "resource"
+          "smithy_kind": "resource",
+          "smithy_resource": {
+            "identifiers": {
+              "cityId": "String"
+            },
+            "lifecycle": {
+              "read": "GetCity"
+            },
+            "operations": [
+              "GetForecast"
+            ]
+          }
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Za-z0-9 ]+$",
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
@@ -318,7 +391,7 @@
             "extras": {},
             "key": "example.weather.Condition.SUNNY",
             "name": "SUNNY",
-            "value": 0
+            "value": "SUNNY"
           },
           {
             "deprecated": false,
@@ -326,7 +399,7 @@
             "extras": {},
             "key": "example.weather.Condition.CLOUDY",
             "name": "CLOUDY",
-            "value": 1
+            "value": "CLOUDY"
           },
           {
             "deprecated": false,
@@ -334,7 +407,7 @@
             "extras": {},
             "key": "example.weather.Condition.RAIN",
             "name": "RAIN",
-            "value": 2
+            "value": "RAIN"
           }
         ],
         "extras": {
@@ -388,7 +461,22 @@
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Za-z0-9 ]+$",
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
@@ -521,7 +609,22 @@
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": "^[A-Za-z0-9 ]+$",
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
@@ -623,6 +726,7 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "smithy_error": "client",
           "smithy_kind": "structure"
         },
         "fields": [
@@ -670,15 +774,15 @@
     "confidence": 0.97,
     "format": "smithy"
   },
-  "fingerprint": "sha256:551e4987e46e8de648ecfa684e918b2a08167273738cbd6c36ac72e54bafdca5",
+  "fingerprint": "sha256:919904054df9da6c0cc3d3959d21659a66f7c7cdfc58f0e3f46b4e94553d9136",
   "lint": {
-    "findings": 32,
+    "findings": 33,
     "grade": "F",
-    "report_fingerprint": "e74ce1c6e834edfe6d8584a2ddc47587960f73169ed66bf1ef3d67c4583cc1f4",
-    "score": 50,
+    "report_fingerprint": "0b1a0e346dd7bab88f8f4b4e74c2951b9c435fd884b4bc76fea5d47ed47f79d1",
+    "score": 49,
     "severity_counts": {
       "error": 0,
-      "info": 18,
+      "info": 19,
       "warning": 14
     }
   },

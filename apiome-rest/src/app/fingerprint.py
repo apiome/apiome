@@ -100,6 +100,7 @@ UNHASHED_EXTRAS = frozenset(
         "apib_refract_sha256",
         "apib_refract_algorithm",
         "apib_drafter_version",
+        "smithy_shape_hashes",
     }
 )
 

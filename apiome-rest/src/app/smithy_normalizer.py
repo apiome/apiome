@@ -3,23 +3,44 @@
 Maps a parsed :class:`~app.smithy_parser.SmithyDocument` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
 :attr:`~app.canonical_model.ApiParadigm.RPC`.
+
+MFI-17.2 (#3809) maps services, operations, resources, shapes and traits as the JSON AST gives them
+(:mod:`app.smithy_ast_mapper`):
+
+* **traits** — a member's ``@documentation`` is its description, ``@default`` its default,
+  ``@length`` / ``@range`` / ``@pattern`` its constraints (a list's ``@length`` bounds its items),
+  ``@deprecated`` marks it deprecated, and every other trait value is kept in
+  ``extras["smithy_trait_values"]``;
+* **operations** — ``@http`` sets ``http_method`` / ``http_path`` and the ``extras["http"]`` binding
+  the OpenAPI projection reads; the input's ``@httpLabel`` / ``@httpQuery`` / ``@httpHeader`` members
+  are its path, query and header parameters; ``@readonly`` / ``@idempotent`` / ``@paginated`` /
+  ``@deprecated`` are recorded; each declared error, and each of its service's, is an ``error``
+  message (status from the error's ``@httpError``);
+* **resources** — a resource type records its identifiers, properties, lifecycle and children, and an
+  operation a resource binds is tagged with it;
+* **enums** — an ``@enumValue`` is the value's wire value; an ``intEnum`` is marked so.
+
+The IDL reader (no Smithy CLI) gives trait names only, so its models carry none of this.
 """
 
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Mapping, Optional, Set
 
 from .canonical_model import (
     ApiIdentity,
     ApiParadigm,
     CanonicalApi,
     CanonicalField,
+    Constraints,
     EnumValue,
     Message,
     MessageRole,
     Operation,
     OperationKind,
+    Parameter,
+    ParameterLocation,
     Service,
     StreamingMode,
     Type,
@@ -27,7 +48,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
-from .smithy_parser import SmithyDocument, SmithyField
+from .smithy_parser import SmithyDocument, SmithyField, SmithyOperation, SmithyService, SmithyStructure
 
 __all__ = ["SmithyNormalizer"]
 
@@ -113,6 +134,9 @@ def _canonical_field(
     extras: Dict[str, Any] = {}
     if field.traits:
         extras["smithy_traits"] = list(field.traits)
+    recorded = _recorded_traits(field.trait_values)
+    if recorded:
+        extras["smithy_trait_values"] = recorded
     return CanonicalField(
         key=Keys.field(type_key, field.name),
         name=field.name,
@@ -122,8 +146,179 @@ def _canonical_field(
             nullable=not field.required,
             extras=ref.extras,
         ),
+        default=field.trait_values.get("default"),
+        constraints=_constraints(field.trait_values, collection=field.type_name in list_names),
+        description=field.documentation,
+        deprecated="deprecated" in field.trait_values,
         extras=extras,
     )
+
+
+#: Traits the canonical field models itself, so they are not repeated in ``smithy_trait_values``.
+_MODELED_FIELD_TRAITS = frozenset({"required", "documentation", "default", "length", "range", "pattern"})
+
+
+def _recorded_traits(values: Mapping[str, Any]) -> Dict[str, Any]:
+    """The trait values a field keeps in extras: every one the canonical field does not model."""
+    return {key: value for key, value in values.items() if key not in _MODELED_FIELD_TRAITS}
+
+
+def _number(value: Any) -> Optional[float]:
+    """A trait bound as a number (``range`` bounds may be written as strings for big numbers)."""
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return value
+    try:
+        return float(value) if isinstance(value, str) else None
+    except ValueError:
+        return None
+
+
+def _constraints(values: Mapping[str, Any], *, collection: bool) -> Optional[Constraints]:
+    """``@length`` / ``@range`` / ``@pattern`` as canonical constraints (MFI-17.2).
+
+    Args:
+        values: The member's trait values.
+        collection: Whether the member is a list, whose ``@length`` counts items, not characters.
+
+    Returns:
+        The constraints, or ``None`` when the member declares none.
+    """
+    length = values.get("length") if isinstance(values.get("length"), Mapping) else {}
+    bounds = values.get("range") if isinstance(values.get("range"), Mapping) else {}
+    pattern = values.get("pattern") if isinstance(values.get("pattern"), str) else None
+    if not length and not bounds and pattern is None:
+        return None
+    low, high = length.get("min"), length.get("max")
+    return Constraints(
+        min_length=None if collection else low,
+        max_length=None if collection else high,
+        min_items=low if collection else None,
+        max_items=high if collection else None,
+        minimum=_number(bounds.get("min")),
+        maximum=_number(bounds.get("max")),
+        pattern=pattern,
+    )
+
+
+def _http_extras(op: SmithyOperation) -> Dict[str, Any]:
+    """An operation's ``@http`` binding as ``extras["http"]`` (the projection's shape) plus its code."""
+    http = op.trait_values.get("http")
+    if not isinstance(http, Mapping):
+        return {}
+    if not isinstance(http.get("method"), str) or not isinstance(http.get("uri"), str):
+        return {}
+    extras: Dict[str, Any] = {"http": {"method": http["method"].lower(), "path": http["uri"]}}
+    if isinstance(http.get("code"), int):
+        extras["smithy_http_code"] = http["code"]
+    return extras
+
+
+def _operation_trait_extras(op: SmithyOperation) -> Dict[str, Any]:
+    """The operation traits recorded in extras: ``readonly``, ``idempotent``, ``paginated``, ``deprecated``."""
+    values = op.trait_values
+    extras: Dict[str, Any] = {}
+    for flag in ("readonly", "idempotent"):
+        if flag in values:
+            extras[f"smithy_{flag}"] = True
+    if isinstance(values.get("paginated"), Mapping):
+        extras["smithy_paginated"] = dict(values["paginated"])
+    deprecated = values.get("deprecated")
+    if isinstance(deprecated, Mapping) and deprecated:
+        extras["smithy_deprecated"] = dict(deprecated)
+    return extras
+
+
+#: ``@httpLabel`` / ``@httpQuery`` / ``@httpHeader`` → the parameter location they bind to.
+_HTTP_PARAMETER_TRAITS = (
+    ("httpLabel", ParameterLocation.PATH),
+    ("httpQuery", ParameterLocation.QUERY),
+    ("httpHeader", ParameterLocation.HEADER),
+)
+
+
+def _http_parameters(
+    op_key: str, input_shape: Optional[SmithyStructure], field_ref: Any
+) -> List[Parameter]:
+    """The input members an operation binds to its path, query string or headers (MFI-17.2).
+
+    Args:
+        op_key: The operation's key.
+        input_shape: Its input structure, or ``None``.
+        field_ref: Resolves a member's type name to a :class:`TypeRef`.
+
+    Returns:
+        One parameter per bound member, named as the HTTP request names it (a query or header
+        trait's value), with the member's documentation and requiredness.
+    """
+    if input_shape is None:
+        return []
+    parameters: List[Parameter] = []
+    for member in input_shape.fields:
+        for trait, location in _HTTP_PARAMETER_TRAITS:
+            if trait not in member.trait_values:
+                continue
+            bound = member.trait_values[trait]
+            name = bound if isinstance(bound, str) and bound else member.name
+            parameters.append(
+                Parameter(
+                    key=Keys.parameter(op_key, location.value, name),
+                    name=name,
+                    location=location,
+                    required=member.required or location is ParameterLocation.PATH,
+                    description=member.documentation,
+                    type=field_ref(member.type_name),
+                    constraints=_constraints(member.trait_values, collection=False),
+                    extras={"smithy_member": member.name},
+                )
+            )
+            break
+    return parameters
+
+
+def _resource_of(source: SmithyDocument) -> Dict[str, str]:
+    """``{operation name: resource name}`` for every operation a resource binds directly."""
+    bound: Dict[str, str] = {}
+    for shape in source.structures:
+        info = shape.resource
+        if not info:
+            continue
+        names = [
+            *info.get("lifecycle", {}).values(),
+            *info.get("operations", []),
+            *info.get("collection_operations", []),
+        ]
+        for name in names:
+            bound.setdefault(name, shape.name)
+    return bound
+
+
+def _structure_extras(shape: SmithyStructure) -> Dict[str, Any]:
+    """An error structure's ``@error`` / ``@httpError`` / ``@retryable``, and a resource's shape."""
+    values = shape.trait_values
+    extras: Dict[str, Any] = {}
+    if isinstance(values.get("error"), str):
+        extras["smithy_error"] = values["error"]
+    if isinstance(values.get("httpError"), int):
+        extras["smithy_http_error"] = values["httpError"]
+    if "retryable" in values:
+        extras["smithy_retryable"] = True
+    if shape.resource:
+        extras["smithy_resource"] = {key: value for key, value in shape.resource.items() if value}
+    return extras
+
+
+def _service_extras(svc: SmithyService) -> Dict[str, Any]:
+    """A service's errors, resources and trait ids (its protocols, such as ``aws.protocols#restJson1``)."""
+    extras: Dict[str, Any] = {}
+    if svc.errors:
+        extras["smithy_errors"] = list(svc.errors)
+    if svc.resources:
+        extras["smithy_resources"] = list(svc.resources)
+    if svc.trait_values:
+        extras["smithy_service_traits"] = sorted(svc.trait_values)
+    return extras
 
 
 
@@ -175,11 +370,13 @@ class SmithyNormalizer(Normalizer, register=True):
 
         for enum in source.enums:
             type_key = _type_key(enum.name, namespace)
+            explicit = list(enum.enum_values) + [None] * (len(enum.values) - len(enum.enum_values))
             values = [
                 EnumValue(
                     key=Keys.enum_value(type_key, value),
                     name=value,
-                    value=index,
+                    # MFI-17.2: an @enumValue is the wire value; without one the position stays.
+                    value=explicit[index] if explicit[index] is not None else index,
                 )
                 for index, value in enumerate(enum.values)
             ]
@@ -191,7 +388,7 @@ class SmithyNormalizer(Normalizer, register=True):
                     namespace=namespace,
                     description=enum.documentation,
                     enum_values=values,
-                    extras={"smithy_kind": "enum"},
+                    extras={"smithy_kind": "intEnum" if enum.int_enum else "enum"},
                 )
             )
 
@@ -277,11 +474,26 @@ class SmithyNormalizer(Normalizer, register=True):
                     namespace=namespace,
                     description=shape.documentation,
                     fields=fields,
-                    extras={"smithy_kind": shape.kind},
+                    extras={"smithy_kind": shape.kind, **_structure_extras(shape)},
                 )
             )
 
         operations_by_name = {op.name: op for op in source.operations}
+        structures_by_name = {shape.name: shape for shape in source.structures}
+        resource_of = _resource_of(source)
+
+        def ref(type_name: str) -> TypeRef:
+            return _type_ref(
+                type_name,
+                namespace=namespace,
+                structure_names=structure_names,
+                enum_names=enum_names,
+                list_names=list_names,
+                map_names=map_names,
+                list_types=list_types,
+                map_types=map_types,
+            )
+
         services: List[Service] = []
         for svc in source.services:
             service_key = _type_key(svc.name, namespace)
@@ -327,6 +539,22 @@ class SmithyNormalizer(Normalizer, register=True):
                             ),
                         )
                     )
+                # MFI-17.2: the operation's declared errors, then its service's, each once.
+                for error_name in dict.fromkeys([*op.errors, *svc.errors]):
+                    error_shape = structures_by_name.get(error_name)
+                    status = error_shape.trait_values.get("httpError") if error_shape is not None else None
+                    messages.append(
+                        Message(
+                            key=f"{op_key}#error.{error_name}",
+                            role=MessageRole.ERROR,
+                            name=error_name.split("#")[-1],
+                            payload=ref(error_name),
+                            status_code=str(status) if isinstance(status, int) else None,
+                            description=error_shape.documentation if error_shape is not None else None,
+                        )
+                    )
+                http = op.trait_values.get("http") if isinstance(op.trait_values.get("http"), Mapping) else {}
+                resource = resource_of.get(op.name)
                 service_operations.append(
                     Operation(
                         key=op_key,
@@ -334,7 +562,19 @@ class SmithyNormalizer(Normalizer, register=True):
                         kind=OperationKind.REQUEST_RESPONSE,
                         streaming=StreamingMode.NONE,
                         description=op.documentation,
+                        deprecated="deprecated" in op.trait_values,
+                        http_method=http.get("method").upper() if isinstance(http.get("method"), str) else None,
+                        http_path=http.get("uri") if isinstance(http.get("uri"), str) else None,
+                        parameters=_http_parameters(
+                            op_key, structures_by_name.get(op.input_type or ""), ref
+                        ),
                         messages=messages,
+                        tags=[resource] if resource else [],
+                        extras={
+                            **_http_extras(op),
+                            **_operation_trait_extras(op),
+                            **({"smithy_resource": resource} if resource else {}),
+                        },
                     )
                 )
             services.append(
@@ -346,6 +586,7 @@ class SmithyNormalizer(Normalizer, register=True):
                     extras={
                         "smithy_version": svc.version,
                         "smithy_operations": list(svc.operations),
+                        **_service_extras(svc),
                     },
                 )
             )
@@ -373,6 +614,8 @@ class SmithyNormalizer(Normalizer, register=True):
                 **({"smithy_source_files": list(source.source_files)} if source.source_files else {}),
                 # MFI-17.3: `smithy validate` events (smithy-linters included), for the `smithy` pack.
                 **_validation_extras(source),
+                # MFI-17.2: each shape's AST hash, keyed by absolute shape id.
+                **({"smithy_shape_hashes": dict(source.shape_hashes)} if source.shape_hashes else {}),
             },
         )
         return normalize_ordering(api)
