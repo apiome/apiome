@@ -5,7 +5,9 @@
     "description": null,
     "extras": {
       "wsdl_target_namespace": "http://example.com/catalogue",
-      "wsdl_version": "2.0"
+      "wsdl_version": "2.0",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "34f59c091bddc1b51fd1ee54160a2b298080a553925626debc111089c6dacf58"
     },
     "format": "wsdl",
     "identity": {
@@ -405,7 +407,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:d821f8a99efd89311b2fbb9519739b707c6fa88ed9bf33edae947a4cc0d04df4",
+  "fingerprint": "sha256:02c5acf553db13d4ff2981172f5479374aa89492f9f0d6814abb4dcb0e816c62",
   "lint": {
     "findings": 20,
     "grade": "D",

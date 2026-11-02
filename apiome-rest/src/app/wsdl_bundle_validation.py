@@ -53,6 +53,7 @@ from .secure_xml import SecureXmlError, parse_xml
 from .wsdl_import_source import WsdlImportSource
 from .wsdl_versions import VERSION_1_1, VERSION_2_0, WSDL_1_1_NAMESPACE, WSDL_2_0_NAMESPACE
 from .wsdl_wsi import check_wsi
+from .xml_import_graph import resolve_bundle_path
 from .zip_bundle import safe_bundle_path
 
 __all__ = [
@@ -206,7 +207,7 @@ def bundle_reference_problems(
             location = element.get(attribute)
             if location is None:
                 continue
-            resolved = _resolve(base, location)
+            resolved = resolve_bundle_path(base, location)
             if resolved is None or resolved not in files:
                 problems.append(
                     WsdlBundleProblem(
@@ -218,16 +219,6 @@ def bundle_reference_problems(
                     )
                 )
     return problems
-
-
-def _resolve(base: str, location: str) -> Optional[str]:
-    """``location`` as a bundle path relative to ``base``, or ``None`` for a URL or an escape."""
-    if not location or "://" in location or location.startswith(("/", "\\")) or ":" in location.split("/")[0]:
-        return None
-    resolved = posixpath.normpath(posixpath.join(base, location))
-    if resolved == ".." or resolved.startswith("../"):
-        return None
-    return resolved
 
 
 def _wsi_problems(root_path: str, version: str, files: Mapping[str, str]) -> List[WsdlBundleProblem]:

@@ -5,7 +5,9 @@
     "description": null,
     "extras": {
       "wsdl_target_namespace": "http://example.com/shipping/tracking/v2",
-      "wsdl_version": "2.0"
+      "wsdl_version": "2.0",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "4c0691911cb49c19dbf3cd6c0762c0cf7ca49c882ffb3c917e93ba8b85bc0c10"
     },
     "format": "wsdl",
     "identity": {
@@ -1021,7 +1023,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:3e93e6a1ab4802c4c47fc9146e15a59f1306c6d3e50b7a599c672cb4adb0ac17",
+  "fingerprint": "sha256:3af9d89979243621e763672e3184c47c9b377ac26e208ca44902d9a773a387de",
   "lint": {
     "findings": 50,
     "grade": "F",

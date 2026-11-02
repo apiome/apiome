@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "c68dad3749e96da6c60c5d3118d96fa55a105fd287fd305636512d41f06d1649",
       "xsd_elements": [
         {
           "name": "note",
@@ -99,7 +101,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:a15a7bf557907faba56c489d0125bd27bac9bb5aef7cb5f249c82ac2f567d210",
+  "fingerprint": "sha256:257e3bcff6b567d619ade7c7ec6164c51671d231598ceb9f9fbaadf65eec7f2b",
   "lint": {
     "findings": 4,
     "grade": "A",

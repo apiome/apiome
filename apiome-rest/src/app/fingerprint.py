@@ -86,9 +86,11 @@ _OPAQUE_KEYS = frozenset(
 
 # Top-level ``CanonicalApi.extras`` keys recorded on the model but kept out of the hash (and so
 # out of the diff, which reads the same projection). They hold values that change on doc-only
-# edits — Avro's semantic hashes (MFI-12.1), which keep ``doc`` by design — and would otherwise
-# mint a version for an edit the fingerprint is meant to ignore.
-UNHASHED_EXTRAS = frozenset({"avro_semantic_hashes"})
+# edits — Avro's semantic hashes (MFI-12.1), which keep ``doc`` by design, and the canonical-XML
+# hash of a WSDL / XSD import (MFI-13.1), which keeps ``xs:documentation`` — or that name files
+# (the XML import graph) — and would otherwise mint a version for an edit the fingerprint is meant
+# to ignore.
+UNHASHED_EXTRAS = frozenset({"avro_semantic_hashes", "xml_c14n_sha256", "xml_c14n_algorithm", "xml_import_graph"})
 
 
 def _scrub(node: Any) -> Any:

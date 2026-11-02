@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "84cecaf9512a3aec7eed599c9a4832251607e3b6e69e04eeb920b5c2433aeeb6",
       "xsd_elements": [
         {
           "name": "directory",
@@ -473,7 +475,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:125f1524c2887d5b122c8a113d93150df0a220c965c533f868bf5d0de90f16a0",
+  "fingerprint": "sha256:285c0c9e1946d4acfc91e4a1843b3096f7180f04f8ad8725b6b830075878f5a1",
   "lint": {
     "findings": 20,
     "grade": "D",

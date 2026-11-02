@@ -1,0 +1,21 @@
+---
+slug: wsdl-xsd-import-resolution
+title: WSDL and XSD files split across folders import as one
+description: Imports resolve relative to each file, and XSD sets read every schema.
+authors: [apiome]
+---
+
+A SOAP description or an XML Schema uploaded as a set of files now imports as one, however the files
+are laid out. [How locations are found](/bring-in/wsdl-import#a-description-split-across-files).
+
+{/* truncate */}
+
+- **Relative to each file.** `../schemas/orders.xsd` in `wsdl/orders.wsdl` is found in the upload's
+  `schemas` folder, the way a SOAP toolkit finds it. Two files with the same name are never mixed up.
+- **WSDL 2.0 too.** A WSDL 2.0 description's `import` and `include` are followed, so an interface or
+  binding kept in another file is part of the item.
+- **XSD sets.** An XSD uploaded with the schemas it imports or includes now catalogs their types as
+  well. See [Import an XML Schema](/bring-in/xsd-import).
+- **A hash over the files.** Each WSDL and XSD item records a Canonical XML hash of every file it was
+  read from. Whitespace, comments and prefixes do not change it.
+- **XSD 1.1.** A schema written in XSD 1.1 is recognized and marked `xsd_version: 1.1`.

@@ -16,6 +16,14 @@ recorded on :attr:`WsdlDocument.version` so it can be reported as provenance.
 
 The version is resolved from the root element's *namespace*
 (:func:`~app.wsdl_versions.detect_wsdl_version`), never from the root's local name.
+
+**One description, many files** (MFI-13.1, #3788). Imports and includes are followed through
+:func:`app.xml_import_graph.resolve_import_graph` — ``wsdl:import`` in both grammars, 2.0
+``wsdl:include``, and ``xs:import`` / ``xs:include`` / ``xs:redefine`` / ``xs:override`` — with
+each location resolved relative to the file that declares it. Every description reached
+contributes its messages, port types/interfaces, bindings, services and schemas. The document
+records the graph it was read from and a Canonical XML hash over it
+(:mod:`app.xml_canonical_hash`), and whether its schemas are XSD 1.1.
 """
 
 from __future__ import annotations
@@ -32,6 +40,9 @@ from .wsdl_versions import (
     detect_wsdl_version,
     version_for_namespace,
 )
+from .xml_canonical_hash import canonical_xml_sha256
+from .xml_import_graph import resolve_import_graph
+from .xsd_parser import detect_xsd_version
 
 __all__ = [
     "WsdlParseError",
@@ -247,6 +258,12 @@ class WsdlDocument:
         wsi_issue_count: How many WS-I problems there were in all.
         bindings: The document's bindings, with the port type, protocol and transport of each
             (MFI-13.2); ports name them.
+        import_graph: The documents the description was read from and the references nothing
+            answered (MFI-13.1, :meth:`app.xml_import_graph.XmlImportGraph.as_extras`); ``None``
+            when it is one self-contained file.
+        c14n_sha256: SHA-256 over Canonical XML 2.0 of every document in the graph (MFI-13.1,
+            :mod:`app.xml_canonical_hash`), or ``None`` when it could not be computed.
+        xsd_version: ``1.1`` when any schema it reads is XSD 1.1, else ``1.0``.
     """
 
     name: Optional[str]
@@ -265,6 +282,9 @@ class WsdlDocument:
     wsi_issues: Tuple[Dict[str, str], ...] = ()
     wsi_issue_count: int = 0
     bindings: Tuple[WsdlBinding, ...] = ()
+    import_graph: Optional[Dict[str, object]] = None
+    c14n_sha256: Optional[str] = None
+    xsd_version: str = "1.0"
 
 
 def is_wsdl(content: str) -> bool:
@@ -592,128 +612,27 @@ def _read_schemas(
     return tuple(complex_types), tuple(elements)
 
 
-def _resolve_member(location: str, members: Mapping[str, str]) -> Optional[str]:
-    """Resolve an ``xs:import``/``xs:include`` ``schemaLocation`` against fileset members.
+def _graph_schemas(roots: Sequence[ET.Element], graph_documents: Sequence[ET.Element]) -> List[ET.Element]:
+    """Return the schemas a description reads: inline ones first, then every imported one.
 
     Args:
-        location: The declared location, which may be a bare filename or a relative path.
-        members: Fileset member name -> text.
+        roots: The descriptions read as one (the root and every description it reached).
+        graph_documents: Every other document of the import graph, in discovery order. A
+            schema document contributes itself; any other document (a description reached
+            through ``xs:import``, which WS-I forbids but toolkits read) its inline schemas.
 
     Returns:
-        The member's text, or ``None`` when nothing in the set matches.
+        The ``xs:schema`` elements to read, in order.
     """
-    if location in members:
-        return members[location]
-    tail = location.rsplit("/", 1)[-1]
-    return members.get(tail)
-
-
-def _collect_schemas(
-    types_el: Optional[ET.Element] | Sequence[ET.Element],
-    *,
-    members: Optional[Mapping[str, str]],
-    source_label: Optional[str],
-) -> List[ET.Element]:
-    """Return the inline schemas plus every schema a fileset member supplies.
-
-    ``xs:import`` / ``xs:include`` name a sibling document by ``schemaLocation``. Parsed
-    alone, a WSDL document has no way to read those; parsed as a fileset it does, which is
-    what lets a service that keeps its types in a separate ``.xsd`` import as one API.
-    Imports are followed transitively, and a location that resolves to nothing is skipped
-    rather than failing the import — an unresolved *schema* leaves dangling type
-    references, which lint reports, not an unparseable document.
-
-    Args:
-        types_el: The ``types`` element (or, for a document merged from ``wsdl:import``,
-            every ``types`` element), or ``None`` when the document declares none.
-        members: Fileset member name -> text, or ``None`` for a single-document parse.
-        source_label: Label used in XML error messages.
-
-    Returns:
-        The ``xs:schema`` elements to read, inline ones first.
-    """
-    if types_el is None:
-        return []
-    types_elements = [types_el] if isinstance(types_el, ET.Element) else list(types_el)
-    schemas = [schema for element in types_elements for schema in _find_descendants(element, "schema")]
-    if not members:
-        return schemas
-
-    resolved: List[ET.Element] = list(schemas)
-    seen: Set[str] = set()
-    queue = list(schemas)
-    while queue:
-        schema = queue.pop(0)
-        for ref in _children(schema, "import") + _children(schema, "include"):
-            location = (ref.get("schemaLocation") or "").strip()
-            if not location or location in seen:
-                continue
-            seen.add(location)
-            text = _resolve_member(location, members)
-            if text is None:
-                continue
-            try:
-                member_root = parse_xml(text, source_label=location or source_label)
-            except SecureXmlError:
-                # A member that cannot be read leaves its types unresolved, exactly as an
-                # absent member would; the root document is still importable.
-                continue
-            member_schemas = (
-                [member_root]
-                if _local(member_root.tag) == "schema"
-                else _find_descendants(member_root, "schema")
-            )
-            resolved.extend(member_schemas)
-            queue.extend(member_schemas)
-    return resolved
-
-
-def _imported_definitions(
-    root: ET.Element,
-    *,
-    members: Optional[Mapping[str, str]],
-    source_label: Optional[str],
-) -> List[ET.Element]:
-    """The WSDL 1.1 documents ``root`` pulls in with ``wsdl:import``, transitively (MFI-13.3).
-
-    A service can split its description across WSDL files — WCF's ``?wsdl`` names
-    ``?wsdl=wsdl0`` this way — and each ``<wsdl:import location=…>`` names one. Their messages,
-    port types, bindings, services and schemas belong to the same API. Only reachable when the
-    document is parsed with ``members`` (a fileset or a live fetch); an import nothing answers
-    is skipped, like an unresolved schema.
-
-    Args:
-        root: The root ``definitions`` element.
-        members: Member name -> text, or ``None`` for a single-document parse.
-        source_label: Label used in XML error messages.
-
-    Returns:
-        The imported ``definitions`` roots, in discovery order (``root`` itself excluded).
-    """
-    if not members:
-        return []
-    imported: List[ET.Element] = []
-    seen: Set[str] = set()
-    queue = [root]
-    while queue:
-        current = queue.pop(0)
-        for ref in _children(current, "import"):
-            location = (ref.get("location") or "").strip()
-            if not location or location in seen:
-                continue
-            seen.add(location)
-            text = _resolve_member(location, members)
-            if text is None:
-                continue
-            try:
-                member_root = parse_xml(text, source_label=location or source_label)
-            except SecureXmlError:
-                continue
-            if _local(member_root.tag) != "definitions":
-                continue
-            imported.append(member_root)
-            queue.append(member_root)
-    return imported
+    schemas = [
+        schema
+        for definition in roots
+        for types in _children(definition, "types")
+        for schema in _find_descendants(types, "schema")
+    ]
+    for element in graph_documents:
+        schemas.extend([element] if _local(element.tag) == "schema" else _find_descendants(element, "schema"))
+    return schemas
 
 
 # ---------------------------------------------------------------------------
@@ -1012,11 +931,12 @@ def _flatten_interface(
     return tuple(by_name.values())
 
 
-def _parse_interfaces(root: ET.Element) -> Tuple[WsdlPortType, ...]:
+def _parse_interfaces(roots: Sequence[ET.Element]) -> Tuple[WsdlPortType, ...]:
     """Read every 2.0 ``interface``, with inherited operations flattened in.
 
     Args:
-        root: The ``description`` element.
+        roots: The ``description`` element and every description it imports or includes, so an
+            interface may extend one declared in another file.
 
     Returns:
         One :class:`WsdlPortType` per declared interface, in document order. A name declared
@@ -1027,11 +947,12 @@ def _parse_interfaces(root: ET.Element) -> Tuple[WsdlPortType, ...]:
     order: List[str] = []
     fault_elements = {
         fault.get("name") or "": _attr_local(fault.get("element"))
+        for root in roots
         for interface_el in _children(root, "interface")
         for fault in _children(interface_el, "fault")
         if fault.get("name")
     }
-    for interface_el in _children(root, "interface"):
+    for interface_el in (el for root in roots for el in _children(root, "interface")):
         name = interface_el.get("name")
         if not name:
             continue
@@ -1052,17 +973,17 @@ def _parse_interfaces(root: ET.Element) -> Tuple[WsdlPortType, ...]:
     )
 
 
-def _parse_endpoints(root: ET.Element) -> Tuple[WsdlService, ...]:
+def _parse_endpoints(roots: Sequence[ET.Element]) -> Tuple[WsdlService, ...]:
     """Read every 2.0 ``service`` and its ``endpoint`` children.
 
     Args:
-        root: The ``description`` element.
+        roots: The ``description`` element and every description it imports or includes.
 
     Returns:
         The services, each carrying its endpoints as :class:`WsdlPort` records.
     """
     services: List[WsdlService] = []
-    for service_el in _children(root, "service"):
+    for service_el in (el for root in roots for el in _children(root, "service")):
         name = service_el.get("name")
         if not name:
             continue
@@ -1126,8 +1047,9 @@ def parse_wsdl(
         content: The raw document text, in either grammar.
         source_label: Label used in error messages (usually the filename).
         members: Sibling documents of a multi-file set, keyed by member name. When given,
-            ``xs:import`` / ``xs:include`` locations are resolved against them, so a
-            service whose types live in a separate schema imports as one API.
+            every import and include is resolved against them (relative to the file that
+            declares it; MFI-13.1), so a description split across files imports as one API.
+            ``source_label`` is the root's own member key.
 
     Returns:
         The parsed document.
@@ -1161,18 +1083,31 @@ def parse_wsdl(
             f"WSDL {version} root element must be `{expected_root}`, found `{root_name}`"
         )
 
-    # MFI-13.3: a WSDL 1.1 description split across files with `wsdl:import` is read as one.
-    roots = [root]
-    if version != VERSION_2_0:
-        roots += _imported_definitions(root, members=members, source_label=source_label)
-    types_elements = [types for definition in roots for types in _children(definition, "types")]
-    complex_types, elements = _read_schemas(
-        _collect_schemas(types_elements, members=members, source_label=source_label)
+    # MFI-13.3 / MFI-13.1: a description split across files is read as one. Every description
+    # the import graph reaches (same grammar, same root element) contributes its components;
+    # every other document reached contributes its schemas.
+    graph = resolve_import_graph(root, root_text=content, root_path=source_label, members=members)
+    roots = [root] + [
+        document.element
+        for document in graph.imported()
+        if _local(document.element.tag) == root_name and _namespace(document.element.tag) == _namespace(root.tag)
+    ]
+    root_ids = {id(element) for element in roots}
+    schemas = _graph_schemas(
+        roots, [document.element for document in graph.imported() if id(document.element) not in root_ids]
     )
+    complex_types, elements = _read_schemas(schemas)
+    provenance = {
+        "import_graph": graph.as_extras(),
+        "c14n_sha256": canonical_xml_sha256(graph),
+        "xsd_version": detect_xsd_version(schemas),
+    }
 
     if version == VERSION_2_0:
-        port_types = _parse_interfaces(root)
-        _check_interface_references(root, {port_type.name for port_type in port_types})
+        port_types = _parse_interfaces(roots)
+        declared = {port_type.name for port_type in port_types}
+        for definition in roots:
+            _check_interface_references(definition, declared)
         if not port_types:
             label = f" ({source_label})" if source_label else ""
             raise WsdlParseError(
@@ -1186,11 +1121,12 @@ def parse_wsdl(
             complex_types=complex_types,
             elements=elements,
             messages=(),
-            port_types=_with_binding_details(port_types, _binding_details([root], VERSION_2_0)),
-            bindings=_parse_bindings([root], VERSION_2_0),
-            services=_parse_endpoints(root),
+            port_types=_with_binding_details(port_types, _binding_details(roots, VERSION_2_0)),
+            bindings=_parse_bindings(roots, VERSION_2_0),
+            services=_parse_endpoints(roots),
             raw=content,
             version=VERSION_2_0,
+            **provenance,
         )
 
     document = WsdlDocument(
@@ -1207,6 +1143,7 @@ def parse_wsdl(
         services=tuple(s for definition in roots for s in _parse_services(definition)),
         raw=content,
         version=VERSION_1_1,
+        **provenance,
     )
 
     if not document.complex_types and not document.port_types:

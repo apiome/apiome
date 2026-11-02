@@ -6,7 +6,7 @@ documents importable into the catalog (store-raw).
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from . import xsd_normalizer  # noqa: F401 — self-registers the normalizer
 from .canonical_model import ApiParadigm, CanonicalApi
@@ -53,9 +53,29 @@ class XsdImportSource(ImportSource, register=True):
                 return DetectionResult(confidence=0.9, format="xsd", reason="`.xsd` file extension")
         return NO_MATCH
 
-    def parse(self, raw: str, *, source_label: Optional[str] = None) -> XsdDocument:
+    def parse(
+        self,
+        raw: str,
+        *,
+        source_label: Optional[str] = None,
+        members: Optional[Mapping[str, str]] = None,
+    ) -> XsdDocument:
+        """Parse one schema, following its imports through ``members`` when given (MFI-13.1).
+
+        Args:
+            raw: The schema text.
+            source_label: Label for errors; for a set, the root's member key.
+            members: The documents of a multi-file set, or ``None`` for one file.
+
+        Returns:
+            The parsed schema.
+
+        Raises:
+            ImportSourceError: When the text cannot be parsed, with the taxonomy code of a
+                refused DTD / entity / size limit when that was the reason.
+        """
         try:
-            return parse_xsd(raw, source_label=source_label)
+            return parse_xsd(raw, source_label=source_label, members=members)
         except (XsdParseError, SecureXmlError) as exc:
             # SecureXmlError carries the taxonomy code for a rejected DTD /
             # entity / external reference or an exceeded size or depth limit.
@@ -70,7 +90,8 @@ class XsdImportSource(ImportSource, register=True):
         root = fileset.root
         if root not in fileset.members:
             raise ImportSourceError("XSD fileset is missing its root document")
-        return self.parse(fileset.members[root], source_label=root or source_label)
+        # MFI-13.1: the set's other members answer the root's xs:import / xs:include.
+        return self.parse(fileset.members[root], source_label=root or source_label, members=fileset.members)
 
     def normalize(self, native_ast: Any, *, include_raw: bool = True) -> CanonicalApi:
         if not isinstance(native_ast, XsdDocument):

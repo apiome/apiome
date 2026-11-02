@@ -4,7 +4,9 @@
     "channels": [],
     "description": null,
     "extras": {
-      "wsdl_target_namespace": "http://example.com/orders"
+      "wsdl_target_namespace": "http://example.com/orders",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "7d078332c83cb8e99ee600dbe50a198017cfeef4e609778baa213faaa6df787a"
     },
     "format": "wsdl",
     "identity": {
@@ -772,7 +774,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:e84a2bb45d40b2814ea3b890005c08966adb9d50cd6fcac4b06c5d22604b0daa",
+  "fingerprint": "sha256:bf82643432ad97f3139b927c796c8693076f7e744a98228428e68a2d26a1da64",
   "lint": {
     "findings": 40,
     "grade": "F",

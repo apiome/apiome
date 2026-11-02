@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "0ceb9c86a35a13a0cd0a342b2206ad7182ac6981261c63ab8638b60384488e4e",
       "xsd_elements": [
         {
           "name": "shelf",
@@ -367,7 +369,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:ab82d50e6d895c0d3902a2dffe98099ea444762328b3e8308320323c4ba0ae1d",
+  "fingerprint": "sha256:8e3ac5852e284d81e805448f7740a081bbfacfdbf1f9ef6c73825fabb19b8cb1",
   "lint": {
     "findings": 17,
     "grade": "D",

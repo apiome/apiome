@@ -2,15 +2,27 @@
 
 Parses W3C XML Schema documents into a typed :class:`XsdDocument` AST using the
 stdlib :mod:`xml.etree.ElementTree`.
+
+**A schema split across files** (MFI-13.1, #3788). Parsed with the members of a multi-file set,
+the schema's ``xs:import`` / ``xs:include`` / ``xs:redefine`` / ``xs:override`` references are
+followed (:func:`app.xml_import_graph.resolve_import_graph`, each location relative to the file
+that declares it), and the types and elements of every schema reached are read with the root's.
+Names are merged the way the WSDL reader merges them: by local name, the first declaration (the
+root's, then discovery order) winning.
+
+**XSD 1.1** is recognized (:func:`detect_xsd_version`) and recorded; its 1.1-only constructs
+(assertions, type alternatives, open content) are not modeled.
 """
 
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
+from .xml_canonical_hash import canonical_xml_sha256
+from .xml_import_graph import resolve_import_graph
 
 __all__ = [
     "XsdParseError",
@@ -19,11 +31,16 @@ __all__ = [
     "XsdSimpleType",
     "XsdElementDecl",
     "XsdDocument",
+    "detect_xsd_version",
     "is_xsd",
     "parse_xsd",
 ]
 
 _XSD_NS = "http://www.w3.org/2001/XMLSchema"
+#: The XSD versioning namespace; ``vc:minVersion="1.1"`` marks a schema as XSD 1.1.
+_VC_NS = "http://www.w3.org/2007/XMLSchema-versioning"
+#: Elements that exist only in XSD 1.1.
+_XSD_1_1_ONLY = frozenset({"assert", "assertion", "alternative", "openContent", "defaultOpenContent", "override"})
 
 
 class XsdParseError(ValueError):
@@ -60,12 +77,58 @@ class XsdElementDecl:
 
 @dataclass(frozen=True)
 class XsdDocument:
+    """A parsed schema and, when parsed as a set, the schemas it imports.
+
+    Attributes:
+        target_namespace: The root schema's ``targetNamespace``.
+        root_element: The first global element's name, if any.
+        complex_types: Named complex types, the root's first.
+        simple_types: Named simple types, the root's first.
+        elements: Global element declarations, the root's first.
+        raw: The root document's text.
+        import_graph: The documents the schema was read from and the references nothing
+            answered (MFI-13.1); ``None`` for one self-contained file.
+        c14n_sha256: SHA-256 over Canonical XML 2.0 of every document read (MFI-13.1,
+            :mod:`app.xml_canonical_hash`), or ``None`` when it could not be computed.
+        xsd_version: ``1.1`` when any schema read is XSD 1.1, else ``1.0``.
+    """
+
     target_namespace: Optional[str]
     root_element: Optional[str]
     complex_types: Tuple[XsdComplexType, ...]
     simple_types: Tuple[XsdSimpleType, ...]
     elements: Tuple[XsdElementDecl, ...]
     raw: str
+    import_graph: Optional[Dict[str, object]] = None
+    c14n_sha256: Optional[str] = None
+    xsd_version: str = "1.0"
+
+
+def detect_xsd_version(schemas: Iterable[ET.Element]) -> str:
+    """Return ``1.1`` when any schema is XSD 1.1, else ``1.0``.
+
+    A schema is XSD 1.1 when it says so (``vc:minVersion="1.1"`` or higher on the ``schema``
+    element) or when it uses an element only XSD 1.1 defines (``xs:assert``, ``xs:assertion``,
+    ``xs:alternative``, ``xs:openContent``, ``xs:defaultOpenContent``, ``xs:override``).
+
+    Args:
+        schemas: ``xs:schema`` elements.
+
+    Returns:
+        ``"1.1"`` or ``"1.0"``.
+    """
+    for schema in schemas:
+        min_version = (schema.get(f"{{{_VC_NS}}}minVersion") or "").strip()
+        try:
+            if min_version and float(min_version) >= 1.1:
+                return "1.1"
+        except ValueError:
+            pass
+        for node in schema.iter():
+            tag = node.tag
+            if isinstance(tag, str) and tag.startswith(f"{{{_XSD_NS}}}") and _local(tag) in _XSD_1_1_ONLY:
+                return "1.1"
+    return "1.0"
 
 
 def is_xsd(content: str) -> bool:
@@ -180,8 +243,38 @@ def _parse_elements(schema_el: ET.Element) -> Tuple[XsdElementDecl, ...]:
     return tuple(elements)
 
 
-def parse_xsd(content: str, *, source_label: Optional[str] = None) -> XsdDocument:
-    """Parse XSD XML into an :class:`XsdDocument`."""
+def _first_by_name(items: Iterable, seen: Set[str]) -> List:
+    """Keep the items whose ``name`` is not yet in ``seen`` (and add theirs); first one wins."""
+    kept = []
+    for item in items:
+        if item.name in seen:
+            continue
+        seen.add(item.name)
+        kept.append(item)
+    return kept
+
+
+def parse_xsd(
+    content: str,
+    *,
+    source_label: Optional[str] = None,
+    members: Optional[Mapping[str, str]] = None,
+) -> XsdDocument:
+    """Parse XSD XML into an :class:`XsdDocument`.
+
+    Args:
+        content: The root schema's text.
+        source_label: Label used in error messages; for a set, the root's member key, which
+            relative locations resolve from.
+        members: The documents of a multi-file set, key -> text, or ``None`` for one file.
+
+    Returns:
+        The parsed schema, with the types of every schema it imports when ``members`` is given.
+
+    Raises:
+        XsdParseError: When the text is empty, is not XSD, is malformed, or no schema read
+            declares a type or element.
+    """
     if not content or not content.strip():
         raise XsdParseError("Invalid or empty XSD document")
     if not is_xsd(content):
@@ -197,9 +290,25 @@ def parse_xsd(content: str, *, source_label: Optional[str] = None) -> XsdDocumen
     if _local(root.tag) != "schema":
         raise XsdParseError("XSD root element must be `schema`")
 
-    complex_types = _parse_complex_types(root)
-    simple_types = _parse_simple_types(root)
-    elements = _parse_elements(root)
+    graph = resolve_import_graph(root, root_text=content, root_path=source_label, members=members)
+    schemas: List[ET.Element] = [root]
+    for document in graph.imported():
+        element = document.element
+        schemas.extend([element] if _local(element.tag) == "schema" else _find_descendants(element, "schema"))
+
+    complex_names: Set[str] = set()
+    simple_names: Set[str] = set()
+    element_names: Set[str] = set()
+    complex_types_list: List[XsdComplexType] = []
+    simple_types_list: List[XsdSimpleType] = []
+    elements_list: List[XsdElementDecl] = []
+    for schema in schemas:
+        complex_types_list += _first_by_name(_parse_complex_types(schema), complex_names)
+        simple_types_list += _first_by_name(_parse_simple_types(schema), simple_names)
+        elements_list += _first_by_name(_parse_elements(schema), element_names)
+    complex_types = tuple(complex_types_list)
+    simple_types = tuple(simple_types_list)
+    elements = tuple(elements_list)
     if not complex_types and not simple_types and not elements:
         label = f" ({source_label})" if source_label else ""
         raise XsdParseError(f"No XSD types or elements found{label}")
@@ -212,4 +321,7 @@ def parse_xsd(content: str, *, source_label: Optional[str] = None) -> XsdDocumen
         simple_types=simple_types,
         elements=elements,
         raw=content,
+        import_graph=graph.as_extras(),
+        c14n_sha256=canonical_xml_sha256(graph),
+        xsd_version=detect_xsd_version(schemas),
     )

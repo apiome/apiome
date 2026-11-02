@@ -37,8 +37,9 @@ from dataclasses import dataclass
 from typing import Dict, List, Mapping, Optional, Set, Tuple
 
 from .secure_xml import SecureXmlError, parse_xml
-from .wsdl_parser import _attr_local, _children, _find_descendants, _local, _namespace, _resolve_member
+from .wsdl_parser import _attr_local, _children, _find_descendants, _local, _namespace
 from .wsdl_versions import VERSION_2_0
+from .xml_import_graph import resolve_member
 
 __all__ = [
     "MAX_REPORTED_ISSUES",
@@ -111,30 +112,48 @@ def _soap(element: ET.Element, local_name: str) -> List[ET.Element]:
     ]
 
 
-def _read_member(location: str, members: Optional[Mapping[str, str]]) -> Tuple[Optional[ET.Element], str]:
-    """Resolve and parse an import target.
+def _read_member(
+    location: str, members: Optional[Mapping[str, str]], *, declared_in: Optional[str]
+) -> Tuple[Optional[ET.Element], str, str]:
+    """Resolve and parse an import target, the way the parser does (MFI-13.1).
+
+    Args:
+        location: The location as written.
+        members: The set's documents, if any.
+        declared_in: The path of the declaring document, which a relative location resolves from.
 
     Returns:
-        ``(root, "")`` when it resolved, else ``(None, reason)``.
+        ``(root, "", member key)`` when it resolved, else ``(None, reason, location)``.
     """
-    text = _resolve_member(location, members) if members else None
-    if text is None:
-        return None, "it is not part of the import (upload it with the description, or import the service URL)"
+    match = resolve_member(location, members, declared_in=declared_in) if members else None
+    if match is None:
+        reason = "it is not part of the import (upload it with the description, or import the service URL)"
+        return None, reason, location
+    key, text = match
     try:
-        return parse_xml(text, source_label=location), ""
+        return parse_xml(text, source_label=key), "", key
     except SecureXmlError as exc:
-        return None, f"it cannot be read ({exc})"
+        return None, f"it cannot be read ({exc})", key
 
 
 class _Checker:
     """Collects the :class:`WsiIssue` list for one description."""
 
-    def __init__(self, root: ET.Element, members: Optional[Mapping[str, str]], version: str) -> None:
+    def __init__(
+        self,
+        root: ET.Element,
+        members: Optional[Mapping[str, str]],
+        version: str,
+        root_path: Optional[str] = None,
+    ) -> None:
         self.root = root
         self.members = members
         self.version = version
         self.issues: List[WsiIssue] = []
         self.definitions: List[ET.Element] = [root]
+        #: The member path of every document read, by element identity, so a relative location
+        #: resolves from the file that declares it (MFI-13.1).
+        self.paths: Dict[int, Optional[str]] = {id(root): root_path}
 
     def _add(self, rule: str, path: str, message: str) -> None:
         self.issues.append(WsiIssue(rule, path, message))
@@ -160,11 +179,11 @@ class _Checker:
                             "a `wsdl:import` has no `location` (WS-I R2007: it must name the description it imports).",
                         )
                     continue
-                if location in seen:
-                    continue
-                seen.add(location)
                 path = f"/import/{location}"
-                member, reason = _read_member(location, self.members)
+                member, reason, key = _read_member(location, self.members, declared_in=self.paths.get(id(current)))
+                if key in seen:
+                    continue
+                seen.add(key)
                 if member is None:
                     self._add(
                         RULE_UNRESOLVED_IMPORT, path, f"`wsdl:import` of `{location}` does not resolve: {reason}."
@@ -178,17 +197,18 @@ class _Checker:
                         f"import schemas with `xs:import` inside `types` (WS-I R2001, R2002).",
                     )
                     continue
+                self.paths[id(member)] = key
                 self.definitions.append(member)
                 queue.append(member)
 
     def schema_imports(self) -> None:
         """Check every ``xs:import`` / ``xs:include`` reachable from the description's ``types``."""
-        schemas = [
-            schema
-            for definition in self.definitions
-            for types in _children(definition, "types")
-            for schema in _find_descendants(types, "schema")
-        ]
+        schemas = []
+        for definition in self.definitions:
+            for types in _children(definition, "types"):
+                for schema in _find_descendants(types, "schema"):
+                    self.paths[id(schema)] = self.paths.get(id(definition))
+                    schemas.append(schema)
         declared = {schema.get("targetNamespace") or "" for schema in schemas}
         seen: Set[str] = set()
         queue = list(schemas)
@@ -203,10 +223,10 @@ class _Checker:
                     if kind == "xs:import":
                         pending_namespaces.append((schema_ns, (ref.get("namespace") or "").strip()))
                     continue
-                if location in seen:
+                member, reason, key = _read_member(location, self.members, declared_in=self.paths.get(id(schema)))
+                if key in seen:
                     continue
-                seen.add(location)
-                member, reason = _read_member(location, self.members)
+                seen.add(key)
                 if member is None:
                     self._add(
                         RULE_UNRESOLVED_IMPORT,
@@ -216,6 +236,7 @@ class _Checker:
                     continue
                 member_schemas = [member] if _local(member.tag) == "schema" else _find_descendants(member, "schema")
                 for member_schema in member_schemas:
+                    self.paths[id(member_schema)] = key
                     declared.add(member_schema.get("targetNamespace") or "")
                 queue.extend(member_schemas)
         for schema_ns, namespace in pending_namespaces:
@@ -412,5 +433,5 @@ def check_wsi(
         root = parse_xml(raw, source_label=source_label)
     except SecureXmlError:
         return [], 0
-    issues = _Checker(root, members, version).run()
+    issues = _Checker(root, members, version, root_path=source_label).run()
     return issues[:MAX_REPORTED_ISSUES], len(issues)
