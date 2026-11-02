@@ -51,6 +51,7 @@ import {
 } from '../../import';
 import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils/openapi-analyzer';
 import { generateSlug } from '../../../../utils/slug';
+import { odataMetadataUrlForServiceDocument } from '../../../../utils/odata-service-url';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
 import { CompassImportIntake } from '../../catalogMigrations/CompassImportIntake';
 import { MigrationReport } from '../../catalogMigrations/MigrationReport';
@@ -170,6 +171,19 @@ function bytesToBase64(bytes: Uint8Array): string {
 
 function toBase64(text: string): string {
   return btoa(unescape(encodeURIComponent(text)));
+}
+
+/**
+ * Fetch a URL in the browser and return its body as text.
+ *
+ * @param url The http/https URL to fetch.
+ * @returns The response body.
+ * @throws Error naming the HTTP status when the response is not 2xx.
+ */
+async function fetchUrlText(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Fetch failed with HTTP ${res.status}.`);
+  return res.text();
 }
 
 function baseName(fileName: string): string {
@@ -593,10 +607,15 @@ export function CatalogImportDialog({
     setState('fetching-url');
     setError(null);
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Fetch failed with HTTP ${res.status}.`);
-      const text = await res.text();
-      await detectContent(text, url, 'url');
+      const text = await fetchUrlText(url);
+      // An OData service root answers with its service document, which has no model: follow it to
+      // the service's `$metadata` and import that instead (MFI-11.6).
+      const metadataUrl = odataMetadataUrlForServiceDocument(url, text);
+      if (metadataUrl) {
+        await detectContent(await fetchUrlText(metadataUrl), metadataUrl, 'url');
+      } else {
+        await detectContent(text, url, 'url');
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not fetch that URL.');
       setRetryRead(() => () => void handleUrlFetchRef.current());

@@ -18,7 +18,7 @@ actions unchanged. See
 ## Import it
 
 Import the metadata like any other catalog format: in the [import wizard](./import-wizard.mdx)
-(**Import to catalog** → **OData**), over the REST API (see
+(**Import to catalog**, then **File Upload** or **URL Import**), over the REST API (see
 [Import a specification](./import-a-spec.md)), or from the CLI with `apiome import odata <file>`.
 
 | What you have | How it is read |
@@ -50,7 +50,25 @@ on a collection, where it is about the items) and not nullable in JSON, and both
 
 ## Discover a live service
 
-Import a running OData service from the CLI by giving its **service root** (or its `$metadata` URL):
+You can import a running OData service from its **service root** (for example
+`https://services.example.com/odata/trippin/`) or its `$metadata` URL, in the import wizard or from
+the CLI. Either way the `$metadata` URL is `<service root>/$metadata`, and a query string such as
+SAP's `?sap-client=100` is kept.
+
+### In the import wizard
+
+1. On the [Catalog](./catalog.mdx), **click “Import to catalog”** and choose **URL Import**.
+2. Enter the service root as the **Document URL** and **click “Fetch and detect”**.
+
+The service root answers with its *service document*, the list of its entity sets, which has no
+model to import. The wizard recognizes it (v4 or v3 JSON, v2 or v3 verbose JSON, or v2 or v3 Atom
+XML), fetches the service's `$metadata` instead, and continues with that document. The catalog item
+records the `$metadata` URL as its source. The fetch runs in your browser, so the service must allow
+requests from Apiome (CORS); if it does not, import the metadata from the CLI or upload a saved copy.
+
+### From the CLI
+
+Give the service root (or its `$metadata` URL) to `--discover`:
 
 ```bash
 apiome import odata --discover https://services.example.com/odata/trippin/
@@ -66,6 +84,18 @@ only input.
 | --- | --- |
 | The URL is not `http`/`https` or has no host | The CLI stops with a usage error. |
 | `$metadata` cannot be fetched (404, 401, network) | The CLI stops with the fetch error; check the service root and your access. |
+
+In the wizard, a `$metadata` that cannot be fetched shows **Couldn't read that source** with the
+error (for example `Fetch failed with HTTP 404.`); **click “Try again”** once the service is
+reachable.
+
+The CLI's test fixtures include one service of each kind the importer reads most: an OData v4
+service (`bookshop-odata-v4.edmx`) and an SAP Gateway-style v2 service (`sales-odata-v2.xml`), in
+`apiome-cli/tests/fixtures/`. They are a quick way to try an import:
+
+```bash
+apiome import odata apiome-cli/tests/fixtures/sales-odata-v2.xml
+```
 
 ## How the metadata is checked
 

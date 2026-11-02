@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Bot, BotMessageSquare, Cloud, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -613,6 +613,55 @@ describe('Smithy source card (MFI-17.5)', () => {
       '.tgz',
       '.tar',
     ]);
+  });
+});
+
+/**
+ * The OData source as the REST registry advertises it (MFI-11.6, #3781). A v2, v3 or v4 `$metadata`
+ * document arrives as an `.edmx` / `.xml` file, CSDL JSON, or a URL — a service root included, which
+ * the URL intake follows to `$metadata` — so the card opens the file panel and the picker offers all
+ * of them.
+ */
+const ODATA_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'odata',
+  label: 'OData',
+  description: 'Import an OData v2, v3 or v4 CSDL / EDMX service metadata document.',
+  icon: 'database',
+  paradigm: 'rest',
+  input_kinds: ['file', 'url', 'paste', 'discovery', 'fileset'],
+  supports_live_discovery: true,
+  formats: ['odata', 'odata-v2', 'odata-v3', 'edmx'],
+  file_extensions: ['.edmx', '.xml', '.json', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('OData source card (MFI-11.6)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([ODATA_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'odata');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('OData');
+    expect(card?.icon).toBe(Database);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('odata')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('odata');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('odata');
+  });
+
+  it('offers .edmx, CSDL XML / JSON and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([ODATA_DESCRIPTOR])).toEqual([
+      '.edmx',
+      '.xml',
+      '.json',
+      '.zip',
+      '.tar.gz',
+      '.tgz',
+      '.tar',
+    ]);
+  });
+
+  it('draws no alternate intake card, since the service root goes through URL Import', () => {
+    expect(alternateIntakeTiles([ODATA_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 

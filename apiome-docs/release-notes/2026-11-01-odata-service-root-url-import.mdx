@@ -1,0 +1,19 @@
+---
+slug: odata-service-root-url-import
+title: Import an OData service from its root URL
+description: URL Import follows an OData service root to its $metadata document.
+authors: [apiome]
+---
+
+**URL Import** in the catalog import wizard now takes an OData **service root**, not only its
+`$metadata` URL. [How it works](/bring-in/odata-import#in-the-import-wizard).
+
+{/* truncate */}
+
+- **Service document followed.** A service root answers with the list of its entity sets. The wizard
+  recognizes that service document — v4 or v3 JSON, v2 or v3 verbose JSON, or Atom XML — and imports
+  the service's `$metadata` instead. A query string such as `?sap-client=100` is kept.
+- **Same rules as the CLI.** The `$metadata` URL is worked out exactly as
+  `apiome import odata --discover` does it, so both paths import the same document.
+- **v2 and v4 fixtures.** The CLI's test fixtures now include an OData v4 service and an SAP
+  Gateway-style v2 service, imported both from a file and from a service root.

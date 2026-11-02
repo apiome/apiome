@@ -1,8 +1,12 @@
-"""Tests for ``apiome import odata`` and its ``--discover`` (MFI-11.3, #3778).
+"""Tests for ``apiome import odata`` and its ``--discover`` (MFI-11.3, #3778; MFI-11.6, #3781).
 
 ``--discover`` turns a service root into its ``$metadata`` URL (the rules of the REST adapter's
 live discovery) and imports that document through the registry-dispatch import, against a mocked
 REST service and a mocked OData service.
+
+The committed v2 (SAP Gateway-style) and v4 fixtures (MFI-11.6) are imported both ways — as a file
+and discovered from a service root — so each CSDL generation is proven to reach the server verbatim
+under ``source_kind: odata``.
 """
 
 from __future__ import annotations
@@ -21,6 +25,12 @@ from helpers import strip_ansi
 runner = CliRunner()
 
 _EXAMPLES = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples" / "odata"
+_FIXTURES = Path(__file__).parent / "fixtures"
+#: The committed OData fixtures (MFI-11.6), one per CSDL generation the importer reads.
+_VERSION_FIXTURES = [
+    pytest.param("bookshop-odata-v4.edmx", id="v4"),
+    pytest.param("sales-odata-v2.xml", id="v2"),
+]
 _METADATA = (_EXAMPLES / "06-trippin-reference.edmx").read_text(encoding="utf-8")
 _SOURCES_URL = "http://localhost:8000/v1/import/sources"
 _IMPORT_URL = "http://localhost:8000/v1/tenants/acme-corp/imports"
@@ -134,3 +144,47 @@ def test_a_metadata_file_is_still_sent_verbatim(httpx_mock: object) -> None:
     result = runner.invoke(app, ["import", "odata", str(path)])
     assert result.exit_code == 0, result.output
     assert base64.b64decode(_post_body(httpx_mock)["document_base64"]) == path.read_bytes()
+
+
+@pytest.mark.parametrize("fixture", _VERSION_FIXTURES)
+def test_a_versioned_fixture_file_imports_verbatim(httpx_mock: object, fixture: str) -> None:
+    _mock_import(httpx_mock)
+    path = _FIXTURES / fixture
+    result = runner.invoke(app, ["import", "odata", str(path)])
+    assert result.exit_code == 0, result.output
+
+    body = _post_body(httpx_mock)
+    assert body["metadata"]["source_kind"] == "odata"
+    assert base64.b64decode(body["document_base64"]) == path.read_bytes()
+
+
+@pytest.mark.parametrize("fixture", _VERSION_FIXTURES)
+def test_a_versioned_fixture_is_discovered_from_its_service_root(httpx_mock: object, fixture: str) -> None:
+    _mock_import(httpx_mock)
+    metadata = (_FIXTURES / fixture).read_text(encoding="utf-8")
+    httpx_mock.add_response(  # type: ignore[attr-defined]
+        url="https://odata.example.com/sap/opu/odata/sap/ZSALES_SRV/$metadata?sap-client=100",
+        method="GET",
+        text=metadata,
+        headers={"Content-Type": "application/xml"},
+    )
+    result = runner.invoke(
+        app,
+        ["import", "odata", "--discover", "https://odata.example.com/sap/opu/odata/sap/ZSALES_SRV/?sap-client=100"],
+    )
+    assert result.exit_code == 0, result.output
+
+    body = _post_body(httpx_mock)
+    assert body["metadata"]["source_kind"] == "odata"
+    assert base64.b64decode(body["document_base64"]).decode("utf-8") == metadata
+
+
+@pytest.mark.parametrize(
+    "fixture, marker",
+    [
+        ("bookshop-odata-v4.edmx", 'xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0"'),
+        ("sales-odata-v2.xml", 'm:DataServiceVersion="2.0"'),
+    ],
+)
+def test_the_versioned_fixtures_are_the_generation_they_claim(fixture: str, marker: str) -> None:
+    assert marker in (_FIXTURES / fixture).read_text(encoding="utf-8")
