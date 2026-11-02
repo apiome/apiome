@@ -384,11 +384,21 @@ RUN curl -fsSL "https://capnproto.org/capnproto-c++-${CAPNP_VERSION}.tar.gz" | t
 # kubeconform — Kubernetes manifest validator (MFX-21.6). Static release binary under lib/, plus the
 # apiextensions.k8s.io/v1 CustomResourceDefinition JSON Schema cached under share/kubeconform so the
 # check needs no network; the bin/ wrapper points -schema-location at that cache (app.k8s_kubeconform).
-RUN mkdir -p ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict \
+# yannh/kubernetes-json-schema no longer publishes a standalone schema for the CRD kind itself (only
+# its sub-objects), so the strict standalone file is built from the kind's schema and
+# `_definitions.json`, which it still publishes, by toolchain/k8s-standalone-schema.mjs.
+COPY apiome-rest/toolchain/k8s-standalone-schema.mjs ${TOOLS_PREFIX}/lib/node/k8s-standalone-schema.mjs
+RUN mkdir -p ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict /tmp/k8s-schema \
     && curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-linux-${TARGETARCH}.tar.gz" \
       | tar -xz -C ${TOOLS_PREFIX}/lib kubeconform \
-    && curl -fsSL "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master-standalone-strict/customresourcedefinition-apiextensions-v1.json" \
-      -o ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict/customresourcedefinition-apiextensions-v1.json \
+    && curl -fsSL "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/customresourcedefinition-apiextensions-v1.json" \
+      -o /tmp/k8s-schema/customresourcedefinition-apiextensions-v1.json \
+    && curl -fsSL "https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/master/_definitions.json" \
+      -o /tmp/k8s-schema/_definitions.json \
+    && node ${TOOLS_PREFIX}/lib/node/k8s-standalone-schema.mjs \
+      /tmp/k8s-schema/customresourcedefinition-apiextensions-v1.json /tmp/k8s-schema/_definitions.json \
+      ${TOOLS_PREFIX}/share/kubeconform/master-standalone-strict/customresourcedefinition-apiextensions-v1.json \
+    && rm -rf /tmp/k8s-schema \
     && printf '#!/bin/sh\nexec %s/lib/kubeconform -schema-location "%s/share/kubeconform/{{ .NormalizedKubernetesVersion }}-standalone{{ .StrictSuffix }}/{{ .ResourceKind }}{{ .KindSuffix }}.json" "$@"\n' "${TOOLS_PREFIX}" "${TOOLS_PREFIX}" \
       > ${TOOLS_PREFIX}/bin/kubeconform \
     && chmod +x ${TOOLS_PREFIX}/lib/kubeconform ${TOOLS_PREFIX}/bin/kubeconform \
