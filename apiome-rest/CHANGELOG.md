@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.601.0] - 2026-11-02
+
+### Added
+- **Connect-RPC: detection from Buf config and the HTTP/JSON binding on every method (MFI-19.5, #3983).**
+  - `DetectionInput` gains `siblings` (fileset member path → text); archive and git intake pass every member
+    through `rank_root_candidates`, so an adapter can read a configuration file next to the candidate root.
+  - The `connectrpc` adapter claims a `.proto` at 0.98 (above the gRPC adapter's bare `syntax` marker) when a
+    sibling `buf.gen.yaml` / `buf.yaml` names a Connect plugin or a `buf.build/connectrpc` dependency
+    (`buf_config_connect_evidence`); the detection reason names the config file. A module without one still
+    imports as `protobuf`.
+  - `ConnectRpcNormalizer` records the Connect transcoding: each operation's `extras["http"]`
+    (`{"method": "post", "path": "/{package.Service}/{Method}"}`, the shape `app.projection` honours) and
+    `extras["connect"]` (unary `application/json` / `application/proto`, streaming `application/connect+json`
+    / `application/connect+proto`); the API's `extras["connect"]` names the route template next to the
+    existing `rpc_stack = "connect"` tag. The RPC projection now takes a Connect method's route from the
+    source instead of recording a `synthesized-http-binding` loss.
+  - Corpus goldens for the six `connectrpc` examples regenerated; their fingerprints change once because the
+    stored model gained the keys above.
+
 ## [1.600.0] - 2026-11-01
 
 ### Added

@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/chat.v1.ChatService/Converse"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "chat.v1.ChatService.Converse",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/chat.v1.ChatService/GetRoom"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "chat.v1.ChatService.GetRoom",
@@ -132,7 +167,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/chat.v1.ChatService/ImportHistory"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "chat.v1.ChatService.ImportHistory",
@@ -184,7 +231,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/chat.v1.ChatService/Subscribe"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "chat.v1.ChatService.Subscribe",
@@ -765,7 +824,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:842f2e0dcd8c5d575c66c95091e3dcdc28f17db78d6107961811962c3cd31612",
+  "fingerprint": "sha256:e639d74c518d4b733ee86aa2ada791cd11bbb91b03bb3c0ce0140a3eccca2d1f",
   "lint": {
     "findings": 39,
     "grade": "F",

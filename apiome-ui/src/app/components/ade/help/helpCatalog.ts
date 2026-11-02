@@ -874,6 +874,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['amf', 'include', 'uses', 'library', 'mulesoft', 'data types', 'file set', 'archive', 'trait', 'resource type', 'resourceTypes', 'shacl', 'validation', 'lint', 'securedBy', 'breaking', 'compatibility'],
   },
   {
+    id: 'connect-rpc-import',
+    title: 'Import a Connect-RPC service',
+    summary: "Catalog Connect services from their Protobuf contract, with each method's HTTP/JSON route.",
+    page: 'apiome-docs/docs/bring-in/connect-rpc-import.md',
+    section: 'reference',
+    keywords: ['buf', 'buf.gen.yaml', 'protobuf', 'proto', 'grpc', 'http', 'json', 'route', 'binding', 'streaming', 'archive', 'file set', 'transcoding', 'detect'],
+  },
+  {
     id: 'thrift-import',
     title: 'Import an Apache Thrift API',
     summary: 'Catalog Thrift IDL, including multi-file sets joined by include.',

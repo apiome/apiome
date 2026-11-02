@@ -1,0 +1,27 @@
+---
+slug: connect-rpc-import
+title: Connect-RPC services recognised from their Buf config, with their routes
+description: A Connect module is detected from buf.gen.yaml, and every method records its HTTP/JSON route.
+authors: [apiome]
+---
+
+A Connect-RPC service is now told apart from plain gRPC by the Buf configuration shipped with it,
+and the catalog item records the HTTP/JSON route every method is served on.
+[Import a Connect-RPC service](/bring-in/connect-rpc-import).
+
+{/* truncate */}
+
+- **Detection from Buf config.** In an uploaded archive or a scanned repository, a `.proto` next to a
+  `buf.gen.yaml` that names a Connect generator (`buf.build/connectrpc/go`, `protoc-gen-connect-es` …)
+  or a `buf.yaml` that depends on `buf.build/connectrpc` is imported as **Connect RPC**. The same
+  module without them stays **gRPC / Protobuf**, as before.
+- **The route on every method.** Each operation of a Connect item carries its binding,
+  `POST /{package.Service}/{Method}`, and the content types Connect accepts: JSON or binary protobuf for
+  a unary call, the Connect streaming envelope for a stream. The item itself records the route
+  template and the `connect` protocol facet.
+- **Honest OpenAPI conversion.** Converting a Connect item to OpenAPI uses the recorded route instead
+  of synthesizing one, so the conversion report no longer lists a synthesized HTTP binding for Connect
+  methods.
+- **One-time version change.** Because the stored model gained these keys, the first re-import of an
+  existing Connect item is recorded as a changed version even when the `.proto` did not change.
+  Later imports compare as usual.

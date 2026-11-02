@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/payments.v1.PaymentService/CreatePayment"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "payments.v1.PaymentService.CreatePayment",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/payments.v1.PaymentService/GetPayment"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "payments.v1.PaymentService.GetPayment",
@@ -132,7 +167,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/payments.v1.PaymentService/WatchPayment"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "payments.v1.PaymentService.WatchPayment",
@@ -533,7 +580,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:84ba6754107414cffb8da00e0c4f291598323b5e461cf846c1f8e2b9e55d048c",
+  "fingerprint": "sha256:a66365ba5eda5a4402268ea30e99b4aaa8a3178fb22709da71aa27e524c952e8",
   "lint": {
     "findings": 27,
     "grade": "F",

@@ -1,10 +1,16 @@
-"""Connect-RPC import source — MFI-12.6.
+"""Connect-RPC import source — MFI-12.6 / MFI-19.5.
 
 The :class:`~app.import_source.ImportSource` adapter for Connect-RPC catalog imports. Connect
 reuses Protocol Buffers ``.proto`` contracts (the same compiled descriptor set gRPC uses), so
 **parse** / **discover** / **parse_fileset** delegate to :class:`app.grpc_import_source.GrpcImportSource`
 while **normalize** runs through :class:`app.connectrpc_normalizer.ConnectRpcNormalizer` so the
-stored catalog item is labeled ``connectrpc`` rather than ``protobuf``.
+stored catalog item is labeled ``connectrpc`` rather than ``protobuf`` and every method carries
+its Connect HTTP/JSON binding.
+
+**Detection** (MFI-19.5) recognises a Connect module three ways, strongest first: Connect prose in
+the ``.proto`` itself; a Buf config next to it (``buf.gen.yaml`` naming a Connect plugin,
+``buf.yaml`` depending on ``buf.build/connectrpc``) when the file arrives in an archive or a
+repository; and a Connect-oriented path. A plain ``.proto`` with none of these stays gRPC.
 """
 
 from __future__ import annotations
@@ -27,11 +33,27 @@ from .import_source import (
 )
 from .proto_descriptor import CompiledDescriptorSet
 
-__all__ = ["ConnectRpcImportSource"]
+__all__ = ["ConnectRpcImportSource", "buf_config_connect_evidence"]
 
 # Connect-RPC prose in comments, docs, or paths — strong enough to prefer this adapter over gRPC.
 _CONNECT_MARKER_RE = re.compile(
     r"(?i)connect[\s\-]*rpc|connectrpc|buf\.build/connect",
+)
+
+# Buf configuration files a module ships next to its ``.proto`` files (v1 and v2 layouts).
+_BUF_CONFIG_NAMES: Tuple[str, ...] = (
+    "buf.gen.yaml",
+    "buf.gen.yml",
+    "buf.yaml",
+    "buf.yml",
+    "buf.work.yaml",
+    "buf.work.yml",
+)
+
+# What a Buf config says when the module targets Connect: a Connect plugin (``buf.build/connectrpc/go``,
+# ``protoc-gen-connect-go``, ``connect-es`` …) or a ``buf.build/connectrpc`` dependency.
+_BUF_CONNECT_RE = re.compile(
+    r"(?i)buf\.build/connectrpc|connectrpc/|protoc-gen-connect|connect-(?:go|es|web|kotlin|swift|query|node)",
 )
 
 # Cheap protobuf markers shared with the gRPC adapter (detection must never shell out to ``buf``).
@@ -52,6 +74,29 @@ def _looks_like_proto(text: str) -> bool:
     if "edition = " in text and ("message " in text or "service " in text):
         return True
     return any(marker in text for marker in _PROTO_MARKERS)
+
+
+def buf_config_connect_evidence(members: Optional[Mapping[str, str]]) -> Optional[str]:
+    """Name the Buf config in *members* that targets Connect, if any (MFI-19.5).
+
+    A Connect module is an ordinary Protobuf module whose ``buf.gen.yaml`` lists a Connect code
+    generator (``buf.build/connectrpc/go``, ``protoc-gen-connect-go``, ``connect-es`` …) or whose
+    ``buf.yaml`` depends on ``buf.build/connectrpc``. The ``.proto`` files themselves rarely say
+    "Connect", so the config is the signal that distinguishes a Connect service from plain gRPC.
+
+    Args:
+        members: The fileset members (path → text), or ``None`` for a single-document import.
+
+    Returns:
+        The member path of the first Buf config (sorted by path) that names Connect, or ``None``.
+    """
+    if not members:
+        return None
+    for path in sorted(members):
+        name = path.replace("\\", "/").rsplit("/", 1)[-1].lower()
+        if name in _BUF_CONFIG_NAMES and _BUF_CONNECT_RE.search(members[path] or ""):
+            return path
+    return None
 
 
 def _connect_path_hint(filename: str) -> bool:
@@ -90,6 +135,17 @@ class ConnectRpcImportSource(ImportSource, register=True):
         self._grpc = GrpcImportSource()
 
     def detect(self, payload: DetectionInput) -> DetectionResult:
+        """Claim a ``.proto`` as Connect when its text, a sibling Buf config, or its path says so.
+
+        Args:
+            payload: The document under detection; ``siblings`` (archive / git intake) lets the
+                Buf config next to the candidate count as evidence.
+
+        Returns:
+            A ``connectrpc`` match at 0.98 for Connect prose or a Connect-targeting Buf config
+            (above the gRPC adapter's 0.97 for a bare ``syntax`` marker), a weaker match for a
+            Connect-oriented path, else :data:`NO_MATCH`. Never raises.
+        """
         text = payload.text
         filename = (payload.filename or "").replace("\\", "/")
 
@@ -99,6 +155,13 @@ class ConnectRpcImportSource(ImportSource, register=True):
                     confidence=0.98,
                     format="connectrpc",
                     reason="Connect-RPC protobuf contract",
+                )
+            buf_config = buf_config_connect_evidence(payload.siblings)
+            if buf_config is not None:
+                return DetectionResult(
+                    confidence=0.98,
+                    format="connectrpc",
+                    reason=f"Buf config `{buf_config}` targets Connect",
                 )
             if filename and _connect_path_hint(filename):
                 return DetectionResult(

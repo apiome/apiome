@@ -53,7 +53,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -274,6 +274,12 @@ class DetectionInput:
     binary artifact (IXH-7.5: a serialized protobuf ``FileDescriptorSet`` / buf
     image). It is optional — callers that only have text omit it, and text-format
     adapters ignore it.
+
+    ``siblings`` carries the other members of the fileset the document arrived in
+    (member path → text), when the caller has them (archive and git intake rank
+    every member as a root candidate). It lets an adapter read a sibling
+    configuration file — a ``buf.gen.yaml`` naming Connect plugins (MFI-19.5) —
+    without shelling out. Single-document callers omit it.
     """
 
     text: Optional[str] = None
@@ -282,6 +288,7 @@ class DetectionInput:
     content_type: Optional[str] = None
     url: Optional[str] = None
     data: Optional[bytes] = None
+    siblings: Optional[Mapping[str, str]] = None
 
 
 @dataclass(frozen=True)

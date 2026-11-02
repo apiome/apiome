@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/eliza.v1.ElizaService/Converse"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "eliza.v1.ElizaService.Converse",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/eliza.v1.ElizaService/Introduce"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "eliza.v1.ElizaService.Introduce",
@@ -132,7 +167,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/eliza.v1.ElizaService/Say"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "eliza.v1.ElizaService.Say",
@@ -410,7 +457,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:d71354b6d4209f60f581fa13cc3dececca26030a9027577ff5294d4796f01590",
+  "fingerprint": "sha256:cfcc30c0cfd34f99ab2713146f4682b13fac03848a7cea9ff26b9da92c9c6532",
   "lint": {
     "findings": 22,
     "grade": "F",
