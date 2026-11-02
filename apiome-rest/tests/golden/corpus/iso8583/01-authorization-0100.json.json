@@ -4,6 +4,24 @@
     "channels": [],
     "description": null,
     "extras": {
+      "iso8583_bitmap": {
+        "elements": [
+          2,
+          3,
+          4,
+          7,
+          11,
+          12,
+          13,
+          18,
+          32,
+          41,
+          49
+        ],
+        "has_secondary": false,
+        "primary": "7238400100808000",
+        "secondary": null
+      },
       "iso8583_data_elements": [
         {
           "length": "..19",
@@ -84,6 +102,17 @@
         }
       ],
       "iso8583_mti": "0100",
+      "iso8583_mti_decoded": {
+        "class": "1",
+        "class_label": "Authorization",
+        "function": "0",
+        "function_label": "Request",
+        "origin": "0",
+        "origin_label": "Acquirer",
+        "summary": "Authorization request (acquirer)",
+        "version": "0",
+        "version_label": "ISO 8583:1987"
+      },
       "iso8583_name": "Authorization Request"
     },
     "format": "iso8583",
@@ -525,6 +554,24 @@
         "description": "Authorization Request",
         "enum_values": [],
         "extras": {
+          "iso8583_bitmap": {
+            "elements": [
+              2,
+              3,
+              4,
+              7,
+              11,
+              12,
+              13,
+              18,
+              32,
+              41,
+              49
+            ],
+            "has_secondary": false,
+            "primary": "7238400100808000",
+            "secondary": null
+          },
           "iso8583_kind": "message",
           "iso8583_mti": "0100"
         },
@@ -540,7 +587,7 @@
               "iso8583_de_number": "11",
               "iso8583_de_type": "n"
             },
-            "field_number": 5,
+            "field_number": 11,
             "key": "0100.Message0100.DE11",
             "name": "DE11",
             "type": {
@@ -561,7 +608,7 @@
               "iso8583_de_number": "12",
               "iso8583_de_type": "n"
             },
-            "field_number": 6,
+            "field_number": 12,
             "key": "0100.Message0100.DE12",
             "name": "DE12",
             "type": {
@@ -582,7 +629,7 @@
               "iso8583_de_number": "13",
               "iso8583_de_type": "n"
             },
-            "field_number": 7,
+            "field_number": 13,
             "key": "0100.Message0100.DE13",
             "name": "DE13",
             "type": {
@@ -603,7 +650,7 @@
               "iso8583_de_number": "18",
               "iso8583_de_type": "n"
             },
-            "field_number": 8,
+            "field_number": 18,
             "key": "0100.Message0100.DE18",
             "name": "DE18",
             "type": {
@@ -624,7 +671,7 @@
               "iso8583_de_number": "2",
               "iso8583_de_type": "n"
             },
-            "field_number": 1,
+            "field_number": 2,
             "key": "0100.Message0100.DE2",
             "name": "DE2",
             "type": {
@@ -645,7 +692,7 @@
               "iso8583_de_number": "3",
               "iso8583_de_type": "n"
             },
-            "field_number": 2,
+            "field_number": 3,
             "key": "0100.Message0100.DE3",
             "name": "DE3",
             "type": {
@@ -666,7 +713,7 @@
               "iso8583_de_number": "32",
               "iso8583_de_type": "n"
             },
-            "field_number": 9,
+            "field_number": 32,
             "key": "0100.Message0100.DE32",
             "name": "DE32",
             "type": {
@@ -687,7 +734,7 @@
               "iso8583_de_number": "4",
               "iso8583_de_type": "n"
             },
-            "field_number": 3,
+            "field_number": 4,
             "key": "0100.Message0100.DE4",
             "name": "DE4",
             "type": {
@@ -708,7 +755,7 @@
               "iso8583_de_number": "41",
               "iso8583_de_type": "ans"
             },
-            "field_number": 10,
+            "field_number": 41,
             "key": "0100.Message0100.DE41",
             "name": "DE41",
             "type": {
@@ -729,7 +776,7 @@
               "iso8583_de_number": "49",
               "iso8583_de_type": "n"
             },
-            "field_number": 11,
+            "field_number": 49,
             "key": "0100.Message0100.DE49",
             "name": "DE49",
             "type": {
@@ -750,7 +797,7 @@
               "iso8583_de_number": "7",
               "iso8583_de_type": "n"
             },
-            "field_number": 4,
+            "field_number": 7,
             "key": "0100.Message0100.DE7",
             "name": "DE7",
             "type": {
@@ -784,7 +831,7 @@
     "confidence": 0.98,
     "format": "iso8583"
   },
-  "fingerprint": "sha256:003373981b10079b3cd5140e0c904acf519876968014e3f07886b4aa7d52b4db",
+  "fingerprint": "sha256:4190005d30a6037bbb8c8dfe3e37f44eb1e97fc4631d54f5bd29bedf0aba6c69",
   "lint": {
     "findings": 12,
     "grade": "B",

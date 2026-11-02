@@ -399,6 +399,9 @@ def load_format_breaking_change_classifiers() -> None:
     # FIX Orchestra breaking-change classifier (MFI-20.4): registers under ``fix-orchestra`` and
     # grades dialect / version deltas by tag, presence, code set and msgType.
     from . import fix_orchestra_breaking as _fix_orchestra_breaking  # noqa: F401
+    # ISO 8583 breaking-change classifier (MFI-20.6): registers under ``iso8583`` and grades the
+    # MTI and each data element's number, type and length.
+    from . import iso8583_breaking as _iso8583_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

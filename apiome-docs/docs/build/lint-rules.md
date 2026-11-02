@@ -864,6 +864,51 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** An external $ref that is never resolved leaves the imported model incomplete: the referenced messages, schemas, or types are missing from every downstream view (diff, lint, export) with no indication that anything was dropped. Enable remote $ref resolution for the import, bundle the referenced documents into the upload, or inline the definitions in the source document.
 
 
+## Pack: `iso8583`
+
+### `iso8583.de-length-declared` {#iso8583-de-length-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every data element should declare its length.
+
+### `iso8583.de-number-valid` {#iso8583-de-number-valid}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every data element number must be in 2–128.
+
+### `iso8583.de-type-known` {#iso8583-de-type-known}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every data element type should be an ISO 8583 type code.
+
+### `iso8583.mti-known` {#iso8583-mti-known}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every MTI digit must be one the standard assigns.
+
+### `iso8583.response-code-on-response` {#iso8583-response-code-on-response}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A response or acknowledgement should carry DE 39 (Response Code).
+
+### `iso8583.stan-present` {#iso8583-stan-present}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** DE 11 (System Trace Audit Number) should be present.
+
+### `iso8583.transmission-datetime-present` {#iso8583-transmission-datetime-present}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** DE 7 (Transmission Date and Time) should be present.
+
+
 ## Pack: `k8s-crd`
 
 ### `k8s-crd.required-field-hygiene` {#k8s-crd-required-field-hygiene}

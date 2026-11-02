@@ -1,0 +1,25 @@
+---
+slug: iso8583-import
+title: ISO 8583 messages record their MTI and bitmaps, with lint and diff rules
+description: The decoded message type, derived bitmaps, a lint pack, breaking-change rules and a guide.
+authors: [apiome]
+---
+
+An ISO 8583 catalog item now records the message's definition, not only its sample: the decoded
+Message Type Indicator, the primary and secondary bitmaps its data elements imply, and fields
+numbered by data element. It is linted for what a counterparty would trip over and its versions are
+compared with ISO 8583 semantics. [Import ISO 8583 card messages](/bring-in/iso8583-import).
+
+{/* truncate */}
+
+- **The definition.** `iso8583_mti_decoded` names the release, class, function and origin the MTI
+  encodes (`Authorization request (acquirer)`); `iso8583_bitmap` holds the primary bitmap, the
+  secondary one when an element above 64 is present, and the element numbers; each message field is
+  numbered by its data element.
+- **Lint.** The `iso8583` pack flags a reserved MTI digit, a data element outside 2–128, an unknown
+  type code, a missing length, a missing System Trace Audit Number, a response without a Response
+  Code, and a missing Transmission Date and Time.
+- **Diff.** A changed MTI, a removed data element, a changed length or type are breaking; an added
+  element is dangerous; a renamed element or a changed sample value is safe.
+- **One-time version change.** Because the stored model gained these keys and field numbers, the
+  first re-import of an existing ISO 8583 item is recorded as a changed version.

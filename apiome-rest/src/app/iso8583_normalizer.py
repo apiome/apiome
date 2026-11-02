@@ -1,13 +1,18 @@
-"""ISO 8583 → canonical model normalizer — MFI-22.6.
+"""ISO 8583 → canonical model normalizer — MFI-22.6 / MFI-20.6.
 
 Maps a parsed :class:`~app.iso8583_parser.Iso8583Document` into a
 :class:`~app.canonical_model.CanonicalApi` of paradigm
-:attr:`~app.canonical_model.ApiParadigm.DATA_SCHEMA`.
+:attr:`~app.canonical_model.ApiParadigm.DATA_SCHEMA`: one record type for the message, whose
+fields are the data elements numbered by their **data element number** (the wire identity ISO
+8583 pairs fields by), and one record type per data element. The message's definition is recorded
+beside the model (MFI-20.6): the decoded MTI (``extras["iso8583_mti_decoded"]``) and the primary
+and secondary bitmaps the elements present imply (``extras["iso8583_bitmap"]``), from
+:mod:`app.iso8583_message_type`.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from .canonical_model import (
     ApiIdentity,
@@ -18,7 +23,8 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
-from .iso8583_parser import Iso8583Document, Iso8583DataElement, data_element_template
+from .iso8583_message_type import bitmaps_for, decode_mti
+from .iso8583_parser import Iso8583DataElement, Iso8583Document, data_element_template
 from .normalizer import Keys, Normalizer, normalize_ordering
 
 __all__ = ["Iso8583Normalizer"]
@@ -83,7 +89,9 @@ class Iso8583Normalizer(Normalizer, register=True):
                 key=Keys.field(message_key, _field_name(element.number)),
                 name=_field_name(element.number),
                 type=TypeRef(name="string", nullable=False),
-                field_number=index,
+                # The data element number is the field's wire identity (MFI-20.6); a number
+                # that is not numeric keeps its position.
+                field_number=int(element.number) if element.number.isdigit() else index,
                 description=element.name,
                 default=element.value,
                 extras={
@@ -101,7 +109,11 @@ class Iso8583Normalizer(Normalizer, register=True):
             kind=TypeKind.RECORD,
             description=source.name,
             fields=fields,
-            extras={"iso8583_kind": "message", "iso8583_mti": source.mti},
+            extras={
+                "iso8583_kind": "message",
+                "iso8583_mti": source.mti,
+                "iso8583_bitmap": bitmaps_for(element.number for element in source.data_elements),
+            },
         )
         element_types = [
             _canonical_type_for_element(element, namespace=namespace)
@@ -117,6 +129,8 @@ class Iso8583Normalizer(Normalizer, register=True):
             raw={"iso8583": source.raw} if include_raw else None,
             extras={
                 "iso8583_mti": source.mti,
+                "iso8583_mti_decoded": decode_mti(source.mti),
+                "iso8583_bitmap": bitmaps_for(element.number for element in source.data_elements),
                 "iso8583_name": source.name,
                 "iso8583_data_elements": [
                     data_element_template(element) for element in source.data_elements

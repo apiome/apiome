@@ -4,6 +4,33 @@
     "channels": [],
     "description": null,
     "extras": {
+      "iso8583_bitmap": {
+        "elements": [
+          2,
+          3,
+          4,
+          7,
+          11,
+          25,
+          28,
+          32,
+          35,
+          38,
+          39,
+          41,
+          48,
+          52,
+          54,
+          55,
+          64,
+          90,
+          95,
+          128
+        ],
+        "has_secondary": true,
+        "primary": "F220009126811601",
+        "secondary": "0000004200000001"
+      },
       "iso8583_data_elements": [
         {
           "length": "..19",
@@ -147,6 +174,17 @@
         }
       ],
       "iso8583_mti": "0420",
+      "iso8583_mti_decoded": {
+        "class": "4",
+        "class_label": "Reversal and chargeback",
+        "function": "2",
+        "function_label": "Advice",
+        "origin": "0",
+        "origin_label": "Acquirer",
+        "summary": "Reversal and chargeback advice (acquirer)",
+        "version": "0",
+        "version_label": "ISO 8583:1987"
+      },
       "iso8583_name": "Reversal Advice"
     },
     "format": "iso8583",
@@ -930,6 +968,33 @@
         "description": "Reversal Advice",
         "enum_values": [],
         "extras": {
+          "iso8583_bitmap": {
+            "elements": [
+              2,
+              3,
+              4,
+              7,
+              11,
+              25,
+              28,
+              32,
+              35,
+              38,
+              39,
+              41,
+              48,
+              52,
+              54,
+              55,
+              64,
+              90,
+              95,
+              128
+            ],
+            "has_secondary": true,
+            "primary": "F220009126811601",
+            "secondary": "0000004200000001"
+          },
           "iso8583_kind": "message",
           "iso8583_mti": "0420"
         },
@@ -945,7 +1010,7 @@
               "iso8583_de_number": "11",
               "iso8583_de_type": "n"
             },
-            "field_number": 5,
+            "field_number": 11,
             "key": "0420.Message0420.DE11",
             "name": "DE11",
             "type": {
@@ -966,7 +1031,7 @@
               "iso8583_de_number": "128",
               "iso8583_de_type": "b"
             },
-            "field_number": 20,
+            "field_number": 128,
             "key": "0420.Message0420.DE128",
             "name": "DE128",
             "type": {
@@ -987,7 +1052,7 @@
               "iso8583_de_number": "2",
               "iso8583_de_type": "n"
             },
-            "field_number": 1,
+            "field_number": 2,
             "key": "0420.Message0420.DE2",
             "name": "DE2",
             "type": {
@@ -1008,7 +1073,7 @@
               "iso8583_de_number": "25",
               "iso8583_de_type": "n"
             },
-            "field_number": 6,
+            "field_number": 25,
             "key": "0420.Message0420.DE25",
             "name": "DE25",
             "type": {
@@ -1029,7 +1094,7 @@
               "iso8583_de_number": "28",
               "iso8583_de_type": "x+n"
             },
-            "field_number": 7,
+            "field_number": 28,
             "key": "0420.Message0420.DE28",
             "name": "DE28",
             "type": {
@@ -1050,7 +1115,7 @@
               "iso8583_de_number": "3",
               "iso8583_de_type": "n"
             },
-            "field_number": 2,
+            "field_number": 3,
             "key": "0420.Message0420.DE3",
             "name": "DE3",
             "type": {
@@ -1071,7 +1136,7 @@
               "iso8583_de_number": "32",
               "iso8583_de_type": "n"
             },
-            "field_number": 8,
+            "field_number": 32,
             "key": "0420.Message0420.DE32",
             "name": "DE32",
             "type": {
@@ -1092,7 +1157,7 @@
               "iso8583_de_number": "35",
               "iso8583_de_type": "z"
             },
-            "field_number": 9,
+            "field_number": 35,
             "key": "0420.Message0420.DE35",
             "name": "DE35",
             "type": {
@@ -1113,7 +1178,7 @@
               "iso8583_de_number": "38",
               "iso8583_de_type": "an"
             },
-            "field_number": 10,
+            "field_number": 38,
             "key": "0420.Message0420.DE38",
             "name": "DE38",
             "type": {
@@ -1134,7 +1199,7 @@
               "iso8583_de_number": "39",
               "iso8583_de_type": "an"
             },
-            "field_number": 11,
+            "field_number": 39,
             "key": "0420.Message0420.DE39",
             "name": "DE39",
             "type": {
@@ -1155,7 +1220,7 @@
               "iso8583_de_number": "4",
               "iso8583_de_type": "n"
             },
-            "field_number": 3,
+            "field_number": 4,
             "key": "0420.Message0420.DE4",
             "name": "DE4",
             "type": {
@@ -1176,7 +1241,7 @@
               "iso8583_de_number": "41",
               "iso8583_de_type": "ans"
             },
-            "field_number": 12,
+            "field_number": 41,
             "key": "0420.Message0420.DE41",
             "name": "DE41",
             "type": {
@@ -1197,7 +1262,7 @@
               "iso8583_de_number": "48",
               "iso8583_de_type": "ans"
             },
-            "field_number": 13,
+            "field_number": 48,
             "key": "0420.Message0420.DE48",
             "name": "DE48",
             "type": {
@@ -1218,7 +1283,7 @@
               "iso8583_de_number": "52",
               "iso8583_de_type": "b"
             },
-            "field_number": 14,
+            "field_number": 52,
             "key": "0420.Message0420.DE52",
             "name": "DE52",
             "type": {
@@ -1239,7 +1304,7 @@
               "iso8583_de_number": "54",
               "iso8583_de_type": "an"
             },
-            "field_number": 15,
+            "field_number": 54,
             "key": "0420.Message0420.DE54",
             "name": "DE54",
             "type": {
@@ -1260,7 +1325,7 @@
               "iso8583_de_number": "55",
               "iso8583_de_type": "b"
             },
-            "field_number": 16,
+            "field_number": 55,
             "key": "0420.Message0420.DE55",
             "name": "DE55",
             "type": {
@@ -1281,7 +1346,7 @@
               "iso8583_de_number": "64",
               "iso8583_de_type": "b"
             },
-            "field_number": 17,
+            "field_number": 64,
             "key": "0420.Message0420.DE64",
             "name": "DE64",
             "type": {
@@ -1302,7 +1367,7 @@
               "iso8583_de_number": "7",
               "iso8583_de_type": "n"
             },
-            "field_number": 4,
+            "field_number": 7,
             "key": "0420.Message0420.DE7",
             "name": "DE7",
             "type": {
@@ -1323,7 +1388,7 @@
               "iso8583_de_number": "90",
               "iso8583_de_type": "n"
             },
-            "field_number": 18,
+            "field_number": 90,
             "key": "0420.Message0420.DE90",
             "name": "DE90",
             "type": {
@@ -1344,7 +1409,7 @@
               "iso8583_de_number": "95",
               "iso8583_de_type": "an"
             },
-            "field_number": 19,
+            "field_number": 95,
             "key": "0420.Message0420.DE95",
             "name": "DE95",
             "type": {
@@ -1378,7 +1443,7 @@
     "confidence": 0.98,
     "format": "iso8583"
   },
-  "fingerprint": "sha256:83ac5ec567d04d819bea49f84b805dcb42ecb59677be133033dd8271eb39c426",
+  "fingerprint": "sha256:a7b8a3ce075547ba3ea482ac3fdbc9dfb32f5bfaa1b5a3157829aa4e680c0cbd",
   "lint": {
     "findings": 21,
     "grade": "C",
