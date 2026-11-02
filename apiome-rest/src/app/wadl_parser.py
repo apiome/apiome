@@ -1,8 +1,25 @@
-"""WADL parser — MFI-17.1.
+"""WADL parser — MFI-17.1, extended by MFI-21.3 (#3993).
 
 Parses WADL REST service descriptions into a typed :class:`WadlDocument` AST using
 the stdlib :mod:`xml.etree.ElementTree`. Syntax errors surface as
 :class:`WadlParseError`.
+
+What the AST keeps (W3C WADL submission, 2009-02 namespace):
+
+* **Resources and methods** — every ``resource`` (nested paths joined) and ``method`` becomes a
+  :class:`WadlOperation`. WADL's reuse is resolved in place: a ``method href="#id"``, a
+  ``param href``, a ``representation href`` and a resource's ``type="#rt1 #rt2"`` (its
+  ``resource_type`` s' params, methods and child resources) read as if written inline. A
+  reference that names no element of the document is kept in
+  :attr:`WadlDocument.unresolved_refs` rather than guessed at.
+* **Params** — name, location (from ``style``), XSD type, ``required``, ``repeating``,
+  ``default`` and ``option`` values, plus the original ``style`` (``matrix`` and ``plain`` have
+  no canonical location of their own).
+* **Representations** — the media types of a request and of each response, and the grammar type
+  an ``element`` / ``type`` names. A response's ``status`` is a *list* of codes; each code reads
+  as its own response.
+* **Grammars** — named ``complexType`` s (sequence elements with ``minOccurs`` / ``maxOccurs`` /
+  ``nillable``) and named ``simpleType`` restrictions (enumerations and their base type).
 """
 
 from __future__ import annotations
@@ -19,6 +36,7 @@ __all__ = [
     "WadlParseError",
     "WadlField",
     "WadlComplexType",
+    "WadlSimpleType",
     "WadlElementDecl",
     "WadlParameter",
     "WadlOperation",
@@ -43,14 +61,43 @@ class WadlParseError(ValueError):
 
 @dataclass(frozen=True)
 class WadlField:
+    """One ``xsd:element`` of a complex type's sequence.
+
+    Attributes:
+        name: The element name.
+        type_expr: Its XSD type, prefix stripped (``string``, ``Book``).
+        min_occurs: ``minOccurs`` (XSD default ``1``; ``0`` makes the element optional).
+        max_occurs: ``maxOccurs`` — ``1`` by default, a number, or ``None`` for ``unbounded``.
+        nillable: Whether the element is ``nillable="true"``.
+    """
+
     name: str
     type_expr: str
+    min_occurs: int = 1
+    max_occurs: Optional[int] = 1
+    nillable: bool = False
 
 
 @dataclass(frozen=True)
 class WadlComplexType:
     name: str
     fields: Tuple[WadlField, ...]
+
+
+@dataclass(frozen=True)
+class WadlSimpleType:
+    """A named ``xsd:simpleType`` restriction.
+
+    Attributes:
+        name: The simple type's name.
+        base: The restriction's base type, prefix stripped (``string``).
+        enumerations: The ``xsd:enumeration`` values, in source order (empty when the
+            restriction is only a facet on its base).
+    """
+
+    name: str
+    base: str
+    enumerations: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -61,10 +108,29 @@ class WadlElementDecl:
 
 @dataclass(frozen=True)
 class WadlParameter:
+    """A WADL ``param`` of a resource or a request.
+
+    Attributes:
+        name: The param name.
+        location: ``path`` / ``query`` / ``header`` (from ``style``).
+        type_expr: Its XSD type, prefix stripped.
+        required: ``required`` (WADL's default is ``false``; this parser has always read an
+            omitted attribute as ``true``, which the corpus relies on).
+        style: The original ``style`` (``template``, ``matrix``, ``query``, ``header``,
+            ``plain``).
+        repeating: ``repeating="true"`` — the param may occur more than once.
+        default: The ``default`` value, when declared.
+        options: The ``option`` values, in source order (the allowed values).
+    """
+
     name: str
     location: str
     type_expr: str
     required: bool = True
+    style: str = "template"
+    repeating: bool = False
+    default: Optional[str] = None
+    options: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -76,6 +142,10 @@ class WadlOperation:
     parameters: Tuple[WadlParameter, ...]
     request_type: Optional[str]
     response_types: Tuple[Tuple[str, Optional[str]], ...]
+    #: The media types of the request's representations, in source order.
+    request_media_types: Tuple[str, ...] = ()
+    #: The media types of each response, aligned with :attr:`response_types` by index.
+    response_media_types: Tuple[Tuple[str, ...], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -87,6 +157,10 @@ class WadlDocument:
     elements: Tuple[WadlElementDecl, ...]
     operations: Tuple[WadlOperation, ...]
     raw: str
+    simple_types: Tuple[WadlSimpleType, ...] = ()
+    #: Every ``href`` / resource ``type`` reference that names no element of the document, as
+    #: ``"<element> <reference>"`` (``"method #getBook"``), in document order without repeats.
+    unresolved_refs: Tuple[str, ...] = ()
 
 
 def is_wadl(content: str) -> bool:
@@ -168,6 +242,18 @@ def _grammar_schemas(
     return schemas
 
 
+def _occurs(value: Optional[str], default: Optional[int]) -> Optional[int]:
+    """An XSD occurrence attribute: an integer, ``None`` for ``unbounded``, else ``default``."""
+    if value is None:
+        return default
+    if value.strip().lower() == "unbounded":
+        return None
+    try:
+        return max(int(value.strip()), 0)
+    except ValueError:
+        return default
+
+
 def _parse_complex_types(schemas: List[ET.Element]) -> Tuple[WadlComplexType, ...]:
     complex_types: List[WadlComplexType] = []
     for schema in schemas:
@@ -185,10 +271,34 @@ def _parse_complex_types(schemas: List[ET.Element]) -> Tuple[WadlComplexType, ..
                             WadlField(
                                 name=field_name,
                                 type_expr=_attr_local(type_expr) or type_expr,
+                                min_occurs=_occurs(field_el.get("minOccurs"), 1) or 0,
+                                max_occurs=_occurs(field_el.get("maxOccurs"), 1),
+                                nillable=(field_el.get("nillable") or "").strip().lower() == "true",
                             )
                         )
             complex_types.append(WadlComplexType(name=name, fields=tuple(fields)))
     return tuple(complex_types)
+
+
+def _parse_simple_types(schemas: List[ET.Element]) -> Tuple[WadlSimpleType, ...]:
+    """Every named top-level ``xsd:simpleType`` restriction of the grammars."""
+    simple_types: List[WadlSimpleType] = []
+    for schema in schemas:
+        for simple in _children(schema, "simpleType"):
+            name = simple.get("name")
+            restriction = next(iter(_children(simple, "restriction")), None)
+            if not name or restriction is None:
+                continue
+            enumerations = _children(restriction, "enumeration")
+            values = tuple(enum.get("value") or "" for enum in enumerations if enum.get("value") is not None)
+            simple_types.append(
+                WadlSimpleType(
+                    name=name,
+                    base=_attr_local(restriction.get("base")) or "string",
+                    enumerations=values,
+                )
+            )
+    return tuple(simple_types)
 
 
 def _parse_elements(schemas: List[ET.Element]) -> Tuple[WadlElementDecl, ...]:
@@ -218,66 +328,190 @@ def _param_location(style: Optional[str]) -> str:
     return mapping.get((style or "template").lower(), "query")
 
 
-def _parse_parameters(resource_el: ET.Element) -> Tuple[WadlParameter, ...]:
-    params: List[WadlParameter] = []
-    for param_el in _children(resource_el, "param"):
-        name = param_el.get("name")
-        if not name:
-            continue
-        type_expr = _attr_local(param_el.get("type")) or "string"
-        required = param_el.get("required", "true").lower() != "false"
-        params.append(
-            WadlParameter(
-                name=name,
-                location=_param_location(param_el.get("style")),
-                type_expr=type_expr,
-                required=required,
-            )
-        )
-    return tuple(params)
+#: The WADL elements a local ``href`` (or a resource ``type``) may name.
+_REFERABLE = frozenset({"method", "param", "representation", "resource_type"})
+
+#: How many ``href`` hops are followed before a chain is treated as a cycle.
+_MAX_HREF_HOPS = 8
+
+
+class _References:
+    """The document's referable elements by id, and the references that resolved to none.
+
+    WADL lets a ``method``, ``param`` or ``representation`` be written once with an ``id`` and
+    reused with ``href="#id"``; a ``resource`` names ``resource_type`` s in ``type``. Only local
+    (``#id``) references are followed: an external WADL is not fetched.
+    """
+
+    def __init__(self, root: ET.Element) -> None:
+        self._by_id: dict[Tuple[str, str], ET.Element] = {}
+        for node in root.iter():
+            local = _local(node.tag) if isinstance(node.tag, str) else ""
+            node_id = node.get("id")
+            if local in _REFERABLE and node_id and (local, node_id) not in self._by_id:
+                self._by_id[(local, node_id)] = node
+        self.unresolved: List[str] = []
+
+    def _miss(self, kind: str, reference: str) -> None:
+        entry = f"{kind} {reference}"
+        if entry not in self.unresolved:
+            self.unresolved.append(entry)
+
+    def lookup(self, kind: str, reference: str) -> Optional[ET.Element]:
+        """The element of ``kind`` a ``#id`` reference names, recording a miss."""
+        target = self._by_id.get((kind, reference[1:])) if reference.startswith("#") else None
+        if target is None:
+            self._miss(kind, reference)
+        return target
+
+    def deref(self, element: ET.Element) -> Optional[ET.Element]:
+        """``element`` itself, or what its ``href`` chain points at (``None`` when unresolved)."""
+        kind = _local(element.tag)
+        current = element
+        for _ in range(_MAX_HREF_HOPS):
+            href = current.get("href")
+            if not href:
+                return current
+            target = self.lookup(kind, href.strip())
+            if target is None:
+                return None
+            current = target
+        self._miss(kind, element.get("href") or "")
+        return None
+
+    def children(self, element: ET.Element, local_name: str) -> List[ET.Element]:
+        """``element``'s ``local_name`` children with every ``href`` resolved (misses dropped)."""
+        resolved = (self.deref(child) for child in _children(element, local_name))
+        return [child for child in resolved if child is not None]
+
+    def resource_types(self, resource_el: ET.Element) -> List[ET.Element]:
+        """The ``resource_type`` s a resource's ``type`` attribute names, in order."""
+        found: List[ET.Element] = []
+        for reference in (resource_el.get("type") or "").split():
+            target = self.lookup("resource_type", reference)
+            if target is not None:
+                found.append(target)
+        return found
+
+
+def _parse_param(param_el: ET.Element) -> Optional[WadlParameter]:
+    """One ``param`` element, or ``None`` when it has no name."""
+    name = param_el.get("name")
+    if not name:
+        return None
+    style = (param_el.get("style") or "template").strip().lower()
+    options = tuple(
+        option.get("value") or "" for option in _children(param_el, "option") if option.get("value") is not None
+    )
+    return WadlParameter(
+        name=name,
+        location=_param_location(style),
+        type_expr=_attr_local(param_el.get("type")) or "string",
+        required=param_el.get("required", "true").lower() != "false",
+        style=style,
+        repeating=(param_el.get("repeating") or "").strip().lower() == "true",
+        default=param_el.get("default"),
+        options=options,
+    )
+
+
+def _parse_parameters(param_els: List[ET.Element]) -> Tuple[WadlParameter, ...]:
+    params = (_parse_param(param_el) for param_el in param_els)
+    return tuple(param for param in params if param is not None)
 
 
 def _resolve_element_type(
     element_ref: Optional[str],
     *,
     element_to_type: dict[str, str],
-    type_names: frozenset[str],
 ) -> Optional[str]:
+    """The grammar type a representation's ``element`` names (the element's own name if untyped)."""
     if not element_ref:
         return None
     local = _attr_local(element_ref) or element_ref
     mapped = element_to_type.get(local)
     if mapped:
-        resolved = _attr_local(mapped) or mapped
-        if resolved in type_names:
-            return resolved
-        return resolved
-    if local in type_names:
-        return local
+        return _attr_local(mapped) or mapped
     return local
 
 
-def _extract_representation_type(
+def _representations(
     container: Optional[ET.Element],
     *,
     element_to_type: dict[str, str],
-    type_names: frozenset[str],
-) -> Optional[str]:
+    references: _References,
+) -> Tuple[Optional[str], Tuple[str, ...]]:
+    """The first typed representation's type and every representation's media type.
+
+    Args:
+        container: A ``request`` or ``response`` element (or ``None``).
+        element_to_type: Grammar element name → its type.
+        references: The document's ``href`` index.
+
+    Returns:
+        ``(type, media_types)`` — the type is ``None`` when no representation names one.
+    """
     if container is None:
-        return None
-    for representation in _children(container, "representation"):
-        element_ref = representation.get("element")
-        resolved = _resolve_element_type(
-            element_ref,
-            element_to_type=element_to_type,
-            type_names=type_names,
+        return None, ()
+    found: Optional[str] = None
+    media_types: List[str] = []
+    for representation in references.children(container, "representation"):
+        media_type = (representation.get("mediaType") or "").strip()
+        if media_type and media_type not in media_types:
+            media_types.append(media_type)
+        if found is None:
+            found = _resolve_element_type(representation.get("element"), element_to_type=element_to_type) or (
+                _attr_local(representation.get("type"))
+            )
+    return found, tuple(media_types)
+
+
+def _statuses(response_el: ET.Element) -> List[str]:
+    """The codes of a response's ``status`` list (``"200"`` when it states none)."""
+    codes = (response_el.get("status") or "").split()
+    return codes or ["200"]
+
+
+def _parse_method(
+    method_el: ET.Element,
+    *,
+    path: str,
+    params: Tuple[WadlParameter, ...],
+    element_to_type: dict[str, str],
+    references: _References,
+) -> WadlOperation:
+    """One (already dereferenced) ``method`` at ``path``, inheriting the resource's ``params``."""
+    method_name = (method_el.get("name") or "GET").upper()
+    doc_el = next(iter(_children(method_el, "doc")), None)
+    description = doc_el.text.strip() if doc_el is not None and doc_el.text else None
+    request_el = next(iter(_children(method_el, "request")), None)
+    # Query, header and plain params a method's request declares, after the resource's own.
+    method_params = params + (
+        _parse_parameters(references.children(request_el, "param")) if request_el is not None else ()
+    )
+    request_type, request_media = _representations(
+        request_el, element_to_type=element_to_type, references=references
+    )
+    responses: List[Tuple[str, Optional[str]]] = []
+    response_media: List[Tuple[str, ...]] = []
+    for response_el in _children(method_el, "response"):
+        response_type, media = _representations(
+            response_el, element_to_type=element_to_type, references=references
         )
-        if resolved:
-            return resolved
-        type_name = _attr_local(representation.get("type"))
-        if type_name:
-            return type_name if type_name in type_names else type_name
-    return None
+        for status in _statuses(response_el):
+            responses.append((status, response_type))
+            response_media.append(media)
+    return WadlOperation(
+        path=path,
+        method=method_name,
+        operation_id=method_el.get("id"),
+        description=description,
+        parameters=method_params,
+        request_type=request_type,
+        response_types=tuple(responses),
+        request_media_types=request_media,
+        response_media_types=tuple(response_media),
+    )
 
 
 def _collect_operations(
@@ -286,57 +520,41 @@ def _collect_operations(
     parent_path: str,
     inherited_params: Tuple[WadlParameter, ...],
     element_to_type: dict[str, str],
-    type_names: frozenset[str],
+    references: _References,
 ) -> List[WadlOperation]:
+    """Every method of a resource and its descendants, the resource's ``type`` s applied."""
     operations: List[WadlOperation] = []
     segment = resource_el.get("path") or ""
     current_path = _join_path(parent_path, segment)
-    params = inherited_params + _parse_parameters(resource_el)
+    # A resource reads as its own params / methods / child resources followed by those of each
+    # resource_type it names.
+    sources = [resource_el, *references.resource_types(resource_el)]
+    param_els = [param for source in sources for param in references.children(source, "param")]
+    params = inherited_params + _parse_parameters(param_els)
 
-    for method_el in _children(resource_el, "method"):
-        method_name = (method_el.get("name") or "GET").upper()
-        operation_id = method_el.get("id")
-        doc_el = next(iter(_children(method_el, "doc")), None)
-        description = doc_el.text.strip() if doc_el is not None and doc_el.text else None
-        request_el = next(iter(_children(method_el, "request")), None)
-        # Query, header and plain params a method's request declares, after the resource's own.
-        method_params = params + (_parse_parameters(request_el) if request_el is not None else ())
-        request_type = _extract_representation_type(
-            request_el,
-            element_to_type=element_to_type,
-            type_names=type_names,
-        )
-        responses: List[Tuple[str, Optional[str]]] = []
-        for response_el in _children(method_el, "response"):
-            status = response_el.get("status") or "200"
-            response_type = _extract_representation_type(
-                response_el,
-                element_to_type=element_to_type,
-                type_names=type_names,
+    for source in sources:
+        for method_el in references.children(source, "method"):
+            operations.append(
+                _parse_method(
+                    method_el,
+                    path=current_path,
+                    params=params,
+                    element_to_type=element_to_type,
+                    references=references,
+                )
             )
-            responses.append((status, response_type))
-        operations.append(
-            WadlOperation(
-                path=current_path,
-                method=method_name,
-                operation_id=operation_id,
-                description=description,
-                parameters=method_params,
-                request_type=request_type,
-                response_types=tuple(responses),
-            )
-        )
 
-    for child in _children(resource_el, "resource"):
-        operations.extend(
-            _collect_operations(
-                child,
-                parent_path=current_path,
-                inherited_params=params,
-                element_to_type=element_to_type,
-                type_names=type_names,
+    for source in sources:
+        for child in _children(source, "resource"):
+            operations.extend(
+                _collect_operations(
+                    child,
+                    parent_path=current_path,
+                    inherited_params=params,
+                    element_to_type=element_to_type,
+                    references=references,
+                )
             )
-        )
     return operations
 
 
@@ -359,6 +577,14 @@ def parse_wadl(
         source_label: Label for errors.
         members: Sibling documents of a multi-file set (``path → text``); a grammar the WADL
             ``include`` s is read from here.
+
+    Returns:
+        The parsed document.
+
+    Raises:
+        WadlParseError: The text is empty, is not WADL, is malformed XML, or declares neither
+            a grammar type nor a resource.
+        SecureXmlError: The XML was refused by the hardened parser (DTD, entity, size, depth).
     """
     if not content or not content.strip():
         raise WadlParseError("Invalid or empty WADL document")
@@ -378,9 +604,10 @@ def parse_wadl(
     grammars_el = next(iter(_children(root, "grammars")), None)
     schemas = _grammar_schemas(grammars_el, members, source_label)
     complex_types = _parse_complex_types(schemas)
+    simple_types = _parse_simple_types(schemas)
     elements = _parse_elements(schemas)
     element_to_type = {element.name: element.type_expr for element in elements}
-    type_names = frozenset(t.name for t in complex_types)
+    references = _References(root)
 
     operations: List[WadlOperation] = []
     base_uri: Optional[str] = None
@@ -393,7 +620,7 @@ def parse_wadl(
                     parent_path="",
                     inherited_params=(),
                     element_to_type=element_to_type,
-                    type_names=type_names,
+                    references=references,
                 )
             )
 
@@ -413,4 +640,6 @@ def parse_wadl(
         elements=elements,
         operations=tuple(operations),
         raw=content,
+        simple_types=simple_types,
+        unresolved_refs=tuple(references.unresolved),
     )

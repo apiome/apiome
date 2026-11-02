@@ -44,7 +44,9 @@
             "kind": "request_response",
             "messages": [
               {
-                "content_types": [],
+                "content_types": [
+                  "text/plain"
+                ],
                 "description": null,
                 "extras": {
                   "http_status": "200"
@@ -56,7 +58,7 @@
                 "payload_schema": null,
                 "required": false,
                 "role": "response",
-                "status_code": null
+                "status_code": "200"
               }
             ],
             "name": "getStatus",
@@ -83,7 +85,7 @@
     "confidence": 0.97,
     "format": "wadl"
   },
-  "fingerprint": "sha256:95c3e76ed9524557b7d4052a8db786a7011cbd26eb040851fc9c17a567b3c9b6",
+  "fingerprint": "sha256:1a405d903a23ff61d4450a265096b4090e15e370f53590f7e38dd51153ca8e36",
   "lint": {
     "findings": 3,
     "grade": "A",

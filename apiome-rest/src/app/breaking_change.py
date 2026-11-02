@@ -411,6 +411,9 @@ def load_format_breaking_change_classifiers() -> None:
     # COBOL copybook breaking-change classifier (MFI-21.1): registers under ``cobolcopybook`` and
     # grades the record layout — offsets, lengths, storage, OCCURS and REDEFINES overlays.
     from . import cobolcopybook_breaking as _cobolcopybook_breaking  # noqa: F401
+    # WADL breaking-change classifier (MFI-21.3): registers under ``wadl`` and grades params,
+    # representations' media types and the grammars' sequence order, occurrence and types.
+    from . import wadl_breaking as _wadl_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

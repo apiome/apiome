@@ -99,7 +99,7 @@ PACK_GOLDENS = [
         "apiblueprint",
         FidelityTier.HIGH,
     ),
-    ("wadl", "wadl", EXAMPLES / "wadl/06-task-tracker.wadl", "wadl", FidelityTier.MEDIUM),
+    ("wadl", "wadl", EXAMPLES / "wadl/06-task-tracker.wadl", "wadl", FidelityTier.HIGH),
 ]
 
 

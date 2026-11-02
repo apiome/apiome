@@ -1548,6 +1548,102 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** A TypeSpec project should compile without warnings from the compiler or its built-in linter rules.
 
 
+## Pack: `wadl`
+
+### `wadl.base-uri-present` {#wadl-base-uri-present}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** The description should state its resources' base URI.
+
+### `wadl.body-on-safe-method` {#wadl-body-on-safe-method}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A GET, HEAD or DELETE should not carry a request representation.
+
+### `wadl.method-id-present` {#wadl-method-id-present}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** A method should declare an id (it becomes the OpenAPI operationId).
+
+### `wadl.method-id-unique` {#wadl-method-id-unique}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** No two methods may share an id.
+- **Reference:** https://www.w3.org/submissions/wadl/
+- **Remediation:** Give each method its own id.
+- **False-positive guidance:** Not a false positive: an id must identify one element of the document.
+- **Fixture:** `catalog/wadl-method-id-unique`
+- **Scan modes:** `lint`
+
+### `wadl.method-name-standard` {#wadl-method-name-standard}
+
+- **Category:** compatibility
+- **Default severity:** warning
+- **Rationale:** A method's name should be a standard HTTP method.
+
+### `wadl.reference-resolved` {#wadl-reference-resolved}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every href and resource type must name an element of the document.
+- **Reference:** https://www.w3.org/submissions/wadl/
+- **Remediation:** Declare the element the reference names (with that id) in the same document, or write it inline.
+- **False-positive guidance:** A reference to another WADL file (other.wadl#id) is reported because it is never fetched; inline the referenced element before treating the finding as a defect of the service.
+- **Fixture:** `catalog/wadl-reference-resolved`
+- **Scan modes:** `lint`
+
+### `wadl.representation-media-type` {#wadl-representation-media-type}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** A typed representation should state its media type.
+
+### `wadl.representation-typed` {#wadl-representation-typed}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** An XML or JSON representation should name its grammar element.
+
+### `wadl.response-declared` {#wadl-response-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A method should declare at least one response.
+
+### `wadl.response-status-valid` {#wadl-response-status-valid}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A response status must be a three-digit HTTP code.
+
+### `wadl.template-param-declared` {#wadl-template-param-declared}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every {name} in a resource path must have a template param.
+- **Reference:** https://www.w3.org/submissions/wadl/
+- **Remediation:** Declare a template param (`<param name="…" style="template" type="xsd:string"/>`) on the resource whose path names the variable.
+- **False-positive guidance:** Not a false positive: every path variable needs a template param for its type to be known.
+- **Fixture:** `catalog/wadl-template-param-declared`
+- **Scan modes:** `lint`
+
+### `wadl.template-param-used` {#wadl-template-param-used}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every template param must appear as {name} in the path.
+
+### `wadl.type-resolved` {#wadl-type-resolved}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every referenced type must be an XSD built-in or declared by the grammars.
+
+
 ## Pack: `wsi`
 
 ### `wsi.binding-style` {#wsi-binding-style}

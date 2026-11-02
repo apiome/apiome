@@ -429,6 +429,9 @@ def load_format_rule_packs() -> None:
     # COBOL copybook lint pack (MFI-21.1): registers under ``cobolcopybook`` (REDEFINES overlays,
     # OCCURS DEPENDING ON tables, storage sizing, FILLER and 88-level conditions).
     from . import cobolcopybook_lint as _cobolcopybook_lint  # noqa: F401
+    # WADL lint pack (MFI-21.3): registers under ``wadl`` (references, template params, method
+    # ids, representations and what the migrate-to-OpenAPI path cannot carry).
+    from . import wadl_lint as _wadl_lint  # noqa: F401
 
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401

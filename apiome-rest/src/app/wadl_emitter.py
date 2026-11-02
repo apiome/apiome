@@ -54,6 +54,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
 from .lossiness import LossinessKind, LossinessSeverity
+from .wadl_normalizer import explicit_method_id
 from .xsd_schema import (
     TNS_PREFIX,
     XSD_NS,
@@ -86,6 +87,9 @@ _PARAM_STYLES = {
     ParameterLocation.QUERY: "query",
     ParameterLocation.HEADER: "header",
 }
+
+#: WADL styles a WADL import records in ``extras["wadl_style"]`` (see :mod:`app.wadl_normalizer`).
+_LOCATION_SHARING_STYLES = frozenset({"matrix", "plain"})
 
 _STATUS = re.compile(r"^[1-5][0-9]{2}$")
 
@@ -513,6 +517,11 @@ class _WadlWriter:
             type_qname = f"{XSD_PREFIX}:{builtin}"
         else:
             type_qname = self._schema.type_qname(param.type.item or param.type, fmt, param.key)
+        # A WADL import keeps the styles that share a canonical location (`matrix` is a path
+        # parameter, `plain` a query one) in `wadl_style`; they are written back as read.
+        source_style = param.extras.get("wadl_style")
+        if source_style in _LOCATION_SHARING_STYLES:
+            style = source_style
         attributes = {
             "name": param.name,
             "style": style,
@@ -528,17 +537,25 @@ class _WadlWriter:
         param_el = ET.SubElement(parent, ET.QName(_WADL_NS, "param"), attributes)
         if param.description:
             ET.SubElement(param_el, ET.QName(_WADL_NS, "doc")).text = param.description
+        # The allowed values (MFI-21.3): WADL lists them as `option` children.
+        for option in (param.constraints.enum or []) if param.constraints is not None else []:
+            if not isinstance(option, (dict, list)):
+                ET.SubElement(param_el, ET.QName(_WADL_NS, "option"), {"value": str(option)})
         self.tracker.record(param.key, Provenance.SOURCE)
 
     def _append_representation(self, parent: ET.Element, message: Message) -> None:
-        """A ``representation`` with the message's media type and its grammar element."""
+        """A ``representation`` per media type of the message, each with its grammar element."""
         element = self._representation_elements.get(id(message))
-        if element is None and message.payload is None and not message.payload_schema:
+        # A representation with a media type but no grammar type (a text/plain body, a form) is
+        # still written, so its media type survives (MFI-21.3).
+        if element is None and message.payload is None and not message.payload_schema and not message.content_types:
             return
-        attributes = {"mediaType": (message.content_types or [self._options.media_type])[0]}
-        if element:
-            attributes["element"] = f"{TNS_PREFIX}:{element}"
-        ET.SubElement(parent, ET.QName(_WADL_NS, "representation"), attributes)
+        # One representation per media type, each naming the same grammar element.
+        for media_type in message.content_types or [self._options.media_type]:
+            attributes = {"mediaType": media_type}
+            if element:
+                attributes["element"] = f"{TNS_PREFIX}:{element}"
+            ET.SubElement(parent, ET.QName(_WADL_NS, "representation"), attributes)
 
 
 # ---------------------------------------------------------------------------
@@ -548,8 +565,7 @@ class _WadlWriter:
 
 def _has_explicit_id(operation: Operation) -> bool:
     """Whether the source named the operation (an unnamed WADL method is ``"<VERB> <path>"``)."""
-    synthesized = f"{(operation.http_method or '').upper()} {operation.http_path or ''}"
-    return bool(operation.name) and operation.name != synthesized and operation.name != operation.key
+    return explicit_method_id(operation) is not None
 
 
 def _document_details_not_carried(api: CanonicalApi) -> List[str]:
