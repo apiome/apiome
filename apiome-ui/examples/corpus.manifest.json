@@ -14750,6 +14750,52 @@
       "rung": "real-world"
     },
     {
+      "path": "iso20022/07-pain.001.001.09-message-definition.xsd",
+      "format": "iso20022",
+      "adapter_key": "iso20022",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "iso20022",
+        "min_confidence": 0.95
+      },
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published ISO 20022 message definition.",
+      "features": [
+        "pain.001",
+        "message-definition",
+        "xsd",
+        "choice-types",
+        "amount-with-currency"
+      ],
+      "rung": "typical",
+      "notes": "The message definition (XML Schema) rather than a message: MFI-20.3 reads it through the XSD normalizer and labels it with the message id its target namespace declares."
+    },
+    {
+      "path": "iso20022/08-pacs.008.001.08-message-definition.xsd",
+      "format": "iso20022",
+      "adapter_key": "iso20022",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "iso20022",
+        "min_confidence": 0.95
+      },
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published ISO 20022 message definition.",
+      "features": [
+        "pacs.008",
+        "message-definition",
+        "xsd",
+        "settlement-information",
+        "component-reuse"
+      ],
+      "rung": "composition",
+      "notes": "The interbank definition reuses the party, account and agent components of pain.001 under the same type names."
+    },
+    {
       "path": "iso20022/adversarial/01-billion-laughs-pain001.xml",
       "format": "iso20022",
       "adapter_key": "iso20022",

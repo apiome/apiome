@@ -1,0 +1,26 @@
+---
+slug: iso20022-message-definitions
+title: ISO 20022 message definitions (XSD) import as ISO 20022
+description: The published schema for a message is read, labelled with its message id, and documented.
+authors: [apiome]
+---
+
+The XML Schema the ISO 20022 standard publishes for a message — `pain.001.001.09.xsd`,
+`pacs.008.001.08.xsd` — now imports as an **ISO 20022** catalog item, next to the messages that
+follow it. [Import ISO 20022 messages and message definitions](/bring-in/iso20022-import).
+
+{/* truncate */}
+
+- **Recognised by its namespace.** A schema whose target namespace is an ISO 20022 message
+  namespace is routed to the ISO 20022 importer, not the plain XSD one; the detection reason names
+  the message id, and a SEPA family carries the SEPA profile.
+- **Read as types.** Each complex type becomes a record, each code list an enum, each text or
+  identifier type a scalar. Members of a `…Choice` type are read as optional fields, and an amount
+  type keeps its `value` and `Ccy`, so the model reflects the definition rather than skipping it.
+- **Labelled and titled.** The item records `iso20022_message_definition` (family, variant,
+  version, root and business element) beside the message id, and is titled
+  `CstmrCdtTrfInitn (pain.001.001.09)`.
+- **XSD imports read more.** Every XSD import now reads `xs:choice` members, `simpleContent`
+  values and attributes declared inside a derivation, which earlier imports skipped.
+- **Two fixtures.** `apiome-ui/examples/iso20022/` gains the `pain.001.001.09` and
+  `pacs.008.001.08` definitions.

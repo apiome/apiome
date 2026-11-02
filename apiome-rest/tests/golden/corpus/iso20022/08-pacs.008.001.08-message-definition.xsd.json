@@ -1,0 +1,2411 @@
+{
+  "adapter": "iso20022",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "engine": "iso20022",
+        "evidence": [
+          "The `<Document>` namespace names message definition pacs.008.001.08 (FI-to-FI customer credit transfer), which carries the SEPA Credit Transfer (SCT), interbank scheme."
+        ],
+        "implementation_guide_consulted": false,
+        "key": "sepa",
+        "label": "SEPA",
+        "message_family": "pacs.008",
+        "message_id": "pacs.008.001.08",
+        "scheme": "SEPA Credit Transfer (SCT), interbank"
+      },
+      "iso20022_business_element": "FIToFICstmrCdtTrf",
+      "iso20022_message_definition": {
+        "business_element": "FIToFICstmrCdtTrf",
+        "business_type": "FIToFICustomerCreditTransferV08",
+        "family": "pacs.008",
+        "root_element": "Document",
+        "root_type": "Document",
+        "variant": "001",
+        "version": 8
+      },
+      "iso20022_message_id": "pacs.008.001.08",
+      "iso20022_namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "7c2d2585e8270864e78aa797c0df7d4a324cd66bda3f0bc28e764e3f1af471d5",
+      "xsd_elements": [
+        {
+          "name": "Document",
+          "type": "Document"
+        }
+      ],
+      "xsd_root_element": "Document",
+      "xsd_target_namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"
+    },
+    "format": "iso20022",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "FIToFICstmrCdtTrf (pacs.008.001.08)",
+      "namespace": "pacs.008.001.08"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "FIToFICstmrCdtTrf (pacs.008.001.08)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IBAN2007Identifier"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.AccountIdentification4Choice.IBAN",
+            "name": "IBAN",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.IBAN2007Identifier",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "GenericAccountIdentification1"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.AccountIdentification4Choice.Othr",
+            "name": "Othr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GenericAccountIdentification1",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.AccountIdentification4Choice",
+        "key_type": null,
+        "kind": "record",
+        "name": "AccountIdentification4Choice",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "ActiveCurrencyCode"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount.Ccy",
+            "name": "Ccy",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "ActiveCurrencyAndAmount_SimpleType"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount_SimpleType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount",
+        "key_type": null,
+        "kind": "record",
+        "name": "ActiveCurrencyAndAmount",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "decimal",
+          "xsd_kind": "simpleType",
+          "xsd_type": "double"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount_SimpleType",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ActiveCurrencyAndAmount_SimpleType",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyCode",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ActiveCurrencyCode",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "ActiveOrHistoricCurrencyCode"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount.Ccy",
+            "name": "Ccy",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "ActiveOrHistoricCurrencyAndAmount_SimpleType"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount_SimpleType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount",
+        "key_type": null,
+        "kind": "record",
+        "name": "ActiveOrHistoricCurrencyAndAmount",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "decimal",
+          "xsd_kind": "simpleType",
+          "xsd_type": "double"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount_SimpleType",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ActiveOrHistoricCurrencyAndAmount_SimpleType",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyCode",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ActiveOrHistoricCurrencyCode",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BICFIDec2014Identifier",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "BICFIDec2014Identifier",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "decimal",
+          "xsd_kind": "simpleType",
+          "xsd_type": "double"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BaseOneRate",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "BaseOneRate",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "boolean",
+          "xsd_kind": "simpleType",
+          "xsd_type": "bool"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BatchBookingIndicator",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "BatchBookingIndicator",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "FinancialInstitutionIdentification18"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6.FinInstnId",
+            "name": "FinInstnId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FinancialInstitutionIdentification18",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+        "key_type": null,
+        "kind": "record",
+        "name": "BranchAndFinancialInstitutionIdentification6",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ActiveOrHistoricCurrencyCode"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38.Ccy",
+            "name": "Ccy",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "AccountIdentification4Choice"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.AccountIdentification4Choice",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38",
+        "key_type": null,
+        "kind": "record",
+        "name": "CashAccount38",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code.DEBT",
+            "name": "DEBT",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code.CRED",
+            "name": "CRED",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code.SHAR",
+            "name": "SHAR",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code.SLEV",
+            "name": "SLEV",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code",
+        "key_type": null,
+        "kind": "enum",
+        "name": "ChargeBearerType1Code",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ExternalCashClearingSystem1Code"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ClearingSystemIdentification3Choice.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ExternalCashClearingSystem1Code",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ClearingSystemIdentification3Choice.Prtry",
+            "name": "Prtry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ClearingSystemIdentification3Choice",
+        "key_type": null,
+        "kind": "record",
+        "name": "ClearingSystemIdentification3Choice",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CountryCode",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "CountryCode",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "PartyIdentification135"
+            },
+            "field_number": 12,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.Cdtr",
+            "name": "Cdtr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CashAccount38"
+            },
+            "field_number": 13,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.CdtrAcct",
+            "name": "CdtrAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 11,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.CdtrAgt",
+            "name": "CdtrAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "ChargeBearerType1Code"
+            },
+            "field_number": 7,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.ChrgBr",
+            "name": "ChrgBr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ChargeBearerType1Code",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "PartyIdentification135"
+            },
+            "field_number": 8,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.Dbtr",
+            "name": "Dbtr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CashAccount38"
+            },
+            "field_number": 9,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.DbtrAcct",
+            "name": "DbtrAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 10,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.DbtrAgt",
+            "name": "DbtrAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ActiveOrHistoricCurrencyAndAmount"
+            },
+            "field_number": 5,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.InstdAmt",
+            "name": "InstdAmt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveOrHistoricCurrencyAndAmount",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "ActiveCurrencyAndAmount"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.IntrBkSttlmAmt",
+            "name": "IntrBkSttlmAmt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ISODate"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.IntrBkSttlmDt",
+            "name": "IntrBkSttlmDt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ISODate",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "PaymentIdentification7"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.PmtId",
+            "name": "PmtId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Purpose2Choice"
+            },
+            "field_number": 14,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.Purp",
+            "name": "Purp",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Purpose2Choice",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "RemittanceInformation16"
+            },
+            "field_number": 15,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.RmtInf",
+            "name": "RmtInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.RemittanceInformation16",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Priority3Code"
+            },
+            "field_number": 4,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.SttlmPrty",
+            "name": "SttlmPrty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Priority3Code",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BaseOneRate"
+            },
+            "field_number": 6,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39.XchgRate",
+            "name": "XchgRate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BaseOneRate",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39",
+        "key_type": null,
+        "kind": "record",
+        "name": "CreditTransferTransaction39",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "decimal",
+          "xsd_kind": "simpleType",
+          "xsd_type": "double"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.DecimalNumber",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "DecimalNumber",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "FIToFICustomerCreditTransferV08"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Document.FIToFICstmrCdtTrf",
+            "name": "FIToFICstmrCdtTrf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FIToFICustomerCreditTransferV08",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Document",
+        "key_type": null,
+        "kind": "record",
+        "name": "Document",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ExternalCashClearingSystem1Code",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ExternalCashClearingSystem1Code",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ExternalPurpose1Code",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ExternalPurpose1Code",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_type": "CreditTransferTransaction39"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FIToFICustomerCreditTransferV08.CdtTrfTxInf",
+            "name": "CdtTrfTxInf",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CreditTransferTransaction39",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "GroupHeader93"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FIToFICustomerCreditTransferV08.GrpHdr",
+            "name": "GrpHdr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "SupplementaryData1"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FIToFICustomerCreditTransferV08.SplmtryData",
+            "name": "SplmtryData",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryData1",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FIToFICustomerCreditTransferV08",
+        "key_type": null,
+        "kind": "record",
+        "name": "FIToFICustomerCreditTransferV08",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BICFIDec2014Identifier"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FinancialInstitutionIdentification18.BICFI",
+            "name": "BICFI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BICFIDec2014Identifier",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "LEIIdentifier"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FinancialInstitutionIdentification18.LEI",
+            "name": "LEI",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.LEIIdentifier",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max140Text"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FinancialInstitutionIdentification18.Nm",
+            "name": "Nm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max140Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.FinancialInstitutionIdentification18",
+        "key_type": null,
+        "kind": "record",
+        "name": "FinancialInstitutionIdentification18",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "Max34Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GenericAccountIdentification1.Id",
+            "name": "Id",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max34Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GenericAccountIdentification1",
+        "key_type": null,
+        "kind": "record",
+        "name": "GenericAccountIdentification1",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BatchBookingIndicator"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.BtchBookg",
+            "name": "BtchBookg",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BatchBookingIndicator",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "ISODateTime"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.CreDtTm",
+            "name": "CreDtTm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ISODateTime",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "DecimalNumber"
+            },
+            "field_number": 5,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.CtrlSum",
+            "name": "CtrlSum",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.DecimalNumber",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 10,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.InstdAgt",
+            "name": "InstdAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 9,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.InstgAgt",
+            "name": "InstgAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ISODate"
+            },
+            "field_number": 7,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.IntrBkSttlmDt",
+            "name": "IntrBkSttlmDt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ISODate",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.MsgId",
+            "name": "MsgId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "Max15NumericText"
+            },
+            "field_number": 4,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.NbOfTxs",
+            "name": "NbOfTxs",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max15NumericText",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "SettlementInstruction7"
+            },
+            "field_number": 8,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.SttlmInf",
+            "name": "SttlmInf",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ActiveCurrencyAndAmount"
+            },
+            "field_number": 6,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93.TtlIntrBkSttlmAmt",
+            "name": "TtlIntrBkSttlmAmt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ActiveCurrencyAndAmount",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.GroupHeader93",
+        "key_type": null,
+        "kind": "record",
+        "name": "GroupHeader93",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.IBAN2007Identifier",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "IBAN2007Identifier",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "date",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ISODate",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ISODate",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "dateTime",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ISODateTime",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "ISODateTime",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.LEIIdentifier",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "LEIIdentifier",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max140Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max140Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max15NumericText",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max15NumericText",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max16Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max16Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max34Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max34Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max350Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max350Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max35Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max70Text",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "Max70Text",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CountryCode"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135.CtryOfRes",
+            "name": "CtryOfRes",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CountryCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max140Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135.Nm",
+            "name": "Nm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max140Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PostalAddress24"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135.PstlAdr",
+            "name": "PstlAdr",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PartyIdentification135",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartyIdentification135",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 5,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7.ClrSysRef",
+            "name": "ClrSysRef",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7.EndToEndId",
+            "name": "EndToEndId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7.InstrId",
+            "name": "InstrId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7.TxId",
+            "name": "TxId",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "UUIDv4Identifier"
+            },
+            "field_number": 4,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7.UETR",
+            "name": "UETR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.UUIDv4Identifier",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PaymentIdentification7",
+        "key_type": null,
+        "kind": "record",
+        "name": "PaymentIdentification7",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "7",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max70Text"
+            },
+            "field_number": 5,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24.AdrLine",
+            "name": "AdrLine",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max70Text",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CountryCode"
+            },
+            "field_number": 4,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24.Ctry",
+            "name": "Ctry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CountryCode",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max16Text"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24.PstCd",
+            "name": "PstCd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max16Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max70Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24.StrtNm",
+            "name": "StrtNm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max70Text",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24.TwnNm",
+            "name": "TwnNm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.PostalAddress24",
+        "key_type": null,
+        "kind": "record",
+        "name": "PostalAddress24",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Priority3Code.URGT",
+            "name": "URGT",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Priority3Code.HIGH",
+            "name": "HIGH",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Priority3Code.NORM",
+            "name": "NORM",
+            "value": 2
+          }
+        ],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Priority3Code",
+        "key_type": null,
+        "kind": "enum",
+        "name": "Priority3Code",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ExternalPurpose1Code"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Purpose2Choice.Cd",
+            "name": "Cd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ExternalPurpose1Code",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max35Text"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Purpose2Choice.Prtry",
+            "name": "Prtry",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max35Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Purpose2Choice",
+        "key_type": null,
+        "kind": "record",
+        "name": "Purpose2Choice",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max140Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.RemittanceInformation16.Ustrd",
+            "name": "Ustrd",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max140Text",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.RemittanceInformation16",
+        "key_type": null,
+        "kind": "record",
+        "name": "RemittanceInformation16",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "ClearingSystemIdentification3Choice"
+            },
+            "field_number": 3,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7.ClrSys",
+            "name": "ClrSys",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.ClearingSystemIdentification3Choice",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 5,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7.InstdRmbrsmntAgt",
+            "name": "InstdRmbrsmntAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "BranchAndFinancialInstitutionIdentification6"
+            },
+            "field_number": 4,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7.InstgRmbrsmntAgt",
+            "name": "InstgRmbrsmntAgt",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.BranchAndFinancialInstitutionIdentification6",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CashAccount38"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7.SttlmAcct",
+            "name": "SttlmAcct",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.CashAccount38",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "SettlementMethod1Code"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7.SttlmMtd",
+            "name": "SttlmMtd",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementInstruction7",
+        "key_type": null,
+        "kind": "record",
+        "name": "SettlementInstruction7",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code.INDA",
+            "name": "INDA",
+            "value": 0
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code.INGA",
+            "name": "INGA",
+            "value": 1
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code.COVE",
+            "name": "COVE",
+            "value": 2
+          },
+          {
+            "deprecated": false,
+            "description": null,
+            "extras": {},
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code.CLRG",
+            "name": "CLRG",
+            "value": 3
+          }
+        ],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SettlementMethod1Code",
+        "key_type": null,
+        "kind": "enum",
+        "name": "SettlementMethod1Code",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_type": "SupplementaryDataEnvelope1"
+            },
+            "field_number": 2,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryData1.Envlp",
+            "name": "Envlp",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryDataEnvelope1",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "Max350Text"
+            },
+            "field_number": 1,
+            "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryData1.PlcAndNm",
+            "name": "PlcAndNm",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.Max350Text",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryData1",
+        "key_type": null,
+        "kind": "record",
+        "name": "SupplementaryData1",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.SupplementaryDataEnvelope1",
+        "key_type": null,
+        "kind": "record",
+        "name": "SupplementaryDataEnvelope1",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "string",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08.UUIDv4Identifier",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "UUIDv4Identifier",
+        "namespace": "urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "iso20022/08-pacs.008.001.08-message-definition.xsd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 46
+  },
+  "detection": {
+    "confidence": 0.98,
+    "format": "iso20022"
+  },
+  "fingerprint": "sha256:48e3552dd0c935f0f7460bf7b2c6a79509122bf0a610adf11f07a3c427a0a701",
+  "lint": {
+    "findings": 114,
+    "grade": "F",
+    "report_fingerprint": "59da34ed7c5aa32b6a002016813bb05b43c1034845f0161a3dbac7375cec4a15",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 68,
+      "warning": 46
+    }
+  },
+  "snapshot_version": 1
+}

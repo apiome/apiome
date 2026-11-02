@@ -132,7 +132,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | HL7 v2 | `hl7v2` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `hl7v2`, `hl7`, `hl7v2x` | `.hl7`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | HL7 v3 / CDA | `hl7v3` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `hl7v3`, `cda`, `c-cda`, `hl7-cda` | `.xml`, `.cda`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-hl7v3) | Ready |
 | IMS DBD and PSB | `ims` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `ims`, `ims-dbd`, `ims-psb`, `dbd`, `psb` | `.dbd`, `.psb`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-ims) | Ready |
-| ISO 20022 | `iso20022` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `iso20022` | `.xml`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
+| ISO 20022 | `iso20022` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `iso20022` | `.xml`, `.xsd`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | ISO 8583 | `iso8583` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `iso8583` | `.iso8583.json`, `.8583.json`, `.json`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
 | JSON Schema | `json-schema` | Import + export | Catalog | `file`, `url`, `paste` | — | `json-schema`, `jsonschema`, `json-schema-2020-12` | `.schema.json`, `.json` | Generic | Ready |
 | JSON Type Definition | `jtd` | Import + export | Catalog | `file`, `url`, `paste` | — | `jtd`, `jsontypedefinition`, `rfc8927` | `.jtd.json`, `.json` | Generic | Ready |
@@ -226,7 +226,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | HTTP Request File | `http-file` | `.http` / `.rest` request file and cURL snippet* | `.http` / `.rest` request file and cURL snippet* | `.http` / `.rest` request file and cURL snippet |
 | IMS DBD and PSB | `ims` | IMS DBDGEN / PSBGEN macro source* | — | — |
 | Insomnia collection | `insomnia` | Insomnia export format 4 (JSON), Insomnia export format 5 (YAML) | Insomnia export format 4 (JSON) | Insomnia export format 4 (JSON) |
-| ISO 20022 | `iso20022` | message XML (any message definition)*, SEPA pain.001 (to .001.12), pain.008 (to .001.11), pacs.008 (to .001.13) | message XML (any message definition)* | message XML (any message definition) |
+| ISO 20022 | `iso20022` | message XML (any message definition)*, message definition XSD (any message definition)*, SEPA pain.001 (to .001.12), pain.008 (to .001.11), pacs.008 (to .001.13) | message XML (any message definition)* | message XML (any message definition) |
 | ISO 8583 | `iso8583` | MTI + data-element field map (any release)* | MTI + data-element field map (any release)* | MTI + data-element field map (any release) |
 | Istio VirtualService | `istio` | networking.istio.io/v1, networking.istio.io/v1beta1, networking.istio.io/v1alpha3 | networking.istio.io/v1 | networking.istio.io/v1 |
 | JSON Schema | `json-schema` | 2020-12, other `$schema` dialects (draft-07, 2019-09, …)* | 2020-12 | 2020-12 |
@@ -446,6 +446,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 **ISO 20022**
 
 - Reads **message XML (any message definition)** (ungated) — The message-definition identifier the document declares (`pain.001.001.09`) is recorded, but the reader does not branch on it and no message-definition schema is applied — except for the SEPA payment families in the next row.
+- Reads **message definition XSD (any message definition)** (ungated) — MFI-20.3: the XML Schema the standard publishes for a message (`pain.001.001.09.xsd`) is read through the XSD reader and labelled with the message id its target namespace declares; choice members, amounts and their `Ccy` are read. The SEPA version ceiling applies to messages, not definitions.
 - Writes **message XML (any message definition)** (ungated) — The written message carries whatever message-definition identifier the model records.
 
 **ISO 8583**

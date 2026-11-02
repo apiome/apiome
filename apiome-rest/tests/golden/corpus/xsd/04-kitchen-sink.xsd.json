@@ -322,10 +322,30 @@
             "deprecated": false,
             "description": null,
             "extras": {
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
+              "xsd_type": "string"
+            },
+            "field_number": 6,
+            "key": "http://example.com/shipping.Parcel.dropOffPoint",
+            "name": "dropOffPoint",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
               "xsd_kind": "attribute",
               "xsd_type": "boolean"
             },
-            "field_number": 6,
+            "field_number": 8,
             "key": "http://example.com/shipping.Parcel.fragile",
             "name": "fragile",
             "type": {
@@ -361,10 +381,30 @@
             "deprecated": false,
             "description": null,
             "extras": {
-              "xsd_kind": "attribute",
+              "xsd_kind": "element",
+              "xsd_min_occurs": "0",
               "xsd_type": "string"
             },
             "field_number": 7,
+            "key": "http://example.com/shipping.Parcel.homeAddress",
+            "name": "homeAddress",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "string"
+            },
+            "field_number": 9,
             "key": "http://example.com/shipping.Parcel.priority",
             "name": "priority",
             "type": {
@@ -516,15 +556,15 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:922344e0ff295502802e4511a1df638d40e52662b38490382078aaa9aba5238b",
+  "fingerprint": "sha256:1df7b980cebf33a6d83f7b8d202d6b255b580e55bae8ccdceac511da31f75fe9",
   "lint": {
-    "findings": 25,
+    "findings": 27,
     "grade": "D",
-    "report_fingerprint": "cf46f528047b9b33573b719eaa9872305b6a38346ab45bd3d00f0ad8ee2ccde2",
-    "score": 63,
+    "report_fingerprint": "38359e0ab10640361fb7710be1c8c07fb6f9f13335a561ea0eb1c4dd512b1857",
+    "score": 61,
     "severity_counts": {
       "error": 0,
-      "info": 17,
+      "info": 19,
       "warning": 8
     }
   },

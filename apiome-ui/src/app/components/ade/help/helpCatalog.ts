@@ -1010,6 +1010,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'declare', 'dcl', '%include', 'include member', 'like', 'union', 'storage map', 'offsets'],
   },
   {
+    id: 'iso20022-import',
+    title: 'Import ISO 20022 messages and message definitions',
+    summary: 'Catalog ISO 20022 financial messages and the XSD message definitions behind them.',
+    page: 'apiome-docs/docs/bring-in/iso20022-import.md',
+    section: 'reference',
+    keywords: ['pain.001', 'pacs.008', 'camt.053', 'sepa', 'swift', 'mx', 'xsd', 'schema', 'payments', 'finance', 'choice', 'amount'],
+  },
+  {
     id: 'ims-dbd-psb-import',
     title: 'Import IMS DBD and PSB',
     summary: 'Catalog IMS segment hierarchies and the access profile each program declares.',
