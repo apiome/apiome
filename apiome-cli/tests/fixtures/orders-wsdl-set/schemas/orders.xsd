@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:ord="urn:example:orders:types"
+    targetNamespace="urn:example:orders:types" elementFormDefault="qualified">
+  <xs:include schemaLocation="common/address.xsd"/>
+  <xs:element name="getOrder">
+    <xs:complexType><xs:sequence>
+      <xs:element name="orderId" type="xs:string"/>
+    </xs:sequence></xs:complexType>
+  </xs:element>
+  <xs:element name="getOrderResponse">
+    <xs:complexType><xs:sequence>
+      <xs:element name="order" type="ord:Order"/>
+    </xs:sequence></xs:complexType>
+  </xs:element>
+  <xs:complexType name="Order">
+    <xs:sequence>
+      <xs:element name="orderId" type="xs:string"/>
+      <xs:element name="shipTo" type="ord:Address"/>
+      <xs:element name="total" type="xs:decimal"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:schema>

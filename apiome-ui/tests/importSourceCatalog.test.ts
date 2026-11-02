@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Binary, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Binary, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -712,6 +712,48 @@ describe('Avro source card (MFI-12.6)', () => {
 
   it('draws no alternate intake card, since a registry URL goes through URL Import', () => {
     expect(alternateIntakeTiles([AVRO_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/**
+ * The WSDL source as the REST registry advertises it (MFI-13.6, #3793). A WSDL 1.1 or 2.0
+ * description arrives as a `.wsdl` / `.xml` file, an archive of the description and the schemas it
+ * imports, or a URL — a `?wsdl` or `.svc` service URL included, which the URL intake reads from
+ * `?singleWsdl` first — so the card opens the file panel and the picker offers all of them.
+ */
+const WSDL_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'wsdl',
+  label: 'WSDL',
+  description: 'Import a SOAP WSDL 1.1 or 2.0 service description.',
+  icon: 'network',
+  paradigm: 'rpc',
+  input_kinds: ['file', 'url', 'paste', 'discovery', 'fileset'],
+  supports_live_discovery: true,
+  formats: ['wsdl', 'wsdl-2.0'],
+  file_extensions: ['.wsdl', '.xml', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('WSDL source card (MFI-13.6)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([WSDL_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'wsdl');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('WSDL');
+    expect(card?.icon).toBe(Network);
+    expect(resolveLucideIcon(WSDL_DESCRIPTOR.icon)).toBe(Network);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('wsdl')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('wsdl');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('wsdl');
+  });
+
+  it('offers .wsdl, .xml and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([WSDL_DESCRIPTOR])).toEqual(['.wsdl', '.xml', '.zip', '.tar.gz', '.tgz', '.tar']);
+  });
+
+  it('draws no alternate intake card, since a service URL goes through URL Import', () => {
+    expect(alternateIntakeTiles([WSDL_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 

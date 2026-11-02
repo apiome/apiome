@@ -1,14 +1,21 @@
-"""Tests for ``apiome import wsdl --discover`` (MFI-13.3, #3790).
+"""Tests for ``apiome import wsdl`` and its ``--discover`` (MFI-13.3, #3790; MFI-13.6, #3793).
 
 ``--discover`` tries a SOAP service's ``?singleWsdl`` (every import inlined), then ``?wsdl``, and
 imports the first that answers with WSDL through the registry-dispatch import, against a mocked
 REST service and a mocked SOAP service.
+
+The committed fixtures (MFI-13.6) — a WSDL 1.1 description with SOAP 1.1 and 1.2 bindings, a WSDL
+2.0 description, and a description whose schemas live in a sibling folder — are imported as a file,
+discovered from a service endpoint, and (the set) sent as a directory, so each reaches the server
+verbatim under ``source_kind: wsdl``.
 """
 
 from __future__ import annotations
 
 import base64
+import io
 import json
+import zipfile
 from pathlib import Path
 
 import httpx
@@ -24,6 +31,14 @@ runner = CliRunner()
 _EXAMPLE = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples" / "wsdl" / "01-calculator.wsdl"
 _WSDL = _EXAMPLE.read_text(encoding="utf-8")
 _SERVICE = "https://soap.example.com/Calculator.svc"
+_FIXTURES = Path(__file__).parent / "fixtures"
+#: The committed single-file fixtures (MFI-13.6), one per WSDL grammar.
+_GRAMMAR_FIXTURES = [
+    pytest.param("calculator-soap11.wsdl", id="wsdl-1.1"),
+    pytest.param("shipping-wsdl20.wsdl", id="wsdl-2.0"),
+]
+#: A description whose types live in schema files in a sibling folder (MFI-13.6, MFI-13.1).
+_SET = _FIXTURES / "orders-wsdl-set"
 _SOURCES_URL = "http://localhost:8000/v1/import/sources"
 _IMPORT_URL = "http://localhost:8000/v1/tenants/acme-corp/imports"
 _JOB_ID = "cdcdcdcd-cdcd-4dcd-8dcd-cdcdcdcdcdcd"
@@ -143,3 +158,64 @@ def test_discover_is_the_only_input() -> None:
     result = runner.invoke(app, ["import", "wsdl", "calc.wsdl", "--discover", _SERVICE])
     assert result.exit_code != 0
     assert "Provide only one input" in strip_ansi(result.output)
+
+
+# --- MFI-13.6 fixtures ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("fixture", _GRAMMAR_FIXTURES)
+def test_a_grammar_fixture_file_imports_verbatim(httpx_mock: object, fixture: str) -> None:
+    _mock_import(httpx_mock)
+    path = _FIXTURES / fixture
+    result = runner.invoke(app, ["import", "wsdl", str(path)])
+    assert result.exit_code == 0, result.output
+
+    body = _post_body(httpx_mock)
+    assert body["metadata"]["source_kind"] == "wsdl"
+    assert base64.b64decode(body["document_base64"]) == path.read_bytes()
+
+
+@pytest.mark.parametrize("fixture", _GRAMMAR_FIXTURES)
+def test_a_grammar_fixture_is_discovered_from_its_endpoint(httpx_mock: object, fixture: str) -> None:
+    _mock_import(httpx_mock)
+    description = (_FIXTURES / fixture).read_text(encoding="utf-8")
+    httpx_mock.add_response(  # type: ignore[attr-defined]
+        url=f"{_SERVICE}?singleWsdl",
+        method="GET",
+        text=description,
+        headers={"Content-Type": "text/xml"},
+        is_reusable=True,
+    )
+    result = runner.invoke(app, ["import", "wsdl", "--discover", _SERVICE])
+    assert result.exit_code == 0, result.output
+
+    assert base64.b64decode(_post_body(httpx_mock)["document_base64"]).decode("utf-8") == description
+    assert f"Discovered WSDL at {_SERVICE}?singleWsdl" in strip_ansi(result.output)
+
+
+def test_the_folder_set_is_sent_as_one_archive(httpx_mock: object) -> None:
+    _mock_import(httpx_mock)
+    result = runner.invoke(app, ["import", "wsdl", str(_SET)])
+    assert result.exit_code == 0, result.output
+
+    body = _post_body(httpx_mock)
+    assert body["metadata"]["source_kind"] == "wsdl"
+    with zipfile.ZipFile(io.BytesIO(base64.b64decode(body["document_base64"]))) as archive:
+        names = sorted(archive.namelist())
+        assert names == ["schemas/common/address.xsd", "schemas/orders.xsd", "wsdl/orders.wsdl"]
+        for name in names:
+            assert archive.read(name) == (_SET / name).read_bytes()
+
+
+@pytest.mark.parametrize(
+    "fixture, marker",
+    [
+        ("calculator-soap11.wsdl", 'xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"'),
+        ("calculator-soap11.wsdl", 'xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/"'),
+        ("shipping-wsdl20.wsdl", '<description xmlns="http://www.w3.org/ns/wsdl"'),
+        ("orders-wsdl-set/wsdl/orders.wsdl", 'schemaLocation="../schemas/orders.xsd"'),
+        ("orders-wsdl-set/schemas/orders.xsd", 'schemaLocation="common/address.xsd"'),
+    ],
+)
+def test_the_fixtures_are_what_they_claim(fixture: str, marker: str) -> None:
+    assert marker in (_FIXTURES / fixture).read_text(encoding="utf-8")

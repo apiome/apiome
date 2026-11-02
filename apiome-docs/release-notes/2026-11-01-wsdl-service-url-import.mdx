@@ -1,0 +1,19 @@
+---
+slug: wsdl-service-url-import
+title: Import a SOAP service from its ?wsdl URL
+description: URL Import reads a SOAP service from ?singleWsdl first, then ?wsdl.
+authors: [apiome]
+---
+
+**URL Import** in the catalog import wizard now takes a SOAP service's `?wsdl` URL or its bare WCF
+or ASMX endpoint. [How it works](/bring-in/wsdl-import#in-the-import-wizard).
+
+{/* truncate */}
+
+- **`?singleWsdl` first.** The wizard asks for the whole description, every import inlined, and
+  falls back to `?wsdl` when the service does not offer it. The catalog item records the URL that
+  answered.
+- **Same rules as the CLI.** The URLs are tried in the order `apiome import wsdl --discover` tries
+  them. A `.wsdl` URL is fetched as entered.
+- **WSDL fixtures.** The CLI's test fixtures now include a WSDL 1.1 service with SOAP 1.1 and 1.2
+  bindings, a WSDL 2.0 service, and a description whose schemas live in a sibling folder.

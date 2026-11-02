@@ -53,6 +53,7 @@ import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils
 import { generateSlug } from '../../../../utils/slug';
 import { odataMetadataUrlForServiceDocument } from '../../../../utils/odata-service-url';
 import { schemaRegistryRawSchemaUrl } from '../../../../utils/schema-registry-url';
+import { fetchWsdlDescription } from '../../../../utils/wsdl-service-url';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
 import { CompassImportIntake } from '../../catalogMigrations/CompassImportIntake';
 import { MigrationReport } from '../../catalogMigrations/MigrationReport';
@@ -608,6 +609,13 @@ export function CatalogImportDialog({
     setState('fetching-url');
     setError(null);
     try {
+      // A SOAP service URL (`…?wsdl`, `…/Service.svc`) is read from `?singleWsdl` when the service
+      // offers it — the whole description with its imports inlined — else from `?wsdl` (MFI-13.6).
+      const description = await fetchWsdlDescription(url, fetchUrlText);
+      if (description) {
+        await detectContent(description.text, description.url, 'url');
+        return;
+      }
       const text = await fetchUrlText(url);
       // An OData service root answers with its service document, which has no model: follow it to
       // the service's `$metadata` and import that instead (MFI-11.6). A schema registry's subject
