@@ -4,6 +4,14 @@
     "channels": [],
     "description": null,
     "extras": {
+      "iso8583_bitmap": {
+        "elements": [
+          70
+        ],
+        "has_secondary": true,
+        "primary": "8000000000000000",
+        "secondary": "0400000000000000"
+      },
       "iso8583_data_elements": [
         {
           "length": "3",
@@ -14,6 +22,17 @@
         }
       ],
       "iso8583_mti": "0800",
+      "iso8583_mti_decoded": {
+        "class": "8",
+        "class_label": "Network management",
+        "function": "0",
+        "function_label": "Request",
+        "origin": "0",
+        "origin_label": "Acquirer",
+        "summary": "Network management request (acquirer)",
+        "version": "0",
+        "version_label": "ISO 8583:1987"
+      },
       "iso8583_name": null
     },
     "format": "iso8583",
@@ -75,6 +94,14 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "iso8583_bitmap": {
+            "elements": [
+              70
+            ],
+            "has_secondary": true,
+            "primary": "8000000000000000",
+            "secondary": "0400000000000000"
+          },
           "iso8583_kind": "message",
           "iso8583_mti": "0800"
         },
@@ -90,7 +117,7 @@
               "iso8583_de_number": "70",
               "iso8583_de_type": "n"
             },
-            "field_number": 1,
+            "field_number": 70,
             "key": "0800.Message0800.DE70",
             "name": "DE70",
             "type": {
@@ -124,16 +151,16 @@
     "confidence": 0.98,
     "format": "iso8583"
   },
-  "fingerprint": "sha256:f4ef8399632b6d6f47abc64e23cfbbe2e25471a1c29d37c802e950efa8afe77b",
+  "fingerprint": "sha256:8a17b58ac25f7a444b8c2cd5d409d96db760355d6f61dd9be99f1a931280b878",
   "lint": {
-    "findings": 3,
-    "grade": "A",
-    "report_fingerprint": "0f7e8d45ae9772a435d0a7a4d53beb79249d03f4409c0787d79e786b89cda1af",
-    "score": 94,
+    "findings": 5,
+    "grade": "B",
+    "report_fingerprint": "5564aa8d16f07d258b349b8573f82c9f54c3b729bb3c4c3bd616b0895b18faa1",
+    "score": 89,
     "severity_counts": {
       "error": 0,
-      "info": 2,
-      "warning": 1
+      "info": 3,
+      "warning": 2
     }
   },
   "snapshot_version": 1

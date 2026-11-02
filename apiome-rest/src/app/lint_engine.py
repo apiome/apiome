@@ -419,6 +419,9 @@ def load_format_rule_packs() -> None:
     # FIX Orchestra lint pack (MFI-20.4): registers under ``fix-orchestra`` (msgType, code sets, presence rules).
     from . import fix_orchestra_lint as _fix_orchestra_lint  # noqa: F401
 
+    # ISO 8583 lint pack (MFI-20.6): registers under ``iso8583`` (MTI and data-element hygiene).
+    from . import iso8583_lint as _iso8583_lint  # noqa: F401
+
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401
     from . import flatbuffers_lint as _flatbuffers_lint  # noqa: F401

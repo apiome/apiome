@@ -1010,6 +1010,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mainframe', 'declare', 'dcl', '%include', 'include member', 'like', 'union', 'storage map', 'offsets'],
   },
   {
+    id: 'iso8583-import',
+    title: 'Import ISO 8583 card messages',
+    summary: 'Catalog ISO 8583 message definitions with their MTI, bitmaps and data elements.',
+    page: 'apiome-docs/docs/bring-in/iso8583-import.md',
+    section: 'reference',
+    keywords: ['atm', 'pos', 'authorization', 'payments', 'finance', 'field map', 'de', 'stan', 'response code', 'lint', 'breaking change'],
+  },
+  {
     id: 'iso20022-import',
     title: 'Import ISO 20022 messages and message definitions',
     summary: 'Catalog ISO 20022 financial messages and the XSD message definitions behind them.',

@@ -4,6 +4,31 @@
     "channels": [],
     "description": null,
     "extras": {
+      "iso8583_bitmap": {
+        "elements": [
+          2,
+          3,
+          4,
+          7,
+          11,
+          12,
+          13,
+          15,
+          18,
+          22,
+          32,
+          35,
+          37,
+          41,
+          42,
+          43,
+          49,
+          52
+        ],
+        "has_secondary": false,
+        "primary": "723A440128E09000",
+        "secondary": null
+      },
       "iso8583_data_elements": [
         {
           "length": "..19",
@@ -133,6 +158,17 @@
         }
       ],
       "iso8583_mti": "0200",
+      "iso8583_mti_decoded": {
+        "class": "2",
+        "class_label": "Financial",
+        "function": "0",
+        "function_label": "Request",
+        "origin": "0",
+        "origin_label": "Acquirer",
+        "summary": "Financial request (acquirer)",
+        "version": "0",
+        "version_label": "ISO 8583:1987"
+      },
       "iso8583_name": "ATM Cash Withdrawal Request"
     },
     "format": "iso8583",
@@ -840,6 +876,31 @@
         "description": "ATM Cash Withdrawal Request",
         "enum_values": [],
         "extras": {
+          "iso8583_bitmap": {
+            "elements": [
+              2,
+              3,
+              4,
+              7,
+              11,
+              12,
+              13,
+              15,
+              18,
+              22,
+              32,
+              35,
+              37,
+              41,
+              42,
+              43,
+              49,
+              52
+            ],
+            "has_secondary": false,
+            "primary": "723A440128E09000",
+            "secondary": null
+          },
           "iso8583_kind": "message",
           "iso8583_mti": "0200"
         },
@@ -855,7 +916,7 @@
               "iso8583_de_number": "11",
               "iso8583_de_type": "n"
             },
-            "field_number": 5,
+            "field_number": 11,
             "key": "0200.Message0200.DE11",
             "name": "DE11",
             "type": {
@@ -876,7 +937,7 @@
               "iso8583_de_number": "12",
               "iso8583_de_type": "n"
             },
-            "field_number": 6,
+            "field_number": 12,
             "key": "0200.Message0200.DE12",
             "name": "DE12",
             "type": {
@@ -897,7 +958,7 @@
               "iso8583_de_number": "13",
               "iso8583_de_type": "n"
             },
-            "field_number": 7,
+            "field_number": 13,
             "key": "0200.Message0200.DE13",
             "name": "DE13",
             "type": {
@@ -918,7 +979,7 @@
               "iso8583_de_number": "15",
               "iso8583_de_type": "n"
             },
-            "field_number": 8,
+            "field_number": 15,
             "key": "0200.Message0200.DE15",
             "name": "DE15",
             "type": {
@@ -939,7 +1000,7 @@
               "iso8583_de_number": "18",
               "iso8583_de_type": "n"
             },
-            "field_number": 9,
+            "field_number": 18,
             "key": "0200.Message0200.DE18",
             "name": "DE18",
             "type": {
@@ -960,7 +1021,7 @@
               "iso8583_de_number": "2",
               "iso8583_de_type": "n"
             },
-            "field_number": 1,
+            "field_number": 2,
             "key": "0200.Message0200.DE2",
             "name": "DE2",
             "type": {
@@ -981,7 +1042,7 @@
               "iso8583_de_number": "22",
               "iso8583_de_type": "n"
             },
-            "field_number": 10,
+            "field_number": 22,
             "key": "0200.Message0200.DE22",
             "name": "DE22",
             "type": {
@@ -1002,7 +1063,7 @@
               "iso8583_de_number": "3",
               "iso8583_de_type": "n"
             },
-            "field_number": 2,
+            "field_number": 3,
             "key": "0200.Message0200.DE3",
             "name": "DE3",
             "type": {
@@ -1023,7 +1084,7 @@
               "iso8583_de_number": "32",
               "iso8583_de_type": "n"
             },
-            "field_number": 11,
+            "field_number": 32,
             "key": "0200.Message0200.DE32",
             "name": "DE32",
             "type": {
@@ -1044,7 +1105,7 @@
               "iso8583_de_number": "35",
               "iso8583_de_type": "z"
             },
-            "field_number": 12,
+            "field_number": 35,
             "key": "0200.Message0200.DE35",
             "name": "DE35",
             "type": {
@@ -1065,7 +1126,7 @@
               "iso8583_de_number": "37",
               "iso8583_de_type": "an"
             },
-            "field_number": 13,
+            "field_number": 37,
             "key": "0200.Message0200.DE37",
             "name": "DE37",
             "type": {
@@ -1086,7 +1147,7 @@
               "iso8583_de_number": "4",
               "iso8583_de_type": "n"
             },
-            "field_number": 3,
+            "field_number": 4,
             "key": "0200.Message0200.DE4",
             "name": "DE4",
             "type": {
@@ -1107,7 +1168,7 @@
               "iso8583_de_number": "41",
               "iso8583_de_type": "ans"
             },
-            "field_number": 14,
+            "field_number": 41,
             "key": "0200.Message0200.DE41",
             "name": "DE41",
             "type": {
@@ -1128,7 +1189,7 @@
               "iso8583_de_number": "42",
               "iso8583_de_type": "ans"
             },
-            "field_number": 15,
+            "field_number": 42,
             "key": "0200.Message0200.DE42",
             "name": "DE42",
             "type": {
@@ -1149,7 +1210,7 @@
               "iso8583_de_number": "43",
               "iso8583_de_type": "ans"
             },
-            "field_number": 16,
+            "field_number": 43,
             "key": "0200.Message0200.DE43",
             "name": "DE43",
             "type": {
@@ -1170,7 +1231,7 @@
               "iso8583_de_number": "49",
               "iso8583_de_type": "n"
             },
-            "field_number": 17,
+            "field_number": 49,
             "key": "0200.Message0200.DE49",
             "name": "DE49",
             "type": {
@@ -1191,7 +1252,7 @@
               "iso8583_de_number": "52",
               "iso8583_de_type": "b"
             },
-            "field_number": 18,
+            "field_number": 52,
             "key": "0200.Message0200.DE52",
             "name": "DE52",
             "type": {
@@ -1212,7 +1273,7 @@
               "iso8583_de_number": "7",
               "iso8583_de_type": "n"
             },
-            "field_number": 4,
+            "field_number": 7,
             "key": "0200.Message0200.DE7",
             "name": "DE7",
             "type": {
@@ -1246,7 +1307,7 @@
     "confidence": 0.98,
     "format": "iso8583"
   },
-  "fingerprint": "sha256:fc6ed59349ede40ddc8d941f33d71861b96b591eefd4d9915074cf17f0cb03a7",
+  "fingerprint": "sha256:723d96c3e8bb28c658bd8d4a6aee829b7f3f3ec09f2aab19dabe6781c94d24fa",
   "lint": {
     "findings": 19,
     "grade": "B",

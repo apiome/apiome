@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.605.0] - 2026-11-02
+
+### Added
+- **ISO 8583: message-type and bitmap definition, lint pack and breaking-change rules (MFI-20.6, #3990).** The field-map
+  reader, normalizer, emitter and six fixtures already shipped (MFI-22.6); this adds the definition the ticket asked
+  for and what versions, diffs and lint need.
+  - New `app/iso8583_message_type.py`: `decode_mti` (release, class, function, origin and a summary),
+    `bitmaps_for` (primary / secondary bitmaps from the elements present), the type-code and data-element-range
+    vocabulary. `Iso8583Normalizer` records `extras["iso8583_mti_decoded"]` and `extras["iso8583_bitmap"]` (on the
+    item and the message record) and numbers each message field by its data element (`field_number`).
+  - New `app/iso8583_lint.py` (`iso8583.*`, registered under `iso8583`, so the format lints natively):
+    `de-number-valid` (error); `mti-known`, `de-type-known`, `de-length-declared`, `stan-present`,
+    `response-code-on-response` (warning); `transmission-datetime-present` (info).
+  - New `app/iso8583_breaking.py` (`iso8583.*`, registered under `iso8583`): `mti-changed`, `de-removed`,
+    `de-length-changed`, `de-type-changed` breaking; `de-added` dangerous; `de-renamed`, `sample-value-changed`
+    safe. Everything else falls back to the baseline.
+  - The six `iso8583` corpus goldens regenerated (fingerprints change once because the model gained keys and field
+    numbers; the minimal `03-network-echo-0800` example now lints for the DE 7 / DE 11 it leaves out);
+    `apiome-docs/docs/build/lint-rules.md` regenerated.
+
 ## [1.604.0] - 2026-11-02
 
 ### Added

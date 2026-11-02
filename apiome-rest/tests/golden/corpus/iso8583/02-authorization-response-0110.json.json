@@ -4,6 +4,21 @@
     "channels": [],
     "description": null,
     "extras": {
+      "iso8583_bitmap": {
+        "elements": [
+          2,
+          3,
+          4,
+          7,
+          11,
+          39,
+          41,
+          49
+        ],
+        "has_secondary": false,
+        "primary": "7220000002808000",
+        "secondary": null
+      },
       "iso8583_data_elements": [
         {
           "length": "..19",
@@ -63,6 +78,17 @@
         }
       ],
       "iso8583_mti": "0110",
+      "iso8583_mti_decoded": {
+        "class": "1",
+        "class_label": "Authorization",
+        "function": "1",
+        "function_label": "Request response",
+        "origin": "0",
+        "origin_label": "Acquirer",
+        "summary": "Authorization request response (acquirer)",
+        "version": "0",
+        "version_label": "ISO 8583:1987"
+      },
       "iso8583_name": "Authorization Response"
     },
     "format": "iso8583",
@@ -390,6 +416,21 @@
         "description": "Authorization Response",
         "enum_values": [],
         "extras": {
+          "iso8583_bitmap": {
+            "elements": [
+              2,
+              3,
+              4,
+              7,
+              11,
+              39,
+              41,
+              49
+            ],
+            "has_secondary": false,
+            "primary": "7220000002808000",
+            "secondary": null
+          },
           "iso8583_kind": "message",
           "iso8583_mti": "0110"
         },
@@ -405,7 +446,7 @@
               "iso8583_de_number": "11",
               "iso8583_de_type": "n"
             },
-            "field_number": 5,
+            "field_number": 11,
             "key": "0110.Message0110.DE11",
             "name": "DE11",
             "type": {
@@ -426,7 +467,7 @@
               "iso8583_de_number": "2",
               "iso8583_de_type": "n"
             },
-            "field_number": 1,
+            "field_number": 2,
             "key": "0110.Message0110.DE2",
             "name": "DE2",
             "type": {
@@ -447,7 +488,7 @@
               "iso8583_de_number": "3",
               "iso8583_de_type": "n"
             },
-            "field_number": 2,
+            "field_number": 3,
             "key": "0110.Message0110.DE3",
             "name": "DE3",
             "type": {
@@ -468,7 +509,7 @@
               "iso8583_de_number": "39",
               "iso8583_de_type": "an"
             },
-            "field_number": 6,
+            "field_number": 39,
             "key": "0110.Message0110.DE39",
             "name": "DE39",
             "type": {
@@ -489,7 +530,7 @@
               "iso8583_de_number": "4",
               "iso8583_de_type": "n"
             },
-            "field_number": 3,
+            "field_number": 4,
             "key": "0110.Message0110.DE4",
             "name": "DE4",
             "type": {
@@ -510,7 +551,7 @@
               "iso8583_de_number": "41",
               "iso8583_de_type": "ans"
             },
-            "field_number": 7,
+            "field_number": 41,
             "key": "0110.Message0110.DE41",
             "name": "DE41",
             "type": {
@@ -531,7 +572,7 @@
               "iso8583_de_number": "49",
               "iso8583_de_type": "n"
             },
-            "field_number": 8,
+            "field_number": 49,
             "key": "0110.Message0110.DE49",
             "name": "DE49",
             "type": {
@@ -552,7 +593,7 @@
               "iso8583_de_number": "7",
               "iso8583_de_type": "n"
             },
-            "field_number": 4,
+            "field_number": 7,
             "key": "0110.Message0110.DE7",
             "name": "DE7",
             "type": {
@@ -586,7 +627,7 @@
     "confidence": 0.98,
     "format": "iso8583"
   },
-  "fingerprint": "sha256:3c9d5e161c2e95977005c156dffb0d85bb3ce85cffd744b490e84e7aa9c3b6ea",
+  "fingerprint": "sha256:95ca674e9f89de5871023175e5324cd61a95c2b92b0913690bdc0064ce481b82",
   "lint": {
     "findings": 9,
     "grade": "A",
