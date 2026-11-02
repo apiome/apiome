@@ -1,0 +1,37 @@
+// CORBA IDL version fixture (MFI-21.4, #3994): a brokerage interface set, v3 — breaking
+// against v1: a member inserted and two swapped, a bound narrowed, an enumerator inserted, a
+// parameter's direction and another's type changed, a raises added, heartbeat made two-way and
+// the base interface dropped.
+//
+// Exercises what the CORBA diff grades: interface inheritance (`Account : Auditable`), an
+// attribute and a readonly attribute, a oneway operation, positional in/out/inout parameters,
+// raises clauses, a bounded string, a struct, an exception and an enum.
+module Brokerage {
+  typedef string<8> Symbol;
+
+  enum Side { BUY, SELL_SHORT, SELL };
+
+  struct Order {
+    Symbol symbol;
+    long quantity;
+    Side side;
+    string account;
+    double limitPrice;
+  };
+
+  exception Rejected {
+    string reason;
+  };
+
+  interface Auditable {
+    readonly attribute string auditId;
+    void audit(in string note);
+  };
+
+  interface Account {
+    attribute string nickname;
+    string place(in Order order, out double price) raises (Rejected);
+    void cancel(in long orderId) raises (Rejected);
+    void heartbeat(in long seq);
+  };
+};

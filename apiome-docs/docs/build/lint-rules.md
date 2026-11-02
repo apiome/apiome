@@ -545,6 +545,115 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** Type names should be author-chosen, not generator output.
 
 
+## Pack: `corbaidl`
+
+### `corbaidl.any-typed` {#corbaidl-any-typed}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** An any value hides what it carries.
+
+### `corbaidl.base-interface-declared` {#corbaidl-base-interface-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A base interface should be declared in the file.
+
+### `corbaidl.exception-as-type` {#corbaidl-exception-as-type}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** An exception may only be raised, not used as a type.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Declare a struct with the same members for the value, and keep the exception for raising.
+- **False-positive guidance:** Not a false positive: IDL compilers reject an exception used as a type.
+- **Fixture:** `catalog/corbaidl-exception-as-type`
+- **Scan modes:** `lint`
+
+### `corbaidl.identifier-not-keyword` {#corbaidl-identifier-not-keyword}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** A declared name must not be an IDL keyword (compared case-insensitively).
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Rename the identifier, or escape it with a leading underscore (_sequence).
+- **False-positive guidance:** Not a false positive: the comparison with keywords is case-insensitive by definition.
+- **Fixture:** `catalog/corbaidl-identifier-not-keyword`
+- **Scan modes:** `lint`
+
+### `corbaidl.inheritance-acyclic` {#corbaidl-inheritance-acyclic}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** An interface may not inherit from itself.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Remove the base that closes the cycle.
+- **False-positive guidance:** Not a false positive: the inheritance graph must be acyclic.
+- **Fixture:** `catalog/corbaidl-inheritance-acyclic`
+- **Scan modes:** `lint`
+
+### `corbaidl.member-names-unique` {#corbaidl-member-names-unique}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** Struct members and operation parameters must not collide case-insensitively.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Rename one of the colliding members or parameters.
+- **False-positive guidance:** Not a false positive: IDL compares identifiers case-insensitively.
+- **Fixture:** `catalog/corbaidl-member-names-unique`
+- **Scan modes:** `lint`
+
+### `corbaidl.object-reference-typed` {#corbaidl-object-reference-typed}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** The untyped Object reference hides which interface the caller gets.
+
+### `corbaidl.oneway-signature` {#corbaidl-oneway-signature}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A oneway operation returns void, takes only in parameters and raises nothing.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Make the operation two-way, or make it void, in-only and raise-free.
+- **False-positive guidance:** Not a false positive: IDL compilers reject such a oneway operation.
+- **Fixture:** `catalog/corbaidl-oneway-signature`
+- **Scan modes:** `lint`
+
+### `corbaidl.operation-names-unique` {#corbaidl-operation-names-unique}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** An interface's operations and attributes, inherited ones included, must not collide.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Give each operation, and each attribute, a distinct name.
+- **False-positive guidance:** Not a false positive: a redefined inherited operation is rejected too.
+- **Fixture:** `catalog/corbaidl-operation-names-unique`
+- **Scan modes:** `lint`
+
+### `corbaidl.raises-declared` {#corbaidl-raises-declared}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** A raises clause may only name declared exceptions.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Declare the name as an exception, or remove it from the raises clause.
+- **False-positive guidance:** An exception declared in an #include is reported as undeclared; import the included definitions too.
+- **Fixture:** `catalog/corbaidl-raises-declared`
+- **Scan modes:** `lint`
+
+### `corbaidl.type-resolves` {#corbaidl-type-resolves}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every type must be an IDL base type or declared in the file.
+- **Reference:** https://www.omg.org/spec/IDL/4.2/PDF
+- **Remediation:** Declare the type in the file, or import the file that declares it together with this one.
+- **False-positive guidance:** A name from an #include is reported because included files are not read; import the included definitions too before treating it as a defect of the contract.
+- **Fixture:** `catalog/corbaidl-type-resolves`
+- **Scan modes:** `lint`
+
+
 ## Pack: `data-contract`
 
 ### `data-contract.classification-missing` {#data-contract-classification-missing}

@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/corbaidl-operation-names-unique",
+  "source_format": "corbaidl",
+  "description": "OMG IDL definition with exactly one blocking defect: two operations whose names differ only in case.",
+  "document": "// CORBA IDL scanner-evaluation fixture (MFI-21.4).\nmodule Brokerage {\n  enum Side { BUY, SELL };\n  struct Order { string symbol; Side side; long quantity; };\n  exception Rejected { string reason; };\n  interface Account {\n    string place(in Order order) raises (Rejected);\n    void cancel(in string orderId);\n    void Cancel(in long orderNumber);\n  };\n};\n"
+}

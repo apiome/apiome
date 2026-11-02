@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/corbaidl-identifier-not-keyword",
+  "source_format": "corbaidl",
+  "description": "OMG IDL definition with exactly one blocking defect: a struct member named Sequence, the IDL keyword sequence compared case-insensitively.",
+  "document": "// CORBA IDL scanner-evaluation fixture (MFI-21.4).\nmodule Brokerage {\n  enum Side { BUY, SELL };\n  struct Order { string symbol; Side side; long quantity; };\n  exception Rejected { string reason; };\n  struct Batch { long Sequence; };\n  interface Account {\n    string place(in Order order) raises (Rejected);\n  };\n};\n"
+}

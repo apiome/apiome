@@ -432,6 +432,9 @@ def load_format_rule_packs() -> None:
     # WADL lint pack (MFI-21.3): registers under ``wadl`` (references, template params, method
     # ids, representations and what the migrate-to-OpenAPI path cannot carry).
     from . import wadl_lint as _wadl_lint  # noqa: F401
+    # CORBA / OMG IDL lint pack (MFI-21.4): registers under ``corbaidl`` (type resolution, raises
+    # clauses, oneway signatures, inheritance and name collisions).
+    from . import corbaidl_lint as _corbaidl_lint  # noqa: F401
 
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401

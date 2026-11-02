@@ -1314,7 +1314,9 @@ class _CorbaIdlWriter:
         return [(service.name, service) for service in self._api.services]
 
     def _render_interface(self, name: str, source: Any) -> List[str]:
-        lines = [f"interface {name} {{"]
+        bases = source.get("bases") if isinstance(source, dict) else None
+        inheritance = f" : {', '.join(str(base) for base in bases)}" if bases else ""
+        lines = [f"interface {name}{inheritance} {{"]
         scope = _Scope(name)
         if isinstance(source, Service):
             for operation in source.operations:
@@ -1325,11 +1327,22 @@ class _CorbaIdlWriter:
                     lines.append(f"  {rendered};")
             self.tracker.record(source.key, Provenance.SOURCE)
         else:
+            # A CORBA source's attributes and own operations, as declared (MFI-21.4).
+            for attribute in source.get("attributes", []) or []:
+                if isinstance(attribute, dict):
+                    lines.append(f"  {self._render_source_attribute(attribute, scope)};")
             for operation in source.get("operations", []):
                 if isinstance(operation, dict):
                     lines.append(f"  {self._render_source_operation(operation, scope)};")
         lines.append("};")
         return lines
+
+    def _render_source_attribute(self, attribute: Dict[str, Any], scope: _Scope) -> str:
+        """``[readonly] attribute <type> <name>`` of a CORBA source's interface."""
+        name = scope.claim(str(attribute.get("name", "attribute")), "attribute")
+        expr = self._signature_type(self._source_expr(str(attribute.get("type", "string"))))
+        readonly = "readonly " if attribute.get("readonly") else ""
+        return f"{readonly}attribute {expr} {name}"
 
     def _render_source_operation(self, operation: Dict[str, Any], scope: _Scope) -> str:
         """An operation of a CORBA source's interface, as it was declared."""
@@ -1355,7 +1368,8 @@ class _CorbaIdlWriter:
         return_type = self._signature_type(self._source_expr(str(operation.get("return_type", "void"))))
         raises = [self._source_expr(str(item)) for item in operation.get("raises", []) or []]
         raises_clause = f" raises ({', '.join(raises)})" if raises else ""
-        return f"{return_type} {name}({', '.join(params)}){raises_clause}"
+        oneway = "oneway " if operation.get("oneway") else ""
+        return f"{oneway}{return_type} {name}({', '.join(params)}){raises_clause}"
 
     def _render_operation(self, operation: Operation, scope: _Scope) -> Optional[str]:
         """``<return> name(in T param, …, in Body body) raises (…)`` for a canonical operation."""

@@ -55,12 +55,21 @@ from __future__ import annotations
 
 from typing import Any, List, Mapping, Optional, Sequence
 
-from .breaking_change import BuiltinBreakingChangeClassifier, ChangeClassification, Severity, _worst
+from .breaking_change import (
+    BuiltinBreakingChangeClassifier,
+    ChangeClassification,
+    Severity,
+    _worst,
+    relative_field_order_changed,
+)
 from .canonical_model import CanonicalApi
 from .diff import ChangeKind, EntityCategory, EntityChange, FieldChange
 from .raml_breaking import Grade, grade_parameters
 
 __all__ = ["RULE_IDS", "WadlBreakingChangeClassifier", "grade_options", "relative_order_changed"]
+
+#: Kept under its original name; the helper moved to :mod:`app.breaking_change` (MFI-21.4).
+relative_order_changed = relative_field_order_changed
 
 _FORMAT_KEY = "wadl"
 _PREFIX = "wadl"
@@ -244,34 +253,6 @@ def _grade_added_element(change: EntityChange) -> Grade:
     return (Severity.SAFE, f"{_PREFIX}.element-added-optional", f"optional element {name!r} was added")
 
 
-def _field_order(api: CanonicalApi, field_key: str) -> Optional[List[str]]:
-    """The keys of the fields of the record that owns ``field_key``, in sequence order."""
-    for type_ in api.types:
-        keys = [f.key for f in type_.fields]
-        if field_key in keys:
-            return [f.key for f in sorted(type_.fields, key=lambda f: f.field_number or 0)]
-    return None
-
-
-def relative_order_changed(base: CanonicalApi, target: CanonicalApi, field_key: str) -> bool:
-    """Whether the elements both versions share changed relative order in ``field_key``'s record.
-
-    Args:
-        base: The "from" model.
-        target: The "to" model.
-        field_key: A field present in both models.
-
-    Returns:
-        ``True`` when the shared elements appear in a different order (a reorder), ``False``
-        when only an insertion or removal shifted their positions.
-    """
-    before, after = _field_order(base, field_key), _field_order(target, field_key)
-    if before is None or after is None:
-        return True
-    shared = set(before) & set(after)
-    return [k for k in before if k in shared] != [k for k in after if k in shared]
-
-
 def _bounds(field: Mapping[str, Any]) -> tuple:
     constraints = field.get("constraints") if isinstance(field, Mapping) else None
     constraints = constraints if isinstance(constraints, Mapping) else {}
@@ -308,7 +289,7 @@ def _grade_element(change: EntityChange, base: CanonicalApi, target: CanonicalAp
                 )
             )
     if "field_number" in moved:
-        if relative_order_changed(base, target, change.key):
+        if relative_field_order_changed(base, target, change.key):
             grades.append(
                 (
                     Severity.BREAKING,

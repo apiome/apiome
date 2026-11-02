@@ -59,6 +59,7 @@ from .diff import ChangeKind, EntityCategory, EntityChange, ModelDiff, diff
 
 __all__ = [
     "Severity",
+    "relative_field_order_changed",
     "ChangeClassification",
     "ClassificationResult",
     "UnattributedFinding",
@@ -414,6 +415,9 @@ def load_format_breaking_change_classifiers() -> None:
     # WADL breaking-change classifier (MFI-21.3): registers under ``wadl`` and grades params,
     # representations' media types and the grammars' sequence order, occurrence and types.
     from . import wadl_breaking as _wadl_breaking  # noqa: F401
+    # CORBA / OMG IDL breaking-change classifier (MFI-21.4): registers under ``corbaidl`` and grades
+    # signatures by position (CDR), oneway, raises, struct members, bounds, enum ordinals and bases.
+    from . import corbaidl_breaking as _corbaidl_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(
@@ -713,6 +717,43 @@ class BuiltinBreakingChangeClassifier(BreakingChangeClassifier):
         if after.get("default") is not None:
             return False
         return _is_non_null_ref(after.get("type"))
+
+
+def _field_order(api: CanonicalApi, field_key: str) -> Optional[List[str]]:
+    """The keys of the fields of the record that owns ``field_key``, in sequence order."""
+    for type_ in api.types:
+        keys = [f.key for f in type_.fields]
+        if field_key in keys:
+            return [f.key for f in sorted(type_.fields, key=lambda f: f.field_number or 0)]
+    return None
+
+
+def relative_field_order_changed(base: CanonicalApi, target: CanonicalApi, field_key: str) -> bool:
+    """Whether the fields both versions share changed relative order in ``field_key``'s record.
+
+    Shared by the classifiers of formats whose records are positional or ordered (WADL's
+    ``xsd:sequence``, CORBA's CDR): a field whose number moved only because another was added or
+    removed is a *shift*, graded with that addition or removal; a change of relative order is a
+    *reorder*.
+
+    Args:
+        base: The "from" model.
+        target: The "to" model.
+        field_key: A field present in both models.
+
+    Returns:
+        ``True`` when the field's position among the fields both versions share changed (a
+        reorder), ``False`` when only an insertion or removal shifted its number.
+    """
+    before, after = _field_order(base, field_key), _field_order(target, field_key)
+    if before is None or after is None:
+        return True
+    shared = set(before) & set(after)
+    old_order = [k for k in before if k in shared]
+    new_order = [k for k in after if k in shared]
+    # The field's own place among the fields both versions share: a field that keeps it was only
+    # shifted by an insertion or removal, one that loses it was reordered.
+    return field_key not in shared or old_order.index(field_key) != new_order.index(field_key)
 
 
 # A single shared instance is safe: the built-in classifier is stateless and pure.

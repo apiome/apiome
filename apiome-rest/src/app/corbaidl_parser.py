@@ -1,8 +1,20 @@
-"""CORBA / OMG IDL parser — MFI-21.7.
+"""CORBA / OMG IDL parser — MFI-21.7, extended by MFI-21.4 (#3994).
 
 Parses ``.idl`` source text into a typed :class:`CorbaIdlDocument` AST using lightweight
 regex and brace matching (no external IDL compiler dependency). Syntax errors surface as
 :class:`CorbaIdlParseError`.
+
+What an interface keeps (OMG IDL 4.2 §7.4.3):
+
+* its **base interfaces** (``interface Account : Auditable, Named``), in declaration order;
+  ``abstract`` and ``local`` interfaces are read like any other, and a forward declaration
+  (``interface Account;``) is not an interface of its own;
+* each **operation**: name, return type, parameters with their direction, ``raises`` list and
+  whether it is ``oneway``;
+* each **attribute** (``readonly attribute string name, alias;``): name, type and whether it is
+  read-only — CORBA maps it to the ``_get_<name>`` / ``_set_<name>`` operations a client calls.
+
+``#include`` d files are not read, and unions, constants and value types are not modelled.
 """
 
 from __future__ import annotations
@@ -19,6 +31,7 @@ __all__ = [
     "CorbaIdlStruct",
     "CorbaIdlParameter",
     "CorbaIdlOperation",
+    "CorbaIdlAttribute",
     "CorbaIdlInterface",
     "CorbaIdlDocument",
     "is_corbaidl",
@@ -89,16 +102,54 @@ class CorbaIdlParameter:
 
 @dataclass(frozen=True)
 class CorbaIdlOperation:
+    """An interface operation.
+
+    Attributes:
+        name: The operation name.
+        return_type: Its return type (``void`` for none), typedefs resolved.
+        parameters: Its parameters in declaration order.
+        raises: The exceptions its ``raises`` clause names, in order.
+        oneway: Whether it is declared ``oneway`` (no reply is sent).
+    """
+
     name: str
     return_type: str
     parameters: Tuple[CorbaIdlParameter, ...]
     raises: Tuple[str, ...]
+    oneway: bool = False
+
+
+@dataclass(frozen=True)
+class CorbaIdlAttribute:
+    """An interface attribute (``[readonly] attribute T name``).
+
+    Attributes:
+        name: The attribute name.
+        type_expr: Its type, typedefs resolved.
+        readonly: Whether it is ``readonly`` (only ``_get_<name>`` exists).
+    """
+
+    name: str
+    type_expr: str
+    readonly: bool = False
 
 
 @dataclass(frozen=True)
 class CorbaIdlInterface:
+    """An interface: its operations, attributes and base interfaces.
+
+    Attributes:
+        name: The interface name.
+        operations: Its own operations (not those it inherits), in declaration order.
+        bases: The interfaces it inherits from, in declaration order (scoped names reduced to
+            their last identifier, like every reference).
+        attributes: Its own attributes, in declaration order.
+    """
+
     name: str
     operations: Tuple[CorbaIdlOperation, ...]
+    bases: Tuple[str, ...] = ()
+    attributes: Tuple[CorbaIdlAttribute, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -301,12 +352,53 @@ def _parse_parameters(params_inner: str, typedefs: Dict[str, str]) -> Tuple[Corb
     return tuple(parameters)
 
 
+#: ``[readonly] attribute <type> <name>[, <name>…]`` (OMG IDL 4.2 §7.4.3.4.2).
+_ATTRIBUTE_RE = re.compile(r"^(readonly\s+)?attribute\s+(.+)$", re.DOTALL)
+
+
+def _parse_attribute(decl: str, typedefs: Dict[str, str]) -> List[CorbaIdlAttribute]:
+    """The attribute(s) one declaration declares, or ``[]`` when it is not an attribute.
+
+    Args:
+        decl: One ``;``-terminated interface member, whitespace-trimmed, without the ``;``.
+        typedefs: Typedef name → type expression, for resolving the attribute type.
+
+    Returns:
+        One attribute per declared name (``attribute long a, b`` declares two).
+    """
+    match = _ATTRIBUTE_RE.match(decl)
+    if not match:
+        return []
+    body = match.group(2).strip()
+    # A getraises / setraises clause (IDL 3) is not modelled.
+    body = re.split(r"\b(?:getraises|setraises)\b", body, maxsplit=1)[0].strip()
+    raw_type, type_end = _parse_field_type(body, 0)
+    names = [name.strip() for name in body[type_end:].split(",") if re.fullmatch(r"\s*\w+\s*", name)]
+    if not raw_type or not names:
+        return []
+    resolved = _resolve_typedef(raw_type, typedefs)
+    return [CorbaIdlAttribute(name=name, type_expr=resolved, readonly=bool(match.group(1))) for name in names]
+
+
+def _parse_interface_attributes(inner: str, typedefs: Dict[str, str]) -> Tuple[CorbaIdlAttribute, ...]:
+    """Every attribute an interface body declares, in order."""
+    attributes: List[CorbaIdlAttribute] = []
+    for decl in (part.strip() for part in inner.split(";")):
+        attributes.extend(_parse_attribute(decl, typedefs))
+    return tuple(attributes)
+
+
 def _parse_interface_operations(inner: str, typedefs: Dict[str, str]) -> Tuple[CorbaIdlOperation, ...]:
     operations: List[CorbaIdlOperation] = []
     decls = [part.strip() for part in inner.split(";") if part.strip()]
     for decl in decls:
-        if decl.startswith("attribute "):
+        if _ATTRIBUTE_RE.match(decl):
             continue
+        oneway = False
+        oneway_match = re.match(r"^oneway\s+", decl)
+        if oneway_match:
+            oneway = True
+            decl = decl[oneway_match.end() :]
         raises: List[str] = []
         raises_match = re.search(r"\braises\s*\(([^)]*)\)\s*$", decl)
         if raises_match:
@@ -331,6 +423,7 @@ def _parse_interface_operations(inner: str, typedefs: Dict[str, str]) -> Tuple[C
                 return_type=_resolve_typedef(return_type, typedefs),
                 parameters=_parse_parameters(params_inner, typedefs),
                 raises=tuple(raises),
+                oneway=oneway,
             )
         )
     return tuple(operations)
@@ -358,6 +451,11 @@ def _extract_module_body(cleaned: str) -> Tuple[Optional[str], str]:
         names.append(nested.group(1))
         body = body[nested.end() : inner_close]
     return ".".join(names), body
+
+
+#: An interface definition — ``[abstract|local] interface Name [: Base, …] {`` — but not a forward
+#: declaration (``interface Name;``). Scoped base names are already reduced by :func:`_simplify`.
+_INTERFACE_RE = re.compile(r"\binterface\s+(\w+)\s*(?::\s*([\w\s,]+?))?\s*\{")
 
 
 def _parse_definitions(
@@ -392,15 +490,22 @@ def _parse_definitions(
         fields = _parse_struct_fields(inner, typedefs)
         structs.append(CorbaIdlStruct(name=name, kind=kind, fields=fields))
 
-    for match in re.finditer(r"\binterface\s+(\w+)\s*\{", scope):
+    for match in _INTERFACE_RE.finditer(scope):
         name = match.group(1)
+        bases = tuple(base.strip() for base in (match.group(2) or "").split(",") if base.strip())
         open_brace = scope.find("{", match.start())
         close = _find_matching_brace(scope, open_brace + 1)
         if close == -1:
             continue
         inner = scope[open_brace + 1 : close]
-        operations = _parse_interface_operations(inner, typedefs)
-        interfaces.append(CorbaIdlInterface(name=name, operations=operations))
+        interfaces.append(
+            CorbaIdlInterface(
+                name=name,
+                operations=_parse_interface_operations(inner, typedefs),
+                bases=bases,
+                attributes=_parse_interface_attributes(inner, typedefs),
+            )
+        )
 
     return tuple(enums), tuple(structs), tuple(interfaces)
 

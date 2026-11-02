@@ -5,6 +5,47 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.609.0] - 2026-11-02
+
+### Added
+- **CORBA / OMG IDL: inheritance, attributes and oneway read, a lint pack and a GIOP-aware breaking-change
+  classifier (MFI-21.4, #3994).** The parser, import source, emitter, UI card, CLI path and six corpus fixtures
+  already shipped; this makes the import describe what an interface set says, and adds what versions, diffs and lint
+  need.
+  - `corbaidl_parser` reads an interface's base interfaces (`interface Account : Auditable, Named`; before, an
+    inheriting interface was not matched at all and was dropped), `abstract` / `local` interfaces, skips forward
+    declarations, reads `oneway` (it used to end up in the return type, `"oneway void"`) and
+    `[readonly] attribute T a, b;` (`CorbaIdlAttribute`; attributes were skipped).
+  - `CorbaIdlNormalizer`: a `oneway` operation is `ONE_WAY` with no response; an attribute becomes its GIOP accessors
+    `_get_<name>` / `_set_<name>`; inherited operations and accessors are flattened into the derived service
+    (`extras["corbaidl_bases"]`, `extras["corbaidl_inherited"]`; diamonds once, cycles stop); an overloaded
+    operation keeps its first declaration instead of failing. `extras["corbaidl_interfaces"]` records bases,
+    attributes and `oneway`. New `attribute_operations`, `inherited_members`, `member_sources`.
+  - New `app/corbaidl_lint.py` (`corbaidl.*`, registered under `corbaidl`): `type-resolves`, `raises-declared`,
+    `exception-as-type`, `oneway-signature`, `operation-names-unique`, `member-names-unique`,
+    `identifier-not-keyword`, `inheritance-acyclic` (error, each with blocking-rule transparency metadata and a
+    scanner-evaluation fixture); `base-interface-declared` (warning); `any-typed`, `object-reference-typed` (info).
+  - New `app/corbaidl_breaking.py` (`corbaidl-giop`): signatures compared by position (CDR) — parameters added,
+    removed, re-typed or re-directed and the return type are breaking, a rename safe; `oneway-changed` breaking;
+    `raises-added` dangerous, `raises-removed` safe; struct members added / removed / reordered / re-typed and a
+    narrowed bound breaking, a widened bound dangerous, a member only shifted by another change safe; enumerators
+    removed, inserted or reordered breaking, appended dangerous; struct ↔ exception and a removed base breaking.
+  - `breaking_change.relative_field_order_changed` (moved from `wadl_breaking`, which keeps its old name): a field's
+    own position among the fields both versions share decides reorder vs shift, so only the swapped fields read
+    as reordered.
+  - Version-diff fixtures `tests/fixtures/corbaidl_versions/brokerage.{v1,v2-compatible,v3-breaking}.idl`.
+
+### Fixed
+- The CORBA IDL emitter writes a CORBA source's base interfaces, attributes and `oneway` operations back as
+  declared, so they survive an IDL → IDL round trip.
+- The built-in "Apiome Recommended" style guide gains the eleven `corbaidl.*` rules (apiome-db V346), so their
+  findings are kept.
+
+### Changed
+- One-time version change: the first re-import of an existing CORBA IDL item that uses `oneway`, attributes or
+  inheritance records a changed version.
+- OpenAPI document version 1.473.0 (no endpoint changes).
+
 ## [1.608.0] - 2026-11-02
 
 ### Added
