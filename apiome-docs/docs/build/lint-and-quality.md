@@ -9,6 +9,10 @@ Apiome computes a **server-side quality score** (an A–F grade out of 100) plus
 findings for a version. The score is computed on the server so the UI and the CLI always agree —
 there is no client-side scoring to drift. Use it before cutting and publishing a version.
 
+Every format is linted by the same engine: rule packs over a common model, one score and grade
+formula. [How linting works](./how-linting-works.md) explains the packs, the score and when a stored
+score is out of date.
+
 ---
 
 ## In the UI
@@ -229,6 +233,7 @@ consistency is the point of server-side scoring.
 
 ## Related
 
+- [How linting works](./how-linting-works.md) — rule packs, the score formula and the stored score
 - [Built-in lint rules](./lint-rules.md) — reference for every built-in lint rule (ids, severities, rationales)
 - [Custom lint rules](./custom-rules.md) — author your own rules in the Spectral-compatible DSL
 - [Edit classes and properties](./edit-classes-and-properties.md) — clear "missing description" findings
