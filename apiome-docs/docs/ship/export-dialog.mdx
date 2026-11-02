@@ -1,0 +1,83 @@
+---
+title: The Export dialog
+description: Export one version or item to another format, seeing fidelity first.
+sidebar_position: 4.3
+tags: [export]
+---
+
+The **Export** dialog turns one source — a project version or a catalog item — into one other
+format, and tells you what the conversion keeps **before** you download anything. It is the quick
+way to export: four steps in place, without leaving the screen you are on.
+
+Use it when you want one file (or one format's file set) now. For more options, several formats at
+once or a job you can watch, continue in the [Export studio](./export-studio.mdx); for many items
+at once, see [Export catalog items](./export-catalog-items.mdx); from a script, use
+`apiome export` ([Export a spec](./export-a-spec.md#with-the-cli)).
+
+## Where to start an export
+
+Export is always an action **on a source** — the version or item you are looking at. There is no
+Export entry in the side navigation, because a workspace can hold hundreds of projects and versions.
+
+| From | Do this | Opens |
+| --- | --- | --- |
+| A version on **Versions** | Open the version's **Actions** menu and **choose “Export to another format…”** | The **Export** dialog, for that version |
+| A version's spec | In the version's **Actions** menu **choose “View spec”**, then use its **Export** panel (below) | The [Export studio](./export-studio.mdx), for that version |
+| A catalog item | **Click “Export”** in the item's header, or choose **Export** in the item's menu on the [Catalog](../bring-in/catalog.mdx) | The **Export** dialog, for the item's version |
+
+## The four steps
+
+The dialog's stepper reads **Source → Target → Fidelity → Export**.
+
+| Step | What it shows | What you do |
+| --- | --- | --- |
+| **Source** | The item or project and the version being exported, while Apiome measures how well each format can carry it | **Click “Choose target”** |
+| **Target** | A card per format, each with a fidelity badge for *this* source (*lossless*, *lossy*, *types-only*) and how much is preserved; a format that cannot export this source is greyed out with the reason | Pick a card, set its options, and **click “Continue”** |
+| **Fidelity** | The advisory message, the share preserved, and a report of every construct the conversion drops, approximates or invents, with where each one lands | When anything is lost, tick the acknowledgement (or type the phrase it asks for when only types survive) |
+| **Export** | A preview of the exported file, with its name, size and checks | **Click the “Download” button that names the file**, or **“Download .zip”** (**“Download all files (.zip)”** for a format that writes several files) |
+
+**Click “Export”** to leave the **Fidelity** step — it reads **“Export anyway”** after an
+acknowledgement. A lossless conversion shows a quiet line instead of the warning and asks for no acknowledgement. The step-by-step detail, what each format
+offers and what its check rejects are on [Export a spec](./export-a-spec.md#in-the-app-the-export-dialog);
+what the badges and the report mean is on [Understand export fidelity](./export-fidelity.md).
+
+<Screenshot id="export-dialog-targets" alt="The Export dialog's target step: format cards with fidelity badges, one greyed out with its reason" />
+
+<Screenshot id="export-dialog-fidelity" alt="The Export dialog's fidelity report for Protobuf: what is kept, approximated and dropped, and the acknowledgement" />
+
+**“Open in Export Studio”** at the foot of the dialog carries the source, target and options into
+the studio.
+
+## The version's Export panel
+
+**View spec** on a version shows its OpenAPI document and, under it, two cards:
+
+- **Convert to any format** — the formats grouped for this version before you pick one:
+  **Best-fidelity targets** and **Lossy targets**, each a chip coloured by its fidelity tier (hover
+  one for how much it preserves). **Click a chip** to open the
+  [Export studio](./export-studio.mdx) for this version with that format already chosen, or
+  **click “Export this version”** to open it with no format chosen.
+- **Recent exports** — the last eight exports of this version made in this browser, each with its
+  format, fidelity badge and when it ran. **Click “Re-run in Studio”** to open the studio on the
+  same format with the same options. Until you export, it reads *No exports of this version yet.*
+
+The list is kept in your browser, so it is yours alone and does not follow you to another browser
+or device.
+
+<Screenshot id="version-export-panel" alt="A version's Export panel: best-fidelity and lossy target chips, Export this version, and recent exports with fidelity badges" />
+
+## See what a round trip changes
+
+To check what reading the exported file back would change, use the studio's round-trip check:
+on **Verify**, open the **Fidelity** tab and **click “See what a round-trip changes”**. It shows a
+**Model diff** (what changed in the API, with each predicted drop marked seen or not) and a
+**Text diff** (the exported file beside the same file read back and exported again).
+[Check a round trip](./export-studio.mdx#check-a-round-trip) explains the results.
+
+## Related
+
+- [Export a spec](./export-a-spec.md) — every format, its options and its checks
+- [Understand export fidelity](./export-fidelity.md) — the tiers, the report and the acknowledgement
+- [Export studio](./export-studio.mdx) — options, several formats, verify and a job you can watch
+- [How an export is checked](./check-an-export.mdx) — validation and lint of the exported file
+- [Version dialogs](../build/version-dialogs.mdx#export) — the version **Actions** menu

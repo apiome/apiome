@@ -23,6 +23,8 @@ generate it.
 
 The **Export** dialog exports one source to one format, and shows what the conversion keeps before
 you download anything.
+[The Export dialog](./export-dialog.mdx) is the overview: where to open it, its four steps and the
+version's **Export** panel. The steps in detail:
 
 1. Open it from a catalog item (**click "Export"** in the item's header) or from a version
    (on **Versions**, open the version's **⋯** menu and **click "Export to another format…"**).
