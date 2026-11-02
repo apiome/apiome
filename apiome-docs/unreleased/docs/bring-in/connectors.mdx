@@ -726,7 +726,18 @@ every server that is new or changed since the last sync:
    concrete URL.
 2. **It adds or refreshes the MCP server.** A new server is added as **private** and unpublished,
    marked as **imported from a registry**. A server it added before has its name, URL, transport and
-   description refreshed from the registry.
+   description refreshed from the registry. The server also keeps what the registry said about it,
+   as `registry_metadata` on the server in the API:
+   - `serverName`, `title`, `version` and `websiteUrl`;
+   - the registry's `status` (`active` or `deprecated`), `isLatest`, `publishedAt` and `updatedAt`;
+   - the chosen `remote`: its `type`, its URL without credentials, and the `headers` it declares.
+     Each header keeps its name, description and **required** / **secret** flags, and a non-secret
+     header keeps its fixed value or default. **A secret header's value is never stored**: only
+     `hasValue` says whether the registry gave one.
+
+   A registry entry written in an earlier, snake_case draft of `server.json` (`version_detail`,
+   `website_url`, `transport_type`, `registry_name`, `is_secret`) is read like the current camelCase
+   one. A deprecation alone, with no new version, refreshes the server too.
 3. **It links the server's sources** with the provenance **registry published**: the registry
    entry itself, `repository.url` as a Git source, and each npm, PyPI, NuGet, Cargo or OCI entry of
    `packages[]`. A package is pinned only when the registry names an exact version. A link this

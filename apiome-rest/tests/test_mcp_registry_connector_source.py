@@ -169,6 +169,10 @@ class McpDb(FakeDb):
         self.endpoints[endpoint_id].update(fields)
         return dict(self.endpoints[endpoint_id])
 
+    def set_mcp_endpoint_registry_metadata(self, tenant_id, endpoint_id, metadata):
+        self.metadata_writes = getattr(self, "metadata_writes", 0) + 1
+        self.endpoints[endpoint_id]["registry_metadata"] = json.loads(json.dumps(metadata))
+
     def create_mcp_endpoint_source(self, *, tenant_id, endpoint_id, source, linked_by):
         for row in self.sources:
             if (row["endpoint_id"], row["source_kind"], row["locator"]) == (
@@ -593,3 +597,132 @@ def test_candidate_is_credential_free_and_revision_tracks_content():
     assert "headers" not in json.dumps(candidate.deployment)
     changed = dict(entry.server, description="new words")
     assert reg.entry_revision(changed) != candidate.revision and candidate.revision.startswith("1.0.0+sha256.")
+
+
+# --- registry metadata on the endpoint (V2-MCP-26.2, #3708) -----------------------------------
+
+
+def test_the_endpoint_records_its_registry_entry(store):
+    servers = _fixture_servers()
+    weather = servers[0]["server"]
+    weather["websiteUrl"] = "https://acme.test/weather?utm=x"
+    weather["remotes"][0]["headers"] = [
+        {
+            "name": "Authorization",
+            "description": "Bearer token",
+            "isRequired": True,
+            "isSecret": True,
+            "value": "Bearer s3cr3t",
+        },
+        {"name": "X-Region", "isRequired": False, "default": "eu"},
+    ]
+    fake, db = FakeRegistry(servers), McpDb()
+    _use(fake, Discovery())
+    _sync(store, db, _connector(store))
+
+    endpoint_id = _items(store)["io.github.acme/weather"]["mcp_endpoint_id"]
+    metadata = db.endpoints[endpoint_id]["registry_metadata"]
+    assert metadata == {
+        "registryUrl": REGISTRY,
+        "serverName": "io.github.acme/weather",
+        "title": "Weather",
+        "version": "1.0.0",
+        "websiteUrl": "https://acme.test/weather",
+        "status": "active",
+        "isLatest": True,
+        "publishedAt": "2026-09-01T00:00:00Z",
+        "updatedAt": "2026-10-01T00:00:00Z",
+        "remote": {
+            "type": "streamable-http",
+            "url": "https://weather.acme.test/mcp",
+            "headers": [
+                {
+                    "name": "Authorization",
+                    "isRequired": True,
+                    "isSecret": True,
+                    "description": "Bearer token",
+                    "hasValue": True,
+                },
+                {"name": "X-Region", "isRequired": False, "isSecret": False, "default": "eu"},
+            ],
+        },
+    }
+    assert "s3cr3t" not in json.dumps(db.endpoints[endpoint_id])
+
+
+def test_registry_metadata_is_rewritten_only_when_it_changes(store):
+    servers = _fixture_servers()[:1]
+    fake, db = FakeRegistry(servers), McpDb()
+    _use(fake, Discovery())
+    connector = _connector(store)
+    _sync(store, db, connector)
+    assert db.metadata_writes == 1
+    # A deprecation in the registry changes the entry: the endpoint is refreshed with the status.
+    official = servers[0]["_meta"]["io.modelcontextprotocol.registry/official"]
+    official.update(status="deprecated", updatedAt="2026-10-15T00:00:00Z")
+    servers[0]["server"]["version"] = "1.1.0"
+    _sync(store, db, connector)
+    endpoint_id = _items(store)["io.github.acme/weather"]["mcp_endpoint_id"]
+    assert db.endpoints[endpoint_id]["registry_metadata"]["status"] == "deprecated"
+    assert db.endpoints[endpoint_id]["registry_metadata"]["version"] == "1.1.0"
+    assert db.metadata_writes == 2
+
+
+def test_an_entry_in_the_snake_case_draft_imports_like_a_camel_case_one(store):
+    legacy = {
+        "server": {
+            "name": "io.github.acme/legacy",
+            "description": "Legacy draft server",
+            "version_detail": {"version": "0.9.0", "is_latest": True},
+            "website_url": "https://acme.test/legacy",
+            "remotes": [
+                {
+                    "transport_type": "sse",
+                    "url": "https://legacy.acme.test/sse",
+                    "headers": [{"name": "X-Api-Key", "is_required": True, "is_secret": True}],
+                }
+            ],
+            "packages": [{"registry_name": "npm", "name": "@acme/legacy", "version": "0.9.0"}],
+        },
+        "_meta": {"io.modelcontextprotocol.registry/official": {"status": "active", "is_latest": True}},
+    }
+    fake, db = FakeRegistry([legacy]), McpDb()
+    _use(fake, Discovery())
+    _sync(store, db, _connector(store))
+
+    item = _items(store)["io.github.acme/legacy"]
+    assert item["status"] == "imported"
+    endpoint = db.endpoints[item["mcp_endpoint_id"]]
+    assert (endpoint["transport"], endpoint["endpoint_url"]) == ("sse", "https://legacy.acme.test/sse")
+    metadata = endpoint["registry_metadata"]
+    assert (metadata["version"], metadata["websiteUrl"], metadata["isLatest"]) == (
+        "0.9.0",
+        "https://acme.test/legacy",
+        True,
+    )
+    assert metadata["remote"]["headers"] == [
+        {"name": "X-Api-Key", "isRequired": True, "isSecret": True, "hasValue": False}
+    ]
+    # The npm package became a source link, read from the legacy registry_name / name keys.
+    assert any(link["locator"].startswith("pkg:npm/") for link in db.sources)
+
+
+
+def test_a_deprecation_alone_refreshes_the_recorded_status(store):
+    servers = _fixture_servers()[:1]
+    fake, db = FakeRegistry(servers), McpDb()
+    _use(fake, Discovery())
+    connector = _connector(store)
+    _sync(store, db, connector)
+    official = servers[0]["_meta"]["io.modelcontextprotocol.registry/official"]
+    official.update(status="deprecated", updatedAt="2026-10-15T00:00:00Z")
+    _sync(store, db, connector)
+    endpoint_id = _items(store)["io.github.acme/weather"]["mcp_endpoint_id"]
+    assert db.endpoints[endpoint_id]["registry_metadata"]["status"] == "deprecated"
+
+
+def test_entry_revision_carries_a_non_active_status_only() -> None:
+    server = {"name": "x", "version": "1.0.0"}
+    base = reg.entry_revision(server)
+    assert reg.entry_revision(server, "active") == base
+    assert reg.entry_revision(server, "Deprecated") == f"{base}.deprecated"

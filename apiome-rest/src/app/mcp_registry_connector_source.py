@@ -25,7 +25,11 @@ the server version plus a digest of the whole ``server.json``):
    ``discovered`` with the reason and creates nothing.
 2. **Create or refresh the MCP server.** A new entry inserts an endpoint (private, unpublished,
    ``added_via = 'registry'``); a known one has its name, URL, transport and description refreshed
-   from the registry.
+   from the registry. The endpoint also records the entry itself (``registry_metadata``,
+   V2-MCP-26.2): server name, ``version``, ``websiteUrl``, the ``_meta`` status and dates, and the
+   chosen remote with the headers it declares — never a secret header's value
+   (:func:`app.mcp_server_json.registry_metadata`). An entry in an earlier snake_case draft of
+   ``server.json`` is read as the current camelCase one.
 3. **Link sources** (``apiome.mcp_endpoint_sources``, provenance ``registry_published``): the
    registry identity itself, ``repository.url`` as a git source and every ``packages[]`` entry of a
    known ecosystem (npm, PyPI, NuGet, Cargo as package sources; OCI as an image). Each link records
@@ -64,6 +68,7 @@ from .catalog_connectors import (
     connector_base_url_from_settings,
 )
 from .mcp_registry import remote_url
+from .mcp_server_json import camelize, normalize_server_json, registry_metadata
 from .mcp_source_link import (
     PROVENANCE_REGISTRY,
     SOURCE_GIT,
@@ -240,7 +245,8 @@ def parse_server_entry(entry: Any) -> Optional[RegistryServer]:
     """Read one ``servers[]`` element of a ``ServerList``.
 
     Accepts the v0.1 shape (``{"server": {...}, "_meta": {...}}``) and the older flat shape (the
-    server's fields at the top level, ``_meta`` beside them).
+    server's fields at the top level, ``_meta`` beside them), in the current camelCase draft or an
+    earlier snake_case one (:func:`app.mcp_server_json.normalize_server_json`).
 
     Args:
         entry: The list element.
@@ -253,7 +259,9 @@ def parse_server_entry(entry: Any) -> Optional[RegistryServer]:
     server = entry.get("server") if isinstance(entry.get("server"), Mapping) else entry
     meta = entry.get("_meta") if isinstance(entry.get("_meta"), Mapping) else server.get("_meta")
     official = meta.get(_OFFICIAL_META_KEY) if isinstance(meta, Mapping) else None
-    official = official if isinstance(official, Mapping) else {}
+    # An entry in an earlier snake_case draft reads as the current camelCase one (V2-MCP-26.2).
+    official = camelize(official) if isinstance(official, Mapping) else {}
+    server = normalize_server_json(server)
     name = server.get("name")
     if not isinstance(name, str) or not name.strip():
         return None
@@ -279,15 +287,19 @@ def latest_servers(entries: Sequence[RegistryServer]) -> List[RegistryServer]:
     return list(chosen.values())
 
 
-def entry_revision(server: Mapping[str, Any]) -> str:
+def entry_revision(server: Mapping[str, Any], status: Optional[str] = None) -> str:
     """The entry's revision: its version plus a digest of the whole ``server.json``.
 
     A digest, not the version alone, because a registry other than the official one may change a
-    remote URL or a package without bumping the version.
+    remote URL or a package without bumping the version. A registry status other than ``active``
+    (``deprecated``) is appended, so a deprecation alone re-imports the entry and its endpoint
+    records it (V2-MCP-26.2); an active entry's revision is unchanged by this.
     """
     digest = hashlib.sha256(json.dumps(server, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:12]
     version = str(server.get("version") or "").strip()
-    return f"{version}+sha256.{digest}" if version else f"sha256.{digest}"
+    revision = f"{version}+sha256.{digest}" if version else f"sha256.{digest}"
+    state = str(status or "").strip().lower()
+    return f"{revision}.{state}" if state and state != "active" else revision
 
 
 def _remotes(server: Mapping[str, Any]) -> List[Mapping[str, Any]]:
@@ -375,7 +387,7 @@ def build_candidate(entry: RegistryServer, *, registry_url: str) -> RefreshCandi
     return RefreshCandidate(
         remote_id=entry.name,
         name=title or entry.name,
-        revision=entry_revision(server),
+        revision=entry_revision(server, entry.official.get("status")),
         updated_at=_parse_instant(updated) if isinstance(updated, str) else None,
         hosts=tuple(hosts),
         raw={"server": dict(server)},
@@ -709,6 +721,7 @@ class McpRegistrySource(ConnectorRefreshSource):
 
         endpoint = self._upsert_endpoint(db, entry, candidate, known_id, transport, url, actor_id)
         endpoint_id = str(endpoint["id"])
+        self._record_registry_metadata(db, endpoint, entry, transport, url)
         self._link_sources(db, endpoint_id, entry, actor_id)
         code = self._discover(endpoint)
         if code in UNREACHABLE_DISCOVERY_CODES:
@@ -718,6 +731,20 @@ class McpRegistrySource(ConnectorRefreshSource):
                 discovered_reason=f"{REASON_DISCOVERY_UNREACHABLE}: discovery could not reach {where} ({code}).",
             )
         return ItemSyncOutcome(mcp_endpoint_id=endpoint_id)
+
+    def _record_registry_metadata(
+        self, db: Any, endpoint: Mapping[str, Any], entry: RegistryServer, transport: str, url: str
+    ) -> None:
+        """Store what the registry says about the entry on its endpoint (V2-MCP-26.2, #3708).
+
+        ``version``, ``websiteUrl``, the ``_meta`` status and dates, and the chosen remote with the
+        headers it declares (secret header values are never kept); written only when it changed.
+        """
+        metadata = registry_metadata(
+            entry.server, entry.official, registry_url=self.registry_url, transport=transport, url=url
+        )
+        if endpoint.get("registry_metadata") != metadata:
+            db.set_mcp_endpoint_registry_metadata(str(self.connector["tenant_id"]), str(endpoint["id"]), metadata)
 
     def _upsert_endpoint(
         self,

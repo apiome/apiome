@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.474.0",
+    "version": "1.475.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -152528,6 +152528,21 @@
             "default": "manual",
             "description": "Added Via.",
             "example": "example"
+          },
+          "registry_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Response payload for mcp endpoint."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp endpoint."
+              }
+            ],
+            "title": "Registry Metadata",
+            "description": "Registry Metadata."
           },
           "created_at": {
             "anyOf": [

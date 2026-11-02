@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.611.0] - 2026-11-02
+
+### Added
+- **MCP registry imports keep the `server.json` entry on the endpoint (V2-MCP-26.2, #3708).** The `mcp-registry`
+  connector (CDG-4.4, #5976) already imported each registry entry as an MCP server (`added_via = 'registry'`) with its
+  name, description and chosen remote's transport and URL; the rest of the entry lived only on the connector's
+  inventory row.
+  - New `apiome.mcp_endpoints.registry_metadata` (apiome-db V348) and `McpEndpointOut.registry_metadata` on every
+    endpoint read: `registryUrl`, `serverName`, `title`, `version`, `websiteUrl` (credential-free), the registry
+    `_meta` `status`, `isLatest`, `publishedAt`, `updatedAt`, and the chosen `remote` (`type`, credential-free `url`,
+    `headers`). Each declared header keeps its name, description and `isRequired` / `isSecret`; a non-secret header
+    keeps its fixed `value` / `default`; **a secret header's value is never stored** (`hasValue` only). `null` for
+    endpoints not imported from a registry.
+  - New `app/mcp_server_json.py`: `normalize_server_json` reads the registry's earlier snake_case drafts
+    (`version_detail.version`, `website_url`, `remotes[].transport_type`, `packages[].registry_name` / `name`,
+    `is_required` / `is_secret`, snake_case `_meta` fields) as the current camelCase draft (a camelCase twin wins);
+    `registry_metadata` builds the column. `Database.set_mcp_endpoint_registry_metadata` writes it.
+  - The connector writes the metadata on create and on every refresh that changed it.
+
+### Fixed
+- A registry status other than `active` is now part of an entry's revision, so a deprecation with no new version
+  re-imports the entry instead of being skipped as unchanged. Active entries keep their existing revision (no
+  one-time re-sync).
+
+### Changed
+- OpenAPI document version 1.475.0 (`McpEndpointOut.registry_metadata`).
+
 ## [1.610.0] - 2026-11-02
 
 ### Added

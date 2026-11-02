@@ -12545,6 +12545,10 @@ class McpEndpointOut(BaseModel):
     transport_metadata_at: Optional[str] = None
     # How the endpoint entered the catalog — manual / registry / import (V2-MCP-34.5).
     added_via: str = "manual"
+    # What the MCP registry says about an endpoint imported from one (V2-MCP-26.2, #3708): server
+    # name, version, websiteUrl, the registry status and dates, and the chosen remote with the
+    # headers it declares (secret header values are never stored). Null for other endpoints.
+    registry_metadata: Optional[Dict[str, Any]] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     # Owner team (CDG-2.2, #5961): confirmed, else suggested; null when none (list reads only).
@@ -12962,6 +12966,9 @@ def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
         else None,
         transport_metadata_at=_ts(row.get("transport_metadata_at")),
         added_via=str(row.get("added_via") or "manual"),
+        registry_metadata=row.get("registry_metadata")
+        if isinstance(row.get("registry_metadata"), dict)
+        else None,
         created_at=_ts(row.get("created_at")),
         updated_at=_ts(row.get("updated_at")),
         owner=owner_ref_from_value(row.get("entity_owner")),

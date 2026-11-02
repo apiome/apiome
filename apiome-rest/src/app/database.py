@@ -21242,7 +21242,7 @@ class Database:
         "visibility, published, enabled, discovery_cadence_seconds, last_discovered_at, "
         "last_discovery_status, consecutive_failures, next_discovery_after, quarantined_at, "
         "quarantine_reason, current_version_id, transport_metadata, transport_metadata_at, "
-        "added_via, created_at, updated_at"
+        "added_via, registry_metadata, created_at, updated_at"
     )
 
     def list_mcp_endpoints(self, tenant_id: str) -> List[Dict[str, Any]]:
@@ -25407,6 +25407,39 @@ class Database:
         try:
             with conn.cursor() as cursor:
                 cursor.execute(q, (discovered_at, status, endpoint_id))
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_mcp_endpoint_registry_metadata(
+        self,
+        tenant_id: str,
+        endpoint_id: str,
+        metadata: Dict[str, Any],
+    ) -> None:
+        """Store what an MCP registry says about an imported endpoint (V2-MCP-26.2, #3708).
+
+        Written by the ``mcp-registry`` connector on every import that changed it: the entry's
+        server name, ``version``, ``websiteUrl``, ``_meta`` status and dates, and the chosen remote
+        with the headers it declares (see :func:`app.mcp_server_json.registry_metadata`, which
+        never includes a secret header's value). A no-op ``UPDATE`` (endpoint gone) is harmless.
+
+        Args:
+            tenant_id: The endpoint's tenant.
+            endpoint_id: The endpoint.
+            metadata: The JSON-ready document.
+        """
+        q = """
+            UPDATE apiome.mcp_endpoints
+            SET registry_metadata = %s,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (Json(metadata), endpoint_id, tenant_id))
                 conn.commit()
         except Exception as e:
             conn.rollback()
