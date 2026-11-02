@@ -10385,32 +10385,6 @@
       "rung": "typical"
     },
     {
-      "path": "fix-orchestra/08-typical-order-repository-venue-dialect.xml",
-      "format": "fix-orchestra",
-      "adapter_key": "fix-orchestra",
-      "validity_class": "valid",
-      "expected_detection": {
-        "format": "fix-orchestra",
-        "min_confidence": 0.9
-      },
-      "features": [
-        "venue-dialect",
-        "diff-fixture",
-        "presence-required",
-        "presence-conditional",
-        "presence-forbidden",
-        "code-removed",
-        "code-added",
-        "new-message"
-      ],
-      "expected_outcome": "imports",
-      "source": "hand-authored",
-      "license": "Apache-2.0",
-      "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "rung": "typical",
-      "notes": "The next release of 02-typical-order-repository.xml as a venue's dialect: a field added, presences tightened and relaxed, codes removed and added, a message added \u2014 the diff fixture for the FIX Orchestra breaking-change rules (MFI-20.4)."
-    },
-    {
       "path": "fix-orchestra/07-modular-set/codesets.xml",
       "format": "fix-orchestra",
       "adapter_key": "fix-orchestra",
@@ -10451,6 +10425,32 @@
       "provenance": "Authored in-repo for the apiome catalog import examples.",
       "rung": "multi-file",
       "fileset_role": "root"
+    },
+    {
+      "path": "fix-orchestra/08-typical-order-repository-venue-dialect.xml",
+      "format": "fix-orchestra",
+      "adapter_key": "fix-orchestra",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "fix-orchestra",
+        "min_confidence": 0.9
+      },
+      "features": [
+        "venue-dialect",
+        "diff-fixture",
+        "presence-required",
+        "presence-conditional",
+        "presence-forbidden",
+        "code-removed",
+        "code-added",
+        "new-message"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples.",
+      "rung": "typical",
+      "notes": "The next release of 02-typical-order-repository.xml as a venue's dialect: a field added, presences tightened and relaxed, codes removed and added, a message added \u2014 the diff fixture for the FIX Orchestra breaking-change rules (MFI-20.4)."
     },
     {
       "path": "fix-orchestra/negative/01-syntactic-unclosed-message.xml",

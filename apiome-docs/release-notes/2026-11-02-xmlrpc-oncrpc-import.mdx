@@ -1,0 +1,33 @@
+---
+slug: xmlrpc-oncrpc-import
+title: XML-RPC and ONC RPC items get lint, diff rules and a migrate note
+description: Both early RPC formats are linted natively, their versions compared with RPC semantics, and each item says how to leave.
+authors: [apiome]
+---
+
+An XML-RPC method description and an ONC RPC `.x` file now import with everything the catalog
+does for a modern contract: native lint rules, a comparison that knows how each format dispatches
+and encodes, and a migrate note that rewrites the item as JSON-RPC or gRPC.
+[Import XML-RPC method descriptions](/bring-in/xmlrpc-import) ·
+[Import ONC RPC (XDR) definitions](/bring-in/oncrpc-import).
+
+{/* truncate */}
+
+- **ONC RPC declarations.** Every declaration shape of RFC 4506 is read: an unbounded
+  `string<>` or `opaque<>`, a fixed-length array `[N]`, an optional-data pointer `*` and the
+  `unsigned` qualifier; they were dropped before. Bounds become constraints, a pointer a nullable
+  field, and the program's number and version numbers are recorded on the item.
+- **Lint.** The `oncrpc` pack flags a reserved or IANA-block program number, duplicate version,
+  procedure or enumerator numbers, a missing or typed null procedure, an unbounded declaration,
+  an unresolved type and a union without a `default` arm. The `xmlrpc` pack flags an unknown
+  `system.` method, a response with no value, an undescribed fault, the `<nil/>` extension, an
+  empty array and a malformed `system.multicall`.
+- **Diff.** For ONC RPC a renumbered program, version or procedure, a moved, added or removed
+  struct field and a narrowed bound are breaking, a widened bound or new union arm dangerous. For
+  XML-RPC a param added, removed or re-typed is breaking, a re-typed result dangerous, a member
+  added to a response safe.
+- **Migrate notes.** Each ONC RPC item records its proto3 rewrite (`oncrpc_migration`: every
+  type, every procedure as an `rpc` line, the caveats); each XML-RPC item its JSON-RPC 2.0
+  rewrite (`xmlrpc_migration`), the shape an OpenRPC export takes.
+- **One-time version change.** Because the stored models gained these keys, the first re-import
+  of an existing XML-RPC or ONC RPC item is recorded as a changed version.

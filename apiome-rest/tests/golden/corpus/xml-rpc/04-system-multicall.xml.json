@@ -4,7 +4,54 @@
     "channels": [],
     "description": null,
     "extras": {
-      "xmlrpc_kind": "methodCall"
+      "xmlrpc_kind": "methodCall",
+      "xmlrpc_migration": {
+        "caveats": [
+          "JSON-RPC params are positional or named; XML-RPC's are positional only, so keep the order and name each param in the OpenRPC description.",
+          "dateTime.iso8601 carries no time zone; the JSON-RPC rewrite should state one.",
+          "base64 becomes a base64-encoded string; the client decodes it.",
+          "A fault's faultCode and faultString become the JSON-RPC error's code and message."
+        ],
+        "request": {
+          "jsonrpc": "2.0",
+          "method": "system.multicall",
+          "params": [
+            {
+              "items": {
+                "properties": {
+                  "methodName": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "summary": "Rewrite the method as a JSON-RPC 2.0 method described by OpenRPC: positional params become `params` by position, a struct becomes an object, a fault becomes a JSON-RPC error.",
+        "target": "openrpc",
+        "value_types": {
+          "array": {
+            "type": "array"
+          },
+          "int": {
+            "type": "integer"
+          },
+          "string": {
+            "type": "string"
+          },
+          "struct": {
+            "type": "object"
+          }
+        }
+      }
     },
     "format": "xmlrpc",
     "identity": {
@@ -170,7 +217,7 @@
     "confidence": 0.98,
     "format": "xmlrpc"
   },
-  "fingerprint": "sha256:f1b71ed20f7a82eb430679a47a4ce3d568cb7bc58dbe8fd22479943140d37de4",
+  "fingerprint": "sha256:f80d573a1a824401911d17fa5db77780dd0873442905d38d07f89b0f51e97da8",
   "lint": {
     "findings": 6,
     "grade": "B",

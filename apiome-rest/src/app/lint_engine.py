@@ -421,6 +421,11 @@ def load_format_rule_packs() -> None:
 
     # ISO 8583 lint pack (MFI-20.6): registers under ``iso8583`` (MTI and data-element hygiene).
     from . import iso8583_lint as _iso8583_lint  # noqa: F401
+    # XML-RPC lint pack (MFI-21.6): registers under ``xmlrpc`` (method naming, params, faults).
+    from . import xmlrpc_lint as _xmlrpc_lint  # noqa: F401
+    # ONC RPC / XDR lint pack (MFI-21.6): registers under ``oncrpc`` (program, version and
+    # procedure numbers, XDR declarations).
+    from . import oncrpc_lint as _oncrpc_lint  # noqa: F401
 
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401

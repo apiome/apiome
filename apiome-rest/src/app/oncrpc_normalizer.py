@@ -8,7 +8,7 @@ Maps a parsed :class:`~app.oncrpc_parser.OncRpcDocument` into a
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -28,7 +28,8 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
-from .oncrpc_parser import OncRpcDocument, OncRpcField, OncRpcStruct
+from .oncrpc_lint import migration_note
+from .oncrpc_parser import OncRpcDocument, OncRpcField
 
 __all__ = ["OncRpcNormalizer"]
 
@@ -58,26 +59,91 @@ def _type_key(name: str, namespace: Optional[str]) -> str:
     return Keys.type(name, namespace)
 
 
+#: A type expression as :mod:`app.oncrpc_parser` writes it: the base (``unsigned int``, a
+#: typedef, enum or struct name), an optional ``*`` (optional-data), and an optional
+#: variable-length ``<N>`` / ``<>`` or fixed-length ``[N]`` suffix.
+_TYPE_EXPR = re.compile(r"^((?:unsigned )?[\w.]+)(\*)?(?:<(\d*)>|\[(\d+)\])?$")
+
+#: The XDR types whose ``<N>`` bound is a byte / character length rather than an item count.
+_LENGTH_BOUNDED = frozenset({"string", "opaque"})
+
+
+class _TypeShape:
+    """A decoded type expression: ``base``, ``pointer`` and the length suffix."""
+
+    __slots__ = ("base", "pointer", "variable", "bound", "fixed")
+
+    def __init__(self, type_expr: str) -> None:
+        match = _TYPE_EXPR.match(type_expr.strip())
+        if match is None:
+            self.base, self.pointer, self.variable, self.bound, self.fixed = (
+                type_expr.strip(), False, False, None, None,
+            )
+            return
+        base, pointer, var_bound, fixed_size = match.groups()
+        self.base = base
+        self.pointer = pointer is not None
+        self.variable = var_bound is not None
+        self.bound = int(var_bound) if var_bound else None
+        self.fixed = int(fixed_size) if fixed_size is not None else None
+
+    @property
+    def is_sequence(self) -> bool:
+        """Whether the suffix makes an array (``<N>`` / ``<>`` on a non-length type, or ``[N]``)."""
+        if self.fixed is not None:
+            return True
+        return self.variable and self.base not in _LENGTH_BOUNDED
+
+
 def _resolve_typedef(type_expr: str, typedefs: Dict[str, str]) -> str:
-    bound_match = re.fullmatch(r"(\w+)<(\d+)>", type_expr.strip())
-    if bound_match:
-        base = bound_match.group(1)
-        resolved = typedefs.get(base, base)
-        if "<" not in resolved:
-            return f"{resolved}<{bound_match.group(2)}>"
+    """Replace a typedef'd base with its definition, keeping the declaration's own suffix.
+
+    ``kv_key`` (``typedef string kv_key<256>``) resolves to ``string<256>``; ``kv_key keys<10>``
+    keeps its ``<10>`` on top of the resolved base — an array of ten bounded strings — so the
+    suffix is only dropped when the typedef already carries one and the field adds none.
+    """
+    shape = _TypeShape(type_expr)
+    resolved = typedefs.get(shape.base)
+    if resolved is None:
+        return type_expr.strip()
+    suffix = type_expr.strip()[len(shape.base):]
+    if not suffix:
         return resolved
-    return typedefs.get(type_expr.strip(), type_expr.strip())
+    resolved_shape = _TypeShape(resolved)
+    if resolved_shape.is_sequence or resolved_shape.variable or resolved_shape.pointer:
+        return f"{resolved}{suffix}" if suffix.startswith(("<", "[")) else resolved
+    return f"{resolved}{suffix}"
+
+
+def _split_stacked(type_expr: str) -> Tuple[str, Optional[str]]:
+    """Split a stacked expression (``string<256><10>``: ten bounded strings) into its parts.
+
+    Returns:
+        ``(inner, outer)``: the element expression and the outer ``<N>`` / ``<>`` / ``[N]``
+        suffix, or ``(type_expr, None)`` when the expression carries at most one suffix.
+    """
+    text = type_expr.strip()
+    match = re.search(r"(<\d*>|\[\d+\])$", text)
+    if match is None:
+        return text, None
+    inner = text[: match.start()]
+    inner_shape = _TypeShape(inner)
+    if inner_shape.variable or inner_shape.fixed is not None:
+        return inner, match.group(1)
+    return text, None
 
 
 def _constraints_for_type(type_expr: str) -> Optional[Constraints]:
-    bound_match = re.fullmatch(r"(\w+)<(\d+)>", type_expr.strip())
-    if not bound_match:
+    """The length / item-count bound a suffix declares, if any."""
+    inner, outer = _split_stacked(type_expr)
+    shape = _TypeShape(f"x{outer}" if outer else inner)
+    if shape.fixed is not None:
+        return Constraints(min_items=shape.fixed, max_items=shape.fixed)
+    if shape.bound is None:
         return None
-    base = bound_match.group(1)
-    max_length = int(bound_match.group(2))
-    if base in {"string", "opaque"}:
-        return Constraints(max_length=max_length)
-    return None
+    if outer is None and shape.base in _LENGTH_BOUNDED:
+        return Constraints(max_length=shape.bound)
+    return Constraints(max_items=shape.bound)
 
 
 def _type_ref_from_expr(
@@ -89,8 +155,35 @@ def _type_ref_from_expr(
     struct_names: frozenset[str],
 ) -> TypeRef:
     resolved = _resolve_typedef(type_expr, typedefs)
-    bound_match = re.fullmatch(r"(\w+)<(\d+)>", resolved)
-    base = bound_match.group(1) if bound_match else resolved
+    inner, outer = _split_stacked(resolved)
+    if outer is not None:
+        # A stacked expression: an array of the inner expression (ten bounded strings, say).
+        element = _type_ref_from_expr(
+            inner,
+            namespace=namespace,
+            typedefs=typedefs,
+            enum_names=enum_names,
+            struct_names=struct_names,
+        )
+        return TypeRef(item=element, nullable=False)
+    shape = _TypeShape(inner)
+    base_ref = _base_type_ref(
+        shape.base, namespace=namespace, enum_names=enum_names, struct_names=struct_names
+    )
+    if shape.is_sequence:
+        return TypeRef(item=base_ref, nullable=shape.pointer)
+    if shape.pointer:
+        return base_ref.model_copy(update={"nullable": True})
+    return base_ref
+
+
+def _base_type_ref(
+    base: str,
+    *,
+    namespace: Optional[str],
+    enum_names: frozenset[str],
+    struct_names: frozenset[str],
+) -> TypeRef:
     mapped = _XDR_BASE_TO_CANONICAL.get(base)
     if mapped:
         return TypeRef(name=mapped, nullable=False)
@@ -272,10 +365,28 @@ class OncRpcNormalizer(Normalizer, register=True):
                             kind=OperationKind.REQUEST_RESPONSE,
                             streaming=StreamingMode.NONE,
                             messages=messages,
-                            extras={"oncrpc_procedure_number": procedure.number},
+                            extras={
+                                "oncrpc_procedure_number": procedure.number,
+                                "oncrpc_version_name": version.name,
+                                "oncrpc_version_number": version.number,
+                                "oncrpc_arg_type": procedure.arg_type,
+                                "oncrpc_return_type": procedure.return_type,
+                            },
                         )
                     )
-            services.append(Service(key=service_key, name=program.name, operations=operations))
+            services.append(
+                Service(
+                    key=service_key,
+                    name=program.name,
+                    operations=operations,
+                    extras={
+                        "oncrpc_program_number": program.number,
+                        "oncrpc_versions": {
+                            version.name: version.number for version in program.versions
+                        },
+                    },
+                )
+            )
 
         api = CanonicalApi(
             paradigm=self.paradigm,
@@ -286,6 +397,8 @@ class OncRpcNormalizer(Normalizer, register=True):
             raw={"oncrpc": source.raw} if include_raw else None,
             extras={
                 "oncrpc_typedefs": typedefs,
+                # The migrate-to-gRPC note (MFI-21.6): where each XDR construct lands in proto3.
+                "oncrpc_migration": migration_note(source),
                 "oncrpc_programs": [
                     {
                         "name": program.name,

@@ -1005,6 +1005,75 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Scan modes:** `lint`
 
 
+## Pack: `oncrpc`
+
+### `oncrpc.enum-values-unique` {#oncrpc-enum-values-unique}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Two enumerators must not share a number.
+
+### `oncrpc.null-procedure-declared` {#oncrpc-null-procedure-declared}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** Every version should declare the null procedure (number 0).
+
+### `oncrpc.null-procedure-void` {#oncrpc-null-procedure-void}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Procedure 0 should take and return void.
+
+### `oncrpc.procedure-names-unique` {#oncrpc-procedure-names-unique}
+
+- **Category:** naming
+- **Default severity:** error
+- **Rationale:** Two procedures of a version must not share a name.
+
+### `oncrpc.procedure-numbers-unique` {#oncrpc-procedure-numbers-unique}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Two procedures of a version must not share a number.
+
+### `oncrpc.program-number-assigned` {#oncrpc-program-number-assigned}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A program number below 0x20000000 must be one IANA assigned.
+
+### `oncrpc.program-number-reserved` {#oncrpc-program-number-reserved}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A program number must stay below the reserved block (0x60000000).
+
+### `oncrpc.type-resolves` {#oncrpc-type-resolves}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every field type must be a base type or a type the file declares.
+
+### `oncrpc.union-has-default` {#oncrpc-union-has-default}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A discriminated union should carry a default arm.
+
+### `oncrpc.variable-length-bounded` {#oncrpc-variable-length-bounded}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A variable-length string, opaque or array should declare its bound.
+
+### `oncrpc.version-numbers-unique` {#oncrpc-version-numbers-unique}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Two versions of a program must not share a number.
+
+
 ## Pack: `openapi`
 
 ### `compatibility.breaking` {#compatibility-breaking}
@@ -1488,3 +1557,48 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **False-positive guidance:** Not a false positive: the Basic Profile requires these import forms.
 - **Fixture:** `catalog/wsdl-wsdl-import-target`
 - **Scan modes:** `lint`
+
+
+## Pack: `xmlrpc`
+
+### `xmlrpc.array-item-type-known` {#xmlrpc-array-item-type-known}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** An empty array leaves its item type unknown.
+
+### `xmlrpc.fault-described` {#xmlrpc-fault-described}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A fault must carry a non-zero faultCode and a faultString.
+
+### `xmlrpc.method-name-namespaced` {#xmlrpc-method-name-namespaced}
+
+- **Category:** naming
+- **Default severity:** info
+- **Rationale:** A method name should be namespaced object.method.
+
+### `xmlrpc.multicall-calls-wellformed` {#xmlrpc-multicall-calls-wellformed}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A system.multicall param must be an array of {methodName, params} structs.
+
+### `xmlrpc.nil-extension` {#xmlrpc-nil-extension}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** A <nil/> value relies on the nil extension.
+
+### `xmlrpc.response-has-value` {#xmlrpc-response-has-value}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A methodResponse must carry exactly one param.
+
+### `xmlrpc.system-method-known` {#xmlrpc-system-method-known}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** A system. method must be an introspection or multicall method.

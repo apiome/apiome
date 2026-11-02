@@ -4,7 +4,48 @@
     "channels": [],
     "description": null,
     "extras": {
-      "xmlrpc_kind": "methodResponse"
+      "xmlrpc_kind": "methodResponse",
+      "xmlrpc_migration": {
+        "caveats": [
+          "JSON-RPC params are positional or named; XML-RPC's are positional only, so keep the order and name each param in the OpenRPC description.",
+          "dateTime.iso8601 carries no time zone; the JSON-RPC rewrite should state one.",
+          "base64 becomes a base64-encoded string; the client decodes it.",
+          "A fault's faultCode and faultString become the JSON-RPC error's code and message."
+        ],
+        "response": {
+          "jsonrpc": "2.0",
+          "result": {
+            "properties": {
+              "remaining": {
+                "type": "integer"
+              },
+              "reservationId": {
+                "type": "string"
+              },
+              "reserved": {
+                "type": "integer"
+              },
+              "sku": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "summary": "Rewrite the method as a JSON-RPC 2.0 method described by OpenRPC: positional params become `params` by position, a struct becomes an object, a fault becomes a JSON-RPC error.",
+        "target": "openrpc",
+        "value_types": {
+          "int": {
+            "type": "integer"
+          },
+          "string": {
+            "type": "string"
+          },
+          "struct": {
+            "type": "object"
+          }
+        }
+      }
     },
     "format": "xmlrpc",
     "identity": {
@@ -181,7 +222,7 @@
     "confidence": 0.98,
     "format": "xmlrpc"
   },
-  "fingerprint": "sha256:01ea10e00c6d492f29816ad63a119f3e86ddb332965754be9f250b099dbbc211",
+  "fingerprint": "sha256:16ef866de4aa73b6669259d16f206baf76210037a84f7fdf732260cb877cfa7c",
   "lint": {
     "findings": 8,
     "grade": "B",

@@ -4,7 +4,54 @@
     "channels": [],
     "description": null,
     "extras": {
-      "xmlrpc_kind": "methodCall"
+      "xmlrpc_kind": "methodCall",
+      "xmlrpc_migration": {
+        "caveats": [
+          "JSON-RPC params are positional or named; XML-RPC's are positional only, so keep the order and name each param in the OpenRPC description.",
+          "dateTime.iso8601 carries no time zone; the JSON-RPC rewrite should state one.",
+          "base64 becomes a base64-encoded string; the client decodes it.",
+          "A fault's faultCode and faultString become the JSON-RPC error's code and message."
+        ],
+        "request": {
+          "jsonrpc": "2.0",
+          "method": "inventory.reserveStock",
+          "params": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "properties": {
+                "customerId": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "summary": "Rewrite the method as a JSON-RPC 2.0 method described by OpenRPC: positional params become `params` by position, a struct becomes an object, a fault becomes a JSON-RPC error.",
+        "target": "openrpc",
+        "value_types": {
+          "boolean": {
+            "type": "boolean"
+          },
+          "int": {
+            "type": "integer"
+          },
+          "string": {
+            "type": "string"
+          },
+          "struct": {
+            "type": "object"
+          }
+        }
+      }
     },
     "format": "xmlrpc",
     "identity": {
@@ -165,7 +212,7 @@
     "confidence": 0.98,
     "format": "xmlrpc"
   },
-  "fingerprint": "sha256:063095e393ba35c3cc05d7d269eb6ba1a2b454cfe0d10dae9963bf86b7d15452",
+  "fingerprint": "sha256:cae83e5678afcf1a92b2771196ff14d5436fa7d196ac49eaf9018299df5bb20c",
   "lint": {
     "findings": 6,
     "grade": "B",

@@ -8,7 +8,7 @@ Maps a parsed :class:`~app.xmlrpc_parser.XmlRpcDocument` into a
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from .canonical_model import (
     ApiIdentity,
@@ -26,6 +26,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
+from .xmlrpc_lint import migration_note
 from .xmlrpc_parser import XmlRpcDocument, XmlRpcValue
 
 __all__ = ["XmlRpcNormalizer"]
@@ -238,6 +239,11 @@ class XmlRpcNormalizer(Normalizer, register=True):
             services=[Service(key=service_key, name=title, operations=[operation])],
             types=list(collector.types.values()),
             raw={"xmlrpc": source.raw} if include_raw else None,
-            extras={"xmlrpc_kind": source.kind},
+            extras={
+                "xmlrpc_kind": source.kind,
+                # The migrate-to-JSON-RPC note (MFI-21.6): the method as the JSON-RPC 2.0
+                # request or response it becomes, and each value kind's JSON type.
+                "xmlrpc_migration": migration_note(source),
+            },
         )
         return normalize_ordering(api)
