@@ -1,0 +1,25 @@
+---
+slug: fix-orchestra-dialect-diffs
+title: FIX Orchestra dialects compared by tag, presence and code set
+description: Breaking-change rules and a lint pack for FIX Orchestra repositories, with a dialect fixture.
+authors: [apiome]
+---
+
+Comparing two FIX Orchestra repositories — a venue's next release, or two venues' rules of
+engagement — now follows FIX semantics, and every repository is linted for the mistakes a
+counterparty would trip over.
+[Compare dialects and versions](/bring-in/fix-orchestra-import#compare-dialects-and-versions).
+
+{/* truncate */}
+
+- **Breaking changes.** Fields are paired by tag, so a rename is dangerous rather than a removal
+  and a reused tag is breaking. Presence tightened to `required`, `constant` or `forbidden` is
+  breaking; relaxed is dangerous or safe. A code removed from a code set, a code's wire value
+  changed, a constant's value changed or a message's `msgType` changed is breaking; a code added
+  or an optional field added is safe.
+- **Lint.** The `fix-orchestra` pack flags a message without a `msgType`, two messages sharing one,
+  an empty message or code set, duplicate code values, a conditional field without its rule, and a
+  repository without a FIX version.
+- **A dialect fixture.** `apiome-ui/examples/fix-orchestra/08-typical-order-repository-venue-dialect.xml`
+  is the next release of the typical repository as a dark-pool dialect, so the comparison can be
+  tried end to end.

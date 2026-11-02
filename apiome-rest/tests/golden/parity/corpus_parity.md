@@ -45,7 +45,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `envoy-xds` | Envoy xDS routes | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `envoy-xds` |
 | `fhir` | FHIR | rest | 10 | 5 | 0 | 0 | 15 | 5/6 (+1 waived) | 10 | `fhir` |
 | `fix` | FIX | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 7 | `fix` |
-| `fix-orchestra` | FIX Orchestra | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 14 | — |
+| `fix-orchestra` | FIX Orchestra | data_schema | 10 | 6 | 0 | 0 | 16 | 6/6 | 15 | — |
 | `flatbuffers` | FlatBuffers | data_schema | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `flatbuffers` |
 | `gateway-api` | Gateway API HTTPRoute | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 6 | `gateway-api` |
 | `graphql` | GraphQL | graph | 18 | 5 | 0 | 0 | 23 | 6/6 | 14 | `graphql` |

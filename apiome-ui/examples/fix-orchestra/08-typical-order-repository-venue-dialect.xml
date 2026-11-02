@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FIX Orchestra example — the next release of 02-typical-order-repository.xml, as a venue's
+  dialect: the diff fixture. Same name, version FIX.4.4_EP002; a new field, a presence
+  tightened, a presence relaxed, a code removed and a code added, a field made forbidden,
+  a new message. Import 02 and then this file into the same catalog item to see each change
+  graded by the FIX Orchestra breaking-change rules.
+-->
+<fixr:repository xmlns:fixr="http://fixprotocol.io/2020/orchestra/repository"
+                 name="ExampleEquities" version="FIX.4.4_EP002">
+  <fixr:metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <dc:title>Example equities order flow — dark-pool venue dialect</dc:title>
+    <dc:creator>Example Trading Ltd</dc:creator>
+    <dc:date>2026-11-02</dc:date>
+  </fixr:metadata>
+
+  <fixr:datatypes>
+    <fixr:datatype name="String" baseType="char"/>
+    <fixr:datatype name="Price" baseType="float"/>
+    <fixr:datatype name="Qty" baseType="float"/>
+    <fixr:datatype name="UTCTimestamp" baseType="String"/>
+    <fixr:datatype name="char"/>
+    <fixr:datatype name="int"/>
+  </fixr:datatypes>
+
+  <fixr:codeSets>
+    <!-- SellShort is no longer accepted on this venue; Cross is new. -->
+    <fixr:codeSet name="SideCodeSet" id="54" type="char">
+      <fixr:code name="Buy" id="54001" value="1"/>
+      <fixr:code name="Sell" id="54002" value="2"/>
+      <fixr:code name="Cross" id="54008" value="8"/>
+    </fixr:codeSet>
+    <!-- Stop orders are not supported on the dark pool. -->
+    <fixr:codeSet name="OrdTypeCodeSet" id="40" type="char">
+      <fixr:code name="Market" id="40001" value="1"/>
+      <fixr:code name="Limit" id="40002" value="2"/>
+    </fixr:codeSet>
+    <fixr:codeSet name="TimeInForceCodeSet" id="59" type="char">
+      <fixr:code name="Day" id="59000" value="0"/>
+      <fixr:code name="GoodTillCancel" id="59001" value="1"/>
+      <fixr:code name="ImmediateOrCancel" id="59003" value="3"/>
+    </fixr:codeSet>
+    <fixr:codeSet name="CxlRejReasonCodeSet" id="102" type="int">
+      <fixr:code name="TooLateToCancel" id="102000" value="0"/>
+      <fixr:code name="UnknownOrder" id="102001" value="1"/>
+    </fixr:codeSet>
+  </fixr:codeSets>
+
+  <fixr:fields>
+    <fixr:field id="11" name="ClOrdID" type="String">
+      <fixr:documentation>Unique identifier for the order as assigned by the buy-side.</fixr:documentation>
+    </fixr:field>
+    <fixr:field id="38" name="OrderQty" type="Qty"/>
+    <fixr:field id="40" name="OrdType" type="OrdTypeCodeSet"/>
+    <fixr:field id="44" name="Price" type="Price"/>
+    <fixr:field id="54" name="Side" type="SideCodeSet"/>
+    <fixr:field id="55" name="Symbol" type="String"/>
+    <fixr:field id="59" name="TimeInForce" type="TimeInForceCodeSet"/>
+    <fixr:field id="60" name="TransactTime" type="UTCTimestamp"/>
+    <fixr:field id="48" name="SecurityID" type="String"/>
+    <fixr:field id="22" name="SecurityIDSource" type="String"/>
+    <fixr:field id="100" name="ExDestination" type="String">
+      <fixr:documentation>Execution destination; the venue's MIC.</fixr:documentation>
+    </fixr:field>
+    <fixr:field id="37" name="OrderID" type="String"/>
+    <fixr:field id="41" name="OrigClOrdID" type="String"/>
+    <fixr:field id="102" name="CxlRejReason" type="CxlRejReasonCodeSet"/>
+  </fixr:fields>
+
+  <fixr:components>
+    <fixr:component name="Instrument" id="1003" category="Common">
+      <fixr:fieldRef id="55" presence="required"/>
+      <fixr:fieldRef id="48" presence="optional"/>
+      <!-- The venue identifies instruments by Symbol only: SecurityIDSource must not be sent. -->
+      <fixr:fieldRef id="22" presence="forbidden"/>
+    </fixr:component>
+  </fixr:components>
+
+  <fixr:messages>
+    <fixr:message name="NewOrderSingle" id="14" msgType="D" category="SingleGeneralOrderHandling">
+      <fixr:structure>
+        <fixr:fieldRef id="11" presence="required"/>
+        <fixr:componentRef id="1003" presence="required"/>
+        <fixr:fieldRef id="54" presence="required"/>
+        <fixr:fieldRef id="38" presence="required"/>
+        <fixr:fieldRef id="40" presence="required"/>
+        <!-- Price is now required for limit orders only. -->
+        <fixr:fieldRef id="44" presence="conditional">
+          <fixr:rule name="LimitNeedsPrice" presence="required">
+            <fixr:when>OrdType == "2"</fixr:when>
+          </fixr:rule>
+        </fixr:fieldRef>
+        <!-- TimeInForce was optional in EP001. -->
+        <fixr:fieldRef id="59" presence="required"/>
+        <fixr:fieldRef id="60" presence="required"/>
+        <fixr:fieldRef id="100" presence="optional"/>
+      </fixr:structure>
+    </fixr:message>
+
+    <fixr:message name="OrderCancelRequest" id="15" msgType="F" category="SingleGeneralOrderHandling">
+      <fixr:structure>
+        <fixr:fieldRef id="11" presence="required"/>
+        <fixr:componentRef id="1003" presence="required"/>
+        <fixr:fieldRef id="54" presence="required"/>
+        <fixr:fieldRef id="60" presence="required"/>
+      </fixr:structure>
+    </fixr:message>
+
+    <fixr:message name="OrderCancelReject" id="16" msgType="9" category="SingleGeneralOrderHandling">
+      <fixr:structure>
+        <fixr:fieldRef id="37" presence="required"/>
+        <fixr:fieldRef id="11" presence="required"/>
+        <fixr:fieldRef id="41" presence="required"/>
+        <fixr:fieldRef id="102" presence="optional"/>
+        <fixr:fieldRef id="60" presence="optional"/>
+      </fixr:structure>
+    </fixr:message>
+  </fixr:messages>
+</fixr:repository>

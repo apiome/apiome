@@ -639,6 +639,51 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** A FHIR profile should say which fhirVersion (R4, R5, R6) it targets.
 
 
+## Pack: `fix-orchestra`
+
+### `fix-orchestra.code-values-unique` {#fix-orchestra-code-values-unique}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** No two codes of a code set may share a wire value.
+
+### `fix-orchestra.codeset-not-empty` {#fix-orchestra-codeset-not-empty}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A code set should declare at least one code.
+
+### `fix-orchestra.conditional-rule-declared` {#fix-orchestra-conditional-rule-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A conditional field should declare the rule that says when it is required.
+
+### `fix-orchestra.message-msgtype-declared` {#fix-orchestra-message-msgtype-declared}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every message must declare a msgType.
+
+### `fix-orchestra.message-not-empty` {#fix-orchestra-message-not-empty}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A message should declare at least one field, component or group.
+
+### `fix-orchestra.msgtype-unique` {#fix-orchestra-msgtype-unique}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** No two base-scenario messages may share a msgType.
+
+### `fix-orchestra.repository-version-declared` {#fix-orchestra-repository-version-declared}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** The repository should name the FIX version it describes.
+
+
 ## Pack: `flatbuffers`
 
 ### `flatbuffers.explicit-ids-all-or-none` {#flatbuffers-explicit-ids-all-or-none}

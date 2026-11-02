@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1529 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1530 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -139,7 +139,7 @@ The corpus holds **1529 files** across **110 format directories**. Every file ha
 | `edifact/` | UN/EDIFACT | message | `UNB`/`UNH` envelopes, optional `UNA` service string advice | 17 |
 | `fhir/` | FHIR R4 | data_schema | `resourceType` (+ StructureDefinition) | 15 |
 | `fix/` | FIX / FIX Orchestra | message | `8=FIX.` tags / `<fixr:repository>` | 12 |
-| `fix-orchestra/` | FIX Orchestra | message | `<fixr:repository>` root in the Orchestra namespace | 14 |
+| `fix-orchestra/` | FIX Orchestra | message | `<fixr:repository>` root in the Orchestra namespace | 15 |
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
 | `hl7v3/` | HL7 v3 / CDA | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
 | `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
@@ -964,6 +964,7 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-stress-presence-and-rules.xml` | stress | `fix-orchestra` ≥ 0.9 | valid | `presence-required`, `presence-optional`, `presence-conditional`, `presence-forbidden`, `presence-ignored`, `presence-constant`, `rule`, `when`, `scenario`, `responses` |
 | `05-real-world-execution-flow.xml` | real-world | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow`, `responses`, `conditional-rules`, `execution-report`, `cancel-reject` |
 | `06-typical-actors-and-state-machine.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow-reliability`, `states`, `transition`, `state-machine` |
+| `08-typical-order-repository-venue-dialect.xml` ⚠ | typical | `fix-orchestra` ≥ 0.9 | valid | `venue-dialect`, `diff-fixture`, `presence-required`, `presence-conditional`, `presence-forbidden`, `code-removed`, `code-added`, `new-message` |
 | `07-modular-set/codesets.xml` ⚠ | multi-file (member) | `fix-orchestra` (no guarantee) | valid | `shared-code-sets`, `xinclude-target` |
 | `07-modular-set/repository.xml` | multi-file (root) | `fix-orchestra` ≥ 0.9 | valid | `xinclude`, `modular-repository`, `conditional-rule` |
 | `negative/01-syntactic-unclosed-message.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
@@ -972,6 +973,8 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-fix-tagvalue.fix` ⚠ | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `wrong-format`, `fix-tagvalue` |
 | `negative/05-encoding-utf16.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 | `negative/06-unresolvable-field-ref.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-field`, `missing-component` |
+
+> ⚠ **`08-typical-order-repository-venue-dialect.xml`** — The next release of 02-typical-order-repository.xml as a venue's dialect: a field added, presences tightened and relaxed, codes removed and added, a message added — the diff fixture for the FIX Orchestra breaking-change rules (MFI-20.4).
 
 > ⚠ **`07-modular-set/codesets.xml`** — Fileset member: the shared code-set library; on its own it types nothing.
 
@@ -2841,7 +2844,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1529 | `Apache-2.0` |
+| `hand-authored` | 1530 | `Apache-2.0` |
 
 ## Trying an import
 
