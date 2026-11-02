@@ -52,6 +52,7 @@ import {
 import { extractFileMetadata, type FileMetadataPreview } from '../../../../utils/openapi-analyzer';
 import { generateSlug } from '../../../../utils/slug';
 import { odataMetadataUrlForServiceDocument } from '../../../../utils/odata-service-url';
+import { schemaRegistryRawSchemaUrl } from '../../../../utils/schema-registry-url';
 import { FormatPill } from '../../../ui/catalog/FormatPill';
 import { CompassImportIntake } from '../../catalogMigrations/CompassImportIntake';
 import { MigrationReport } from '../../catalogMigrations/MigrationReport';
@@ -609,10 +610,13 @@ export function CatalogImportDialog({
     try {
       const text = await fetchUrlText(url);
       // An OData service root answers with its service document, which has no model: follow it to
-      // the service's `$metadata` and import that instead (MFI-11.6).
-      const metadataUrl = odataMetadataUrlForServiceDocument(url, text);
-      if (metadataUrl) {
-        await detectContent(await fetchUrlText(metadataUrl), metadataUrl, 'url');
+      // the service's `$metadata` and import that instead (MFI-11.6). A schema registry's subject
+      // or schema-id route answers with an envelope around the schema: follow it to the raw
+      // `…/schema` route (MFI-12.6).
+      const followUrl =
+        odataMetadataUrlForServiceDocument(url, text) ?? schemaRegistryRawSchemaUrl(url, text);
+      if (followUrl) {
+        await detectContent(await fetchUrlText(followUrl), followUrl, 'url');
       } else {
         await detectContent(text, url, 'url');
       }

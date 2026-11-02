@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "com.example.orders",
+  "doc": "An order placed on the orders topic.",
+  "fields": [
+    {"name": "id", "type": {"type": "string", "logicalType": "uuid"}, "doc": "Order id."},
+    {"name": "placedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}, "doc": "When the order was placed."},
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "OrderStatus",
+        "doc": "Where the order is.",
+        "symbols": ["UNKNOWN", "PLACED", "SHIPPED"],
+        "default": "UNKNOWN"
+      },
+      "doc": "Order status."
+    },
+    {
+      "name": "total",
+      "type": {"type": "bytes", "logicalType": "decimal", "precision": 12, "scale": 2},
+      "doc": "Order total."
+    },
+    {"name": "note", "type": ["null", "string"], "default": null, "doc": "Optional note.", "aliases": ["comment"]}
+  ]
+}

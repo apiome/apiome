@@ -1,0 +1,21 @@
+---
+slug: avro-schema-registry-import
+title: Import an Avro schema from a schema registry
+description: URL Import and the CLI read an Avro schema from a Confluent schema registry.
+authors: [apiome]
+---
+
+An Avro schema can now be imported straight from a **Confluent-compatible schema registry**, in the
+import wizard or from the CLI. [How it works](/bring-in/avro-import#import-from-a-schema-registry).
+
+{/* truncate */}
+
+- **URL Import follows the registry.** Enter a subject version (`…/subjects/orders-value/versions/3`),
+  a subject's version list (for its latest version) or a schema id (`…/schemas/ids/21`). The wizard
+  recognizes the registry's answer and imports the schema itself.
+- **`apiome import avro --registry`.** Name the schema with `--subject` and `--version`, or with
+  `--schema-id`.
+- **Subject naming strategies.** Or name the subject the way a producer does: `--topic orders` gives
+  `orders-value` (`--key` for `orders-key`), `--strategy record` uses the record's full name, and
+  `--strategy topic_record` gives `<topic>-<record>`.
+- **Fixtures.** The CLI's test fixtures now include an orders schema as `.avsc` and as `.avdl`.

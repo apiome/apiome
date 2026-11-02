@@ -15,6 +15,8 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, and Avro doc
 | `echo-grpc.proto` | Self-contained proto3 gRPC service import example (`echo.v1`) |
 | `bookshop-odata-v4.edmx` | OData v4 CSDL XML service metadata (entity types, enum, bound action, function import) for `import odata` file and `--discover` tests (MFI-11.6) |
 | `sales-odata-v2.xml` | SAP Gateway-style OData v2 service metadata (associations, `sap:` annotations, `m:HttpMethod` function import) for `import odata` tests (MFI-11.6) |
+| `orders-avro.avsc` | Avro `.avsc` record schema (uuid / timestamp-millis / decimal logical types, enum with a `default`, nullable aliased field) for `import avro` file and `--registry` tests (MFI-12.6) |
+| `orders-avro.avdl` | The same orders schema as an Avro IDL protocol (enum default, `error`, one RPC message) for `import avro` tests (MFI-12.6) |
 | `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
 | `export-grpc.proto` | Emitted proto3 document returned by `/export/document`, for `export grpc` round-trip tests (MFX-12.5) |
 | `export-graphql.graphql` | Emitted GraphQL SDL returned by `/export/document`, for `export graphql` round-trip tests (MFX-13.5) |
