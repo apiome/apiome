@@ -319,9 +319,9 @@ describe('type-relative sizing', () => {
     // 380px related-artifacts column → 23.75rem; 200/140px field row → 12.5/8.75rem;
     // 8px composition bar → 0.5rem; the rail's 36px tile and 34px connector → 2rem and a
     // spacing token; the aside → 21.25rem.
-    expect(declaration('.cid-top', 'grid-template-columns')).toBe(
-      'minmax(0, 1fr) minmax(0, 23.75rem)'
-    );
+    // One column since the facelift ("voids"): the strip runs full width and nothing sits
+    // beside an empty band.
+    expect(declaration('.cid-top', 'grid-template-columns')).toBe('minmax(0, 1fr)');
     expect(declaration('.cid-overview', 'grid-template-columns')).toBe(
       'minmax(0, 1fr) minmax(0, 21.25rem)'
     );

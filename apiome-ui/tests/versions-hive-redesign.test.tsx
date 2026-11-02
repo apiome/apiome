@@ -470,6 +470,8 @@ beforeAll(() => {
 beforeEach(() => {
   installFetch();
   mockSearch = new URLSearchParams();
+  // These suites exercise the table; the timeline is the default view (facelift "timeline").
+  window.localStorage.setItem('hive.versions.view', 'table');
   // The status strip remembers its open chip per project for the session.
   window.sessionStorage.clear();
   mockConfirm.mockClear();

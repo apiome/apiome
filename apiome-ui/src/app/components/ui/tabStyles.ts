@@ -109,7 +109,7 @@ export const TAB_COUNT_CLASS =
 const PILL_BASE_CLASS =
   'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border-0 ' +
   'font-medium transition-colors duration-[var(--dur-fast)] focus-visible:outline-none';
-const PILL_ACTIVE_CLASS = 'bg-brand-navy text-white dark:bg-fg dark:text-surface';
+const PILL_ACTIVE_CLASS = 'bg-pill-active text-pill-active-fg';
 const PILL_IDLE_CLASS = 'text-fg-muted hover:bg-subtle hover:text-fg';
 const PILL_DISABLED_CLASS = 'cursor-not-allowed text-fg-faint opacity-50';
 

@@ -34,3 +34,4 @@ export * from './Ring';
 export * from './Sparkline';
 export * from './Meter';
 export * from './Progress';
+export { CountUp } from './CountUp';

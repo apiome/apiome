@@ -340,11 +340,15 @@ describe('what only the stylesheet can do', () => {
     expect(declarationsOf('.hive-sparkline__line').get('vector-effect')).toBe('non-scaling-stroke');
   });
 
-  it('draws the stat strip as hairlines rather than as N bordered cards', () => {
+  it('draws the stat strip as raised tiles with a spacing token between them', () => {
+    // The facelift's "layers" idea (PROPOSALS_FACELIFT.md §2): six measurements on the canvas,
+    // each a card of its own, rather than one bordered box cut by hairlines.
     const grid = declarationsOf('.hive-stat-grid');
-    expect(grid.get('gap')).toBe('1px');
-    expect(grid.get('background')).toBe('var(--border)');
-    expect(declarationsOf('.hive-stat-grid > *').get('background')).toBe('var(--bg-surface)');
+    expect(grid.get('gap')).toBe('var(--space-3)');
+    expect(grid.get('background')).toBe('transparent');
+    const tile = declarationsOf('.hive-stat-grid > *');
+    expect(tile.get('background')).toBe('var(--bg-surface)');
+    expect(tile.get('box-shadow')).toBe('var(--shadow-card)');
   });
 
   it('out-specifies a call site that styles its own stat glyph', () => {

@@ -261,12 +261,44 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
               data-testid="changes-detail-error"
             />
           ) : !detail ? (
-            <p className="vdlg-changes__note">
-              Changelog not available yet — classification runs right after publish.
-              {selectedSummary?.status === 'failed'
-                ? ' The last classification attempt failed; it is retried on the next publish.'
-                : ''}
-            </p>
+            /* The empty pane names the version, says why it is empty and says how the tab fills
+               up (facelift "voids", PROPOSALS_FACELIFT.md §2) — never a bare sentence in a
+               viewport of white. */
+            <div className="vdlg-changes__void" data-testid="changes-not-classified">
+              <EmptyState
+                variant="inline"
+                icon={<GitCompareArrows />}
+                title={`No changelog for ${formatVersionWithPrefix(selectedSummary?.versionLabel ?? undefined)} yet`}
+                description={
+                  selectedSummary?.status === 'failed'
+                    ? 'The last classification attempt failed; it is retried on the next publish.'
+                    : 'Changes are classified right after a publish. This version was published before classification ran, so its changelog arrives with the next publish on this line.'
+                }
+              />
+              <ol className="vdlg-changes__steps" aria-label="How the Changes tab fills up">
+                <li>
+                  <span className="vdlg-changes__step-n" aria-hidden>1</span>
+                  <span>
+                    <b>Publish a version.</b> Classification compares it with the previous published
+                    version on the line.
+                  </span>
+                </li>
+                <li>
+                  <span className="vdlg-changes__step-n" aria-hidden>2</span>
+                  <span>
+                    <b>Every change is graded.</b> Breaking, dangerous and safe changes are listed by
+                    path, operation and schema.
+                  </span>
+                </li>
+                <li>
+                  <span className="vdlg-changes__step-n" aria-hidden>3</span>
+                  <span>
+                    <b>Open the diff.</b> Each entry links to the side-by-side comparison at that
+                    pointer.
+                  </span>
+                </li>
+              </ol>
+            </div>
           ) : detail.status === 'failed' ? (
             <Alert variant="error" data-testid="changes-failed">
               Changelog classification failed for this version

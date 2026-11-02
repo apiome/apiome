@@ -67,6 +67,13 @@ export interface StatProps extends React.HTMLAttributes<HTMLElement> {
   footnote?: React.ReactNode;
   /** A second footnote pushed to the opposite end, as `.stat__foot`'s space-between implies. */
   footnoteEnd?: React.ReactNode;
+  /**
+   * A measurement drawn *beside* the figure — a `Ring` for "5 of 14" (facelift "viz",
+   * PROPOSALS_FACELIFT.md §2). It shares the figure's row.
+   */
+  aside?: React.ReactNode;
+  /** A measurement drawn *under* the figure — a `Sparkline` of the figure's history. */
+  trend?: React.ReactNode;
 }
 
 /**
@@ -88,6 +95,8 @@ export const Stat = React.forwardRef<HTMLElement, StatProps>(function Stat(
     deltaLabel,
     footnote,
     footnoteEnd,
+    aside,
+    trend,
     className,
     ...props
   },
@@ -110,10 +119,21 @@ export const Stat = React.forwardRef<HTMLElement, StatProps>(function Stat(
         {icon}
         {label}
       </span>
-      <span className="hive-stat__value">
-        {value}
-        {unit ? <small>{unit}</small> : null}
-      </span>
+      {aside ? (
+        <span className="hive-stat__row">
+          {aside}
+          <span className="hive-stat__value">
+            {value}
+            {unit ? <small>{unit}</small> : null}
+          </span>
+        </span>
+      ) : (
+        <span className="hive-stat__value">
+          {value}
+          {unit ? <small>{unit}</small> : null}
+        </span>
+      )}
+      {trend ? <span className="hive-stat__trend">{trend}</span> : null}
       {hasDelta ? (
         <span
           data-direction={direction}

@@ -157,6 +157,7 @@ import {
   type VersionRowMenuAction,
   type VersionTagRow,
 } from '../../../components/ade/versions';
+import VersionsTimeline from '../../../components/ade/versions/VersionsTimeline';
 import {
   ALL_PROJECTS_ICON,
   ALL_PROJECTS_ROUTE,
@@ -256,6 +257,19 @@ import { useRecordProjectView } from '@/app/hooks/useRecordProjectView';
 import { useProjectTimeTracker } from '@/app/hooks/useProjectTimeTracker';
 import { lookupReview } from '@lib/review-status';
 import { scrollBehavior } from '@lib/motion';
+
+/** The two ways the revisions are drawn (facelift "timeline"). */
+type VersionsView = 'timeline' | 'table';
+/** Where the device remembers the chosen view. */
+const VERSIONS_VIEW_KEY = 'hive.versions.view';
+/** The stored view, or the timeline — the design's default. */
+function readVersionsView(): VersionsView {
+  try {
+    return window.localStorage.getItem(VERSIONS_VIEW_KEY) === 'table' ? 'table' : 'timeline';
+  } catch {
+    return 'timeline';
+  }
+}
 
 /** Where the breadcrumb's first crumb goes. */
 const HOME_ROUTE = '/ade/dashboard';
@@ -582,6 +596,20 @@ const Versions = () => {
    * read of a project (or a lifecycle change) resets it — a reload after a write draws the
    * rows it has while the new ones arrive.
    */
+  /**
+   * How the revisions are drawn (facelift "timeline", PROPOSALS_FACELIFT.md §2): the timeline —
+   * a spine with a node per revision — by default, or the table. Remembered per device.
+   */
+  const [versionsView, setVersionsView] = useState<VersionsView>(() => readVersionsView());
+  const selectVersionsView = useCallback((next: string) => {
+    const view: VersionsView = next === 'table' ? 'table' : 'timeline';
+    setVersionsView(view);
+    try {
+      window.localStorage.setItem(VERSIONS_VIEW_KEY, view);
+    } catch {
+      /* a device without storage simply forgets the choice */
+    }
+  }, []);
   const [versionsLoaded, setVersionsLoaded] = useState(false);
   // RC6-H3 (#6210): a pending or failed read is said as such — never "No projects yet" or an
   // empty table that reads as "No versions yet".
@@ -3662,6 +3690,20 @@ const Versions = () => {
         onClick={clearTableFilters}
         data-testid="versions-clear-filters"
       />
+      <Segmented
+        size="sm"
+        value={versionsView}
+        onValueChange={selectVersionsView}
+        aria-label="View"
+        data-testid="versions-view"
+      >
+        <SegmentedItem value="timeline" data-testid="versions-view-timeline">
+          Timeline
+        </SegmentedItem>
+        <SegmentedItem value="table" data-testid="versions-view-table">
+          Table
+        </SegmentedItem>
+      </Segmented>
       <DataTableToolbarSpacer />
       <DropdownMenu.Root>
         <DropdownMenu.Trigger asChild>
@@ -4021,37 +4063,75 @@ const Versions = () => {
                   </Card>
                 ) : null}
 
-                <VersionsTable
-                  versions={pagedVersions.rows}
-                  loading={!versionsLoaded}
-                  error={versionsError}
-                  onRetry={() => {
-                    setVersionsLoaded(false);
-                    void loadVersions();
-                  }}
-                  projectId={selectedProjectId}
-                  projectSlug={selectedProject?.slug}
-                  headRevisionId={headRevisionId}
-                  tagsByVersionId={tagsByVersionId}
-                  hasClassSchemaMap={hasClassSchemaMap}
-                  reviewsByVersionId={reviewsByVersionId}
-                  effectiveIsAdmin={!!effectiveIsAdmin}
-                  can={permissions.can}
-                  currentUserId={currentUserId}
-                  hasBranches={versionBranches.length > 0}
-                  freezingSchemaVersionId={freezingSchemaVersionId}
-                  isVersionPublishable={isVersionPublishable}
-                  gitlike={GITLIKE}
-                  mockUsageByVersion={mockUsageByVersion}
-                  onMockChanged={handleVersionMockChanged}
-                  onRowAction={handleTableRowAction}
-                  sort={versionsSort}
-                  onSortChange={handleVersionsSortChange}
-                  toolbar={tableToolbar}
-                  footer={tableFooter}
-                  empty={tableEmpty}
-                  caption={`Revisions of ${selectedProject?.name ?? 'this project'}`}
-                />
+                {versionsView === 'timeline' ? (
+
+                  <VersionsTimeline
+                    versions={pagedVersions.rows}
+                    loading={!versionsLoaded}
+                    error={versionsError}
+                    onRetry={() => {
+                      setVersionsLoaded(false);
+                      void loadVersions();
+                    }}
+                    projectId={selectedProjectId}
+                    projectSlug={selectedProject?.slug}
+                    headRevisionId={headRevisionId}
+                    tagsByVersionId={tagsByVersionId}
+                    hasClassSchemaMap={hasClassSchemaMap}
+                    reviewsByVersionId={reviewsByVersionId}
+                    effectiveIsAdmin={!!effectiveIsAdmin}
+                    can={permissions.can}
+                    currentUserId={currentUserId}
+                    hasBranches={versionBranches.length > 0}
+                    freezingSchemaVersionId={freezingSchemaVersionId}
+                    isVersionPublishable={isVersionPublishable}
+                    gitlike={GITLIKE}
+                    mockUsageByVersion={mockUsageByVersion}
+                    onMockChanged={handleVersionMockChanged}
+                    onRowAction={handleTableRowAction}
+                    toolbar={tableToolbar}
+                    footer={tableFooter}
+                    empty={tableEmpty}
+                    caption={`Revisions of ${selectedProject?.name ?? 'this project'}`}
+
+                  />
+
+                ) : (
+
+                  <VersionsTable
+                    versions={pagedVersions.rows}
+                    loading={!versionsLoaded}
+                    error={versionsError}
+                    onRetry={() => {
+                      setVersionsLoaded(false);
+                      void loadVersions();
+                    }}
+                    projectId={selectedProjectId}
+                    projectSlug={selectedProject?.slug}
+                    headRevisionId={headRevisionId}
+                    tagsByVersionId={tagsByVersionId}
+                    hasClassSchemaMap={hasClassSchemaMap}
+                    reviewsByVersionId={reviewsByVersionId}
+                    effectiveIsAdmin={!!effectiveIsAdmin}
+                    can={permissions.can}
+                    currentUserId={currentUserId}
+                    hasBranches={versionBranches.length > 0}
+                    freezingSchemaVersionId={freezingSchemaVersionId}
+                    isVersionPublishable={isVersionPublishable}
+                    gitlike={GITLIKE}
+                    mockUsageByVersion={mockUsageByVersion}
+                    onMockChanged={handleVersionMockChanged}
+                    onRowAction={handleTableRowAction}
+                    sort={versionsSort}
+                    onSortChange={handleVersionsSortChange}
+                    toolbar={tableToolbar}
+                    footer={tableFooter}
+                    empty={tableEmpty}
+                    caption={`Revisions of ${selectedProject?.name ?? 'this project'}`}
+
+                  />
+
+                )}
               </>
             )}
           </>
