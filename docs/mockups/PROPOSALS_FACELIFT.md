@@ -1,7 +1,7 @@
 # Apiome “Hive” — round-3 proposals: the facelift
 
-> **Status:** proposal. Reviewed 2026-10-30 against `apiome-ui` 0.550.27 (the HIVE-11/12/13
-> “quiet pass” shipped; HIVE-EPIC-9 admin console open). Every proposal below is one of twelve
+> **Status:** adopted 2026-11-02 in `apiome-ui` 0.578.0 (see §8). Reviewed 2026-10-30 against
+> `apiome-ui` 0.550.27 (the HIVE-11/12/13 “quiet pass” shipped; HIVE-EPIC-9 admin console open). Every proposal below is one of twelve
 > **ideas**, each a token swap or a markup variant that the mockups gate on
 > `<html data-fx="…">` (`assets/facelift.css`, `assets/facelift.js`). One mockup per screen
 > renders both the shipped look (`?fx=none`) and the proposal (`?fx=all`, or a list such as
@@ -109,3 +109,28 @@ solid format colours) · §4 (the signature Dark; four themes shown) · §5.2 (n
 
 Not ticketed yet. The natural split is one epic per numbered step in §4 (six epics), each citing
 its mockups and the sections above; the viewer link with `#screen=…&fx=…` goes in each ticket.
+
+## 8. What shipped (2026-11-02)
+
+Every idea but **admin** is in `apiome-ui` 0.578.0, ungated — the look, not an overlay:
+
+| Idea | Where it landed |
+| --- | --- |
+| rail | `.rail` in `globals.css`: the navy gradient mixed from `--brand-navy`, white type, the honey marker on the active row, the bee in a honey hex; `--color-rail-navy-mix` / `--color-rail-edge-mix` let a dark theme keep a navy cast and High contrast its black |
+| hex | `data-fmt-tone` on catalog cards, project cards, table rows and detail headers: the hex avatar filled with the format colour, a faint cell in the card's corner |
+| type | `--font-display` (Manrope via `next/font`): page titles, stat figures, card and dialog titles, the brand word |
+| layers | `--shadow-card` / `--shadow-card-hover` on `Card`, the stat strip as separate tiles, the export tiles raised |
+| color | the 3 px format rule on cards and rows, azure selection, the active tab's azure underline, the active pill in navy, `PageHeader mood="hero"` on Home and `mood="identity"` on the catalog item |
+| viz | `Stat` gained `aside` (a `Ring` for the published share) and `trend` (the publishing pulse as a `Sparkline`); `CountUp` counts the figures up once |
+| timeline | `VersionsTimeline` with the `.vt` spine, the default view of Versions; a Timeline / Table segment on the toolbar, remembered per device (`hive.versions.view`) |
+| voids | the export target tile with its fidelity meter, the Changes tab's empty state with three steps, the catalog item's full-width strip |
+| forms | the scenario editor's JSON fields as editor panes with a caps bar |
+| motion | `hive-rise` on page content and the header row (staggered, ≤ 260 ms), the card lift, the rail pill that follows the pointer, the count-up — all zeroed by Reduce motion |
+| themes | the signature Dark (`html[data-theme="dark"]`), the theme picker folding five themes under **More themes** |
+| admin | not shipped: the console on the Hive shell is HIVE-EPIC-9 (#5272) |
+
+Deviations from the mockups: motion runs at `--dur-slow` (DESIGN.md §3.4 caps it); the page
+header keeps its hairline under the blur rather than a shadow (the chrome test pins it); the
+sparkline reads the twelve-week publishing pulse the Home already loads rather than a per-stat
+history the API does not keep.
+

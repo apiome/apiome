@@ -38,6 +38,7 @@ import {
   DialogContent,
 } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
+import { Disclosure, EditorPane } from './MockScenarioFields';
 import { Input } from '../../ui/Input';
 import { Textarea } from '../../ui/Textarea';
 import {
@@ -955,36 +956,40 @@ export function MockScenarioEditor({
                             </Button>
                           )}
                         </div>
-                        <Textarea
-                          value={response.headersText}
-                          onChange={(e) =>
-                            updateResponse(scenarioIndex, operationIndex, responseIndex, {
-                              headersText: e.target.value,
-                            })
-                          }
-                          placeholder='Headers as JSON, e.g. {"Retry-After": "60"} (optional)'
-                          aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} response ${responseIndex + 1} headers`}
-                          className="vdlg-textarea vdlg-textarea--mono"
-                        />
-                        <Textarea
-                          ref={(element) => {
-                            templateFields.current.set(
-                              `${scenarioIndex}:${operationIndex}:${responseIndex}:body`,
-                              element
-                            );
-                          }}
-                          value={response.bodyText}
-                          onChange={(e) =>
-                            updateResponse(scenarioIndex, operationIndex, responseIndex, {
-                              bodyText: e.target.value,
-                            })
-                          }
-                          placeholder={
-                            'Body as JSON; leave blank for an empty response body. Supports {{templates}}, e.g. {"id": "{{request.path.petId}}"}'
-                          }
-                          aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} response ${responseIndex + 1} body`}
-                          className="vdlg-textarea vdlg-textarea--mono"
-                        />
+                        <EditorPane label="Headers" hint="optional">
+                          <Textarea
+                            value={response.headersText}
+                            onChange={(e) =>
+                              updateResponse(scenarioIndex, operationIndex, responseIndex, {
+                                headersText: e.target.value,
+                              })
+                            }
+                            placeholder='Headers as JSON, e.g. {"Retry-After": "60"} (optional)'
+                            aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} response ${responseIndex + 1} headers`}
+                            className="vdlg-textarea vdlg-textarea--mono"
+                          />
+                        </EditorPane>
+                        <EditorPane label="Body" hint="{{templates}} allowed">
+                          <Textarea
+                            ref={(element) => {
+                              templateFields.current.set(
+                                `${scenarioIndex}:${operationIndex}:${responseIndex}:body`,
+                                element
+                              );
+                            }}
+                            value={response.bodyText}
+                            onChange={(e) =>
+                              updateResponse(scenarioIndex, operationIndex, responseIndex, {
+                                bodyText: e.target.value,
+                              })
+                            }
+                            placeholder={
+                              'Body as JSON; leave blank for an empty response body. Supports {{templates}}, e.g. {"id": "{{request.path.petId}}"}'
+                            }
+                            aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} response ${responseIndex + 1} body`}
+                            className="vdlg-textarea vdlg-textarea--mono"
+                          />
+                        </EditorPane>
                         <MockTokenPicker
                           groups={buildTokenGroups(
                             operationsByKey.get(operation.key.trim()) ?? null,
@@ -1021,28 +1026,32 @@ export function MockScenarioEditor({
                       <Plus className="h-3.5 w-3.5" /> Add sequence step
                     </Button>
 
-                    <div className="flex flex-col gap-1">
-                      <span className="vdlg-caps">
-                        Match rules (advanced) — evaluated before the responses above; first match
-                        wins, responses above are the fallback
-                      </span>
-                      <Textarea
-                        ref={(element) => {
-                          templateFields.current.set(
-                            `${scenarioIndex}:${operationIndex}:rules`,
-                            element
-                          );
-                        }}
-                        value={operation.rulesText}
-                        onChange={(e) =>
-                          updateOperation(scenarioIndex, operationIndex, { rulesText: e.target.value })
-                        }
-                        placeholder={
-                          'Rules as JSON, e.g. [{"when": {"query": {"limit": {"gt": 10}}}, "responses": [{"status": 429}]}] (optional)'
-                        }
-                        aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} match rules`}
-                        className="vdlg-textarea vdlg-textarea--mono"
-                      />
+                    <Disclosure
+                      label="Match rules"
+                      tag="advanced"
+                      hint="Evaluated before the responses above; first match wins, the responses above are the fallback."
+                      defaultOpen={operation.rulesText.trim().length > 0}
+                      data-testid={`mock-scenario-${scenarioIndex}-op-${operationIndex}-rules`}
+                    >
+                      <EditorPane label="Rules" hint="first match wins">
+                        <Textarea
+                          ref={(element) => {
+                            templateFields.current.set(
+                              `${scenarioIndex}:${operationIndex}:rules`,
+                              element
+                            );
+                          }}
+                          value={operation.rulesText}
+                          onChange={(e) =>
+                            updateOperation(scenarioIndex, operationIndex, { rulesText: e.target.value })
+                          }
+                          placeholder={
+                            'Rules as JSON, e.g. [{"when": {"query": {"limit": {"gt": 10}}}, "responses": [{"status": 429}]}] (optional)'
+                          }
+                          aria-label={`Scenario ${scenarioIndex + 1} operation ${operationIndex + 1} match rules`}
+                          className="vdlg-textarea vdlg-textarea--mono"
+                        />
+                      </EditorPane>
                       <MockTokenPicker
                         groups={buildTokenGroups(
                           operationsByKey.get(operation.key.trim()) ?? null,
@@ -1060,7 +1069,7 @@ export function MockScenarioEditor({
                         fieldLabel={`scenario ${scenarioIndex + 1} operation ${operationIndex + 1} match rules`}
                         testId={`mock-scenario-${scenarioIndex}-${operationIndex}-rules-tokens`}
                       />
-                    </div>
+                    </Disclosure>
                   </div>
                 ))}
 

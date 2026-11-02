@@ -15146,7 +15146,7 @@ button.tfa-reset-notice__close > svg {
 }
 
 .vt__published > svg {
-  color: var(--ok);
+  stroke: var(--ok);
 }
 
 .vt__published > svg {
@@ -17651,6 +17651,113 @@ button.tfa-reset-notice__close > svg {
   padding: var(--space-3);
   border-radius: var(--r-md);
   background: var(--bg-subtle);
+}
+
+/* ---- Editor panes and the advanced disclosure (facelift round 3, "forms") -----
+   A JSON field is an editor, not a textarea: a caps bar names what it holds and
+   how it is read (`Headers · JSON`, `optional`), the control drops its own chrome
+   and the pane carries the hover and focus rings. The rules of an operation fold
+   behind a native `<details>`, open only when they already have content. */
+.vdlg-editor {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-control);
+  overflow: hidden;
+  transition: box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.vdlg-editor:hover {
+  box-shadow: var(--shadow-control-hover);
+}
+
+.vdlg-editor:focus-within {
+  box-shadow: var(--shadow-control-focus);
+}
+
+.vdlg-editor__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-subtle);
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+
+.vdlg-editor__lang {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.vdlg-editor__hint {
+  font-size: var(--fs-2xs);
+  color: var(--fg-faint);
+}
+
+.vdlg-editor > .hive-control.vdlg-textarea,
+.vdlg-editor > .hive-control.vdlg-textarea:hover,
+.vdlg-editor > .hive-control.vdlg-textarea:focus-visible {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.vdlg-disclosure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.vdlg-disclosure__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--r-sm);
+}
+
+.vdlg-disclosure__summary::-webkit-details-marker {
+  display: none;
+}
+
+.vdlg-disclosure__chevron {
+  inline-size: var(--icon-dense);
+  block-size: var(--icon-dense);
+  flex-shrink: 0;
+  color: var(--fg-muted);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.vdlg-disclosure[open] > .vdlg-disclosure__summary > .vdlg-disclosure__chevron {
+  transform: rotate(90deg);
+}
+
+.vdlg-disclosure__tag {
+  padding-inline: var(--space-2);
+  border-radius: var(--r-full);
+  background: var(--bg-subtle);
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-disclosure__hint {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.vdlg-disclosure__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .vdlg-mock__step {
@@ -39793,11 +39900,21 @@ tr[data-selected="true"] > td:first-child {
 /* The stat figure's counter (facelift "motion"; `CountUp` in the metrics set): the registered
    `--count-figure` transitions from zero, and the pseudo-element prints it. */
 [data-count-figure] {
+  /* The counter is reset on the element, not on the pseudo-element that prints it: the
+     property is registered as non-inheriting, so `::before` would only ever see its initial 0. */
+  counter-reset: figure var(--count-figure);
   transition: --count-figure var(--dur-slow) var(--ease-out);
 }
 
+/* The figure's starting value: zero as the element enters, so the transition above has
+   somewhere to count up from while the DOM holds the real number. */
+@starting-style {
+  [data-count-figure] {
+    --count-figure: 0;
+  }
+}
+
 [data-count-figure]::before {
-  counter-reset: figure var(--count-figure);
   content: counter(figure);
   font-variant-numeric: tabular-nums;
 }

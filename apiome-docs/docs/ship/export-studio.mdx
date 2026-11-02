@@ -12,7 +12,7 @@ you what the conversion keeps and loses **before** you generate it. Six steps ru
 **Source**, **Target**, **Options**, **Overlays**, **Verify** and **Review & Generate**. **Back** and
 the step's main button at the foot move between them.
 
-<Screenshot id="export-studio" alt="Export studio on the Target step: target cards grouped by family, each with its fidelity tier" />
+<Screenshot id="export-studio" alt="Export studio on the Target step: compact target tiles grouped by family, each with its three-segment fidelity meter" />
 
 ## Open the studio
 
@@ -67,11 +67,15 @@ or `per-type`). **API clients & collections** holds the targets that
 export saved requests rather than a contract: Postman, Hoppscotch, Thunder Client and the `.http`
 request file (see [Export to an API client](./export-to-an-api-client.md)).
 
-| Tier | Means |
-| --- | --- |
-| `lossless` | Carries the source cleanly. |
-| `lossy` | Drops or approximates some constructs. |
-| `types-only` | Only the schemas survive; operations and channels are dropped. |
+Each tile names the target, its family and, where the catalog knows it, the format's own colour
+on the tile. Under the name, a three-segment **fidelity meter** and the tier say how much of this
+source the target carries:
+
+| Tier | Meter | Means |
+| --- | --- | --- |
+| `lossless` | three green segments | Carries the source cleanly. |
+| `lossy` | two amber segments | Drops or approximates some constructs. |
+| `types-only` | one segment | Only the schemas survive; operations and channels are dropped. |
 
 A readiness badge (**ready**, **check first**, **blocked**, **unavailable**) appears when the
 pre-flight check has run; blocked and unavailable cards cannot be chosen and say why. Toggle

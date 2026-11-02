@@ -93,8 +93,11 @@ request with the `X-Mock-Scenario` header. Requests without the header get the d
 
 1. **Click “Add scenario”** and name it, for example `quota-exceeded`, with an optional description.
 2. **Click “Add operation override”**, enter the operation — `GET /pets` — and its response:
-   **Status** `429`, headers `{"Retry-After": "60"}` and body `{"error": "quota"}`. **Add sequence
-   step** adds another response, so successive calls get each in turn.
+   **Status** `429`, then the **Headers · JSON** pane `{"Retry-After": "60"}` and the **Body ·
+   JSON** pane `{"error": "quota"}`; each pane's bar says what it holds and whether it is
+   optional. **Add sequence step** adds another response, so successive calls get each in turn.
+   **Match rules** (advanced) stay folded under the responses until an operation has some —
+   **click** the caption to open the pane.
 3. Optionally set **Latency & chaos** — a delay (± jitter, capped at 30 s) and an error rate — for
    the whole version or one route, or **Add scenario chaos** for this scenario only.
 4. Under **Try it**, choose the operation and **click “Render”** to see what the mock would answer

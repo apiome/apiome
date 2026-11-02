@@ -32,7 +32,8 @@ export const jetbrainsMono = JetBrains_Mono({
  */
 export const manropeDisplay = Manrope({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
+  // Manrope is a variable font (wght 200–800); the display rules pick 700/800 from the one file.
+  weight: "variable",
   display: "swap",
   variable: "--app-webfont-display",
 });

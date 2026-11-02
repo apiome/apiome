@@ -200,7 +200,7 @@ export function tabTriggerClass({
 
 /** The same look expressed as Radix `data-[state=…]` variants, for Radix-driven strips. */
 export const TAB_TRIGGER_RADIX_STATE_CLASS =
-  'data-[state=active]:border-fg data-[state=active]:text-fg ' +
+  'data-[state=active]:border-accent data-[state=active]:text-fg ' +
   'data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:border-border-strong ' +
   'data-[state=inactive]:hover:text-fg ' +
   'disabled:cursor-not-allowed disabled:border-transparent disabled:text-fg-faint ' +
@@ -208,7 +208,7 @@ export const TAB_TRIGGER_RADIX_STATE_CLASS =
 
 /** `pills`, as Radix state variants. */
 const PILL_RADIX_STATE_CLASS =
-  'data-[state=active]:bg-fg data-[state=active]:text-surface ' +
+  'data-[state=active]:bg-pill-active data-[state=active]:text-pill-active-fg ' +
   'data-[state=inactive]:text-fg-muted data-[state=inactive]:hover:bg-subtle ' +
   'data-[state=inactive]:hover:text-fg ' +
   'disabled:cursor-not-allowed disabled:text-fg-faint disabled:opacity-50';
