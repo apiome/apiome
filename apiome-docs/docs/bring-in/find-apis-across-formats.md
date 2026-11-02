@@ -100,6 +100,7 @@ too — see [Browse published specs](../ship/browse-published-specs.md#query-lan
 
 ## Related
 
+- [What an import records](./what-an-import-records.md) — the format, protocol and source details stored with each version
 - [Catalog](./catalog.mdx) — the list, its filters and each item's page
 - [Search across formats](./search-across-formats.md) — the full search reference
 - [Supported formats](./supported-formats.md) — every format and its protocol
