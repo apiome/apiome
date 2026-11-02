@@ -1,0 +1,19 @@
+---
+slug: raml-cli-and-migrate
+title: RAML from the CLI, and its move to OpenAPI
+description: Import RAML files and folders from the CLI, then convert to OpenAPI.
+authors: [apiome]
+---
+
+RAML imports and the move to OpenAPI now have a documented path end to end, in the wizard and the
+CLI. [How to move to OpenAPI](/bring-in/raml-import#move-to-openapi).
+
+{/* truncate */}
+
+- **Files and folders.** `apiome import raml ./api.raml` sends a file; `apiome import raml ./api/`
+  packs a folder with its `!include` fragments and `uses` libraries into one archive.
+- **The conversion pack is named.** `apiome convert --dry-run` now prints the conversion pack that
+  produced the OpenAPI document, such as `Conversion pack: RAML (native projection).`, with what
+  the format is known to lose.
+- **RAML fixtures.** The CLI's test fixtures include a self-contained RAML 1.0 file and a set with
+  an included type and a library.

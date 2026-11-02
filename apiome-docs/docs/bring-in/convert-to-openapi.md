@@ -251,6 +251,10 @@ apiome convert my-x12-item --to openapi --out openapi.yaml --force
 The manifest JSON contains the same nodes, edges, statuses, reasons, and
 `manifest_hash` the UI renders — same source revision and defaults, same bytes.
 
+The CLI's summary also names the [conversion pack](#per-format-conversion-packs) that ran, with
+its refinements and documented losses, for example
+`Conversion pack: RAML (native projection).`
+
 ## With the REST API
 
 | Purpose | Route |

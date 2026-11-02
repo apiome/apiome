@@ -1,0 +1,58 @@
+#%RAML 1.0
+# A self-contained RAML 1.0 API: types, a resource type and a trait in one file (MFI-15.5).
+title: Pet Store
+version: v1
+baseUri: https://api.example.com/{version}
+mediaType: application/json
+
+types:
+  Pet:
+    type: object
+    properties:
+      id: integer
+      name: string
+      tag?: string
+  Error:
+    type: object
+    properties:
+      code: integer
+      message: string
+
+traits:
+  paged:
+    queryParameters:
+      limit:
+        type: integer
+        required: false
+        default: 20
+
+resourceTypes:
+  collection:
+    get:
+      responses:
+        200:
+          body:
+            type: <<item>>[]
+    post:
+      body:
+        type: <<item>>
+      responses:
+        201:
+          body:
+            type: <<item>>
+
+/pets:
+  type: { collection: { item: Pet } }
+  get:
+    is: [paged]
+  /{petId}:
+    uriParameters:
+      petId: integer
+    get:
+      responses:
+        200:
+          body:
+            type: Pet
+        404:
+          body:
+            type: Error

@@ -1,0 +1,17 @@
+#%RAML 1.0 Library
+usage: Shared types and traits of the Bookstore API.
+
+types:
+  Error:
+    type: object
+    properties:
+      code: integer
+      message: string
+
+traits:
+  paged:
+    queryParameters:
+      page:
+        type: integer
+        required: false
+        default: 1

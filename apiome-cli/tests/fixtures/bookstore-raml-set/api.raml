@@ -1,0 +1,29 @@
+#%RAML 1.0
+# A RAML 1.0 API split across files (MFI-15.5): an included type and a library.
+title: Bookstore
+version: v2
+baseUri: https://books.example.com/{version}
+mediaType: application/json
+
+uses:
+  common: libraries/common.raml
+
+types:
+  Book: !include types/book.raml
+
+/books:
+  get:
+    is: [common.paged]
+    responses:
+      200:
+        body:
+          type: Book[]
+  /{isbn}:
+    get:
+      responses:
+        200:
+          body:
+            type: Book
+        404:
+          body:
+            type: common.Error

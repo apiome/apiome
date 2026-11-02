@@ -67,6 +67,38 @@ def _gap_items(report: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     ]
 
 
+def format_conversion_pack(pack: Any) -> list[str]:
+    """Summarize the per-format conversion pack that shaped a conversion (MFI-22.8, MFI-15.5).
+
+    A dry-run response names the pack — for RAML, the migrate-to-OpenAPI off-ramp — so a scripted
+    migration can see which path produced the document and what that format is known to lose.
+
+    Args:
+        pack: The response's ``conversionPack`` object, or ``None`` / anything else when the
+            conversion had no pack (an OpenAPI passthrough, a format without one, a commit).
+
+    Returns:
+        ``Conversion pack: <label> (<how>).`` then one line per refinement and documented loss;
+        empty when there is no pack.
+    """
+    if not isinstance(pack, Mapping):
+        return []
+    label = pack.get("label") or pack.get("key") or "unnamed"
+    converter = pack.get("external_converter")
+    if pack.get("strategy") == "external" and isinstance(converter, Mapping):
+        how = f"external converter {converter.get('name') or converter.get('tool')}"
+    else:
+        how = "native projection"
+    lines = [f"Conversion pack: {label} ({how})."]
+    for refinement in pack.get("refinements") or []:
+        lines.append(f"  - Refined: {refinement}")
+    for loss in pack.get("documented_losses") or []:
+        lines.append(f"  - Known loss: {loss}")
+    if isinstance(converter, Mapping) and not converter.get("used") and converter.get("fallback_reason"):
+        lines.append(f"  - {converter.get('name') or converter.get('tool')} not used: {converter['fallback_reason']}")
+    return lines
+
+
 def format_conversion_summary(
     response: Mapping[str, Any],
     *,
@@ -115,6 +147,7 @@ def format_conversion_summary(
         lines.append(f"Projection losses: {len(losses)} (constructs with no faithful OpenAPI form).")
 
     lines.extend(format_projection_summary(response.get("projection")))
+    lines.extend(format_conversion_pack(response.get("conversionPack")))
 
     if committed:
         project_id = response.get("projectId")
