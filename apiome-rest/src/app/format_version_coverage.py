@@ -1234,6 +1234,15 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "schema is applied — except for the SEPA payment families in the next row.",
             ),
             FormatVersion(
+                version="message definition XSD (any message definition)",
+                format_key="iso20022",
+                support=VersionSupport.UNGATED,
+                note="MFI-20.3: the XML Schema the standard publishes for a message "
+                "(`pain.001.001.09.xsd`) is read through the XSD reader and labelled with the "
+                "message id its target namespace declares; choice members, amounts and their "
+                "`Ccy` are read. The SEPA version ceiling applies to messages, not definitions.",
+            ),
+            FormatVersion(
                 version="SEPA pain.001 (to .001.12), pain.008 (to .001.11), pacs.008 (to .001.13)",
                 format_key="iso20022",
                 support=VersionSupport.FULL,

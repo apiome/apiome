@@ -49,6 +49,12 @@ class XsdParseError(ValueError):
 
 @dataclass(frozen=True)
 class XsdField:
+    """One member of a complex type.
+
+    ``kind`` is ``"element"`` for a sequence / choice / all member, ``"attribute"`` for an
+    attribute, and ``"value"`` for the simple content a ``simpleContent`` type wraps (MFI-20.3).
+    """
+
     name: str
     type_expr: str
     kind: str = "element"
@@ -182,24 +188,46 @@ def _parse_complex_types(schema_el: ET.Element) -> Tuple[XsdComplexType, ...]:
         if not name:
             continue
         fields: List[XsdField] = []
-        for sequence in _find_descendants(complex_type, "sequence"):
-            for field_el in _children(sequence, "element"):
-                field_name = field_el.get("name")
-                type_expr = field_el.get("type")
-                if field_name and type_expr:
+        seen: Set[str] = set()
+        # MFI-20.3: a member of an ``xs:choice`` (or ``xs:all``) is a field like a sequence
+        # member — ISO 20022 message definitions build most of their types from ``…Choice``
+        # types — and, being one alternative among several, is optional unless it says
+        # otherwise. The first declaration of a name wins when a type repeats it.
+        for group_name in ("sequence", "choice", "all"):
+            for group in _find_descendants(complex_type, group_name):
+                for field_el in _children(group, "element"):
+                    field_name = field_el.get("name")
+                    type_expr = field_el.get("type")
+                    if not field_name or not type_expr or field_name in seen:
+                        continue
+                    seen.add(field_name)
+                    min_occurs = field_el.get("minOccurs")
+                    if group_name == "choice" and min_occurs is None:
+                        min_occurs = "0"
                     fields.append(
                         XsdField(
                             name=field_name,
                             type_expr=_attr_local(type_expr) or type_expr,
                             kind="element",
                             max_occurs=field_el.get("maxOccurs"),
-                            min_occurs=field_el.get("minOccurs"),
+                            min_occurs=min_occurs,
                         )
                     )
-        for attr_el in _children(complex_type, "attribute"):
+        # ``xs:simpleContent`` wraps a simple value (an ISO 20022 amount) with attributes (its
+        # ``Ccy``): the value is read as the ``value`` field of the base type (MFI-20.3).
+        for simple_content in _children(complex_type, "simpleContent"):
+            for derivation in (*_children(simple_content, "extension"), *_children(simple_content, "restriction")):
+                base = derivation.get("base")
+                if base and "value" not in seen:
+                    seen.add("value")
+                    fields.append(XsdField(name="value", type_expr=_attr_local(base) or base, kind="value"))
+        # Attributes may sit on the type itself or inside a simpleContent / complexContent
+        # derivation; read them wherever they are declared.
+        for attr_el in _find_descendants(complex_type, "attribute"):
             attr_name = attr_el.get("name")
             type_expr = attr_el.get("type")
-            if attr_name and type_expr:
+            if attr_name and type_expr and attr_name not in seen:
+                seen.add(attr_name)
                 fields.append(
                     XsdField(
                         name=attr_name,

@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1527 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1529 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -143,7 +143,7 @@ The corpus holds **1527 files** across **110 format directories**. Every file ha
 | `hl7v2/` | HL7 v2.x | message | `MSH\|^~\&\|` message header | 11 |
 | `hl7v3/` | HL7 v3 / CDA | message | `<ClinicalDocument>` root in the `urn:hl7-org:v3` namespace | 14 |
 | `idoc/` | SAP IDoc | message | `EDI_DC40` control record (flat) or `<IDOC>` + `<EDI_DC40>` (XML) | 14 |
-| `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 12 |
+| `iso20022/` | ISO 20022 | message | `urn:iso:std:iso:20022` XML namespace | 14 |
 | `iso8583/` | ISO 8583 | message | `mti` + numbered `dataElements` | 11 |
 | `nacha/` | NACHA ACH | message | 94-character records: `1` file header, `5`/`6`/`7`/`8`/`9` types | 14 |
 | `ncpdp/` | NCPDP SCRIPT / Telecom | message | `Message` root in the NCPDP SCRIPT namespace, or a `D0` Telecom transaction header | 14 |
@@ -1286,12 +1286,18 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-pain.008-direct-debit.xml` | composition | `iso20022` ≥ 0.95 | valid | `pain.008`, `group-header`, `component-reuse`, `sepa-mandate` |
 | `05-camt.054-notification.xml` | stress | `iso20022` ≥ 0.95 | valid | `camt.054`, `prefixed-namespace`, `supplementary-data`, `currency-attributes` |
 | `06-pacs.008-interbank-transfer.xml` | real-world | `iso20022` ≥ 0.95 | valid | `pacs.008`, `group-header`, `settlement-information`, `uetr` |
+| `07-pain.001.001.09-message-definition.xsd` ⚠ | typical | `iso20022` ≥ 0.95 | valid | `pain.001`, `message-definition`, `xsd`, `choice-types`, `amount-with-currency` |
+| `08-pacs.008.001.08-message-definition.xsd` ⚠ | composition | `iso20022` ≥ 0.95 | valid | `pacs.008`, `message-definition`, `xsd`, `settlement-information`, `component-reuse` |
 | `adversarial/01-billion-laughs-pain001.xml` ⚠ | — | `iso20022` (no guarantee) | adversarial | `adversarial`, `billion-laughs`, `entity-expansion`, `pain.001` |
 | `negative/01-syntactic-unclosed-tag.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-tag` |
 | `negative/02-semantic-empty-document.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `semantic`, `empty-document` |
 | `negative/03-truncated-mid-tag.xml` ⚠ | — | `iso20022` (no guarantee) | invalid | `negative`, `truncated`, `mid-tag` |
 | `negative/04-wrong-format-xsd-schema.xsd` | — | `iso20022` (no guarantee) | invalid | `negative`, `wrong-format`, `xsd-schema` |
 | `negative/05-encoding-utf16-event.xml` | — | `iso20022` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bytes` |
+
+> ⚠ **`07-pain.001.001.09-message-definition.xsd`** — The message definition (XML Schema) rather than a message: MFI-20.3 reads it through the XSD normalizer and labels it with the message id its target namespace declares.
+
+> ⚠ **`08-pacs.008.001.08-message-definition.xsd`** — The interbank definition reuses the party, account and agent components of pain.001 under the same type names.
 
 > ⚠ **`adversarial/01-billion-laughs-pain001.xml`** — parse_iso20022 parses before its shape check (IXH-1.4) because is_iso20022 needs a successful secure parse; without that order the security code would be masked as a format mismatch.
 
@@ -2835,7 +2841,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1527 | `Apache-2.0` |
+| `hand-authored` | 1529 | `Apache-2.0` |
 
 ## Trying an import
 

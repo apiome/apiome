@@ -2225,11 +2225,11 @@
         "sepa"
       ],
       "fixtures": {
-        "valid": 14,
+        "valid": 16,
         "negative": 11,
         "adversarial": 1,
         "scale": 0,
-        "total": 26
+        "total": 28
       },
       "rungs": [
         "composition",
@@ -2240,7 +2240,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 13,
+      "goldens": 15,
       "golden_directories": [
         "iso20022",
         "sepa"
@@ -4552,8 +4552,8 @@
         {
           "source_format": "wsdl2",
           "emit_key": "wsdl",
-          "status": "xfail",
-          "has_reason": true
+          "status": "pass",
+          "has_reason": false
         }
       ],
       "capability_provenance": "derived",

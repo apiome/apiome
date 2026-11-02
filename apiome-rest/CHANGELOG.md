@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.603.0] - 2026-11-02
+
+### Added
+- **ISO 20022 message definitions (XSD) import as ISO 20022 (MFI-20.3, #3987).** The adapter read messages and inferred
+  their schema; now the XML Schema the standard publishes for a message imports too, built on the XSD reader and
+  normalizer (MFI-EPIC-13).
+  - New `app/iso20022_message_definition.py`: `declared_definition_id` recognises a schema by its
+    `urn:iso:std:iso:20022:tech:xsd:<id>` target namespace; `parse_message_definition` parses it with `parse_xsd`;
+    `normalize_message_definition` runs `XsdNormalizer` and relabels the model `iso20022` with
+    `iso20022_message_id` / `iso20022_namespace`, `iso20022_message_definition` (family, variant, version, root and
+    business element), the business-element title, and the SEPA `format_profile` for a SEPA family.
+  - `Iso20022ImportSource` claims the definition at 0.98 (above the generic `xsd` adapter), routes `parse` /
+    `parse_fileset` (a set's members answer `xs:import`) and `normalize` by shape, and lists `.xsd` among its file
+    extensions; `Iso20022Normalizer` accepts an `Iso20022MessageDefinition`.
+  - `xsd_parser` reads what ISO 20022 definitions are made of and every XSD import skipped: members of `xs:choice`
+    / `xs:all` (a choice member is `minOccurs="0"` unless it says otherwise), the `value` of a `simpleContent`
+    type (kind `"value"`), and attributes declared inside a `simpleContent` / `complexContent` derivation. The
+    `xsd/04-kitchen-sink` corpus golden gains those fields.
+  - Fixtures `apiome-ui/examples/iso20022/07-pain.001.001.09-message-definition.xsd` and
+    `08-pacs.008.001.08-message-definition.xsd` (representative subsets), with corpus and MCP toolset goldens;
+    `format_version_coverage` lists the definition read.
+
 ## [1.602.0] - 2026-11-02
 
 ### Added

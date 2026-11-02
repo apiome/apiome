@@ -59,7 +59,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `idoc` | SAP IDoc | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | `idoc` |
 | `ims` | IMS DBD and PSB | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `insomnia` | Insomnia collection | rest | 8 | 8 | 0 | 0 | 16 | 6/6 | 7 | `insomnia` |
-| `iso20022` | ISO 20022 | data_schema | 14 | 11 | 1 | 0 | 26 | 6/6 | 13 | `iso20022` |
+| `iso20022` | ISO 20022 | data_schema | 16 | 11 | 1 | 0 | 28 | 6/6 | 15 | `iso20022` |
 | `iso8583` | ISO 8583 | data_schema | 6 | 5 | 0 | 0 | 11 | 4/6 (+2 waived) | 6 | `iso8583` |
 | `istio` | Istio VirtualService | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `istio` |
 | `json-schema` | JSON Schema | data_schema | 12 | 5 | 0 | 0 | 17 | 5/6 (+1 waived) | 12 | `json-schema` |

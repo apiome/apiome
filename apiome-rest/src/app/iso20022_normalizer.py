@@ -20,6 +20,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .edi_dialect_profiles import PROFILE_EXTRAS_KEY
+from .iso20022_message_definition import Iso20022MessageDefinition, normalize_message_definition
 from .iso20022_parser import Iso20022Document, Iso20022Element, element_template
 from .iso20022_sepa import sepa_profile_extras
 from .normalizer import Keys, Normalizer, normalize_ordering
@@ -108,9 +109,13 @@ class Iso20022Normalizer(Normalizer, register=True):
     paradigm = ApiParadigm.DATA_SCHEMA
 
     def normalize(self, source: Any, *, include_raw: bool = True) -> CanonicalApi:
+        # MFI-20.3: a message definition (XSD) normalizes through the XSD normalizer.
+        if isinstance(source, Iso20022MessageDefinition):
+            return normalize_message_definition(source, include_raw=include_raw)
         if not isinstance(source, Iso20022Document):
             raise ValueError(
-                "ISO 20022 source must be an Iso20022Document (see app.iso20022_parser.parse_iso20022)"
+                "ISO 20022 source must be an Iso20022Document or Iso20022MessageDefinition "
+                "(see app.iso20022_parser.parse_iso20022 / app.iso20022_message_definition)"
             )
 
         namespace = source.message_id
