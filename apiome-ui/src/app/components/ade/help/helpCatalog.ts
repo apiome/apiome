@@ -946,6 +946,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['apib', 'drafter', 'refract', 'api elements', 'mson', 'apiary', 'legacy'],
   },
   {
+    id: 'flatbuffers-capnproto-import',
+    title: "Import a FlatBuffers or Cap'n Proto schema",
+    summary: "Catalog FlatBuffers and Cap'n Proto schemas, versioned by field id.",
+    page: 'apiome-docs/docs/bring-in/flatbuffers-capnproto-import.md',
+    section: 'reference',
+    keywords: ['fbs', 'capnp', 'flatc', 'zero-copy', 'ordinal', 'deprecated', 'root_type', 'breaking'],
+  },
+  {
     id: 'wsdl-import',
     title: 'Import a SOAP / WSDL service',
     summary: 'Catalog a WSDL file, a WSDL split across files, or a live SOAP service.',

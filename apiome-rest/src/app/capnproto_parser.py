@@ -221,16 +221,45 @@ def _parse_nested_definitions(
     return structs, enums, remainder
 
 
+def _balanced_group(text: str, open_paren: int) -> Tuple[Optional[str], int]:
+    """The text inside the parenthesis group opening at ``open_paren``, and the index after it.
+
+    A parameter or result list holds types that are themselves parenthesized
+    (``List(Person)``), so the group ends at its *matching* ``)``, not the first one.
+
+    Returns:
+        ``(inner text, index after the closing parenthesis)``, or ``(None, open_paren)`` when the
+        group is not closed.
+    """
+    depth = 0
+    for index in range(open_paren, len(text)):
+        if text[index] == "(":
+            depth += 1
+        elif text[index] == ")":
+            depth -= 1
+            if depth == 0:
+                return text[open_paren + 1 : index], index + 1
+    return None, open_paren
+
+
 def _parse_interface_methods(inner: str) -> Tuple[CapnpInterfaceMethod, ...]:
     methods: List[CapnpInterfaceMethod] = []
-    pattern = r"(\w+)\s*@(\d+)\s*\(([^)]*)\)\s*->\s*\(([^)]*)\)\s*;"
-    for match in re.finditer(pattern, inner):
+    for match in re.finditer(r"(\w+)\s*@(\d+)\s*(?=\()", inner):
+        parameters, after = _balanced_group(inner, match.end())
+        if parameters is None:
+            continue
+        arrow = re.match(r"\s*->\s*(?=\()", inner[after:])
+        if not arrow:
+            continue
+        results, end = _balanced_group(inner, after + arrow.end())
+        if results is None or not re.match(r"\s*;", inner[end:]):
+            continue
         methods.append(
             CapnpInterfaceMethod(
                 name=match.group(1),
                 slot=int(match.group(2)),
-                parameters=_parse_named_types(match.group(3)),
-                results=_parse_named_types(match.group(4)),
+                parameters=_parse_named_types(parameters),
+                results=_parse_named_types(results),
             )
         )
     return tuple(methods)

@@ -1,6 +1,6 @@
 # CLI test fixtures
 
-Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, RAML, and API Blueprint documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
+Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, RAML, API Blueprint, FlatBuffers, and Cap'n Proto documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
 
 | File | Purpose |
 |------|---------|
@@ -24,6 +24,8 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, 
 | `bookstore-raml-set/` | RAML 1.0 API whose `Book` type is `!include`d from `types/` and whose `Error` type and `paged` trait come from a `uses` library in `libraries/`, for directory `import raml` tests (MFI-15.5) |
 | `shelter-apiblueprint.apib` | API Blueprint 1A with resource groups, an enum parameter, a named request, response headers, and MSON inheritance (`## Cat (Pet)`) and a mixin (`+ Include Problem`), for `import apiblueprint` tests (MFI-16.4) |
 | `notes-apiblueprint.md` | A minimal API Blueprint saved with a `.md` extension, for `import apiblueprint` tests (MFI-16.4) |
+| `monsters-flatbuffers.fbs` | FlatBuffers schema: namespace, enum, struct, union, a table with explicit field ids and a `(deprecated)` slot, `root_type`, for `import flatbuffers` tests (MFI-19.4) |
+| `addressbook-capnproto.capnp` | Cap'n Proto schema: file id, structs with a union, a nested enum, and an interface whose results are parenthesized types (`List(Person)`), for `import capnproto` tests (MFI-19.4) |
 | `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
 | `export-grpc.proto` | Emitted proto3 document returned by `/export/document`, for `export grpc` round-trip tests (MFX-12.5) |
 | `export-graphql.graphql` | Emitted GraphQL SDL returned by `/export/document`, for `export graphql` round-trip tests (MFX-13.5) |

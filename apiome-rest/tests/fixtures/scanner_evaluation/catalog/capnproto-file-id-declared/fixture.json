@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/capnproto-file-id-declared",
+  "source_format": "capnproto",
+  "description": "Cap'n Proto schema with exactly one blocking defect: no `@0x\u2026;` file id.",
+  "document": "struct Person {\n  name @0 :Text;\n  email @1 :Text;\n}\n"
+}

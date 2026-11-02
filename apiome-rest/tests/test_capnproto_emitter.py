@@ -602,13 +602,15 @@ def test_capnp_source_imports_use_valid_syntax() -> None:
     assert "@import" not in text
 
 
-def test_capnp_source_method_gap_is_filled() -> None:
-    """The parser drops one of 04's methods; the gap is filled so the interface still compiles."""
+def test_capnp_source_methods_are_all_read_so_no_gap_is_filled() -> None:
+    """04's methods all parse — a result list of parenthesized types (``List(…)``) included (MFI-19.4).
+
+    Before, the parser dropped such a method and the emitter filled the ordinal gap it left.
+    """
     result = _emit(_capnp_api("04-event-stress.capnp"))
     ordinals = _ordinals(_text(result), "interface", "Collector")
     assert sorted(ordinals.values()) == list(range(len(ordinals)))
-    if len(ordinals) > 2:
-        assert any(loss.subject == "ordinal-gap" for loss in result.losses)
+    assert not any(loss.subject == "ordinal-gap" for loss in result.losses)
 
 
 # ===========================================================================
