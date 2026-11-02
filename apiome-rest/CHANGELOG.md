@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.598.0] - 2026-11-01
+
+### Added
+- **API Blueprint → canonical model: groups, transactions, MSON (MFI-16.2, #3805).** The built-in reader
+  (`app.apiblueprint_parser`) — which builds the model on every server, with or without drafter — now reads:
+  - **resource groups**: `# Group Pets` is each action's `Operation.tags` entry and `extras["apib_group"]` (and is no
+    longer taken for the API title);
+  - **transactions**: a named or bare `+ Request` (`+ Request Minimal (application/json)`) keeps its body (only the
+    action's first request is the operation's; later requests are other transactions), `+ Headers` under a request or
+    response become `Message.headers` (each a `string`, its example in `extras["apib_sample"]`), and an inline
+    `+ Attributes` body becomes a type named after the action (`Get owner 200 Response`, `extras["apib_inline"]`);
+  - **MSON** (one block reader shared by `# Data Structures` and inline bodies): multi-word type names
+    (`## Owner Summary (object)`), inheritance (`## Cat (Pet)` → `extras["apib_base"]`) and `+ Include` mixins
+    (`extras["apib_includes"]`) flattened into the type (base, then mixins, then own; a later member of a name wins;
+    cycles and unknown types contribute nothing — `app.apiblueprint_normalizer.flattened_fields`), nested `object`
+    members as types named after their parent (`Pet.address`), `+ Members` under an `enum[…]` member or parameter as
+    `Constraints.enum` on a `string`, and `nullable`.
+- The API Blueprint emitter writes `## Name (Base)` and `+ Include` lines back for an API Blueprint source, so an
+  inheritance blueprint round-trips unchanged.
+
+### Fixed
+- A data-structure heading with spaces in its name was not recognized, so its members were added to the type above it.
+- `+ Members` under an enum parameter ended the `+ Parameters` block, dropping every parameter after it.
+- A named request's `+ Attributes` (`+ Request Minimal (application/json)`) was ignored, so the operation had no
+  request body.
+
+### Changed
+- Corpus golden `api-blueprint/04-mson-inheritance.apib` regenerated: `AdminUser` now lists `User`'s members, with
+  `apib_base: "User"` (its `apib_kind` was the lowercased base name, `user`; it is now `object`).
+- 1.597.0 said mapping drafter's Refract tree onto the canonical model would be MFI-16.2; 16.2 extended the built-in
+  reader instead, so the model does not depend on drafter. The Refract tree remains the source of the format hash.
+- OpenAPI document version 1.461.0 → 1.462.0 (no schema change).
+
 ## [1.597.0] - 2026-11-01
 
 ### Added

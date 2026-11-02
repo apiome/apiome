@@ -1,0 +1,22 @@
+---
+slug: apiblueprint-groups-mson
+title: API Blueprint groups, transactions and MSON in the catalog
+description: Groups become tags; headers, inline bodies and MSON inheritance are now kept.
+authors: [apiome]
+---
+
+An API Blueprint catalog item now carries far more of the blueprint: its resource groups, every
+request and response header, inline bodies and the whole of its MSON data structures.
+[What the catalog item holds](/bring-in/apiblueprint-import#what-the-catalog-item-holds).
+
+{/* truncate */}
+
+- **Groups are tags.** Each action in `# Group Pets` is tagged `Pets`.
+- **Transactions.** A named request (`+ Request Minimal (application/json)`) keeps its body, and
+  `+ Headers` under a request or response are the message's headers. An inline `+ Attributes` body
+  becomes a type named after its action.
+- **MSON.** Type names may contain spaces, `## Cat (Pet)` inherits `Pet`'s members, `+ Include`
+  mixes another type in, nested objects become their own types, and enum `+ Members` and `nullable`
+  are kept.
+- **Fixes.** A type name with spaces no longer adds its members to the type above it, and an enum
+  parameter no longer drops the parameters listed after it.

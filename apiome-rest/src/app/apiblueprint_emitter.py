@@ -991,7 +991,17 @@ class _ApiblueprintWriter:
         if type_.kind is TypeKind.RECORD:
             own = type_.extras.get("apib_kind") if self._apib_source else None
             base = own if isinstance(own, str) and own and own != "enum" else "object"
-            return base, _flatten([self._property(f) for f in _ordered_fields(type_)])
+            mixins: List[str] = []
+            if self._apib_source:
+                # MFI-16.2: the reader records MSON inheritance and mixins (it flattens their members
+                # into the type); write them back so a re-import records the same. The flattened
+                # members are restated after them, which MSON reads as the same members.
+                inherited = type_.extras.get("apib_base")
+                if isinstance(inherited, str) and inherited:
+                    base = self._names.names.get(inherited, inherited)
+                for mixin in type_.extras.get("apib_includes") or []:
+                    mixins.append(f"+ Include {self._names.names.get(mixin, mixin)}")
+            return base, mixins + _flatten([self._property(f) for f in _ordered_fields(type_)])
         if type_.kind is TypeKind.ENUM:
             return "enum", [f"+ {_enum_member(value.name)}" for value in type_.enum_values]
         if type_.kind is TypeKind.UNION:
