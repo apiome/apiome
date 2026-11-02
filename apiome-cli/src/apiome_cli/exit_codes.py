@@ -61,8 +61,9 @@ EXIT_UPDATE_CONFLICT = 6
 #: archived. Unpublish them first, or pass ``--force``. Another per-command use of 6.
 EXIT_PUBLISHED_VERSIONS = 6
 
-#: ``apiome versions fork`` (CLI 4.4): the target project **already has** the ``--to`` version
-#: label, so nothing was forked. Choose another ``--to``. Another per-command use of 6.
+#: ``apiome versions fork`` (CLI 4.4) / ``apiome versions create`` (CLI 4.3): the project
+#: **already has** the ``--to`` / ``--version`` label, so nothing was created. Choose another
+#: label. Another per-command use of 6.
 EXIT_VERSION_EXISTS = 6
 
 #: ``apiome classes create`` (CLI 7.3): the version is **published or frozen**, so no class can be

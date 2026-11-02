@@ -1,0 +1,32 @@
+---
+slug: cli-versions-show-create
+title: "apiome versions show and create: inspect and cut versions from the CLI"
+description: The versions command group now covers a version's whole life, from cutting a draft to deleting it.
+authors: [apiome]
+---
+
+`apiome versions` now has the two commands the old CLI shipped and the rewrite did not carry over,
+so a terminal or CI job can manage a version's whole life without the UI.
+[Manage versions from the CLI](/ship/manage-versions-from-the-cli).
+
+{/* truncate */}
+
+- **`apiome versions show <project> <version>`** takes a label, revision UUID or version tag
+  (`stable`) and prints:
+  - the version's state, dates, notes and tags;
+  - its class and path counts, with what was added, removed and modified against the previous
+    published version;
+  - a compatibility summary from the server's engine;
+  - the absolute OpenAPI, Swagger UI, Arazzo and JSON Schema URLs.
+
+  `--json` returns the version record plus `compatibility_summary` and `spec_urls`.
+- **`apiome versions create <project> --version 1.2.0`** cuts a draft:
+  - its classes are copied from `--base` or the latest published version, or none with `--empty`;
+  - `--copy-paths` copies the base's paths too;
+  - `--notes` or `--notes-file` describe it.
+
+  The command finds the project's head itself, so the server's optimistic lock just works, and a
+  label the project already has exits `6`.
+- **The overview.** [Manage versions from the CLI](/ship/manage-versions-from-the-cli) walks through
+  every `apiome versions` command, the REST call behind each, a release job and the exit codes.
+  [Cut a version](/ship/cut-a-version) now shows the request body the API actually takes.
