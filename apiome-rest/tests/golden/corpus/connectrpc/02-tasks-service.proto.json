@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/tasks.v1.TaskService/CompleteTask"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "tasks.v1.TaskService.CompleteTask",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/tasks.v1.TaskService/CreateTask"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "tasks.v1.TaskService.CreateTask",
@@ -132,7 +167,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/tasks.v1.TaskService/GetTask"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "tasks.v1.TaskService.GetTask",
@@ -184,7 +231,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/tasks.v1.TaskService/ListTasks"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "tasks.v1.TaskService.ListTasks",
@@ -680,7 +739,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:0f517b685315e3deb5e0c54fa5d026e432c08b95d077fbdc3d809d4bd07f4c4e",
+  "fingerprint": "sha256:b5954d2ab9480857b257d842a9759c9d85d7e1e6ee18ecd4847e1e2c286768f9",
   "lint": {
     "findings": 35,
     "grade": "F",

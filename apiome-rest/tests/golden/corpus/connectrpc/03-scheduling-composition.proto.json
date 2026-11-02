@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/scheduling.v1.SchedulingService/BookSlot"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "scheduling.v1.SchedulingService.BookSlot",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/scheduling.v1.SchedulingService/CancelBooking"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "scheduling.v1.SchedulingService.CancelBooking",
@@ -132,7 +167,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/scheduling.v1.SchedulingService/ListSlots"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "scheduling.v1.SchedulingService.ListSlots",
@@ -541,7 +588,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:17facf116fcee29183d2595692b940f9abe07eaf2608707b6fa0c77b75f587ad",
+  "fingerprint": "sha256:51aa0e37679688b7efc84729dd9ae37048ba9b29f37c6a2ce7a6206ba1fb0174",
   "lint": {
     "findings": 29,
     "grade": "F",

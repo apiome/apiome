@@ -696,9 +696,11 @@ def rank_root_candidates(
 def _member_detection_input(
     members: Mapping[str, str], binary_members: Optional[Mapping[str, bytes]], path: str
 ) -> DetectionInput:
-    """The detection input for one member: its text, plus its exact bytes when it is binary."""
+    """The detection input for one member: its text, its exact bytes when it is binary, and
+    the other members as ``siblings`` so an adapter can read a configuration file next to the
+    candidate (a ``buf.gen.yaml`` naming Connect plugins, MFI-19.5)."""
     data = (binary_members or {}).get(path)
-    return DetectionInput(text=members[path], filename=path, data=data)
+    return DetectionInput(text=members[path], filename=path, data=data, siblings=members)
 
 
 def _root_candidates(

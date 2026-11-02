@@ -4,6 +4,17 @@
     "channels": [],
     "description": null,
     "extras": {
+      "connect": {
+        "route_template": "/{package.Service}/{Method}",
+        "streaming_content_types": [
+          "application/connect+json",
+          "application/connect+proto"
+        ],
+        "unary_content_types": [
+          "application/json",
+          "application/proto"
+        ]
+      },
       "rpc_stack": "connect"
     },
     "format": "connectrpc",
@@ -28,7 +39,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/json",
+                  "application/proto"
+                ],
+                "streaming": false
+              },
+              "http": {
+                "method": "post",
+                "path": "/greet.v1.GreetService/Greet"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "greet.v1.GreetService.Greet",
@@ -80,7 +103,19 @@
             "channel_ref": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "connect": {
+                "content_types": [
+                  "application/connect+json",
+                  "application/connect+proto"
+                ],
+                "streaming": true
+              },
+              "http": {
+                "method": "post",
+                "path": "/greet.v1.GreetService/GreetStream"
+              }
+            },
             "http_method": null,
             "http_path": null,
             "key": "greet.v1.GreetService.GreetStream",
@@ -259,7 +294,7 @@
     "confidence": 0.98,
     "format": "connectrpc"
   },
-  "fingerprint": "sha256:2c05c2000db761640ec5448b2f35e79aa33ada51ad7a8d3653d37906cda17142",
+  "fingerprint": "sha256:08ac1fd3da992ff25f4b9887ed827ccdbe3e5500064e865191c6f37943d4b5dd",
   "lint": {
     "findings": 13,
     "grade": "C",
