@@ -1,0 +1,21 @@
+---
+slug: hl7v2-import
+title: HL7 v2 messages get a lint pack and a migrate-to-FHIR note
+description: Six MSH header rules, the FHIR resource each segment maps to, and a guide page.
+authors: [apiome]
+---
+
+An HL7 v2 catalog item is now linted for the `MSH` header every interface engine depends on, records
+which FHIR resource each of its segments maps to, and has its own guide page.
+[Import HL7 v2 messages](/bring-in/hl7v2-import).
+
+{/* truncate */}
+
+- **Lint.** The `hl7v2` pack adds six rules on the **Quality** step and the **Lint & score** tab: an
+  empty message type (`MSH-9`), a message code without its trigger event, an empty version
+  (`MSH-12`), control id (`MSH-10`) or processing id (`MSH-11`), and non-standard separators.
+- **Migrate to FHIR.** Every HL7 v2 item records `hl7v2_fhir_counterparts`, the FHIR resource each
+  segment maps to (`PID` → `Patient`, `PV1` → `Encounter`, `OBX` → `Observation` …), and the guide
+  explains the path: export the item as FHIR logical models and catalog the FHIR server beside it.
+- **The guide.** What is read from a message, how the schema is inferred, how versions compare and
+  why an import is refused, on one page.

@@ -14,6 +14,12 @@
         "sending_application": "LAB",
         "sending_facility": "HOSPITAL"
       },
+      "hl7v2_fhir_counterparts": {
+        "MSH": "MessageHeader",
+        "OBR": "ServiceRequest",
+        "OBX": "Observation",
+        "PID": "Patient"
+      },
       "hl7v2_message_type": "ORU^R01",
       "hl7v2_segments": [
         {
@@ -1069,7 +1075,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:e5b83a519ad9f110de6d77c950c438e9a28e3db80126a368c86656ed012162f2",
+  "fingerprint": "sha256:9937501c1ad2b2466200cb05d6ee7533e58e164b8ea6ff9552d392db5c891dee",
   "lint": {
     "findings": 44,
     "grade": "D",

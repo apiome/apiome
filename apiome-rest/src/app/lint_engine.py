@@ -413,6 +413,9 @@ def load_format_rule_packs() -> None:
     # Apache Thrift lint pack (MFI-19.3): registers under ``thrift``.
     from . import thrift_lint as _thrift_lint  # noqa: F401
 
+    # HL7 v2 lint pack (MFI-20.2): registers under ``hl7v2`` (MSH header hygiene).
+    from . import hl7v2_lint as _hl7v2_lint  # noqa: F401
+
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401
     from . import flatbuffers_lint as _flatbuffers_lint  # noqa: F401
