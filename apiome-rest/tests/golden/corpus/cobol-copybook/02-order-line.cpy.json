@@ -4,6 +4,20 @@
     "channels": [],
     "description": null,
     "extras": {
+      "cobolcopybook_encoding": {
+        "assumed": "EBCDIC",
+        "notes": [
+          "One byte per character position — a single-byte encoding (EBCDIC or ASCII). DBCS and national (PIC N / USAGE NATIONAL) items are not sized.",
+          "COMP-3 items are packed two digits per byte with a trailing sign nibble, so a picture of n digits occupies (n div 2) + 1 bytes whether or not it is signed.",
+          "COMP / COMP-4 / BINARY items occupy 2, 4 or 8 bytes by digit count, the common IBM representation; a compiler set to allocate by truncation rules may differ.",
+          "A sign is assumed to be overpunched on the trailing digit rather than held in its own byte, because SIGN IS SEPARATE is not read by the parser.",
+          "No SYNCHRONIZED alignment is applied, so no slack bytes are inserted between items."
+        ]
+      },
+      "cobolcopybook_record_length": {
+        "max": 37,
+        "min": 37
+      },
       "cobolcopybook_root": "ORDER-LINE",
       "cobolcopybook_tree": {
         "children": [
@@ -101,21 +115,49 @@
         "enum_values": [],
         "extras": {
           "cobol_kind": "group",
+          "cobol_length": {
+            "max": 37,
+            "min": 37
+          },
           "cobol_level": 1
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(10)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 10,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 1,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(10)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 10,
               "cobol_usage": null
             },
             "field_number": 1,
@@ -129,17 +171,41 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 12,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "X(12)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 12,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 11,
+              "cobol_offset_variable": false,
               "cobol_picture": "X(12)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 12,
               "cobol_usage": null
             },
             "field_number": 2,
@@ -153,17 +219,41 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 999999999.99,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -999999999.99,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "S9(9)V99",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 6,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 32,
+              "cobol_offset_variable": false,
               "cobol_picture": "S9(9)V99",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "packed-decimal",
+                "note": "Packed decimal (COMP-3): two digits per byte and a trailing sign nibble. Binary data — never transcode it."
+              },
+              "cobol_total_length": 6,
               "cobol_usage": "COMP-3"
             },
             "field_number": 5,
@@ -172,22 +262,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "double",
+              "name": "decimal",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(4)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 4,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 23,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(4)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 4,
               "cobol_usage": null
             },
             "field_number": 3,
@@ -196,22 +310,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999999.99,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -9999999.99,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "S9(7)V99",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 5,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 27,
+              "cobol_offset_variable": false,
               "cobol_picture": "S9(7)V99",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "packed-decimal",
+                "note": "Packed decimal (COMP-3): two digits per byte and a trailing sign nibble. Binary data — never transcode it."
+              },
+              "cobol_total_length": 5,
               "cobol_usage": "COMP-3"
             },
             "field_number": 4,
@@ -220,7 +358,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "double",
+              "name": "decimal",
               "nullable": false
             }
           }
@@ -248,7 +386,7 @@
     "confidence": 0.98,
     "format": "cobolcopybook"
   },
-  "fingerprint": "sha256:97e7af0af77edce0c66cecd527cf160edecb9e18926d08d90b0f33c206cc3293",
+  "fingerprint": "sha256:7ea2aeb97323986bbea91479f3474e8c78d8a20ca16db92203892f88bec50fe3",
   "lint": {
     "findings": 2,
     "grade": "A",

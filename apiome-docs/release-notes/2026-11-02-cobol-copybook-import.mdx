@@ -1,0 +1,33 @@
+---
+slug: cobol-copybook-import
+title: COBOL copybooks import as types, with layout diffs and lint
+description: Copybook items now carry every group, REDEFINES unions and storage notes, are diffed by byte position and linted.
+authors: [apiome]
+---
+
+A COBOL copybook now imports as the record it describes: every group a type, every `REDEFINES`
+overlay a union of its layouts, every item its offset, length and how its bytes are encoded.
+New versions are compared by byte position, the way the programs that read the records see them.
+[Import COBOL copybooks](/bring-in/cobol-copybook-import).
+
+{/* truncate */}
+
+- **Types.** Nested groups are now types of their own (they were referenced but missing).
+  `PIC X` becomes a string with its width, `PIC 9` an `i32` or `i64` with its bounds, a picture
+  with `V` a `decimal`, and an `OCCURS` table a list with its item counts.
+- **REDEFINES → unions.** The items that lay the same bytes out again are members of one
+  `<base>-OVERLAY` union, not extra fields, so a JSON Schema export shows them as a `oneOf`.
+- **EBCDIC notes.** Each item says whether its bytes are EBCDIC text, zoned or packed decimal,
+  binary or hexadecimal float, and so whether to transcode them.
+- **Layout fingerprint.** A record-layout hash ignores names and level numbers: two copybooks
+  with the same hash read each other's records.
+- **Diff.** A moved offset, a changed length or picture, an inserted or removed item is breaking;
+  an item appended after the last byte is dangerous; an item carved out of spare `FILLER` is safe.
+- **Lint.** Twelve `cobolcopybook` rules flag ambiguous or ill-fitting `REDEFINES`, misplaced
+  `DEPENDING ON` controllers, duplicate names, unsized storage, even-digit packed items, `FILLER`
+  and duplicate 88-level values.
+- **Fixes.** An 88-level value list such as `VALUE 'B' 'X'` now exports as declared, and the
+  HL7 v2, FIX Orchestra, ISO 8583, XML-RPC and ONC RPC lint findings, which the built-in style
+  guide was discarding, now count.
+- **One-time version change.** The first re-import of an existing copybook item is recorded as a
+  changed version.

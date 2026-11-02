@@ -4,6 +4,20 @@
     "channels": [],
     "description": null,
     "extras": {
+      "cobolcopybook_encoding": {
+        "assumed": "EBCDIC",
+        "notes": [
+          "One byte per character position — a single-byte encoding (EBCDIC or ASCII). DBCS and national (PIC N / USAGE NATIONAL) items are not sized.",
+          "COMP-3 items are packed two digits per byte with a trailing sign nibble, so a picture of n digits occupies (n div 2) + 1 bytes whether or not it is signed.",
+          "COMP / COMP-4 / BINARY items occupy 2, 4 or 8 bytes by digit count, the common IBM representation; a compiler set to allocate by truncation rules may differ.",
+          "A sign is assumed to be overpunched on the trailing digit rather than held in its own byte, because SIGN IS SEPARATE is not read by the parser.",
+          "No SYNCHRONIZED alignment is applied, so no slack bytes are inserted between items."
+        ]
+      },
+      "cobolcopybook_record_length": {
+        "max": null,
+        "min": null
+      },
       "cobolcopybook_root": "LEDGER-RECORD",
       "cobolcopybook_tree": {
         "children": [
@@ -148,21 +162,169 @@
         "enum_values": [],
         "extras": {
           "cobol_kind": "group",
+          "cobol_length": {
+            "max": 6,
+            "min": 6
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "9(2)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 2,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 13,
+              "cobol_offset_variable": false,
+              "cobol_picture": "9(2)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 2,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+            "name": "LEDGER-MONTH",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "9(4)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 4,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 9,
+              "cobol_offset_variable": false,
+              "cobol_picture": "9(4)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 4,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+            "name": "LEDGER-YEAR",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "LEDGER-RECORD.LEDGER-PERIOD",
+        "key_type": null,
+        "kind": "record",
+        "name": "LEDGER-PERIOD",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": null,
+            "min": null
+          },
           "cobol_level": 1
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999999.99,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -99999999999.99,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "S9(11)V99",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 7,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
               "cobol_picture": "S9(11)V99",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "packed-decimal",
+                "note": "Packed decimal (COMP-3): two digits per byte and a trailing sign nibble. Binary data — never transcode it."
+              },
+              "cobol_total_length": 7,
               "cobol_usage": "COMP-3"
             },
             "field_number": 4,
@@ -171,22 +333,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "double",
+              "name": "decimal",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(8)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 8,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 1,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 8,
               "cobol_usage": null
             },
             "field_number": 1,
@@ -195,7 +381,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
@@ -207,10 +393,15 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 6,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 9,
+              "cobol_offset_variable": false,
               "cobol_picture": null,
+              "cobol_redefines": null,
+              "cobol_total_length": 6,
               "cobol_usage": null
             },
             "field_number": 2,
@@ -240,10 +431,15 @@
                 }
               ],
               "cobol_depending_on": null,
+              "cobol_length": null,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
               "cobol_picture": "X(1)",
+              "cobol_redefines": null,
+              "cobol_total_length": null,
               "cobol_usage": null
             },
             "field_number": 5,
@@ -264,10 +460,19 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": null,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 15,
+              "cobol_offset_variable": false,
               "cobol_picture": "N(20)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "unsized",
+                "note": "The storage of this item is not computed, so how its bytes are encoded is not stated."
+              },
+              "cobol_total_length": null,
               "cobol_usage": null
             },
             "field_number": 3,
@@ -288,6 +493,63 @@
         "namespace": null,
         "union_members": [],
         "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": null,
+            "min": null
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": null,
+              "cobol_level": 66,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
+              "cobol_picture": null,
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "unsized",
+                "note": "The storage of this item is not computed, so how its bytes are encoded is not stated."
+              },
+              "cobol_total_length": null,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+            "name": "LEDGER-STAMP",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "LEDGER-RECORD.LEDGER-STATUS",
+        "key_type": null,
+        "kind": "record",
+        "name": "LEDGER-STATUS",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
       }
     ],
     "version": null
@@ -298,22 +560,22 @@
     "operations": 0,
     "servers": 0,
     "services": 0,
-    "types": 1
+    "types": 3
   },
   "detection": {
     "confidence": 0.98,
     "format": "cobolcopybook"
   },
-  "fingerprint": "sha256:99ad6bb1fda9f854c7725aa515f6bb7aa7374b704a24e5810c66b6f0b6d31ecc",
+  "fingerprint": "sha256:5c06e83b5bf885e63867388fa216f53bed7e1ab2657c32f27b42ed6c6afffd32",
   "lint": {
-    "findings": 3,
-    "grade": "A",
-    "report_fingerprint": "ec5f512d39f10f8a77338b176cfe2cc3e86d00917c7ca4b2fbea8fbe68a5a441",
-    "score": 94,
+    "findings": 8,
+    "grade": "C",
+    "report_fingerprint": "9b423d86a586c803dadc12c344dc1b5f0867ec575f87c285b6a0efe45d98925b",
+    "score": 77,
     "severity_counts": {
       "error": 0,
-      "info": 2,
-      "warning": 1
+      "info": 3,
+      "warning": 5
     }
   },
   "snapshot_version": 1

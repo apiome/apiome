@@ -4,6 +4,20 @@
     "channels": [],
     "description": null,
     "extras": {
+      "cobolcopybook_encoding": {
+        "assumed": "EBCDIC",
+        "notes": [
+          "One byte per character position — a single-byte encoding (EBCDIC or ASCII). DBCS and national (PIC N / USAGE NATIONAL) items are not sized.",
+          "COMP-3 items are packed two digits per byte with a trailing sign nibble, so a picture of n digits occupies (n div 2) + 1 bytes whether or not it is signed.",
+          "COMP / COMP-4 / BINARY items occupy 2, 4 or 8 bytes by digit count, the common IBM representation; a compiler set to allocate by truncation rules may differ.",
+          "A sign is assumed to be overpunched on the trailing digit rather than held in its own byte, because SIGN IS SEPARATE is not read by the parser.",
+          "No SYNCHRONIZED alignment is applied, so no slack bytes are inserted between items."
+        ]
+      },
+      "cobolcopybook_record_length": {
+        "max": 145,
+        "min": 81
+      },
       "cobolcopybook_root": "CUSTOMER-RECORD",
       "cobolcopybook_tree": {
         "children": [
@@ -188,21 +202,289 @@
         "enum_values": [],
         "extras": {
           "cobol_kind": "group",
+          "cobol_length": {
+            "max": 40,
+            "min": 40
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(20)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 20,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 9,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(20)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 20,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+            "name": "CUST-FIRST-NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 20,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(20)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 20,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 29,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(20)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 20,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+            "name": "CUST-LAST-NAME",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CUSTOMER-RECORD.CUST-NAME",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUST-NAME",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 80,
+            "min": 16
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 15,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(15)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 15,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 59,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(15)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 15,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+            "name": "CUST-PHONE-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(1)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 1,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 58,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(1)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 1,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+            "name": "CUST-PHONE-TYPE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "CUSTOMER-RECORD.CUST-PHONES",
+        "key_type": null,
+        "kind": "record",
+        "name": "CUST-PHONES",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 145,
+            "min": 81
+          },
           "cobol_level": 1
         },
         "fields": [
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 999999999.99,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -999999999.99,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "S9(9)V99",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 6,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 50,
+              "cobol_offset_variable": false,
               "cobol_picture": "S9(9)V99",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "packed-decimal",
+                "note": "Packed decimal (COMP-3): two digits per byte and a trailing sign nibble. Binary data — never transcode it."
+              },
+              "cobol_total_length": 6,
               "cobol_usage": "COMP-3"
             },
             "field_number": 4,
@@ -211,22 +493,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "double",
+              "name": "decimal",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(8)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 8,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
               "cobol_picture": "9(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 8,
               "cobol_usage": null
             },
             "field_number": 7,
@@ -235,22 +541,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(8)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 8,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 1,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 8,
               "cobol_usage": null
             },
             "field_number": 1,
@@ -259,7 +589,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
@@ -271,10 +601,15 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 40,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 9,
+              "cobol_offset_variable": false,
               "cobol_picture": null,
+              "cobol_redefines": null,
+              "cobol_total_length": 40,
               "cobol_usage": null
             },
             "field_number": 2,
@@ -288,17 +623,41 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(2)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 2,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 56,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(2)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 2,
               "cobol_usage": null
             },
             "field_number": 5,
@@ -307,22 +666,42 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": 5,
+              "max_length": null,
+              "maximum": null,
+              "min_items": 1,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": "CUST-PHONE-COUNT",
+              "cobol_length": 16,
               "cobol_level": 5,
               "cobol_occurs_max": 5,
               "cobol_occurs_min": 1,
+              "cobol_offset": 58,
+              "cobol_offset_variable": false,
               "cobol_picture": null,
+              "cobol_redefines": null,
+              "cobol_total_length": 80,
               "cobol_usage": null
             },
             "field_number": 6,
@@ -341,7 +720,22 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "X(1)",
@@ -361,10 +755,19 @@
                 }
               ],
               "cobol_depending_on": null,
+              "cobol_length": 1,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 49,
+              "cobol_offset_variable": false,
               "cobol_picture": "X(1)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 1,
               "cobol_usage": null
             },
             "field_number": 3,
@@ -395,22 +798,22 @@
     "operations": 0,
     "servers": 0,
     "services": 0,
-    "types": 1
+    "types": 3
   },
   "detection": {
     "confidence": 0.98,
     "format": "cobolcopybook"
   },
-  "fingerprint": "sha256:bc5e9889db3d84dcfecbb88f80a69646fc5b8c1c31831e75ac0f00b30ef3ce5a",
+  "fingerprint": "sha256:85b35ab470ee9141378c313481ea97694c1b56c1e2e439c2a1c45e79d027aee5",
   "lint": {
-    "findings": 4,
-    "grade": "A",
-    "report_fingerprint": "c9739026c7db3753499829b39e08c2123bac216dab6daf68f6298abaf175c792",
-    "score": 93,
+    "findings": 7,
+    "grade": "B",
+    "report_fingerprint": "a8b92d300cdc6b51664df4db2c23bcbf1d928a160239d74a973891b278769064",
+    "score": 84,
     "severity_counts": {
       "error": 0,
-      "info": 3,
-      "warning": 1
+      "info": 4,
+      "warning": 3
     }
   },
   "snapshot_version": 1

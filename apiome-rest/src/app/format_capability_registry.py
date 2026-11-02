@@ -3620,19 +3620,21 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
                 "copybook.computed_storage_length",
                 "copybook.condition_names_88",
                 "copybook.level_numbers",
-                "copybook.occurs_bounds",
                 "copybook.occurs_depending_on",
                 "copybook.picture_clauses",
-                "copybook.redefines",
                 "copybook.storage_offsets",
                 "copybook.usage_clauses",
             ],
             note=(
-                "The canonical model keeps a field's name and inferred type. Everything that "
-                "makes a copybook a *layout* — levels, PICTURE, USAGE, OCCURS bounds, "
-                "88-conditions, byte offsets, and the fact that two items share one span of "
-                "storage — survives only in the analysis. A REDEFINES overlay normalizes to an "
-                "ordinary sibling field; representing it as a union is #3991's."
+                "Every group → a RECORD; an elementary item → a field typed by its PICTURE and "
+                "USAGE (text → string with its width as max_length; an integer → i32 / i64; an "
+                "implied decimal point → decimal; COMP-1 / COMP-2 → float / double), numeric "
+                "bounds as minimum / maximum. An OCCURS table → a list with its bounds as "
+                "min_items / max_items. A REDEFINES overlay → a UNION type (`<base>-OVERLAY`) of "
+                "every layout of the shared storage, which types the base item's field (MFI-21.1, "
+                "#3991). Levels, the PICTURE and USAGE text, 88-conditions, the DEPENDING ON "
+                "controller, byte offsets and lengths and each item's storage encoding are kept "
+                "in the field's extras rather than as canonical structure."
             ),
         ),
         notes=[

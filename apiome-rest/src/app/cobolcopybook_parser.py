@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 __all__ = [
     "CobolCopybookParseError",
@@ -17,6 +17,9 @@ __all__ = [
     "CobolField",
     "CobolCopybookDocument",
     "CopybookSourceLine",
+    "condition_value",
+    "field_from_template",
+    "field_template",
     "is_cobolcopybook",
     "iter_definition_lines",
     "parse_cobolcopybook",
@@ -40,14 +43,42 @@ _OCCURS_RE = re.compile(
 #: a fixed table of one. A fixed table's bounds are equal, which is what makes it fixed.
 _FIXED_OCCURS_RE = re.compile(r"OCCURS\s+(\d+)(?:\s+TIMES)?\b", re.IGNORECASE)
 #: ``REDEFINES <name>`` — the item shares the storage of a previously declared sibling rather than
-#: following it. Read here (CPDO-2.3) so the layout analysis can overlay the two; the canonical
-#: model's union representation is #3991's, and normalization is deliberately unchanged by this.
+#: following it. Read here (CPDO-2.3) so the layout analysis can overlay the two; the normalizer
+#: models the overlay as a canonical union (MFI-21.1, #3991).
 _REDEFINES_RE = re.compile(r"\bREDEFINES\s+([\w-]+)", re.IGNORECASE)
 _FIELD_RE = re.compile(r"^(\d{2})\s+([\w-]+)\.?(?:\s+(.*))?$")
 _CONDITION_RE = re.compile(
     r"^88\s+([\w-]+)\s+VALUE\s+(.+?)\.?\s*$",
     re.IGNORECASE,
 )
+
+
+#: One quoted COBOL literal: ``'A'`` or ``"A"``, a doubled quote standing for one inside it.
+_SINGLE_LITERAL_RE = re.compile(r"""^(?:'((?:[^']|'')*)'|"((?:[^"]|"")*)")$""")
+
+
+def condition_value(text: str) -> str:
+    """The value of an ``88`` level's ``VALUE`` clause, as recorded — MFI-21.1 (#3991).
+
+    A single quoted literal is recorded without its quotes (``'A'`` → ``A``, ``'O''B'`` → ``O'B``),
+    which is what a reader compares a field's contents with. Anything else — a number, a figurative
+    constant, or a list or range of literals (``'B' 'X'``, ``'A' THRU 'C'``) — is recorded exactly
+    as written: stripping the outer quotes of a list used to fuse it into one literal (``B' 'X``)
+    that the emitter then wrote back as a different value.
+
+    Args:
+        text: The clause text after ``VALUE``, without the closing period.
+
+    Returns:
+        The recorded value.
+    """
+    text = text.strip()
+    match = _SINGLE_LITERAL_RE.match(text)
+    if match is None:
+        return text
+    if match.group(1) is not None:
+        return match.group(1).replace("''", "'")
+    return match.group(2).replace('""', '"')
 
 
 class CobolCopybookParseError(ValueError):
@@ -321,7 +352,7 @@ def _parse_flat_fields(content: str) -> List[CobolField]:
                 depending_on=previous.depending_on,
                 redefines=previous.redefines,
                 conditions=previous.conditions
-                + (Cobol88Condition(condition_match.group(1), condition_match.group(2).strip("'\""),),),
+                + (Cobol88Condition(condition_match.group(1), condition_value(condition_match.group(2))),),
                 children=list(previous.children),
             )
             continue
@@ -398,3 +429,45 @@ def field_template(field: CobolField) -> Dict[str, object]:
         ],
         "children": [field_template(child) for child in field.children],
     }
+
+
+def field_from_template(template: Mapping[str, Any]) -> CobolField:
+    """Rebuild a :class:`CobolField` tree from its :func:`field_template` form — MFI-21.1 (#3991).
+
+    The normalizer records the parsed tree on the canonical model (``extras["cobolcopybook_tree"]``)
+    so the layout survives normalization. The lint pack, the breaking-change classifier and the
+    layout hasher only ever see the canonical model, so they rebuild the tree with this to reuse
+    :func:`~app.cobolcopybook_layout.compute_layout` rather than re-parsing the raw source (which a
+    model normalized with ``include_raw=False`` does not carry).
+
+    Args:
+        template: One node as :func:`field_template` wrote it.
+
+    Returns:
+        The equivalent :class:`CobolField`, children included.
+
+    Raises:
+        ValueError: If ``template`` is not a mapping with an integer ``level`` and a ``name``.
+    """
+    if not isinstance(template, Mapping):
+        raise ValueError("A copybook field template must be a mapping")
+    level, name = template.get("level"), template.get("name")
+    if not isinstance(level, int) or not isinstance(name, str):
+        raise ValueError("A copybook field template needs an integer level and a name")
+    conditions = tuple(
+        Cobol88Condition(str(c.get("name")), str(c.get("value")))
+        for c in template.get("conditions") or ()
+        if isinstance(c, Mapping)
+    )
+    return CobolField(
+        level=level,
+        name=name,
+        picture=template.get("picture"),
+        usage=template.get("usage"),
+        occurs_min=template.get("occurs_min"),
+        occurs_max=template.get("occurs_max"),
+        depending_on=template.get("depending_on"),
+        redefines=template.get("redefines"),
+        conditions=conditions,
+        children=[field_from_template(child) for child in template.get("children") or ()],
+    )

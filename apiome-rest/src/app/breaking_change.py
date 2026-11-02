@@ -408,6 +408,9 @@ def load_format_breaking_change_classifiers() -> None:
     # ONC RPC breaking-change classifier (MFI-21.6): registers under ``oncrpc`` and grades
     # program / version / procedure numbers and XDR field order, type and bounds.
     from . import oncrpc_breaking as _oncrpc_breaking  # noqa: F401
+    # COBOL copybook breaking-change classifier (MFI-21.1): registers under ``cobolcopybook`` and
+    # grades the record layout — offsets, lengths, storage, OCCURS and REDEFINES overlays.
+    from . import cobolcopybook_breaking as _cobolcopybook_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

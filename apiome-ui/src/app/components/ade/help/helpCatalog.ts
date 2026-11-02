@@ -1179,6 +1179,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['adt', 'oru', 'orm', 'vxu', 'ack', 'segment', 'pipe', 'msh', 'fhir', 'healthcare', 'clinical', 'lint', 'migrate'],
   },
   {
+    id: 'cobol-copybook-import',
+    title: 'Import COBOL copybooks',
+    summary: 'Catalog mainframe record layouts as types, with REDEFINES unions, layout diffs and lint.',
+    page: 'apiome-docs/docs/bring-in/cobol-copybook-import.md',
+    section: 'reference',
+    keywords: ['mainframe', 'record layout', 'redefines', 'occurs', 'picture', 'comp-3', 'packed decimal', 'ebcdic', 'filler', 'lint', 'breaking change'],
+  },
+  {
     id: 'oncrpc-import',
     title: 'Import ONC RPC (XDR) definitions',
     summary: 'Catalog rpcgen .x files: programs, versions, procedures and XDR types, with lint and diff rules.',

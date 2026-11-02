@@ -447,6 +447,8 @@ and name (`ddata.bin/Inputs/Temperature`).
 
 For copybook sources the tab renders the record layout — **record → group → field →
 88-level condition** — plus a byte-accurate **storage map**:
+(what the import itself records — types, unions, layout diffs and lint — is on
+[Import COBOL copybooks](./cobol-copybook-import.md)):
 
 - Each item shows its level number, PICTURE, USAGE (`COMP-3`, binary, display…), byte
   offset range, computed length, sign and decimal-place notes, and OCCURS bounds.

@@ -459,13 +459,15 @@ def test_copybook_states_its_layout_and_clause_boundaries() -> None:
     ):
         assert construct in entry.unsupported_constructs, construct
     assert entry.source_location.quality is SourceLocationQuality.LINE_NUMBERS
-    # The layout semantics survive only in the analysis — offsets and overlays included.
+    # Offsets and clause text are kept only in extras and the analysis.
     for construct in (
         "copybook.picture_clauses",
         "copybook.storage_offsets",
-        "copybook.redefines",
     ):
         assert construct in entry.canonical_projection.dropped_constructs, construct
+    # MFI-21.1 (#3991): an overlay is a canonical union and a table's bounds are list constraints.
+    for construct in ("copybook.redefines", "copybook.occurs_bounds"):
+        assert construct not in entry.canonical_projection.dropped_constructs, construct
 
 
 def test_copybook_never_claims_a_construct_it_both_models_and_does_not() -> None:
