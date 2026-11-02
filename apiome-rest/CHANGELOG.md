@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.597.0] - 2026-11-01
+
+### Added
+- **API Blueprint parse via drafter → API Elements / Refract (MFI-16.1, #3804).** The import's single
+  `drafter -f json` run (drafter pinned at 4.0.0 in `toolchain_packaging`) now keeps the whole Refract parse result as
+  well as its annotations: `run_drafter_parse()` / `read_drafter_parse_result()` / `annotations_of()` in
+  `app.apiblueprint_drafter` (`run_drafter` keeps its signature). New `app/apiblueprint_refract.py`:
+  `refract_contract()` drops prose (`copy` elements, every `description`, the `title` of a category, resource,
+  transition or transaction — a member's `title`, which is its type, is kept), examples (`messageBody` assets, MSON
+  `samples`), annotations and `sourceMap`s; `refract_sha256()` hashes what remains with sorted keys (algorithm
+  `sha256-refract-contract-v1`). Recorded as `extras["apib_refract_sha256"]`, `apib_refract_algorithm` and
+  `apib_drafter_version`, and exposed as the `apiblueprint` `format_hash` by `ApiBlueprintRefractHasher`; the parse
+  result is kept on `raw["refract"]`. The built-in reader still builds the model (mapping Refract onto it is MFI-16.2),
+  and an import without drafter is unchanged.
+
+### Changed
+- `apib_refract_sha256`, `apib_refract_algorithm` and `apib_drafter_version` join `fingerprint.UNHASHED_EXTRAS`, so a
+  server with drafter and one without mint the same version for the same blueprint.
+- OpenAPI document version 1.460.0 → 1.461.0 (no schema change).
+
 ## [1.596.0] - 2026-11-01
 
 ### Changed

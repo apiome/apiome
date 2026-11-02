@@ -126,6 +126,9 @@ class ApiblueprintDocument:
     #: drafter's annotations of the document (MFI-16.3, :func:`app.apiblueprint_drafter.run_drafter`):
     #: ``{"severity", "code", "message", "line"?, "column"?}``; empty without drafter.
     drafter_annotations: Tuple[Dict[str, Any], ...] = ()
+    #: drafter's API Elements parse result — the Refract tree (MFI-16.1,
+    #: :func:`app.apiblueprint_drafter.run_drafter_parse`); ``None`` without drafter.
+    refract: Optional[Dict[str, Any]] = None
 
 
 def is_apiblueprint(content: str) -> bool:

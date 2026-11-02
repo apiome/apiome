@@ -1,0 +1,22 @@
+---
+slug: apiblueprint-drafter-refract
+title: API Blueprint imports keep drafter's parse
+description: drafter's API Elements tree is kept and hashed, prose and examples left out.
+authors: [apiome]
+---
+
+Every API Blueprint import now keeps the API Elements (Refract) tree that **drafter**, the reference
+parser, builds from it, and records a hash of the API it describes.
+[What drafter adds](/bring-in/apiblueprint-import#what-drafter-adds).
+
+{/* truncate */}
+
+- **One drafter run.** The same run that gives the `apiblueprint` lint findings now also gives the
+  parse result, kept with the item's source.
+- **A contract hash.** The hash leaves out prose, descriptions, headings, example bodies, sample values,
+  warnings and source positions, so rewording a blueprint or editing an example keeps it. It is the
+  item's format hash, recorded as `apib_refract_sha256` with drafter's version (`4.0.0`).
+- **Same versions everywhere.** A new catalog version is still decided by the catalog's fingerprint,
+  so a server without drafter versions the same blueprint the same way.
+- **A new guide.** [Import an API Blueprint](/bring-in/apiblueprint-import) covers the import, drafter
+  and the move to OpenAPI.
