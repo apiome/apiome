@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.455.0",
+    "version": "1.456.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -34134,7 +34134,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-01T21:40:54Z"
+                          "example": "2026-11-01T23:35:06Z"
                         },
                         "method": {
                           "type": "string",
@@ -86002,6 +86002,105 @@
         }
       }
     },
+    "/v1/export/{tenant_slug}/avro/push": {
+      "post": {
+        "tags": [
+          "export"
+        ],
+        "summary": "Register an Avro export on a schema registry through a connector",
+        "description": "MFX-19.4: export one version to Avro (``.avsc``, one schema per type, each under the subject its naming strategy gives it), validate it with fastavro, then push each subject to the registry of an existing ``schema-registry`` connector, using the connector's base URL and stored credentials. Per subject, referenced schemas first: look the schema up (already registered \u2192 nothing written), check it against the subject's latest version under the subject's compatibility level (incompatible \u2192 not registered), then register it, with Confluent ``references`` to the subjects of the types it names. ``dry_run`` does everything but register. The response gives each subject's status, schema id and version. Needs ``imports:edit``.",
+        "operationId": "push_avro_export_v1_export__tenant_slug__avro_push_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeran Avroexportonaschemaregistrythrauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeran Avroexportonaschemaregistrythrauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Registeran Avroexportonaschemaregistrythr Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Registeran Avroexportonaschemaregistrythr Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvroPushRequest",
+                "description": "Request body for registeran avroexportonaschemaregistrythrrequest."
+              }
+            }
+          },
+          "description": "Request body for register an avro export on a schema registry through a connector."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for register an avro export on a schema registry through a connector.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvroPushResponse",
+                  "description": "Response payload for registeran avroexportonaschemaregistrythrresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for registeran avroexportonaschemaregistrythrresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/export/{tenant_slug}/mock/capability": {
       "get": {
         "tags": [
@@ -110524,6 +110623,306 @@
         "title": "AvailableSurfaceResponse",
         "description": "The picker's catalogue for one stored version."
       },
+      "AvroPushReference": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The referenced type's full Avro name.",
+            "example": "Pet"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "The subject the referenced schema is registered under.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Avro Push Reference schema."
+              },
+              {
+                "type": "null",
+                "description": "Avro Push Reference schema."
+              }
+            ],
+            "title": "Version",
+            "description": "The registered version referenced; null in a dry run when that schema would be registered by this push."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "subject"
+        ],
+        "title": "AvroPushReference",
+        "description": "A Confluent schema reference: the referenced type's full name, subject and version."
+      },
+      "AvroPushRequest": {
+        "properties": {
+          "artifact": {
+            "type": "string",
+            "title": "Artifact",
+            "description": "The artifact (project) id to export.",
+            "example": "example"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for avro push."
+              },
+              {
+                "type": "null",
+                "description": "Request body for avro push."
+              }
+            ],
+            "title": "Version",
+            "description": "Revision UUID, version label (``1.0.0``), or null for the latest revision."
+          },
+          "options": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Request body for avro push."
+              },
+              {
+                "type": "null",
+                "description": "Request body for avro push."
+              }
+            ],
+            "title": "Options",
+            "description": "Avro emit options (``namespace``, ``subject_naming``, ``topic``, ``subject_role``); ``output_syntax`` must stay ``avsc``. Null applies the defaults."
+          },
+          "connector_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Connector Id",
+            "description": "The ``schema-registry`` connector whose registry receives the push.",
+            "example": "connector_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "Look up and check every subject against the registry, but register nothing.",
+            "default": false,
+            "example": true
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Confirm",
+            "description": "Push a **severe** conversion (MFX-3.3) the export guard would otherwise refuse.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "artifact",
+          "connector_id"
+        ],
+        "title": "AvroPushRequest",
+        "description": "Which version to export to Avro, and the connector whose registry receives it."
+      },
+      "AvroPushResponse": {
+        "properties": {
+          "artifact": {
+            "type": "string",
+            "title": "Artifact",
+            "description": "The artifact (project) id exported.",
+            "example": "example"
+          },
+          "version_record_id": {
+            "type": "string",
+            "title": "Version Record Id",
+            "description": "The resolved revision (``versions.id``).",
+            "example": "version_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "version_label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for avro push."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for avro push."
+              }
+            ],
+            "title": "Version Label",
+            "description": "The resolved revision's version label."
+          },
+          "connector_id": {
+            "type": "string",
+            "title": "Connector Id",
+            "description": "The connector pushed through.",
+            "example": "connector_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "registry_url": {
+            "type": "string",
+            "title": "Registry Url",
+            "description": "The registry's base URL.",
+            "example": "https://example.com/resource"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run",
+            "description": "Whether nothing was registered.",
+            "example": true
+          },
+          "summary": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Summary",
+            "description": "How many subjects ended in each status (``registered``, ``already_registered``, ``would_register``, ``incompatible``, ``failed``, ``skipped``)."
+          },
+          "subjects": {
+            "items": {
+              "$ref": "#/components/schemas/AvroPushSubjectResult"
+            },
+            "type": "array",
+            "title": "Subjects",
+            "description": "One result per subject, in the order they were pushed (referenced schemas first).",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "artifact",
+          "version_record_id",
+          "connector_id",
+          "registry_url",
+          "dry_run",
+          "summary",
+          "subjects"
+        ],
+        "title": "AvroPushResponse",
+        "description": "What the push did for each subject."
+      },
+      "AvroPushSubjectResult": {
+        "properties": {
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "description": "The registry subject.",
+            "example": "example"
+          },
+          "file": {
+            "type": "string",
+            "title": "File",
+            "description": "The emitted ``.avsc`` file registered under it.",
+            "example": "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Avro Push Subject schema."
+              },
+              {
+                "type": "null",
+                "description": "Avro Push Subject schema."
+              }
+            ],
+            "title": "Record",
+            "description": "The schema's full Avro name, when it has one."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "already_registered",
+              "would_register",
+              "incompatible",
+              "failed",
+              "skipped"
+            ],
+            "title": "Status",
+            "description": "``registered`` (written now), ``already_registered`` (the registry holds this exact schema), ``would_register`` (dry run), ``incompatible`` (refused by the subject's compatibility level), ``failed`` (the registry refused or did not answer) or ``skipped`` (a schema it references did not register).",
+            "example": "registered"
+          },
+          "compatibility": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "compatible",
+                  "new_subject",
+                  "unchecked"
+                ],
+                "description": "Avro Push Subject schema."
+              },
+              {
+                "type": "null",
+                "description": "Avro Push Subject schema."
+              }
+            ],
+            "title": "Compatibility",
+            "description": "The compatibility check: ``compatible`` with the latest version, ``new_subject`` (no version to check against) or ``unchecked`` (dry run, a referenced schema is not registered yet)."
+          },
+          "schema_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Avro Push Subject schema."
+              },
+              {
+                "type": "null",
+                "description": "Avro Push Subject schema."
+              }
+            ],
+            "title": "Schema Id",
+            "description": "The registry's global schema id."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Avro Push Subject schema."
+              },
+              {
+                "type": "null",
+                "description": "Avro Push Subject schema."
+              }
+            ],
+            "title": "Version",
+            "description": "The subject version holding the schema."
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/AvroPushReference"
+            },
+            "type": "array",
+            "title": "References",
+            "description": "The schema references sent with the schema.",
+            "maxItems": 1000
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Messages",
+            "description": "The registry's compatibility messages, error, or why the subject was skipped.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject",
+          "file",
+          "status"
+        ],
+        "title": "AvroPushSubjectResult",
+        "description": "What the push did for one subject."
+      },
       "BindingInput": {
         "properties": {
           "kind": {
@@ -118957,7 +119356,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "completed_at": {
             "anyOf": [
@@ -120553,7 +120952,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           }
         },
         "type": "object",
@@ -120609,7 +121008,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "workspaces": {
             "items": {
@@ -121213,7 +121612,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "comment_count": {
             "type": "integer",
@@ -121441,7 +121840,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "comment_count": {
             "type": "integer",
@@ -122208,14 +122607,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -125501,7 +125900,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "4f8a4ffe-99f7-496e-b8a9-6309d3878021"
+            "example": "88206aac-6966-4c3f-91e6-5519d0fc88f6"
           },
           "method": {
             "type": "string",
@@ -128028,7 +128427,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -129924,7 +130323,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "browse_url": {
             "anyOf": [
@@ -178032,7 +178431,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           }
         },
         "additionalProperties": false,
@@ -190539,13 +190938,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           }
         },
         "additionalProperties": false,
@@ -192049,7 +192448,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "detected_by": {
             "anyOf": [
@@ -200801,14 +201200,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-01T21:40:54Z"
+            "example": "2026-11-01T23:35:06Z"
           },
           "outcome": {
             "anyOf": [

@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.592.0] - 2026-11-01
+
+### Added
+- **Push an Avro export to a schema registry (MFX-19.4, #3912).** `POST /v1/export/{tenant_slug}/avro/push` exports a
+  version to Avro (`.avsc`), validates it with fastavro, and registers each subject (MFX-19.3's naming) on the registry
+  of an existing `schema-registry` connector, with the connector's base URL and stored credentials over its
+  SSRF-guarded client. Per subject, referenced schemas first: look up (`already_registered`, nothing written), check
+  against the latest version under the subject's compatibility level (`incompatible`, not registered), register with
+  Confluent `references` (`registered`, with its schema id and version); a subject whose referenced schema did not
+  register is `skipped`, one the registry refuses `failed`. `dry_run` does everything but register (`would_register`).
+  Two schemas on one subject (`topic_name` with several types) are refused (`AVRO_PUSH_DUPLICATE_SUBJECT`), as is
+  `output_syntax: avdl`; an export that fails its check pushes nothing (`EMITTED_ARTIFACT_INVALID`). Needs
+  `imports:edit`; a push that registered a subject writes an `export.avro.pushed` audit row. New
+  `app/avro_registry_push.py` and `app/avro_registry_push_routes.py`; tests in `tests/test_avro_registry_push.py`.
+- OpenAPI document version 1.455.0 → 1.456.0.
+
 ## [1.591.0] - 2026-11-01
 
 ### Added
