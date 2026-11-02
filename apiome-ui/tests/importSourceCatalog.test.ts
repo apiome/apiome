@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Binary, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Binary, BookMarked, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -754,6 +754,48 @@ describe('WSDL source card (MFI-13.6)', () => {
 
   it('draws no alternate intake card, since a service URL goes through URL Import', () => {
     expect(alternateIntakeTiles([WSDL_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/**
+ * The RAML source as the REST registry advertises it (MFI-15.5, #3803). A RAML 1.0 document arrives
+ * as a `.raml` file, a URL or a paste, or — when it `!include`s fragments or `uses` libraries — as an
+ * archive holding the whole set, which the server resolves with AMF. So the card opens the file
+ * panel and the picker offers `.raml` and the archive types.
+ */
+const RAML_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'raml',
+  label: 'RAML',
+  description: 'Import a RAML 1.0 REST API definition with types and resources.',
+  icon: 'book-marked',
+  paradigm: 'rest',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['raml'],
+  file_extensions: ['.raml', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('RAML source card (MFI-15.5)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([RAML_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'raml');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('RAML');
+    expect(card?.icon).toBe(BookMarked);
+    expect(resolveLucideIcon(RAML_DESCRIPTOR.icon)).toBe(BookMarked);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('raml')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('raml');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('raml');
+  });
+
+  it('offers .raml and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([RAML_DESCRIPTOR])).toEqual(['.raml', '.zip', '.tar.gz', '.tgz', '.tar']);
+  });
+
+  it('draws no alternate intake card', () => {
+    expect(alternateIntakeTiles([RAML_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 

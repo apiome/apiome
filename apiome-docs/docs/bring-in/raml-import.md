@@ -33,11 +33,22 @@ which ships with the server.
 ## Import it
 
 Import the RAML like any other catalog format: in the [import wizard](./import-wizard.mdx)
-(**Import to catalog**), or over the REST API (see [Import a specification](./import-a-spec.md)).
+(**Import to catalog** → **RAML**), over the REST API (see
+[Import a specification](./import-a-spec.md)), or from the CLI:
+
+```bash
+apiome import raml ./petstore.raml
+apiome import raml ./bookstore-api/
+```
 
 - **One self-contained file.** Upload, paste or link the `.raml` file.
 - **A file set.** Upload a `.zip`, `.tar.gz` or `.tar` that holds the root document and every
-  file it includes or uses, in the same folders the `!include` and `uses` paths name.
+  file it includes or uses, in the same folders the `!include` and `uses` paths name. From the CLI,
+  give the folder: it is packed into one archive with those folders.
+
+The CLI's test fixtures, in `apiome-cli/tests/fixtures/`, include one of each:
+`petstore-raml10.raml` (types, a resource type and a trait in one file) and `bookstore-raml-set/`
+(an `!include`d type and a `uses` library in sibling folders).
 
 ## What the import resolves
 
@@ -176,10 +187,34 @@ A removed resource, method, response or type is breaking; a new one is safe.
 
 ## Move to OpenAPI
 
-RAML is no longer actively developed. Once the API is in the catalog, export it as **OpenAPI 3.1**
-(see [Export a specification](../ship/export-a-spec.md)). Because resource types and traits are
-already applied, every operation in the export lists its own headers, parameters and responses,
-each under its status code.
+RAML is no longer actively developed. Once the API is in the catalog, convert it to an
+**OpenAPI 3.1** project. Converting the item *is* the migration; there is no separate migrator.
+
+1. On the [Catalog](./catalog.mdx), open the RAML item and **click “Convert to OpenAPI Project”**.
+2. Review the preview: the **RAML** conversion pack converts each resource and method directly, at
+   an expected tier of `high`.
+3. Confirm to create the OpenAPI project.
+
+From the CLI, preview first, then convert:
+
+```bash
+apiome convert <item-id> --to openapi --dry-run --out openapi.json
+apiome convert <item-id> --to openapi
+```
+
+The dry-run names the pack that produced the document and what RAML is known to lose:
+
+```text
+Conversion pack: RAML (native projection).
+  - Known loss: Resource types and traits are applied, not preserved as reusable definitions.
+```
+
+Because resource types and traits are already applied when the RAML is imported, every operation in
+the OpenAPI document lists its own headers, parameters and responses, each under its status code.
+AMF resolves the RAML on import; the conversion itself is Apiome's own (see
+[Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs)). You can also
+export the item as OpenAPI without creating a project (see
+[Export a specification](../ship/export-a-spec.md)).
 
 ## Related
 
