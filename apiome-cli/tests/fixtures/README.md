@@ -1,6 +1,6 @@
 # CLI test fixtures
 
-Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, and RAML documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
+Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, RAML, and API Blueprint documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
 
 | File | Purpose |
 |------|---------|
@@ -22,6 +22,8 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, WSDL, 
 | `orders-wsdl-set/` | WSDL 1.1 description in `wsdl/` whose types live in `schemas/orders.xsd` (`../schemas/…`) and `schemas/common/address.xsd`, for directory `import wsdl` tests (MFI-13.6, MFI-13.1) |
 | `petstore-raml10.raml` | Self-contained RAML 1.0 API (types, a `collection` resource type, a `paged` trait) for `import raml` file tests (MFI-15.5) |
 | `bookstore-raml-set/` | RAML 1.0 API whose `Book` type is `!include`d from `types/` and whose `Error` type and `paged` trait come from a `uses` library in `libraries/`, for directory `import raml` tests (MFI-15.5) |
+| `shelter-apiblueprint.apib` | API Blueprint 1A with resource groups, an enum parameter, a named request, response headers, and MSON inheritance (`## Cat (Pet)`) and a mixin (`+ Include Problem`), for `import apiblueprint` tests (MFI-16.4) |
+| `notes-apiblueprint.md` | A minimal API Blueprint saved with a `.md` extension, for `import apiblueprint` tests (MFI-16.4) |
 | `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
 | `export-grpc.proto` | Emitted proto3 document returned by `/export/document`, for `export grpc` round-trip tests (MFX-12.5) |
 | `export-graphql.graphql` | Emitted GraphQL SDL returned by `/export/document`, for `export graphql` round-trip tests (MFX-13.5) |

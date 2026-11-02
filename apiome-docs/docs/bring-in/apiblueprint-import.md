@@ -18,9 +18,15 @@ Import the blueprint like any other catalog format: in the [import wizard](./imp
 
 ```bash
 apiome import apiblueprint ./shelter.apib
+apiome import apiblueprint ./notes.md
 ```
 
-Apiome's own reader builds the catalog item, so it imports the same way on every server.
+A blueprint saved as Markdown (`.md`) imports too: its `FORMAT: 1A` line is what marks it as API
+Blueprint. Apiome's own reader builds the catalog item, so it imports the same way on every server.
+
+The CLI's test fixtures, in `apiome-cli/tests/fixtures/`, are a quick way to try it:
+`shelter-apiblueprint.apib` (groups, a named request, response headers, MSON inheritance and a mixin)
+and `notes-apiblueprint.md` (a minimal blueprint saved as Markdown).
 
 ## What the catalog item holds
 
@@ -88,9 +94,32 @@ the item has no drafter findings and none of the keys above.
 
 ## Move to OpenAPI
 
-Convert the item to an OpenAPI project: open it on the **Catalog** and **click “Convert to OpenAPI
-Project”**, or run `apiome convert <item-id> --to openapi`. The **API Blueprint** conversion pack
-converts each resource and action directly; example transactions are not carried over (see
+API Blueprint is no longer actively developed. Once the API is in the catalog, convert it to an
+**OpenAPI 3.1** project. Converting the item *is* the migration; there is no separate migrator.
+
+1. On the [Catalog](./catalog.mdx), open the API Blueprint item and **click “Convert to OpenAPI
+   Project”**.
+2. Review the preview: the **API Blueprint** conversion pack converts each resource and action
+   directly, at an expected tier of `high`.
+3. Confirm to create the OpenAPI project.
+
+From the CLI, preview first, then convert:
+
+```bash
+apiome convert <item-id> --to openapi --dry-run --out openapi.json
+apiome convert <item-id> --to openapi
+```
+
+The dry-run names the pack that produced the document and what API Blueprint is known to lose:
+
+```text
+Conversion pack: API Blueprint (native projection).
+  - Known loss: Example transactions are not carried over as OpenAPI examples.
+```
+
+Groups become the operations' tags, and request and response headers, data structures and their
+inheritance come across from the catalog item (see [What the catalog item holds](#what-the-catalog-item-holds)).
+The conversion is Apiome's own (see
 [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs)).
 
 ## Related

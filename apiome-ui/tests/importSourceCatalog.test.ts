@@ -6,7 +6,7 @@
  * by a built-in must never produce a duplicate.
  */
 
-import { Activity, Binary, BookMarked, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
+import { Activity, Binary, BookMarked, Bot, BotMessageSquare, Cloud, Database, FileCode, FileJson, FileText, Globe, Hammer, Network, Radio, Send, Share2, Waypoints } from 'lucide-react';
 import {
   REGISTRY_KEYS_COVERED_BY_BUILTINS,
   alternateIntakeTiles,
@@ -796,6 +796,54 @@ describe('RAML source card (MFI-15.5)', () => {
 
   it('draws no alternate intake card', () => {
     expect(alternateIntakeTiles([RAML_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
+  });
+});
+
+/**
+ * The API Blueprint source as the REST registry advertises it (MFI-16.4, #3807). A blueprint
+ * arrives as a `.apib` file, a Markdown `.md` file (the `FORMAT: 1A` line is what claims it), a URL or
+ * a paste, so the card opens the file panel and the picker offers both extensions and the archives.
+ */
+const APIBLUEPRINT_DESCRIPTOR: ImportSourceDescriptor = {
+  key: 'apiblueprint',
+  label: 'API Blueprint',
+  description: 'Import an API Blueprint 1A REST API description with MSON data structures.',
+  icon: 'file-text',
+  paradigm: 'rest',
+  input_kinds: ['file', 'url', 'paste', 'fileset'],
+  supports_live_discovery: false,
+  formats: ['apiblueprint', 'api-blueprint', 'apib', 'blueprint'],
+  file_extensions: ['.apib', '.md', '.zip', '.tar.gz', '.tgz', '.tar'],
+};
+
+describe('API Blueprint source card (MFI-16.4)', () => {
+  it('appears from the registry alone as a Catalog file card', () => {
+    const cards = mergeImportSourceCards([APIBLUEPRINT_DESCRIPTOR]);
+    const card = cards.find((c) => c.key === 'apiblueprint');
+    expect(card?.builtin).toBe(false);
+    expect(card?.label).toBe('API Blueprint');
+    expect(card?.icon).toBe(FileText);
+    expect(resolveLucideIcon(APIBLUEPRINT_DESCRIPTOR.icon)).toBe(FileText);
+    expect(card?.panel).toBe('file');
+    expect(card?.scope).toBe('alternative');
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('apiblueprint')).toBe(false);
+    expect(filterCardsForVariant(cards, 'catalog').map((c) => c.key)).toContain('apiblueprint');
+    expect(filterCardsForVariant(cards, 'projects').map((c) => c.key)).not.toContain('apiblueprint');
+  });
+
+  it('offers .apib, .md and archives in the file picker', () => {
+    expect(mergeImportFileExtensions([APIBLUEPRINT_DESCRIPTOR])).toEqual([
+      '.apib',
+      '.md',
+      '.zip',
+      '.tar.gz',
+      '.tgz',
+      '.tar',
+    ]);
+  });
+
+  it('draws no alternate intake card', () => {
+    expect(alternateIntakeTiles([APIBLUEPRINT_DESCRIPTOR], CATALOG_ALTERNATE_INTAKE_KINDS)).toEqual([]);
   });
 });
 
