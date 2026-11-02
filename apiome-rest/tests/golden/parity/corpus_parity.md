@@ -20,7 +20,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `apigee` | Apigee proxy bundle | rest | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | `apigee` |
 | `arazzo` | Arazzo | rest | 14 | 11 | 0 | 0 | 25 | 6/6 | 13 | `arazzo` |
 | `arrow` | Apache Arrow | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
-| `asn1` | ASN.1 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 6 | `asn1` |
+| `asn1` | ASN.1 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `asn1` |
 | `asyncapi` | AsyncAPI | event | 9 | 5 | 0 | 0 | 14 | 6/6 | 7 | `asyncapi` |
 | `avro` | Avro | data_schema | 14 | 11 | 0 | 0 | 25 | 6/6 | 12 | `avro` |
 | `aws-apigateway` | AWS API Gateway | rest | 8 | 5 | 0 | 0 | 13 | 6/6 | 7 | `aws-apigateway` |

@@ -279,6 +279,77 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Scan modes:** `lint`
 
 
+## Pack: `asn1`
+
+### `asn1.any-deprecated` {#asn1-any-deprecated}
+
+- **Category:** compatibility
+- **Default severity:** warning
+- **Rationale:** ANY was removed from ASN.1 in 1994.
+
+### `asn1.choice-tags-distinct` {#asn1-choice-tags-distinct}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** CHOICE alternatives must have distinct tags.
+- **Reference:** https://www.itu.int/rec/T-REC-X.680
+- **Remediation:** Tag the alternatives distinctly ([0], [1] …), or use AUTOMATIC TAGS with no explicit tags.
+- **False-positive guidance:** Not a false positive: X.680 requires distinct tags; AUTOMATIC TAGS modules whose alternatives carry no tag are not reported.
+- **Fixture:** `catalog/asn1-choice-tags-distinct`
+- **Scan modes:** `lint`
+
+### `asn1.default-valid` {#asn1-default-valid}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A DEFAULT must be in range and name only declared items.
+
+### `asn1.extension-marker` {#asn1-extension-marker}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** A SEQUENCE, SET, CHOICE or ENUMERATED should carry an extension marker.
+
+### `asn1.legacy-string-type` {#asn1-legacy-string-type}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** Legacy character-string types should be UTF8String.
+
+### `asn1.sequence-tags-unambiguous` {#asn1-sequence-tags-unambiguous}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** An optional SEQUENCE component's tag must differ from the components that may follow it.
+- **Reference:** https://www.itu.int/rec/T-REC-X.680
+- **Remediation:** Tag the optional component and the ones that may follow it distinctly, or use AUTOMATIC TAGS.
+- **False-positive guidance:** Not a false positive: the ambiguity is a compile-time error in X.680.
+- **Fixture:** `catalog/asn1-sequence-tags-unambiguous`
+- **Scan modes:** `lint`
+
+### `asn1.set-tags-distinct` {#asn1-set-tags-distinct}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** SET components must have distinct tags.
+- **Reference:** https://www.itu.int/rec/T-REC-X.680
+- **Remediation:** Give each SET component its own tag, or use AUTOMATIC TAGS with no explicit tags.
+- **False-positive guidance:** Not a false positive: X.680 requires distinct tags in a SET.
+- **Fixture:** `catalog/asn1-set-tags-distinct`
+- **Scan modes:** `lint`
+
+### `asn1.type-resolves` {#asn1-type-resolves}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** Every referenced type must be built in, assigned in the module or imported.
+- **Reference:** https://www.itu.int/rec/T-REC-X.680
+- **Remediation:** Assign the type in the module, or add it to IMPORTS with the module it comes from.
+- **False-positive guidance:** A type from another module that is used without an IMPORTS entry is reported; import the defining module alongside this one.
+- **Fixture:** `catalog/asn1-type-resolves`
+- **Scan modes:** `lint`
+
+
 ## Pack: `asyncapi`
 
 ### `asyncapi.message-missing-name` {#asyncapi-message-missing-name}

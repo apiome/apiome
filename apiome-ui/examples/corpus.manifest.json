@@ -3030,7 +3030,7 @@
       "source": "hand-authored",
       "license": "Apache-2.0",
       "provenance": "Authored in-repo for the apiome catalog import examples.",
-      "notes": "Import currently fails: the asn1 normalizer builds `Type(scalar=...)` for top-level scalar typedefs and `Type(alias_of=...)` for top-level SEQUENCE OF typedefs, but the canonical `Type` model has no `scalar` field and names the alias field `aliased`, so normalize raises a pydantic ValidationError; expected_outcome records the intended contract.",
+      "notes": "Top-level scalar, SEQUENCE OF and BIT STRING typedefs import as aliases with their constraints and named numbers (MFI-21.5, #3995; the import used to fail on them).",
       "rung": "stress"
     },
     {

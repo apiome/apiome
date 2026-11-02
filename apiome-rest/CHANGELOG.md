@@ -5,6 +5,45 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.610.0] - 2026-11-02
+
+### Added
+- **ASN.1: typedefs, tags, constraints and extension markers normalized, a lint pack and an encoding-aware
+  breaking-change classifier (MFI-21.5, #3995).** The parser, import source, emitter, UI card, CLI path and seven
+  corpus modules already shipped; this makes the model describe what a module says, and adds what versions, diffs and
+  lint need.
+  - `asn1_parser` reads each type's and component's tag (`Asn1Tag`: class, number, kind), `SIZE` and value-range
+    constraints, named numbers / named bits, integer and boolean `DEFAULT`s (only text ones were kept), the extension
+    marker `...` with the extension additions after it (`[[ … ]]` groups flattened; they used to be dropped), inline
+    `SEQUENCE` / `SET` / `CHOICE` components, `SET OF`, the module's `IMPORTS` and `EXTENSIBILITY IMPLIED`.
+  - `Asn1Normalizer`: `Name ::= INTEGER …`, `Name ::= SEQUENCE OF X` and `Name ::= Other` become ALIAS types (the
+    normalizer built `Type(scalar=…)` / `Type(alias_of=…)`, which the canonical model rejects, so any module with such
+    a typedef failed to import; corpus `asn1/07` is no longer a known import bug). Constraints map to `minimum` /
+    `maximum`, `min_length` / `max_length` and `min_items` / `max_items`; fields record `asn1_type`, `asn1_tag` (kind
+    resolved from the module default, explicit on a CHOICE), `asn1_extension` and named numbers; types record
+    `asn1_kind` (SET), `asn1_extensible` and their own tag; CHOICE alternatives keep their declared built-in, tag,
+    extension flag and constraints. Inline constructed components become `<Type><Component>` types.
+  - New `app/asn1_lint.py` (`asn1.*`, registered under `asn1`): `type-resolves`, `choice-tags-distinct`,
+    `set-tags-distinct`, `sequence-tags-unambiguous` (error, with blocking-rule metadata and scanner-evaluation
+    fixtures); `default-valid`, `any-deprecated` (warning); `legacy-string-type`, `extension-marker` (info).
+  - New `app/asn1_breaking.py` (`asn1-encoding`): 27 rules grading components, tags, DEFAULTs, extension additions,
+    SEQUENCE order (SET order is safe), value-range / SIZE constraints, ENUMERATED items, CHOICE alternatives,
+    extension markers, SEQUENCE ↔ SET and alias targets by how an old BER / DER / PER peer decodes a new value.
+  - Version-diff fixtures `tests/fixtures/asn1_versions/subscriber.{v1,v2-compatible,v3-breaking}.asn1`.
+
+### Fixed
+- The ASN.1 emitter writes an ASN.1 item's tags (with their kind, so the `AUTOMATIC TAGS` header cannot change them),
+  extension markers, `SET`s, named numbers, named-number DEFAULTs, declared built-ins (`IA5String`, `BIT STRING`,
+  `UTCTime` were rewritten as `UTF8String`, `OCTET STRING`, `GeneralizedTime`) and CHOICE alternatives' constraints.
+  An X.509 `Time ::= CHOICE { utcTime UTCTime, generalTime GeneralizedTime }` was exported with two `UTF8String`
+  alternatives, an ambiguous CHOICE.
+- The built-in "Apiome Recommended" style guide gains the eight `asn1.*` rules (apiome-db V347).
+
+### Changed
+- One-time version change: the first re-import of an existing ASN.1 item records a changed version (its model gained
+  constraints, tags, defaults and extension flags).
+- OpenAPI document version 1.474.0 (no endpoint changes).
+
 ## [1.609.0] - 2026-11-02
 
 ### Added

@@ -68,11 +68,6 @@ KNOWN_DETECTION_BUGS: Dict[str, str] = {
 #: Corpus entries whose import (parse/normalize/lint) crashes on a known
 #: adapter bug. Path -> reason. Same strict-xfail convention as above.
 KNOWN_IMPORT_BUGS: Dict[str, str] = {
-    "asn1/07-scalar-alias-typedefs.asn1": (
-        "asn1_normalizer builds Type(scalar=...) / Type(alias_of=...) for "
-        "top-level scalar and SEQUENCE OF typedefs, but canonical Type has "
-        "no such fields, so normalize raises a pydantic ValidationError."
-    ),
     "cloudevents/03-order-lifecycle-batch.json": (
         "parse_cloudevents documents a batch-array mode, but it delegates to "
         "parse_document, which raises IngestionError for top-level arrays, "

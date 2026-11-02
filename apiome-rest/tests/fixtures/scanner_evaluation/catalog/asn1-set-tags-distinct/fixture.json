@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/asn1-set-tags-distinct",
+  "source_format": "asn1",
+  "description": "ASN.1 module with exactly one blocking defect: two SET components that share the tag [0].",
+  "document": "-- ASN.1 scanner-evaluation fixture (MFI-21.5).\nSubscriber-Provisioning DEFINITIONS EXPLICIT TAGS ::= BEGIN\n  ServiceClass ::= ENUMERATED { basic(0), premium(1), ... }\n  Location ::= SET {\n    cellId  [0] INTEGER (0..65535),\n    lac     [0] INTEGER (0..65535),\n    ...\n  }\nEND\n"
+}

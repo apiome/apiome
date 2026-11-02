@@ -435,6 +435,9 @@ def load_format_rule_packs() -> None:
     # CORBA / OMG IDL lint pack (MFI-21.4): registers under ``corbaidl`` (type resolution, raises
     # clauses, oneway signatures, inheritance and name collisions).
     from . import corbaidl_lint as _corbaidl_lint  # noqa: F401
+    # ASN.1 lint pack (MFI-21.5): registers under ``asn1`` (references, tag ambiguity, ENUMERATED
+    # numbers, DEFAULT values, ANY, legacy strings and extension markers).
+    from . import asn1_lint as _asn1_lint  # noqa: F401
 
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401

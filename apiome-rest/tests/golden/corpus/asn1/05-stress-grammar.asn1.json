@@ -27,14 +27,23 @@
         "deprecated": false,
         "description": null,
         "enum_values": [],
-        "extras": {},
+        "extras": {
+          "asn1_kind": "SET"
+        },
         "fields": [
           {
             "constraints": null,
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 0
+              },
+              "asn1_type": "IA5String"
+            },
             "field_number": 1,
             "key": "StressModule.Endpoint.host",
             "name": "host",
@@ -46,11 +55,33 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 65535.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 1.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 1
+              },
+              "asn1_type": "INTEGER"
+            },
             "field_number": 2,
             "key": "StressModule.Endpoint.port",
             "name": "port",
@@ -66,7 +97,14 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 2
+              },
+              "asn1_type": "PrintableString"
+            },
             "field_number": 3,
             "key": "StressModule.Endpoint.tag",
             "name": "tag",
@@ -99,7 +137,14 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 3
+              },
+              "asn1_type": "OBJECT IDENTIFIER"
+            },
             "field_number": 4,
             "key": "StressModule.Envelope.contentType",
             "name": "contentType",
@@ -115,7 +160,14 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 4
+              },
+              "asn1_type": "BIT STRING"
+            },
             "field_number": 5,
             "key": "StressModule.Envelope.flags",
             "name": "flags",
@@ -131,7 +183,13 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 6
+              }
+            },
             "field_number": 7,
             "key": "StressModule.Envelope.hops",
             "name": "hops",
@@ -152,7 +210,13 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 7
+              }
+            },
             "field_number": 8,
             "key": "StressModule.Envelope.payload",
             "name": "payload",
@@ -168,7 +232,13 @@
             "default": "normal",
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 1
+              }
+            },
             "field_number": 2,
             "key": "StressModule.Envelope.priority",
             "name": "priority",
@@ -184,7 +254,13 @@
             "default": null,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 5
+              }
+            },
             "field_number": 6,
             "key": "StressModule.Envelope.source",
             "name": "source",
@@ -200,7 +276,13 @@
             "default": "tcp",
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 2
+              }
+            },
             "field_number": 3,
             "key": "StressModule.Envelope.transport",
             "name": "transport",
@@ -212,11 +294,33 @@
             }
           },
           {
-            "constraints": null,
-            "default": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 86400.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": 3600,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 8
+              },
+              "asn1_type": "INTEGER"
+            },
             "field_number": 9,
             "key": "StressModule.Envelope.ttlSeconds",
             "name": "ttlSeconds",
@@ -229,10 +333,17 @@
           },
           {
             "constraints": null,
-            "default": null,
+            "default": 1,
             "deprecated": false,
             "description": null,
-            "extras": {},
+            "extras": {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 0
+              },
+              "asn1_type": "INTEGER"
+            },
             "field_number": 1,
             "key": "StressModule.Envelope.version",
             "name": "version",
@@ -302,14 +413,36 @@
         "extras": {
           "asn1_choice_members": [
             {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 0
+              },
+              "asn1_type": "UTF8String",
               "name": "text",
               "type": "string"
             },
             {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 1
+              },
+              "asn1_type": "OCTET STRING",
+              "constraints": {
+                "max_length": 4096,
+                "min_length": 1
+              },
               "name": "binary",
               "type": "bytes"
             },
             {
+              "asn1_tag": {
+                "class": "CONTEXT",
+                "kind": "EXPLICIT",
+                "number": 2
+              },
+              "asn1_type": "NULL",
               "name": "empty",
               "type": "null"
             }
@@ -392,15 +525,15 @@
     "confidence": 0.95,
     "format": "asn1"
   },
-  "fingerprint": "sha256:b66113d7d1a58568f4ad93ed81b5ee625a9208e4e9e39f09058d824d686a36ca",
+  "fingerprint": "sha256:054f4e307bfb70f7b0a0fe7eed581109e90fd0ee3e3291fc9dafdb7c9f9d5ff2",
   "lint": {
-    "findings": 18,
+    "findings": 23,
     "grade": "D",
-    "report_fingerprint": "14ce1b7ab029cd1a2bdb0172ee2185b56e43fe720829e8d931080292a969fd36",
-    "score": 67,
+    "report_fingerprint": "65c63eb78753329e60ef1a7d0b2ea8fd58261164a912fd5865097021cdf32f2e",
+    "score": 62,
     "severity_counts": {
       "error": 0,
-      "info": 13,
+      "info": 18,
       "warning": 5
     }
   },
