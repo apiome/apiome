@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.602.0] - 2026-11-02
+
+### Added
+- **HL7 v2: lint pack and migrate-to-FHIR note (MFI-20.2, #3986).** The adapter, normalizer, emitter and six
+  example messages (ADT, ORU, ACK, ORM, VXU) already shipped; this adds what the ticket still owed.
+  - New `app/hl7v2_lint.py` (`hl7v2.*`, registered under `hl7v2`, so the format lints natively): `message-type-declared`
+    (error), `trigger-event-declared`, `version-declared`, `control-id-present`, `standard-encoding-characters`
+    (warning) and `processing-id-declared` (info). The rules read the `MSH` envelope the normalizer records.
+  - `Hl7V2Normalizer` records `extras["hl7v2_fhir_counterparts"]`: the FHIR resource each segment present maps to
+    (`FHIR_RESOURCE_FOR_SEGMENT`, after the HL7 v2-to-FHIR guide's segment maps). Converting the item is the
+    migration, as for RAML → OpenAPI; the note says where each segment lands.
+  - `apiome-docs/docs/build/lint-rules.md` regenerated with the new pack; the six `hl7v2` corpus goldens regenerated
+    (their fingerprints change once because the model gained the key above).
+
 ## [1.601.0] - 2026-11-02
 
 ### Added

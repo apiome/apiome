@@ -14,6 +14,12 @@
         "sending_application": "ADT1",
         "sending_facility": "GOOD HEALTH HOSPITAL"
       },
+      "hl7v2_fhir_counterparts": {
+        "MSH": "MessageHeader",
+        "NK1": "RelatedPerson",
+        "PID": "Patient",
+        "PV1": "Encounter"
+      },
       "hl7v2_message_type": "ADT^A01",
       "hl7v2_segments": [
         {
@@ -1226,7 +1232,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:c43db2591c5124df9ca874803ae5771b39b4f2178ac664a1cba4f3f52b661cb0",
+  "fingerprint": "sha256:62bad588c3a4549039bf51a24b952c7cdeb999b5f47493d242832973f050383f",
   "lint": {
     "findings": 52,
     "grade": "C",

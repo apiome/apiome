@@ -14,6 +14,9 @@
         "sending_application": "GHH LAB",
         "sending_facility": "GOOD HEALTH HOSPITAL"
       },
+      "hl7v2_fhir_counterparts": {
+        "MSH": "MessageHeader"
+      },
       "hl7v2_message_type": "ACK^A01",
       "hl7v2_segments": [
         {
@@ -406,7 +409,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:43af8936471ffa8f679b40bc0451b2c8778e930bc6f04c6fb894e32a9e84f220",
+  "fingerprint": "sha256:bafe96b0e01c3006b42ae9793269b353deccdaa0e0bcc02c400404dd445bfb38",
   "lint": {
     "findings": 17,
     "grade": "C",

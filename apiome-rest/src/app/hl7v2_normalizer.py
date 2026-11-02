@@ -19,6 +19,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .hl7v2_lint import fhir_counterparts
 from .hl7v2_parser import Hl7Message, Hl7Segment, Hl7V2Document
 from .normalizer import Keys, Normalizer, normalize_ordering
 
@@ -181,6 +182,11 @@ class Hl7V2Normalizer(Normalizer, register=True):
                     "processing_id": message.processing_id,
                 },
                 "hl7v2_segments": [_segment_template(segment) for segment in message.segments],
+                # The migrate-to-FHIR note (MFI-20.2): which FHIR resource each segment present
+                # maps to. Converting the item is the migration; this says where each part lands.
+                "hl7v2_fhir_counterparts": fhir_counterparts(
+                    segment.id for segment in message.segments
+                ),
             },
         )
         return normalize_ordering(api)

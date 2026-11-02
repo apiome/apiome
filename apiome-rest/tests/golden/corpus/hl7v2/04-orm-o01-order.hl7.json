@@ -14,6 +14,14 @@
         "sending_application": "CPOE",
         "sending_facility": "GOOD HEALTH HOSPITAL"
       },
+      "hl7v2_fhir_counterparts": {
+        "MSH": "MessageHeader",
+        "NTE": "Annotation",
+        "OBR": "ServiceRequest",
+        "ORC": "ServiceRequest",
+        "PID": "Patient",
+        "PV1": "Encounter"
+      },
       "hl7v2_message_type": "ORM^O01",
       "hl7v2_segments": [
         {
@@ -1484,7 +1492,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:ee0a9933a728ae16e6111ea83ef7fd2e7f283eca8667454c45d6bbcd1b26a493",
+  "fingerprint": "sha256:1531eec34563a937558acf5f68a919ceb479289951262770de5baad8b706f659",
   "lint": {
     "findings": 63,
     "grade": "C",

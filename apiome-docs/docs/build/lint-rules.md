@@ -765,6 +765,45 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Rationale:** A @deprecated entity should carry a deprecation reason.
 
 
+## Pack: `hl7v2`
+
+### `hl7v2.control-id-present` {#hl7v2-control-id-present}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** MSH-10 must carry a message control id.
+
+### `hl7v2.message-type-declared` {#hl7v2-message-type-declared}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** MSH-9 must name the message type.
+
+### `hl7v2.processing-id-declared` {#hl7v2-processing-id-declared}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** MSH-11 should say whether the message is production, training or debugging.
+
+### `hl7v2.standard-encoding-characters` {#hl7v2-standard-encoding-characters}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** MSH-1 and MSH-2 should be the conventional '|' and '^~\&'.
+
+### `hl7v2.trigger-event-declared` {#hl7v2-trigger-event-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** MSH-9 should carry a trigger event next to the message code.
+
+### `hl7v2.version-declared` {#hl7v2-version-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** MSH-12 must name the HL7 version.
+
+
 ## Pack: `intake`
 
 ### `intake.blocked-external-ref` {#intake-blocked-external-ref}

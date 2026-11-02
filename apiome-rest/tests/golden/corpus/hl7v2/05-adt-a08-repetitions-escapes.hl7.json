@@ -14,6 +14,15 @@
         "sending_application": "REG^GHH^L",
         "sending_facility": "GOOD HEALTH HOSPITAL"
       },
+      "hl7v2_fhir_counterparts": {
+        "AL1": "AllergyIntolerance",
+        "DG1": "Condition",
+        "IN1": "Coverage",
+        "MSH": "MessageHeader",
+        "OBX": "Observation",
+        "PID": "Patient",
+        "PV1": "Encounter"
+      },
       "hl7v2_message_type": "ADT^A08^ADT_A01",
       "hl7v2_segments": [
         {
@@ -2193,7 +2202,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:58b4a48227d8775c28b8237b4ab0e3892211a74b887be9deaf3ef0bcb3e2e596",
+  "fingerprint": "sha256:7deb096977ad198f1af38b11909de4045302bbb94996c4f625bcb1927c7f8c43",
   "lint": {
     "findings": 92,
     "grade": "D",

@@ -14,6 +14,16 @@
         "sending_application": "MYEHR2.5",
         "sending_facility": "CLINIC OF GOOD HEALTH"
       },
+      "hl7v2_fhir_counterparts": {
+        "MSH": "MessageHeader",
+        "NK1": "RelatedPerson",
+        "OBX": "Observation",
+        "ORC": "ServiceRequest",
+        "PD1": "Patient",
+        "PID": "Patient",
+        "RXA": "Immunization",
+        "RXR": "Immunization"
+      },
       "hl7v2_message_type": "VXU^V04^VXU_V04",
       "hl7v2_segments": [
         {
@@ -2249,7 +2259,7 @@
     "confidence": 0.98,
     "format": "hl7v2"
   },
-  "fingerprint": "sha256:468b3956f31cf25560e84ca923105f554ad57dd6c7a8f5e4ad161e9d9a9e872d",
+  "fingerprint": "sha256:a51372e78a27a946b471f222f8cad1d338284f2e60cf85bdedf1aa5c31a203f5",
   "lint": {
     "findings": 96,
     "grade": "C",

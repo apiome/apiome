@@ -1155,6 +1155,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['ppd', 'ccd', 'pain.001', 'pain.008', 'pacs.008', 'entry hash', 'iso 20022', 'fixed-width'],
   },
   {
+    id: 'hl7v2-import',
+    title: 'Import HL7 v2 messages',
+    summary: 'Catalog HL7 v2 clinical messages, lint their MSH header, and plan a FHIR migration.',
+    page: 'apiome-docs/docs/bring-in/hl7v2-import.md',
+    section: 'reference',
+    keywords: ['adt', 'oru', 'orm', 'vxu', 'ack', 'segment', 'pipe', 'msh', 'fhir', 'healthcare', 'clinical', 'lint', 'migrate'],
+  },
+  {
     id: 'hl7v3-cda-import',
     title: 'Import HL7 v3 / CDA documents',
     summary: 'Catalog CCDs, discharge summaries and other C-CDA clinical documents.',
