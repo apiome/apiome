@@ -22,43 +22,53 @@ Subcommands: [`list`](#paths-list), [`show`](#paths-show).
 
 ## apiome paths list {#paths-list}
 
-List path templates and operations (GET /versions/{version_id}/paths).
+List a version's paths: one row per path with its methods, operations and tags.
+
+GET /v1/paths/{tenant}/{version}. --json prints the API's array of path records (only those --search matches, when given).
 
 ```text
-apiome paths list [OPTIONS]
-```
-
-**Options**
-
-| Option | Type | Default | Required | Description |
-| --- | --- | --- | --- | --- |
-| `--project` | text |  | yes | Project UUID or slug. |
-| `--version` | text |  | yes | Version UUID, slug, or label. |
-| `--tag` | text (repeatable) |  |  | Filter by OpenAPI operation tag (repeatable). |
-| `--method` | text (repeatable) |  |  | Filter by HTTP method (repeatable). |
-| `--q` | text |  |  | Case-insensitive text search over path, method, operationId, summary, and tags. |
-| `--limit` | integer range | `50` |  | Maximum rows per API page (server enforces its own max). |
-| `--all` | flag |  |  | Fetch all API pages when resolving paths and operations. |
-
-## apiome paths show {#paths-show}
-
-Show one path template and its operations (GET /versions/{version_id}/paths/{path_id}).
-
-```text
-apiome paths show [OPTIONS] PATH_REF
+apiome paths list [OPTIONS] [PROJECT VERSION]
 ```
 
 **Arguments**
 
 | Argument | Type | Required | Description |
 | --- | --- | --- | --- |
-| `PATH_REF` | text | yes | Path UUID or OpenAPI path template. |
+| `REFS...` | text |  | Project (slug or UUID) and version (label, slug or UUID). |
 
 **Options**
 
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
-| `--project` | text |  | yes | Project UUID or slug. |
-| `--version` | text |  | yes | Version UUID, slug, or label. |
+| `--project` | text |  |  | Project UUID or slug (instead of PROJECT). |
+| `--version` | text |  |  | Version UUID, slug, or label (instead of VERSION). |
+| `--tag` | text (repeatable) |  |  | Filter by OpenAPI operation tag (repeatable). |
+| `--method` | text (repeatable) |  |  | Filter by HTTP method (repeatable). |
+| `--search`, `--q` | text |  |  | Case-insensitive text search over path, method, operationId, summary, and tags. |
+| `--limit` | integer range | `50` |  | Maximum rows per API page (server enforces its own max). |
+| `--all` | flag |  |  | Fetch all API pages when resolving paths and operations. |
+
+## apiome paths show {#paths-show}
+
+Show one path as a tree: its operations, then each one's parameters, body and responses.
+
+GET /v1/paths/{tenant}/{version}/{path_id}/full. --json prints that API object (operations filtered by --method / --tag, when given).
+
+```text
+apiome paths show [OPTIONS] [PROJECT VERSION] PATH
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REFS...` | text | yes | Project, version and path, or just PATH with --project / --version. PATH is the template (/charges/{id}), its URL-encoded or JSON Pointer form (~1charges~1{id}), or the path UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project` | text |  |  | Project UUID or slug (instead of PROJECT). |
+| `--version` | text |  |  | Version UUID, slug, or label (instead of VERSION). |
 | `--tag` | text (repeatable) |  |  | Filter operations by OpenAPI tag (repeatable). |
 | `--method` | text (repeatable) |  |  | Filter operations by HTTP method (repeatable). |

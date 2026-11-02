@@ -1,0 +1,8 @@
+┏━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┓
+┃ Path          ┃ Methods     ┃ Operations                ┃ Tags     ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━┩
+│ /charges      │ GET, POST   │ listCharges, createCharge │ public   │
+│ /charges/{id} │ GET, DELETE │ getCharge, deleteCharge   │ public   │
+│ /webhooks     │ POST        │ receiveWebhook            │ internal │
+└───────────────┴─────────────┴───────────────────────────┴──────────┘
+Showing 3 of 3

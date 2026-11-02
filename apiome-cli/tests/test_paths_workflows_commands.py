@@ -138,7 +138,7 @@ def test_paths_list_human_output(httpx_mock: object) -> None:
 
 
 def test_paths_list_json_mode(httpx_mock: object) -> None:
-    """paths list --json emits the REST paths list envelope."""
+    """paths list --json emits the API's array of path records (#3237)."""
     list_payload = {"total": 1, "items": [_PATH]}
     httpx_mock.add_response(
         url=f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}",
@@ -160,7 +160,7 @@ def test_paths_list_json_mode(httpx_mock: object) -> None:
 
     assert result.exit_code == EXIT_SUCCESS
     payload = json.loads(result.stdout.strip())
-    assert payload["items"] == [_PATH]
+    assert payload == [_PATH]
 
 
 def test_paths_list_passes_method_and_tag_filters(httpx_mock: object) -> None:
@@ -194,17 +194,15 @@ def test_paths_list_passes_method_and_tag_filters(httpx_mock: object) -> None:
 
 
 def test_paths_show_by_pathname(httpx_mock: object) -> None:
-    """paths show resolves a path template and lists operations."""
+    """paths show resolves a path template and prints its tree (#3237)."""
     _mock_project_version_scope(httpx_mock)
     httpx_mock.add_response(
         url=f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}",
         json={"total": 1, "offset": 0, "limit": 50, "items": [_PATH]},
     )
     httpx_mock.add_response(
-        url=(
-            f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}/{_PATH_ID}/operations"
-        ),
-        json={"total": 1, "offset": 0, "limit": 50, "items": [_OPERATION]},
+        url=f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}/{_PATH_ID}/full",
+        json={**_PATH, "operations": [_OPERATION]},
     )
 
     result = runner.invoke(
@@ -225,16 +223,14 @@ def test_paths_show_by_pathname(httpx_mock: object) -> None:
 
 
 def test_paths_show_json_mode(httpx_mock: object) -> None:
-    """paths show --json returns path and operations payloads."""
+    """paths show --json returns the API's ``…/full`` path object (#3237)."""
     httpx_mock.add_response(
         url=f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}/{_PATH_ID}",
         json=_PATH,
     )
     httpx_mock.add_response(
-        url=(
-            f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}/{_PATH_ID}/operations"
-        ),
-        json={"total": 1, "offset": 0, "limit": 50, "items": [_OPERATION]},
+        url=f"http://localhost:8000/v1/paths/acme-corp/{_VERSION_ID}/{_PATH_ID}/full",
+        json={**_PATH, "operations": [_OPERATION]},
     )
 
     result = runner.invoke(
@@ -253,8 +249,8 @@ def test_paths_show_json_mode(httpx_mock: object) -> None:
 
     assert result.exit_code == EXIT_SUCCESS
     payload = json.loads(result.stdout.strip())
-    assert payload["path"]["id"] == _PATH_ID
-    assert payload["operations"]["items"] == [_OPERATION]
+    assert payload["id"] == _PATH_ID
+    assert payload["operations"] == [_OPERATION]
 
 
 def test_operations_show_by_operation_id(httpx_mock: object) -> None:
