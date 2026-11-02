@@ -227,8 +227,7 @@ The parser gained `REDEFINES`, fixed-size `OCCURS`, and continuation lines: a
 COBOL entry ends at a period rather than at a line break, so a clause split over
 two lines is now read as the one clause it is (which is how the shipped
 `01-customer-record.cpy` gets its `DEPENDING ON` controller). The canonical model
-still describes two overlays as independent fields; representing them as a union
-is #3991's, and normalization is unchanged by this.
+describes an overlay as a union of its layouts (`<base>-OVERLAY`, MFI-21.1 #3991).
 
 Only an *unsized item* makes a record `partial` — that is a boundary of the
 analyzer. A variable-length record, an unresolved ODO controller and a REDEFINES

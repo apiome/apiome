@@ -153,6 +153,9 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Lay the copybook out once (as it will be emitted), file its losses by construct, then walk the model."""
+        # A copybook item is re-emitted from its own layout (``cobolcopybook_tree``), so what its
+        # pictures imply — widths, numeric bounds, overlays — is written back exactly (MFI-21.1).
+        self._from_layout = isinstance(api.extras.get("cobolcopybook_tree"), dict)
         writer = _CobolCopybookWriter(api, getattr(self, "_options", None) or CobolCopybookEmitOptions())
         try:
             writer.render()
@@ -209,6 +212,36 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
     def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
         """A copybook identifies a field by its position, which the layout keeps: no number is involved."""
         return None
+
+    def _constraints_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """A copybook item's constraints are its PICTURE / OCCURS, written back as declared (MFI-21.1).
+
+        The normalizer derives ``max_length``, numeric bounds and item counts from the item's own
+        clauses (``extras["cobol_picture"]`` / ``cobol_occurs_max``); re-emitted from the layout they
+        lose nothing. Any other source's constraints are graded by the base rules.
+        """
+        if getattr(self, "_from_layout", False) and "cobol_picture" in field.extras:
+            return None
+        return super()._constraints_verdict(field)
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """A copybook item's REDEFINES overlay is written back as the same REDEFINES (MFI-21.1).
+
+        Any other union is graded by the base rules (the writer files its own ``union-as-redefines``
+        or ``union-dropped`` loss for it).
+        """
+        if getattr(self, "_from_layout", False) and type_.extras.get("cobol_kind") == "redefines":
+            return FidelityVerdict.ok(
+                message=f"REDEFINES overlay carried to {self.target_label} as declared",
+                target_mapping="union → REDEFINES (as imported)",
+            )
+        return super()._union_verdict(type_)
+
+    def _scalar_verdict(self, type_: Type) -> FidelityVerdict:
+        """An elementary REDEFINES layout's constraints are its PICTURE, written back as declared."""
+        if getattr(self, "_from_layout", False) and "cobol_picture" in type_.extras:
+            return FidelityVerdict.ok(message=f"scalar carried to {self.target_label}")
+        return super()._scalar_verdict(type_)
 
     def operation_verdict(self, operation) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -446,10 +479,24 @@ class _CobolCopybookWriter:
         return _fixed_format_entry(" " * 7 + " " * (min(indent, _MAX_INDENT_LEVELS) * 4), head, clauses)
 
 
+#: A list or range of quoted literals, recorded as written by the parser (``'B' 'X'``, ``'A' THRU 'C'``).
+_LITERAL_LIST_RE = re.compile(
+    r"""^(?:'(?:[^']|'')*'|"(?:[^"]|"")*")(?:(?:\s*,\s*|\s+|\s+(?:THRU|THROUGH)\s+)(?:'(?:[^']|'')*'|"(?:[^"]|"")*"))+$""",
+    re.IGNORECASE,
+)
+
+
 def _condition_value(condition: Dict[str, Any]) -> str:
-    """An ``88`` level's value: a number as is, text in quotes (a quote inside doubled)."""
+    """An ``88`` level's value: a number as is, a list of literals as imported, else text in quotes.
+
+    A quote inside a single text value is doubled. A list or range of quoted literals is the form the
+    parser keeps verbatim (:func:`~app.cobolcopybook_parser.condition_value`), so it is written back
+    unchanged rather than re-quoted into one literal (MFI-21.1).
+    """
     value = str(condition.get("value", ""))
     if condition.get("numeric") and value.lstrip("-").isdigit():
+        return value
+    if _LITERAL_LIST_RE.match(value):
         return value
     return "'" + value.replace("'", "''") + "'"
 

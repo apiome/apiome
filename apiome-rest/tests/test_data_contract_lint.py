@@ -76,7 +76,7 @@ RESEED_MIGRATION = (
     Path(__file__).resolve().parents[2]
     / "apiome-db"
     / "scripts"
-    / "V343__style_guide_builtin_reseed_flatbuffers_capnproto_packs_3982.sql"
+    / "V344__style_guide_builtin_reseed_cobolcopybook_and_legacy_rpc_packs_3991.sql"
 )
 
 

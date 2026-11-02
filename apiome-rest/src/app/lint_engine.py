@@ -426,6 +426,9 @@ def load_format_rule_packs() -> None:
     # ONC RPC / XDR lint pack (MFI-21.6): registers under ``oncrpc`` (program, version and
     # procedure numbers, XDR declarations).
     from . import oncrpc_lint as _oncrpc_lint  # noqa: F401
+    # COBOL copybook lint pack (MFI-21.1): registers under ``cobolcopybook`` (REDEFINES overlays,
+    # OCCURS DEPENDING ON tables, storage sizing, FILLER and 88-level conditions).
+    from . import cobolcopybook_lint as _cobolcopybook_lint  # noqa: F401
 
     # FlatBuffers and Cap'n Proto lint packs (MFI-19.4): register under ``flatbuffers`` / ``capnproto``.
     from . import capnproto_lint as _capnproto_lint  # noqa: F401

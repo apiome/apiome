@@ -419,6 +419,81 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Scan modes:** `lint`
 
 
+## Pack: `cobolcopybook`
+
+### `cobolcopybook.condition-values-unique` {#cobolcopybook-condition-values-unique}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Two 88-level conditions of one item should not test the same value.
+
+### `cobolcopybook.duplicate-name` {#cobolcopybook-duplicate-name}
+
+- **Category:** naming
+- **Default severity:** warning
+- **Rationale:** A data name other than FILLER should be declared once.
+
+### `cobolcopybook.filler-unused` {#cobolcopybook-filler-unused}
+
+- **Category:** documentation
+- **Default severity:** info
+- **Rationale:** A FILLER is storage no program can read by name.
+
+### `cobolcopybook.odo-controller-declared` {#cobolcopybook-odo-controller-declared}
+
+- **Category:** reference
+- **Default severity:** warning
+- **Rationale:** A DEPENDING ON must name an item the copybook declares.
+
+### `cobolcopybook.odo-controller-precedes` {#cobolcopybook-odo-controller-precedes}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A DEPENDING ON controller must be declared before its table, outside it.
+
+### `cobolcopybook.odo-trailing-items` {#cobolcopybook-odo-trailing-items}
+
+- **Category:** compatibility
+- **Default severity:** info
+- **Rationale:** Items after a variable-length table have offsets that vary at run time.
+
+### `cobolcopybook.packed-odd-digits` {#cobolcopybook-packed-odd-digits}
+
+- **Category:** quality
+- **Default severity:** info
+- **Rationale:** A COMP-3 item should declare an odd number of digits.
+
+### `cobolcopybook.redefines-discriminated` {#cobolcopybook-redefines-discriminated}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** A REDEFINES overlay needs an earlier item whose 88-levels say which layout holds data.
+
+### `cobolcopybook.redefines-fits` {#cobolcopybook-redefines-fits}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** A redefining layout must not be larger than the item it redefines.
+
+### `cobolcopybook.redefines-target-declared` {#cobolcopybook-redefines-target-declared}
+
+- **Category:** reference
+- **Default severity:** warning
+- **Rationale:** A REDEFINES must name an earlier item of the same group.
+
+### `cobolcopybook.redefines-variable` {#cobolcopybook-redefines-variable}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** An OCCURS DEPENDING ON table cannot be redefined or redefine.
+
+### `cobolcopybook.storage-sized` {#cobolcopybook-storage-sized}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Every elementary item's storage length should be computable.
+
+
 ## Pack: `common`
 
 ### `common.api-missing-description` {#common-api-missing-description}

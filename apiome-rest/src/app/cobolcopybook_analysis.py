@@ -42,8 +42,8 @@ advance the record. Each item records what it redefines and what redefines it, a
 larger than its target is reported rather than reconciled — that is a fact about the copybook, and
 the analysis is not the place to correct it.
 
-The canonical model still describes the two overlays as independent fields; representing them as a
-union is #3991's, and normalization is deliberately unchanged here.
+The canonical model describes the overlay as a union of its layouts (MFI-21.1, #3991); the analysis
+keeps the byte-level facts the union does not carry.
 
 Source lines
 ------------

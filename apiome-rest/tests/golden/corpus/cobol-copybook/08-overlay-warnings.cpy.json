@@ -4,6 +4,20 @@
     "channels": [],
     "description": null,
     "extras": {
+      "cobolcopybook_encoding": {
+        "assumed": "EBCDIC",
+        "notes": [
+          "One byte per character position — a single-byte encoding (EBCDIC or ASCII). DBCS and national (PIC N / USAGE NATIONAL) items are not sized.",
+          "COMP-3 items are packed two digits per byte with a trailing sign nibble, so a picture of n digits occupies (n div 2) + 1 bytes whether or not it is signed.",
+          "COMP / COMP-4 / BINARY items occupy 2, 4 or 8 bytes by digit count, the common IBM representation; a compiler set to allocate by truncation rules may differ.",
+          "A sign is assumed to be overpunched on the trailing digit rather than held in its own byte, because SIGN IS SEPARATE is not read by the parser.",
+          "No SYNCHRONIZED alignment is applied, so no slack bytes are inserted between items."
+        ]
+      },
+      "cobolcopybook_record_length": {
+        "max": 24,
+        "min": 24
+      },
       "cobolcopybook_root": "ACCOUNT-SNAPSHOT",
       "cobolcopybook_tree": {
         "children": [
@@ -139,6 +153,10 @@
         "enum_values": [],
         "extras": {
           "cobol_kind": "group",
+          "cobol_length": {
+            "max": 24,
+            "min": 24
+          },
           "cobol_level": 1
         },
         "fields": [
@@ -150,10 +168,22 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 10,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 7,
+              "cobol_offset_variable": false,
               "cobol_picture": "X(10)",
+              "cobol_redefined_by": [
+                "SNAP-WIDE"
+              ],
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 10,
               "cobol_usage": null
             },
             "field_number": 2,
@@ -162,22 +192,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "string",
+              "name": "ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(6)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 6,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 1,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(6)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 6,
               "cobol_usage": null
             },
             "field_number": 1,
@@ -186,7 +240,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
@@ -198,13 +252,18 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 4,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
               "cobol_picture": null,
+              "cobol_redefines": "SNAP-MISSING",
+              "cobol_total_length": 4,
               "cobol_usage": null
             },
-            "field_number": 4,
+            "field_number": 3,
             "key": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
             "name": "SNAP-ORPHAN",
             "type": {
@@ -215,50 +274,50 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(8)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 8,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 17,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 8,
               "cobol_usage": null
             },
-            "field_number": 5,
+            "field_number": 4,
             "key": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-POSTED-DATE",
             "name": "SNAP-POSTED-DATE",
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
-              "nullable": false
-            }
-          },
-          {
-            "constraints": null,
-            "default": null,
-            "deprecated": false,
-            "description": null,
-            "extras": {
-              "cobol_conditions": [],
-              "cobol_depending_on": null,
-              "cobol_level": 5,
-              "cobol_occurs_max": null,
-              "cobol_occurs_min": null,
-              "cobol_picture": null,
-              "cobol_usage": null
-            },
-            "field_number": 3,
-            "key": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
-            "name": "SNAP-WIDE",
-            "type": {
-              "extras": {},
-              "item": null,
-              "name": "ACCOUNT-SNAPSHOT.SNAP-WIDE",
+              "name": "i32",
               "nullable": false
             }
           }
@@ -267,6 +326,292 @@
         "key_type": null,
         "kind": "record",
         "name": "ACCOUNT-SNAPSHOT",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 10,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "X(10)",
+        "enum_values": [],
+        "extras": {
+          "cobol_conditions": [],
+          "cobol_depending_on": null,
+          "cobol_kind": "elementary",
+          "cobol_length": 10,
+          "cobol_level": 5,
+          "cobol_occurs_max": null,
+          "cobol_occurs_min": null,
+          "cobol_offset": 7,
+          "cobol_offset_variable": false,
+          "cobol_picture": "X(10)",
+          "cobol_redefines": null,
+          "cobol_storage": {
+            "kind": "ebcdic-text",
+            "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+          },
+          "cobol_total_length": 10,
+          "cobol_usage": null
+        },
+        "fields": [],
+        "key": "ACCOUNT-SNAPSHOT.SNAP-BODY",
+        "key_type": null,
+        "kind": "alias",
+        "name": "SNAP-BODY",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Storage of SNAP-BODY, laid out 2 ways (REDEFINES).",
+        "enum_values": [],
+        "extras": {
+          "cobol_base": "SNAP-BODY",
+          "cobol_kind": "redefines",
+          "cobol_layouts": [
+            {
+              "kind": "elementary",
+              "name": "SNAP-BODY",
+              "occurs_max": null,
+              "redefines": null,
+              "total_length": 10
+            },
+            {
+              "kind": "group",
+              "name": "SNAP-WIDE",
+              "occurs_max": null,
+              "redefines": "SNAP-BODY",
+              "total_length": 14
+            }
+          ],
+          "cobol_offset": 7,
+          "cobol_storage_length": 10
+        },
+        "fields": [],
+        "key": "ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "key_type": null,
+        "kind": "union",
+        "name": "SNAP-BODY-OVERLAY",
+        "namespace": null,
+        "union_members": [
+          "ACCOUNT-SNAPSHOT.SNAP-BODY",
+          "ACCOUNT-SNAPSHOT.SNAP-WIDE"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 4,
+            "min": 4
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(4)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 4,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": null,
+              "cobol_offset_variable": true,
+              "cobol_picture": "X(4)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 4,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
+            "name": "SNAP-ORPHAN-KEY",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "key_type": null,
+        "kind": "record",
+        "name": "SNAP-ORPHAN",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 14,
+            "min": 14
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 8,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(8)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 8,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 7,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 8,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+            "name": "SNAP-WIDE-CODE",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 6,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(6)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 6,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 15,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(6)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 6,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+            "name": "SNAP-WIDE-EXTRA",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "key_type": null,
+        "kind": "record",
+        "name": "SNAP-WIDE",
         "namespace": null,
         "union_members": [],
         "value_type": null
@@ -280,22 +625,22 @@
     "operations": 0,
     "servers": 0,
     "services": 0,
-    "types": 1
+    "types": 5
   },
   "detection": {
     "confidence": 0.98,
     "format": "cobolcopybook"
   },
-  "fingerprint": "sha256:399eb31cd90a4799b2bbe7cd9b16092497bbb69b225b24c2fc5f900626bd49a5",
+  "fingerprint": "sha256:8f02281f94025d2d8910b3be32e00aeafb29632cdcb0d8724ee4573ff852197d",
   "lint": {
-    "findings": 4,
-    "grade": "A",
-    "report_fingerprint": "3b0d1e4a1d9ce39eb5ae7c14f3562703f29da423b31459231a1429b7ca88cc47",
-    "score": 93,
+    "findings": 8,
+    "grade": "C",
+    "report_fingerprint": "16e0a1ed49affa597ffdcaa5911ea11a0eac571a45da8b8024be6ac2745ff67f",
+    "score": 77,
     "severity_counts": {
       "error": 0,
       "info": 3,
-      "warning": 1
+      "warning": 5
     }
   },
   "snapshot_version": 1

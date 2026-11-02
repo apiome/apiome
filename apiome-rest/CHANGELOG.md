@@ -5,6 +5,54 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.607.0] - 2026-11-02
+
+### Added
+- **COBOL copybooks: canonical types, REDEFINES unions, a record-layout hash, the layout diff and a lint pack
+  (MFI-21.1, #3991).** The parser, import source, analysis, emitter and corpus fixtures already shipped; this makes
+  the normalized model describe the record, and adds what versions, diffs and lint need.
+  - `CobolCopybookNormalizer` now emits **every** group as a record type (nested groups were referenced by their
+    fields but never emitted). A `REDEFINES` overlay becomes a `UNION` type `<base>-OVERLAY` whose members are each
+    layout of the shared storage (a group's record, or an `ALIAS` for an elementary item); the base item's field is
+    typed by it and the redefining items are no longer separate fields. PICTURE → `string` (width as `max_length`),
+    `i32` (≤ 9 digits), `i64` (≤ 18), `decimal` (implied point or > 18 digits), `float` / `double` (`COMP-1` /
+    `COMP-2`), with numeric `minimum` / `maximum` (bounds over 15 digits are left out rather than rounded); an
+    `OCCURS` table carries `min_items` / `max_items`. Every field records `cobol_offset`, `cobol_length`,
+    `cobol_total_length`, `cobol_redefines` and `cobol_storage` (EBCDIC text, edited, zoned decimal, packed decimal,
+    binary or hexadecimal float, with a transcoding note); the model records `cobolcopybook_record_length` and
+    `cobolcopybook_encoding` (EBCDIC assumed, plus the layout assumptions). A repeated name in one group (`FILLER`)
+    gets its own field key (`FILLER#2`).
+  - New `app/cobolcopybook_fingerprint.py`: `CobolCopybookLayoutHasher` (`cobol-record-layout-sha256`), a
+    name-blind hash of every item's position, length, storage, `OCCURS` bounds and `REDEFINES` target, attached as
+    the fingerprint's `format_hash`.
+  - New `app/cobolcopybook_lint.py` (`cobolcopybook.*`, registered under `cobolcopybook`):
+    `redefines-target-declared`, `redefines-fits`, `redefines-variable`, `odo-controller-declared`,
+    `odo-controller-precedes`, `duplicate-name`, `storage-sized`, `condition-values-unique` (warning);
+    `redefines-discriminated`, `odo-trailing-items`, `packed-odd-digits`, `filler-unused` (info).
+  - New `app/cobolcopybook_breaking.py` (`cobolcopybook-layout`): `offset-moved`, `occurs-changed`,
+    `length-changed`, `picture-changed`, `field-removed`, `field-inserted`, `overlay-removed` breaking;
+    `field-appended`, `overlay-added`, `condition-removed` dangerous; `field-added-in-place`, `filler-reclaimed`,
+    `condition-added`, `level-renumbered` safe; `record-length-changed` dangerous when the record grew with every
+    offset held, breaking otherwise.
+  - `cobolcopybook_parser.field_from_template` rebuilds the parsed tree from `extras["cobolcopybook_tree"]`.
+  - Version-diff fixtures `tests/fixtures/cobolcopybook_versions/POLICY-RECORD.{v1,v2-compatible,v3-breaking}.cpy`.
+
+### Fixed
+- An 88-level `VALUE` list or range (`'B' 'X'`, `'A' THRU 'C'`) was fused into one literal by the copybook parser
+  (`B' 'X`) and exported as a different value; it is now kept and written back as declared.
+- The built-in "Apiome Recommended" style guide was missing the `hl7v2.*`, `fix-orchestra.*`, `iso8583.*`,
+  `xmlrpc.*` and `oncrpc.*` rules, so their findings were discarded; apiome-db V344 re-seeds it from the full
+  registry, the twelve `cobolcopybook.*` rules included.
+
+### Changed
+- The copybook export fidelity report grades a copybook item's own constraints and `REDEFINES` overlays as carried
+  (they are written back from the item's layout), so a copybook → copybook export stays lossless.
+- The `cobolcopybook` capability entry no longer lists `copybook.redefines` or `copybook.occurs_bounds` as dropped
+  from the canonical projection.
+- One-time version change: the first re-import of an existing copybook item records a changed version, because its
+  model gained types, unions and storage extras.
+- OpenAPI document version 1.471.0 (no endpoint changes).
+
 ## [1.606.0] - 2026-11-02
 
 ### Added

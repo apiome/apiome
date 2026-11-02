@@ -4,6 +4,20 @@
     "channels": [],
     "description": null,
     "extras": {
+      "cobolcopybook_encoding": {
+        "assumed": "EBCDIC",
+        "notes": [
+          "One byte per character position — a single-byte encoding (EBCDIC or ASCII). DBCS and national (PIC N / USAGE NATIONAL) items are not sized.",
+          "COMP-3 items are packed two digits per byte with a trailing sign nibble, so a picture of n digits occupies (n div 2) + 1 bytes whether or not it is signed.",
+          "COMP / COMP-4 / BINARY items occupy 2, 4 or 8 bytes by digit count, the common IBM representation; a compiler set to allocate by truncation rules may differ.",
+          "A sign is assumed to be overpunched on the trailing digit rather than held in its own byte, because SIGN IS SEPARATE is not read by the parser.",
+          "No SYNCHRONIZED alignment is applied, so no slack bytes are inserted between items."
+        ]
+      },
+      "cobolcopybook_record_length": {
+        "max": 55,
+        "min": 55
+      },
       "cobolcopybook_root": "PAYMENT-RECORD",
       "cobolcopybook_tree": {
         "children": [
@@ -208,69 +222,472 @@
         "enum_values": [],
         "extras": {
           "cobol_kind": "group",
+          "cobol_length": {
+            "max": 30,
+            "min": 30
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 17,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(17)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 17,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 27,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(17)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 17,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
+            "name": "BANK-ACCOUNT",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 999999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "9(9)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 9,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 18,
+              "cobol_offset_variable": false,
+              "cobol_picture": "9(9)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 9,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
+            "name": "BANK-ROUTING",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 4,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(4)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 4,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 44,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(4)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 4,
+              "cobol_usage": null
+            },
+            "field_number": 3,
+            "key": "PAYMENT-RECORD.BANK-DETAIL.FILLER",
+            "name": "FILLER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PAYMENT-RECORD.BANK-DETAIL",
+        "key_type": null,
+        "kind": "record",
+        "name": "BANK-DETAIL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 30,
+            "min": 30
+          },
+          "cobol_level": 5
+        },
+        "fields": [
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "9(4)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 4,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 34,
+              "cobol_offset_variable": false,
+              "cobol_picture": "9(4)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 4,
+              "cobol_usage": null
+            },
+            "field_number": 2,
+            "key": "PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+            "name": "CARD-EXPIRY-YYMM",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i32",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": "9(16)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 16,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 18,
+              "cobol_offset_variable": false,
+              "cobol_picture": "9(16)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 16,
+              "cobol_usage": null
+            },
+            "field_number": 1,
+            "key": "PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+            "name": "CARD-NUMBER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "i64",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 10,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
+            "default": null,
+            "deprecated": false,
+            "description": "X(10)",
+            "extras": {
+              "cobol_conditions": [],
+              "cobol_depending_on": null,
+              "cobol_length": 10,
+              "cobol_level": 10,
+              "cobol_occurs_max": null,
+              "cobol_occurs_min": null,
+              "cobol_offset": 38,
+              "cobol_offset_variable": false,
+              "cobol_picture": "X(10)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 10,
+              "cobol_usage": null
+            },
+            "field_number": 3,
+            "key": "PAYMENT-RECORD.CARD-DETAIL.FILLER",
+            "name": "FILLER",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "PAYMENT-RECORD.CARD-DETAIL",
+        "key_type": null,
+        "kind": "record",
+        "name": "CARD-DETAIL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": {
+          "extras": {},
+          "item": null,
+          "name": "string",
+          "nullable": false
+        },
+        "constraints": {
+          "enum": null,
+          "exclusive_maximum": null,
+          "exclusive_minimum": null,
+          "extras": {},
+          "format": null,
+          "max_items": null,
+          "max_length": 30,
+          "maximum": null,
+          "min_items": null,
+          "min_length": null,
+          "minimum": null,
+          "multiple_of": null,
+          "pattern": null,
+          "unique_items": null
+        },
+        "deprecated": false,
+        "description": "X(30)",
+        "enum_values": [],
+        "extras": {
+          "cobol_conditions": [],
+          "cobol_depending_on": null,
+          "cobol_kind": "elementary",
+          "cobol_length": 30,
+          "cobol_level": 5,
+          "cobol_occurs_max": null,
+          "cobol_occurs_min": null,
+          "cobol_offset": 18,
+          "cobol_offset_variable": false,
+          "cobol_picture": "X(30)",
+          "cobol_redefines": null,
+          "cobol_storage": {
+            "kind": "ebcdic-text",
+            "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+          },
+          "cobol_total_length": 30,
+          "cobol_usage": null
+        },
+        "fields": [],
+        "key": "PAYMENT-RECORD.PAYMENT-DETAIL",
+        "key_type": null,
+        "kind": "alias",
+        "name": "PAYMENT-DETAIL",
+        "namespace": null,
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": "Storage of PAYMENT-DETAIL, laid out 3 ways (REDEFINES).",
+        "enum_values": [],
+        "extras": {
+          "cobol_base": "PAYMENT-DETAIL",
+          "cobol_kind": "redefines",
+          "cobol_layouts": [
+            {
+              "kind": "elementary",
+              "name": "PAYMENT-DETAIL",
+              "occurs_max": null,
+              "redefines": null,
+              "total_length": 30
+            },
+            {
+              "kind": "group",
+              "name": "CARD-DETAIL",
+              "occurs_max": null,
+              "redefines": "PAYMENT-DETAIL",
+              "total_length": 30
+            },
+            {
+              "kind": "group",
+              "name": "BANK-DETAIL",
+              "occurs_max": null,
+              "redefines": "PAYMENT-DETAIL",
+              "total_length": 30
+            }
+          ],
+          "cobol_offset": 18,
+          "cobol_storage_length": 30
+        },
+        "fields": [],
+        "key": "PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "key_type": null,
+        "kind": "union",
+        "name": "PAYMENT-DETAIL-OVERLAY",
+        "namespace": null,
+        "union_members": [
+          "PAYMENT-RECORD.PAYMENT-DETAIL",
+          "PAYMENT-RECORD.CARD-DETAIL",
+          "PAYMENT-RECORD.BANK-DETAIL"
+        ],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "cobol_kind": "group",
+          "cobol_length": {
+            "max": 55,
+            "min": 55
+          },
           "cobol_level": 1
         },
         "fields": [
           {
-            "constraints": null,
-            "default": null,
-            "deprecated": false,
-            "description": null,
-            "extras": {
-              "cobol_conditions": [],
-              "cobol_depending_on": null,
-              "cobol_level": 5,
-              "cobol_occurs_max": null,
-              "cobol_occurs_min": null,
-              "cobol_picture": null,
-              "cobol_usage": null
-            },
-            "field_number": 6,
-            "key": "PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
-            "name": "BANK-DETAIL",
-            "type": {
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
               "extras": {},
-              "item": null,
-              "name": "PAYMENT-RECORD.BANK-DETAIL",
-              "nullable": false
-            }
-          },
-          {
-            "constraints": null,
-            "default": null,
-            "deprecated": false,
-            "description": null,
-            "extras": {
-              "cobol_conditions": [],
-              "cobol_depending_on": null,
-              "cobol_level": 5,
-              "cobol_occurs_max": null,
-              "cobol_occurs_min": null,
-              "cobol_picture": null,
-              "cobol_usage": null
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 999999999.99,
+              "min_items": null,
+              "min_length": null,
+              "minimum": -999999999.99,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
             },
-            "field_number": 5,
-            "key": "PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
-            "name": "CARD-DETAIL",
-            "type": {
-              "extras": {},
-              "item": null,
-              "name": "PAYMENT-RECORD.CARD-DETAIL",
-              "nullable": false
-            }
-          },
-          {
-            "constraints": null,
             "default": null,
             "deprecated": false,
             "description": "S9(9)V99",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 6,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 12,
+              "cobol_offset_variable": false,
               "cobol_picture": "S9(9)V99",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "packed-decimal",
+                "note": "Packed decimal (COMP-3): two digits per byte and a trailing sign nibble. Binary data — never transcode it."
+              },
+              "cobol_total_length": 6,
               "cobol_usage": "COMP-3"
             },
             "field_number": 3,
@@ -279,7 +696,7 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "double",
+              "name": "decimal",
               "nullable": false
             }
           },
@@ -291,10 +708,23 @@
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 30,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 18,
+              "cobol_offset_variable": false,
               "cobol_picture": "X(30)",
+              "cobol_redefined_by": [
+                "CARD-DETAIL",
+                "BANK-DETAIL"
+              ],
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 30,
               "cobol_usage": null
             },
             "field_number": 4,
@@ -303,22 +733,46 @@
             "type": {
               "extras": {},
               "item": null,
-              "name": "string",
+              "name": "PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 9999999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(10)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 10,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 1,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(10)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 10,
               "cobol_usage": null
             },
             "field_number": 1,
@@ -332,31 +786,70 @@
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": null,
+              "maximum": 99999999.0,
+              "min_items": null,
+              "min_length": null,
+              "minimum": 0.0,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "9(8)",
             "extras": {
               "cobol_conditions": [],
               "cobol_depending_on": null,
+              "cobol_length": 8,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 48,
+              "cobol_offset_variable": false,
               "cobol_picture": "9(8)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "zoned-decimal",
+                "note": "Zoned decimal: one EBCDIC digit (X'F0'–X'F9') per byte, the sign overpunched in the zone nibble of the last byte (X'C' positive, X'D' negative). Convert it as a number; transcoding it as text corrupts a signed value."
+              },
+              "cobol_total_length": 8,
               "cobol_usage": null
             },
-            "field_number": 7,
+            "field_number": 5,
             "key": "PAYMENT-RECORD.PAYMENT-RECORD.PAYMENT-POSTED-DATE",
             "name": "PAYMENT-POSTED-DATE",
             "type": {
               "extras": {},
               "item": null,
-              "name": "i64",
+              "name": "i32",
               "nullable": false
             }
           },
           {
-            "constraints": null,
+            "constraints": {
+              "enum": null,
+              "exclusive_maximum": null,
+              "exclusive_minimum": null,
+              "extras": {},
+              "format": null,
+              "max_items": null,
+              "max_length": 1,
+              "maximum": null,
+              "min_items": null,
+              "min_length": null,
+              "minimum": null,
+              "multiple_of": null,
+              "pattern": null,
+              "unique_items": null
+            },
             "default": null,
             "deprecated": false,
             "description": "X(1)",
@@ -372,10 +865,19 @@
                 }
               ],
               "cobol_depending_on": null,
+              "cobol_length": 1,
               "cobol_level": 5,
               "cobol_occurs_max": null,
               "cobol_occurs_min": null,
+              "cobol_offset": 11,
+              "cobol_offset_variable": false,
               "cobol_picture": "X(1)",
+              "cobol_redefines": null,
+              "cobol_storage": {
+                "kind": "ebcdic-text",
+                "note": "Character data in the host code page (EBCDIC; the copybook does not say which code page). Transcode it as text, one character per byte."
+              },
+              "cobol_total_length": 1,
               "cobol_usage": null
             },
             "field_number": 2,
@@ -406,22 +908,22 @@
     "operations": 0,
     "servers": 0,
     "services": 0,
-    "types": 1
+    "types": 5
   },
   "detection": {
     "confidence": 0.98,
     "format": "cobolcopybook"
   },
-  "fingerprint": "sha256:2f3dade8d3faa6f46190570c427d25e7c564182da4b52381f9196ac3500ff532",
+  "fingerprint": "sha256:cc3080d5f500ff7c365e760294bffe7604d5a8dec5e76ed01f7fa91ac8d77d67",
   "lint": {
-    "findings": 4,
-    "grade": "A",
-    "report_fingerprint": "5a74b60218425822b6a768d3d8333ef99ac39fd7dd40a768644652749eacbc15",
-    "score": 93,
+    "findings": 6,
+    "grade": "B",
+    "report_fingerprint": "b4b4f2df0e1ceb3fdd246ee6095230b66396a695366f47b875cb31a5212940e6",
+    "score": 85,
     "severity_counts": {
       "error": 0,
       "info": 3,
-      "warning": 1
+      "warning": 3
     }
   },
   "snapshot_version": 1
