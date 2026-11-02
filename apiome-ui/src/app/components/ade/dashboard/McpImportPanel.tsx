@@ -16,6 +16,8 @@
 
 import { CheckCircle2, GaugeCircle, Network, Plug, ScanSearch, ShieldCheck } from 'lucide-react';
 import { Card, cardVariants } from '../../../components/ui/Card';
+import { Segmented, SegmentedItem } from '../../../components/ui/Segmented';
+import McpRegistryImportFields from './McpRegistryImportFields';
 import { FormField } from '../../../components/ui/FormField';
 import { Input } from '../../../components/ui/Input';
 import { cn } from '@lib/utils';
@@ -31,6 +33,7 @@ import {
   MCP_TRANSPORT_OPTIONS,
   type McpAuthType,
   type McpImportForm,
+  type McpImportMode,
   type McpTransport,
 } from './mcp/mcpImportFlow';
 
@@ -69,8 +72,31 @@ export default function McpImportPanel({ form, onChange }: McpImportPanelProps) 
   const showHeaderName = form.authType === 'header';
   const tokenLabel = form.authType === 'header' ? 'Header value' : 'Access token';
 
+  // One server, or every server a registry lists (AAU-5.4, #5725).
+  const modeSwitch = (
+    <Segmented
+      value={form.mode}
+      onValueChange={(value) => set('mode', value as McpImportMode)}
+      aria-label="What to add"
+      className="self-start"
+    >
+      <SegmentedItem value="server">One server</SegmentedItem>
+      <SegmentedItem value="registry">From a registry</SegmentedItem>
+    </Segmented>
+  );
+
+  if (form.mode === 'registry') {
+    return (
+      <div className="flex flex-col gap-6">
+        {modeSwitch}
+        <McpRegistryImportFields form={form.registry} onChange={(registry) => onChange({ ...form, registry })} />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
+      {modeSwitch}
       {/* Hero: what this source does, and the three stages the import runs through. */}
       <Card variant="flat" className="overflow-hidden">
         <div className="flex items-start gap-3 p-4">

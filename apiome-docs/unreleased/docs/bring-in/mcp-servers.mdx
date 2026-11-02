@@ -28,7 +28,7 @@ last discovered, capabilities or health, and switch between **Grid** and **Dense
 The steps are **Connect → Discover capabilities → Lint & grade**. To try it on the local stack, use
 Apiome's own MCP server.
 
-1. **Click “Add MCP server”.**
+1. **Click “Add MCP server”.** **One server** is selected at the top of the form.
 2. Enter the **Endpoint URL** — `http://localhost:8765/mcp` on the local stack — and, optionally, a
    **Display name** (`Apiome specs`).
 3. Choose the **Transport**: **Streamable HTTP** (the default; right for the example),
@@ -41,6 +41,47 @@ Apiome's own MCP server.
 If discovery fails, read the reason, then **“Discard”** or **“Add this server anyway”**.
 
 <Screenshot id="import-wizard-mcp" alt="Add an MCP server: endpoint URL, display name, transport and authentication" />
+
+## Import from a registry
+
+If your team already keeps its MCP servers in a registry, bring them all in at once instead of one at
+a time. That can be the official MCP registry, Azure API Center, a Kong MCP registry, or another Apiome
+workspace's [registry endpoint](../ship/mcp-registry.mdx).
+
+1. **Click “Add MCP server”** and choose **From a registry** at the top of the form.
+2. Enter the **Registry URL**, the registry's root: `https://registry.modelcontextprotocol.io` for the
+   official registry, or `https://<apiome>/registry/mcp/<workspace>` for another Apiome workspace.
+3. Optionally, enter a **Search** to import only the servers whose name matches, for example
+   `io.github.acme`.
+4. Choose the **Registry credential**:
+   - **None (public registry)**, for the official registry and most public ones;
+   - **Bearer token**;
+   - **Apiome workspace API key**, to read another Apiome workspace.
+
+   The credential is stored encrypted and never shown again.
+5. Leave **Keep these servers in sync** ticked to re-sync daily. Only servers whose registry entry
+   changed are imported again.
+6. **Click “Import servers →”.**
+
+<Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked" />
+
+Apiome registers an [MCP registry connector](./connectors.mdx#mcp-registry) for the registry and runs
+its first sync. Each server with a reachable `streamable-http` or `sse` remote is added here,
+discovered, linted and graded. The dialog then shows:
+- how many servers the registry listed;
+- how many were imported;
+- each server that could not be added yet, with the reason.
+
+| Reason | What it means |
+| --- | --- |
+| `no-remote` | The server ships only packages that run locally, so there is nothing to discover |
+| `remote-templated` | Its URL needs a value you fill in; add it with **One server** |
+| `remote-refused` | Its URL resolves to a private address |
+| `remote-unreachable` | Its remote did not answer; the next sync tries again |
+
+A registry URL that resolves to a private address, or a registry that refuses the request, imports
+nothing: the dialog shows the reason and creates no connector. Every sync is recorded with its counts on
+the connector's **Runs** tab. Change its cadence, or sync it again, under **Bring in → Connectors**.
 
 ## An endpoint's page
 

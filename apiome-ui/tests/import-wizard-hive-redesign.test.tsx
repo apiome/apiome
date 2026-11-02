@@ -548,6 +548,115 @@ describe('opening straight onto a source', () => {
 });
 
 /* -------------------------------------------------------------------------
+   5b. MCP "From a registry" (AAU-5.4, #5725)
+   ------------------------------------------------------------------------- */
+
+/** Answer the registry-import calls: create the connector, store its credential, run its sync. */
+function stubRegistryImport(run: Record<string, unknown>) {
+  const calls: { url: string; method: string; body: unknown }[] = [];
+  fetchMock.mockImplementation(((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? 'GET';
+    calls.push({ url, method, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+    if (url.includes('/api/import/sources')) {
+      return Promise.resolve({ ok: true, json: async () => REGISTRY_SOURCES });
+    }
+    if (url === '/api/connectors' && method === 'POST') {
+      return Promise.resolve({ ok: true, json: async () => ({ id: 'conn-1', kind: 'mcp-registry' }) });
+    }
+    if (url === '/api/connectors/conn-1/sync') {
+      return Promise.resolve({ ok: true, json: async () => run });
+    }
+    return Promise.resolve({ ok: true, json: async () => ({}) });
+  }) as never);
+  return calls;
+}
+
+const REGISTRY_RUN = {
+  id: 'run-1',
+  status: 'succeeded',
+  errorClass: null,
+  httpStatus: null,
+  errorMessage: null,
+  summary: {
+    candidates: 3,
+    imported: 2,
+    discovered: 1,
+    failed: 0,
+    discoveredItems: [
+      { remoteId: 'io.github.acme/local-files', reason: 'no-remote: the server lists only packages, which run locally (stdio)' },
+    ],
+  },
+};
+
+async function openRegistryMode() {
+  const rendered = renderWizard({ initialSource: 'mcp' });
+  await screen.findByText('Add an MCP server');
+  fireEvent.click(screen.getByRole('radio', { name: 'From a registry' }));
+  await screen.findByText('Import from a registry');
+  return rendered;
+}
+
+describe('importing MCP servers from a registry', () => {
+  it('offers the registry form, and its verb, once the registry is named', async () => {
+    stubRegistryImport(REGISTRY_RUN);
+    await openRegistryMode();
+    const importButton = screen.getByRole('button', { name: 'Import servers →' });
+    expect(importButton).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Registry URL/), {
+      target: { value: 'https://registry.modelcontextprotocol.io' },
+    });
+    expect(screen.getByRole('button', { name: 'Import servers →' })).toBeEnabled();
+  });
+
+  it('registers an mcp-registry connector, syncs it and shows what was imported', async () => {
+    const calls = stubRegistryImport(REGISTRY_RUN);
+    await openRegistryMode();
+    fireEvent.change(screen.getByLabelText(/Registry URL/), {
+      target: { value: 'https://apiome.example/registry/mcp/acme' },
+    });
+    fireEvent.change(screen.getByLabelText(/Search/), { target: { value: 'io.github.acme' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Import servers →' }));
+
+    expect(await screen.findByText('2 servers imported from the registry')).toBeInTheDocument();
+    expect(screen.getByText('io.github.acme/local-files')).toBeInTheDocument();
+    expect(screen.getByText('no-remote')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View MCP servers/ })).toHaveAttribute('href', '/ade/dashboard/mcp');
+
+    const created = calls.find((c) => c.url === '/api/connectors' && c.method === 'POST');
+    expect(created?.body).toEqual({
+      kind: 'mcp-registry',
+      name: 'MCP registry · apiome.example · io.github.acme',
+      baseUrl: 'https://apiome.example/registry/mcp/acme',
+      scope: { search: 'io.github.acme' },
+      refreshIntervalSeconds: 86400,
+      conflictPolicy: 'hold-for-review',
+    });
+    // A public registry: no credential is stored.
+    expect(calls.some((c) => c.url.endsWith('/credentials'))).toBe(false);
+    expect(calls.some((c) => c.url === '/api/connectors/conn-1/sync' && c.method === 'POST')).toBe(true);
+  });
+
+  it('deletes the connector of a run that failed outright and shows the reason on the form', async () => {
+    const calls = stubRegistryImport({
+      ...REGISTRY_RUN,
+      status: 'failed',
+      errorMessage: 'Base URL refused: host resolves to a private or reserved address.',
+      summary: {},
+    });
+    await openRegistryMode();
+    fireEvent.change(screen.getByLabelText(/Registry URL/), { target: { value: 'https://10.0.0.8' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Import servers →' }));
+
+    expect(await screen.findByText(/private or reserved address/)).toBeInTheDocument();
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === '/api/connectors/conn-1' && c.method === 'DELETE')).toBe(true)
+    );
+    expect(screen.getByText('Import from a registry')).toBeInTheDocument();
+  });
+});
+
+/* -------------------------------------------------------------------------
    6. The eight job states — mounted one at a time
    ------------------------------------------------------------------------- */
 
@@ -931,6 +1040,15 @@ describe('the browser fixtures', () => {
     fireEvent.click(screen.getByRole('tab', { name: /MCP Server/ }));
     await screen.findByText('Add an MCP server');
     write('mcp', wizard().outerHTML);
+
+    // AAU-5.4 (#5725): the same source, importing a whole registry.
+    fireEvent.click(screen.getByRole('radio', { name: 'From a registry' }));
+    await screen.findByText('Import from a registry');
+    fireEvent.change(screen.getByLabelText(/Registry URL/), {
+      target: { value: 'https://registry.modelcontextprotocol.io' },
+    });
+    fireEvent.change(screen.getByLabelText(/Search/), { target: { value: 'io.github.acme' } });
+    write('mcp-registry', wizard().outerHTML);
   });
 
   it('renders the Import step in its running and failed states', async () => {
