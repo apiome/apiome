@@ -4,7 +4,9 @@
     "channels": [],
     "description": null,
     "extras": {
-      "wsdl_target_namespace": "http://example.com/globalweather"
+      "wsdl_target_namespace": "http://example.com/globalweather",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "c030ab59a667857c05e75c20f91d17d09546a2c5e570e45ae1364bab741d7650"
     },
     "format": "wsdl",
     "identity": {
@@ -332,7 +334,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:82eca0a657d4b8499a4bedcb374912fba38b40096eef5d0f160866a0760df303",
+  "fingerprint": "sha256:64a201b0e8127b7adda9fdfad0b7f51d24d99a2980badeef20f34d7453ba6291",
   "lint": {
     "findings": 16,
     "grade": "D",

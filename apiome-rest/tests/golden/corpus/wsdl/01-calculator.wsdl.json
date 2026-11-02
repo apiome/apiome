@@ -4,7 +4,9 @@
     "channels": [],
     "description": null,
     "extras": {
-      "wsdl_target_namespace": "http://example.com/calculator"
+      "wsdl_target_namespace": "http://example.com/calculator",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "7d3fdd9b4ad3bd32a5312a34e3ac5d441ff86dc0c96ddef61e4f0021b3d6e32e"
     },
     "format": "wsdl",
     "identity": {
@@ -204,7 +206,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:ef709336e97e8c61556c29273bce88b64950c31c573d426631e59398c5b8a706",
+  "fingerprint": "sha256:e77a0900bfca52d8f95a7e46813e6d5f8e0431b43df46da5b554a43f609f3b9f",
   "lint": {
     "findings": 9,
     "grade": "B",

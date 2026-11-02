@@ -2,7 +2,7 @@
 title: "Import a SOAP / WSDL service"
 description: "Catalog a WSDL file, a WSDL split across files, or a live SOAP service."
 sidebar_position: 44
-tags: [import, wsdl, soap, xsd, singlewsdl, breaking-changes]
+tags: [import, wsdl, soap, xsd, singlewsdl, breaking-changes, c14n]
 ---
 
 The **WSDL** importer (`wsdl`) reads a SOAP service description, WSDL 1.1 or 2.0, into the
@@ -40,15 +40,45 @@ out again, so a re-import of the export matches the item.
 
 A WSDL often pulls in other documents:
 
-- `<xs:import schemaLocation="types.xsd">` and `<xs:include schemaLocation="…">` inside `<wsdl:types>`
-  bring in XML Schema files;
-- `<wsdl:import location="contract.wsdl">` (WSDL 1.1) brings in another WSDL with its own messages,
-  port types, bindings and services. WCF services publish their contract this way.
+- `<xs:import schemaLocation="types.xsd">`, `<xs:include>`, `<xs:redefine>` and `<xs:override>`
+  inside `<wsdl:types>` bring in XML Schema files;
+- `<wsdl:import location="contract.wsdl">` (WSDL 1.1 and 2.0) and `<wsdl:include>` (WSDL 2.0) bring
+  in another description with its own messages, port types or interfaces, bindings and services.
+  WCF services publish their contract this way.
 
 When you upload the files together, every one of them is read, at any depth, and the API is cataloged
-as one: types from the schemas, and messages and operations from the imported WSDL files. A location
-nothing in the upload answers is skipped, and the types it would have supplied stay unresolved. Lint
-reports it as [`wsi.unresolved-import`](#ws-i-basic-profile-checks).
+as one: types from the schemas, and messages and operations from the imported descriptions. Each
+location is found the way a SOAP toolkit finds it:
+
+1. **Relative to the file that declares it.** `../schemas/orders.xsd` in `wsdl/orders.wsdl` is
+   `schemas/orders.xsd` in the upload, so a set laid out in folders imports as it is.
+2. **As written**, for a description fetched from a live service.
+3. **By file name**, when only one file in the upload has that name. When two files share the name,
+   neither is guessed.
+
+A location nothing in the upload answers, or a file that is not well-formed XML, is skipped, and the
+types it would have supplied stay unresolved. Lint reports it as
+[`wsi.unresolved-import`](#ws-i-basic-profile-checks), and the catalog item lists it under
+`xml_import_graph` (see below). Each file is read once, so an import cycle ends.
+
+### What the catalog item keeps about its files
+
+| Key | Holds |
+| --- | --- |
+| `xml_import_graph` | For a description split across files: each file read (`path`, and `kind`: `wsdl` or `schema`), the root first, and each location nothing answered (`declared_in`, `location`, `reason`: `missing` or `unreadable`) |
+| `xml_c14n_sha256` | A SHA-256 over every file read, in Canonical XML (`xml_c14n_algorithm`: `sha256-c14n2-v1`) |
+| `xsd_version` | `1.1` when a schema it reads is XSD 1.1; absent for XSD 1.0 |
+
+The **canonical XML hash** is computed after every import is resolved. It ignores how each file is
+written: whitespace, comments, attribute order and namespace prefixes (`xs:` or `xsd:`, including
+inside `type="tns:Order"`). It changes when anything else does, in the root file or in any file it
+imports, `xs:documentation` included. It is the item's format hash. A new catalog version is still
+decided by the catalog's own fingerprint, so a documentation-only edit or a renamed file creates no
+version.
+
+A schema is **XSD 1.1** when it says so (`vc:minVersion="1.1"`) or uses an XSD 1.1 element, such as
+`xs:assert`, `xs:alternative` or `xs:openContent`. Its types are read as they are in XSD 1.0;
+assertions and type alternatives are not part of the catalog item.
 
 ## Discover a live service
 

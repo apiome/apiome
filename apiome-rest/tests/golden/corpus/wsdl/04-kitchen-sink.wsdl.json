@@ -42,7 +42,9 @@
           "path": "/binding/IngestionSoap12Binding/operation/GetSensorStatus/output",
           "rule": "wsi.document-literal"
         }
-      ]
+      ],
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "81b8baee4d1aadbccf54601b2f18a831d9d26e5402a9b24af6b59687bf41f383"
     },
     "format": "wsdl",
     "identity": {
@@ -655,7 +657,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:81c124e9e8bfe906f486cfb2d3a01b0d3d697b56b100d504097c2ac7d570bc08",
+  "fingerprint": "sha256:73ca384b54b937fc3087cb848c0d646335f80780b509b48207a9b4cfe62d8183",
   "lint": {
     "findings": 36,
     "grade": "F",

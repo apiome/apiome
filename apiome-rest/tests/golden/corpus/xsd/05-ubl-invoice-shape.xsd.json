@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "dcb3b7715c7a7a0d0534dd0255c5e1ef59394339befc719b6e38e9b1caf69ec5",
       "xsd_elements": [
         {
           "name": "Invoice",
@@ -829,7 +831,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:df29ee7688d14e80b621e15eeca28834753887200f2f516a96e0789c9b258a2c",
+  "fingerprint": "sha256:610679a14816ba938452b867b8ad5c1211d2e743653c665a7036c3766add3976",
   "lint": {
     "findings": 39,
     "grade": "F",

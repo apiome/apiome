@@ -21,6 +21,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
+from .xml_canonical_hash import xml_provenance_extras
 from .xsd_parser import XsdComplexType, XsdDocument, XsdField, XsdSimpleType
 
 __all__ = ["XsdNormalizer"]
@@ -209,6 +210,12 @@ class XsdNormalizer(Normalizer, register=True):
                     {"name": element.name, "type": element.type_expr}
                     for element in source.elements
                 ],
+                # MFI-13.1: the canonical-XML hash over the import graph, the graph, XSD 1.1.
+                **xml_provenance_extras(
+                    c14n_sha256=source.c14n_sha256,
+                    import_graph=source.import_graph,
+                    xsd_version=source.xsd_version,
+                ),
             },
         )
         return normalize_ordering(api)

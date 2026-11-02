@@ -5,6 +5,40 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.595.0] - 2026-11-01
+
+### Added
+- **WSDL + XSD parse & import resolution (MFI-13.1, #3788).** New `app/xml_import_graph.py` follows every import of a
+  description or schema against a multi-file set — `xs:import` / `xs:include` / `xs:redefine` / `xs:override`, WSDL 1.1
+  `wsdl:import`, WSDL 2.0 `wsdl:import` / `wsdl:include` — transitively and cycle-safely. Each location resolves
+  **relative to the file that declares it** (`../schemas/orders.xsd` from `wsdl/orders.wsdl`), then as written (live-
+  fetch members), then by a file name only one member has; it is never guessed between two same-named files. Unresolved
+  and unreadable references are returned, never fatal. `resolve_bundle_path` moved here from
+  `app.wsdl_bundle_validation`'s private `_resolve` (same rules).
+- **WSDL 2.0 descriptions split across files** now import as one: interfaces (including `extends` across files),
+  bindings, endpoints and schemas of every imported or included description are read.
+- **XSD filesets stitch their imports**: `XsdImportSource.parse_fileset` passes the set to `parse_xsd(members=…)`, which
+  reads the types and elements of every schema reached, merged by local name with the root's declaration winning. A
+  single `.xsd` is read alone, as before.
+- **Canonical-XML hash.** New `app/xml_canonical_hash.py`: SHA-256 over Canonical XML 2.0 (stdlib
+  `ElementTree.canonicalize`: text stripped, comments dropped, prefixes rewritten including in QName-valued attributes)
+  of the root and every imported document, in path order — algorithm `sha256-c14n2-v1`. Recorded as
+  `extras["xml_c14n_sha256"]` / `xml_c14n_algorithm` and exposed as `FingerprintResult.format_hash` by the new
+  `WsdlCanonicalXmlHasher` / `XsdCanonicalXmlHasher`.
+- `extras["xml_import_graph"]` lists the documents read (`path`, `kind`) and the references nothing answered
+  (`declared_in`, `location`, `reason`) for a description that spans files; `extras["xsd_version"] = "1.1"` for a
+  schema marked `vc:minVersion="1.1"` or using an XSD 1.1-only element (`assert`, `assertion`, `alternative`,
+  `openContent`, `defaultOpenContent`, `override`). 1.1 constructs are not modeled.
+
+### Changed
+- WS-I import checks (`wsi.unresolved-import`, `wsi.wsdl-import-target`) resolve locations with the same rules as the
+  parser, so lint and import agree on a set laid out in folders.
+- `xml_c14n_sha256`, `xml_c14n_algorithm` and `xml_import_graph` join `fingerprint.UNHASHED_EXTRAS`: the version
+  fingerprint is unchanged, so formatting, a documentation edit or a renamed file mints no version.
+- Corpus goldens for every `wsdl`, `wsdl2` and `xsd` example regenerated: additions only (the hash, and the import graph
+  for `wsdl2/06-imported-set`).
+- OpenAPI document version 1.458.0 → 1.459.0 (no schema change).
+
 ## [1.594.0] - 2026-11-01
 
 ### Added

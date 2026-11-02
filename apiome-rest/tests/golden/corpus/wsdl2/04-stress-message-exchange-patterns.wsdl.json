@@ -5,7 +5,9 @@
     "description": null,
     "extras": {
       "wsdl_target_namespace": "http://example.com/meps",
-      "wsdl_version": "2.0"
+      "wsdl_version": "2.0",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "a25de4b4625365ac58a40f562570ac0831b2f344bbd6bb3658be89c20fa3ffba"
     },
     "format": "wsdl",
     "identity": {
@@ -330,7 +332,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:902e0f486747a9f00e5c684256dbf0b262b7a42f32bd1cb9d68fe35d5ef716cc",
+  "fingerprint": "sha256:a38ac5df04df208f56bd5a57965d634f094707785ead672665d15b80e80ca71c",
   "lint": {
     "findings": 16,
     "grade": "D",

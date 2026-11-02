@@ -5,7 +5,22 @@
     "description": null,
     "extras": {
       "wsdl_target_namespace": "http://example.com/billing",
-      "wsdl_version": "2.0"
+      "wsdl_version": "2.0",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "b5438e6a7c7848420571beac3395f52ec0cd1e2cd6a24cd4efc70c52780ac130",
+      "xml_import_graph": {
+        "documents": [
+          {
+            "kind": "wsdl",
+            "path": "service.wsdl"
+          },
+          {
+            "kind": "schema",
+            "path": "invoice.xsd"
+          }
+        ],
+        "unresolved": []
+      }
     },
     "format": "wsdl",
     "identity": {
@@ -239,7 +254,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:e308813dfd4a99145c1d813a3fdd14502bfb8c05285d9782a23604bcf88d5b14",
+  "fingerprint": "sha256:407d243298694c18d3e30718ee418986da3ed49e86f7d40af9f946aa4ee889b8",
   "lint": {
     "findings": 11,
     "grade": "B",

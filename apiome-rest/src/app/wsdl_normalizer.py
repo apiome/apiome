@@ -51,6 +51,7 @@ from .canonical_model import (
 from .normalizer import Keys, Normalizer, normalize_ordering
 from .wsdl_parser import WsdlDocument, WsdlField, WsdlMessage, WsdlOperation
 from .wsdl_versions import VERSION_2_0, operation_kind_for_pattern
+from .xml_canonical_hash import xml_provenance_extras
 
 __all__ = ["WsdlNormalizer"]
 
@@ -526,6 +527,12 @@ class WsdlNormalizer(Normalizer, register=True):
                 **_version_extras(source),
                 **_live_fetch_extras(source),
                 **_wsi_extras(source),
+                # MFI-13.1: the canonical-XML hash over the import graph, the graph, XSD 1.1.
+                **xml_provenance_extras(
+                    c14n_sha256=source.c14n_sha256,
+                    import_graph=source.import_graph,
+                    xsd_version=source.xsd_version,
+                ),
             },
         )
         return normalize_ordering(api)

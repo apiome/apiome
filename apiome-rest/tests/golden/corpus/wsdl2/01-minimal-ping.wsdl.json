@@ -5,7 +5,9 @@
     "description": null,
     "extras": {
       "wsdl_target_namespace": "http://example.com/ping",
-      "wsdl_version": "2.0"
+      "wsdl_version": "2.0",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "f3dce778f1908dd55a612f6938e9a0ef9720b3f6ce4e63abf3012aa941e201f3"
     },
     "format": "wsdl",
     "identity": {
@@ -110,7 +112,7 @@
     "confidence": 0.97,
     "format": "wsdl-2.0"
   },
-  "fingerprint": "sha256:cbb3f192bd3bc1e7fc79f5728c7e83454edaf3d844bc6336919413f282e41e30",
+  "fingerprint": "sha256:d3c34fd068ac3485f9f7befedd54f0590074ba5144f65d882fd09ea750205c28",
   "lint": {
     "findings": 4,
     "grade": "A",

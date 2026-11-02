@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "3333234ee490dc41e70801dadb304d927fbbdc849344549dd2e78e2143c25b71",
       "xsd_elements": [
         {
           "name": "manifest",
@@ -514,7 +516,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:a3caa613c1cd35e4b7ff84a572632a0362decf8e40c1c4fa259639ea3bf71788",
+  "fingerprint": "sha256:922344e0ff295502802e4511a1df638d40e52662b38490382078aaa9aba5238b",
   "lint": {
     "findings": 25,
     "grade": "D",

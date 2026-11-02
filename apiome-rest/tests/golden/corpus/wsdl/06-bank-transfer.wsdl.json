@@ -4,7 +4,9 @@
     "channels": [],
     "description": null,
     "extras": {
-      "wsdl_target_namespace": "http://example.com/banking"
+      "wsdl_target_namespace": "http://example.com/banking",
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "1d5a527daf3e4b354f9062107abdc41eda4cbd14c64840dbb8621b1804143a45"
     },
     "format": "wsdl",
     "identity": {
@@ -532,7 +534,7 @@
     "confidence": 0.97,
     "format": "wsdl"
   },
-  "fingerprint": "sha256:8da085fb04cfa8a592297137846ef3eb452fd1082f0eb9574e878a5d1af9ea68",
+  "fingerprint": "sha256:d80906cb7254f74c314d1fe14c1e3df87d97f6259810e5063262fea98c2260e8",
   "lint": {
     "findings": 27,
     "grade": "F",

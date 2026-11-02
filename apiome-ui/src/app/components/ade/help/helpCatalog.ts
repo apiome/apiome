@@ -946,6 +946,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['xsd', 'singlewsdl', 'wcf', 'discover', 'endpoint', 'xml schema', 'ws-i', 'basic profile', 'document/literal', 'soapaction', 'breaking', 'minoccurs', 'facet', 'fault', 'soap12', 'binding'],
   },
   {
+    id: 'xsd-import',
+    title: 'Import an XML Schema (XSD)',
+    summary: 'Catalog an XSD schema, or a schema split across files, as data types.',
+    page: 'apiome-docs/docs/bring-in/xsd-import.md',
+    section: 'reference',
+    keywords: ['schemalocation', 'redefine', 'override', 'c14n', 'canonical xml', 'vc:minversion'],
+  },
+  {
     id: 'soapui-import',
     title: 'Import a SoapUI or ReadyAPI project',
     summary: 'Catalog a SoapUI or ReadyAPI project, its WSDLs and test suites, as one API.',

@@ -4,6 +4,8 @@
     "channels": [],
     "description": null,
     "extras": {
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "29c967e997f9a1897d709dfefaa83fda71d7c568d955c018695e9f8460ea4808",
       "xsd_elements": [
         {
           "name": "purchaseOrder",
@@ -438,7 +440,7 @@
     "confidence": 0.98,
     "format": "xsd"
   },
-  "fingerprint": "sha256:eb8ccaf12754aec1a25f0f63c401e05518f10b3b34522aa716b1ba49153e70ff",
+  "fingerprint": "sha256:37e50d875e239748a4437507120c362cde591d077f7a32c00f8abc462ee8df74",
   "lint": {
     "findings": 19,
     "grade": "D",
