@@ -87,6 +87,55 @@ you link it.
 Try it with `apiome-ui/examples/fix-orchestra/02-typical-order-repository.xml` and
 `apiome-ui/examples/fix/01-newordersingle.fix`.
 
+## Compare dialects and versions
+
+A repository is a dialect: a venue's or a firm's rules of engagement. Import the next release of a
+repository into the same catalog item, or two venues' repositories as two versions of one item, and
+the comparison grades every change with FIX semantics — by **tag**, by **presence**, by **code set**
+and by **msgType** — rather than by field name alone:
+
+| Change | Severity | Rule |
+| --- | --- | --- |
+| A field renamed, tag and type unchanged | Dangerous: the wire is the same, generated code is not | `fix-orchestra.field-renamed` |
+| A tag reused for a field of another type | Breaking | `fix-orchestra.tag-reused` |
+| A field moved to another tag | Breaking | `fix-orchestra.tag-changed` |
+| A `required` or `constant` field added | Breaking: senders on the old dialect omit it | `fix-orchestra.required-field-added` |
+| Any other field added | Safe | `fix-orchestra.optional-field-added` |
+| A `required` or `constant` field removed | Breaking | `fix-orchestra.required-field-removed` |
+| Any other field removed | Dangerous: a strict receiver rejects what senders still send | `fix-orchestra.optional-field-removed` |
+| Presence tightened to `required` or `constant` | Breaking | `fix-orchestra.made-required` |
+| Presence tightened to `forbidden` | Breaking: senders that send it are rejected | `fix-orchestra.made-forbidden` |
+| `required` relaxed to optional or conditional | Dangerous | `fix-orchestra.made-optional` |
+| A field made `ignored` | Dangerous | `fix-orchestra.made-ignored` |
+| `forbidden` relaxed to optional or conditional | Safe | `fix-orchestra.presence-relaxed` |
+| A `constant` field's value changed | Breaking | `fix-orchestra.constant-changed` |
+| A conditional field's `when` or `assign` rules changed | Dangerous | `fix-orchestra.rules-changed` |
+| A code removed from a code set, or its wire value changed | Breaking | `fix-orchestra.code-removed`, `fix-orchestra.code-value-changed` |
+| A code added to a code set | Safe | `fix-orchestra.code-added` |
+| A message's `msgType` changed | Breaking | `fix-orchestra.msgtype-changed` |
+
+Everything else — a message or component added or removed, a field's datatype changed — is graded
+by the standard rules. Try it: import `apiome-ui/examples/fix-orchestra/02-typical-order-repository.xml`,
+then `08-typical-order-repository-venue-dialect.xml` (the same venue's next release, as a dark-pool
+dialect) into the same item. The comparison reports `TimeInForce` made required, `SecurityIDSource`
+made forbidden, `SellShort` and `Stop` removed from their code sets, `Cross` added, `Price` relaxed
+to conditional, `ExDestination` added, and the new `OrderCancelReject` message.
+
+## Lint
+
+The **Quality** step and the item's **Lint & score** tab add the `fix-orchestra` rules on top of the
+common ones:
+
+| Rule | Severity | Flags |
+| --- | --- | --- |
+| [`fix-orchestra.message-msgtype-declared`](../build/lint-rules.md#fix-orchestra-message-msgtype-declared) | Error | A message with no `msgType`: a counterparty cannot route it |
+| [`fix-orchestra.msgtype-unique`](../build/lint-rules.md#fix-orchestra-msgtype-unique) | Error | Two base-scenario messages share a `msgType` |
+| [`fix-orchestra.message-not-empty`](../build/lint-rules.md#fix-orchestra-message-not-empty) | Warning | A message with no fields, components or groups |
+| [`fix-orchestra.codeset-not-empty`](../build/lint-rules.md#fix-orchestra-codeset-not-empty) | Warning | A code set with no codes |
+| [`fix-orchestra.code-values-unique`](../build/lint-rules.md#fix-orchestra-code-values-unique) | Error | Two codes of a code set share a wire value |
+| [`fix-orchestra.conditional-rule-declared`](../build/lint-rules.md#fix-orchestra-conditional-rule-declared) | Warning | A `conditional` field with no rule saying when it is required |
+| [`fix-orchestra.repository-version-declared`](../build/lint-rules.md#fix-orchestra-repository-version-declared) | Info | A repository with no FIX `version` |
+
 ## Supported versions
 
 | Version | How it is read |

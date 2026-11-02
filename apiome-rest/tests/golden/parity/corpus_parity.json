@@ -1546,11 +1546,11 @@
         "fix-orchestra"
       ],
       "fixtures": {
-        "valid": 9,
+        "valid": 10,
         "negative": 6,
         "adversarial": 0,
         "scale": 0,
-        "total": 15
+        "total": 16
       },
       "rungs": [
         "composition",
@@ -1561,7 +1561,7 @@
         "typical"
       ],
       "rung_waivers": [],
-      "goldens": 14,
+      "goldens": 15,
       "golden_directories": [
         "fix",
         "fix-orchestra"

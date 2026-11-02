@@ -1144,7 +1144,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog the declared FIX schema: messages, code sets, components, groups and presence rules.',
     page: 'apiome-docs/docs/bring-in/fix-orchestra-import.md',
     section: 'reference',
-    keywords: ['rules of engagement', 'msgtype', 'code set', 'presence', 'trading', 'fixr'],
+    keywords: ['rules of engagement', 'msgtype', 'code set', 'presence', 'trading', 'fixr', 'dialect', 'venue', 'breaking change', 'lint', 'tag'],
   },
   {
     id: 'dicom-import',

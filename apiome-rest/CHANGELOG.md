@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.604.0] - 2026-11-02
+
+### Added
+- **FIX Orchestra: dialect / version breaking-change rules, a lint pack and a dialect fixture (MFI-20.4, #3988).** The
+  Orchestra reader, normalizer, seven fixtures and the FIX link already shipped (FMT-6.9); this adds what the ticket
+  still owed — grading a diff across two dialects or versions, and native lint.
+  - New `app/fix_orchestra_breaking.py` (`fix-orchestra.*`, registered under `fix-orchestra`): fields paired by tag
+    (`field-renamed` dangerous, `tag-reused` / `tag-changed` breaking); additions and removals graded by presence
+    (`required-field-added` / `required-field-removed` breaking, `optional-field-added` safe,
+    `optional-field-removed` dangerous); presence transitions (`made-required`, `made-forbidden` breaking;
+    `made-optional`, `made-ignored` dangerous; `presence-relaxed` safe); `constant-changed` breaking; `rules-changed`
+    dangerous; code sets (`code-removed`, `code-value-changed` breaking; `code-added` safe); `msgtype-changed`
+    breaking. Everything else falls back to the baseline.
+  - New `app/fix_orchestra_lint.py` (`fix-orchestra.*`, registered under `fix-orchestra`, so the format lints natively):
+    `message-msgtype-declared`, `msgtype-unique`, `code-values-unique` (error), `message-not-empty`,
+    `codeset-not-empty`, `conditional-rule-declared` (warning), `repository-version-declared` (info).
+  - Fixture `apiome-ui/examples/fix-orchestra/08-typical-order-repository-venue-dialect.xml` — the next release of
+    the typical repository as a dark-pool dialect — with corpus and MCP toolset goldens;
+    `apiome-docs/docs/build/lint-rules.md` regenerated with the new pack.
+
 ## [1.603.0] - 2026-11-02
 
 ### Added

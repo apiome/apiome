@@ -396,6 +396,9 @@ def load_format_breaking_change_classifiers() -> None:
     # Avro breaking-change classifier (MFI-12.4): registers under ``avro`` and grades by Avro schema
     # resolution — BACKWARD breaks are breaking, FORWARD-only breaks dangerous (Confluent's modes).
     from . import avro_breaking as _avro_breaking  # noqa: F401
+    # FIX Orchestra breaking-change classifier (MFI-20.4): registers under ``fix-orchestra`` and
+    # grades dialect / version deltas by tag, presence, code set and msgType.
+    from . import fix_orchestra_breaking as _fix_orchestra_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(
