@@ -1,8 +1,14 @@
 """Shared pytest fixtures for apiome-rest tests."""
 
+import os
 from pathlib import Path
 
 import pytest
+
+# MFI-14.2: a single ``.tsp`` file is compiled through ``tsp`` when the compiler is installed. Pin the
+# built-in reader for the suite so the corpus goldens and adapter tests read the same model on a
+# machine with ``tsp`` as on one without; tests of the compiled single-file path turn it back on.
+os.environ.setdefault("APIOME_TYPESPEC_COMPILE_SINGLE_FILES", "0")
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

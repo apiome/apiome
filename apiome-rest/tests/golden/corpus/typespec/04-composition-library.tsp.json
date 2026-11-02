@@ -4,6 +4,7 @@
     "channels": [],
     "description": null,
     "extras": {
+      "typespec_compiled_via": "reader",
       "typespec_enums": [],
       "typespec_imports": [
         "import \"@typespec/http\"",
@@ -731,7 +732,7 @@
     "confidence": 0.98,
     "format": "typespec"
   },
-  "fingerprint": "sha256:534c097ea8bbf0f5fcefd23c05864dc5e693a7d04805b1d2b9de8a57b71fbc41",
+  "fingerprint": "sha256:ac6da289ca4876c3fb658b57d839990d0ccc3b95813fb8e122c9aafc34930a69",
   "lint": {
     "findings": 15,
     "grade": "B",

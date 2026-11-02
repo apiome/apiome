@@ -1,6 +1,6 @@
 ---
 title: "Import a TypeSpec API"
-description: "Catalog TypeSpec: one .tsp file, or a multi-file project compiled to OpenAPI."
+description: "Catalog a .tsp file or a TypeSpec project, compiled to OpenAPI."
 sidebar_position: 42
 tags: [import, typespec, tsp, openapi, multi-file]
 ---
@@ -17,8 +17,23 @@ Import the definition like any other catalog format: in the [import wizard](./im
 
 | What you have | How it is read |
 | --- | --- |
-| One `.tsp` file | Read by the built-in TypeSpec reader. |
+| One `.tsp` file | Compiled to OpenAPI by the **TypeSpec compiler**, then cataloged from that OpenAPI, exactly like a one-file project. Read by the built-in TypeSpec reader when the server has no compiler. |
 | A TypeSpec project: several `.tsp` files, or a `.tsp` file with its `tspconfig.yaml` (a `.zip`, `.tar.gz` or `.tar`, or a directory from the CLI) | Compiled to OpenAPI by the **TypeSpec compiler**, then cataloged from that OpenAPI. |
+
+Either way the item is built from the **OpenAPI the compiler emits**, so a single file and a project
+have the same operations, types, diff and lint as an OpenAPI import of that document. A single file
+that imports another file (`import "./models.tsp"`) must be uploaded with it, as a project: on its
+own, the import is refused because the file it names is not in the upload.
+
+### Without the compiler
+
+The compiler ships with the Apiome server image. A server without it reads a single `.tsp` file with
+the **built-in reader** instead, and refuses a multi-file project (`ADAPTER_UNAVAILABLE`). The item
+records which one ran in `typespec_compiled_via`: `tsp` or `reader`. An administrator can make every
+single file use the reader by setting `APIOME_TYPESPEC_COMPILE_SINGLE_FILES=0` on the REST server.
+
+Re-importing a single-file item that was read by the reader, once the compiler runs, creates one new
+version: the compiler's OpenAPI names some operations and types differently from the reader.
 
 The built-in reader reads each model's properties, including their decorators, optional `?` marks
 and backticked names, and each enum's members. It reads every interface operation with its verb, its
@@ -57,7 +72,7 @@ The catalog item records how it was built:
 
 | Field | What it holds |
 | --- | --- |
-| `typespec_compiled_via` | `tsp` |
+| `typespec_compiled_via` | `tsp` (`reader` for a single file read without the compiler) |
 | `typespec_openapi_format` | The OpenAPI version the compiler emitted, such as `openapi-3.0` |
 | `typespec_source_files` | The `.tsp` files of the project |
 | `typespec_namespaces` | The namespaces the files declare |

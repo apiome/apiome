@@ -892,7 +892,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'typespec-import',
     title: 'Import a TypeSpec API',
-    summary: 'Catalog TypeSpec: one .tsp file, or a multi-file project compiled to OpenAPI.',
+    summary: 'Catalog a .tsp file or a TypeSpec project, compiled to OpenAPI.',
     page: 'apiome-docs/docs/bring-in/typespec-import.md',
     section: 'reference',
     keywords: ['tsp', 'compile', 'cadl', 'multi-file', 'archive', 'openapi3', 'emitter', 'microsoft', 'tspconfig', 'cli', 'folder', 'linter', 'warnings', 'diagnostics', 'deprecated', 'versioning', 'versioned', 'breaking'],
