@@ -15,7 +15,7 @@ operation. You can then search, version, diff and convert it like any other cata
 | --- | --- |
 | One `.wsdl` file | Upload, paste or link it in the [import wizard](./import-wizard.mdx) (**Import to catalog** → **WSDL**), or `apiome import wsdl ./service.wsdl`. |
 | A WSDL that imports other files | Upload them together as a `.zip`, `.tar.gz` or `.tar`, or `apiome import wsdl ./service-folder/`. |
-| A running SOAP service | `apiome import wsdl --discover https://host/Service.svc` |
+| A running SOAP service | Enter its `?wsdl` URL in **URL Import** (see [In the import wizard](#in-the-import-wizard)), or `apiome import wsdl --discover https://host/Service.svc` |
 
 ## What the catalog item records
 
@@ -82,6 +82,24 @@ assertions and type alternatives are not part of the catalog item.
 
 ## Discover a live service
 
+### In the import wizard
+
+1. On the [Catalog](./catalog.mdx), **click “Import to catalog”** and choose **URL Import**.
+2. Enter the service's description URL as the **Document URL**, for example
+   `https://soap.example.com/Calculator.svc?wsdl`. A bare WCF or ASMX endpoint (`…/Calculator.svc`,
+   `…/Service.asmx`) works too.
+3. **Click “Fetch and detect”**.
+
+The wizard asks the service for **`?singleWsdl`** first, the whole description with its imports
+inlined, and uses **`?wsdl`** when the service does not offer it. The catalog item records the URL
+that answered. A `.wsdl` URL, a `?singleWsdl` URL or any other URL is fetched as you entered it.
+
+The fetch runs in your browser, so the service must allow requests from Apiome (CORS). A `?wsdl`
+description whose schemas are separate documents (`?xsd=xsd0`) arrives without them in the wizard.
+For such a service, use the CLI or upload the files together.
+
+### From the CLI
+
 Give `--discover` the service endpoint (or its `?wsdl` URL):
 
 ```bash
@@ -99,6 +117,21 @@ import. A `?singleWsdl` or `.wsdl` URL is used as given. `--discover` must be th
 
 A `?wsdl` description that imports other documents by URL arrives without them. For such services,
 use `?singleWsdl` when the service offers it, or save the files and upload them together.
+
+### Try it with the CLI fixtures
+
+The CLI's test fixtures, in `apiome-cli/tests/fixtures/`, include one description of each kind:
+
+| Fixture | What it is |
+| --- | --- |
+| `calculator-soap11.wsdl` | WSDL 1.1, document/literal, with a fault and SOAP 1.1 and SOAP 1.2 bindings |
+| `shipping-wsdl20.wsdl` | WSDL 2.0, with in-out and robust-in-only operations |
+| `orders-wsdl-set/` | A WSDL 1.1 description in `wsdl/` whose types live in `schemas/` |
+
+```bash
+apiome import wsdl apiome-cli/tests/fixtures/shipping-wsdl20.wsdl
+apiome import wsdl apiome-cli/tests/fixtures/orders-wsdl-set/
+```
 
 ## WS-I Basic Profile checks
 

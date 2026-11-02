@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- WSDL 2.0: an interface with in-out and robust-in-only operations, a SOAP binding (MFI-13.6). -->
+<description xmlns="http://www.w3.org/ns/wsdl"
+    targetNamespace="urn:example:shipping"
+    xmlns:tns="urn:example:shipping"
+    xmlns:wsoap="http://www.w3.org/ns/wsdl/soap"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <types>
+    <xs:schema targetNamespace="urn:example:shipping" elementFormDefault="qualified">
+      <xs:element name="track">
+        <xs:complexType><xs:sequence>
+          <xs:element name="trackingNumber" type="xs:string"/>
+        </xs:sequence></xs:complexType>
+      </xs:element>
+      <xs:element name="trackResponse">
+        <xs:complexType><xs:sequence>
+          <xs:element name="status" type="xs:string"/>
+          <xs:element name="updatedAt" type="xs:dateTime"/>
+        </xs:sequence></xs:complexType>
+      </xs:element>
+      <xs:element name="cancel">
+        <xs:complexType><xs:sequence>
+          <xs:element name="trackingNumber" type="xs:string"/>
+        </xs:sequence></xs:complexType>
+      </xs:element>
+      <xs:element name="shippingFault">
+        <xs:complexType><xs:sequence>
+          <xs:element name="reason" type="xs:string"/>
+        </xs:sequence></xs:complexType>
+      </xs:element>
+    </xs:schema>
+  </types>
+
+  <interface name="Shipping">
+    <fault name="ShippingFault" element="tns:shippingFault"/>
+    <operation name="Track" pattern="http://www.w3.org/ns/wsdl/in-out">
+      <input element="tns:track"/>
+      <output element="tns:trackResponse"/>
+      <outfault ref="tns:ShippingFault"/>
+    </operation>
+    <operation name="Cancel" pattern="http://www.w3.org/ns/wsdl/robust-in-only">
+      <input element="tns:cancel"/>
+      <outfault ref="tns:ShippingFault"/>
+    </operation>
+  </interface>
+
+  <binding name="ShippingSoap" interface="tns:Shipping" type="http://www.w3.org/ns/wsdl/soap"
+      wsoap:protocol="http://www.w3.org/2003/05/soap/bindings/HTTP/">
+    <operation ref="tns:Track" wsoap:action="urn:example:shipping/Track"/>
+    <operation ref="tns:Cancel" wsoap:action="urn:example:shipping/Cancel"/>
+  </binding>
+
+  <service name="ShippingService" interface="tns:Shipping">
+    <endpoint name="ShippingEndpoint" binding="tns:ShippingSoap" address="https://soap.example.com/shipping"/>
+  </service>
+</description>

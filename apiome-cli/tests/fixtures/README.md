@@ -1,6 +1,6 @@
 # CLI test fixtures
 
-Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, and Avro documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
+Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, Avro, and WSDL documents used by pytest and integration tests. They contain **no credentials, API keys, or PII** — only example titles, paths, channels, types, and workflow IDs suitable for mocked REST tests.
 
 | File | Purpose |
 |------|---------|
@@ -17,6 +17,9 @@ Synthetic OpenAPI, Arazzo, AsyncAPI, GraphQL, gRPC/Protobuf, OData, and Avro doc
 | `sales-odata-v2.xml` | SAP Gateway-style OData v2 service metadata (associations, `sap:` annotations, `m:HttpMethod` function import) for `import odata` tests (MFI-11.6) |
 | `orders-avro.avsc` | Avro `.avsc` record schema (uuid / timestamp-millis / decimal logical types, enum with a `default`, nullable aliased field) for `import avro` file and `--registry` tests (MFI-12.6) |
 | `orders-avro.avdl` | The same orders schema as an Avro IDL protocol (enum default, `error`, one RPC message) for `import avro` tests (MFI-12.6) |
+| `calculator-soap11.wsdl` | WSDL 1.1 document/literal service with a fault and SOAP 1.1 + SOAP 1.2 bindings, for `import wsdl` file and `--discover` tests (MFI-13.6) |
+| `shipping-wsdl20.wsdl` | WSDL 2.0 description (in-out and robust-in-only operations, interface fault, SOAP binding) for `import wsdl` tests (MFI-13.6) |
+| `orders-wsdl-set/` | WSDL 1.1 description in `wsdl/` whose types live in `schemas/orders.xsd` (`../schemas/…`) and `schemas/common/address.xsd`, for directory `import wsdl` tests (MFI-13.6, MFI-13.1) |
 | `export-openapi-lossless.json` | Reconstructed OpenAPI 3.1 document returned by the browse export, for `export openapi` round-trip tests |
 | `export-grpc.proto` | Emitted proto3 document returned by `/export/document`, for `export grpc` round-trip tests (MFX-12.5) |
 | `export-graphql.graphql` | Emitted GraphQL SDL returned by `/export/document`, for `export graphql` round-trip tests (MFX-13.5) |
