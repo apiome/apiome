@@ -78,6 +78,12 @@
       "data": "fixture:hive-import-wizard/mcp.html"
     },
     {
+      "id": "mcp-servers-import-registry",
+      "route": "/ade/dashboard/catalog",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-import-wizard/mcp-registry.html"
+    },
+    {
       "id": "mcp-servers-grid",
       "route": "/ade/dashboard/mcp",
       "waitFor": "#a11y-mount > *",

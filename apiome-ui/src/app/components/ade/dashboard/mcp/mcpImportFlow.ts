@@ -11,6 +11,8 @@
  * panels (`McpImportPanel`, `McpDiscoveryPanel`) and `ImportDialog` consume them.
  */
 
+import { emptyMcpRegistryForm, validateMcpRegistryForm, type McpRegistryForm } from './mcpRegistryImport';
+
 /** Transports accepted by apiome-rest (`MCP_ENDPOINT_TRANSPORTS`). */
 export type McpTransport = 'streamable_http' | 'sse' | 'stdio';
 
@@ -31,8 +33,18 @@ export const MCP_AUTH_TYPE_OPTIONS: { value: McpAuthType; label: string }[] = [
   { value: 'oauth2', label: 'OAuth 2.1 access token' },
 ];
 
+/**
+ * What the MCP source adds: one server by its endpoint URL, or every server a registry lists
+ * (AAU-5.4, #5725 — see `mcpRegistryImport.ts`).
+ */
+export type McpImportMode = 'server' | 'registry';
+
 /** The collected form state for the MCP import source. */
 export interface McpImportForm {
+  /** One server (the fields below) or a whole registry (`registry`). */
+  mode: McpImportMode;
+  /** The registry half of the form, used when `mode` is `registry`. */
+  registry: McpRegistryForm;
   endpointUrl: string;
   transport: McpTransport;
   name: string;
@@ -47,6 +59,8 @@ export interface McpImportForm {
 /** A fresh, empty form with sensible defaults. */
 export function emptyMcpImportForm(): McpImportForm {
   return {
+    mode: 'server',
+    registry: emptyMcpRegistryForm(),
     endpointUrl: '',
     transport: 'streamable_http',
     name: '',
@@ -114,6 +128,7 @@ export function validateMcpEndpointUrl(url: string, transport: McpTransport): st
  * required secret fields per auth type) so the user is corrected before any network call.
  */
 export function validateMcpImportForm(form: McpImportForm): string | null {
+  if (form.mode === 'registry') return validateMcpRegistryForm(form.registry ?? emptyMcpRegistryForm());
   const urlError = validateMcpEndpointUrl(form.endpointUrl, form.transport);
   if (urlError) return urlError;
 

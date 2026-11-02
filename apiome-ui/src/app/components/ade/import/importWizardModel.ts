@@ -188,6 +188,8 @@ export interface ImportFooterState {
   mcpReady?: boolean;
   /** An MCP endpoint registration is in flight. */
   mcpSubmitting?: boolean;
+  /** The MCP source imports a whole registry rather than one server (AAU-5.4). */
+  mcpRegistry?: boolean;
 }
 
 /** One footer button. */
@@ -223,6 +225,12 @@ export interface ImportFooter {
 function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
   const { source, analyzing = false, intakeReady = false } = state;
   if (source === 'mcp') {
+    if (state.mcpRegistry) {
+      return {
+        label: state.mcpSubmitting ? 'Importing servers…' : 'Import servers →',
+        disabled: Boolean(state.mcpSubmitting) || !state.mcpReady,
+      };
+    }
     return {
       label: state.mcpSubmitting ? 'Starting…' : 'Discover →',
       disabled: Boolean(state.mcpSubmitting) || !state.mcpReady,

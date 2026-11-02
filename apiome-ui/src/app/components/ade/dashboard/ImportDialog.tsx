@@ -52,6 +52,15 @@ import {
   validateMcpImportForm,
   type McpImportForm,
 } from './mcp/mcpImportFlow';
+import {
+  buildRegistryConnectorDraft,
+  buildRegistryCredentials,
+  registryRunFailed,
+  summarizeRegistryRun,
+  type RegistryImportSummary,
+} from './mcp/mcpRegistryImport';
+import { createConnector, deleteConnector, syncConnector } from '@lib/connectors-api';
+import { McpRegistryImportDonePanel } from '../import/McpRegistryImportDonePanel';
 import { startImport, getImportStatus, rollbackImport } from '../../../../../lib/db/import-actions';
 import { fetchProjectDelta, type ProjectDeltaState } from '../../../utils/import-project-delta';
 import { planImportVersion } from '../../../utils/import-version-label';
@@ -176,6 +185,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [mcpEndpointName, setMcpEndpointName] = useState<string>('');
   const [mcpJobId, setMcpJobId] = useState<string | null>(null);
   const [mcpSubmitting, setMcpSubmitting] = useState(false);
+  /** A finished "From a registry" import: its connector and what the first sync did (AAU-5.4). */
+  const [registryImport, setRegistryImport] = useState<{ connectorId: string; summary: RegistryImportSummary } | null>(
+    null
+  );
   // A created endpoint is "committed" only once discovery succeeds, or the user explicitly keeps a
   // failed one ("Add this server anyway"). An uncommitted endpoint is discarded (deleted) on
   // back/cancel/close so a failed auth/scan never lingers in the catalog.
@@ -301,7 +314,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
 
   const handleBack = () => {
     setErrorMessage(null);
-    if (currentStep === 'done') {
+    if (currentStep === 'done' && registryImport) {
+      // A registry import has no scan step: Back returns to the form (its connector stays).
+      setRegistryImport(null);
+      setCurrentStep('file-upload');
+    } else if (currentStep === 'done') {
       setCurrentStep('import');
     } else if (currentStep === 'import' && selectedSource === 'mcp') {
       // MCP has no analyze/preview steps — Back returns to the endpoint config form. An uncommitted
@@ -406,6 +423,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setMcpJobId(null);
     setMcpSubmitting(false);
     setMcpEndpointCommitted(false);
+    setRegistryImport(null);
     setErrorMessage(null);
     setJobsDrawerOpen(false);
     deltaRequestRef.current += 1;
@@ -789,6 +807,47 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   };
 
   /**
+   * MCP source, "From a registry" (AAU-5.4, #5725): register an `mcp-registry` connector for the
+   * registry, store its credential, and run its first sync — which pages the registry and adds,
+   * discovers and grades every server with a reachable remote — then land on the Done step with
+   * the counts. A run that failed outright (the registry refused or did not answer, or its URL is a
+   * private address) imported nothing, so its connector is deleted and the reason shown on the form.
+   */
+  const beginMcpRegistryImport = async () => {
+    const validationError = validateMcpImportForm(mcpForm);
+    if (validationError) {
+      setErrorMessage(validationError);
+      return;
+    }
+    setErrorMessage(null);
+    setMcpSubmitting(true);
+    let connectorId: string | null = null;
+    try {
+      const connector = await createConnector(
+        buildRegistryConnectorDraft(mcpForm.registry),
+        buildRegistryCredentials(mcpForm.registry)
+      );
+      connectorId = connector.id;
+      const run = await syncConnector(connector.id);
+      if (registryRunFailed(run)) {
+        await deleteConnector(connector.id).catch(() => undefined);
+        connectorId = null;
+        setErrorMessage(run.errorMessage || 'The registry could not be read.');
+        return;
+      }
+      setRegistryImport({ connectorId: connector.id, summary: summarizeRegistryRun(run) });
+      setImportSucceeded(true);
+      setImportComplete(true);
+      setCurrentStep('done');
+    } catch (error) {
+      if (connectorId) await deleteConnector(connectorId).catch(() => undefined);
+      setErrorMessage(error instanceof Error ? error.message : 'Could not import from the registry.');
+    } finally {
+      setMcpSubmitting(false);
+    }
+  };
+
+  /**
    * Whether the chosen intake has produced something Analyze can read.
    *
    * One expression rather than the six `disabled={…}` clauses the old footer carried, so the
@@ -840,6 +899,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     checkingChanges: currentStep === 'preview' && projectDelta.status === 'checking',
     mcpReady: validateMcpImportForm(mcpForm) === null,
     mcpSubmitting,
+    mcpRegistry: mcpForm.mode === 'registry',
   });
 
   const qualityGate = currentStep === 'analysis' ? importQualityGate(analysisResult) : null;
@@ -867,7 +927,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       return;
     }
     if (currentStep === 'file-upload') {
-      if (selectedSource === 'mcp') void beginMcpImport();
+      if (selectedSource === 'mcp' && mcpForm.mode === 'registry') void beginMcpRegistryImport();
+      else if (selectedSource === 'mcp') void beginMcpImport();
       else void handleAnalyze();
     }
   };
@@ -968,6 +1029,15 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
 
     if (currentStep === 'done') {
+      if (selectedSource === 'mcp' && registryImport) {
+        return (
+          <McpRegistryImportDonePanel
+            connectorId={registryImport.connectorId}
+            summary={registryImport.summary}
+            onNavigate={() => void handleClose()}
+          />
+        );
+      }
       if (selectedSource === 'mcp') {
         return (
           <McpImportDonePanel
