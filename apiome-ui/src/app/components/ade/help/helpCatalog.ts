@@ -173,6 +173,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['target', 'format', 'fidelity', 'losses', 'download', 'convert'],
   },
   {
+    id: 'read-an-exported-file',
+    title: 'Read an exported file',
+    summary: 'Read exactly what an export writes, with its files, problems and round-trip diff.',
+    page: 'apiome-docs/docs/ship/read-an-exported-file.mdx',
+    section: 'reference',
+    keywords: ['viewer', 'monaco', 'bundle', 'file tree', 'markers', 'text diff', 'preview'],
+  },
+  {
     id: 'export-jobs',
     title: 'How an export runs',
     summary: 'The export job pipeline, from version and target to a checked download.',

@@ -1,0 +1,21 @@
+---
+slug: read-an-exported-file
+title: Read exactly what an export writes
+description: "A new guide to the export viewer: bundles, problem markers, large files, diffs."
+authors: [apiome]
+---
+
+The export viewer is complete: the read-only code viewer with each format's highlighting, the file
+tree and tabs for bundles, problem markers from the checks, the round-trip text diff, and the
+large-file limits and viewer actions. A new guide,
+[Read an exported file](/ship/read-an-exported-file), describes all of it.
+
+{/* truncate */}
+
+- **Where it is:** the **Export** dialog's **Export** step, the Export studio's **Review & Generate**
+  step, and the round-trip check's **Text diff**.
+- **What it does:** **Copy**, **Download file**, **Wrap**, **Folding** and **Find**; a tree of a
+  bundle's files with a badge per file with findings; each validation and lint finding with a line
+  underlined in the file, with **Problems** to jump between them.
+- **Large files:** a file over 512 KB shows its beginning on request, and a bundle loads files past
+  its first 2 MB one at a time — the viewer always says what it held back.
