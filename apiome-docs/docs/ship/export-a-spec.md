@@ -702,9 +702,32 @@ The fidelity report lists what FHIR logical models cannot express, construct by 
 
 ### OData (CSDL) from any source
 
+#### When to export to OData
+
+- **Describe an API as an OData service.** Any REST, RPC, GraphQL, JSON Schema or WSDL item becomes
+  CSDL metadata: its resources become entity types with keys and entity sets, and every other
+  operation a Function or Action. Keys Apiome had to infer or add, and what CSDL's type system
+  cannot hold, are listed in the fidelity report before you download.
+- **Round-trip an OData item.** An item imported from OData exports back **lossless**; an OData 2 or
+  3 item is written as CSDL 4.01.
+
+#### OData export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the OData card and its output (CSDL JSON, XML or both) | **Export** dialog → **REST & HTTP** → **OData** | [Where to find the OData card](#where-to-find-the-odata-card) |
+| **See** how types, keys, properties and operations are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-odata) |
+| **See** what is approximated, synthesized or dropped | The fidelity report on the card | [What the fidelity report lists](#what-the-odata-fidelity-report-lists) |
+| **Trust** the file: OASIS schema, references and keys, re-import | Automatic before every download | [How an OData export is checked](#how-an-odata-export-is-checked) |
+| **Export** from the CLI | `apiome export odata <item> --out <file>.csdl.json` | [Where to find the OData card](#where-to-find-the-odata-card) |
+
 Exporting to **OData** writes the service's metadata as **CSDL JSON 4.01** (`<Namespace>.csdl.json`),
 the canonical form. Set the **output** option to `xml` for CSDL XML (`<Namespace>.edmx`), or `both`
-for the two. Each export is checked before you download it, with the same checks an OData import runs:
+for the two.
+
+#### How an OData export is checked {#how-an-odata-export-is-checked}
+
+Each export is checked before you download it, with the same checks an OData import runs:
 
 1. The OASIS **CSDL JSON** schema, or for CSDL XML the OASIS **EDMX / EDM** XML schemas. Each
    violation is listed on its own, with the JSON pointer where it is (`/Demo/Product/ID/$Type`).
@@ -717,6 +740,8 @@ A failed check names the file, the pointer and the rule (`odata.csdl-schema`,
 `odata.csdl-xml-schema`, `odata.unresolved-reference`, `odata.key`, `odata.outputs-disagree`,
 `odata.reimport`). An item imported from OData exports and re-imports as it was read; its types are
 written in one namespace, and every reference is re-qualified to match.
+
+#### How the item is written {#how-the-item-is-written-to-odata}
 
 - **Entity and complex types.** An object an HTTP operation sends or returns is a resource and
   becomes an `EntityType` with an entity set. Any other object becomes a `ComplexType`. An item
@@ -743,6 +768,8 @@ written in one namespace, and every reference is re-qualified to match.
   stay facets, and `Edm.DateTime` becomes `Edm.DateTimeOffset`. The report lists the version
   upgrade and the `sap:` and `m:` annotations, which are not written.
 
+#### What the fidelity report lists {#what-the-odata-fidelity-report-lists}
+
 The fidelity report lists what OData cannot carry, in three groups:
 
 | Group | Source construct | In the report |
@@ -763,7 +790,9 @@ error format), defaults that do not fit, servers, and the document's title, desc
 version. Also approximated: CRUD operations served by an entity set (their query parameters become
 OData query options such as `$top` and `$filter`), unions, maps, aliases and renamed elements.
 
-**Where to find it.** In the **Export** dialog, the **OData** card is under **REST & HTTP** on the
+#### Where to find the OData card {#where-to-find-the-odata-card}
+
+In the **Export** dialog, the **OData** card is under **REST & HTTP** on the
 **Target** step, as one file. Its badge is **lossy** for a REST, RPC, GraphQL, JSON Schema or WSDL
 source and **lossless** for an item imported from OData. Pick the card to see its two options:
 **Output** (`json` by default; `xml` or `both`) and **Include Comments** (on by default), which writes
