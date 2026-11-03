@@ -9,6 +9,27 @@ The **WSDL** importer (`wsdl`) reads a SOAP service description, WSDL 1.1 or 2.0
 [Catalog](./catalog.mdx). Its XSD types become types, and each port-type operation becomes an
 operation. You can then search, version, diff and convert it like any other catalog item.
 
+## When to use it
+
+Use the WSDL importer for any SOAP service: WSDL 1.1 or 2.0 descriptions with SOAP 1.1, SOAP 1.2 or
+HTTP bindings, and the XML Schema types they carry or import. Bring the description in as one file,
+as a set of files that import each other, or point Apiome at the running service (WCF and ASMX
+endpoints included). For an XML Schema on its own, with no service around it, use the
+[XSD importer](./xsd-import.md) instead.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** a `.wsdl` file | **Import to catalog** → **WSDL**, or `apiome import wsdl` | [Import it](#import-it) |
+| **Import** a description split across files | Upload a `.zip`, `.tar.gz` or `.tar`, or `apiome import wsdl ./folder/` | [A description split across files](#a-description-split-across-files) |
+| **Discover** a running SOAP service | **URL Import** with its `?wsdl` URL, or `apiome import wsdl --discover` | [Discover a live service](#discover-a-live-service) |
+| **See** what the description became: services, messages, faults, servers | The catalog item | [What the catalog item records](#what-the-catalog-item-records) |
+| **Check** the bindings and imports against the WS-I Basic Profile | Automatic on every import; problems show in lint | [WS-I Basic Profile checks](#ws-i-basic-profile-checks) |
+| **Compare** two versions by SOAP and XML Schema compatibility | Tick two versions on the catalog item's **Versions** tab | [Breaking changes between versions](#breaking-changes-between-versions) |
+| **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
+| **Export** back to WSDL and XSD | **Export** on the catalog item | [WSDL and XSD from any source](../ship/export-a-spec.md#wsdl-and-xsd-from-any-source) |
+
 ## Import it
 
 | What you have | How to bring it in |

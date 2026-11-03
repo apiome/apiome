@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - SOAP / WSDL — the **Import a SOAP / WSDL service** guide in **Help & docs** now opens with when to use it and a table of every step: import a file, a file set or a live service, the WS-I Basic Profile checks, comparing versions, converting to OpenAPI and exporting back to WSDL and XSD
   - Avro — the **Import an Apache Avro schema** guide in **Help & docs** now opens with when to use it and a table of every step: import a file or a schema registry schema, mirror a registry, fingerprints, comparing versions, the lint pack, converting to OpenAPI, exporting back to Avro and pushing to a registry
   - OData — the **Import an OData service** guide in **Help & docs** now opens with when to use it and a table of every step: import or discover a service, the metadata checks, comparing versions, converting to OpenAPI and exporting back to OData
   - Collections and captured traffic — **Help & docs** lists a new guide, **Collections and captured traffic**: importing Postman, Insomnia, Bruno, Hoppscotch and Thunder Client collections, `.http` files and HAR recordings, how the API is inferred from the requests with every credential removed, and converting the result to OpenAPI
