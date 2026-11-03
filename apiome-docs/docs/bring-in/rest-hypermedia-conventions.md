@@ -61,3 +61,7 @@ A JSON Type Definition schema (JTD, RFC 8927) imports as a data schema, the same
 does: its `properties` become required fields and its `optionalProperties` optional ones. Choose
 **JSON Type Definition** in the import wizard, or upload a `.jtd.json` file. See
 [Supported formats](./supported-formats.md).
+
+## Related
+
+- [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.

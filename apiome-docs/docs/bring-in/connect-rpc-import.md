@@ -85,3 +85,4 @@ representation.
 - [Supported formats](./supported-formats.md): Connect's coverage and export support
 - [What an import records](./what-an-import-records.md): the model every catalog item is stored as
 - [Convert to OpenAPI](./convert-to-openapi.md): how an RPC item becomes an OpenAPI project
+- [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.

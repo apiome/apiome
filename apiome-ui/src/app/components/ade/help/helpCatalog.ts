@@ -285,6 +285,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['postman', 'insomnia', 'bruno', 'hoppscotch', 'thunder', 'har', 'inferred', 'requests', 'scrub', 'secrets'],
   },
   {
+    id: 'rpc-and-event-formats',
+    title: 'RPC and event formats',
+    summary:
+      'Import OpenRPC, xRegistry and CloudEvents, Thrift, FlatBuffers, Cap\'n Proto, Connect RPC and JTD: discovery, versions, lint and conversion.',
+    page: 'apiome-docs/docs/bring-in/rpc-and-event-formats.mdx',
+    section: 'spine',
+    keywords: ['openrpc', 'json-rpc', 'xregistry', 'cloudevents', 'thrift', 'flatbuffers', 'capnproto', 'connect', 'jtd', 'hypermedia', 'idl'],
+  },
+  {
     id: 'how-importing-works',
     title: 'How importing works',
     summary:
