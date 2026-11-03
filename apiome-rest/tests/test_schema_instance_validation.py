@@ -692,3 +692,27 @@ def test_format_is_annotation_by_default_and_asserted_on_request() -> None:
     # The asserted run may still pass when the optional checker dependency is absent; what it
     # must never do is disagree by *reporting a different keyword*.
     assert {f.keyword for f in asserted.findings} <= {"format"}
+
+
+def test_a_prebuilt_registry_is_reused_and_retrieve_is_not_consulted() -> None:
+    """A caller that built the registry once gets the same verdict without any new retrieval."""
+    from app.schema_instance_validation import build_reference_registry
+
+    document = {"$defs": {"Pet": {"type": "object", "required": ["name"]}}}
+    fetched: list = []
+
+    def retrieve(uri: str):
+        fetched.append(uri)
+        return document if uri == "urn:test:doc" else None
+
+    wrapper = {"$ref": "urn:test:doc#/$defs/Pet"}
+    registry, diagnostics = build_reference_registry(wrapper, retrieve=retrieve)
+    assert diagnostics == [] and fetched == ["urn:test:doc"]
+
+    fresh = validate_json_instance(wrapper, {}, retrieve=retrieve)
+    reused = validate_json_instance(wrapper, {}, registry=registry)
+
+    assert fetched == ["urn:test:doc", "urn:test:doc"]  # only the fresh call fetched again
+    assert reused.validated is fresh.validated is True
+    assert [(f.keyword, f.pointer) for f in reused.findings] == [(f.keyword, f.pointer) for f in fresh.findings]
+    assert [f.keyword for f in reused.findings] == ["required"]
