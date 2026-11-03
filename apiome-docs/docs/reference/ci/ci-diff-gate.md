@@ -37,7 +37,7 @@ jobs:
   diff:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: apiome/apiome/diff-action@main
         with:
           spec: openapi.yaml

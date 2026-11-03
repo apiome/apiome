@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pick free host ports
         run: |
@@ -82,7 +82,7 @@ jobs:
         run: docker compose up --build --wait postgres migrate rest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
@@ -110,7 +110,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: catalog-journey-playwright-report
           path: |
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload stack logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: catalog-journey-stack-logs
           path: docker-compose.logs.txt
@@ -156,7 +156,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pick free host ports
         run: |
@@ -183,7 +183,7 @@ jobs:
         run: docker compose up --build --wait postgres migrate rest
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
@@ -211,7 +211,7 @@ jobs:
 
       - name: Upload Playwright report on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: catalog-exporter-journey-playwright-report
           path: |
@@ -226,7 +226,7 @@ jobs:
 
       - name: Upload stack logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: catalog-exporter-journey-stack-logs
           path: docker-compose.logs.txt

@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Pick a free port for the app under test
         run: |
@@ -78,7 +78,7 @@ jobs:
           echo "App under test will listen on ${port}"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
@@ -123,7 +123,7 @@ jobs:
         # Always: the report is as useful when the gate fails as when it passes — more so.
         # The global teardown also appends the per-theme score table to the job summary.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apiome-ui-visual-parity-report
           path: |
@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apiome-ui-visual-parity-traces
           path: apiome-ui/test-results-visual/

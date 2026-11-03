@@ -45,7 +45,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
           #      - name: Pick free host ports
           #        run: |
@@ -89,7 +89,7 @@ jobs:
           #        run: npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
           #
           #      - name: Setup Node.js
-          #        uses: actions/setup-node@v6
+          #        uses: actions/setup-node@v7
           #        with:
           #          node-version: lts/*
           #
@@ -108,12 +108,12 @@ jobs:
           #          CI: "1"
           #
           #      - name: Install uv
-          #        uses: astral-sh/setup-uv@v6
+          #        uses: astral-sh/setup-uv@v10
           #        with:
           #          enable-cache: true
           #
           #      - name: Set up Python
-          #        uses: actions/setup-python@v6
+          #        uses: actions/setup-python@v7
           #        with:
           #          python-version: "3.12"
           #
@@ -127,7 +127,7 @@ jobs:
           #
           #      - name: Upload Playwright report on failure
           #        if: failure()
-          #        uses: actions/upload-artifact@v4
+          #        uses: actions/upload-artifact@v7
           #        with:
           #          name: olo-journey-playwright-report
           #          path: |
@@ -142,7 +142,7 @@ jobs:
           #
           #      - name: Upload stack logs on failure
           #        if: failure()
-          #        uses: actions/upload-artifact@v4
+          #        uses: actions/upload-artifact@v7
           #        with:
           #          name: olo-journey-stack-logs
           #          path: docker-compose.logs.txt

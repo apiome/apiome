@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Read package version
         id: meta
@@ -49,7 +49,7 @@ jobs:
         run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
 
       - name: Build Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # Repo-root context: the Dockerfile bundles the apiome-ui workspace (tsx
           # spec-import worker) alongside the Python app.

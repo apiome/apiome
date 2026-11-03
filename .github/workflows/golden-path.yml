@@ -19,7 +19,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Validate Docker Compose specification
         run: docker compose config
@@ -29,7 +29,7 @@ jobs:
       # runner's vCPU does not provide, so they abort with "CPU ISA level is lower than
       # required". uv's python-build-standalone builds are baseline x86-64.
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10
         with:
           enable-cache: true
           python-version: "3.12"
@@ -61,7 +61,7 @@ jobs:
 
       - name: Upload stack logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: golden-path-stack-logs
           path: docker-compose.logs.txt

@@ -31,13 +31,13 @@ jobs:
 
     steps:
       - name: Checkout the tag
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.release || github.ref }}
           fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
@@ -62,7 +62,7 @@ jobs:
           echo "file=apiome-docs/release-notes/${RELEASE,,}.md" >> "$GITHUB_OUTPUT"
 
       - name: Open a pull request with the post
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           base: main
           branch: release-notes/${{ env.RELEASE }}

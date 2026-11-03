@@ -30,7 +30,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Lint shell scripts
         run: |
@@ -49,7 +49,7 @@ jobs:
         recipe: [gitlab, bitbucket]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Execute the ${{ matrix.recipe }} recipe against a stub CLI
         run: bash diff-action/tests/test_ci_recipes.sh --recipe ${{ matrix.recipe }}
@@ -62,7 +62,7 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build the diff-action image
         run: |

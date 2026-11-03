@@ -67,7 +67,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Start PostgreSQL on a random free port
         run: |
@@ -140,7 +140,7 @@ jobs:
       # runner's vCPU does not provide, so they abort with "CPU ISA level is lower than
       # required". uv's python-build-standalone builds are baseline x86-64.
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10
         with:
           version: "latest"
           python-version: "3.11"
@@ -158,7 +158,7 @@ jobs:
       # bundled tool. Install the pinned toolchain into apiome-rest/.tools, where the editable
       # apiome-rest resolves it, so the drift gate covers the whole corpus.
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
@@ -200,7 +200,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Read package version
         id: meta
@@ -219,7 +219,7 @@ jobs:
         run: echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY" -u "$DOCKER_USERNAME" --password-stdin
 
       - name: Build Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: apiome-mcp/Dockerfile
