@@ -28,7 +28,10 @@ Production applies
 [`docker-compose.prod.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.prod.yml) on
 top of [`docker-compose.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.yml): it adds
 `caddy` (TLS from Let's Encrypt, the only service with host ports — `80` and `443`), `backup`
-(encrypted scheduled backups) and the Studio image, and keeps `seed` out of `up`.
+(encrypted scheduled backups) and the Studio image, and keeps `seed` out of `up`. The Studio image
+builds from `private-suite/designer/Dockerfile` with the `private-suite` repository checked out
+beside `apiome-ui` in the same tree, so `docker compose build` leaves the web app and Studio on the
+same sign-in code; rebuild both whenever you move the checkout.
 
 To try Apiome on one machine, follow [Run Apiome locally](../getting-started/run-locally.md).
 
@@ -57,7 +60,9 @@ The web app and Studio share one sign-in. Two things follow from the hostnames y
 
 - **The session cookie** is scoped to the installation's *registrable domain* — the part of the
   hostname you own. For `app.example.com` that is `.example.com`; for `app.example.co.uk` it is
-  `.example.co.uk`.
+  `.example.co.uk`. The cookie that remembers a person's **active workspace** uses the same
+  domain, so the workspace chosen on the web app is the one Studio opens, and the other way round;
+  signing out on either clears it on both.
 - **After sign-in, a person can be sent** to any `https` host under that same domain, or to one of
   the app URLs you configured (`BETTER_AUTH_URL`, `NEXT_PUBLIC_MAIN_APP_URL`,
   `NEXT_PUBLIC_STUDIO_URL`). Any other address is replaced with the default landing page.

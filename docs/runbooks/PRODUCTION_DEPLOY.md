@@ -259,7 +259,9 @@ dc --profile ops run --rm --entrypoint node backup dist/cli.js backup drill --rt
 cd /opt/apiome
 git pull                      # or check out the target release tag
 
-dc build                      # rebuild images at the new code
+dc build                      # rebuild images at the new code — including `studio`, which builds
+                              # from private-suite/designer/Dockerfile and needs private-suite/
+                              # checked out beside apiome-ui/ at the paired release (BAA-2.1, #6564)
 dc --profile ops  run --rm backup full          # rollback point BEFORE migrating
 dc --profile migrate run --rm migrate migrate --dry-run   # GATE: review pending schema
 dc --profile migrate run --rm migrate           # apply

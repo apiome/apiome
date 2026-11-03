@@ -11,7 +11,7 @@
  *
  * Server-only.
  */
-import { REST_API_BASE_URL } from '../rest-auth';
+import { getRestApiBaseUrl } from '../rest-auth';
 
 /** One `auth_events` row, as `/v1/internal/auth-events` accepts it. */
 export interface AuthEventInput {
@@ -39,7 +39,7 @@ export interface AuthEventInput {
 export async function postAuthEvent(event: AuthEventInput): Promise<void> {
   const token = process.env.INTERNAL_SERVICE_TOKEN?.trim();
   if (!token) return;
-  const base = process.env.REST_API_BASE_URL?.trim().replace(/\/+$/, '') || REST_API_BASE_URL;
+  const base = getRestApiBaseUrl();
   try {
     await fetch(`${base}/internal/auth-events`, {
       method: 'POST',

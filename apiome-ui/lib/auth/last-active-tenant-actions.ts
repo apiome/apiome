@@ -17,8 +17,8 @@ import { cookies } from 'next/headers';
 import { getAuthSession } from '@lib/auth/server-session';
 import {
   LAST_ACTIVE_TENANT_COOKIE,
-  LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
   isWellFormedTenantId,
+  lastActiveTenantCookieOptions,
 } from './last-active-tenant';
 import { validateTenantSwitch } from './post-login-routing';
 
@@ -40,16 +40,16 @@ export async function persistLastActiveTenant(tenantId: string): Promise<void> {
   await writeLastActiveTenantCookie(tenantId);
 }
 
-/** Write the durable last-active-tenant cookie for an already-validated tenant id. */
+/**
+ * Write the durable last-active-tenant cookie for an already-validated tenant id.
+ *
+ * The attributes — including the shared cookie domain that makes the choice visible on the studio
+ * origin too (BAA-2.2, apiome #6565) — come from `lastActiveTenantCookieOptions()` and are restated
+ * nowhere else.
+ */
 async function writeLastActiveTenantCookie(tenantId: string): Promise<void> {
   const store = await cookies();
-  store.set(LAST_ACTIVE_TENANT_COOKIE, tenantId, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
-  });
+  store.set(LAST_ACTIVE_TENANT_COOKIE, tenantId, lastActiveTenantCookieOptions());
 }
 
 /**

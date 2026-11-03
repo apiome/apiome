@@ -56,6 +56,30 @@ describe('serverLogout', () => {
     expect(domainCalls).toHaveLength(0);
   });
 
+  it('expires the last-active-tenant cookie on the shared domain too (BAA-2.2)', async () => {
+    // Every writer scopes the tenant cookie to the shared domain in production
+    // (`lastActiveTenantCookieOptions`), and a host-only delete cannot remove a domain-scoped
+    // cookie — so logout has to expire both forms, or the next sign-in on either origin would
+    // silently restore the old tenant.
+    (getSharedCookieDomain as jest.Mock).mockReturnValue('.apiome.dev');
+    await serverLogout();
+
+    expect(mockDelete).toHaveBeenCalledWith(LAST_ACTIVE_TENANT_COOKIE);
+    expect(mockSet).toHaveBeenCalledWith(
+      LAST_ACTIVE_TENANT_COOKIE,
+      '',
+      expect.objectContaining({ domain: '.apiome.dev', maxAge: 0, path: '/', httpOnly: true }),
+    );
+  });
+
+  it('does not emit a domain-scoped tenant-cookie expiry when there is no shared domain', async () => {
+    (getSharedCookieDomain as jest.Mock).mockReturnValue(undefined);
+    await serverLogout();
+
+    const tenantSets = mockSet.mock.calls.filter(([name]) => name === LAST_ACTIVE_TENANT_COOKIE);
+    expect(tenantSets).toHaveLength(0);
+  });
+
   it('also domain-scopes the expiry for shareable cookies, but never for __Host-', async () => {
     (getSharedCookieDomain as jest.Mock).mockReturnValue('.apiome.dev');
     await serverLogout();
