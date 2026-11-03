@@ -122,8 +122,24 @@ Realised in `apiome-ui/lib/auth/better-auth-session.ts` (pure env-driven builder
   in prod, inferred otherwise; host-only in dev). Every other attribute (`sameSite=lax`, `secure`,
   `httpOnly`, `__Secure-`/`__Host-` prefixes) is already Better Auth's default and matches
   `buildAuthCookieOverrides()`. Better Auth's cookie name differs (`better-auth.session_token` /
-  `__Secure-…`); the studio's mirror (`private-suite/.../designer/lib/auth/cookie-options.ts`) must be
-  updated in lockstep (BAA-1.3 #2541) or a studio login stops being an app login.
+  `__Secure-…`); the studio's mirror (`private-suite/.../designer/lib/auth/cookie-options.ts`) was
+  **deleted** by BAA-1.3 (#2541) — the studio imports this instance, so it inherits the cookie
+  configuration rather than restating it.
+- **Active-tenant cookie (BAA-2.2, #6565):** `apiome.last-active-tenant` — the durable hint the
+  session's `current_tenant_id` is derived from at read time — is scoped to the **same**
+  `getSharedCookieDomain()` as the session cookie (`lastActiveTenantCookieOptions()` in
+  `lib/auth/last-active-tenant.ts`, the one place its attributes are stated), and `serverLogout()`
+  expires both the host-only and the domain-scoped form. Written host-only, the main app and the
+  studio read one session but derived different active tenants, and the service bearer each minted
+  named a different `current_tenant_id`.
+- **Service bearer (BAA-2.3, #6566):** `lib/rest-auth.ts` is the **only** implementation of the HS256
+  bearer sent to apiome-rest and `spire` — the `user_id`/`sub`/`email`/`name`/`current_tenant_id`
+  claims plus `two_factor_elevated` (from `session.twoFactorElevated`, never `user.twoFactorEnabled`;
+  `lib/auth/session-elevation.ts`), signed with `BETTER_AUTH_SECRET` for one hour, with the REST
+  base URL resolved at call time (`getRestApiBaseUrl()`: `REST_API_BASE_URL`, then the build-time
+  `NEXT_PUBLIC_REST_API_BASE_URL`). The studio re-exports this module
+  (`private-suite/designer/lib/rest-auth.ts`, BAA-2.4) instead of carrying a copy; the claim table is
+  pinned in `private-suite/docs/contracts/suite-auth-token.contract.json`.
 - **Trusted origins:** `buildBetterAuthTrustedOrigins()` trusts the configured app/studio origins plus
   a `https://*<cookie-domain>` wildcard so a login can still return to a sibling subdomain covered by
   the shared cookie — the Better Auth equivalent of `isAllowedCallbackUrl`'s cookie-domain rule.

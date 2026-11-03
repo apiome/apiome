@@ -152,6 +152,8 @@ We continue to improve the platform based on your feedback with improvements and
 - Browse:
   - Versions created before Apiome recorded each version's format now show under the **format** and **paradigm** filters too: OpenAPI versions as `openapi` (or their exact version, such as `openapi-3.1`, when Apiome knows it) and Arazzo versions as `arazzo`, both under **REST**. Before, they matched no format or paradigm filter
 - Sign-in:
+  - The workspace you pick is the same on the web app and on Studio: the choice is now kept on the sign-in's shared domain rather than on the site you made it on, so switching workspace in one is switching it in the other, and signing out clears it in both
+  - Studio is built from the same checkout as the web app again (`docker compose build studio` had been pointing at a Dockerfile that did not exist), and the two now sign the service token they send to the API with one shared module
   - Confirming a new account no longer flashes *We could not sign you in automatically* before the **Let's set up your first workspace** screen
   - **Sign In** stays disabled while you are being signed in, instead of turning back on and inviting a second click; it comes back only if the attempt fails
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel

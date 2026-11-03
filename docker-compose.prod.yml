@@ -135,7 +135,11 @@ services:
   studio:
     build:
       context: .
-      dockerfile: private-suite/suite/designer/Dockerfile
+      # The studio's Dockerfile builds from this monorepo root with `private-suite/` checked out
+      # beside `apiome-ui/` — the studio imports the main app's auth instance, cookie resolver and
+      # service-bearer signer from that sibling, so `dc build studio` is what keeps the two on the
+      # same library code (BAA-2.1, #6564; pairing in private-suite/docs/SUITE_AUTH_CUTOVER.md).
+      dockerfile: private-suite/designer/Dockerfile
       # NEXT_PUBLIC_* values are baked into the Next.js bundle at build time,
       # so they must be passed here as build args — the runtime environment
       # copies below do not affect the compiled client code.

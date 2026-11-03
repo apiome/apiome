@@ -23,8 +23,8 @@
 import { cookies, headers } from 'next/headers';
 import {
   LAST_ACTIVE_TENANT_COOKIE,
-  LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
   isWellFormedTenantId,
+  lastActiveTenantCookieOptions,
 } from './last-active-tenant';
 import type { VerifyOneTimeCodeResult } from './better-auth-one-time-code';
 
@@ -52,15 +52,10 @@ export async function completeOneTimeCodeSignIn(
 
     // Seed the durable active tenant so the derived session tenant matches the NextAuth path. The id
     // is re-shape-checked here (defence in depth) even though the endpoint returns a trusted value.
+    // The attributes (shared cookie domain included, BAA-2.2) are the one builder every writer uses.
     if (result?.tenantId && isWellFormedTenantId(result.tenantId)) {
       const store = await cookies();
-      store.set(LAST_ACTIVE_TENANT_COOKIE, result.tenantId, {
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: LAST_ACTIVE_TENANT_MAX_AGE_SECONDS,
-      });
+      store.set(LAST_ACTIVE_TENANT_COOKIE, result.tenantId, lastActiveTenantCookieOptions());
     }
     return { ok: true };
   } catch (error) {

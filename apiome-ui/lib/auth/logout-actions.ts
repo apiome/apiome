@@ -9,14 +9,17 @@
  *
  *   1. **The durable `apiome.last-active-tenant` cookie** (OLO-6.1) — the tenant hint is not part of the
  *      auth session, so `signOut` never removes it; leaving it would silently restore the old tenant on
- *      the next login. This is the primary reason the action still exists.
+ *      the next login. This is the primary reason the action still exists. Since BAA-2.2 (apiome
+ *      #6565) the cookie is scoped to the shared cookie domain in production, so it is expired both
+ *      host-only and domain-scoped, like the session cookies below.
  *   2. **Any lingering legacy NextAuth session cookie** — a transitional cleanup for users whose
  *      pre-cutover (OLO-10.14) `__Secure-next-auth.session-token` is still in the browser (up to its
  *      30-day TTL). Better Auth ignores these cookies, but expiring them on logout keeps the browser
  *      tidy. Safe to drop once the cutover bake window has passed.
  *
  * Shared-cookie aware: a plain host-only expiry does not remove a cookie scoped to
- * `BETTER_AUTH_COOKIE_DOMAIN`, so both a host-only and a domain-scoped expiry are emitted in production.
+ * `BETTER_AUTH_COOKIE_DOMAIN`, so both a host-only and a domain-scoped expiry are emitted in production
+ * — for the tenant cookie as well as for the session cookies.
  */
 
 import { cookies } from 'next/headers';
@@ -46,8 +49,19 @@ export async function serverLogout(): Promise<void> {
   const store = await cookies();
   const domain = getSharedCookieDomain();
 
-  // Durable tenant hint: host-scoped only, so a single host-only delete suffices.
+  // Durable tenant hint. The host-only delete covers development and any pre-BAA-2.2 cookie; the
+  // domain-scoped expiry removes the shared cookie every writer sets in production.
   store.delete(LAST_ACTIVE_TENANT_COOKIE);
+  if (domain) {
+    store.set(LAST_ACTIVE_TENANT_COOKIE, '', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 0,
+      domain,
+    });
+  }
 
   for (const name of SESSION_COOKIE_NAMES) {
     // `__Secure-`/`__Host-` cookies only ever exist over https, so they must be

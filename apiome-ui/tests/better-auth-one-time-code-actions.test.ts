@@ -19,6 +19,11 @@ jest.mock('next/headers', () => ({
 jest.mock('@lib/auth/auth', () => ({
   auth: { api: { verifyOneTimeCode: mockVerifyOneTimeCode } },
 }));
+// The shared cookie domain the tenant cookie is scoped to (BAA-2.2); `undefined` keeps it host-only.
+const mockSharedCookieDomain = jest.fn<string | undefined, []>();
+jest.mock('@lib/auth/cookie-options', () => ({
+  getSharedCookieDomain: () => mockSharedCookieDomain(),
+}));
 
 import { completeOneTimeCodeSignIn } from '@lib/auth/better-auth-one-time-code-actions';
 import { LAST_ACTIVE_TENANT_COOKIE } from '@lib/auth/last-active-tenant';
@@ -28,6 +33,20 @@ const VALID_TENANT_ID = '11111111-2222-3333-4444-555555555555';
 describe('completeOneTimeCodeSignIn', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSharedCookieDomain.mockReturnValue(undefined);
+  });
+
+  it('scopes the seeded tenant cookie to the shared cookie domain, like the session cookie (BAA-2.2)', async () => {
+    mockSharedCookieDomain.mockReturnValue('.apiome.dev');
+    mockVerifyOneTimeCode.mockResolvedValue({ ok: true, tenantId: VALID_TENANT_ID });
+
+    await completeOneTimeCodeSignIn('code-123');
+
+    expect(mockCookieSet).toHaveBeenCalledWith(
+      LAST_ACTIVE_TENANT_COOKIE,
+      VALID_TENANT_ID,
+      expect.objectContaining({ domain: '.apiome.dev', httpOnly: true, sameSite: 'lax', path: '/' })
+    );
   });
 
   it('redeems the code and seeds the last-active-tenant cookie on success', async () => {
