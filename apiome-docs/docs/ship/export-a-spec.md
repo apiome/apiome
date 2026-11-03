@@ -398,7 +398,31 @@ Thrift import, keeps them.
 
 ### Thrift from any source
 
+#### When to export to Thrift
+
+- **Move an API to Thrift.** An OpenAPI, gRPC, GraphQL, WSDL or Avro item becomes one `.thrift` file
+  of structs, enums, unions, exceptions and services that the Thrift compiler accepts, for services and
+  stacks that still speak Thrift. What Thrift cannot carry is listed in the fidelity report before you
+  download.
+- **Keep clients compatible across exports.** Apiome stores each field id it assigns, so every later
+  export of the item gives a field the same id and never reuses a removed one.
+- **Round-trip a Thrift item.** An item imported from Thrift exports **lossless**, with its field ids,
+  namespaces and `typedef`s.
+
+#### Thrift export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the Apache Thrift card and its options (comments, namespaces) | **Export** dialog → **Apache Thrift** (under **RPC**) | [Where to find the Apache Thrift card](#where-to-find-the-apache-thrift-card) |
+| **See** how types, errors, services, field ids and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-thrift) · [scalar types from OpenAPI](#protobuf-and-thrift-from-an-openapi-source) |
+| **See** what Thrift cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-thrift-fidelity-report-lists) |
+| **Trust** the file: the Thrift compiler, thriftpy2, then re-import | Automatic before every download | [How a Thrift export is checked](#how-a-thrift-export-is-checked) |
+| **Export** from the CLI | `apiome export thrift <item> --out <file>.thrift` | [Where to find the Apache Thrift card](#where-to-find-the-apache-thrift-card) |
+
 Exporting to **Apache Thrift** writes one `<Name>.thrift` file that the Thrift compiler accepts.
+
+#### How a Thrift export is checked {#how-a-thrift-export-is-checked}
+
 Each export is checked before you download it:
 
 1. The **Thrift compiler** (`thrift`) compiles it when the server has the compiler. A compile error
@@ -412,6 +436,8 @@ Each export is checked before you download it:
 A failed check names the file and the rule (`thrift.compile`, `thrift.thriftpy2-parse`,
 `thrift.parser-disagreement`, `thrift.reimport`). An item imported from Thrift exports and re-imports
 unchanged.
+
+#### How the item is written {#how-the-item-is-written-to-thrift}
 
 - **Types.** Objects become `struct`s, enums `enum`s, and unions `union`s. A union that only lists
   its member types gets one optional field per member. Aliases and named scalars become `typedef`s,
@@ -440,6 +466,8 @@ unchanged.
   written as a comment above it — `// constraints: >= 1; max length 40; pattern ^[A-Z]+$` — for the
   people reading the file. Nothing enforces them.
 
+#### What the fidelity report lists {#what-the-thrift-fidelity-report-lists}
+
 The fidelity report lists what Thrift cannot carry, each on the construct it affects:
 
 | What the source has | What the report says | Kind |
@@ -459,7 +487,9 @@ The fidelity report lists what Thrift cannot carry, each on the construct it aff
 Exporting an OpenAPI, gRPC, GraphQL, WSDL or Avro source to Thrift and reading it back shows no
 change the report did not name.
 
-**Where to find it.** In the **Export** dialog, the **Apache Thrift** card is under **RPC** on the
+#### Where to find the Apache Thrift card {#where-to-find-the-apache-thrift-card}
+
+In the **Export** dialog, the **Apache Thrift** card is under **RPC** on the
 **Target** step, as one file. Its badge is **lossless** for an item imported from Thrift and **lossy**
 for any other source. Pick the card to see **Include Comments** (on by default), which writes the
 header comment. The **namespaces** option (`namespace` lines per language) is set from the CLI or the
