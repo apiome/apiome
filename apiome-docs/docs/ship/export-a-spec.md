@@ -974,8 +974,32 @@ or with `both` a zip of the two documents.
 
 ### OpenRPC from any source
 
+#### When to export to OpenRPC
+
+- **Describe an API as JSON-RPC 2.0.** A gRPC, REST, GraphQL or event item becomes an OpenRPC
+  document of methods and notifications, the description format of the JSON-RPC ecosystem (Ethereum,
+  MetaMask, Filecoin, Starknet). REST operations are reframed as methods with by-name `params`, and
+  publish and subscribe operations as notifications. What JSON-RPC cannot carry is listed in the
+  fidelity report before you download.
+- **Round-trip an OpenRPC item.** An item imported from OpenRPC exports **lossless** and re-imports
+  unchanged.
+
+#### OpenRPC export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the OpenRPC card (one option: `indent`, set from the CLI or the API) | **Export** dialog → **OpenRPC** (under **RPC**) | [Where to find the OpenRPC card](#where-to-find-the-openrpc-card) |
+| **See** how the document, methods, notifications, REST operations, events and schemas are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-openrpc) |
+| **See** what OpenRPC cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-openrpc-fidelity-report-lists) |
+| **Trust** the document: the meta-schema, `$ref` resolution, then re-import | Automatic before every download | [How an OpenRPC export is checked](#how-an-openrpc-export-is-checked) |
+| **Export** from the CLI | `apiome export openrpc <item> --out <file>.openrpc.json` | [Where to find the OpenRPC card](#where-to-find-the-openrpc-card) |
+
 Exporting to **OpenRPC** writes an `openrpc.json` document that is valid against the OpenRPC
-meta-schema. Each export is checked before it is offered:
+meta-schema.
+
+#### How an OpenRPC export is checked {#how-an-openrpc-export-is-checked}
+
+Each export is checked before it is offered:
 
 1. It is validated against the OpenRPC meta-schema. Each violation is listed on its own, with the
    JSON pointer where it is (`/methods/0/params`).
@@ -985,6 +1009,8 @@ meta-schema. Each export is checked before it is offered:
 
 A failed check names the rule (`openrpc.meta-schema`, `openrpc.unresolved-ref`, `openrpc.reimport`).
 An item imported from OpenRPC exports and re-imports unchanged.
+
+#### How the item is written {#how-the-item-is-written-to-openrpc}
 
 - **Document.** `info` carries the title, version and description. OpenRPC requires a version, so
   an item without one gets `0.0.0`, and the report says so. Servers keep their name, description
@@ -1011,6 +1037,8 @@ An item imported from OpenRPC exports and re-imports unchanged.
   as the OpenAPI export. Every `$ref` names a written component, and scalars such as `int64` or
   `timestamp` become their JSON Schema form (`{"type": "integer", "format": "int64"}`).
 
+#### What the fidelity report lists {#what-the-openrpc-fidelity-report-lists}
+
 The fidelity report lists what OpenRPC cannot carry. JSON-RPC 2.0 has no HTTP semantics, no
 streams and no channels, so each loss of a REST, gRPC or event item is listed on its own:
 
@@ -1035,7 +1063,9 @@ any value).
 - **Carried.** For each operation that is carried, the report names the method or notification it
   became, such as `method getPet`.
 
-**Where to find it.** In the **Export** dialog, the **OpenRPC** card is under **RPC** on the **Target**
+#### Where to find the OpenRPC card {#where-to-find-the-openrpc-card}
+
+In the **Export** dialog, the **OpenRPC** card is under **RPC** on the **Target**
 step, as one `<Name>.openrpc.json` file. Its badge is **lossless** for an item imported from OpenRPC and
 **lossy**, with the share it keeps, for an item of any other paradigm: REST (OpenAPI, WSDL, RAML), RPC
 (Thrift, Smithy), GraphQL or a data schema. Its one option, **indent** (`2` by default; `0` for compact
