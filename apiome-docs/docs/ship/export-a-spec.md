@@ -1047,6 +1047,29 @@ A lossy export exits non-zero unless you add `--force`, and `--json` prints the 
 
 ### Cap'n Proto from any source
 
+#### When to export to Cap'n Proto
+
+- **Move an API to Cap'n Proto.** Any item becomes a `.capnp` schema of structs, enums, unions and
+  interfaces that `capnp compile` accepts, for a Cap'n Proto RPC service and its messages.
+  What Cap'n Proto cannot carry is listed in the fidelity report before you download.
+- **Keep readers compatible across exports.** Apiome stores each field number and the file's `@0x…`
+  id, so every later export writes the same ones, and a removed field keeps its slot as
+  `obsolete<Name>`.
+- **Round-trip a Cap'n Proto item.** An item imported from Cap'n Proto exports **lossless**, with its
+  own numbers and file id.
+
+#### Cap'n Proto export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the Cap'n Proto card and its option (comments) | **Export** dialog → **Cap'n Proto** (under **RPC**) | [Where to find the Cap'n Proto card](#where-to-find-the-capn-proto-card) |
+| **See** how types, services, names, numbers and constraints are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-capn-proto) |
+| **See** what Cap'n Proto cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-capn-proto-fidelity-report-lists) |
+| **Trust** the schema: `capnp compile` | Automatic before every download, when the server has the compiler | [How a Cap'n Proto export is checked](#how-a-capn-proto-export-is-checked) |
+| **Export** from the CLI | `apiome export capnp <item> --out <file>.capnp` | [Where to find the Cap'n Proto card](#where-to-find-the-capn-proto-card) |
+
+#### How the item is written {#how-the-item-is-written-to-capn-proto}
+
 Exporting to **Cap'n Proto** writes a `.capnp` schema that compiles with `capnp compile`, whatever
 the item was imported from:
 
@@ -1070,6 +1093,8 @@ the item was imported from:
   comment just above it (`# constraints: >= 1; <= 100`). Nothing checks them. With
   **include_comments** off they are left out.
 
+#### What the fidelity report lists {#what-the-capn-proto-fidelity-report-lists}
+
 The fidelity report lists, on each operation, type and field, what the schema changed:
 
 | In the source | In the report |
@@ -1082,11 +1107,15 @@ The fidelity report lists, on each operation, type and field, what the schema ch
 | A field, enum value or method with no Cap'n Proto number; the file id | Synthesized (note) |
 | A name that breaks Cap'n Proto's rules | Approximated (note), naming the new name |
 
+#### How a Cap'n Proto export is checked {#how-a-capn-proto-export-is-checked}
+
 When the server has the Cap'n Proto compiler, every export is compiled before it is delivered. A
 schema that does not compile fails the export, and the check lists each compiler error with its file,
 line and column. A schema that imports other `.capnp` files is not compiled on its own.
 
-**Where to find it.** In the **Export** dialog, the **Cap'n Proto** card is under **RPC** on the
+#### Where to find the Cap'n Proto card {#where-to-find-the-capn-proto-card}
+
+In the **Export** dialog, the **Cap'n Proto** card is under **RPC** on the
 **Target** step, as one `.capnp` file. Its badge is **lossless** for an item imported from Cap'n Proto
 and **lossy** for any other source. Pick the card to see **Include Comments** (on by default). The
 numbers and file id Apiome stored for the item are reused on every export, so a field you remove keeps
@@ -1096,6 +1125,29 @@ non-zero unless you add `--force`, and `--json` prints the tier. A public item's
 Browse offers Cap'n Proto too, as the `.capnp` file.
 
 ### FlatBuffers from any source
+
+#### When to export to FlatBuffers
+
+- **Hand the data types to a FlatBuffers reader.** Any item becomes one `.fbs` schema of tables,
+  structs, enums and unions that `flatc` compiles, for games, embedded devices and robotics.
+  Operations and channels are left out, and the card says so (**types-only**).
+- **Keep readers compatible across exports.** Apiome stores each field id, so every later export
+  writes the same ids, and a removed field keeps its slot as `(deprecated)`.
+- **Round-trip a FlatBuffers item.** An item imported from FlatBuffers exports **lossless**, with its
+  own ids, deprecated slots and `root_type`.
+
+#### FlatBuffers export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the FlatBuffers card and its options (root type, comments) | **Export** dialog → **FlatBuffers** (under **Data schema & graph**) | [Options](#flatbuffers-export-options) · [Where to find the FlatBuffers card](#where-to-find-the-flatbuffers-card) |
+| **See** how types, scalars, defaults, names and constraints are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-flatbuffers) |
+| **See** how field ids are kept from one export to the next | — | [Field ids](#flatbuffers-field-ids) |
+| **See** what FlatBuffers cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-flatbuffers-fidelity-report-lists) |
+| **Trust** the schema: `flatc`, or a re-import without it | Automatic before every download | [How a FlatBuffers export is checked](#how-a-flatbuffers-export-is-checked) |
+| **Export** from the CLI | `apiome export flatbuffers <item> --out <file>.fbs` | [Where to find the FlatBuffers card](#where-to-find-the-flatbuffers-card) |
+
+#### How the item is written {#how-the-item-is-written-to-flatbuffers}
 
 Exporting to **FlatBuffers** writes one `<Name>.fbs` schema that compiles with `flatc`, whatever the
 item was imported from — for games, embedded devices and robotics. Operations and channels are left
@@ -1122,7 +1174,9 @@ out: a FlatBuffers schema describes data only.
   comment just above it (`// constraints: max length 12; pattern ^[A-Z]+$`). Nothing checks them.
   With **include_comments** off they are left out.
 
-**Field ids.** Every table field is written with its id, `(id: N)`, in id order — the id is what a
+#### Field ids {#flatbuffers-field-ids}
+
+Every table field is written with its id, `(id: N)`, in id order — the id is what a
 reader matches a field by. Ids start at `0`, and a union field takes two (its hidden `<name>_type`
 field and its value). Apiome remembers the ids it assigned for the item, so every later export writes
 the same ids and an unchanged item exports byte for byte the same. A field added since gets the next
@@ -1130,12 +1184,14 @@ free id. A field removed from the source keeps its id as a `(deprecated)` placeh
 from the earlier schema still read the other fields correctly. A FlatBuffers import keeps its own ids
 and deprecated slots.
 
-Options:
+#### Options {#flatbuffers-export-options}
 
 - **root_type** — the table a buffer starts with, by type name (`Order`) or key. By default it is the
   imported schema's `root_type`, and none for other sources. Naming a type that is not a table is
   refused.
 - **include_comments** — on by default; descriptions are written as `///` comments.
+
+#### What the fidelity report lists {#what-the-flatbuffers-fidelity-report-lists}
 
 The fidelity report lists, on each type and field, what the schema changed:
 
@@ -1151,12 +1207,16 @@ The fidelity report lists, on each type and field, what the schema changed:
 
 A FlatBuffers import keeps its own ids, so its report lists no synthesized id.
 
+#### How a FlatBuffers export is checked {#how-a-flatbuffers-export-is-checked}
+
 When the server has the FlatBuffers compiler, every export is compiled with `flatc` before it is
 delivered. A schema that does not compile fails the export, and the check lists each compiler error
 with its file, line and column. Without the compiler, the export is read back with Apiome's FlatBuffers
 importer. A schema that includes other `.fbs` files is not compiled on its own.
 
-**Where to find it.** In the **Export** dialog, the **FlatBuffers** card is under **Data schema &
+#### Where to find the FlatBuffers card {#where-to-find-the-flatbuffers-card}
+
+In the **Export** dialog, the **FlatBuffers** card is under **Data schema &
 graph** on the **Target** step, as one `.fbs` file. Its badge is **lossless** for an item imported from
 FlatBuffers and **types-only** for any other source (FlatBuffers keeps the tables and leaves out the
 operations). Pick the card to see **Include Comments** (on by default) and **Root Type** (the table
