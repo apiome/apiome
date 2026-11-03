@@ -1,0 +1,20 @@
+---
+slug: thrift-export-overview
+title: Apache Thrift export, end to end
+description: The Thrift export guide now opens with when to use it and every step.
+authors: [apiome]
+---
+
+Apache Thrift export is complete: the IDL emitter, stable field-id assignment, its fidelity pack,
+validation with the Thrift compiler and thriftpy2, and the **Apache Thrift** target card, CLI and
+fixtures. [Thrift from any source](/ship/export-a-spec#thrift-from-any-source) now opens with an
+overview of all of it.
+
+{/* truncate */}
+
+- **When to export to Thrift:** to move an OpenAPI, gRPC, GraphQL, WSDL or Avro item to a `.thrift`
+  file, to keep clients compatible with field ids that stay the same from one export to the next,
+  or to round-trip a Thrift item losslessly.
+- **At a glance:** one table from the **Apache Thrift** card and its options, through how the item
+  is written and what the fidelity report lists, to the compiler and thriftpy2 checks before every
+  download and the CLI.
