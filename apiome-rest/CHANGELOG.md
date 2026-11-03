@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.615.0] - 2026-11-03
+
+### Changed
+- **WSDL fidelity pack (MFX-14.2, #3890).** The WSDL export's fidelity report now names the JSON → XSD mapping
+  losses, construct by construct, from the losses the WSDL writer records — so the report and the export agree:
+  - a union is an `xs:choice` of child elements (`APPROX`, warn); a union with no alternatives is an empty
+    `xs:choice` (`DROP`);
+  - a nullable value is `nillable="true" minOccurs="0"` (`APPROX`, info);
+  - a field's examples are not written (`DROP`, info) — new writer loss `example-dropped`;
+  - a constraint with no XSD facet (`multipleOf`, `uniqueItems`, an untranslatable `pattern`) is a `DROP`
+    (warn) instead of an `APPROX`, because the rule is not written.
+  A construct with one of these losses is never also reported `OK`. A WSDL or XSD source is XML already and
+  records none of them. The emitted WSDL and XSD are unchanged.
+- `xsd_schema.XsdSchemaWriter` takes `record_json_mapping` (implied by `standalone`): it records
+  `union-as-choice` / `union-dropped`, `null-as-nillable` and `example-dropped` without changing the output.
+  `schema_field_verdicts` takes `facets` (default `True`, so WADL is unchanged).
+- The Petstore OpenAPI → WSDL card reads `lossy`, 13 % preserved (was 25 %): its seven nullable fields are now
+  reported. Fixtures regenerated: `tests/fixtures/wsdl_target/outcomes.json`, the CLI's
+  `export-targets-wsdl.json` / `export-job-completed-wsdl-lossy.json` and the UI's `export-targets-wsdl-rest.json`.
+- OpenAPI document version 1.478.1 → 1.479.0.
+
 ## [1.614.1] - 2026-11-03
 
 ### Fixed

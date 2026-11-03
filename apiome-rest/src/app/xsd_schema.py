@@ -24,6 +24,11 @@ and the approximations a fidelity report must name are recorded as losses — a 
 ``xs:choice`` (or dropped when it has no alternatives), a nullable value written ``nillable`` and
 optional, an example kept only as an annotation. WSDL and WADL keep their own behaviour.
 
+**JSON-mapping report** (``record_json_mapping=True``, the WSDL export — MFX-14.2, #3890): the output is
+unchanged, but the same approximations are recorded — ``union-as-choice`` (``union-dropped`` for a union
+with no alternatives), ``null-as-nillable`` — and a field's examples, which a WSDL's schema does not
+write, are recorded as ``example-dropped``. Standalone mode implies it.
+
 **XSD 1.1** (``xsd_version="1.1"``): the schema is marked ``vc:minVersion="1.1"`` and ``multipleOf``
 becomes an ``xs:assertion`` facet (``$value mod 5 = 0``), which XSD 1.0 has no facet for.
 
@@ -119,6 +124,8 @@ class XsdSchemaWriter:
             ``target_namespace``). Every namespace in ``type_namespaces`` needs one.
         xsd_version: ``"1.0"`` (default) or ``"1.1"``.
         standalone: Write and record the standalone XSD export's conventions (see the module docstring).
+        record_json_mapping: Record how JSON-shaped constructs are mapped (unions, null, examples) without
+            changing the output (see the module docstring). Implied by ``standalone``.
     """
 
     def __init__(
@@ -134,6 +141,7 @@ class XsdSchemaWriter:
         prefixes: Optional[Mapping[str, str]] = None,
         xsd_version: str = "1.0",
         standalone: bool = False,
+        record_json_mapping: bool = False,
     ) -> None:
         self._api = api
         self.target_namespace = target_namespace
@@ -143,6 +151,8 @@ class XsdSchemaWriter:
         self._skip = skip_types
         self.xsd_version = xsd_version
         self.standalone = standalone
+        #: Record the JSON → XSD mapping losses (unions, null, examples); the output does not change.
+        self.record_json_mapping = standalone or record_json_mapping
         self._types_by_key = {t.key: t for t in api.types}
         #: Type key → type, for callers that describe what a type became.
         self.types_by_key = self._types_by_key
@@ -302,7 +312,14 @@ class XsdSchemaWriter:
             else:
                 choice = ET.SubElement(complex_el, ET.QName(XSD_NS, "choice"))
                 self._append_union_members(choice, type_)
-                if self.standalone:
+                if self.record_json_mapping and not len(choice):
+                    self.losses.record(
+                        LossKind.NA, "union-dropped",
+                        f"Union {type_.key!r} has no alternatives an xs:choice can name; it is written as an "
+                        "empty xs:choice, which no value matches.",
+                        pointer=type_.key,
+                    )
+                elif self.record_json_mapping:
                     names = ", ".join(el.get("name") or "" for el in choice)
                     self.losses.record(
                         LossKind.INFERRED, "union-as-choice",
@@ -460,9 +477,11 @@ class XsdSchemaWriter:
             return
         fmt = field.constraints.format if field.constraints is not None else None
         optional = field.type.nullable and not in_choice
-        examples = field_examples(field) if self.standalone else []
-        if self.standalone:
-            self._record_standalone_notes(field, optional=optional, examples=examples)
+        examples = field_examples(field) if self.record_json_mapping else []
+        if self.record_json_mapping:
+            self._record_json_mapping_notes(field, optional=optional, examples=examples)
+        if not self.standalone:
+            examples = []  # only the standalone export writes examples (as xs:documentation)
         self.append_value(
             parent,
             name,
@@ -478,8 +497,17 @@ class XsdSchemaWriter:
             pointer=field.key,
         )
 
-    def _record_standalone_notes(self, field: CanonicalField, *, optional: bool, examples: List[Any]) -> None:
-        """Record what a standalone XSD export approximates about one field (null vs absent, examples)."""
+    def _record_json_mapping_notes(self, field: CanonicalField, *, optional: bool, examples: List[Any]) -> None:
+        """Record what the export approximates or drops about one JSON-shaped field.
+
+        Args:
+            field: The field being written.
+            optional: Whether it is written ``minOccurs="0"`` (a nullable value outside a choice).
+            examples: The examples the source kept on it.
+
+        The standalone XSD export keeps examples as ``xs:documentation`` (``example-as-annotation``); a
+        WSDL's schema does not write them (``example-dropped``).
+        """
         if optional and field.type.item is None:
             self.losses.record(
                 LossKind.INFERRED, "null-as-nillable",
@@ -487,7 +515,13 @@ class XsdSchemaWriter:
                 'written nillable="true" minOccurs="0", so either form is accepted for a null value.',
                 pointer=field.key,
             )
-        if examples:
+        if examples and not self.standalone:
+            self.losses.record(
+                LossKind.NA, "example-dropped",
+                f"{self._label}'s XML Schema has no examples; the example(s) of {field.key!r} are not written.",
+                pointer=field.key,
+            )
+        elif examples:
             self.losses.record(
                 LossKind.INFERRED, "example-as-annotation",
                 f"XSD has no examples; the example(s) of {field.key!r} are kept as xs:documentation, which a "
@@ -724,9 +758,20 @@ def schema_type_verdict(type_: Type, *, target_label: str) -> Optional[FidelityV
 
 
 def schema_field_verdicts(
-    field: CanonicalField, *, target_label: str, version: str = "1.0"
+    field: CanonicalField, *, target_label: str, version: str = "1.0", facets: bool = True
 ) -> List[FidelityVerdict]:
-    """Everything XSD changes or cannot carry about one field (rename, untyped, facets, deprecated)."""
+    """Everything XSD changes or cannot carry about one field (rename, untyped, facets, deprecated).
+
+    Args:
+        field: The source field.
+        target_label: The export target's label (``"WSDL"``, ``"WADL"``).
+        version: The XSD version written (``"1.1"`` has a facet for ``multipleOf``).
+        facets: Report constraints with no XSD facet here (``APPROX``). A pack that reports them from
+            the writer's ``unsupported-facet`` loss instead (WSDL: a ``DROP``) passes ``False``.
+
+    Returns:
+        The verdicts, in order; ``[]`` when XSD keeps the field as it is.
+    """
     verdicts: List[FidelityVerdict] = []
     renamed = rename_verdict(
         field.name, ncname(field.name, fallback="field"), target_label=target_label, noun="element"
@@ -741,7 +786,7 @@ def schema_field_verdicts(
                 target_mapping="untyped → xs:anyType",
             )
         )
-    unsupported = unsupported_facets(field.constraints, version=version)
+    unsupported = unsupported_facets(field.constraints, version=version) if facets else []
     if unsupported:
         verdicts.append(
             FidelityVerdict.approx(
