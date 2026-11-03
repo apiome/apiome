@@ -145,6 +145,30 @@ version.
 
 ### AsyncAPI 3.1, 3.0 and 2.6
 
+#### When to export to AsyncAPI
+
+- **Round-trip an event API.** An item imported from AsyncAPI, or any other event source, exports
+  back **lossless**: its channels, operations, messages and schemas are kept.
+- **Describe a REST or RPC API as messages.** A REST or RPC item exports **lossy**. Each
+  request / response operation is reframed as a `send` operation with a `reply`. The HTTP method,
+  path and response status are not represented, and the fidelity report says so for each
+  operation (see [Worked examples](./export-fidelity.md#worked-examples)).
+- **Serve consumers on an older AsyncAPI.** Write 3.0 or 2.6 instead of 3.1; what the older version
+  cannot hold is listed before you download.
+
+#### AsyncAPI export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the AsyncAPI card and its version | **Export** dialog → **Events** → **AsyncAPI** | [Versions](#asyncapi-versions) |
+| **See** what is kept, reframed or dropped | The fidelity report on the card | [Understand export fidelity](./export-fidelity.md#worked-examples) |
+| **Trust** the file | Checked with the AsyncAPI parser before every download | [Exports checked with the format's own tool](#exports-checked-with-the-formats-own-tool) |
+| **Export** from the CLI | `apiome export asyncapi --project … --version … -o asyncapi.json`, or `apiome export asyncapi-3 <item> --out …` | [Export from the CLI](./export-from-the-cli.md) |
+
+A REST or RPC source is lossy, so from the CLI it exits non-zero unless you add `--force`.
+
+#### Versions {#asyncapi-versions}
+
 Exporting to **AsyncAPI** writes AsyncAPI **3.1** by default. Set **asyncapi_version** to `3.0` or `2.6`
 for consumers on an older version; the badge then reads `3.0 · downgrade` or `2.6 · downgrade`.
 
