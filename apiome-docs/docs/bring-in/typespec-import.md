@@ -9,6 +9,27 @@ The **TypeSpec** importer (`typespec`) reads a [TypeSpec](https://typespec.io/) 
 (`.tsp`) into the [Catalog](./catalog.mdx). You can then search, version, diff, lint and convert it
 like any other catalog item.
 
+## When to use it
+
+Use the TypeSpec importer when your API is designed in TypeSpec: one `.tsp` file, or a project of
+several files with its `tspconfig.yaml`. Apiome compiles it with the TypeSpec compiler and the
+standard libraries (`@typespec/http`, `@typespec/rest`, `@typespec/openapi3`,
+`@typespec/versioning`), so the catalog item matches the OpenAPI your own build would emit, and a
+versioned service brings every version with it.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** a `.tsp` file | **Import to catalog** → **TypeSpec**, or `apiome import typespec` | [Import it](#import-it) |
+| **Import** a project of several files | Upload a `.zip`, `.tar.gz` or `.tar`, or `apiome import typespec ./folder/` | [Multi-file projects](#multi-file-projects) |
+| **Tune** the emitted OpenAPI | A `tspconfig.yaml` beside the root `.tsp` | [`tspconfig.yaml`](#tspconfigyaml) |
+| **Review** compiler and linter warnings | Automatic on every compile; warnings show in lint | [Compiler and linter warnings](#compiler-and-linter-warnings) |
+| **Track** a versioned service's versions | Automatic for `@versioned` services; each step is graded | [Versioned services](#versioned-services) |
+| **Fix** a refused import | The error code the import returns | [When the import refuses a project](#when-the-import-refuses-a-project) |
+| **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Convert to OpenAPI](./convert-to-openapi.md) |
+| **Export** back to TypeSpec | **Export** on the catalog item | [TypeSpec from any source](../ship/export-a-spec.md#typespec-from-any-source) |
+
 ## Import it
 
 Import the definition like any other catalog format: in the [import wizard](./import-wizard.mdx)
