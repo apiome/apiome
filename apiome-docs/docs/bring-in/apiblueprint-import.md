@@ -10,6 +10,23 @@ document (`.apib`, or any file with a `FORMAT: 1A` line) into the [Catalog](./ca
 API Blueprint is no longer actively developed; once the API is cataloged you can version, diff and
 lint it, and [move it to OpenAPI](#move-to-openapi).
 
+## When to use it
+
+Use the API Blueprint importer for an existing Format 1A blueprint: Markdown with MSON data
+structures, in one file. The format's repository was archived in November 2024, so bring the
+blueprint in to catalog, lint and diff what you have, then move it to OpenAPI for new work.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** an `.apib` file, or a blueprint saved as `.md` | **Import to catalog** → **API Blueprint**, or `apiome import apiblueprint` | [Import it](#import-it) |
+| **See** what the blueprint became: groups, actions, MSON types | The catalog item | [What the catalog item holds](#what-the-catalog-item-holds) |
+| **Check** it with drafter, the reference parser | Automatic on every import; warnings show in lint | [What drafter adds](#what-drafter-adds) |
+| **Lint** it | The `apiblueprint` lint pack | [Lint rules](../build/lint-rules.md#pack-apiblueprint) |
+| **Migrate** to an OpenAPI 3.1 project | **Convert to OpenAPI Project** on the catalog item, or `apiome convert --to openapi` | [Move to OpenAPI](#move-to-openapi) |
+| **Export** back to API Blueprint | **Export** on the catalog item | [API Blueprint from any source](../ship/export-a-spec.md#api-blueprint-from-any-source) |
+
 ## Import it
 
 Import the blueprint like any other catalog format: in the [import wizard](./import-wizard.mdx)
