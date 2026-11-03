@@ -139,3 +139,4 @@ result with the migrate note.
 - [Import ONC RPC (XDR) definitions](./oncrpc-import.md): the other early RPC format
 - [Import an OpenRPC document](./openrpc-import.md): the JSON-RPC description the migrate note targets
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

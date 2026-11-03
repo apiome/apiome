@@ -161,3 +161,4 @@ compare the result with the migrate note.
 - [Supported formats](./supported-formats.md): ONC RPC's coverage and export support
 - [Import XML-RPC method descriptions](./xmlrpc-import.md): the other early RPC format
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

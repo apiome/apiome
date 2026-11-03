@@ -1,0 +1,84 @@
+---
+title: Legacy, mainframe and middleware formats
+description: Catalog COBOL copybooks, z/OS Connect, WADL, CORBA, ASN.1, XML-RPC and ONC RPC.
+sidebar_position: 38.7
+tags: [import, mainframe, cobol, copybook, zos-connect, cics, ims, wadl, corba, idl, asn1, xml-rpc, onc-rpc, xdr, migration]
+---
+
+Some of the most important interfaces in a company are also the oldest. A CICS program exchanges
+COBOL records, a Java service still serves WADL, a telecom back-end talks CORBA, and every X.509
+certificate is defined in ASN.1. These contracts rarely have an OpenAPI document. Apiome imports each
+of them into the [Catalog](./catalog.mdx) with its own importer, so they can be searched,
+versioned, diffed and linted next to your modern APIs, and moved to a modern format when you are
+ready.
+
+Use this page to find the right importer. Each one has its own page with the details.
+
+## What you can import
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **COBOL copybook** | The record layout of a mainframe file, message or CICS COMMAREA (`.cpy`) | `cobolcopybook` | [Import COBOL copybooks](./cobol-copybook-import.md) |
+| **z/OS Connect** | The descriptor that binds a REST operation to the COBOL structures a CICS or IMS program passes | `zosconnect` | [Link z/OS Connect to its copybooks](./zos-connect-binding.md) |
+| **WADL** | The XML REST description that came before OpenAPI, still served by JAX-RS back-ends | `wadl` | [Import WADL descriptions](./wadl-import.md) |
+| **CORBA IDL** | OMG IDL interfaces, operations and types, from telecom, defense and finance back-ends | `corbaidl` | [Import CORBA IDL (OMG IDL) definitions](./corba-idl-import.md) |
+| **ASN.1** | The schema language behind X.509, 4G / 5G signalling, SNMP and LDAP | `asn1` | [Import ASN.1 modules](./asn1-import.md) |
+| **XML-RPC** | Method calls, responses and faults of an XML-RPC service | `xmlrpc` | [Import XML-RPC method descriptions](./xmlrpc-import.md) |
+| **ONC RPC** | `rpcgen` `.x` files: programs, procedures and XDR types | `oncrpc` | [Import ONC RPC (XDR) definitions](./oncrpc-import.md) |
+
+## How it works
+
+1. **Import the file.** **Go to Bring in → Catalog**, **click "Import to catalog"**, and upload or
+   paste it on **File Upload**. Files that belong together go in one archive (`.zip`, `.tar.gz`).
+   From the CLI, use `apiome import cobolcopybook`, `apiome import wadl`, `apiome import corbaidl`,
+   `apiome import asn1`, `apiome import xmlrpc` or `apiome import oncrpc`.
+2. **It lands in the Catalog.** Records, interfaces, modules and methods become types and
+   operations, with what their encoding depends on: a copybook's byte offsets and lengths, ASN.1's
+   tags and constraints, CORBA's positional members.
+3. **Compare versions by how the wire sees them.** Import a newer file into the same item and tick
+   two versions on its **Versions** tab. Each format grades a change by what it does to a reader
+   that still has the old contract:
+   - a [COBOL copybook](./cobol-copybook-import.md#versions-and-changes) by **byte position**;
+   - [CORBA IDL](./corba-idl-import.md#versions-and-changes) by operation **name** and member
+     **position**, as GIOP and CDR do;
+   - [ASN.1](./asn1-import.md#versions-and-changes) by **tag**, **position** and
+     **extension marker**, as BER, DER and PER decoders do;
+   - [WADL](./wadl-import.md#versions-and-changes),
+     [XML-RPC](./xmlrpc-import.md#versions-and-changes) and
+     [ONC RPC](./oncrpc-import.md#versions-and-changes) by their own rules.
+4. **Lint it.** Each format adds its own rules on the item's **Lint & score** tab. See
+   [COBOL](./cobol-copybook-import.md#lint), [WADL](./wadl-import.md#lint),
+   [CORBA IDL](./corba-idl-import.md#lint), [ASN.1](./asn1-import.md#lint),
+   [XML-RPC](./xmlrpc-import.md#lint) and [ONC RPC](./oncrpc-import.md#lint).
+
+## Link a mainframe API to its copybooks
+
+z/OS Connect binds each REST operation to a request and a response structure in a copybook. Import
+the descriptor, its copybooks and the OpenAPI document, then **click "Suggest links"** in
+**Related artifacts** on the descriptor's item to keep the three sides together. See
+[Link z/OS Connect to its copybooks](./zos-connect-binding.md).
+
+## Move to a modern format
+
+Every item writes back out in its own format from **Export**, and each one also has a way forward:
+
+| From | To | How |
+| --- | --- | --- |
+| WADL | OpenAPI | **Convert to OpenAPI Project** on the item ([Migrate to OpenAPI](./wadl-import.md#migrate-to-openapi)) |
+| XML-RPC | JSON-RPC / OpenRPC | Export to **OpenRPC** and compare with the item's [migrate note](./xmlrpc-import.md#the-migrate-note) |
+| ONC RPC | gRPC | Export to **Protocol Buffers** and compare with the item's [migrate note](./oncrpc-import.md#the-migrate-note) |
+| CORBA IDL | gRPC | Export to **Protocol Buffers** ([Export](./corba-idl-import.md#export)) |
+| COBOL copybook | JSON Schema | Export to **JSON Schema** to describe the record to a modern consumer ([Export](./cobol-copybook-import.md#export)) |
+
+## More mainframe formats
+
+Apiome also reads the rest of a mainframe estate:
+[PL/I structures](./pli-structure-import.md), [IMS DBD and PSB](./ims-dbd-psb-import.md),
+[Natural / ADABAS DDM](./natural-ddm-import.md) and
+[VSAM cluster definitions and CICS BMS maps](./vsam-cics-bms-import.md).
+
+## Where next
+
+- [Supported formats](./supported-formats.md): every format and the versions each importer reads.
+- [How importing works](./how-importing-works.mdx): every import source and import history.
+- [Export a specification](../ship/export-a-spec.md): every export target and what it keeps.

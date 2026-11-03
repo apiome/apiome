@@ -187,3 +187,4 @@ through the **WADL** target; see [Export a spec](../ship/export-a-spec.md). Para
 - [Import WSDL descriptions](./wsdl-import.md): the SOAP counterpart
 - [Import RAML](./raml-import.md): another pre-OpenAPI REST description
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

@@ -163,3 +163,4 @@ An ASN.1 item writes back out as an ASN.1 module through the **ASN.1** target; s
 - [Supported formats](./supported-formats.md): ASN.1's coverage and export support
 - [Import CORBA IDL (OMG IDL) definitions](./corba-idl-import.md): another long-lived interface language
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.
