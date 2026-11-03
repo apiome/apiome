@@ -1639,8 +1639,31 @@ When the source has no server, the base URI `https://api.example.com/` is used, 
 
 ### RAML from any source
 
+#### When to export to RAML
+
+- **Supply a tool that still reads RAML.** A REST item is written as one RAML 1.0 document with its
+  resources, methods, types and facets. RAML is no longer actively developed, so prefer OpenAPI for
+  new work; the fidelity report lists what RAML cannot carry before you download.
+- **Round-trip a RAML item.** An item imported from RAML exports back **lossless**, with its resource
+  types and traits already applied to each method.
+
+RAML describes REST APIs only. A GraphQL, gRPC, event or data-schema item exports at most its types,
+and its report starts with **RAML captures REST only**.
+
+#### RAML export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the RAML card and its options | **Export** dialog → **REST & HTTP** → **RAML** | [Where to find the RAML card](#where-to-find-the-raml-card) |
+| **See** how the document, types and resources are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-raml) |
+| **See** what RAML cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-raml-fidelity-report-lists) |
+| **Trust** the file: AMF validation and re-import | Automatic before every download | [How a RAML export is checked](#how-a-raml-export-is-checked) |
+| **Export** from the CLI | `apiome export raml <item> --out <file>.raml` | [Where to find the RAML card](#where-to-find-the-raml-card) |
+
 Exporting to **RAML** writes one `<Name>.raml` file in RAML 1.0, starting with the `#%RAML 1.0` header
 line that RAML tools require.
+
+#### How the item is written {#how-the-item-is-written-to-raml}
 
 - **Document.** The item's title, description and version, its first server as `baseUri` (server
   variables become `baseUriParameters`), and a `mediaType`: a RAML item keeps its own; otherwise it is
@@ -1654,6 +1677,8 @@ line that RAML tools require.
   `uriParameters`. Each operation is a method with its operation name as `displayName` (when the
   source names it), its description, query parameters, headers and body, and its responses by status
   code with their description, headers and body.
+
+#### What the fidelity report lists {#what-the-raml-fidelity-report-lists}
 
 RAML describes REST APIs only. An item from GraphQL, gRPC, an event or data-schema format, or an agent
 descriptor gets a warning at the top of its fidelity report: **RAML captures REST only**. The warning
@@ -1682,6 +1707,8 @@ An item imported from RAML is written back as it was read. Its resource types an
 applied to each method when it is imported, so the export writes the methods in full, without `type:`
 or `is:`, and the report says so.
 
+#### How a RAML export is checked {#how-a-raml-export-is-checked}
+
 Each export is checked before you download it:
 
 1. **AMF** validates it against RAML 1.0 when the server has the AMF toolchain. A violation fails the
@@ -1694,7 +1721,9 @@ shows what RAML could not keep, and the fidelity report names each of those chan
 in the report: Apiome's RAML reader does not read `displayName`, so an operation's name reads back as
 its method and path (`DELETE /reindex`).
 
-**Where to find it.** In the **Export** dialog, the **RAML** card is under **REST & HTTP** on the
+#### Where to find the RAML card {#where-to-find-the-raml-card}
+
+In the **Export** dialog, the **RAML** card is under **REST & HTTP** on the
 **Target** step, as one file. Its badge is **lossless** for an item imported from RAML and **lossy**
 for any other source. A GraphQL, RPC or data-schema item's fidelity report, on the **Fidelity** step,
 starts with **RAML captures REST only**. Pick the card to see its two options: **Include Comments** (on
