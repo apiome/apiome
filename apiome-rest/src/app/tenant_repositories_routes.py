@@ -31,6 +31,11 @@ from .models import (
     RefreshHistoryEntryOut,
     RefreshHistoryPageResponse,
     RefreshHistoryPaginationOut,
+    RepositoryRefreshAppliedOut,
+    RepositoryRefreshDefaultsOut,
+    RepositoryRefreshDefaultsResponse,
+    RepositoryRefreshDefaultsUpdate,
+    RepositoryRefreshInheritanceOut,
     RepositoryBranchRefreshOut,
     RepositoryBranchRefreshResponse,
     RepositoryBranchRefreshRuleOut,
@@ -325,6 +330,13 @@ def _row_to_record(
                 row.get("refresh_conflict_policy"), default=DEFAULT_CONFLICT_POLICY
             )
         ).value,
+        # RAR-3.1 cadence and RAR-6.5 inheritance; pre-column rows follow the defaults.
+        refresh_interval_seconds=(
+            int(row["refresh_interval_seconds"]) if row.get("refresh_interval_seconds") is not None else None
+        ),
+        inherits_refresh_interval=row.get("inherits_refresh_interval") is not False,
+        inherits_conflict_policy=row.get("inherits_conflict_policy") is not False,
+        inherits_auto_refresh=row.get("inherits_auto_refresh") is not False,
         # REPO-6.5 badge; omitted (null) when health signals could not be read.
         health=RepositoryHealthOut(**health) if health else None,
         created_at=_ts(row.get("created_at")),
@@ -1725,12 +1737,16 @@ async def update_tenant_repository(
     payload: TenantRepositoryUpdate,
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> TenantRepositoryGetResponse:
-    """Patch mutable repository settings (RAR-3.3 auto-refresh toggle, #3524).
+    """Patch mutable repository settings (RAR-3.3, RAR-4.5, RAR-6.5).
 
-    Applies only the fields present in the request body. Currently the per-repo
-    ``auto_refresh_enabled`` opt-out: when set to False the auto-refresh sweep skips
-    this repository (manual "Refresh Now" is unaffected). Returns the updated
-    repository record. 404 when the repository does not belong to the tenant.
+    Applies only the fields present in the request body: the per-repo
+    ``auto_refresh_enabled`` opt-out (the sweep skips a repository with it off; manual
+    "Refresh Now" is unaffected), the ``refresh_conflict_policy``, and the
+    ``refresh_interval_seconds`` cadence. Setting any of the three overrides the
+    workspace refresh default for that setting; ``use_workspace_defaults`` lists the
+    settings that follow the defaults again (applied last). Returns the updated
+    repository record. 400 for a bad policy or a cadence below the deployment minimum;
+    404 when the repository does not belong to the tenant.
     """
     enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT)
     _ = tenant_slug
@@ -1749,12 +1765,203 @@ async def update_tenant_repository(
         if stored is None:
             raise HTTPException(status_code=404, detail="repository not found")
 
+    if payload.refresh_interval_seconds is not None:
+        # RAR-6.5: a repository may override the workspace cadence, but not go below the floor.
+        _require_interval_at_least_floor(payload.refresh_interval_seconds)
+        if db.set_repository_refresh_interval(tenant_id, rid, payload.refresh_interval_seconds) is None:
+            raise HTTPException(status_code=404, detail="repository not found")
+
+    if payload.use_workspace_defaults:
+        if not db.restore_repository_refresh_defaults(tenant_id, rid, list(payload.use_workspace_defaults)):
+            raise HTTPException(status_code=404, detail="repository not found")
+
     row = db.get_tenant_repository(tenant_id, rid)
     if not row:
         raise HTTPException(status_code=404, detail="repository not found")
     health = _repository_health_by_id(tenant_id, [rid])
     return TenantRepositoryGetResponse(
         success=True, repository=_row_to_record(row, health.get(rid))
+    )
+
+
+# --- RAR-6.5 workspace refresh defaults (#3542) ------------------------------------------
+
+
+def _refresh_floor_seconds() -> int:
+    """The shortest cadence a repository or the workspace defaults may set."""
+    from .config import settings
+
+    return max(1, settings.refresh_min_interval_seconds)
+
+
+def _require_interval_at_least_floor(interval_seconds: int) -> None:
+    """Reject a cadence below the deployment minimum with a 400 that names it.
+
+    Args:
+        interval_seconds: The requested cadence.
+
+    Raises:
+        HTTPException: 400 when the cadence is below the floor.
+    """
+    floor = _refresh_floor_seconds()
+    if interval_seconds < floor:
+        raise HTTPException(
+            status_code=400, detail=f"refresh interval must be at least {floor} seconds"
+        )
+
+
+def _caller_is_tenant_admin(auth_data: Dict[str, Any]) -> bool:
+    """Whether the caller passes the tenant-administrator check (without raising)."""
+    try:
+        require_tenant_admin_session(db, auth_data)
+    except HTTPException:
+        return False
+    return True
+
+
+def _refresh_defaults_response(
+    tenant_id: str,
+    *,
+    can_edit: bool,
+    applied: Optional[Dict[str, int]] = None,
+) -> RepositoryRefreshDefaultsResponse:
+    """Load a workspace's refresh defaults and how many repositories follow them (RAR-6.5).
+
+    Args:
+        tenant_id: The workspace.
+        can_edit: Whether the caller may change the defaults.
+        applied: After a re-apply, how many repositories changed per setting.
+
+    Returns:
+        The defaults (the built-in values, ``configured: false``, when none are stored), the
+        inheritance counts, and the re-apply counts when given.
+    """
+    from .repository_refresh_defaults import resolve_refresh_defaults
+
+    row = db.get_repository_refresh_defaults(tenant_id)
+    defaults = resolve_refresh_defaults(row)
+    counts = db.count_repository_refresh_inheritance(tenant_id)
+    return RepositoryRefreshDefaultsResponse(
+        refresh_defaults=RepositoryRefreshDefaultsOut(
+            configured=row is not None,
+            refresh_interval_seconds=defaults.refresh_interval_seconds,
+            conflict_policy=defaults.conflict_policy,
+            auto_refresh_enabled=defaults.auto_refresh_enabled,
+            min_interval_seconds=_refresh_floor_seconds(),
+            available_conflict_policies=[p.value for p in ConflictPolicy],
+            can_edit=can_edit,
+            updated_by=str(row["updated_by"]) if row and row.get("updated_by") else None,
+            updated_at=_ts(row.get("updated_at")) if row else None,
+            inheriting=RepositoryRefreshInheritanceOut(
+                repositories=counts["repositories"],
+                refresh_interval=counts["refresh_interval"],
+                conflict_policy=counts["conflict_policy"],
+                auto_refresh=counts["auto_refresh"],
+            ),
+            applied=(
+                RepositoryRefreshAppliedOut(**applied)
+                if applied is not None
+                else None
+            ),
+        )
+    )
+
+
+@router.get(
+    "/{tenant_slug}/repository-refresh-defaults",
+    response_model=RepositoryRefreshDefaultsResponse,
+    response_model_by_alias=True,
+)
+async def get_repository_refresh_defaults(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryRefreshDefaultsResponse:
+    """Read the workspace's repository refresh defaults (RAR-6.5, #3542).
+
+    The defaults are the cadence, conflict policy and auto-refresh switch a new repository
+    starts from. Each repository follows a default per setting until that setting is changed on
+    the repository; the response counts how many follow each one. A workspace that has not set
+    defaults reports the built-in values with ``configured: false``.
+
+    Args:
+        tenant_slug: Tenant slug from the path (scoping comes from the token).
+        auth_data: Authenticated principal; supplies the tenant scope.
+
+    Returns:
+        The defaults, whether the caller may change them, and the inheritance counts.
+    """
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW)
+    _ = tenant_slug
+    return _refresh_defaults_response(
+        str(auth_data["tenant_id"]), can_edit=_caller_is_tenant_admin(auth_data)
+    )
+
+
+@router.put(
+    "/{tenant_slug}/repository-refresh-defaults",
+    response_model=RepositoryRefreshDefaultsResponse,
+    response_model_by_alias=True,
+)
+async def set_repository_refresh_defaults(
+    tenant_slug: str,
+    payload: RepositoryRefreshDefaultsUpdate,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryRefreshDefaultsResponse:
+    """Set the workspace's repository refresh defaults (RAR-6.5, #3542). Tenant administrators only.
+
+    New repositories start from the stored defaults. With ``applyToInheriting``, every
+    repository setting that follows the defaults is rewritten to the new value in the same
+    transaction; settings a repository overrides are never touched. Without it, existing
+    repositories keep their current values until a later re-apply.
+
+    Args:
+        tenant_slug: Tenant slug from the path (scoping comes from the token).
+        payload: The defaults and whether to re-apply them.
+        auth_data: Authenticated principal; must resolve to a tenant administrator.
+
+    Returns:
+        The defaults after the update, the inheritance counts and, after a re-apply, how many
+        repositories changed per setting.
+
+    Raises:
+        HTTPException: 403 for non-administrators or API-key auth; 400 for an unknown conflict
+            policy or a cadence below the deployment minimum.
+    """
+    tenant_id = require_tenant_admin_session(
+        db,
+        auth_data,
+        detail="Only tenant administrators can change the workspace refresh defaults",
+    )
+    _ = tenant_slug
+    policy = parse_conflict_policy(payload.conflict_policy)
+    if policy is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"unrecognised conflict policy: {payload.conflict_policy!r}; expected one of: "
+                + ", ".join(p.value for p in ConflictPolicy)
+            ),
+        )
+    _require_interval_at_least_floor(payload.refresh_interval_seconds)
+    user_id = get_authenticated_user_id(auth_data)
+    applied = db.save_repository_refresh_defaults(
+        tenant_id,
+        refresh_interval_seconds=payload.refresh_interval_seconds,
+        refresh_conflict_policy=policy.value,
+        auto_refresh_enabled=payload.auto_refresh_enabled,
+        updated_by=str(user_id) if user_id else None,
+        apply_to_inheriting=payload.apply_to_inheriting,
+    )
+    _logger.info(
+        "repository refresh defaults saved tenant_id=%s interval=%s policy=%s enabled=%s applied=%s",
+        tenant_id,
+        payload.refresh_interval_seconds,
+        policy.value,
+        payload.auto_refresh_enabled,
+        applied if payload.apply_to_inheriting else "no",
+    )
+    return _refresh_defaults_response(
+        tenant_id, can_edit=True, applied=applied if payload.apply_to_inheriting else None
     )
 
 

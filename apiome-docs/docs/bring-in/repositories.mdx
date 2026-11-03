@@ -9,8 +9,8 @@ tags: [repositories, import, git]
 
 Register a Git repository and Apiome scans it for API specifications you can import — one at a time
 or many at once — and keeps them refreshed. **Go to Bring in → Repositories.** The tabs across the
-top are **Repositories**, **Discovered specs**, **Quota & rate limits** and **Webhook IP
-allowlist**.
+top are **Repositories**, **Discovered specs**, **Quota & rate limits**, **Webhook IP
+allowlist** and **Refresh defaults**.
 
 <Screenshot id="repositories" alt="Repositories: one summary line — 4 repositories, files indexed, imports, last scan, 1 needs attention and a 1 stale · 1 failed chip — above the repository table" />
 
@@ -45,6 +45,9 @@ scanned or by name, and switch between **Grid** and **List**. A row's menu has *
      `https://github.com/apiome/apiome.git` and **click “Test”**.
 3. **Click “Continue”.** Apiome says **Repository registered.** and starts its first scan.
 
+A new repository starts from the workspace's [refresh defaults](#refresh-defaults): its cadence,
+what happens on a refresh conflict, and whether auto-refresh is on.
+
 <Screenshot id="repository-add" alt="Add a repository with no linked accounts yet: Linked account and Public Git URL choices, and Connect an account" />
 
 The page also shows a **Proposed steps 2–4** card marked *Redesign proposal — not in the app today*:
@@ -72,7 +75,8 @@ as cards. Five tabs follow:
 - **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
 - **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
   and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).
-- **Settings** — the source, **Scan cadence** (**Auto-refresh**), **Branch refresh rules** (see
+- **Settings** — the source, **Scan cadence** (**Auto-refresh**, the **Cadence**, and whether each
+  setting follows the [workspace defaults](#refresh-defaults)), **Branch refresh rules** (see
   [Branch refresh rules](#branch-refresh-rules)), what happens on a refresh
   conflict (**Hold for review**, **Overwrite** or **New branch**), which projects may open pull
   requests back into the repository (see [Send changes back as a pull request](#send-changes-back-as-a-pull-request)),
@@ -298,6 +302,45 @@ From the CLI, `apiome repository branch-rules show acme/api` lists the rules and
 (`--off` turns refresh off, `remove` and `clear` delete rules). See
 [`apiome repository branch-rules`](../reference/cli/repository.md#repository-branch-rules).
 
+## Refresh defaults
+
+<Route path="/ade/dashboard/repositories/refresh-defaults" />
+
+A workspace can set the refresh settings every new repository starts from, so you don't set them
+repository by repository:
+
+- **Cadence**: how often a repository is checked, for example **Every 15 min**.
+- **Refresh conflicts**: what a refresh does when the version it would replace was edited in
+  Apiome (**Hold for review**, **Overwrite** or **New branch**).
+- **Auto-refresh**: whether repositories refresh on their own at all.
+
+Without defaults, a new repository checks every 5 minutes, holds conflicts for review, and has
+auto-refresh on.
+
+To set them (workspace administrators only; everyone else can read them):
+
+1. On **Repositories**, **click the “Refresh defaults” tab**.
+2. Choose the **Cadence**, the **Refresh conflicts** behaviour and **Auto-refresh**.
+3. Leave **Also apply to the repositories that follow these defaults** ticked to update existing
+   repositories too, or clear it so only new repositories use the new values.
+4. **Click “Save defaults”.**
+
+Under each setting, the page counts the repositories that follow it, for example *4 of 5
+repositories follow this default*.
+
+<Screenshot id="repository-refresh-defaults" alt="Refresh defaults: cadence, refresh conflicts and auto-refresh, with how many repositories follow each" />
+
+**Each setting follows the default on its own.** A repository follows a default until you change
+that one setting on the repository: choosing a **Cadence** on its **Settings** tab, a policy under
+**Refresh conflicts**, or turning **Auto-refresh** off. That setting then reads **Custom**, and
+re-applying the defaults never touches it; the repository's other settings still follow the
+defaults. **Click “Use workspace default”** next to a **Custom** setting to follow the default again.
+
+<Screenshot id="repository-refresh-inheritance" alt="A repository's Scan cadence: the cadence, and each refresh setting marked Workspace default or Custom" />
+
+Repositories that existed before the defaults were set follow a default only where they still had
+the built-in value. A setting someone had already changed stays **Custom**.
+
 ## Refresh on push
 
 A repository refreshes its imported specs on its **Scan cadence**. When the repository also sends
@@ -349,6 +392,8 @@ change it.
   --new-project` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/tenants/{tenant}/repositories`, `GET …/repositories/{repo}/files`,
   `POST …/repositories/{repo}/refresh`, `GET` / `PUT …/repositories/{repo}/branch-refresh-rules`,
+  `GET` / `PUT …/repository-refresh-defaults` (a repository's `PATCH` takes `refresh_interval_seconds`
+  and `use_workspace_defaults`),
   `GET …/repository-quota-telemetry`,
   `GET …/repository-webhook-ip-allowlist` — see the [API reference](../reference/api-reference.md).
   A project's contributing repositories and the source of each class and path:

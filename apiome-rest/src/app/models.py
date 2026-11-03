@@ -10781,6 +10781,13 @@ class TenantRepositoryRecord(BaseModel):
     # overwrite | hold-for-review | new-branch. Defaults to hold-for-review — the
     # RAR-4.4 hold-not-clobber behaviour — for rows predating the column.
     refresh_conflict_policy: str = "hold-for-review"
+    # Per-repo refresh cadence in seconds (RAR-3.1); null for rows read without it.
+    refresh_interval_seconds: Optional[int] = None
+    # Workspace refresh defaults (RAR-6.5, #3542): True when the setting follows the workspace
+    # default, False when this repository overrides it. True for rows read without the column.
+    inherits_refresh_interval: bool = True
+    inherits_conflict_policy: bool = True
+    inherits_auto_refresh: bool = True
     # At-a-glance health badge (REPO-6.5, #2798). Null only when the health signals could
     # not be read at all — the badge is then simply not rendered, never guessed.
     health: Optional[RepositoryHealthOut] = None
@@ -10811,6 +10818,23 @@ class TenantRepositoryUpdate(BaseModel):
         description=(
             "Conflict policy for a diverged refresh: overwrite | hold-for-review | "
             "new-branch. Applies to every file in the repository that has no override."
+        ),
+    )
+    refresh_interval_seconds: Optional[int] = Field(
+        None,
+        ge=1,
+        validation_alias=AliasChoices("refreshIntervalSeconds", "refresh_interval_seconds"),
+        description=(
+            "Refresh cadence in seconds (RAR-6.5); must be at least the deployment minimum. "
+            "Setting it overrides the workspace default cadence."
+        ),
+    )
+    use_workspace_defaults: Optional[List[Literal["refresh_interval", "conflict_policy", "auto_refresh"]]] = Field(
+        None,
+        validation_alias=AliasChoices("useWorkspaceDefaults", "use_workspace_defaults"),
+        description=(
+            "Settings to follow the workspace refresh defaults again (RAR-6.5): refresh_interval, "
+            "conflict_policy, auto_refresh. Applied after the other fields."
         ),
     )
 
@@ -11013,6 +11037,80 @@ class RepositoryBranchRefreshResponse(BaseModel):
 
     success: bool = True
     branch_refresh: RepositoryBranchRefreshOut = Field(alias="branchRefresh")
+
+
+class RepositoryRefreshInheritanceOut(BaseModel):
+    """How many repositories follow each workspace refresh default (RAR-6.5, #3542)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    repositories: int = Field(description="Live repositories in the workspace.")
+    refresh_interval: int = Field(alias="refreshInterval")
+    conflict_policy: int = Field(alias="conflictPolicy")
+    auto_refresh: int = Field(alias="autoRefresh")
+
+
+class RepositoryRefreshAppliedOut(BaseModel):
+    """How many repositories a re-apply changed, per setting (RAR-6.5, #3542)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    refresh_interval: int = Field(alias="refreshInterval")
+    conflict_policy: int = Field(alias="conflictPolicy")
+    auto_refresh: int = Field(alias="autoRefresh")
+
+
+class RepositoryRefreshDefaultsOut(BaseModel):
+    """A workspace's repository refresh defaults (RAR-6.5, #3542)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    configured: bool = Field(
+        description="False when the workspace has not set defaults and the built-in values apply."
+    )
+    refresh_interval_seconds: int = Field(alias="refreshIntervalSeconds")
+    conflict_policy: str = Field(alias="conflictPolicy")
+    auto_refresh_enabled: bool = Field(alias="autoRefreshEnabled")
+    min_interval_seconds: int = Field(alias="minIntervalSeconds")
+    available_conflict_policies: List[str] = Field(alias="availableConflictPolicies")
+    can_edit: bool = Field(alias="canEdit", description="Whether the caller may change the defaults.")
+    updated_by: Optional[str] = Field(default=None, alias="updatedBy")
+    updated_at: Optional[str] = Field(default=None, alias="updatedAt")
+    inheriting: RepositoryRefreshInheritanceOut = Field(
+        description="How many repositories follow each default."
+    )
+    applied: Optional[RepositoryRefreshAppliedOut] = Field(
+        default=None,
+        description="After an update with applyToInheriting: how many repositories changed per setting.",
+    )
+
+
+class RepositoryRefreshDefaultsResponse(BaseModel):
+    """Envelope for the refresh-defaults read and update (RAR-6.5)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    refresh_defaults: RepositoryRefreshDefaultsOut = Field(alias="refreshDefaults")
+
+
+class RepositoryRefreshDefaultsUpdate(BaseModel):
+    """Set a workspace's repository refresh defaults (RAR-6.5, #3542)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    refresh_interval_seconds: int = Field(
+        alias="refreshIntervalSeconds", ge=1, description="Default cadence in seconds."
+    )
+    conflict_policy: str = Field(
+        alias="conflictPolicy", description="overwrite | hold-for-review | new-branch."
+    )
+    auto_refresh_enabled: bool = Field(alias="autoRefreshEnabled")
+    apply_to_inheriting: bool = Field(
+        default=False,
+        alias="applyToInheriting",
+        description="Also re-apply the defaults to every repository setting that follows them.",
+    )
 
 
 class RepositoryRefreshNowRequest(BaseModel):

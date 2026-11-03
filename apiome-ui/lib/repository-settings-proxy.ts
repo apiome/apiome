@@ -1,6 +1,7 @@
 /**
  * Shared forwarding for the repository settings proxy routes: the refresh conflict policy
- * (RAR-4.5, #3531) and the per-branch refresh rules (RAR-6.4, #3541).
+ * (RAR-4.5, #3531), the per-branch refresh rules (RAR-6.4, #3541) and the workspace refresh
+ * defaults (RAR-6.5, #3542).
  *
  * Each route talks to one `/v1/tenants/{slug}/repositories/{id}/<subpath>` REST surface with
  * the same auth, the same repository-id guard and the same error contract. REST nests its
@@ -52,14 +53,46 @@ export async function forwardRepositorySettingsRequest({
   if (!repositoryId || !UUID_RE.test(repositoryId)) {
     return NextResponse.json({ success: false, error: 'Invalid repository id' }, { status: 400 });
   }
+  return forwardWorkspaceSettingsRequest({
+    method,
+    path: `repositories/${encodeURIComponent(repositoryId)}/${subpath}`,
+    envelope,
+    body,
+  });
+}
+
+/** One workspace-level settings request to forward (no repository in the path). */
+export interface WorkspaceSettingsRequest {
+  /** `GET` reads, `PUT` writes. */
+  method: 'GET' | 'PUT';
+  /** The REST path under `/v1/tenants/{slug}/` (`repository-refresh-defaults`, …). */
+  path: string;
+  /** The key REST nests its projection under (`refreshDefaults`, …). */
+  envelope: string;
+  /** The payload of a write; omitted on a read. */
+  body?: unknown;
+}
+
+/**
+ * Forward one workspace-level settings request to REST and flatten its answer — the
+ * workspace refresh defaults (RAR-6.5, #3542), and the repository routes above.
+ *
+ * @param request What to forward. See {@link WorkspaceSettingsRequest}.
+ * @returns `{ success: true, ...projection }`, or `{ success: false, error }` with REST's status
+ *   (403 for a non-administrator's write, 503 when REST is down).
+ */
+export async function forwardWorkspaceSettingsRequest({
+  method,
+  path,
+  envelope,
+  body,
+}: WorkspaceSettingsRequest): Promise<NextResponse> {
   const context = await getAuthenticatedTenantContext();
   if (!context.ok) {
     return NextResponse.json({ success: false, error: context.error }, { status: context.status });
   }
 
-  const url =
-    `${REST_API_BASE_URL}/tenants/${encodeURIComponent(context.tenantSlug)}` +
-    `/repositories/${encodeURIComponent(repositoryId)}/${subpath}`;
+  const url = `${REST_API_BASE_URL}/tenants/${encodeURIComponent(context.tenantSlug)}/${path}`;
 
   try {
     const rest = await fetch(url, {

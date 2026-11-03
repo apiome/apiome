@@ -53,6 +53,17 @@ export interface DashboardRepository {
   branch_count?: number | null;
   /** Per-repo auto-refresh opt-out (RAR-3.3). True (default) = sweep may refresh this repo. */
   auto_refresh_enabled?: boolean;
+  /** Refresh cadence in seconds (RAR-3.1); null when the API did not send it. */
+  refresh_interval_seconds?: number | null;
+  /** Repository-wide conflict policy (RAR-4.5); null when the API did not send it. */
+  refresh_conflict_policy?: string | null;
+  /**
+   * Whether each refresh setting follows the workspace default (RAR-6.5): true = workspace
+   * default, false = changed on this repository. True when the API did not send the flag.
+   */
+  inherits_refresh_interval?: boolean;
+  inherits_conflict_policy?: boolean;
+  inherits_auto_refresh?: boolean;
   /**
    * At-a-glance health badge (REPO-6.5). Null when the API returned none — an older
    * payload, or a repository whose health signals could not be read — in which case no
@@ -133,6 +144,13 @@ export function dashboardRepositoryFromApi(x: unknown): DashboardRepository | nu
       const v = o.auto_refresh_enabled ?? (o as { autoRefreshEnabled?: unknown }).autoRefreshEnabled;
       return v == null ? true : Boolean(v);
     })(),
+    refresh_interval_seconds:
+      typeof o.refresh_interval_seconds === 'number' ? o.refresh_interval_seconds : null,
+    refresh_conflict_policy:
+      typeof o.refresh_conflict_policy === 'string' ? o.refresh_conflict_policy : null,
+    inherits_refresh_interval: o.inherits_refresh_interval !== false,
+    inherits_conflict_policy: o.inherits_conflict_policy !== false,
+    inherits_auto_refresh: o.inherits_auto_refresh !== false,
     health: parseRepositoryHealth(o.health),
     clone_url: o.clone_url != null ? String(o.clone_url) : null,
     source: o.source != null ? String(o.source) : null,

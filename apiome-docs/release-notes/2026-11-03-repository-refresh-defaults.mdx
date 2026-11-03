@@ -1,0 +1,22 @@
+---
+slug: repository-refresh-defaults
+title: Set refresh defaults once for every repository
+description: Workspace refresh defaults set the cadence, conflict behaviour and auto-refresh for repositories.
+authors: [apiome]
+---
+
+Workspace administrators can now set the refresh settings every new repository starts from, on the
+new **Refresh defaults** tab under **Repositories**. See
+[Refresh defaults](/bring-in/repositories#refresh-defaults).
+
+{/* truncate */}
+
+- **One place for the defaults.** The cadence, what a refresh does on a conflict, and whether
+  auto-refresh is on. New repositories start from them.
+- **Apply them to existing repositories too.** Saving can update every repository setting that
+  follows the defaults; a setting changed on a repository is never touched.
+- **Per setting, per repository.** A repository's **Settings** tab marks each refresh setting
+  **Workspace default** or **Custom**, has a **Cadence** choice, and offers **Use workspace
+  default** to follow a default again.
+- **API.** `GET` / `PUT …/repository-refresh-defaults`; a repository's `PATCH` takes
+  `refresh_interval_seconds` and `use_workspace_defaults`.

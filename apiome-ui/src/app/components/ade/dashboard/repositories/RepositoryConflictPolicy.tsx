@@ -110,11 +110,17 @@ export function ConflictPolicyOption({
 export function RepositoryConflictPolicy({
   repositoryId,
   defaultBranch,
+  onRepositoryPolicyChanged,
 }: {
   /** The repository whose policy this panel configures. */
   repositoryId: string;
   /** Pre-fills the branch field when adding an override; the usual case is one branch. */
   defaultBranch: string;
+  /**
+   * Called after the repository-wide policy is saved, so the page can re-read the repository
+   * (the policy now overrides the workspace default, RAR-6.5).
+   */
+  onRepositoryPolicyChanged?: () => void;
 }) {
   const [data, setData] = useState<ConflictPolicyResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -187,7 +193,9 @@ export function RepositoryConflictPolicy({
 
   const selectPolicy = (policy: ConflictPolicy) => {
     if (!data || policy === data.policy) return;
-    void mutate('', { policy }, `Conflict policy set to “${POLICY_COPY[policy].label}”.`);
+    void mutate('', { policy }, `Conflict policy set to “${POLICY_COPY[policy].label}”.`).then((ok) => {
+      if (ok) onRepositoryPolicyChanged?.();
+    });
   };
 
   const addOverride = async () => {

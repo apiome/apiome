@@ -152,6 +152,13 @@ const REPOSITORY = {
   importable_count: 41,
   branch_count: 3,
   auto_refresh_enabled: true,
+  // RAR-6.5: the cadence and conflict policy follow the workspace defaults; auto-refresh was
+  // switched on this repository, so it is a custom value.
+  refresh_interval_seconds: 900,
+  refresh_conflict_policy: 'hold-for-review',
+  inherits_refresh_interval: true,
+  inherits_conflict_policy: true,
+  inherits_auto_refresh: false,
   clone_url: 'https://github.com/acme/payments-specs.git',
   source: 'linked_account',
 };
@@ -1234,6 +1241,60 @@ describe('the Settings tab', () => {
       expect(patch?.body).toEqual({ auto_refresh_enabled: false });
     });
     expect(mockToastSuccess).toHaveBeenCalledWith('Auto-refresh disabled.');
+  });
+
+  test('each refresh setting says whether it follows the workspace default (RAR-6.5)', async () => {
+    await renderScreen();
+    await openTab('settings');
+
+    expect(await screen.findByTestId('repository-refresh-value-refresh_interval')).toHaveTextContent('Every 15 min');
+    expect(screen.getByTestId('repository-refresh-source-refresh_interval')).toHaveTextContent('Workspace default');
+    expect(screen.getByTestId('repository-refresh-value-conflict_policy')).toHaveTextContent('Hold for review');
+    expect(screen.getByTestId('repository-refresh-source-auto_refresh')).toHaveTextContent('Custom');
+    expect(screen.queryByTestId('repository-use-default-refresh_interval')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'refresh defaults' })).toHaveAttribute(
+      'href',
+      '/ade/dashboard/repositories/refresh-defaults'
+    );
+  });
+
+  test('a custom setting goes back to the workspace default', async () => {
+    await renderScreen();
+    await openTab('settings');
+
+    routes['/api/repositories/repo-1'] = {
+      body: { success: true, repository: { ...REPOSITORY, inherits_auto_refresh: true } },
+    };
+    fireEvent.click(await screen.findByTestId('repository-use-default-auto_refresh'));
+
+    await waitFor(() => {
+      const patch = calls.find((c) => c.method === 'PATCH');
+      expect(patch?.body).toEqual({ use_workspace_defaults: ['auto_refresh'] });
+    });
+    expect(await screen.findByTestId('repository-refresh-source-auto_refresh')).toHaveTextContent(
+      'Workspace default'
+    );
+    expect(mockToastSuccess).toHaveBeenCalledWith('This setting now follows the workspace default.');
+  });
+
+  test('choosing a cadence overrides the workspace default', async () => {
+    await renderScreen();
+    await openTab('settings');
+
+    routes['/api/repositories/repo-1'] = {
+      body: {
+        success: true,
+        repository: { ...REPOSITORY, refresh_interval_seconds: 3600, inherits_refresh_interval: false },
+      },
+    };
+    await userEvent.click(await screen.findByRole('combobox', { name: 'Cadence' }));
+    await userEvent.click(screen.getByRole('option', { name: 'Every 1 hour' }));
+
+    await waitFor(() => {
+      const patch = calls.find((c) => c.method === 'PATCH');
+      expect(patch?.body).toEqual({ refresh_interval_seconds: 3600 });
+    });
+    expect(await screen.findByTestId('repository-refresh-source-refresh_interval')).toHaveTextContent('Custom');
   });
 
   test('the danger zone asks before it removes', async () => {

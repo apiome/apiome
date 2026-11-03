@@ -142,6 +142,7 @@ export function RepositoryDetailClient() {
   const [removing, setRemoving] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [savingAutoRefresh, setSavingAutoRefresh] = useState(false);
+  const [savingRefreshSettings, setSavingRefreshSettings] = useState(false);
   const [repoImports, setRepoImports] = useState<RepositoryImportRow[]>([]);
   const [importsLoading, setImportsLoading] = useState(false);
   const [importsError, setImportsError] = useState<string | null>(null);
@@ -345,6 +346,38 @@ export function RepositoryDetailClient() {
       toast.error(e instanceof Error ? e.message : 'Could not update auto-refresh.');
     } finally {
       setSavingAutoRefresh(false);
+    }
+  };
+
+  /**
+   * Patch this repository's refresh settings and adopt the record the server returns (RAR-6.5).
+   *
+   * @param body The PATCH body (`refresh_interval_seconds` or `use_workspace_defaults`).
+   * @param success The toast when it lands.
+   */
+  const patchRefreshSettings = async (body: Record<string, unknown>, success: string) => {
+    if (!id || savingRefreshSettings) return;
+    setSavingRefreshSettings(true);
+    try {
+      const res = await fetch(`/api/repositories/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(typeof data.error === 'string' ? data.error : res.statusText);
+      }
+      const parsed = dashboardRepositoryFromApi(
+        data && typeof data === 'object' ? (data as { repository?: unknown }).repository : null
+      );
+      if (parsed) setRepo(parsed);
+      toast.success(success);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update the refresh settings.');
+    } finally {
+      setSavingRefreshSettings(false);
     }
   };
 
@@ -600,6 +633,16 @@ export function RepositoryDetailClient() {
               webUrl={webUrl}
               savingAutoRefresh={savingAutoRefresh}
               onToggleAutoRefresh={(next) => void performToggleAutoRefresh(next)}
+              savingRefreshSettings={savingRefreshSettings}
+              onChangeInterval={(seconds) =>
+                void patchRefreshSettings({ refresh_interval_seconds: seconds }, 'Cadence updated.')
+              }
+              onUseWorkspaceDefault={(setting) =>
+                void patchRefreshSettings(
+                  { use_workspace_defaults: [setting] },
+                  'This setting now follows the workspace default.'
+                )
+              }
               onRemove={() => setRemoveDialogOpen(true)}
               removing={removing}
               branchRefresh={
@@ -609,8 +652,11 @@ export function RepositoryDetailClient() {
               conflictPolicy={
                 /* RAR-4.5 (#3531): what a refresh does when it meets a hand-edited version. */
                 <RepositoryConflictPolicy
+                  /* RAR-6.5: re-read the panel when "Use workspace default" changes the policy. */
+                  key={repo.refresh_conflict_policy ?? 'unknown'}
                   repositoryId={repo.id}
                   defaultBranch={repo.default_branch}
+                  onRepositoryPolicyChanged={() => void load({ silent: true })}
                 />
               }
               prBack={

@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.617.0] - 2026-11-03
+
+### Added
+- **Workspace refresh defaults for repositories (RAR-6.5, #3542).** A workspace can store the cadence, conflict
+  policy and auto-refresh switch a new repository starts from; each repository follows the defaults per setting
+  until that setting is changed on it.
+  - V351: `tenant_repository_refresh_defaults` (one row per workspace) and `inherits_refresh_interval`,
+    `inherits_conflict_policy`, `inherits_auto_refresh` on `tenant_repositories`. Existing repositories follow a
+    default only where they still hold the built-in value (300 s, hold-for-review, on).
+  - `GET` / `PUT /v1/tenants/{tenant_slug}/repository-refresh-defaults` — read (imports:view; `canEdit` says whether
+    the caller may change them) and write (tenant administrators only, never an API key). `applyToInheriting`
+    rewrites, in the same transaction, only the repository settings that follow the defaults, and the response
+    counts how many repositories changed per setting. 400 for an unknown conflict policy or a cadence below the
+    deployment minimum.
+  - New repositories read the defaults in the insert itself; without defaults they get the built-in values.
+  - `PATCH /v1/tenants/{tenant_slug}/repositories/{repository_id}` takes `refresh_interval_seconds` (an override,
+    floor-checked) and `use_workspace_defaults` (`refresh_interval`, `conflict_policy`, `auto_refresh`) to follow a
+    default again. Changing `auto_refresh_enabled`, the conflict policy or the cadence marks that setting as an
+    override. The repository record reports `refresh_interval_seconds` and the three `inherits_*` flags.
+- OpenAPI document version 1.480.0 → 1.481.0.
+
 ## [1.616.0] - 2026-11-03
 
 ### Added
