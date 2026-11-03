@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {
           "taskId": {
@@ -16,10 +16,12 @@
       },
       "name": "deleteTask",
       "operation": "DELETE /tasks/{taskId}",
-      "output": {}
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "List tasks, optionally filtered by assignee or completion.\n\nReturns http://example.com/tasks.Task.",
+      "description": "List tasks, optionally filtered by assignee or completion.\n\nReturns HTTP 200 application/xml (http://example.com/tasks.Task).",
       "inputSchema": {
         "properties": {
           "assignee": {
@@ -32,6 +34,7 @@
       "name": "listTasks",
       "operation": "GET /tasks",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "assignee": {
@@ -48,13 +51,21 @@
               "type": "string"
             }
           },
+          "required": [
+            "assignee",
+            "done",
+            "dueDate",
+            "id",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/tasks.Task"
+        "shape": "http://example.com/tasks.Task",
+        "status": "200"
       }
     },
     {
-      "description": "Returns http://example.com/tasks.Task.",
+      "description": "Returns HTTP 200 application/xml (http://example.com/tasks.Task).",
       "inputSchema": {
         "properties": {
           "taskId": {
@@ -69,6 +80,7 @@
       "name": "getTask",
       "operation": "GET /tasks/{taskId}",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "assignee": {
@@ -85,13 +97,21 @@
               "type": "string"
             }
           },
+          "required": [
+            "assignee",
+            "done",
+            "dueDate",
+            "id",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/tasks.Task"
+        "shape": "http://example.com/tasks.Task",
+        "status": "200"
       }
     },
     {
-      "description": "Returns http://example.com/tasks.Task.",
+      "description": "Returns HTTP 201 application/xml (http://example.com/tasks.Task).",
       "inputSchema": {
         "properties": {
           "assignee": {
@@ -108,11 +128,19 @@
             "type": "string"
           }
         },
+        "required": [
+          "assignee",
+          "done",
+          "dueDate",
+          "id",
+          "title"
+        ],
         "type": "object"
       },
       "name": "createTask",
       "operation": "POST /tasks",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "assignee": {
@@ -129,13 +157,21 @@
               "type": "string"
             }
           },
+          "required": [
+            "assignee",
+            "done",
+            "dueDate",
+            "id",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/tasks.Task"
+        "shape": "http://example.com/tasks.Task",
+        "status": "201"
       }
     },
     {
-      "description": "Returns http://example.com/tasks.Task.",
+      "description": "Returns HTTP 200 application/xml (http://example.com/tasks.Task).",
       "inputSchema": {
         "properties": {
           "assignee": {
@@ -156,13 +192,19 @@
           }
         },
         "required": [
-          "taskId"
+          "taskId",
+          "assignee",
+          "done",
+          "dueDate",
+          "id",
+          "title"
         ],
         "type": "object"
       },
       "name": "replaceTask",
       "operation": "PUT /tasks/{taskId}",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "assignee": {
@@ -179,9 +221,17 @@
               "type": "string"
             }
           },
+          "required": [
+            "assignee",
+            "done",
+            "dueDate",
+            "id",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/tasks.Task"
+        "shape": "http://example.com/tasks.Task",
+        "status": "200"
       }
     }
   ]

@@ -2,7 +2,36 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns oneway void.",
+      "description": "Returns string.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "get_sessionName",
+      "operation": "Trading.MarketData._get_sessionName",
+      "output": {
+        "schema": {
+          "type": "string"
+        },
+        "shape": "string"
+      }
+    },
+    {
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "set_sessionName",
+      "operation": "Trading.MarketData._set_sessionName"
+    },
+    {
       "inputSchema": {
         "properties": {
           "body": {}
@@ -13,11 +42,7 @@
         "type": "object"
       },
       "name": "heartbeat",
-      "operation": "Trading.MarketData.heartbeat",
-      "output": {
-        "schema": {},
-        "shape": "oneway void"
-      }
+      "operation": "Trading.MarketData.heartbeat"
     },
     {
       "description": "Returns array of array of double.",

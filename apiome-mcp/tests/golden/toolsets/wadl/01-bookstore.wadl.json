@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns http://example.com/bookstore.Book.",
+      "description": "Returns HTTP 200 application/xml (http://example.com/bookstore.Book).",
       "inputSchema": {
         "properties": {},
         "type": "object"
@@ -10,6 +10,7 @@
       "name": "listBooks",
       "operation": "GET /books",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "author": {
@@ -23,13 +24,20 @@
               "type": "string"
             }
           },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/bookstore.Book"
+        "shape": "http://example.com/bookstore.Book",
+        "status": "200"
       }
     },
     {
-      "description": "Returns http://example.com/bookstore.Book.",
+      "description": "Returns HTTP 200 application/xml (http://example.com/bookstore.Book).",
       "inputSchema": {
         "properties": {
           "bookId": {
@@ -44,6 +52,7 @@
       "name": "getBook",
       "operation": "GET /books/{bookId}",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "author": {
@@ -57,13 +66,20 @@
               "type": "string"
             }
           },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/bookstore.Book"
+        "shape": "http://example.com/bookstore.Book",
+        "status": "200"
       }
     },
     {
-      "description": "Returns http://example.com/bookstore.Book.",
+      "description": "Returns HTTP 201 application/xml (http://example.com/bookstore.Book).",
       "inputSchema": {
         "properties": {
           "author": {
@@ -77,11 +93,18 @@
             "type": "string"
           }
         },
+        "required": [
+          "author",
+          "id",
+          "price",
+          "title"
+        ],
         "type": "object"
       },
       "name": "createBook",
       "operation": "POST /books",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "author": {
@@ -95,9 +118,16 @@
               "type": "string"
             }
           },
+          "required": [
+            "author",
+            "id",
+            "price",
+            "title"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/bookstore.Book"
+        "shape": "http://example.com/bookstore.Book",
+        "status": "201"
       }
     }
   ]
