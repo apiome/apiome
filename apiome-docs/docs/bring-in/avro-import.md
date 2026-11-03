@@ -31,7 +31,7 @@ same rules a Confluent Schema Registry uses.
 | **Compare** two versions by the Avro schema resolution rules | Tick two versions on the catalog item's **Versions** tab, or `apiome registry compat` | [Compatibility between versions](#compatibility-between-versions) |
 | **Lint** defaults, unions, aliases and `doc`s | The `avro` lint pack | [Lint](#lint) |
 | **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
-| **Export** back to Avro, or **push** it to a registry | **Export** on the catalog item; a push over the REST API | [Export catalog items](../ship/export-catalog-items.mdx), [Push Avro to a schema registry](../ship/push-avro-to-a-schema-registry.md) |
+| **Export** back to Avro, or **push** it to a registry | **Export** on the catalog item; a push over the REST API | [Apache Avro from any source](../ship/export-a-spec.md#apache-avro-from-any-source), [Push Avro to a schema registry](../ship/push-avro-to-a-schema-registry.md) |
 
 ## Import it
 

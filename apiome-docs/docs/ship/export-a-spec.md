@@ -293,6 +293,89 @@ is neither a primary nor a unique key, so that one stays as plain columns.
 pass `prisma validate`. From the CLI, run `apiome export sql-ddl <item> --out schema.prisma --option
 output=prisma`.
 
+### Apache Avro from any source
+
+#### When to export to Avro
+
+- **Give Kafka producers and consumers the schemas of an API's data.** Any item's types become Avro
+  record, enum, union and map schemas, one `.avsc` per type, each with the Schema Registry subject it
+  is registered under.
+- **Register them on a schema registry.** Push the export to a Confluent-compatible registry through
+  a connector; see [Push Avro to a schema registry](./push-avro-to-a-schema-registry.md).
+
+Avro describes data, not APIs: operations and channels are not written, so the export is
+**types-only** for every source. Export to OpenAPI or AsyncAPI as well to keep them.
+
+#### Avro export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the Avro card and its options | **Export** dialog → **Data schema & graph** → **Apache Avro** | [Where to find the Avro card](#where-to-find-the-avro-card) |
+| **See** how types, fields and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-avro) |
+| **Choose** the subject each schema is registered under | The card's subject options | [Subjects](#avro-subjects) |
+| **See** what Avro cannot carry, and the defaults it adds | The fidelity report on the card | [What the fidelity report lists](#what-the-avro-fidelity-report-lists) |
+| **Trust** the files: every schema parses | Automatic before every download | [How an Avro export is checked](#how-an-avro-export-is-checked) |
+| **Push** the schemas to a registry | The REST API, through a schema registry connector | [Push Avro to a schema registry](./push-avro-to-a-schema-registry.md) |
+
+#### How the item is written {#how-the-item-is-written-to-avro}
+
+Exporting to **Avro** writes one `.avsc` JSON schema per named type, in a folder per namespace
+(`com.acme.Order` is `com/acme/Order.avsc`). Set the **output_syntax** option to `avdl` for one
+Avro IDL document instead.
+
+- **Types.** An object becomes a `record` with its fields in order, an enum an `enum`, a union an
+  Avro union, and a map a `map` with string keys. A list is an `array`.
+- **Nullable fields.** A field that may be null is the union `["null", T]`.
+- **Logical types.** A `date` is an `int` with `logicalType: date`, a `date-time` a `long` with
+  `timestamp-millis`, a `uuid` a `string` with `uuid`, and a `decimal` `bytes` with `decimal`. An item
+  imported from Avro keeps its own logical types.
+- **Names.** Avro names are letters, digits and `_`: any other character is replaced, and enum
+  symbols likewise. The namespace is the item's own, or the **namespace** option for a source that
+  has none.
+
+#### Subjects {#avro-subjects}
+
+Each schema has the Schema Registry subject it is registered under, chosen with the
+**subject_naming** option:
+
+| `subject_naming` | Subject | Example |
+| --- | --- | --- |
+| `record_name` (the default) | `{namespace}.{Type}-value`, one subject per type | `com.acme.Order-value` |
+| `topic_name` | `{topic}-value`, set **topic** | `orders-value` |
+| `topic_record_name` | `{topic}-{namespace}.{Type}-value`, set **topic** | `orders-com.acme.Order-value` |
+
+Set **subject_role** to `key` to end each subject in `-key` instead of `-value`. These are
+Confluent's `RecordNameStrategy`, `TopicNameStrategy` and `TopicRecordNameStrategy`.
+
+#### What the fidelity report lists {#what-the-avro-fidelity-report-lists}
+
+- **Operations and channels** are dropped (critical): Avro is types-only.
+- **Validation rules** (lengths, ranges, patterns, formats with no logical type) are dropped: Avro
+  does not enforce them.
+- **Unions** are carried as an Avro union when every member is a record, an enum, a `fixed` or a
+  primitive; any other union is approximated.
+- **Nullable fields** are approximated as `["null", T]`.
+- **Defaults** are synthesized for a nullable field that has none (`null`), because Avro schema
+  evolution needs one.
+
+#### How an Avro export is checked {#how-an-avro-export-is-checked}
+
+Every schema is parsed with `fastavro` before the export is delivered, together with the schemas it
+references, in whatever order they are written. A schema that does not parse fails the export.
+
+#### Where to find the Avro card {#where-to-find-the-avro-card}
+
+In the **Export** dialog, the **Apache Avro** card is under **Data schema & graph** on the **Target**
+step, marked multi-file, so you download every schema in one `.zip`. Its badge is **types-only**.
+Pick the card to set **output_syntax**, **namespace**, **subject_naming**, **topic** and
+**subject_role**.
+
+From the CLI, `apiome export avro --project <project> --version <version> --output <file>.avsc`
+writes the **first** schema only, with the fidelity report. To get every schema, export Avro as one
+of several formats, which runs a job and unpacks a folder per format:
+`apiome export openapi-3.1 <item> --targets avro --out exports/`. See
+[Export from the CLI](./export-from-the-cli.md).
+
 ### Protobuf and Thrift from an OpenAPI source
 
 An OpenAPI schema's `type` and `format` become the target's own scalar types:

@@ -5,7 +5,7 @@ sidebar_position: 5.6
 tags: [export, avro, schema registry, confluent, karapace, apicurio, kafka, connector]
 ---
 
-An Avro export writes one `.avsc` schema per type. Each schema has a **subject**, the name a
+An [Avro export](./export-a-spec.md#apache-avro-from-any-source) writes one `.avsc` schema per type. Each schema has a **subject**, the name a
 Confluent-compatible schema registry files it under. A **push** exports a version to Avro, checks it,
 and registers each subject on a registry for you. It works with Confluent Platform or Cloud, Karapace,
 or Apicurio Registry's compatibility API.
