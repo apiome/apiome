@@ -545,10 +545,30 @@ and `--json` prints the tier. A public item's **Export** dialog on Browse offers
 
 ### Smithy from any source
 
+#### When to export to Smithy
+
+- **Move an API to Smithy.** Any REST, RPC, GraphQL, JSON Schema or WSDL item becomes a Smithy 2.0
+  model that `smithy validate` accepts: shapes with traits, services and operations, with each HTTP
+  binding kept. What Smithy cannot carry is listed in the fidelity report before you download.
+- **Round-trip a Smithy item.** An item imported from Smithy exports back **lossless**, with its
+  namespace, `$version` and operation order.
+
+#### Smithy export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the Smithy card and its options (IDL, JSON AST or both; protocol) | **Export** dialog → **Smithy** (under **RPC** in **Export studio**) | [Where to find the Smithy card](#where-to-find-the-smithy-card) |
+| **See** how shapes, traits, services, errors and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-smithy) |
+| **See** what Smithy cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-smithy-fidelity-report-lists) |
+| **Trust** the model: `smithy validate`, then re-import | Automatic before every download | [How a Smithy export is checked](#how-a-smithy-export-is-checked) |
+| **Export** from the CLI | `apiome export smithy <item> --out <file>.smithy` | [Where to find the Smithy card](#where-to-find-the-smithy-card) |
+
 Exporting to **Smithy** writes a Smithy 2.0 model that `smithy validate` accepts. Set the **output**
 option to choose the form: `idl` (the default) writes `<Name>.smithy`, `json-ast` writes the Smithy
 JSON AST as `<Name>.json`, and `both` writes the two. They describe the same model, so load one of
 them, not both together.
+
+#### How a Smithy export is checked {#how-a-smithy-export-is-checked}
 
 Each export is checked before you download it:
 
@@ -558,6 +578,8 @@ Each export is checked before you download it:
    Apiome's Smithy reader reads the model instead, and a parse error fails the export.
 2. The built model is then imported again. If it does not import, the export fails
    (`smithy.reimport`).
+
+#### How the item is written {#how-the-item-is-written-to-smithy}
 
 - **Shapes.** Objects become `structure`s, unions `union`s, enums `enum`s, maps `map`s, and named
   lists `list`s. A list with no name of its own gets a `<Element>List` shape. A named scalar or an
@@ -589,6 +611,8 @@ Each export is checked before you download it:
   limits were not kept, cannot be written back, and the report says so. A `resource` is not written
   back either; its operations stay on the service.
 
+#### What the fidelity report lists {#what-the-smithy-fidelity-report-lists}
+
 The fidelity report lists what Smithy cannot carry, on the type, field or operation it concerns.
 The report predicts exactly what the export writes:
 
@@ -606,7 +630,9 @@ The report predicts exactly what the export writes:
 - **Carried.** For each operation and type that is carried, the report names the Smithy shape it
   became, such as `operation getPet @http(GET /pets/{id})` or `structure Pet`.
 
-**Where to find it.** In the **Export** dialog, the **Smithy** card is on the **Target** step (under
+#### Where to find the Smithy card {#where-to-find-the-smithy-card}
+
+In the **Export** dialog, the **Smithy** card is on the **Target** step (under
 **RPC** in **Export studio**), as one file. Its badge is **lossless** for an item imported from Smithy
 and **lossy** for any other source. Pick the card to see its four options: **Output** (`idl` by
 default; `json-ast` or `both`), **Protocol** (`none` by default; `restJson1` or `rpcv2Cbor`),
