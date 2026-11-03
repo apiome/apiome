@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Smithy — the **Import a Smithy model** guide in **Help & docs** now opens with when to use it and a table of every step: import a file, a JSON AST or a multi-file model, Smithy lint, comparing versions with `smithy diff`, converting to OpenAPI and exporting back to Smithy
   - API Blueprint — the **Import an API Blueprint** guide in **Help & docs** now opens with when to use it and a table of every step: import, what the catalog item holds, drafter's checks, lint, moving to OpenAPI and exporting back to API Blueprint
   - RAML — the **Import a RAML API** guide in **Help & docs** now opens with when to use it and a table of every step: import a file or a file set, what is resolved, lint, comparing versions, moving to OpenAPI and exporting back to RAML
   - TypeSpec — the **Import a TypeSpec API** guide in **Help & docs** now opens with when to use it and a table of every step: import a file or a project, `tspconfig.yaml`, compiler warnings, versioned services, converting to OpenAPI and exporting back to TypeSpec

@@ -10,6 +10,26 @@ The **Smithy** importer (`smithy`) reads a [Smithy](https://smithy.io/2.0/) mode
 operations become operations. You can then search, version, diff and convert it like any other
 catalog item.
 
+## When to use it
+
+Use the Smithy importer for a Smithy 2.0 model: `.smithy` IDL files or the equivalent JSON AST, one
+file or a model split across many. On a server with the Smithy CLI, Apiome assembles, validates and
+compares the model with Smithy's own tools, so what you see in the catalog matches your Smithy
+build.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** a `.smithy` file or a JSON AST | **Import to catalog** → **Smithy**, or `apiome import smithy` | [Import it](#import-it) |
+| **Import** a model split across files | Upload a `.zip`, `.tar.gz` or `.tar`, or `apiome import smithy ./folder/` | [Multi-file models](#multi-file-models) |
+| **See** what the model became: shapes, traits, resources, errors | The catalog item | [What the catalog item holds](#what-the-catalog-item-holds) |
+| **Lint** it with Smithy validation and `smithy-linters` | Automatic on every import; events show in lint | [Lint: Smithy validation and smithy-linters](#lint-smithy-validation-and-smithy-linters) |
+| **Compare** two versions with `smithy diff` | Tick two versions on the catalog item's **Versions** tab | [Breaking changes between versions](#breaking-changes-between-versions) |
+| **Fix** a refused model | The error code the import returns | [When the import refuses a model](#when-the-import-refuses-a-model) |
+| **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
+| **Export** back to Smithy | **Export** on the catalog item | [Smithy from any source](../ship/export-a-spec.md#smithy-from-any-source) |
+
 ## Import it
 
 Import the model like any other catalog format: in the [import wizard](./import-wizard.mdx)
