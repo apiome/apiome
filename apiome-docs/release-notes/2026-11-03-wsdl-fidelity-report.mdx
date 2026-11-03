@@ -1,0 +1,23 @@
+---
+slug: wsdl-fidelity-report
+title: The WSDL export's fidelity report names the JSON-to-XSD losses
+description: WSDL export reports unions, nulls, examples and unwritable rules construct by construct.
+authors: [apiome]
+---
+
+The fidelity report of a **WSDL** export now lists, on each type and field, what XML Schema cannot
+say the way a JSON-shaped source does.
+[What the fidelity report lists](/ship/export-a-spec#wsdl-and-xsd-from-any-source).
+
+{/* truncate */}
+
+- **Unions.** A `oneOf` is an `xs:choice` of child elements, reported as approximated; a union with no
+  alternatives is reported as dropped.
+- **Null vs absent.** A nullable field is written `nillable="true" minOccurs="0"`, noted as an
+  approximation.
+- **Examples.** XML Schema has no examples, so they are not written and are reported as dropped.
+- **Rules with no facet.** `multipleOf`, `uniqueItems` and a pattern XSD cannot express are not
+  written, and are now reported as dropped rather than approximated.
+
+An item imported from WSDL or XSD is XML already, so none of these is listed for it. The exported
+files are unchanged.

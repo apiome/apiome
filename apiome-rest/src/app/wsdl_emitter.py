@@ -25,6 +25,10 @@ element carrying the response body, and one element per fault.
 
 **Names.** Names that are not legal XML ``NCName`` s are rewritten and de-duplicated; each change is
 reported. The HTTP method and path of a REST operation are not carried (reported).
+
+**Fidelity** (MFX-14.2, #3890): :class:`WsdlFidelityRulePack` adds the JSON → XSD mapping losses the writer
+records for a source that is not XML (a WSDL or XSD source has none) to the capability verdicts — a union
+as an ``xs:choice``, a nullable value as ``nillable``, examples and constraints with no facet not written.
 """
 
 from __future__ import annotations
@@ -63,6 +67,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+from .writer_loss_rulepack import filed_writer_verdicts
 from .xsd_schema import (
     NameScope,
     XsdSchemaWriter,
@@ -95,23 +100,62 @@ _WSDL_FORMAT = "wsdl"
 #: re-import assigns the same numbers: nothing is lost.
 _POSITIONAL_FIELD_NUMBER_FORMATS = frozenset({_WSDL_FORMAT, "xsd"})
 
+#: Source formats that are XML already: they have no JSON-shaped constructs (unions, null, examples) whose
+#: mapping to XSD the export reports (MFX-14.2).
+_XML_SOURCE_FORMATS = _POSITIONAL_FIELD_NUMBER_FORMATS
+
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
 class WsdlFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for WSDL export.
+    """Fidelity rules for WSDL export — MFX-14.1 (#3889), MFX-14.2 (#3890).
 
     On top of the capability rules: names that are not legal ``NCName`` s are reported as renames;
-    a map is written as a list of entries; an untyped value becomes ``xs:anyType``; ``multipleOf``,
-    ``uniqueItems`` and ``deprecated`` have no XSD form; a REST operation loses its HTTP method and
-    path. A field number is kept when it is only a sequence position (a WSDL or XSD source) and
-    dropped when it is a real one (Protobuf, Thrift, …).
+    a map is written as a list of entries; an untyped value becomes ``xs:anyType``; ``deprecated`` has
+    no XSD form; a REST operation loses its HTTP method and path. A field number is kept when it is only
+    a sequence position (a WSDL or XSD source) and dropped when it is a real one (Protobuf, Thrift, …).
+
+    **JSON → XSD mapping** (MFX-14.2). The pack builds the export once with the WSDL writer (default
+    options) and files the mapping losses it records on the type or field they concern
+    (:data:`_WRITER_LOSSES`), so the report names exactly what the export does:
+
+    * **unions** — an ``xs:choice`` of child elements, ``APPROX``; a union with no alternatives, ``DROP``;
+    * **JSON null vs absent** — a nullable value is ``nillable`` and optional, an info ``APPROX``;
+    * **examples** — not written, an info ``DROP``;
+    * **constraints with no facet** (``multipleOf``, ``uniqueItems``, an untranslatable ``pattern``) —
+      not written, a ``DROP``.
+
+    A WSDL or XSD source is XML already and records none of these. A construct with a mapping loss is
+    never also reported ``OK``.
     """
 
     target_label = "WSDL"
 
+    #: Writer loss subject → (verdict kind, severity), for the JSON → XSD mapping losses (MFX-14.2).
+    _WRITER_LOSSES = {
+        "union-as-choice": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "union-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "null-as-nillable": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "example-dropped": (LossinessKind.DROP, LossinessSeverity.INFO),
+        "unsupported-facet": (LossinessKind.DROP, LossinessSeverity.WARN),
+    }
+    #: Set by :meth:`evaluate`: construct key → the verdicts of its writer mapping losses.
+    _filed: Dict[str, List[FidelityVerdict]] = {}
+
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Note whether the source's field numbers are sequence positions, then run the drive loop."""
+        """Build the export once and file its mapping losses, then run the drive loop.
+
+        Also notes whether the source's field numbers are sequence positions.
+
+        Args:
+            api: The source model. Never mutated.
+
+        Returns:
+            The predicted fidelity report.
+        """
         self._positional_field_numbers = api.format in _POSITIONAL_FIELD_NUMBER_FORMATS
+        writer = _WsdlWriter(api, WsdlEmitOptions())
+        writer.render()
+        self._filed = filed_writer_verdicts(api, writer.losses.records(), self._WRITER_LOSSES)
         return super().evaluate(api)
 
     def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
@@ -198,8 +242,35 @@ class WsdlFidelityRulePack(CapabilityRulePack):
             return verdict
         return schema_type_verdict(type_, target_label=self.target_label) or verdict
 
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's verdict and its mapping losses (a union written as an ``xs:choice``)."""
+        return _without_ok_beside_loss([*super().type_verdicts(type_), *self._filed.get(type_.key, [])])
+
     def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
-        return [*super().field_verdicts(field), *schema_field_verdicts(field, target_label=self.target_label)]
+        """The capability and XSD verdicts, and the field's mapping losses (null, examples, facets).
+
+        Constraints with no facet are reported from the writer's ``unsupported-facet`` loss — a ``DROP``,
+        because the rule is not written — not as the shared helper's ``APPROX``.
+        """
+        return _without_ok_beside_loss([
+            *super().field_verdicts(field),
+            *schema_field_verdicts(field, target_label=self.target_label, facets=False),
+            *self._filed.get(field.key, []),
+        ])
+
+
+def _without_ok_beside_loss(verdicts: List[FidelityVerdict]) -> List[FidelityVerdict]:
+    """``verdicts`` without its ``OK`` s when any other verdict reports a loss (an ``OK`` would over-claim).
+
+    Args:
+        verdicts: One construct's verdicts.
+
+    Returns:
+        The verdicts to record, in order.
+    """
+    if all(v.kind is LossinessKind.OK for v in verdicts):
+        return verdicts
+    return [v for v in verdicts if v.kind is not LossinessKind.OK]
 
 
 class WsdlEmitOptions(EmitOptions):
@@ -303,6 +374,8 @@ class _WsdlWriter:
             losses=self.losses,
             tracker=self.tracker,
             skip_types=frozenset(self._message_types),
+            # MFX-14.2: a source that is not XML has JSON-shaped constructs whose mapping is reported.
+            record_json_mapping=api.format not in _XML_SOURCE_FORMATS,
         )
         self._service_names: Dict[str, str] = {}
         self._operation_names: Dict[str, str] = {}

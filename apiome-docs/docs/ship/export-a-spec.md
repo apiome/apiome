@@ -1168,7 +1168,7 @@ To get one file with the types inline, set the **layout** option to `single`.
   `enum` become XSD facets. A JSON Schema pattern is translated to XSD's dialect (`^[A-Z]{3}$` is
   written `[A-Z]{3}`, because an XSD pattern always matches the whole value). XSD has no facet for
   `multipleOf` or `uniqueItems`, nor for a pattern that uses lookahead, lazy quantifiers or `\b`;
-  those rules are not written, and the fidelity report lists each one.
+  those rules are not written, and the fidelity report lists each one as dropped.
 - **Operations.** Each operation becomes a SOAP operation with a request element named after it,
   carrying its path, query and header parameters and its request body, a `<operation>Response`
   element carrying the response body, and one element per error response (`getPetByIdStatus404Fault`).
@@ -1187,6 +1187,20 @@ versions and XSD details round-trip unchanged.
 - **One-way operations.** An operation with no reply is written with an `input` and no `output`.
   WSDL 1.1 has no message-exchange pattern, so importing the file again reads it as a request/response
   operation; the report says so for each one.
+
+**What the fidelity report lists.** For an item that is not XML already (OpenAPI, JSON Schema,
+GraphQL, Protobuf …), the report names each place where XML Schema cannot say what JSON says, on the
+type or field it concerns:
+
+| What the source has | How it is written | In the report |
+| --- | --- | --- |
+| A union (`oneOf`, `anyOf`) | An `xs:choice` of child elements: a document wraps the value in the element of its alternative | Approximated |
+| A union with no alternatives | An empty `xs:choice`, which no value matches | Dropped |
+| A nullable field | `nillable="true" minOccurs="0"`: XML tells an absent element from `xsi:nil`, JSON tells `null` from absent | Approximated (info) |
+| Examples | Not written: XML Schema has no examples | Dropped (info) |
+| `multipleOf`, `uniqueItems`, a pattern XSD cannot express | Not written: XML Schema has no facet for them | Dropped |
+
+An item imported from WSDL or XSD is XML already, so none of these is listed for it.
 
 **Where to find it.** In the **Export** dialog, the **WSDL** card is under **REST & HTTP** on the
 **Target** step, marked multi-file. Its badge is **lossy** for a REST, RPC, GraphQL or JSON Schema

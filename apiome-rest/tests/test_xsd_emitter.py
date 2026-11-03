@@ -522,8 +522,15 @@ def test_examples_are_written_as_documentation() -> None:
 
 
 def test_wsdl_keeps_its_own_conventions() -> None:
-    """Standalone mode is the XSD export's: WSDL still writes a free-form map as entries and records no notes."""
+    """Standalone mode is the XSD export's: WSDL still writes a free-form map as entries and no examples.
+
+    Since MFX-14.2 (#3890) WSDL records the JSON → XSD mapping losses too, without changing its output:
+    the union as an xs:choice, null as nillable, and the examples it does not write as dropped.
+    """
     result = WsdlEmitter().emit(_rich_json_source())
     subjects = {loss.subject for loss in result.losses}
-    assert not subjects & {"union-as-choice", "null-as-nillable", "example-as-annotation", "map-as-any"}
-    assert "<xsd:any" not in "".join(str(f.content) for f in result.files)
+    assert not subjects & {"example-as-annotation", "map-as-any"}
+    assert {"union-as-choice", "null-as-nillable", "example-dropped"} <= subjects
+    text = "".join(str(f.content) for f in result.files)
+    assert "<xsd:any" not in text
+    assert "brown" not in text  # the examples are not written

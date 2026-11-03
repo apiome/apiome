@@ -12,11 +12,11 @@
     "fidelity": {
       "summary": {
         "tier": "lossy",
-        "preserved_percent": 25,
-        "total": 8,
+        "preserved_percent": 13,
+        "total": 15,
         "preserved": 2,
         "dropped": 0,
-        "approximated": 5,
+        "approximated": 12,
         "synthesized": 1
       },
       "target": {
@@ -27,7 +27,7 @@
       "advisory": {
         "show": true,
         "severity": "info",
-        "message": "Exporting to WSDL may lose some fidelity. The destination format can't represent everything in this API, so 6 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+        "message": "Exporting to WSDL may lose some fidelity. The destination format can't represent everything in this API, so 13 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
       }
     },
     "files": [
