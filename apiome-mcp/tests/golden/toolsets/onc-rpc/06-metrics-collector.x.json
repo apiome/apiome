@@ -26,6 +26,52 @@
         "schema": {
           "properties": {
             "matches": {
+              "items": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      0,
+                      1
+                    ],
+                    "type": "integer"
+                  },
+                  "name": {
+                    "maxLength": 128,
+                    "type": "string"
+                  },
+                  "timestamp": {},
+                  "value": {}
+                },
+                "required": [
+                  "kind",
+                  "name",
+                  "timestamp",
+                  "value"
+                ],
+                "type": "object"
+              },
+              "maxItems": 64,
+              "type": "array"
+            }
+          },
+          "required": [
+            "matches"
+          ],
+          "type": "object"
+        },
+        "shape": "METRICS_PROG.query_res"
+      }
+    },
+    {
+      "description": "Returns METRICS_PROG.report_res.",
+      "inputSchema": {
+        "properties": {
+          "hostname": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "samples": {
+            "items": {
               "properties": {
                 "kind": {
                   "enum": [
@@ -48,47 +94,9 @@
                 "value"
               ],
               "type": "object"
-            }
-          },
-          "required": [
-            "matches"
-          ],
-          "type": "object"
-        },
-        "shape": "METRICS_PROG.query_res"
-      }
-    },
-    {
-      "description": "Returns METRICS_PROG.report_res.",
-      "inputSchema": {
-        "properties": {
-          "hostname": {
-            "maxLength": 64,
-            "type": "string"
-          },
-          "samples": {
-            "properties": {
-              "kind": {
-                "enum": [
-                  0,
-                  1
-                ],
-                "type": "integer"
-              },
-              "name": {
-                "maxLength": 128,
-                "type": "string"
-              },
-              "timestamp": {},
-              "value": {}
             },
-            "required": [
-              "kind",
-              "name",
-              "timestamp",
-              "value"
-            ],
-            "type": "object"
+            "maxItems": 32,
+            "type": "array"
           }
         },
         "required": [

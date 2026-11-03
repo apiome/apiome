@@ -6,6 +6,7 @@
       "inputSchema": {
         "properties": {
           "cityId": {
+            "pattern": "^[A-Za-z0-9 ]+$",
             "type": "string"
           }
         },
@@ -63,6 +64,7 @@
       "inputSchema": {
         "properties": {
           "cityId": {
+            "pattern": "^[A-Za-z0-9 ]+$",
             "type": "string"
           }
         },
@@ -80,11 +82,11 @@
             "conditions": {
               "items": {
                 "enum": [
-                  0,
-                  1,
-                  2
+                  "SUNNY",
+                  "CLOUDY",
+                  "RAIN"
                 ],
-                "type": "integer"
+                "type": "string"
               },
               "type": "array"
             },

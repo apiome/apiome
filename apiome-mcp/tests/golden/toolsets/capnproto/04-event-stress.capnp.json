@@ -2,6 +2,72 @@
   "mappingVersion": 1,
   "tools": [
     {
+      "description": "Returns array of Event.",
+      "inputSchema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "name": "drain",
+      "operation": "Collector.drain",
+      "output": {
+        "schema": {
+          "items": {
+            "properties": {
+              "created": {
+                "properties": {
+                  "actor": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "deleted": {
+                "properties": {
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "id": {},
+              "latitude": {},
+              "longitude": {},
+              "matrix": {},
+              "note": {
+                "type": "string"
+              },
+              "payload": {},
+              "severity": {
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3
+                ],
+                "type": "integer"
+              },
+              "tags": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Event"
+      }
+    },
+    {
       "inputSchema": {
         "properties": {},
         "type": "object"

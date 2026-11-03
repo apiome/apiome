@@ -2,7 +2,7 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Search the news index for matching articles.\n\nReturns http://example.com/newssearch.ResultSet.",
+      "description": "Search the news index for matching articles.\n\nReturns HTTP 200 application/xml (http://example.com/newssearch.ResultSet).",
       "inputSchema": {
         "properties": {
           "appid": {
@@ -32,15 +32,22 @@
       "name": "search",
       "operation": "GET /newsSearch",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "firstResultPosition": {},
             "totalResultsAvailable": {},
             "totalResultsReturned": {}
           },
+          "required": [
+            "firstResultPosition",
+            "totalResultsAvailable",
+            "totalResultsReturned"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/newssearch.ResultSet"
+        "shape": "http://example.com/newssearch.ResultSet",
+        "status": "200"
       }
     }
   ]

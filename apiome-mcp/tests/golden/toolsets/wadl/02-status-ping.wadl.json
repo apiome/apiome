@@ -2,14 +2,17 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 200 text/plain.",
       "inputSchema": {
         "properties": {},
         "type": "object"
       },
       "name": "getStatus",
       "operation": "GET /status",
-      "output": {}
+      "output": {
+        "mediaType": "text/plain",
+        "status": "200"
+      }
     }
   ]
 }

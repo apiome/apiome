@@ -2,17 +2,19 @@
   "mappingVersion": 1,
   "tools": [
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 204 with no body.",
       "inputSchema": {
         "properties": {},
         "type": "object"
       },
       "name": "cancelReindex",
       "operation": "DELETE /reindex",
-      "output": {}
+      "output": {
+        "status": "204"
+      }
     },
     {
-      "description": "Method with no id and a matrix param on the resource.\n\nReturns http://example.com/search.IndexStats.",
+      "description": "Method with no id and a matrix param on the resource.\n\nReturns HTTP 200 application/xml (http://example.com/search.IndexStats).",
       "inputSchema": {
         "properties": {
           "collection": {
@@ -31,18 +33,24 @@
       "name": "GET_corpus_collection_view",
       "operation": "GET /corpus/{collection};view",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
             "documents": {},
             "sizeBytes": {}
           },
+          "required": [
+            "documents",
+            "sizeBytes"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/search.IndexStats"
+        "shape": "http://example.com/search.IndexStats",
+        "status": "200"
       }
     },
     {
-      "description": "Full-text search with paging and optional filters.\n\nReturns http://example.com/search.SearchResult.",
+      "description": "Full-text search with paging and optional filters.\n\nReturns HTTP 200 application/xml (http://example.com/search.SearchResult).",
       "inputSchema": {
         "properties": {
           "lang": {
@@ -62,19 +70,28 @@
       "name": "search",
       "operation": "GET /query",
       "output": {
+        "mediaType": "application/xml",
         "schema": {
           "properties": {
-            "firstUrl": {},
+            "firstUrl": {
+              "type": "string"
+            },
             "tookMillis": {},
             "totalHits": {}
           },
+          "required": [
+            "firstUrl",
+            "tookMillis",
+            "totalHits"
+          ],
           "type": "object"
         },
-        "shape": "http://example.com/search.SearchResult"
+        "shape": "http://example.com/search.SearchResult",
+        "status": "200"
       }
     },
     {
-      "description": "Returns with no body.",
+      "description": "Returns HTTP 202 with no body.",
       "inputSchema": {
         "properties": {
           "priority": {
@@ -85,7 +102,9 @@
       },
       "name": "reindex",
       "operation": "POST /reindex",
-      "output": {}
+      "output": {
+        "status": "202"
+      }
     }
   ]
 }
