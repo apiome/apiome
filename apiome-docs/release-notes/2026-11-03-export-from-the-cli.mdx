@@ -1,0 +1,19 @@
+---
+slug: export-from-the-cli
+title: Export from the CLI, in one guide
+description: A new guide to apiome export, its fidelity report and gating CI on it.
+authors: [apiome]
+---
+
+CLI export is complete: `apiome export <format>` for every export target, the fidelity report in
+the terminal, and exports checked with the same format tools Apiome runs on import. A new guide,
+[Export from the CLI](/ship/export-from-the-cli), brings it together.
+
+{/* truncate */}
+
+- **At a glance:** list the targets, rank them with pre-flight, page the evidence, then export to
+  one format, several formats or several catalog items.
+- **Gate a pipeline:** `--force` for a lossy export, `--min-grade` and `--fail-on` for lint, the
+  tenant's quality policy, and the exit code each one uses.
+- **Checked with the format's own tool:** `buf`, `tsp`, the Smithy CLI, AMF, drafter and others
+  validate an export before it is delivered.

@@ -124,6 +124,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['create', 'show', 'draft', 'release', 'pipeline', 'exit code', 'semver', 'tag', 'compatibility gate'],
   },
   {
+    id: 'export-from-the-cli',
+    title: 'Export from the CLI',
+    summary:
+      'Export a version to any format with apiome export, read its fidelity report and gate a CI job on fidelity and lint.',
+    page: 'apiome-docs/docs/ship/export-from-the-cli.md',
+    section: 'reference',
+    keywords: ['terminal', 'pipeline', 'exit code', 'lossy', 'force', 'min-grade', 'fail-on', 'preflight', 'targets', 'evidence', 'toolchain'],
+  },
+  {
     id: 'find-apis-across-formats',
     title: 'Find APIs across formats',
     summary: 'Filter, categorize and search every API in the catalog by protocol, format, domain and tag.',
