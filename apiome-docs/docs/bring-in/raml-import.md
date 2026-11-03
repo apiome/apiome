@@ -9,6 +9,25 @@ The **RAML** importer (`raml`) reads a RAML 1.0 REST API definition into the [Ca
 Its types become types, and its resources and methods become operations. You can then search,
 version, diff and convert it like any other catalog item.
 
+## When to use it
+
+Use the RAML importer for an existing RAML 1.0 API, often one built for MuleSoft Anypoint. RAML
+has not been actively developed since 2016, so bring it in to catalog, lint and diff what you have,
+then [move it to OpenAPI](#move-to-openapi) for new work. Import one self-contained file, or a set
+whose `!include`s and `uses` libraries are resolved for you.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** a `.raml` file or a file set | **Import to catalog** → **RAML**, or `apiome import raml` | [Import it](#import-it) |
+| **See** what is resolved: includes, libraries, resource types and traits | The catalog item | [What the import resolves](#what-the-import-resolves) |
+| **Fix** a refused set | The error code the import returns | [When the import refuses a set](#when-the-import-refuses-a-set) |
+| **Lint** against the RAML specification and hygiene rules | The `raml` lint pack, on every import | [Lint and validation](#lint-and-validation) |
+| **Compare** two versions with the RAML breaking-change rules | Tick two versions on the catalog item's **Versions** tab | [Breaking changes between versions](#breaking-changes-between-versions) |
+| **Migrate** to an OpenAPI 3.1 project | **Convert to OpenAPI Project** on the catalog item, or `apiome convert --to openapi` | [Move to OpenAPI](#move-to-openapi) |
+| **Export** back to RAML | **Export** on the catalog item | [RAML from any source](../ship/export-a-spec.md#raml-from-any-source) |
+
 RAML APIs are often split across files. The root document pulls in data types and examples with
 `!include`, and shared types with `uses` libraries:
 
