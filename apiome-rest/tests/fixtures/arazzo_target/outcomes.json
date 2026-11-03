@@ -1,0 +1,136 @@
+{
+  "cards": {
+    "arazzo-1-0": {
+      "available": true,
+      "paradigm": "rest",
+      "preserved_percent": 100,
+      "tier": "lossless"
+    },
+    "arazzo-1-1": {
+      "available": true,
+      "paradigm": "rest",
+      "preserved_percent": 100,
+      "tier": "lossless"
+    },
+    "data-json-schema": {
+      "available": false,
+      "paradigm": "data_schema",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "graph-graphql": {
+      "available": true,
+      "paradigm": "graph",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "rest-openapi": {
+      "available": true,
+      "paradigm": "rest",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "rest-raml": {
+      "available": true,
+      "paradigm": "rest",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "rest-wsdl": {
+      "available": true,
+      "paradigm": "rest",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "rpc-smithy": {
+      "available": true,
+      "paradigm": "rpc",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    },
+    "rpc-thrift": {
+      "available": true,
+      "paradigm": "rpc",
+      "preserved_percent": 0,
+      "tier": "lossy"
+    }
+  },
+  "options": {
+    "arazzo-1-0": {
+      "default": {
+        "arazzo": "1.0.1",
+        "files": [
+          "simple-todo-workflow.arazzo.yaml"
+        ],
+        "lines": 42,
+        "preserved_percent": 100,
+        "steps": 2,
+        "tier": "lossless",
+        "valid": true,
+        "workflows": 1
+      },
+      "flow-style": {
+        "arazzo": "1.0.1",
+        "files": [
+          "simple-todo-workflow.arazzo.yaml"
+        ],
+        "lines": 13,
+        "preserved_percent": 100,
+        "steps": 2,
+        "tier": "lossless",
+        "valid": true,
+        "workflows": 1
+      },
+      "version-1-1": {
+        "arazzo": "1.1.0",
+        "files": [
+          "simple-todo-workflow.arazzo.yaml"
+        ],
+        "lines": 42,
+        "preserved_percent": 100,
+        "steps": 2,
+        "tier": "lossless",
+        "valid": true,
+        "workflows": 1
+      }
+    },
+    "rest-openapi": {
+      "default": {
+        "arazzo": "1.0.1",
+        "files": [
+          "sample-pet-store-api-openapi-3-0-.arazzo.yaml"
+        ],
+        "lines": 27,
+        "preserved_percent": 0,
+        "steps": 5,
+        "tier": "lossy",
+        "valid": true,
+        "workflows": 1
+      },
+      "flow-style": {
+        "arazzo": "1.0.1",
+        "files": [
+          "sample-pet-store-api-openapi-3-0-.arazzo.yaml"
+        ],
+        "lines": 8,
+        "preserved_percent": 0,
+        "steps": 5,
+        "tier": "lossy",
+        "valid": true,
+        "workflows": 1
+      },
+      "version-1-1": {
+        "arazzo": "1.1.0",
+        "files": [
+          "sample-pet-store-api-openapi-3-0-.arazzo.yaml"
+        ],
+        "lines": 27,
+        "preserved_percent": 0,
+        "steps": 5,
+        "tier": "lossy",
+        "valid": true,
+        "workflows": 1
+      }
+    }
+  }
+}

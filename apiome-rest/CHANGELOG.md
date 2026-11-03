@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.613.0] - 2026-11-02
+
+### Added
+- **Arazzo target card + fixtures (MFX-10.4, #3873).** `tests/test_arazzo_target_card.py` +
+  `fixtures/arazzo_target/outcomes.json` pin the `arazzo` card across paradigms (REST — OpenAPI, WSDL, RAML; RPC —
+  Thrift, Smithy; graph — GraphQL: `lossy`, each report led by *this target captures workflows, not the full API
+  surface*; imported Arazzo 1.0 and 1.1 `lossless`; a JSON Schema set of types unavailable — nothing to sequence),
+  the `pretty_print` / `arazzo_version` choices (each passes the MFX-10.3 gate), browse delivering the
+  `.arazzo.yaml` itself, and keep the CLI / UI registry fixtures and the CLI job fixture — with the live **report** —
+  equal to the live registry (`APIOME_REGEN_ARAZZO_TARGET=1`).
+- OpenAPI document version 1.476.0 → 1.477.0.
+
 ## [1.612.0] - 2026-11-02
 
 ### Fixed

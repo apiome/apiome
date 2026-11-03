@@ -1,0 +1,20 @@
+---
+slug: arazzo-target-card
+title: Export to Arazzo from the Export dialog and the CLI
+description: The Arazzo card badges every paradigm, and the CLI prints the workflows-only report.
+authors: [apiome]
+---
+
+The **Export** dialog's **Arazzo** card writes one `.arazzo.yaml` workflow document, badged with the
+fidelity it keeps for the item. The CLI exports the same with `apiome export arazzo`.
+[Where to find it](/ship/export-a-spec#arazzo-from-any-source).
+
+{/* truncate */}
+
+- **Every paradigm.** REST, RPC and GraphQL items badge **lossy**: Arazzo captures workflows, not the
+  full API surface. An item imported from Arazzo 1.0 or 1.1 badges **lossless**. An item with nothing
+  to sequence, such as a set of types, is greyed out.
+- **Two options.** **Pretty Print** (on by default) and **Arazzo Version** (`1.0.1` or `1.1.0`; empty
+  keeps the item's own version).
+- **The report on the CLI.** `apiome export arazzo` prints the tier, the counts and the losses, with
+  the workflows-only warning. A lossy export exits non-zero unless you add `--force`.

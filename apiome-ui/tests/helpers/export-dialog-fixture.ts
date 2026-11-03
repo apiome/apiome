@@ -40,6 +40,9 @@ import capnprotoTargetsForRest from '../fixtures/export-targets-capnproto-rest.j
 import capnprotoTargetsForCapnproto from '../fixtures/export-targets-capnproto-capnproto.json';
 import openrpcTargetsForRest from '../fixtures/export-targets-openrpc-rest.json';
 import openrpcTargetsForOpenrpc from '../fixtures/export-targets-openrpc-openrpc.json';
+import arazzoTargetsForRest from '../fixtures/export-targets-arazzo-rest.json';
+import arazzoTargetsForArazzo from '../fixtures/export-targets-arazzo-arazzo.json';
+import arazzoTargetsForData from '../fixtures/export-targets-arazzo-data.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -623,4 +626,20 @@ export function serializationIdlTargets(
  */
 export function openrpcTargets(source: 'rest' | 'openrpc'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? openrpcTargetsForRest : openrpcTargetsForOpenrpc);
+}
+
+/**
+ * The Arazzo target as the registry lists it (MFX-10.4, #3873), for a REST source, an imported Arazzo workflow
+ * document and a set of types — recorded from the live REST registry by
+ * `apiome-rest/tests/test_arazzo_target_card.py`. Arazzo captures workflows, not the full API surface, so a REST
+ * source is `lossy`; an Arazzo document exports again unchanged (`lossless`); a set of types has no operation to
+ * sequence, so the target is unavailable.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `arazzo` (an imported Arazzo 1.0 workflow) or `data` (a JSON
+ *   Schema set of types).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function arazzoTargets(source: 'rest' | 'arazzo' | 'data'): ExportTargetsResponse {
+  const recorded = { rest: arazzoTargetsForRest, arazzo: arazzoTargetsForArazzo, data: arazzoTargetsForData };
+  return recordedTargets(recorded[source]);
 }

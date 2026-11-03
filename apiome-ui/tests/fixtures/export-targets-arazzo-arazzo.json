@@ -1,0 +1,68 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "arazzo",
+        "format": "arazzo",
+        "label": "Arazzo",
+        "description": "Export as an Arazzo workflow description (.yaml).",
+        "icon": "workflow",
+        "paradigm": "rest",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`ArazzoEmitter`.",
+        "properties": {
+          "pretty_print": {
+            "default": true,
+            "description": "Pretty-print the generated Arazzo YAML document.",
+            "title": "Pretty Print",
+            "type": "boolean"
+          },
+          "arazzo_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Arazzo specification version to write (1.0.x or 1.1.x). Defaults to the version the model was imported from, falling back to 1.1.0 when the model uses an AsyncAPI source description and 1.0.1 otherwise.",
+            "title": "Arazzo Version"
+          }
+        },
+        "title": "ArazzoEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "pretty_print": true,
+        "arazzo_version": null
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 2,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}
