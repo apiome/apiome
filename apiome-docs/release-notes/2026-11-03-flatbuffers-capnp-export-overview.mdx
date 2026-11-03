@@ -1,0 +1,21 @@
+---
+slug: flatbuffers-capnp-export-overview
+title: FlatBuffers and Cap'n Proto export, end to end
+description: The FlatBuffers and Cap'n Proto export guides now open with when to use them.
+authors: [apiome]
+---
+
+FlatBuffers and Cap'n Proto export are complete: both schema emitters, their fidelity packs and
+compile checks, and the **FlatBuffers** and **Cap'n Proto** target cards, CLI and fixtures.
+[Cap'n Proto from any source](/ship/export-a-spec#capn-proto-from-any-source) and
+[FlatBuffers from any source](/ship/export-a-spec#flatbuffers-from-any-source) now each open with
+an overview.
+
+{/* truncate */}
+
+- **When to export:** to move an API to a Cap'n Proto schema, to hand data types to a FlatBuffers
+  reader, to keep readers compatible with field numbers and ids that stay the same from one export
+  to the next, or to round-trip an item of either format losslessly.
+- **At a glance:** one table per format from the card and its options, through how the item is
+  written and what the fidelity report lists, to the `capnp compile` or `flatc` check before every
+  download and the CLI.
