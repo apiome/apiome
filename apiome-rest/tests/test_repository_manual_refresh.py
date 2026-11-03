@@ -55,6 +55,19 @@ def _candidate(path: str, *, remote_committed_at, remote_blob, last_committed_at
 class FakeDB:
     """Records manual-refresh interactions; no real database."""
 
+    # --- RAR-6.4 branch refresh rules (none by default: repository-wide behaviour) ---
+    branch_rules: list = []
+    branch_state: dict = {}
+
+    def list_repository_branch_refresh_rules(self, tenant_id, repository_id):
+        return [dict(rule) for rule in self.branch_rules]
+
+    def list_repository_branch_refresh_state(self, repository_id):
+        return dict(self.branch_state)
+
+    def mark_repository_branch_refreshed(self, repository_id, branch):
+        self.__dict__.setdefault("branches_refreshed", []).append((repository_id, branch))
+
     def __init__(self, *, repo=None, branches=None, candidates=None):
         self._repo = repo
         self._branches = branches if branches is not None else {}
@@ -299,3 +312,26 @@ def test_bad_branch_does_not_abort_other_branches():
 
     assert result.enqueued == 1
     assert result.branches == ["main"]  # only the branch that succeeded
+
+
+# ----------------------------------------------- RAR-6.4 per-branch refresh policy (#3541)
+
+
+def test_refresh_now_ignores_a_branch_rules_switch_but_keeps_its_line():
+    """Refresh now bypasses a rule that turns refresh off, like the repository opt-out, and still
+    lands the refresh in the branch's version line."""
+    stale = _candidate(
+        "api/openapi.yaml",
+        remote_committed_at=NEWER, remote_blob="blob-new",
+        last_committed_at=OLDER, last_blob="blob-old",
+    )
+    db = FakeDB(repo=_repo(), branches={"r1": ["main"]}, candidates={("r1", "main"): [stale]})
+    db.branch_rules = [
+        {"branch_pattern": "main", "refresh_enabled": False, "refresh_interval_seconds": None,
+         "target_version_line": "latest"},
+    ]
+
+    result = refresh_repository_now(db, tenant_id="t1", repository_id="r1")
+
+    assert result.enqueued == 1
+    assert db.enqueued[0]["target_version_line"] == "latest"

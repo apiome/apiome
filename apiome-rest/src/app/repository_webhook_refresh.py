@@ -58,6 +58,8 @@ REASON_NOT_POLLABLE = "repository-not-pollable"
 REASON_QUOTA_EXHAUSTED = "quota-exhausted"
 REASON_LOCK_HELD = "refresh-in-progress"
 REASON_REFRESH_FAILED = "refresh-failed"
+#: A branch rule turns refresh off for the pushed branch (RAR-6.4); the sweep skips it too.
+REASON_BRANCH_REFRESH_OFF = "branch-refresh-off"
 
 
 class InstantRefreshResult(NamedTuple):
@@ -170,6 +172,14 @@ def refresh_pushed_files(
         # The tenant's opt-out and the RAR-3.4 auto-pause hold for a push, as they do for the sweep.
         return done(InstantRefreshResult(ran=False, reason=REASON_NOT_POLLABLE))
 
+    from .repository_refresh_sweep import load_branch_refresh_rules, resolve_branch_refresh
+
+    # RAR-6.4: a branch rule that turns refresh off holds for a push too.
+    rules = load_branch_refresh_rules(db, tenant_id, repository_id)
+    policy = resolve_branch_refresh(rules, repo_row, branch) if rules else None
+    if policy is not None and not policy.enabled:
+        return done(InstantRefreshResult(ran=False, reason=REASON_BRANCH_REFRESH_OFF))
+
     quota = load_tenant_refresh_quota_tracker(db)
     if quota is not None and quota.is_exhausted(tenant_id):
         return done(InstantRefreshResult(ran=False, reason=REASON_QUOTA_EXHAUSTED))
@@ -184,6 +194,7 @@ def refresh_pushed_files(
             branch,
             path_filter=frozenset(wanted),
             max_enqueues=(quota.remaining(tenant_id) if quota is not None else None),
+            target_version_line=policy.target_version_line if policy is not None else None,
         )
     except Exception:  # noqa: BLE001 - the sweep retries a repository left due
         _logger.exception(

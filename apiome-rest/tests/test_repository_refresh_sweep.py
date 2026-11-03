@@ -83,6 +83,19 @@ def _candidate(path: str, *, remote_committed_at, remote_blob, last_committed_at
 class FakeDB:
     """Records sweep interactions; no real database."""
 
+    # --- RAR-6.4 branch refresh rules (none by default: repository-wide behaviour) ---
+    branch_rules: list = []
+    branch_state: dict = {}
+
+    def list_repository_branch_refresh_rules(self, tenant_id, repository_id):
+        return [dict(rule) for rule in self.branch_rules]
+
+    def list_repository_branch_refresh_state(self, repository_id):
+        return dict(self.branch_state)
+
+    def mark_repository_branch_refreshed(self, repository_id, branch):
+        self.__dict__.setdefault("branches_refreshed", []).append((repository_id, branch))
+
     def __init__(
         self,
         *,
@@ -1266,3 +1279,83 @@ def test_a_counter_write_failure_never_blocks_a_deferral(monkeypatch, telemetry)
     assert db.acquired == []
     assert db.refreshed == []
     assert db.failures_recorded == []
+
+
+# ----------------------------------------------- RAR-6.4 per-branch refresh policy (#3541)
+
+
+def _stale_on(branch, path):
+    """A stale + newer candidate on ``branch``."""
+    row = _candidate(
+        path,
+        remote_committed_at=NEWER, remote_blob="b1",
+        last_committed_at=OLDER, last_blob="b0",
+    )
+    row["branch"] = branch
+    return row
+
+
+def _branch_db(rules, *, state=None):
+    db = FakeDB(
+        due=[{"id": "r1", "tenant_id": "t1"}],
+        branches={"r1": ["main", "release/2.0", "sandbox"]},
+        candidates={
+            ("r1", "main"): [_stale_on("main", "main.yaml")],
+            ("r1", "release/2.0"): [_stale_on("release/2.0", "release.yaml")],
+            ("r1", "sandbox"): [_stale_on("sandbox", "sandbox.yaml")],
+        },
+    )
+    db.branch_rules = rules
+    db.branch_state = state or {}
+    return db
+
+
+_RULES = [
+    {"branch_pattern": "main", "refresh_enabled": True, "refresh_interval_seconds": None, "target_version_line": "latest"},
+    {"branch_pattern": "release/*", "refresh_enabled": True, "refresh_interval_seconds": 3600, "target_version_line": "2.x"},
+    {"branch_pattern": "sandbox", "refresh_enabled": False, "refresh_interval_seconds": None, "target_version_line": None},
+]
+
+
+def test_a_branch_rule_turns_one_branch_off():
+    """RAR-6.4 AC1: the sandbox rule stops its branch; the others refresh."""
+    db = _branch_db(_RULES)
+
+    process_repository_refresh_sweep(db)
+
+    assert [j["branch"] for j in db.enqueued] == ["main", "release/2.0"]
+    assert ("r1", "sandbox") not in db.scanned
+
+
+def test_each_job_carries_its_branch_version_line():
+    """RAR-6.4 AC2: the job is stamped with the line of the rule that matched its branch."""
+    db = _branch_db(_RULES)
+
+    process_repository_refresh_sweep(db)
+
+    assert {j["branch"]: j.get("target_version_line") for j in db.enqueued} == {
+        "main": "latest",
+        "release/2.0": "2.x",
+    }
+
+
+def test_a_branch_waits_for_its_own_cadence():
+    """RAR-6.4 AC1: release/* refreshes hourly; refreshed 10 minutes ago, it is not due yet."""
+    recent = datetime.now(timezone.utc) - timedelta(minutes=10)
+    db = _branch_db(_RULES, state={"main": recent, "release/2.0": recent})
+
+    process_repository_refresh_sweep(db)
+
+    # main inherits the repository default (300 s) and is due; release/2.0 (3600 s) is not.
+    assert [j["branch"] for j in db.enqueued] == ["main"]
+    assert db.branches_refreshed == [("r1", "main")]
+
+
+def test_without_rules_every_branch_refreshes_as_before():
+    db = _branch_db([])
+
+    process_repository_refresh_sweep(db)
+
+    assert [j["branch"] for j in db.enqueued] == ["main", "release/2.0", "sandbox"]
+    assert all("target_version_line" not in j for j in db.enqueued)
+    assert "branches_refreshed" not in db.__dict__  # no per-branch anchor without rules

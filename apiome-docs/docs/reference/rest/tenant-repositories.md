@@ -1,6 +1,6 @@
 ---
 title: "Tenant repositories"
-description: "REST endpoints tagged tenant-repositories: 28 operations."
+description: "REST endpoints tagged tenant-repositories: 30 operations."
 sidebar_position: 94
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.479.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.480.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `tenant-repositories` · 28 operations
+Tag: `tenant-repositories` · 30 operations
 
 ## `GET /v1/tenants/{tenant_slug}/repositories` {#list-tenant-repositories-v1-tenants-tenant-slug-repositories-get}
 
@@ -160,6 +160,95 @@ Operation id: `delete_tenant_repository_v1_tenants__tenant_slug__repositories__r
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for delete tenant repository. | `application/json` map of boolean |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/repositories/{repository_id}/branch-refresh-rules` {#get-repository-branch-refresh-rules-v1-tenants-tenant-slug-repositories-repository-id-branch-refresh-rules-get}
+
+**Get Repository Branch Refresh Rules**
+
+Read a repository's per-branch refresh rules (RAR-6.4, #3541).
+
+A rule names a branch exactly (``main``) or by glob (``release/*``) and sets, for the
+branches it matches, whether they refresh, how often, and the version line a refresh lands
+in. The most specific matching rule wins; a branch no rule matches follows the
+repository-wide settings. The response also lists every tracked branch with the settings it
+refreshes with, so a panel can show the effect of the rules.
+
+Args:
+    tenant_slug: Tenant slug from the path (scoping comes from the token).
+    repository_id: The repository to read.
+    auth_data: Authenticated principal; supplies the tenant scope.
+
+Returns:
+    The rules, the repository-wide fallback, and each tracked branch's effective settings.
+
+Raises:
+    HTTPException: 404 when the repository does not belong to the tenant.
+
+Operation id: `get_repository_branch_refresh_rules_v1_tenants__tenant_slug__repositories__repository_id__branch_refresh_rules_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `repository_id` | path | string (uuid) | yes | Connected repository identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get repository branch refresh rules. | `application/json` [`RepositoryBranchRefreshResponse`](#schema-repositorybranchrefreshresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/repositories/{repository_id}/branch-refresh-rules` {#set-repository-branch-refresh-rules-v1-tenants-tenant-slug-repositories-repository-id-branch-refresh-rules-put}
+
+**Set Repository Branch Refresh Rules**
+
+Replace a repository's per-branch refresh rules (RAR-6.4, #3541).
+
+The request holds the complete set: rules left out are removed, and an empty list removes
+them all, so every branch follows the repository-wide settings again. Changes apply from the
+next sweep tick or push; a refresh already enqueued keeps the version line it was enqueued
+with.
+
+Args:
+    tenant_slug: Tenant slug from the path (scoping comes from the token).
+    repository_id: The repository to configure.
+    payload: The rules to store.
+    auth_data: Authenticated principal; supplies the tenant scope.
+
+Returns:
+    The rules and each tracked branch's effective settings after the update.
+
+Raises:
+    HTTPException: 400 for an invalid rule; 404 when the repository does not belong to the
+        tenant.
+
+Operation id: `set_repository_branch_refresh_rules_v1_tenants__tenant_slug__repositories__repository_id__branch_refresh_rules_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `repository_id` | path | string (uuid) | yes | Connected repository identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for set repository branch refresh rules.
+
+- `application/json` — [`RepositoryBranchRefreshRulesUpdate`](#schema-repositorybranchrefreshrulesupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for set repository branch refresh rules. | `application/json` [`RepositoryBranchRefreshResponse`](#schema-repositorybranchrefreshresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/repositories/{repository_id}/conflict-policy` {#get-repository-conflict-policy-v1-tenants-tenant-slug-repositories-repository-id-conflict-policy-get}
@@ -1247,6 +1336,23 @@ Stable JSON envelope for GET .../repositories/{id}/refresh-history (RAR-5.3).
 | `schemaVersion` | integer | no | Bumped only when item or pagination shape changes incompatibly. |
 | `items` | array of `RefreshHistoryEntryOut` | yes | Items. |
 | `pagination` | `RefreshHistoryPaginationOut` | yes | Pagination. |
+
+### `RepositoryBranchRefreshResponse` {#schema-repositorybranchrefreshresponse}
+
+Envelope returned by the branch-refresh read and by its update (RAR-6.4).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `branchRefresh` | `RepositoryBranchRefreshOut` | yes | Branch Refresh. |
+
+### `RepositoryBranchRefreshRulesUpdate` {#schema-repositorybranchrefreshrulesupdate}
+
+Replace a repository's branch refresh rules (RAR-6.4, #3541). An empty list removes them all.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `rules` | array of `RepositoryBranchRefreshRuleIn` | no | The complete set of rules; patterns must be unique. |
 
 ### `RepositoryConflictPolicyOverrideRequest` {#schema-repositoryconflictpolicyoverriderequest}
 

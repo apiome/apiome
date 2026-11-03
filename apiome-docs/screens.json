@@ -696,6 +696,16 @@
       "data": "fixture:hive-repository-detail/settings.html"
     },
     {
+      "id": "repository-branch-refresh",
+      "route": "/ade/dashboard/repositories/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-repository-detail/settings.html",
+      "scrollTo": "[data-testid=\"branch-refresh\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/repositories/RepositoryBranchRefreshRules.tsx"
+      ]
+    },
+    {
       "id": "repository-sync-history",
       "route": "/ade/dashboard/repositories/[id]",
       "waitFor": "#a11y-mount > *",

@@ -183,3 +183,29 @@ def test_metadata_carries_refresh_provenance():
     assert meta.refresh_provenance.source_committed_at == _COMMITTED_AT
     # The spec-faithful payload (RAR-4.1) is still present alongside provenance.
     assert meta.repository_import_spec is not None
+
+
+# ----------------------------------------------- RAR-6.4 per-branch refresh policy (#3541)
+
+
+def test_a_job_with_a_version_line_targets_a_timestamped_version_in_it():
+    from datetime import datetime, timezone
+
+    from app.repository_refresh_executor import build_version_line_target
+
+    now = datetime(2026, 11, 3, 21, 0, tzinfo=timezone.utc)
+    target = build_version_line_target({"branch": "release/2.0", "target_version_line": "2.x"}, now=now)
+
+    assert target is not None
+    assert target.version_id == "2.x-2026-11-03T21:00Z"
+    assert target.description == "Refreshed from branch release/2.0 into version line 2.x"
+
+
+def test_a_job_without_a_version_line_keeps_the_default_naming():
+    from datetime import datetime, timezone
+
+    from app.repository_refresh_executor import build_version_line_target
+
+    now = datetime(2026, 11, 3, 21, 0, tzinfo=timezone.utc)
+    assert build_version_line_target({"branch": "main"}, now=now) is None
+    assert build_version_line_target({"branch": "main", "target_version_line": "  "}, now=now) is None

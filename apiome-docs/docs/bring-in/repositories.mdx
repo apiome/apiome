@@ -72,7 +72,8 @@ as cards. Five tabs follow:
 - **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
 - **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
   and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).
-- **Settings** — the source, **Scan cadence** (**Auto-refresh**), what happens on a refresh
+- **Settings** — the source, **Scan cadence** (**Auto-refresh**), **Branch refresh rules** (see
+  [Branch refresh rules](#branch-refresh-rules)), what happens on a refresh
   conflict (**Hold for review**, **Overwrite** or **New branch**), which projects may open pull
   requests back into the repository (see [Send changes back as a pull request](#send-changes-back-as-a-pull-request)),
   and **Remove repository**.
@@ -258,6 +259,45 @@ reported instead: the file's row on **Discovered specs** carries a warning such 
 
 <Screenshot id="repositories-catalog" alt="Discovered specs: specs found across repositories with format, project and status" />
 
+## Branch refresh rules
+
+A repository often tracks several branches: `main`, release branches, a sandbox. Each one can
+refresh on its own terms. A **rule** names a branch exactly (`main`) or with a pattern
+(`release/*`), and sets, for the branches it matches:
+
+- **Refresh**: whether they refresh on the schedule and on push.
+- **Every**: how often. **Repository** keeps the repository's cadence.
+- **Version line**: the line of versions a refresh lands in, such as `latest` or `2.x`. The
+  refreshed version is labelled with the line and the time, such as `2.x-2026-11-03T21:00Z`, and
+  follows the latest version of that line. Leave it empty for the usual date-and-time label.
+
+In a pattern, `*` matches within one part of the name (`release/*` matches `release/2.4` but not
+`release/2.4/hotfix`), and `**` matches across parts. When several rules match a branch, the most
+specific one wins: an exact name before any pattern, then the pattern with the most fixed
+characters. A branch no rule matches follows the repository.
+
+1. Open the repository and **click the “Settings” tab**.
+2. Under **Branch refresh rules**, **click “Add rule”**.
+3. Enter the **Branch**, for example `release/*`, choose **Every**, for example **6 hours**, and enter
+   the **Version line**, for example `2.x`. Turn **Refresh** off for a branch that should never
+   refresh, such as `sandbox`.
+4. **Click “Save rules”**.
+
+**Tracked branches** lists every branch with an imported file and says how it refreshes, and
+which rule decided it, for example *Every 6 hours into 2.x · rule release/\**.
+
+<Screenshot id="repository-branch-refresh" alt="Branch refresh rules: each tracked branch with how it refreshes, and the rules for main and release/*" />
+
+**Auto-refresh** under **Scan cadence** is still the switch for the whole repository: when it is
+off, no branch refreshes on its own. **“Refresh now”** refreshes a branch even when its rule turns
+refresh off, and still lands it in the branch's version line. A rule's cadence can't be shorter
+than the minimum your deployment allows.
+
+From the CLI, `apiome repository branch-rules show acme/api` lists the rules and branches, and
+`apiome repository branch-rules set acme/api "release/*" --interval 21600 --line 2.x` adds a rule
+(`--off` turns refresh off, `remove` and `clear` delete rules). See
+[`apiome repository branch-rules`](../reference/cli/repository.md#repository-branch-rules).
+
 ## Refresh on push
 
 A repository refreshes its imported specs on its **Scan cadence**. When the repository also sends
@@ -274,7 +314,8 @@ Apiome its push webhooks (GitHub, GitLab or Bitbucket, delivered to
 A push refresh follows the same rules as a scheduled one. A file is re-imported only when it is
 newer than what you last imported, and a version you edited by hand is held for review (see
 **Settings**). The refresh counts against your [quota](#quota--rate-limits). A push does nothing
-while **Auto-refresh** is off or the repository is paused after repeated failures.
+while **Auto-refresh** is off, while the repository is paused after repeated failures, or when the
+pushed branch's [rule](#branch-refresh-rules) turns refresh off.
 
 If a push refresh can't run, for example because your quota is used up, the repository still
 refreshes on its next scheduled check. Without webhooks, **Scan cadence** works as before.
@@ -307,7 +348,8 @@ change it.
   `apiome repos files <repo>`, `apiome repos import <repo> --files "**/openapi*.yaml"
   --new-project` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/tenants/{tenant}/repositories`, `GET …/repositories/{repo}/files`,
-  `POST …/repositories/{repo}/refresh`, `GET …/repository-quota-telemetry`,
+  `POST …/repositories/{repo}/refresh`, `GET` / `PUT …/repositories/{repo}/branch-refresh-rules`,
+  `GET …/repository-quota-telemetry`,
   `GET …/repository-webhook-ip-allowlist` — see the [API reference](../reference/api-reference.md).
   A project's contributing repositories and the source of each class and path:
   `GET /v1/tenants/{tenant}/projects/{project}/repository-sources` — see

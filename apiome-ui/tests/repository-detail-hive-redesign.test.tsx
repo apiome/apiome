@@ -429,6 +429,25 @@ beforeEach(() => {
         overrides: [],
       },
     },
+    // RAR-6.4: main lands in "latest", release branches in "2.x", develop follows the repository.
+    '/api/repositories/repo-1/branch-refresh-rules': {
+      body: {
+        success: true,
+        repositoryId: 'repo-1',
+        autoRefreshEnabled: true,
+        repositoryIntervalSeconds: 3600,
+        minIntervalSeconds: 60,
+        rules: [
+          { branchPattern: 'main', refreshEnabled: true, refreshIntervalSeconds: 300, targetVersionLine: 'latest' },
+          { branchPattern: 'release/*', refreshEnabled: true, refreshIntervalSeconds: 21600, targetVersionLine: '2.x' },
+        ],
+        branches: [
+          { branch: 'main', enabled: true, intervalSeconds: 300, targetVersionLine: 'latest', rulePattern: 'main', lastRefreshedAt: null },
+          { branch: 'release/2.4', enabled: true, intervalSeconds: 21600, targetVersionLine: '2.x', rulePattern: 'release/*', lastRefreshedAt: null },
+          { branch: 'develop', enabled: true, intervalSeconds: 3600, targetVersionLine: null, rulePattern: null, lastRefreshedAt: null },
+        ],
+      },
+    },
     // REPO-5.8: the repository allows one project to open pull requests back into it.
     '/api/repositories/repo-1/pr-back-settings': {
       body: {
@@ -1234,6 +1253,15 @@ describe('the Settings tab', () => {
     expect(screen.getByTestId('pr-back-reviewers')).toHaveValue('acme/api-reviewers');
   });
 
+  test('carries the per-branch refresh rules panel (RAR-6.4)', async () => {
+    await renderScreen();
+    await openTab('settings');
+    expect(await screen.findByTestId('branch-refresh-branch-release/2.4')).toHaveTextContent(
+      'Every 6 hours into 2.x · rule release/*'
+    );
+    expect(screen.getByTestId('branch-refresh-branch-develop')).toHaveTextContent('repository settings');
+  });
+
   test('carries the conflict-policy panel rather than a copy of it', async () => {
     await renderScreen();
     await openTab('settings');
@@ -1362,6 +1390,7 @@ describe('the browser fixtures', () => {
     await openTab('settings');
     await screen.findByTestId('conflict-policy');
     await screen.findByTestId('pr-back-settings-form');
+    await screen.findByTestId('branch-refresh-branch-main');
     write('settings', page());
   });
 

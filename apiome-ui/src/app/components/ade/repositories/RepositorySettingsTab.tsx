@@ -61,6 +61,8 @@ export interface RepositorySettingsTabProps {
   removing: boolean;
   /** The RAR-4.5 conflict-policy panel, passed in so this tab owns no data of its own. */
   conflictPolicy: React.ReactNode;
+  /** The RAR-6.4 per-branch refresh rules panel, passed in for the same reason. */
+  branchRefresh?: React.ReactNode;
   /** The REPO-5.8 PR-back settings card, passed in for the same reason. */
   prBack?: React.ReactNode;
 }
@@ -81,6 +83,7 @@ export function RepositorySettingsTab({
   onRemove,
   removing,
   conflictPolicy,
+  branchRefresh,
   prBack,
 }: RepositorySettingsTabProps) {
   const autoRefreshOn = repository.auto_refresh_enabled ?? true;
@@ -183,6 +186,8 @@ export function RepositorySettingsTab({
           </p>
         </CardContent>
       </Card>
+
+      {branchRefresh}
 
       {conflictPolicy}
 

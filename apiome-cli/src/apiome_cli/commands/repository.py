@@ -1,4 +1,5 @@
-"""Repository auto-refresh commands: ``apiome repository refresh`` (RAR-5.6).
+"""Repository auto-refresh commands: ``apiome repository refresh`` (RAR-5.6) and
+``apiome repository branch-rules`` (RAR-6.4).
 
 CI and power users need to trigger and inspect a repository refresh without the
 dashboard. Two verbs cover that:
@@ -34,6 +35,12 @@ from apiome_cli.cli_context import (
     timeout_from_context,
 )
 from apiome_cli.client.http import RestClient
+from apiome_cli.client.repository_branch_rules import (
+    fetch_branch_rules,
+    remove_rule,
+    replace_branch_rules,
+    upsert_rule,
+)
 from apiome_cli.client.repository_refresh import (
     DEFAULT_STATUS_LIMIT,
     MAX_STATUS_LIMIT,
@@ -428,3 +435,137 @@ def repository_group(ctx: typer.Context) -> None:
 def refresh_group(ctx: typer.Context) -> None:
     """Refresh command group."""
     group_callback_without_subcommand(ctx)
+
+
+# ----------------------------------------------- RAR-6.4 per-branch refresh rules (#3541)
+
+branch_rules_app = typer.Typer(
+    name="branch-rules",
+    help=(
+        "Per-branch refresh rules: whether each branch refreshes, how often, and the "
+        "version line its refreshes land in."
+    ),
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+app.add_typer(branch_rules_app, name="branch-rules")
+
+
+def _format_interval(seconds: Any) -> str:
+    """``300`` → ``5m``, ``3600`` → ``1h``, ``None`` → ``inherit``."""
+    if seconds is None:
+        return "inherit"
+    value = int(seconds)
+    for unit, size in (("h", 3600), ("m", 60)):
+        if value >= size and value % size == 0:
+            return f"{value // size}{unit}"
+    return f"{value}s"
+
+
+def _emit_branch_rules(body: dict[str, Any], *, json_mode: bool) -> None:
+    """Print the rules and each tracked branch's effective settings (or the JSON projection)."""
+    if json_mode:
+        emit_json(body)
+        return
+    switch = "on" if body.get("autoRefreshEnabled") else "off"
+    typer.echo(
+        f"Repository refresh: {switch}, every {_format_interval(body.get('repositoryIntervalSeconds'))}"
+    )
+    rules = body.get("rules") or []
+    if not rules:
+        typer.echo("No branch rules: every branch follows the repository settings.")
+    else:
+        typer.echo("Rules:")
+        for rule in rules:
+            typer.echo(
+                f"  {rule.get('branchPattern')}: "
+                f"{'on' if rule.get('refreshEnabled', True) else 'off'}, "
+                f"every {_format_interval(rule.get('refreshIntervalSeconds'))}, "
+                f"line {rule.get('targetVersionLine') or '-'}"
+            )
+    branches = body.get("branches") or []
+    if branches:
+        typer.echo("Tracked branches:")
+        for branch in branches:
+            typer.echo(
+                f"  {branch.get('branch')}: "
+                f"{'on' if branch.get('enabled') else 'off'}, "
+                f"every {_format_interval(branch.get('intervalSeconds'))}, "
+                f"line {branch.get('targetVersionLine') or '-'} "
+                f"({'rule ' + str(branch['rulePattern']) if branch.get('rulePattern') else 'repository settings'})"
+            )
+
+
+@branch_rules_app.command("show")
+def branch_rules_show(
+    ctx: typer.Context,
+    repository: str = typer.Argument(..., metavar="REPO", help=_REPO_ARGUMENT_HELP),
+    output_format: str | None = typer.Option(None, "--format", help="Output format: table (default) or json."),
+) -> None:
+    """Show a repository's branch rules and how each tracked branch refreshes (RAR-6.4)."""
+    json_mode = _json_output(ctx, output_format)
+    client, tenant_slug = _scoped_client(ctx)
+    record = resolve_repository(client, tenant_slug, repository)
+    _emit_branch_rules(fetch_branch_rules(client, tenant_slug, str(record["id"])), json_mode=json_mode)
+
+
+@branch_rules_app.command("set")
+def branch_rules_set(
+    ctx: typer.Context,
+    repository: str = typer.Argument(..., metavar="REPO", help=_REPO_ARGUMENT_HELP),
+    pattern: str = typer.Argument(
+        ..., metavar="BRANCH", help="A branch name (main) or a glob (release/*; ** crosses '/')."
+    ),
+    enabled: bool = typer.Option(True, "--on/--off", help="Whether matching branches refresh."),
+    interval: int | None = typer.Option(
+        None, "--interval", help="Cadence in seconds; omit to inherit the repository's."
+    ),
+    line: str | None = typer.Option(
+        None, "--line", help="Version line refreshes land in (latest, 2.x); omit for the default naming."
+    ),
+    output_format: str | None = typer.Option(None, "--format", help="Output format: table (default) or json."),
+) -> None:
+    """Add a branch rule, or replace the rule with the same BRANCH pattern (RAR-6.4)."""
+    json_mode = _json_output(ctx, output_format)
+    client, tenant_slug = _scoped_client(ctx)
+    record = resolve_repository(client, tenant_slug, repository)
+    repository_id = str(record["id"])
+    current = fetch_branch_rules(client, tenant_slug, repository_id).get("rules") or []
+    rule = {
+        "branchPattern": pattern.strip(),
+        "refreshEnabled": enabled,
+        "refreshIntervalSeconds": interval,
+        "targetVersionLine": line,
+    }
+    body = replace_branch_rules(client, tenant_slug, repository_id, upsert_rule(current, rule))
+    _emit_branch_rules(body, json_mode=json_mode)
+
+
+@branch_rules_app.command("remove")
+def branch_rules_remove(
+    ctx: typer.Context,
+    repository: str = typer.Argument(..., metavar="REPO", help=_REPO_ARGUMENT_HELP),
+    pattern: str = typer.Argument(..., metavar="BRANCH", help="The pattern of the rule to remove."),
+    output_format: str | None = typer.Option(None, "--format", help="Output format: table (default) or json."),
+) -> None:
+    """Remove one branch rule; its branches follow the repository settings again (RAR-6.4)."""
+    json_mode = _json_output(ctx, output_format)
+    client, tenant_slug = _scoped_client(ctx)
+    record = resolve_repository(client, tenant_slug, repository)
+    repository_id = str(record["id"])
+    current = fetch_branch_rules(client, tenant_slug, repository_id).get("rules") or []
+    body = replace_branch_rules(client, tenant_slug, repository_id, remove_rule(current, pattern.strip()))
+    _emit_branch_rules(body, json_mode=json_mode)
+
+
+@branch_rules_app.command("clear")
+def branch_rules_clear(
+    ctx: typer.Context,
+    repository: str = typer.Argument(..., metavar="REPO", help=_REPO_ARGUMENT_HELP),
+    output_format: str | None = typer.Option(None, "--format", help="Output format: table (default) or json."),
+) -> None:
+    """Remove every branch rule of a repository (RAR-6.4)."""
+    json_mode = _json_output(ctx, output_format)
+    client, tenant_slug = _scoped_client(ctx)
+    record = resolve_repository(client, tenant_slug, repository)
+    _emit_branch_rules(replace_branch_rules(client, tenant_slug, str(record["id"]), []), json_mode=json_mode)

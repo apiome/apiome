@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.616.0] - 2026-11-03
+
+### Added
+- **Per-branch repository refresh policy (RAR-6.4, #3541).** A repository can carry branch rules, each naming a
+  branch exactly (`main`) or by glob (`release/*`; `*` within one segment, `**` across) and setting, for the
+  branches it matches, `refreshEnabled`, `refreshIntervalSeconds` (null inherits the repository's) and
+  `targetVersionLine`. The most specific rule wins; a branch no rule matches follows the repository-wide settings,
+  and `auto_refresh_enabled` stays the master switch.
+  - `GET` / `PUT /v1/tenants/{tenant_slug}/repositories/{repository_id}/branch-refresh-rules` — read the rules and
+    every tracked branch's effective settings; replace the whole set (`{"rules": []}` removes them). 400 for an
+    invalid or duplicate pattern, an invalid version line, or a cadence below the deployment minimum.
+  - V350: `repository_branch_refresh_rule`, `repository_branch_refresh_state` (when the sweep last refreshed each
+    branch) and `tenant_repository_refresh_jobs.target_version_line`.
+  - The sweep skips a branch whose rule turns refresh off and refreshes a branch only when its own cadence has
+    elapsed; a repository is due on its shortest enabled rule cadence. A push to a branch whose rule is off does
+    nothing (`branch-refresh-off`). "Refresh now" bypasses a rule's switch, as it bypasses the repository opt-out.
+  - Every enqueued job carries its branch's version line; `repository_refresh_executor.build_version_line_target`
+    names the refreshed version `<line>-<UTC timestamp>`, and
+    `repository_branch_refresh_policy.select_version_line_parent` picks the latest version of the line as its
+    parent. A repository with no rules refreshes exactly as before.
+- OpenAPI document version 1.479.0 → 1.480.0.
+
 ## [1.615.0] - 2026-11-03
 
 ### Changed

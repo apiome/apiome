@@ -10908,6 +10908,113 @@ class RepositoryConflictPolicyOverrideRequest(BaseModel):
     )
 
 
+class RepositoryBranchRefreshRuleIn(BaseModel):
+    """One branch refresh rule as a client sends it (RAR-6.4, #3541)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    branch_pattern: str = Field(
+        alias="branchPattern",
+        description="An exact branch name (`main`) or a glob (`release/*`; `*` stays within one "
+        "path segment, `**` crosses segments).",
+    )
+    refresh_enabled: bool = Field(
+        default=True,
+        alias="refreshEnabled",
+        description="Whether matching branches refresh on the schedule and on push.",
+    )
+    refresh_interval_seconds: Optional[int] = Field(
+        default=None,
+        alias="refreshIntervalSeconds",
+        ge=1,
+        description="Cadence for matching branches, in seconds; null inherits the repository's. "
+        "Must be at least the deployment's minimum interval.",
+    )
+    target_version_line: Optional[str] = Field(
+        default=None,
+        alias="targetVersionLine",
+        max_length=64,
+        description="Version line a refresh of a matching branch lands in (`latest`, `2.x`): the "
+        "refreshed version is labelled `<line>-<UTC timestamp>`. Null keeps the default naming.",
+    )
+
+
+class RepositoryBranchRefreshRulesUpdate(BaseModel):
+    """Replace a repository's branch refresh rules (RAR-6.4, #3541). An empty list removes them all."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rules: List[RepositoryBranchRefreshRuleIn] = Field(
+        default_factory=list,
+        max_length=100,
+        description="The complete set of rules; patterns must be unique.",
+    )
+
+
+class RepositoryBranchRefreshRuleOut(RepositoryBranchRefreshRuleIn):
+    """One stored branch refresh rule (RAR-6.4, #3541)."""
+
+    created_by: Optional[str] = Field(default=None, alias="createdBy")
+    created_at: Optional[str] = Field(default=None, alias="createdAt")
+    updated_at: Optional[str] = Field(default=None, alias="updatedAt")
+
+
+class RepositoryTrackedBranchRefreshOut(BaseModel):
+    """How one tracked branch refreshes once the rules are applied (RAR-6.4, #3541)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    branch: str
+    enabled: bool = Field(description="Whether the branch refreshes on the schedule and on push.")
+    interval_seconds: int = Field(
+        alias="intervalSeconds", description="The branch's cadence, clamped to the minimum."
+    )
+    target_version_line: Optional[str] = Field(default=None, alias="targetVersionLine")
+    rule_pattern: Optional[str] = Field(
+        default=None,
+        alias="rulePattern",
+        description="The rule that governs the branch; null when it follows the repository settings.",
+    )
+    last_refreshed_at: Optional[str] = Field(
+        default=None,
+        alias="lastRefreshedAt",
+        description="When the sweep last refreshed the branch under its own cadence.",
+    )
+
+
+class RepositoryBranchRefreshOut(BaseModel):
+    """A repository's branch refresh rules and their effect on each tracked branch (RAR-6.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    repository_id: str = Field(alias="repositoryId")
+    auto_refresh_enabled: bool = Field(
+        alias="autoRefreshEnabled",
+        description="The repository-wide switch; when off, no branch refreshes on the schedule.",
+    )
+    repository_interval_seconds: int = Field(
+        alias="repositoryIntervalSeconds",
+        description="The repository's cadence, which a rule without an interval inherits.",
+    )
+    min_interval_seconds: int = Field(
+        alias="minIntervalSeconds", description="The shortest cadence a rule may set."
+    )
+    rules: List[RepositoryBranchRefreshRuleOut] = Field(default_factory=list)
+    branches: List[RepositoryTrackedBranchRefreshOut] = Field(
+        default_factory=list,
+        description="Every tracked branch (a branch with an imported file) and the settings it refreshes with.",
+    )
+
+
+class RepositoryBranchRefreshResponse(BaseModel):
+    """Envelope returned by the branch-refresh read and by its update (RAR-6.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    branch_refresh: RepositoryBranchRefreshOut = Field(alias="branchRefresh")
+
+
 class RepositoryRefreshNowRequest(BaseModel):
     """Dashboard: trigger a one-shot manual "Refresh Now" (RAR-5.2, #3533).
 
