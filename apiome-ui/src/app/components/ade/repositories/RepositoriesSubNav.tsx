@@ -30,7 +30,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Activity, FolderGit2, Library, ShieldCheck } from 'lucide-react';
+import { Activity, FolderGit2, Library, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 
 import { TAB_COUNT_CLASS, TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
 import { REPOSITORIES_NAV_TABS, type RepositoriesNavTab } from './repositoriesModel';
@@ -43,6 +43,7 @@ const TAB_ICON: Readonly<
   catalog: Library,
   telemetry: Activity,
   allowlist: ShieldCheck,
+  defaults: SlidersHorizontal,
 };
 
 /**

@@ -17604,7 +17604,8 @@ class Database:
                    linked_account_id, last_scanned_at, total_files, importable_count, branch_count,
                    refresh_interval_seconds, last_refreshed_at, auto_refresh_enabled,
                    refresh_consecutive_failures, refresh_backoff_until,
-                   refresh_paused_at, refresh_pause_reason, refresh_conflict_policy
+                   refresh_paused_at, refresh_pause_reason, refresh_conflict_policy,
+                   inherits_refresh_interval, inherits_conflict_policy, inherits_auto_refresh
             FROM apiome.tenant_repositories
             WHERE tenant_id = %s::uuid AND deleted_at IS NULL
             ORDER BY created_at DESC
@@ -17619,7 +17620,8 @@ class Database:
                    refresh_interval_seconds, last_refreshed_at, auto_refresh_enabled,
                    refresh_consecutive_failures, refresh_backoff_until,
                    refresh_paused_at, refresh_pause_reason, refresh_conflict_policy,
-                   bulk_import_version_policy
+                   bulk_import_version_policy,
+                   inherits_refresh_interval, inherits_conflict_policy, inherits_auto_refresh
             FROM apiome.tenant_repositories
             WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
             LIMIT 1
@@ -17843,7 +17845,8 @@ class Database:
         :func:`repository_refresh_cadence.resolve_refresh_interval` first, so a
         ``None``/non-positive value falls back to the configured default and a
         sub-floor value is clamped up (with a warning). The clamped value is what
-        is persisted, so a later read needs no re-clamping.
+        is persisted, so a later read needs no re-clamping. The repository then
+        overrides the workspace default cadence (RAR-6.5).
 
         Args:
             tenant_id: Owning tenant id (scopes the update for isolation).
@@ -17866,6 +17869,7 @@ class Database:
         q = """
             UPDATE apiome.tenant_repositories
             SET refresh_interval_seconds = %s,
+                inherits_refresh_interval = FALSE,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
             RETURNING id
@@ -18024,6 +18028,185 @@ class Database:
             conn.rollback()
             raise e
 
+    # --- RAR-6.5 workspace refresh defaults (#3542) -------------------------------
+
+    def get_repository_refresh_defaults(self, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Return a workspace's repository refresh defaults, or ``None`` when it has none (RAR-6.5).
+
+        Args:
+            tenant_id: The workspace.
+
+        Returns:
+            The ``tenant_repository_refresh_defaults`` row, or ``None`` (the built-in values apply).
+        """
+        rows = self.execute_query(
+            """
+            SELECT tenant_id, refresh_interval_seconds, refresh_conflict_policy,
+                   auto_refresh_enabled, updated_by, created_at, updated_at
+            FROM apiome.tenant_repository_refresh_defaults
+            WHERE tenant_id = %s::uuid
+            """,
+            (tenant_id,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def save_repository_refresh_defaults(
+        self,
+        tenant_id: str,
+        *,
+        refresh_interval_seconds: int,
+        refresh_conflict_policy: str,
+        auto_refresh_enabled: bool,
+        updated_by: Optional[str] = None,
+        apply_to_inheriting: bool = False,
+    ) -> Dict[str, int]:
+        """Store a workspace's refresh defaults and optionally re-apply them (RAR-6.5).
+
+        Both happen in one transaction, so repositories that follow the defaults are never left
+        aligned to a preset that was not stored. Re-applying rewrites, on every repository of the
+        workspace, only the settings whose ``inherits_*`` flag is TRUE; overrides are untouched.
+
+        Args:
+            tenant_id: The workspace.
+            refresh_interval_seconds: Default cadence (already validated against the floor).
+            refresh_conflict_policy: Default conflict policy (a canonical token).
+            auto_refresh_enabled: Default auto-refresh switch.
+            updated_by: The administrator making the change.
+            apply_to_inheriting: Rewrite the settings repositories inherit.
+
+        Returns:
+            How many repositories changed per setting: ``refresh_interval``, ``conflict_policy``
+            and ``auto_refresh`` (all 0 when ``apply_to_inheriting`` is False).
+        """
+        changed = {"refresh_interval": 0, "conflict_policy": 0, "auto_refresh": 0}
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.tenant_repository_refresh_defaults (
+                        tenant_id, refresh_interval_seconds, refresh_conflict_policy,
+                        auto_refresh_enabled, updated_by
+                    )
+                    VALUES (%s::uuid, %s, %s, %s, %s::uuid)
+                    ON CONFLICT (tenant_id) DO UPDATE
+                    SET refresh_interval_seconds = EXCLUDED.refresh_interval_seconds,
+                        refresh_conflict_policy = EXCLUDED.refresh_conflict_policy,
+                        auto_refresh_enabled = EXCLUDED.auto_refresh_enabled,
+                        updated_by = EXCLUDED.updated_by,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (
+                        tenant_id,
+                        int(refresh_interval_seconds),
+                        refresh_conflict_policy,
+                        bool(auto_refresh_enabled),
+                        updated_by,
+                    ),
+                )
+                if apply_to_inheriting:
+                    for key, column, flag, value in (
+                        ("refresh_interval", "refresh_interval_seconds", "inherits_refresh_interval",
+                         int(refresh_interval_seconds)),
+                        ("conflict_policy", "refresh_conflict_policy", "inherits_conflict_policy",
+                         refresh_conflict_policy),
+                        ("auto_refresh", "auto_refresh_enabled", "inherits_auto_refresh",
+                         bool(auto_refresh_enabled)),
+                    ):
+                        cursor.execute(
+                            f"""
+                            UPDATE apiome.tenant_repositories
+                            SET {column} = %s, updated_at = CURRENT_TIMESTAMP
+                            WHERE tenant_id = %s::uuid AND deleted_at IS NULL
+                              AND {flag} AND {column} IS DISTINCT FROM %s
+                            """,
+                            (value, tenant_id, value),
+                        )
+                        changed[key] = cursor.rowcount or 0
+                conn.commit()
+                return changed
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def count_repository_refresh_inheritance(self, tenant_id: str) -> Dict[str, int]:
+        """Count a workspace's repositories, and those following each refresh default (RAR-6.5).
+
+        Args:
+            tenant_id: The workspace.
+
+        Returns:
+            ``repositories`` (live repositories) and, per setting, how many follow the default:
+            ``refresh_interval``, ``conflict_policy``, ``auto_refresh``.
+        """
+        rows = self.execute_query(
+            """
+            SELECT COUNT(*) AS repositories,
+                   COUNT(*) FILTER (WHERE inherits_refresh_interval) AS refresh_interval,
+                   COUNT(*) FILTER (WHERE inherits_conflict_policy) AS conflict_policy,
+                   COUNT(*) FILTER (WHERE inherits_auto_refresh) AS auto_refresh
+            FROM apiome.tenant_repositories
+            WHERE tenant_id = %s::uuid AND deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        row = rows[0] if rows else {}
+        keys = ("repositories", "refresh_interval", "conflict_policy", "auto_refresh")
+        return {key: int(row.get(key) or 0) for key in keys}
+
+    def restore_repository_refresh_defaults(
+        self, tenant_id: str, repository_id: str, settings_to_restore: List[str]
+    ) -> bool:
+        """Make a repository follow the workspace default again for each named setting (RAR-6.5).
+
+        Copies the current default (or the built-in value when the workspace has none) and sets
+        the setting's ``inherits_*`` flag back to TRUE, in one statement.
+
+        Args:
+            tenant_id: The workspace.
+            repository_id: The repository.
+            settings_to_restore: Any of ``refresh_interval``, ``conflict_policy``, ``auto_refresh``.
+
+        Returns:
+            True when a live repository matched; False otherwise.
+
+        Raises:
+            ValueError: For an unknown setting name.
+        """
+        columns = {
+            "refresh_interval": ("refresh_interval_seconds", "inherits_refresh_interval", "300"),
+            "conflict_policy": ("refresh_conflict_policy", "inherits_conflict_policy", "'hold-for-review'"),
+            "auto_refresh": ("auto_refresh_enabled", "inherits_auto_refresh", "TRUE"),
+        }
+        unknown = [name for name in settings_to_restore if name not in columns]
+        if unknown:
+            raise ValueError(f"unknown refresh setting(s): {', '.join(unknown)}")
+        if not settings_to_restore:
+            return self.get_tenant_repository(tenant_id, repository_id) is not None
+        assignments = ",\n                ".join(
+            f"{column} = COALESCE((SELECT d.{column} FROM apiome.tenant_repository_refresh_defaults d "
+            f"WHERE d.tenant_id = %s::uuid), {builtin}), {flag} = TRUE"
+            for column, flag, builtin in (columns[name] for name in dict.fromkeys(settings_to_restore))
+        )
+        params = [tenant_id] * len(dict.fromkeys(settings_to_restore)) + [repository_id, tenant_id]
+        q = f"""
+            UPDATE apiome.tenant_repositories
+            SET {assignments},
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+            RETURNING id
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, tuple(params))
+                row = cursor.fetchone()
+                conn.commit()
+                return bool(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     def set_repository_auto_refresh_enabled(
         self,
         tenant_id: str,
@@ -18035,7 +18218,8 @@ class Database:
         When ``enabled`` is False the refresh sweep's due-selection
         (:meth:`list_due_repositories`) skips this repository, so it is never
         auto-refreshed. The global ``APIOME_REFRESH_ENABLED`` kill switch and
-        manual "Refresh Now" (RAR-5.2) are independent of this flag.
+        manual "Refresh Now" (RAR-5.2) are independent of this flag. The repository
+        then overrides the workspace default switch (RAR-6.5).
 
         Args:
             tenant_id: Owning tenant id (scopes the update for isolation).
@@ -18049,6 +18233,7 @@ class Database:
         q = """
             UPDATE apiome.tenant_repositories
             SET auto_refresh_enabled = %s,
+                inherits_auto_refresh = FALSE,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
             RETURNING id
@@ -18078,7 +18263,8 @@ class Database:
         was hand-edited after import (RAR-4.4 divergence): ``overwrite`` lets the
         refresh win, ``hold-for-review`` (the default) parks it, ``new-branch``
         diverts it. A per-file override row takes precedence over this value; see
-        :meth:`set_repository_file_conflict_policy`.
+        :meth:`set_repository_file_conflict_policy`. The repository then overrides the
+        workspace default policy (RAR-6.5).
 
         The token is normalised through
         :func:`repository_conflict_policy.parse_conflict_policy` before it is
@@ -18106,6 +18292,7 @@ class Database:
         q = """
             UPDATE apiome.tenant_repositories
             SET refresh_conflict_policy = %s,
+                inherits_conflict_policy = FALSE,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
             RETURNING id
@@ -19526,13 +19713,22 @@ class Database:
             INSERT INTO apiome.tenant_repositories (
                 tenant_id, source, provider, clone_url, clone_url_normalized,
                 repository_full_name, description, default_branch, visibility, status, created_by,
-                linked_account_id, branch_count
-            ) VALUES (
-                %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s
+                linked_account_id, branch_count,
+                refresh_interval_seconds, refresh_conflict_policy, auto_refresh_enabled
             )
+            -- RAR-6.5: a new repository starts from the workspace refresh defaults, read in the
+            -- same statement; without a defaults row it gets the built-in values.
+            SELECT %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid, %s,
+                   COALESCE(d.refresh_interval_seconds, 300),
+                   COALESCE(d.refresh_conflict_policy, 'hold-for-review'),
+                   COALESCE(d.auto_refresh_enabled, TRUE)
+            FROM (SELECT 1) AS one
+            LEFT JOIN apiome.tenant_repository_refresh_defaults d ON d.tenant_id = %s::uuid
             RETURNING id, tenant_id, source, provider, clone_url, repository_full_name,
                       description, default_branch, visibility, status, created_at, updated_at,
-                      linked_account_id, last_scanned_at, total_files, importable_count, branch_count
+                      linked_account_id, last_scanned_at, total_files, importable_count, branch_count,
+                      refresh_interval_seconds, refresh_conflict_policy, auto_refresh_enabled,
+                      inherits_refresh_interval, inherits_conflict_policy, inherits_auto_refresh
         """
         conn = self.connect()
         try:
@@ -19553,6 +19749,7 @@ class Database:
                         created_by if created_by else None,
                         linked_account_id if linked_account_id else None,
                         branch_count,
+                        tenant_id,
                     ),
                 )
                 row = cursor.fetchone()

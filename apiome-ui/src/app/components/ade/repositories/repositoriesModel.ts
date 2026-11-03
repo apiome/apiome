@@ -158,7 +158,7 @@ export const ADD_REPOSITORY_HREF = '/ade/dashboard/repositories/new';
  */
 export interface RepositoriesNavTab {
   /** Stable id, and the `data-testid` suffix. */
-  id: 'list' | 'catalog' | 'telemetry' | 'allowlist';
+  id: 'list' | 'catalog' | 'telemetry' | 'allowlist' | 'defaults';
   /** The tab's label. */
   label: string;
   /** Its route — unchanged from the buttons it replaces. */
@@ -197,6 +197,12 @@ export const REPOSITORIES_NAV_TABS: readonly RepositoriesNavTab[] = [
     label: 'Webhook IP allowlist',
     href: '/ade/dashboard/repositories/webhook-ip-allowlist',
     description: "Provider IP ranges and this workspace's own allowlist for webhook delivery",
+  },
+  {
+    id: 'defaults',
+    label: 'Refresh defaults',
+    href: '/ade/dashboard/repositories/refresh-defaults',
+    description: 'The cadence, conflict policy and auto-refresh switch new repositories start from',
   },
 ] as const;
 

@@ -32,6 +32,19 @@ import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 import { Switch } from '@/app/components/ui/Switch';
 import { Badge } from '@/app/components/ui/Badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/Select';
+import {
+  CADENCE_CHOICES,
+  cadenceChoices,
+  formatCadence,
+} from '@/app/components/ade/dashboard/repositories/repositoryBranchRefresh';
+import { POLICY_COPY, asConflictPolicy } from '@/app/components/ade/dashboard/repositories/repositoryConflictPolicy';
 
 import { ProviderGlyph } from './ProviderBadge';
 import {
@@ -39,12 +52,20 @@ import {
   IMPORTER_MAPPINGS_EMPTY,
   IMPORTER_MAPPINGS_STUB_NOTE,
   REMOVE_REPOSITORY_DESCRIPTION,
-  SCHEDULE_STUB_VALUE,
   SUBPATH_GLOB_STUB_NOTE,
   WEBHOOK_STUB_NOTE,
   repositorySourceLine,
 } from './repositoryDetailModel';
 import type { DashboardRepository } from './repositoriesModel';
+import {
+  REFRESH_SETTINGS,
+  REFRESH_SETTING_LABELS,
+  type RefreshSetting,
+  settingValueText,
+} from './refreshDefaultsModel';
+
+/** Where a repository's "Workspace defaults" rows link to (RAR-6.5). */
+export const REFRESH_DEFAULTS_HREF = '/ade/dashboard/repositories/refresh-defaults';
 
 export interface RepositorySettingsTabProps {
   /** The repository being configured. */
@@ -55,6 +76,12 @@ export interface RepositorySettingsTabProps {
   savingAutoRefresh: boolean;
   /** Flip this repository's auto-refresh opt-out. */
   onToggleAutoRefresh: (next: boolean) => void;
+  /** True while a cadence or workspace-default write is in flight (RAR-6.5). */
+  savingRefreshSettings?: boolean;
+  /** Set this repository's cadence, overriding the workspace default (RAR-6.5). */
+  onChangeInterval?: (seconds: number) => void;
+  /** Make one refresh setting follow the workspace default again (RAR-6.5). */
+  onUseWorkspaceDefault?: (setting: RefreshSetting) => void;
   /** Open the remove confirm. */
   onRemove: () => void;
   /** True while the delete is in flight. */
@@ -80,6 +107,9 @@ export function RepositorySettingsTab({
   webUrl,
   savingAutoRefresh,
   onToggleAutoRefresh,
+  savingRefreshSettings = false,
+  onChangeInterval,
+  onUseWorkspaceDefault,
   onRemove,
   removing,
   conflictPolicy,
@@ -87,6 +117,18 @@ export function RepositorySettingsTab({
   prBack,
 }: RepositorySettingsTabProps) {
   const autoRefreshOn = repository.auto_refresh_enabled ?? true;
+  const interval = repository.refresh_interval_seconds ?? null;
+  const inherits: Record<RefreshSetting, boolean> = {
+    refresh_interval: repository.inherits_refresh_interval !== false,
+    conflict_policy: repository.inherits_conflict_policy !== false,
+    auto_refresh: repository.inherits_auto_refresh !== false,
+  };
+  const settingValue: Record<RefreshSetting, number | string | boolean | null | undefined> = {
+    refresh_interval: interval,
+    conflict_policy: repository.refresh_conflict_policy,
+    auto_refresh: autoRefreshOn,
+  };
+  const policyLabel = (policy: string) => POLICY_COPY[asConflictPolicy(policy)].label;
 
   return (
     <div className="flex max-w-[57.5rem] flex-col gap-6" data-testid="repository-settings-tab">
@@ -168,12 +210,28 @@ export function RepositorySettingsTab({
             />
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="repository-interval">Cadence</Label>
+            <Select
+              value={interval === null ? undefined : String(interval)}
+              disabled={savingRefreshSettings || !onChangeInterval}
+              onValueChange={(value) => onChangeInterval?.(Number(value))}
+            >
+              <SelectTrigger id="repository-interval" className="max-w-[14rem]" data-testid="repository-interval">
+                <SelectValue placeholder="Not reported" />
+              </SelectTrigger>
+              <SelectContent>
+                {cadenceChoices(CADENCE_CHOICES[0], interval).map((seconds) => (
+                  <SelectItem key={seconds} value={String(seconds)}>
+                    Every {formatCadence(seconds)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <fieldset disabled className="repo-set-stub" data-testid="repository-cadence-stub">
             <div className="repo-set-stub__grid">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="repository-schedule">Schedule</Label>
-                <Input id="repository-schedule" readOnly value={SCHEDULE_STUB_VALUE} />
-              </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="repository-webhook">Webhook</Label>
                 <Input id="repository-webhook" readOnly value={WEBHOOK_STUB_NOTE} />
@@ -181,9 +239,49 @@ export function RepositorySettingsTab({
             </div>
           </fieldset>
           <p className="repo-det-note">
-            Scheduling and webhook secrets are a product decision — a poll interval against
-            provider push hooks. Neither control is wired, and both say so above.
+            Webhook secrets are not wired here yet, and the field says so above.
           </p>
+
+          <div className="flex flex-col gap-2" data-testid="repository-refresh-inheritance">
+            <h4 className="repo-det-caps">Workspace defaults</h4>
+            <p className="repo-det-note">
+              Each setting follows the workspace{' '}
+              <a href={REFRESH_DEFAULTS_HREF} className="repo-det-link">
+                refresh defaults
+              </a>{' '}
+              until it is changed here.
+            </p>
+            <div className="repo-set-inherit">
+              {REFRESH_SETTINGS.map((setting) => (
+                <React.Fragment key={setting}>
+                  <span className="text-sm font-medium text-fg">{REFRESH_SETTING_LABELS[setting]}</span>
+                  <span className="repo-det-note" data-testid={`repository-refresh-value-${setting}`}>
+                    {settingValueText(setting, settingValue[setting], policyLabel)}
+                  </span>
+                  <Badge
+                    variant={inherits[setting] ? 'outline' : 'warn'}
+                    data-testid={`repository-refresh-source-${setting}`}
+                  >
+                    {inherits[setting] ? 'Workspace default' : 'Custom'}
+                  </Badge>
+                  {inherits[setting] ? (
+                    <span />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={savingRefreshSettings || !onUseWorkspaceDefault}
+                      onClick={() => onUseWorkspaceDefault?.(setting)}
+                      data-testid={`repository-use-default-${setting}`}
+                    >
+                      Use workspace default
+                    </Button>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

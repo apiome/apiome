@@ -27364,6 +27364,29 @@ button.cid-entity__head {
 }
 
 /* The per-file override form: a branch, a path and a policy, then the save. */
+/* A workspace refresh default (RAR-6.5): the control, then how many repositories follow it. */
+.repo-set-defaults__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-6);
+}
+
+/* A repository's refresh settings, each marked as the workspace default or a custom value. */
+.repo-set-inherit {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr auto auto;
+  align-items: center;
+  justify-items: start;
+  gap: var(--space-2) var(--space-3);
+}
+
+@media (max-width: 48rem) {
+  .repo-set-inherit {
+    grid-template-columns: 1fr auto;
+  }
+}
+
 .repo-set-override-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));

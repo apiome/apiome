@@ -696,6 +696,16 @@
       "data": "fixture:hive-repository-detail/settings.html"
     },
     {
+      "id": "repository-refresh-inheritance",
+      "route": "/ade/dashboard/repositories/[id]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-repository-detail/settings.html",
+      "scrollTo": "[data-testid=\"repository-settings-cadence\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/repositories/RepositorySettingsTab.tsx"
+      ]
+    },
+    {
       "id": "repository-branch-refresh",
       "route": "/ade/dashboard/repositories/[id]",
       "waitFor": "#a11y-mount > *",
@@ -744,6 +754,13 @@
       ],
       "data": "golden-path",
       "fallback": "fixture:hive-repository-bring-in/telemetry.html"
+    },
+    {
+      "id": "repository-refresh-defaults",
+      "route": "/ade/dashboard/repositories/refresh-defaults",
+      "waitFor": "[data-testid=\"page-header\"]",
+      "data": "golden-path",
+      "fallback": "fixture:hive-repository-bring-in/refresh-defaults.html"
     },
     {
       "id": "webhook-allowlist",

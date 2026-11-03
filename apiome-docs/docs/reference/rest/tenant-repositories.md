@@ -1,6 +1,6 @@
 ---
 title: "Tenant repositories"
-description: "REST endpoints tagged tenant-repositories: 30 operations."
+description: "REST endpoints tagged tenant-repositories: 32 operations."
 sidebar_position: 94
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.480.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.481.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `tenant-repositories` · 30 operations
+Tag: `tenant-repositories` · 32 operations
 
 ## `GET /v1/tenants/{tenant_slug}/repositories` {#list-tenant-repositories-v1-tenants-tenant-slug-repositories-get}
 
@@ -109,12 +109,16 @@ Operation id: `get_tenant_repository_v1_tenants__tenant_slug__repositories__repo
 
 **Update Tenant Repository**
 
-Patch mutable repository settings (RAR-3.3 auto-refresh toggle, #3524).
+Patch mutable repository settings (RAR-3.3, RAR-4.5, RAR-6.5).
 
-Applies only the fields present in the request body. Currently the per-repo
-``auto_refresh_enabled`` opt-out: when set to False the auto-refresh sweep skips
-this repository (manual "Refresh Now" is unaffected). Returns the updated
-repository record. 404 when the repository does not belong to the tenant.
+Applies only the fields present in the request body: the per-repo
+``auto_refresh_enabled`` opt-out (the sweep skips a repository with it off; manual
+"Refresh Now" is unaffected), the ``refresh_conflict_policy``, and the
+``refresh_interval_seconds`` cadence. Setting any of the three overrides the
+workspace refresh default for that setting; ``use_workspace_defaults`` lists the
+settings that follow the defaults again (applied last). Returns the updated
+repository record. 400 for a bad policy or a cadence below the deployment minimum;
+404 when the repository does not belong to the tenant.
 
 Operation id: `update_tenant_repository_v1_tenants__tenant_slug__repositories__repository_id__patch`
 
@@ -1094,6 +1098,88 @@ Operation id: `get_tenant_repository_quota_telemetry_v1_tenants__tenant_slug__re
 | 200 | Successful response for get tenant repository quota telemetry. | `application/json` [`RepositoryQuotaTelemetryResponse`](#schema-repositoryquotatelemetryresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/tenants/{tenant_slug}/repository-refresh-defaults` {#get-repository-refresh-defaults-v1-tenants-tenant-slug-repository-refresh-defaults-get}
+
+**Get Repository Refresh Defaults**
+
+Read the workspace's repository refresh defaults (RAR-6.5, #3542).
+
+The defaults are the cadence, conflict policy and auto-refresh switch a new repository
+starts from. Each repository follows a default per setting until that setting is changed on
+the repository; the response counts how many follow each one. A workspace that has not set
+defaults reports the built-in values with ``configured: false``.
+
+Args:
+    tenant_slug: Tenant slug from the path (scoping comes from the token).
+    auth_data: Authenticated principal; supplies the tenant scope.
+
+Returns:
+    The defaults, whether the caller may change them, and the inheritance counts.
+
+Operation id: `get_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get repository refresh defaults. | `application/json` [`RepositoryRefreshDefaultsResponse`](#schema-repositoryrefreshdefaultsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/tenants/{tenant_slug}/repository-refresh-defaults` {#set-repository-refresh-defaults-v1-tenants-tenant-slug-repository-refresh-defaults-put}
+
+**Set Repository Refresh Defaults**
+
+Set the workspace's repository refresh defaults (RAR-6.5, #3542). Tenant administrators only.
+
+New repositories start from the stored defaults. With ``applyToInheriting``, every
+repository setting that follows the defaults is rewritten to the new value in the same
+transaction; settings a repository overrides are never touched. Without it, existing
+repositories keep their current values until a later re-apply.
+
+Args:
+    tenant_slug: Tenant slug from the path (scoping comes from the token).
+    payload: The defaults and whether to re-apply them.
+    auth_data: Authenticated principal; must resolve to a tenant administrator.
+
+Returns:
+    The defaults after the update, the inheritance counts and, after a re-apply, how many
+    repositories changed per setting.
+
+Raises:
+    HTTPException: 403 for non-administrators or API-key auth; 400 for an unknown conflict
+        policy or a cadence below the deployment minimum.
+
+Operation id: `set_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for set repository refresh defaults.
+
+- `application/json` — [`RepositoryRefreshDefaultsUpdate`](#schema-repositoryrefreshdefaultsupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for set repository refresh defaults. | `application/json` [`RepositoryRefreshDefaultsResponse`](#schema-repositoryrefreshdefaultsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/tenants/{tenant_slug}/repository-webhook-ip-allowlist` {#get-repository-webhook-ip-allowlist-v1-tenants-tenant-slug-repository-webhook-ip-allowlist-get}
 
 **Get Repository Webhook Ip Allowlist**
@@ -1468,6 +1554,26 @@ Carries the current quota projection alongside the history so a caller can rende
 | `quota` | `RepositoryPollingQuotaOut` | yes | Quota. |
 | `telemetry` | `RepositoryQuotaTelemetryOut` | yes | Telemetry. |
 
+### `RepositoryRefreshDefaultsResponse` {#schema-repositoryrefreshdefaultsresponse}
+
+Envelope for the refresh-defaults read and update (RAR-6.5).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `refreshDefaults` | `RepositoryRefreshDefaultsOut` | yes | Refresh Defaults. |
+
+### `RepositoryRefreshDefaultsUpdate` {#schema-repositoryrefreshdefaultsupdate}
+
+Set a workspace's repository refresh defaults (RAR-6.5, #3542).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `refreshIntervalSeconds` | integer | yes | Default cadence in seconds. |
+| `conflictPolicy` | string | yes | overwrite \| hold-for-review \| new-branch. |
+| `autoRefreshEnabled` | boolean | yes | Auto Refresh Enabled. |
+| `applyToInheriting` | boolean | no | Also re-apply the defaults to every repository setting that follows them. |
+
 ### `RepositoryRefreshNowRequest` {#schema-repositoryrefreshnowrequest}
 
 Dashboard: trigger a one-shot manual "Refresh Now" (RAR-5.2, #3533).
@@ -1679,3 +1785,5 @@ camelCase spellings so the UI can send either.
 | --- | --- | --- | --- |
 | `autoRefreshEnabled` | boolean or null | no | Auto Refresh Enabled. |
 | `refreshConflictPolicy` | string or null | no | Conflict policy for a diverged refresh: overwrite \| hold-for-review \| new-branch. Applies to every file in the repository that has no override. |
+| `refreshIntervalSeconds` | integer or null | no | Refresh cadence in seconds (RAR-6.5); must be at least the deployment minimum. Setting it overrides the workspace default cadence. |
+| `useWorkspaceDefaults` | array of enum `"refresh_interval"`, `"conflict_policy"`, `"auto_refresh"` or null | no | Settings to follow the workspace refresh defaults again (RAR-6.5): refresh_interval, conflict_policy, auto_refresh. Applied after the other fields. |

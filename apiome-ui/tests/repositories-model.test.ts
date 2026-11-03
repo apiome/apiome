@@ -153,6 +153,7 @@ describe('the sub-nav', () => {
       '/ade/dashboard/repositories/catalog',
       '/ade/dashboard/repositories/telemetry',
       '/ade/dashboard/repositories/webhook-ip-allowlist',
+      '/ade/dashboard/repositories/refresh-defaults',
     ]);
   });
 

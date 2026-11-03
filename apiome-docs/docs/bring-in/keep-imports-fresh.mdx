@@ -39,6 +39,8 @@ explains each source and links to the page with the steps.
 
 - **One repository:** turn off **Auto-refresh** under **Scan cadence** on its **Settings** tab
   ([Repositories](./repositories.mdx)).
+- **New repositories:** a workspace administrator turns **Auto-refresh** off in the workspace
+  [refresh defaults](./repositories.mdx#refresh-defaults).
 - **One branch of a repository:** add a rule for it under **Branch refresh rules** with **Refresh**
   off ([Branch refresh rules](./repositories.mdx#branch-refresh-rules)).
 - **One URL import:** `PATCH …/url-imports/{id}` with the REST API
@@ -56,8 +58,8 @@ explains each source and links to the page with the steps.
 
 These are planned and not in the product yet:
 
-- **Workspace refresh defaults:** one default cadence and conflict policy applied to every
-  repository, URL and catalog source.
+- **Workspace refresh defaults for URL imports and catalog sources.** Repositories already start
+  from the workspace's [refresh defaults](./repositories.mdx#refresh-defaults).
 - **URL-sourced catalog items** refreshed the same way as URL imports.
 
 ## Where next
