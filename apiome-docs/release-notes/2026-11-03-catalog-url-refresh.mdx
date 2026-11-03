@@ -1,0 +1,21 @@
+---
+slug: catalog-url-refresh
+title: Catalog items imported from a URL now stay current
+description: A catalog item imported from a URL now refreshes when the document changes.
+authors: [apiome]
+---
+
+A catalog item you imported with **URL Import** in **Import to catalog** now follows its **Document
+URL**. See [Keep a URL catalog item up to date](/bring-in/import-wizard#keep-a-url-catalog-item-up-to-date).
+
+{/* truncate */}
+
+- **Only real changes add a revision.** Apiome asks the URL whether the document changed (`ETag`,
+  `Last-Modified`). A *not modified* answer, or the same document again, adds nothing; a changed
+  document becomes a new revision of the same item, with a change report.
+- **Nothing to set up.** Every workspace with URL catalog items gets a **Catalog URLs** connector.
+  URL items you import later join it on its next run, and its first run adds no revisions.
+- **Runs like every refresh.** Each check is a connector run: `apiome connectors runs` lists them and
+  `apiome connectors sync` checks at once.
+- **API.** A `url` connector with a specification URL as `baseUrl` follows that one document; with
+  no `baseUrl` it covers every URL catalog item of the workspace.

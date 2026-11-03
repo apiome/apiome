@@ -160,8 +160,13 @@ export const CONNECTOR_KINDS: readonly ConnectorKind[] = [
   {
     kind: 'url',
     label: 'Specification URL',
-    description: 'A specification published at a URL.',
-    baseUrl: 'required',
+    description:
+      'A specification published at a URL, checked for changes on the connector cadence. Leave the base URL empty ' +
+      'to refresh every catalog item imported from a URL.',
+    baseUrl: 'optional',
+    baseUrlHelp:
+      'The specification URL, for example https://api.example.com/openapi.json. Leave it empty to cover every ' +
+      'catalog item imported from a URL in this workspace.',
     scope: [],
     credentials: [],
   },

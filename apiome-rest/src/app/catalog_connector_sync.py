@@ -39,8 +39,9 @@ CDG-1.3), the Azure API Management source (``azure-apim``; CDG-1.4) and the Apig
 CDG-1.5) register themselves from their modules (:mod:`app.kong_connector_source`,
 :mod:`app.aws_apigateway_connector_source`, :mod:`app.azure_apim_connector_source`,
 :mod:`app.apigee_connector_source`), imported at the bottom of this module; the remaining gateway source
-is CDG-1.7 and the ``url`` source is RAR-6.1. A connector whose kind has no source
-is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
+is CDG-1.7. The ``url`` source (RAR-6.1b, :mod:`app.url_connector_source`) refreshes one specification
+URL, or — with no base URL — every catalog item imported from a URL. A connector whose kind has no
+source is listed and editable but cannot sync (``connector-kind-unsupported``), and the sweep skips it.
 
 **Findings.** A source may expose ``findings`` (a list of credential-free dicts with a ``code``)
 about the inventory as a whole rather than one API — the Kong source reports a route that
@@ -1218,4 +1219,5 @@ from . import (  # noqa: E402,F401
     mcp_registry_connector_source,
     registry_crawl,
     schema_registry_connector_source,
+    url_connector_source,
 )

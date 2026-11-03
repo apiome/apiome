@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import pytest
-from catalog_connector_fakes import FakeConnectorStore, FakeDb, restore_builtin_sources
+from catalog_connector_fakes import FakeConnectorStore, FakeDb, restore_builtin_sources, url_kind_without_source
 
 from app import catalog_connector_sync as sync
 from app.catalog_connector_sync import (
@@ -327,11 +327,12 @@ def test_runs_count_pulls_against_the_quota_window_and_are_audited(store, db, im
 
 def test_a_kind_without_a_source_cannot_sync_and_opens_no_run(store, db, importer):
     other = store.add_connector(TENANT, kind="url")
-    with pytest.raises(ConnectorError) as info:
-        _run(db, other, importer)
+    with url_kind_without_source():
+        with pytest.raises(ConnectorError) as info:
+            _run(db, other, importer)
+        assert "url" not in syncable_kinds() and "kong-admin" in syncable_kinds()
     assert info.value.code == CODE_KIND_UNSUPPORTED
     assert store.runs == {}
-    assert "url" not in syncable_kinds() and "kong-admin" in syncable_kinds()
 
 
 def test_one_run_at_a_time(store, db, importer, connector):
@@ -356,7 +357,8 @@ def test_sweep_syncs_due_connectors_and_skips_paused_and_unsupported(store, db, 
     paused = store.add_connector(TENANT, name="paused", status="paused")
     other = store.add_connector(TENANT, name="registry", kind="url")
     FakeGatewaySource.inventory = [_api("orders")]
-    assert process_connector_refresh_sweep(db) == 1
+    with url_kind_without_source():
+        assert process_connector_refresh_sweep(db) == 1
     synced = {r["connector_id"] for r in store.runs.values()}
     assert synced == {due["id"]}
     assert paused["id"] not in synced and other["id"] not in synced

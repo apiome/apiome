@@ -33,6 +33,16 @@ describe('connector kinds', () => {
     expect(connectorKindLabel('mystery')).toBe('mystery');
   });
 
+  it('lets a url connector leave its base URL empty to cover every URL-sourced catalog item (RAR-6.1b)', () => {
+    const url = connectorKind('url')!;
+    expect(url.baseUrl).toBe('optional');
+    expect(url.description).toMatch(/every catalog item imported from a URL/);
+    expect(url.scope).toEqual([]);
+    expect(url.credentials).toEqual([]);
+    expect(missingFields(url, 'scope', {}, '')).toEqual([]);
+    expect(missingFields(url, 'scope', {}, 'https://specs.example.com/openapi.json')).toEqual([]);
+  });
+
   it('sends MCP registry entries to the MCP server catalog with optional credentials (CDG-4.4)', () => {
     expect(landsInMcpCatalog('mcp-registry')).toBe(true);
     expect(landsInMcpCatalog('kong-admin')).toBe(false);

@@ -7,10 +7,11 @@ SQL is covered separately by ``test_catalog_connector_store_live.py``.
 
 from __future__ import annotations
 
+import contextlib
 import itertools
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Mapping
+from typing import Any, Dict, Iterable, Iterator, List, Mapping
 
 from app import catalog_connector_store as real_store
 from app.catalog_connectors import (
@@ -409,3 +410,30 @@ def restore_builtin_sources() -> None:
         schema_registry.SchemaRegistrySource,
         scope_validator=schema_registry.validate_schema_registry_scope,
     )
+    register_url_source()
+
+
+def register_url_source() -> None:
+    """Re-register the shipped ``url`` source (RAR-6.1b), as :mod:`app.url_connector_source` does."""
+    from app import url_connector_source as url
+    from app.catalog_connector_sync import register_connector_source
+
+    register_connector_source(
+        url.KIND, url._factory, scope_validator=url.validate_url_scope, accepts_credentials=False
+    )
+
+
+@contextlib.contextmanager
+def url_kind_without_source() -> Iterator[None]:
+    """Unregister the ``url`` source for the block: a kind this deployment cannot sync.
+
+    Every kind ships a source since RAR-6.1b (#6467), so the "kind without a source" paths are tested
+    by removing one; the shipped source is registered again afterwards.
+    """
+    from app.catalog_connector_sync import unregister_connector_source
+
+    unregister_connector_source("url")
+    try:
+        yield
+    finally:
+        register_url_source()

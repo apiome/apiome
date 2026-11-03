@@ -336,6 +336,28 @@ Options → Quality → Import**.
 5. **Import** — the item is stored in its original format. Use **Convert to OpenAPI** when you are
    ready.
 
+### Keep a URL catalog item up to date
+
+A catalog item imported with **URL Import** keeps following its **Document URL**. The workspace's
+**Catalog URLs** connector checks every such item on the connector cadence — every five minutes by
+default — and adds a revision when the document changed:
+
+- **Nothing changed** — the server answers *not modified* to the `ETag` and `Last-Modified` it sent
+  last time, or sends the same document again. The run counts the item as unchanged and adds nothing.
+- **The document changed** — Apiome imports it as a new revision of the same catalog item, labelled
+  with the date and time, and writes a change report against the revision before it.
+- **The check failed** — the URL answered an error, could not be reached, or sent more than 25 MB.
+  The run reports the item as failed and changes nothing; the next run tries again.
+
+The first check of an item only records what the URL serves then; it adds no revision. A catalog
+item you import from a URL later is picked up on the connector's next run. Only `http` and `https`
+URLs are checked, from Apiome's server, and addresses on a private network are refused, as for every
+URL Apiome fetches.
+
+Each check is a run of the connector, so it shows with every other refresh run. List them with
+`apiome connectors runs <connector-id>` (`apiome connectors list` gives the id), or check at once
+with `apiome connectors sync <connector-id>` — see the [CLI reference](../reference/cli/connectors.md).
+
 ### Dry run a catalog import
 
 A dry run runs the same importer as **Import**, then stops before anything is written. It creates
