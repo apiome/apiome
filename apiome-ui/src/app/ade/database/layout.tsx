@@ -3,6 +3,7 @@
 import '../../globals.css';
 import * as React from 'react';
 import AdeAppShell from '@/app/components/shell/AdeAppShell';
+import UnreleasedFeatureGate from '@/app/components/shell/UnreleasedFeatureGate';
 import { DatabaseProvider, useDatabase } from './DatabaseContext';
 import DatabaseHeader from './components/DatabaseHeader';
 import TablesSidebar from './components/TablesSidebar';
@@ -45,15 +46,20 @@ function DatabaseLayoutInner({ children }: { children: React.ReactNode }) {
  * The rail is the platform's navigation on every `/ade` route but the launcher, so the data
  * browser gets it too. Its own `TablesSidebar` is unaffected: that is page furniture, scoped
  * to the selected version, and it survives here until the deferred Tools redesign replaces it.
+ *
+ * The data browser is not released (`lib/feature-release.ts`): until its id leaves the unreleased
+ * set, every page under this route answers with the "not available yet" state.
  */
 export default function DatabaseLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <AdeAppShell>
-      <DatabaseProvider>
-        <DatabaseLayoutInner>{children}</DatabaseLayoutInner>
-      </DatabaseProvider>
+      <UnreleasedFeatureGate feature="data-browser">
+        <DatabaseProvider>
+          <DatabaseLayoutInner>{children}</DatabaseLayoutInner>
+        </DatabaseProvider>
+      </UnreleasedFeatureGate>
     </AdeAppShell>
   );
 }

@@ -133,7 +133,36 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 
+describe('the unreleased Tools answer inside AppShell', () => {
+  it.each([
+    ['/ade/database', DatabaseLayout, 'Data browser'],
+    ['/ade/migration', MigrationLayout, 'Migrations'],
+  ] as const)('gates %s behind the "not available yet" page, keeping the rail', async (path, Layout, label) => {
+    mockUsePathname.mockReturnValue(path);
+
+    render(
+      <Layout>
+        <div data-testid="tool-page" />
+      </Layout>
+    );
+
+    await waitFor(() => expect(screen.getByTestId('app-rail')).toBeInTheDocument());
+    expect(screen.queryByTestId('tool-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('unreleased-feature-gate')).toHaveTextContent(`${label} opens once`);
+  });
+});
+
 describe('Tools routes render inside AppShell', () => {
+  // Both tools are unreleased (`lib/feature-release.ts`); re-open them to test their furniture.
+  const previewFeatures = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
+  });
+  afterAll(() => {
+    if (previewFeatures === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = previewFeatures;
+  });
+
   it('gives /ade/database the rail, around its own furniture', async () => {
     mockUsePathname.mockReturnValue('/ade/database');
 

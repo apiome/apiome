@@ -3,6 +3,7 @@
 import '../../globals.css';
 import * as React from 'react';
 import AdeAppShell from '@/app/components/shell/AdeAppShell';
+import UnreleasedFeatureGate from '@/app/components/shell/UnreleasedFeatureGate';
 import { MigrationProvider, useMigration } from './MigrationContext';
 import MigrationHeader from './components/MigrationHeader';
 import MigrationSidebar from './components/MigrationSidebar';
@@ -48,15 +49,20 @@ function MigrationLayoutInner({ children }: { children: React.ReactNode }) {
  * migration tool gets it too. Its own `MigrationSidebar` is unaffected: that is page
  * furniture, scoped to the chosen version pair, and it survives here until the deferred Tools
  * redesign replaces it.
+ *
+ * The migration tool is not released (`lib/feature-release.ts`): until its id leaves the unreleased
+ * set, every page under this route answers with the "not available yet" state.
  */
 export default function MigrationLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <AdeAppShell>
-      <MigrationProvider>
-        <MigrationLayoutInner>{children}</MigrationLayoutInner>
-      </MigrationProvider>
+      <UnreleasedFeatureGate feature="migrations">
+        <MigrationProvider>
+          <MigrationLayoutInner>{children}</MigrationLayoutInner>
+        </MigrationProvider>
+      </UnreleasedFeatureGate>
     </AdeAppShell>
   );
 }

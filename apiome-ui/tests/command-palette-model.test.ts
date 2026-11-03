@@ -98,13 +98,28 @@ describe('Jump to — the navigation model, and only it', () => {
     const meta = (label: string) => commands.find((command) => command.label === label)?.meta;
 
     expect(meta('Tenants')).toBe('Workspace');
-    expect(meta('Data browser')).toBe('Tools');
-    expect(meta('Migrations')).toBe('Tools');
+    // The Tools are unreleased (`lib/feature-release.ts`), so the palette leaves them out.
+    expect(meta('Data browser')).toBeUndefined();
+    expect(meta('Migrations')).toBeUndefined();
     expect(commands.find((command) => command.label === 'Tenants')?.href).toBe('/ade/dashboard/tenants');
     // Off-rail rows follow the rail rows and precede the account rows.
     const labels = commands.map((command) => command.label);
     expect(labels.indexOf('Tenants')).toBeGreaterThan(labels.indexOf('Schema registry'));
-    expect(labels.indexOf('Migrations')).toBeLessThan(labels.indexOf('Profile'));
+    expect(labels.indexOf('Tenants')).toBeLessThan(labels.indexOf('Profile'));
+  });
+
+  it('lists the Tools under Tools once they are previewed', () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
+    try {
+      const commands = buildJumpCommands(getPlatformNavGroups({ currentTenantId: TENANT }), TENANT);
+      const meta = (label: string) => commands.find((command) => command.label === label)?.meta;
+      expect(meta('Data browser')).toBe('Tools');
+      expect(meta('Migrations')).toBe('Tools');
+      const labels = commands.map((command) => command.label);
+      expect(labels.indexOf('Migrations')).toBeLessThan(labels.indexOf('Profile'));
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
   });
 
   it('lists SDK settings at its Export studio tab once the feature is previewed', () => {

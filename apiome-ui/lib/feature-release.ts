@@ -43,6 +43,10 @@ export const UNRELEASED_FEATURE_IDS = [
   'schema-registry',
   'catalog-entities',
   'consumers',
+  // The Tools in the user menu (HIVE-12.2): the data browser and the migrations canvas are
+  // not finished; both routes stay in the code, out of the menu, palette and jumps.
+  'data-browser',
+  'migrations',
 ] as const;
 
 /** One of {@link UNRELEASED_FEATURE_IDS}. */

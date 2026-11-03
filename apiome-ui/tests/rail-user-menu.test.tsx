@@ -173,8 +173,23 @@ describe('what the menu offers', () => {
     expect(screen.getByTestId('user-menu-all-apps')).toHaveAttribute('href', LAUNCHER_ROUTE);
   });
 
-  it('gives the Tools a home beside Admin console (HIVE-12.2)', async () => {
+  it('leaves the unreleased Tools out of the menu', async () => {
     const user = userEvent.setup();
+    renderMenu();
+    await openMenu(user);
+
+    // Data browser and Migrations are not finished (`lib/feature-release.ts`).
+    expect(screen.queryByTestId('user-menu-data-browser')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('user-menu-migrations')).not.toBeInTheDocument();
+    const ids = menuRows().map((row) => row.getAttribute('data-testid'));
+    expect(ids.indexOf('user-menu-shortcuts') + 1).toBe(ids.indexOf('user-menu-admin-console'));
+  });
+
+  it('gives the Tools a home beside Admin console once previewed (HIVE-12.2)', async () => {
+    const previous = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
+    const user = userEvent.setup();
+    try {
     renderMenu();
     await openMenu(user);
 
@@ -191,6 +206,10 @@ describe('what the menu offers', () => {
     expect(at('migrations') + 1).toBe(at('admin-console'));
     // Neither needs a workspace, so neither is ever disabled.
     expect(screen.getByTestId('user-menu-data-browser')).not.toHaveAttribute('aria-disabled');
+    } finally {
+      if (previous === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+      else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = previous;
+    }
   });
 
   it('reads the account destinations out of the navigation model', async () => {
@@ -451,7 +470,7 @@ describe('the collapsed rail', () => {
 
     // The labels the rail hides are CSS on `.rail-label`; the menu never carried that
     // class, so a collapsed rail changes nothing about what is inside the popup.
-    expect(menuRows()).toHaveLength(10);
+    expect(menuRows()).toHaveLength(8);
     expect(screen.getByTestId('user-menu-profile')).toBeVisible();
   });
 });
