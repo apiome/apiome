@@ -14,7 +14,7 @@ from typing import Any, Dict, List
 from unittest.mock import patch
 
 import pytest
-from catalog_connector_fakes import FakeConnectorStore, restore_builtin_sources
+from catalog_connector_fakes import FakeConnectorStore, restore_builtin_sources, url_kind_without_source
 from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication
@@ -143,7 +143,8 @@ def test_a_dry_run_checks_the_scope_and_the_base_url(store):
 
 
 def test_a_kind_without_a_source_is_a_409(store):
-    response = _dry({"kind": "url", "scope": {}})
+    with url_kind_without_source():
+        response = _dry({"kind": "url", "scope": {}})
     assert response.status_code == 409 and response.json()["detail"]["code"] == "connector-kind-unsupported"
 
 

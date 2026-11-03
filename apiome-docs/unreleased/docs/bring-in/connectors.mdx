@@ -24,8 +24,8 @@ found that the catalog does not describe.
 :::note
 Each kind needs a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway),
 [Azure API Management](#azure-api-management), [Apigee](#apigee), the [schema registry](#schema-registry)
-and the [MCP registry](#mcp-registry) sync today; the URL source follows. A kind your deployment cannot sync yet is shown as **Not available on this
-deployment** when you add a connector.
+the [MCP registry](#mcp-registry) and the [specification URL](#specification-url) sync today. A kind your
+deployment cannot sync yet is shown as **Not available on this deployment** when you add a connector.
 :::
 
 ## Source kinds
@@ -37,7 +37,7 @@ deployment** when you add a connector.
 | `aws-apigateway` | Amazon API Gateway, by region and account |
 | `azure-apim` | Azure API Management, by resource group |
 | `apigee` | Apigee, by organization and environment |
-| `url` | A specification published at a URL |
+| `url` | A specification published at a URL, or — with no base URL — every catalog item imported from a URL. See [Specification URL](#specification-url) |
 | `schema-registry` | A Confluent, Karapace or Apicurio schema registry. Its subjects become [schema subjects](../ship/schema-registry.mdx) with their version history |
 | `mcp-registry` | An MCP registry: the official registry, Azure API Center, a Kong registry or another Apiome workspace. Its servers become MCP servers, not catalog items |
 | `registry` | A registry of artifacts, crawled by protocol: an A2A agent registry, a CNCF xRegistry, or a FHIR server's `/metadata`. Every artifact becomes its own catalog item. See [Registry crawl](#registry-crawl) |
@@ -674,6 +674,49 @@ shows why under its status:
 Any other schema the importer refuses fails that subject for this run. The versions mirrored before
 it stay, and the next sync carries on from there. Schema registry connectors are left out of
 [Shadow APIs](../govern/shadow-apis.mdx): schema subjects are not APIs a gateway serves.
+
+## Specification URL
+
+The `url` kind re-checks documents published at a URL. It works in one of two ways, depending on
+the **Base URL**:
+
+| Base URL | What the connector covers |
+| --- | --- |
+| A specification URL, such as `https://specs.example.com/openapi.json` | That one document. The first sync imports it as a catalog item; later syncs add revisions to it. |
+| Empty | Every catalog item of the workspace imported with **URL Import** (**Import to catalog**). Each item is one inventory row, and a change becomes a new revision of that item. A URL item you import later joins on the next sync. |
+
+Every workspace that had catalog items imported from a URL already has an empty-base-URL connector
+named **Catalog URLs**. Only one such connector acts per workspace: another one lists nothing, and
+its run says so (`url-workspace-connector-duplicate`).
+
+### Add a specification URL
+
+1. **Go to Bring in → Connectors** and click **Add connector**.
+2. **Kind:** choose **Specification URL** and click **Continue**. There are no credentials: a `url`
+   connector only reads public documents.
+3. **Scope:** enter the **Base URL**, or leave it empty to cover every URL-sourced catalog item.
+4. **Dry run**, **Schedule** and **Save connector** as for every other kind.
+
+With the API: `{"kind": "url", "name": "Orders spec", "baseUrl": "https://specs.example.com/openapi.json"}`.
+A `url` connector takes no scope and no credential; either is refused.
+
+### What a URL sync does
+
+Each sync asks every URL whether its document changed, with the `ETag` and `Last-Modified` the last
+answer carried (`If-None-Match`, `If-Modified-Since`):
+
+| The URL answers | The item |
+| --- | --- |
+| `304 Not Modified` | **Unchanged**: nothing is fetched or imported |
+| `200` with a new document | **Imported**: a new revision, with a change report against the one before |
+| `200` with the same document | **Unchanged**: no revision |
+| An error, a timeout or more than 25 MB | **Failed**: nothing changes, and the next sync tries again |
+
+The first sync of an item that was already in the catalog records what its URL serves and adds no
+revision. The importer is chosen from the document itself, or the item's recorded format when the
+document does not say. Every URL, and every redirect, follows the
+[base URL rule](#base-urls-and-private-networks); an item whose URL is refused is reported
+(`url-refused`) and the others are still checked.
 
 ## MCP registry
 

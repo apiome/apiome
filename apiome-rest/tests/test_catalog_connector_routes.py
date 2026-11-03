@@ -16,7 +16,7 @@ from typing import Any, Dict, List
 from unittest.mock import patch
 
 import pytest
-from catalog_connector_fakes import FakeConnectorStore, restore_builtin_sources
+from catalog_connector_fakes import FakeConnectorStore, restore_builtin_sources, url_kind_without_source
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
@@ -148,7 +148,8 @@ def test_create_returns_the_connector_without_credentials(store, audits):
     assert created["hasCredentials"] is False and created["refreshIntervalSeconds"] == 900
     assert created["syncable"] is True  # the Kong sources ship with CDG-1.2
     assert audits[-1]["action"] == AUDIT_CREATE
-    assert _create(kind="url", name="Spec URL", scope={})["syncable"] is False
+    # RAR-6.1b: a url connector with no base URL covers the workspace's URL-sourced catalog items.
+    assert _create(kind="url", name="Spec URL", scope={})["syncable"] is True
 
 
 def test_list_reports_kinds_and_syncable_kinds(store, audits):
@@ -164,25 +165,13 @@ def test_list_reports_kinds_and_syncable_kinds(store, audits):
         "mcp-registry",
         "registry",
         "schema-registry",
-    ]
-    assert body["connectors"][0]["syncable"] is False
-    register_connector_source("url", ConnectorRefreshSource)
-    try:
-        body = client.get(_BASE).json()
-    finally:
-        unregister_connector_source("url")
-    assert body["syncableKinds"] == [
-        "apigee",
-        "aws-apigateway",
-        "azure-apim",
-        "kong-admin",
-        "kong-konnect",
-        "mcp-registry",
-        "registry",
-        "schema-registry",
         "url",
     ]
     assert body["connectors"][0]["syncable"] is True
+    with url_kind_without_source():
+        body = client.get(_BASE).json()
+    assert "url" not in body["syncableKinds"]
+    assert body["connectors"][0]["syncable"] is False
 
 
 def test_a_kong_scope_is_checked_on_create_and_update(store, audits):
@@ -367,8 +356,9 @@ def test_a_failed_sync_is_a_200_carrying_the_provider_failure(store, audits, sou
 
 
 def test_sync_of_a_kind_without_a_source_is_a_409(store, audits):
-    created = _create(kind="url")
-    response = client.post(f"{_BASE}/{created['id']}/sync")
+    created = _create(kind="url", scope={})
+    with url_kind_without_source():
+        response = client.post(f"{_BASE}/{created['id']}/sync")
     assert response.status_code == 409 and response.json()["detail"]["code"] == "connector-kind-unsupported"
 
 

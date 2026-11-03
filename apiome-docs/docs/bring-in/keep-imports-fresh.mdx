@@ -15,6 +15,7 @@ explains each source and links to the page with the steps.
 | --- | --- | --- | --- |
 | A **Git repository** | Apiome re-checks each imported file on the repository's **Scan cadence**, or on its branch's own cadence when a [branch rule](./repositories.mdx#branch-refresh-rules) sets one. A push webhook from GitHub or GitLab refreshes the changed file within seconds; **“Refresh now”** on the **Specs** tab re-reads them at once | With **Auto-refresh** under **Scan cadence** on the repository's **Settings** tab | [Refresh on push](./repositories.mdx#refresh-on-push) |
 | A **URL** (**URL Import**) | Apiome asks the URL every five minutes whether the document changed, using its `ETag` and `Last-Modified` | Automatically, for a URL with no credentials | [Keep a URL import up to date](./import-wizard.mdx#keep-a-url-import-up-to-date) |
+| A **URL**, into the catalog (**Import to catalog** → **URL Import**) | The workspace's **Catalog URLs** connector asks each item's URL whether the document changed, using its `ETag` and `Last-Modified`, on the connector cadence | Automatically, for every catalog item imported from an `http` or `https` URL | [Keep a URL catalog item up to date](./import-wizard.mdx#keep-a-url-catalog-item-up-to-date) |
 | A **live endpoint** in the catalog (GraphQL introspection, gRPC server reflection, FHIR `/metadata`) | **Live refresh** re-discovers the API on the cadence you choose | When you set it up on the item's **Provenance** tab | [Keep a catalog item fresh](./catalog-refresh.mdx#set-up-refresh) |
 | An **uploaded file** | Nothing can re-check it. Apiome flags the item once its upload is old enough to be stale, and you **re-upload** the current file | Always (the flag) | [Uploaded files](./catalog-refresh.mdx#uploaded-files) |
 | **Pasted text** | Never refreshed: there is no source to check | — | Import it again |
@@ -45,6 +46,10 @@ explains each source and links to the page with the steps.
   off ([Branch refresh rules](./repositories.mdx#branch-refresh-rules)).
 - **One URL import:** `PATCH …/url-imports/{id}` with the REST API
   ([URL Import](./import-wizard.mdx#keep-a-url-import-up-to-date)).
+- **Catalog items imported from a URL:** pause the workspace's **Catalog URLs** connector with
+  `PATCH …/connectors/{id}` and `{"status": "paused"}`
+  ([REST reference](../reference/rest/connectors.md#update-connector-v1-tenants-tenant-slug-connectors-connector-id-patch));
+  `apiome connectors list` gives its id.
 - **One catalog item:** set **Cadence** to **Off** to pause, or **click “Turn off”** on its **Live
   refresh** card to remove the setting ([Change or stop refresh](./catalog-refresh.mdx#change-or-stop-refresh)).
 - **The whole workspace:** an administrator can pause catalog live refresh with
@@ -60,7 +65,6 @@ These are planned and not in the product yet:
 
 - **Workspace refresh defaults for URL imports and catalog sources.** Repositories already start
   from the workspace's [refresh defaults](./repositories.mdx#refresh-defaults).
-- **URL-sourced catalog items** refreshed the same way as URL imports.
 
 ## Where next
 

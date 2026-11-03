@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.618.0] - 2026-11-03
+
+### Added
+- **Catalog URL connector (RAR-6.1b, #6467).** Catalog items imported with **Document URL** now refresh. A `url`
+  connector source (`app.url_connector_source`) is registered with the connector framework, so `url` connectors
+  sync through the same engine, run ledger and Refresh history as every other connector.
+  - **Two modes.** With a base URL (a specification URL) the connector imports that one document as a catalog item
+    and refreshes it. With no base URL it covers every live catalog item of the workspace whose latest revision was
+    imported from an `http`/`https` URL (one inventory row per item, linked to it), and a URL import made later
+    joins on the next run. Only the workspace's oldest such connector acts; another reports
+    `url-workspace-connector-duplicate`.
+  - **One conditional GET per item.** `If-None-Match` / `If-Modified-Since` from the validators kept on the
+    inventory row's `deployment` (with the digest of the content they describe): `304` → unchanged, nothing
+    fetched; `200` with new content → a new revision of the item with a change report; the same content → no
+    revision; an error, a timeout or more than 25 MB → a failed item. The importer is detected from the document,
+    falling back to the item's recorded format.
+  - **Baseline.** An item with no import anchor (a backfilled item's first run) is anchored to what its URL
+    serves, without a new revision.
+  - **SSRF.** Every URL, and every redirect, passes the CDG-1.1 connector rule; a refused URL is reported
+    (`url-refused`) and the other items are still checked.
+  - A `url` connector takes no scope and no stored credential.
+  - V352: one live `url` connector named **Catalog URLs** (no base URL) per tenant that has URL-sourced catalog
+    items, with their inventory rows linked and `imported`. Idempotent; a tenant that already has a workspace-mode
+    `url` connector or a connector named "Catalog URLs" keeps it.
+- OpenAPI document version 1.481.0 → 1.482.0.
+
 ## [1.617.0] - 2026-11-03
 
 ### Added
