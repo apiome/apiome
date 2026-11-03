@@ -1418,6 +1418,32 @@ WS-I problem the original WSDL already had is not counted again; the item's lint
 
 ### JSON Schema from any source
 
+#### When to export to JSON Schema
+
+- **Share the data types on their own.** Any item — an OpenAPI or AsyncAPI API, a gRPC service, an
+  Avro or Protobuf schema, a GraphQL schema — becomes a standalone JSON Schema of its types, for
+  validation pipelines, Kafka JSON subjects, config contracts and database validators. Operations and
+  channels are left out, and the card says so (**types-only**).
+- **Target an older validator.** Pick `draft-07` or `draft-04` for a tool that does not read
+  2020-12; the fidelity report lists each keyword the older draft cannot carry.
+- **Generate strict code.** Pick the `jtd` mode for a JSON Type Definition (RFC 8927) document that
+  `jtd-codegen` and ajv read.
+- **Round-trip a JSON Schema item.** An item imported from JSON Schema exports back **lossless** with
+  the default options.
+
+#### JSON Schema export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the JSON Schema card and its options (draft, packaging, `$id` base, mode) | **Export** dialog → **JSON Schema** (under **Data schema & graph**) | [Options](#json-schema-export-options) · [Where to find the JSON Schema card](#where-to-find-the-json-schema-card) |
+| **See** how types, rules, enumerations and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-json-schema) |
+| **See** what the draft you picked cannot carry | The fidelity report on the card, recomputed when you change **Draft** | [What the fidelity report lists](#what-the-json-schema-fidelity-report-lists) |
+| **Write** a JSON Type Definition instead | **Mode** `jtd` | [JSON Type Definition (JTD) mode](#json-type-definition-jtd-mode) |
+| **Trust** the schema: metaschema, `$ref` resolution, then re-import | Automatic before every download | [How a JSON Schema export is checked](#how-a-json-schema-export-is-checked) |
+| **Export** from the CLI | `apiome export jsonschema <item> --out <file>.schema.json` | [Where to find the JSON Schema card](#where-to-find-the-json-schema-card) |
+
+#### How the item is written {#how-the-item-is-written-to-json-schema}
+
 Exporting to **JSON Schema** writes the item's data types as a standalone JSON Schema, whatever it
 was imported from — for validation pipelines, schema registries and contract tests. By default you
 get one draft **2020-12** document, `<Name>.schema.json`, with every type under `$defs`; the
@@ -1435,7 +1461,7 @@ document itself refers (`$ref`) to the type named after the item, when there is 
 - **Names.** Each type is a `$defs` entry named after it (`Order`); two types with the same name
   keep their full keys (`v1.Pet`, `v2.Pet`).
 
-Options:
+#### Options {#json-schema-export-options}
 
 - **draft** — `2020-12` (default), `draft-07` or `draft-04`. An older draft gets `definitions` instead
   of `$defs`, a `$ref` with other keywords beside it wrapped in `allOf`, and drops what it has no
@@ -1449,6 +1475,8 @@ Options:
   published.
 - **mode** — `json-schema` (default), or `jtd` for a [JSON Type Definition](#json-type-definition-jtd-mode)
   document instead.
+
+#### How a JSON Schema export is checked {#how-a-json-schema-export-is-checked}
 
 Each export is checked before you download it:
 
@@ -1464,6 +1492,8 @@ If a check fails, the export fails and names the file, the JSON pointer and the 
 JSON Schema is re-exported exactly as it was imported unless you pick another draft, `per-type` or
 an **id_base**.
 Operations and channels are left out: JSON Schema describes data only.
+
+#### What the fidelity report lists {#what-the-json-schema-fidelity-report-lists}
 
 The fidelity report is computed for the options you pick, so changing **draft** in the export dialog
 updates it. It lists:
@@ -1483,7 +1513,9 @@ updates it. It lists:
 
 Each downgrade is listed on the type or field it happened in.
 
-**Where to find it.** In the **Export** dialog, the **JSON Schema** card is under **Data schema &
+#### Where to find the JSON Schema card {#where-to-find-the-json-schema-card}
+
+In the **Export** dialog, the **JSON Schema** card is under **Data schema &
 graph** on the **Target** step. Its badge is computed for the item: **types-only** for an item with
 operations or channels (a REST API, a gRPC service), which the export leaves out, and **lossless** for
 a JSON Schema item exported with the default options. Pick the card to set **Draft**, **Packaging**
