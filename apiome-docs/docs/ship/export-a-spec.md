@@ -1827,9 +1827,29 @@ re-import only. Apiome reads some spellings the schema does not allow, such as `
 
 ### API Blueprint from any source
 
+#### When to export to API Blueprint
+
+- **Publish human-readable docs.** A REST item becomes one Markdown `.apib` file people can read, with
+  its resources, actions and MSON data structures. It is documentation, not a contract: validation
+  rules MSON cannot express are left out, and the fidelity report lists each one. API Blueprint is no
+  longer actively developed, so prefer OpenAPI for a machine-readable contract.
+- **Round-trip an API Blueprint item.** An item imported from API Blueprint exports back **lossless**.
+
+#### API Blueprint export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the API Blueprint card and its options | **Export** dialog → **REST & HTTP** → **API Blueprint** | [Where to find the API Blueprint card](#where-to-find-the-api-blueprint-card) |
+| **See** how the document, resources and data structures are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-api-blueprint) |
+| **See** what API Blueprint cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-api-blueprint-fidelity-report-lists) |
+| **Trust** the file: drafter, then re-import | Automatic before every download | [How an API Blueprint export is checked](#how-an-api-blueprint-export-is-checked) |
+| **Export** from the CLI | `apiome export apiblueprint <item> --out <file>.apib` | [Where to find the API Blueprint card](#where-to-find-the-api-blueprint-card) |
+
 Exporting to **API Blueprint** writes one `<Name>.apib` file in API Blueprint 1A: Markdown, with
 its data structures in MSON. It is meant to be read by people, as documentation of the API, so it
 writes what a reader needs and leaves out validation rules MSON cannot express.
+
+#### How the item is written {#how-the-item-is-written-to-api-blueprint}
 
 - **Document.** The `FORMAT: 1A` line and the first server as `HOST` come first, then the item's
   title and description.
@@ -1843,6 +1863,8 @@ writes what a reader needs and leaves out validation rules MSON cannot express.
   members, and an alias is a named type based on what it wraps.
 - **Types.** MSON has three value types: `string`, `number` and `boolean`. A 64-bit integer becomes a
   `number`, and a date becomes a `string`.
+
+#### What the fidelity report lists {#what-the-api-blueprint-fidelity-report-lists}
 
 The fidelity report lists what API Blueprint cannot carry:
 
@@ -1864,6 +1886,8 @@ An item imported from API Blueprint is written back as it was read. Import now a
 action's description, query parameters from the URI (`{?limit}`), a data structure's description,
 `+ Default:` values, and property names in backticks.
 
+#### How an API Blueprint export is checked {#how-an-api-blueprint-export-is-checked}
+
 Each export is checked before you download it:
 
 1. **drafter**, the API Blueprint parser, reads it when the server has it. A good blueprint has no
@@ -1876,7 +1900,9 @@ Each export is checked before you download it:
 An item imported from API Blueprint exports and re-imports unchanged. From any other source, the
 re-import shows what API Blueprint could not keep; the fidelity report names those losses.
 
-**Where to find it.** In the **Export** dialog, the **API Blueprint** card is under **REST & HTTP** on
+#### Where to find the API Blueprint card {#where-to-find-the-api-blueprint-card}
+
+In the **Export** dialog, the **API Blueprint** card is under **REST & HTTP** on
 the **Target** step, as one file. Its badge is **lossless** for an item imported from API Blueprint and
 **lossy** for any other source. On the **Fidelity** step, the export is described as one for
 human-readable docs, and the report lists each constraint MSON cannot express (`format`, `minimum`,
