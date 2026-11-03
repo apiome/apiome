@@ -11,9 +11,10 @@ What the standalone ``xsd`` export target shows and writes, pinned in ``fixtures
   multi-namespace model (two URI namespaces, built here): it exports one ``.xsd`` per namespace, the first
   ``xs:import`` ing the second, and browse delivers the set as a zip;
 * **the options** — ``xsd_version`` (``1.0`` default; ``1.1`` marks ``vc:minVersion="1.1"``),
-  ``include_xml_declaration`` and ``include_comments`` (both default on). Every pinned choice passes the export
-  gate's check (:func:`app.xsd_roundtrip.check_emitted_xsd`). RELAX NG / DTD modes (MFX-22.3) and the
-  ISO 20022 profile (MFX-22.4) are not in the registry yet; the card shows them when they are;
+  ``include_xml_declaration`` and ``include_comments`` (both default on), and ``mode`` (``xsd`` default;
+  ``relaxng``, ``relaxng-compact`` and ``dtd``, MFX-22.3 — covered in ``test_xsd_output_modes.py``). Every
+  pinned choice passes the export gate's check (:func:`app.xsd_roundtrip.check_emitted_xsd`). The ISO 20022
+  profile (MFX-22.4) is not in the registry yet; the card shows it when it is;
 * **browse** — the public ``…/document`` route delivers a one-namespace ``.xsd`` itself;
 * **the CLI and UI fixtures** — ``apiome-cli/tests/fixtures/export-targets-xsd.json`` and
   ``apiome-ui/tests/fixtures/export-targets-xsd-{rest,xsd}.json`` carry the live descriptor, options schema,
@@ -223,9 +224,14 @@ def test_a_multi_namespace_model_writes_one_schema_per_namespace() -> None:
 
 def test_the_options_are_in_the_descriptor() -> None:
     card = _card(_source("rest"))
-    assert set(card.options_schema["properties"]) == {"include_comments", "include_xml_declaration", "xsd_version"}
+    assert set(card.options_schema["properties"]) == {
+        "include_comments", "include_xml_declaration", "mode", "xsd_version",
+    }
     assert card.options_schema["properties"]["xsd_version"]["enum"] == ["1.0", "1.1"]
-    assert card.default_options == {"include_comments": True, "include_xml_declaration": True, "xsd_version": "1.0"}
+    assert card.options_schema["properties"]["mode"]["enum"] == ["xsd", "relaxng", "relaxng-compact", "dtd"]
+    assert card.default_options == {
+        "include_comments": True, "include_xml_declaration": True, "mode": "xsd", "xsd_version": "1.0",
+    }
 
 
 def test_browse_delivers_a_one_namespace_xsd_itself() -> None:

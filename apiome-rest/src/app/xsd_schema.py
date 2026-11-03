@@ -172,6 +172,10 @@ class XsdSchemaWriter:
         self.type_names: Dict[str, str] = {}
         #: Type key → the global element declared for it (complex types only).
         self.type_elements: Dict[str, str] = {}
+        #: ``id()`` of each field's ``xs:element`` / ``xs:attribute`` → the field's key, so a writer that
+        #: re-reads the documents (the RELAX NG and DTD modes, MFX-22.3) files its losses by construct.
+        #: Kept beside the tree, never written into it.
+        self.node_keys: Dict[int, str] = {}
         self._schema_el: Optional[ET.Element] = None
         #: The namespace of the schema document being written.
         self._document_namespace: Optional[str] = target_namespace
@@ -352,7 +356,8 @@ class XsdSchemaWriter:
         self.rename(field.name, name, field.key, "attribute")
         self.tracker.record(field.key, Provenance.SOURCE)
         type_ref = self.source_type_qname(field.type, hint=field.extras.get("xsd_type"))
-        ET.SubElement(complex_el, ET.QName(XSD_NS, "attribute"), {"name": name, "type": type_ref})
+        attribute = ET.SubElement(complex_el, ET.QName(XSD_NS, "attribute"), {"name": name, "type": type_ref})
+        self.node_keys[id(attribute)] = field.key
 
     def _append_enum(self, schema_el: ET.Element, type_: Type, name: str) -> None:
         """An enum: a ``simpleType`` restricting ``xs:int`` (a numeric enum) or ``xs:string``.
@@ -474,6 +479,7 @@ class XsdSchemaWriter:
         self.tracker.record(field.key, Provenance.SOURCE)
         if "xsd_type" in extras:
             self._append_xsd_source_field(parent, field, name)
+            self.node_keys[id(parent[-1])] = field.key
             return
         fmt = field.constraints.format if field.constraints is not None else None
         optional = field.type.nullable and not in_choice
@@ -496,6 +502,7 @@ class XsdSchemaWriter:
             optional=optional,
             pointer=field.key,
         )
+        self.node_keys[id(parent[-1])] = field.key
 
     def _record_json_mapping_notes(self, field: CanonicalField, *, optional: bool, examples: List[Any]) -> None:
         """Record what the export approximates or drops about one JSON-shaped field.

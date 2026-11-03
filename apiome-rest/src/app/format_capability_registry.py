@@ -1851,8 +1851,10 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "credentials, fails the import as an unsafe construct — and a policy-legal http(s) "
             "href is recorded as a declared limit whose definitions are absent, which then "
             "surfaces as an unresolved reference rather than as a silently smaller grammar.",
-            "RELAX NG *output* is not implemented (#4134), so a grammar imported here is "
-            "exported through another target's emitter and is not written back as RELAX NG.",
+            "RELAX NG *output* is a mode of the XSD export (`mode=relaxng` or `relaxng-compact`, "
+            "MFX-22.3): it writes a new grammar from the item's types — defines, datatype parameters "
+            "and namespaces — rather than this grammar's own patterns, so a grammar imported here is "
+            "not written back exactly as it was read.",
         ],
     ),
     "dtd": _Seed(
@@ -1945,8 +1947,10 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "A DTD has no documentation construct: comments are not attached to the "
             "declarations they precede, so imported types and members carry no description and "
             "the absence is the format's, not the reader's.",
-            "DTD *output* is not implemented, so a DTD imported here is exported through "
-            "another target's emitter and is not written back as a DTD.",
+            "DTD *output* is a mode of the XSD export (`mode=dtd`, MFX-22.3): it writes a new DTD "
+            "from the item's types — element names and content models, with no datatypes or facets — "
+            "rather than this DTD's own declarations, so a DTD imported here is not written back "
+            "exactly as it was read.",
         ],
     ),
     "odcs": _Seed(

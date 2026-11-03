@@ -52,6 +52,10 @@ ARG AMF_VERSION=5.7.1
 ARG FHIR_VALIDATOR_VERSION=6.10.4
 # cb2xml (MFX-23.4, #4142) — optional: it parses an emitted COBOL copybook.
 ARG CB2XML_VERSION=1.01.08
+# jing (MFX-22.3) — RELAX NG validator jar from Maven Central, with the two libraries it loads.
+ARG JING_VERSION=20220510
+ARG ISORELAX_VERSION=20030108
+ARG XERCES_VERSION=2.9.1
 ARG ASYNCAPI_VERSION=2.16.0
 # NOTE: @asyncapi/parser, typescript, zod and @trpc/server are deliberately absent from this list.
 # They are HARD dependencies (FMT-1.3, #5414; FMT-8.1, #5462; FMT-8.2, #5463; FMT-8.3, #5464) and
@@ -234,6 +238,26 @@ RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSI
     && ${TOOLS_PREFIX}/bin/cb2xml -cobol /tmp/smoke.cpy -xml /tmp/smoke.xml \
     && grep -q 'name="SMOKE-ID"' /tmp/smoke.xml \
     && rm /tmp/smoke.cpy /tmp/smoke.xml
+
+# jing (MFX-22.3, #4134) — the relaxng/jing-trang validator, from Maven Central, behind a `jing` wrapper
+# (com.thaiopensource.relaxng.util.Driver; `-c` reads the compact syntax). Given a grammar and no
+# instance it checks the grammar itself (app.relaxng_jing). isorelax and Xerces are the libraries jing
+# loads for that; Saxon is only for Schematron, which the check does not use. The smoke test checks one
+# grammar in each syntax.
+RUN curl -fsSL "https://repo1.maven.org/maven2/org/relaxng/jing/${JING_VERSION}/jing-${JING_VERSION}.jar" \
+      -o ${TOOLS_PREFIX}/lib/jing.jar \
+    && curl -fsSL "https://repo1.maven.org/maven2/isorelax/isorelax/${ISORELAX_VERSION}/isorelax-${ISORELAX_VERSION}.jar" \
+      -o ${TOOLS_PREFIX}/lib/isorelax.jar \
+    && curl -fsSL "https://repo1.maven.org/maven2/xerces/xercesImpl/${XERCES_VERSION}/xercesImpl-${XERCES_VERSION}.jar" \
+      -o ${TOOLS_PREFIX}/lib/xercesImpl.jar \
+    && printf '#!/bin/sh\nexec java -cp %s/lib/jing.jar:%s/lib/isorelax.jar:%s/lib/xercesImpl.jar com.thaiopensource.relaxng.util.Driver "$@"\n' "${TOOLS_PREFIX}" "${TOOLS_PREFIX}" "${TOOLS_PREFIX}" \
+      > ${TOOLS_PREFIX}/bin/jing \
+    && chmod +x ${TOOLS_PREFIX}/bin/jing \
+    && printf '<element name="smoke" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"><data type="int"><param name="minInclusive">0</param></data></element>\n' > /tmp/smoke.rng \
+    && ${TOOLS_PREFIX}/bin/jing /tmp/smoke.rng \
+    && printf 'datatypes xsd = "http://www.w3.org/2001/XMLSchema-datatypes"\nstart = element smoke { xsd:int { minInclusive = "0" } }\n' > /tmp/smoke.rnc \
+    && ${TOOLS_PREFIX}/bin/jing -c /tmp/smoke.rnc \
+    && rm /tmp/smoke.rng /tmp/smoke.rnc
 
 # The toolchain manifest (FMT-1.3, #5414): the exact pins of every HARD Node dependency. It is
 # copied in first so the `npm install` below installs its `dependencies` (currently

@@ -1,0 +1,20 @@
+---
+slug: relax-ng-and-dtd-output
+title: Export types as RELAX NG or a DTD
+description: "The XSD export can now write a RELAX NG grammar or a DTD."
+authors: [apiome]
+---
+
+The **XSD** export has a **Mode** option for XML tool chains that read RELAX NG or a DTD rather than an
+XML Schema. See [RELAX NG and DTD output](/ship/export-a-spec#relax-ng-and-dtd-output).
+
+{/* truncate */}
+
+- **Three new modes:** `relaxng` (`<Name>.rng`, the XML syntax), `relaxng-compact` (`<Name>.rnc`) and
+  `dtd` (`<Name>.dtd`) — one file each, with the same elements, occurrences and choices as the XSD export.
+- **What each keeps:** RELAX NG keeps the types, facets and namespaces; a DTD keeps element names and
+  content models only. The fidelity report follows the mode, listing each dropped datatype, facet, default
+  and repeat count on the field it belongs to.
+- **Checked before download:** a RELAX NG grammar with jing when the server has it, then by Apiome's
+  RELAX NG or DTD reader, and imported again.
+- **CLI:** `apiome export xsd <item> --option mode=relaxng-compact --out <file>.rnc`.

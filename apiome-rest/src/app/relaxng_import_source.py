@@ -10,7 +10,8 @@ adapter removes.
 Parsing lives in :mod:`app.relaxng_parser` (XML syntax, fileset composition) and
 :mod:`app.relaxng_compact` (compact syntax), both onto the shared algebra in
 :mod:`app.relaxng_grammar`; normalization lives in :mod:`app.relaxng_normalizer`. RELAX NG
-**output** is a separate ticket (#4134), so this adapter reads only.
+**output** is a mode of the XSD export (MFX-22.3, #4134, :mod:`app.xml_schema_modes`); this adapter
+reads only.
 """
 
 from __future__ import annotations
