@@ -43,9 +43,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
     # --- azure-apim (1) ---
     ('azure-apim', 'azure-apim'):
         'changed root',
-    # --- cddl (15) ---
-    ('cobolcopybook', 'cddl'):
-        'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',
+    # --- cddl (14) ---
     ('edifact', 'cddl'):
         'changed root; added type DTM; removed type EDIFACT-INVOIC.DTM; removed type EDIFACT-INVOIC.IMD; remo',
     ('edix12', 'cddl'):
@@ -145,9 +143,7 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'added operation Mutation.GetCurrentConditions; added operation Mutation.GetForecast; added operation',
     ('typescript-types', 'graphql'):
         'added operation Query._; changed root; added service Query; removed type NewOrder; removed type NewO',
-    # --- jtd (15) ---
-    ('cobolcopybook', 'jtd'):
-        'changed root; added type CUSTOMER-RECORD; removed type CUSTOMER-RECORD.CUSTOMER-RECORD',
+    # --- jtd (14) ---
     ('edifact', 'jtd'):
         'changed root; added type DTM; added type EDIFACT INVOIC; removed type EDIFACT-INVOIC.DTM; removed ty',
     ('edix12', 'jtd'):

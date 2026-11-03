@@ -7,9 +7,9 @@ Every corpus source family exported to every production target through the catal
 | Status | Cells |
 | --- | --- |
 | ok | 39 |
-| lossy | 3938 |
+| lossy | 3940 |
 | refused | 2115 |
-| silent-loss | 172 |
+| silent-loss | 170 |
 | crash | 0 |
 | skipped | 0 |
 
@@ -33,7 +33,7 @@ Every corpus source family exported to every production target through the catal
 | cddl | L | R | R | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | cics-bms | L | R | R | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | cloudevents | L | R | R | L | ok | L | R | R | R | L | L | ok | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
-| cobolcopybook | L | R | R | L | L | L | R | R | R | L | S | L | ok | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | S | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
+| cobolcopybook | L | R | R | L | L | L | R | R | R | L | L | L | ok | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
 | connectrpc | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |
 | consul | L | L | L | L | L | R | L | L | R | L | L | L | R | S | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | R | L | L | L | R | R | L | R |
 | corbaidl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | ok | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |

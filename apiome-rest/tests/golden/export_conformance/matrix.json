@@ -10294,15 +10294,16 @@
       "tier": "lossy"
     },
     {
-      "drift": [
-        "changed root",
-        "added type CUSTOMER-RECORD",
-        "removed type CUSTOMER-RECORD.CUSTOMER-RECORD"
-      ],
       "family": "cobolcopybook",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "cddl"
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "cddl",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -10467,15 +10468,16 @@
       "tier": "types-only"
     },
     {
-      "drift": [
-        "changed root",
-        "added type CUSTOMER-RECORD",
-        "removed type CUSTOMER-RECORD.CUSTOMER-RECORD"
-      ],
       "family": "cobolcopybook",
-      "reason": "Fidelity report is empty but the round trip shows 3 difference(s).",
-      "status": "silent-loss",
-      "target": "jtd"
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "jtd",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -62434,10 +62436,10 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3938,
+    "lossy": 3940,
     "ok": 39,
     "refused": 2115,
-    "silent-loss": 172,
+    "silent-loss": 170,
     "skipped": 0
   },
   "families": [
