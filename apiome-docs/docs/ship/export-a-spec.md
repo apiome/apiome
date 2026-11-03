@@ -1778,6 +1778,9 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 
 ## With the CLI
 
+[Export from the CLI](./export-from-the-cli.md) walks through `apiome export` end to end: every format,
+the fidelity report, and gating a CI job on it.
+
 ```bash
 # OpenAPI (default), JSON, to a file
 apiome spec export --project <id-or-slug> --version <id-or-label> --output petstore.json

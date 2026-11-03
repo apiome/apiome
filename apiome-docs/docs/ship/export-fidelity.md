@@ -369,6 +369,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
 - [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
+- [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
 - [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference
 - [`apiome-rest/docs/export_projection_author_guide.md`](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_projection_author_guide.md)
