@@ -34,7 +34,7 @@ The dialog's stepper reads **Source → Target → Fidelity → Export**.
 | **Source** | The item or project and the version being exported, while Apiome measures how well each format can carry it | **Click “Choose target”** |
 | **Target** | A card per format, each with a fidelity badge for *this* source (*lossless*, *lossy*, *types-only*) and how much is preserved; a format that cannot export this source is greyed out with the reason | Pick a card, set its options, and **click “Continue”** |
 | **Fidelity** | The advisory message, the share preserved, and a report of every construct the conversion drops, approximates or invents, with where each one lands | When anything is lost, tick the acknowledgement (or type the phrase it asks for when only types survive) |
-| **Export** | A preview of the exported file, with its name, size and checks | **Click the “Download” button that names the file**, or **“Download .zip”** (**“Download all files (.zip)”** for a format that writes several files) |
+| **Export** | A preview of the exported file, with its name, size and checks ([Read an exported file](./read-an-exported-file.mdx)) | **Click the “Download” button that names the file**, or **“Download .zip”** (**“Download all files (.zip)”** for a format that writes several files) |
 
 **Click “Export”** to leave the **Fidelity** step — it reads **“Export anyway”** after an
 acknowledgement. A lossless conversion shows a quiet line instead of the warning and asks for no acknowledgement. The step-by-step detail, what each format
@@ -80,4 +80,5 @@ on **Verify**, open the **Fidelity** tab and **click “See what a round-trip ch
 - [Understand export fidelity](./export-fidelity.md) — the tiers, the report and the acknowledgement
 - [Export studio](./export-studio.mdx) — options, several formats, verify and a job you can watch
 - [How an export is checked](./check-an-export.mdx) — validation and lint of the exported file
+- [Read an exported file](./read-an-exported-file.mdx) — the viewer: bundles, problems, large files and the text diff
 - [Version dialogs](../build/version-dialogs.mdx#export) — the version **Actions** menu

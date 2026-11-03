@@ -1,0 +1,116 @@
+---
+title: Read an exported file
+description: Read exactly what an export writes, with its files, problems and round-trip diff.
+sidebar_position: 4.35
+tags: [export, viewer, bundle, problems, round-trip]
+---
+
+Before you download an export, Apiome shows you **exactly the bytes it will write** in a read-only
+code viewer: syntax-highlighted for the format, in the app's light or dark theme. A format that
+writes several files gets a file tree and tabs; the checks' findings are marked on the lines they
+concern; and a very large file never slows the screen down.
+
+## When to read the file first
+
+- **Check the output before it leaves Apiome.** See the generated `.proto`, `.thrift`, `.graphql` or
+  OpenAPI document as it will be downloaded, not a summary of it.
+- **Find what a check flagged.** A validation or lint finding with a line number is underlined in the
+  file, and clicking it takes you to that line.
+- **Browse a bundle.** A format that writes many files (a Bruno collection, per-type JSON Schema,
+  gateway configurations) opens as a tree you can move through file by file.
+- **See what a round trip would change.** The exported file beside the same file read back and
+  exported again.
+
+## Where the viewer is
+
+| Where | What it shows |
+| --- | --- |
+| The **Export** dialog → **Export** step | **Emitted *file-name***: the one file the export writes, with the viewer's actions and its **Problems** ([The Export dialog](./export-dialog.mdx#the-four-steps)) |
+| The [Export studio](./export-studio.mdx#6-review--generate) → **Review & Generate**, one file | The same viewer for the generated file |
+| The Export studio → **Review & Generate**, a bundle | The file tree, the open files as tabs, and the viewer for the active file |
+| The Export studio → **Verify** → **Fidelity** → **“See what a round-trip changes”** → **Text diff** | The exported file beside the same file read back and exported again ([Check a round trip](./export-studio.mdx#check-a-round-trip)) |
+
+## At a glance
+
+| You want to | Do this |
+| --- | --- |
+| Copy or download the file | **“Copy”** or **“Download file”** above the viewer; **“Download .zip”** for a whole bundle |
+| Read long lines | **“Wrap”** wraps them; click again to stop |
+| Collapse sections | **“Folding”** turns code folding on or off |
+| Search the file | **“Find”** opens the search box |
+| Open another file of a bundle | Click it in the tree, or use `↑` `↓` and `↵` |
+| Go to a problem | Click its row under **Problems**, or a finding's **Open in the Review editor** on **Verify** |
+| Read a file the viewer held back | **“Load into the viewer”**, **“Show the beginning”** or **“Download the whole file”** |
+
+## The viewer
+
+The viewer is read-only. Its language follows the export's format and the file itself, so a
+Protobuf export is highlighted as Protobuf, a GraphQL export as GraphQL and an OpenAPI export as YAML
+or JSON, whichever the file is. A format the editor has no grammar for (ASN.1, EDI X12) is shown as
+plain text. The line under it gives the file's
+size, its media type and the language it is read as.
+
+Above the viewer:
+
+- **“Copy”** copies the file to the clipboard (it reads **Copied** for a moment).
+- **“Download file”** downloads this file; **“Download .zip”** (a bundle only) downloads every file.
+- **“Wrap”** and **“Folding”** switch line wrapping and code folding.
+- **“Find”** opens the search box in the file.
+
+`Tab` moves out of the viewer to the next control, because nothing in it is editable. If the editor
+cannot load (offline, or a blocked script), the file is shown as plain text instead, so it is never
+hidden.
+
+## Bundles: the file tree and tabs
+
+When an export writes several files, **Review & Generate** shows them as a tree, in folders. Each
+file you open joins the tabs above the viewer, so you can move between them; the last eight stay
+open. Press `Delete` on a tab to close it.
+
+A file with findings carries a badge in the tree and on its tab: its number of errors, or of warnings
+when it has none.
+
+In the tree, `↑` and `↓` move between files, `Home` and `End` jump to the first and last, `→` opens a
+folder and `←` closes it.
+
+## Problems in the file
+
+The **Verify** step's **Validation** and **Lint** findings that name a line are shown in the file:
+
+- the line is underlined, and the gutter beside it is coloured by the worst severity on it;
+- **Problems** under the viewer lists them, with their count — click one to go to its line;
+- clicking a marked line selects its problem in the list;
+- on **Verify**, a finding that names a line opens it in the file: **Open in the Review editor**.
+
+A finding with no line number stays in the **Verify** list only; the viewer never invents a place for
+it.
+
+## Large files
+
+A large export stays quick to read. Nothing is cut silently: the viewer always says what it is
+holding back and why.
+
+- **A file over 512 KB** is not shown whole. Its panel names its size and offers **“Show the
+  beginning”** (the first 128 KB, labelled *Showing the first 128 KB of …*) or **“Download the whole
+  file”**.
+- **A bundle** puts up to 2 MB of files in the viewer on its own, in the order they were written. Past
+  that, the tree says how many files load only when you open them, and each one shows **“Load into
+  the viewer”** when you do.
+- **A file over 128 KB** that is shown loses the editor's heavier extras — bracket colours and the
+  highlighting of matching words — so scrolling stays smooth.
+
+The download is always the whole file, whatever the viewer shows.
+
+## The round-trip text diff
+
+**Text diff** in the round-trip check shows the exported file on the left and the same file read
+back and exported again on the right, in the same viewer, with the differences highlighted. A file
+that comes back byte for byte says so. A bundle, a binary file or a very large file has no text diff;
+the tab says why, and **Model diff** still covers it. See
+[Check a round trip](./export-studio.mdx#check-a-round-trip).
+
+## Related
+
+- [The Export dialog](./export-dialog.mdx) — the four steps and where the preview sits
+- [Export studio](./export-studio.mdx) — **Verify**, **Review & Generate** and the round-trip check
+- [How an export is checked](./check-an-export.mdx) — the validation and lint findings the viewer marks
