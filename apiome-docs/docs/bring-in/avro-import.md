@@ -11,6 +11,28 @@ Records, enums and fixed types become types. An IDL `protocol` with messages bec
 one operation per message. You can then search, version, diff, lint and convert it like any other
 catalog item.
 
+## When to use it
+
+Use the Avro importer for the schemas behind your Kafka topics and any other Avro data: Avro 1.12
+JSON schemas and Avro IDL protocols. Bring them in as files, or read them straight from a
+Confluent-compatible schema registry (Confluent Platform or Cloud, Karapace, Apicurio Registry's
+compatibility API). Each version is fingerprinted the way Avro libraries do it, and compared by the
+same rules a Confluent Schema Registry uses.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** an `.avsc` or `.avdl` file, or a file set | **Import to catalog** → **Avro**, or `apiome import avro` | [Import it](#import-it) |
+| **Read** one schema from a schema registry | **URL Import** with a registry URL, or `apiome import avro --registry` | [Import from a schema registry](#import-from-a-schema-registry) |
+| **Mirror** a whole registry, every subject and version | A `schema-registry` connector | [Schema registry connector](./schema-registry-connector.md) |
+| **See** what the schema became: types, unions, logical types | The catalog item | [What the catalog item holds](#what-the-catalog-item-holds) |
+| **Fingerprint** each type by Parsing Canonical Form | Automatic on every import | [Fingerprints](#fingerprints) |
+| **Compare** two versions by the Avro schema resolution rules | Tick two versions on the catalog item's **Versions** tab, or `apiome registry compat` | [Compatibility between versions](#compatibility-between-versions) |
+| **Lint** defaults, unions, aliases and `doc`s | The `avro` lint pack | [Lint](#lint) |
+| **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
+| **Export** back to Avro, or **push** it to a registry | **Export** on the catalog item; a push over the REST API | [Export catalog items](../ship/export-catalog-items.mdx), [Push Avro to a schema registry](../ship/push-avro-to-a-schema-registry.md) |
+
 ## Import it
 
 Import the schema like any other catalog format: in the [import wizard](./import-wizard.mdx)
