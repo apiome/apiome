@@ -51,7 +51,7 @@ The mark is a bee on a honeycomb (navy `#16265C`, azure `#1E90E8`, honey
 
 | Element | Use |
 | --- | --- |
-| **Navy ink** | primary buttons (light theme), page titles, selected text, **the rail** (round 3: the navigation rail is the mark's navy with white type, so the brand is on every page, not only the launcher) |
+| **Navy ink** | primary buttons (light theme), page titles, selected text, **the rail on dark themes** (round 3: on a dark-based theme the navigation rail is the mark's navy with white type; on a light theme it follows the page — warm paper, the page's ink) |
 | **Azure accent** | links, focus rings, selected states, info, charts, the underline of the active tab |
 | **Honey** | brand ornament only: logo mark, “new”/“starred”/“preview” markers, first-run checklist, empty-state art, the theme grid highlight, **the active rail marker, the HEAD node on the Versions timeline, and the primary button in the signature Dark theme** (round 3). Never used to mean *warning* (warnings are amber with an icon). |
 | **Hexagon** | workspace avatars (`.avatar--hex`), **item avatars filled with the item's format colour** (catalog items, projects; round 3), empty-state art, the faint canvas pattern on auth/launcher pages (`.hex-bg`) and behind the Home hero band. People stay round. |
@@ -181,8 +181,10 @@ during migration so users don’t lose their theme.
   contrast (`high-contrast, blueprint, solarized, nord, darcula`). **Dark** is the
   signature theme (round 3): navy-black surfaces that carry the brand's navy, honey as
   the primary (`--ink`), azure for links.
-* The rail keeps a navy cast on every dark-based theme (`--color-rail-navy-mix`) and
-  stays black with a white hairline in High contrast.
+* The rail follows the theme (`--color-rail-dark-mix`): on a light theme it is the paper
+  rail with the page's ink, the raised surface pill on the current row and a hairline edge;
+  on every dark-based theme it is white-on-ink with a navy cast (`--color-rail-navy-mix`),
+  and High contrast keeps it black with a white hairline.
 * Format pills / method chips keep fixed hues in every theme (identity > tint).
 
 ---
@@ -212,11 +214,14 @@ tenant pill + version badge + theme + profile) is **retired**. Its jobs move to:
 264 px expanded / 64 px collapsed (`⌘\`, chevron on hover, or Preferences).
 Top-to-bottom: brand (mark + “apiome / Platform”), workspace switcher, search
 trigger (`⌘K`), grouped nav, footer (Help & docs · Preferences · user).
-Round 3: the rail is the mark's navy (a gradient mixed from `--brand-navy`) with white
-type; the bee sits in a honey hexagon; the content stays on warm paper. Nav item: 34 px,
-icon 18 px + 13 px label; hover = a white tint, and one pill slides between rows after
-the pointer (`.rail-pill`, parked under Reduce motion); **active = a white tint with a
-3 px honey marker** on the rail's edge and a honey icon. Group labels are 11 px caps.
+Round 3: the rail follows light/dark. On a light theme it is warm paper (`--bg-rail`) with
+the page's ink and a hairline edge; on a dark-based theme it is navy-tinted ink (a gradient
+mixed from `--brand-navy`) with white type. The bee sits in a honey hexagon in both. Nav
+item: 34 px, icon 18 px + 13 px label; hover = a 5 % ink tint (white on a dark rail), and
+one pill slides between rows after the pointer (`.rail-pill`, parked under Reduce motion);
+**active = a 3 px honey marker** on the rail's edge plus the raised surface pill on a light
+rail, or a white tint and a honey icon on a dark one. (Nov 3 2026: the light themes' all-navy
+rail of the first facelift cut was dropped — the rail did not follow the theme.) Group labels are 11 px caps.
 Gated items (no current tenant) render at 45 % with a tooltip. Collapsed rail shows
 tooltips on hover and hairlines between groups.
 

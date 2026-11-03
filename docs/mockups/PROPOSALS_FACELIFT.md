@@ -116,7 +116,7 @@ Every idea but **admin** is in `apiome-ui` 0.578.0, ungated — the look, not an
 
 | Idea | Where it landed |
 | --- | --- |
-| rail | `.rail` in `globals.css`: the navy gradient mixed from `--brand-navy`, white type, the honey marker on the active row, the bee in a honey hex; `--color-rail-navy-mix` / `--color-rail-edge-mix` let a dark theme keep a navy cast and High contrast its black |
+| rail | `.rail` in `globals.css`: on dark-based themes the navy gradient mixed from `--brand-navy` with white type; the honey marker on the active row and the bee in a honey hex everywhere; `--color-rail-dark-mix` switches it, `--color-rail-navy-mix` / `--color-rail-edge-mix` set the navy cast and the hairline. **Revised 2026-11-03:** the light themes no longer get the all-navy rail — it ignored light/dark — and keep the paper rail with the page's ink |
 | hex | `data-fmt-tone` on catalog cards, project cards, table rows and detail headers: the hex avatar filled with the format colour, a faint cell in the card's corner |
 | type | `--font-display` (Manrope via `next/font`): page titles, stat figures, card and dialog titles, the brand word |
 | layers | `--shadow-card` / `--shadow-card-hover` on `Card`, the stat strip as separate tiles, the export tiles raised |
