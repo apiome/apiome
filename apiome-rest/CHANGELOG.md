@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.614.1] - 2026-11-03
+
+### Fixed
+- **Publishing the REST API's own spec timed out at the gateway** (the `apiome-openapi` workflow's
+  `import openapi … --publish public`: the import completed in 19 s, then `POST …/publish` ran past nginx's
+  60 s and answered 504). The publish prechecks lint the revision, and the example-conformance pass rebuilt its
+  `$ref` registry — a walk of the whole document — for **every** example site: 2000 sites over the 7.6 MB spec
+  took 29 s on a developer machine (minutes under load). `check_example_conformance` now builds the registry once
+  per document and passes it to `validate_json_instance` (new optional `registry` argument); the lint of that spec
+  takes 0.3 s. Findings are unchanged (pinned against a per-site rebuild over the OpenAPI corpus).
+- OpenAPI document version 1.478.0 → 1.478.1.
+
 ## [1.614.0] - 2026-11-02
 
 ### Added

@@ -713,3 +713,95 @@ def test_base_uri_is_not_dereferenceable() -> None:
     """The document is registered under a URN, so nothing can be fetched for it."""
     assert SPEC_BASE_URI.startswith("urn:")
     assert "://" not in SPEC_BASE_URI
+
+
+# ===========================================================================
+# One reference registry per document
+# ===========================================================================
+
+
+def test_the_reference_registry_is_built_once_per_document(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every site points into the same document, so its registry is built once, not per site.
+
+    Building it walks the whole document; per site, a large spec's lint grew with sites x size
+    (2000 sites over the 7.6 MB REST spec took minutes and timed out the publish request).
+    """
+    import app.example_conformance as conformance
+
+    calls: List[Any] = []
+    real = conformance.build_reference_registry
+
+    def counting(schema: Any, **kwargs: Any) -> Any:
+        calls.append(schema)
+        return real(schema, **kwargs)
+
+    monkeypatch.setattr(conformance, "build_reference_registry", counting)
+    document = {
+        "openapi": "3.1.0",
+        "components": {
+            "schemas": {
+                name: {"type": "object", "required": ["id"], "example": {}} for name in ("A", "B", "C", "D")
+            }
+        },
+    }
+
+    report = check_example_conformance(document)
+
+    assert report.sites_checked == 4 and len(report.issues) == 4
+    assert len(calls) == 1
+
+
+def _per_site_reference(document: Any) -> List[Any]:
+    """The report's issues as validating each site with its own registry would produce them."""
+    from app.example_conformance import _is_binary_float_artifact
+    from app.schema_instance_validation import validate_json_instance
+
+    sites, _family, _truncated = walk_example_sites(document)
+
+    def retrieve(uri: str) -> Any:
+        return dict(document) if uri == SPEC_BASE_URI else None
+
+    found: List[Any] = []
+    for site in sites:
+        try:
+            result = validate_json_instance(
+                {"$ref": f"{SPEC_BASE_URI}#{site.schema_pointer}"},
+                site.value,
+                dialect=site.dialect,
+                retrieve=retrieve,
+            )
+        except Exception:  # noqa: BLE001 - mirrors the checker: a fault is "not checked"
+            continue
+        if not result.validated:
+            continue
+        found.extend(
+            (site.example_pointer, f.keyword, f.pointer)
+            for f in result.findings
+            if not _is_binary_float_artifact(f.keyword, f.actual, f.expected)
+        )
+    return found
+
+
+def _corpus_documents() -> List[Any]:
+    from pathlib import Path
+
+    import yaml
+
+    examples = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples" / "openapi"
+    documents = []
+    for path in sorted(examples.glob("*.yaml")):
+        try:
+            documents.append(yaml.safe_load(path.read_text(encoding="utf-8")))
+        except yaml.YAMLError:
+            continue
+    return [document for document in documents if isinstance(document, dict)]
+
+
+@pytest.mark.parametrize("index", range(len(_corpus_documents())))
+def test_the_shared_registry_reports_what_a_per_site_registry_would(index: int) -> None:
+    """Building the registry once changes the cost, never the verdict."""
+    document = _corpus_documents()[index]
+    report = check_example_conformance(document)
+    assert [(i.example_pointer, i.keyword, i.instance_pointer) for i in report.issues] == _per_site_reference(
+        document
+    )

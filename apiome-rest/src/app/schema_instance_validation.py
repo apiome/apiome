@@ -395,6 +395,7 @@ def validate_json_instance(
     retrieve: Optional[SchemaRetriever] = None,
     max_findings: int = DEFAULT_MAX_FINDINGS,
     assert_formats: bool = False,
+    registry: Optional[Registry] = None,
 ) -> JsonValidationResult:
     """Validate one JSON instance against one JSON Schema.
 
@@ -412,6 +413,12 @@ def validate_json_instance(
             default because ``format`` is an annotation in every modern draft, and because
             ``jsonschema`` silently skips checkers whose optional dependency is absent — an
             asserted-format pass is therefore weaker evidence than a keyword pass.
+        registry: A reference registry already built with :func:`build_reference_registry`
+            for this schema's references, reused instead of building one per call. A caller
+            validating many instances against one document (example conformance) builds it
+            once: building it walks the whole referenced document, so per call it costs the
+            document's size every time. ``retrieve`` and ``base_uri`` are not consulted when
+            it is given, and the caller owns its diagnostics.
 
     Returns:
         The :class:`JsonValidationResult`. ``valid`` is ``None`` (and ``validated`` is
@@ -460,10 +467,11 @@ def validate_json_instance(
             diagnostics=diagnostics,
         )
 
-    registry, ref_diagnostics = build_reference_registry(
-        schema, base_uri=base_uri, retrieve=retrieve
-    )
-    diagnostics.extend(ref_diagnostics)
+    if registry is None:
+        registry, ref_diagnostics = build_reference_registry(
+            schema, base_uri=base_uri, retrieve=retrieve
+        )
+        diagnostics.extend(ref_diagnostics)
 
     validator = validator_cls(
         schema,

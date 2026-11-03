@@ -52,7 +52,11 @@ from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
-from .schema_instance_validation import DEFAULT_MAX_FINDINGS, validate_json_instance
+from .schema_instance_validation import (
+    DEFAULT_MAX_FINDINGS,
+    build_reference_registry,
+    validate_json_instance,
+)
 
 __all__ = [
     "EXAMPLE_FAMILIES",
@@ -1048,6 +1052,14 @@ def check_example_conformance(
         """Serve the one document under test, and nothing else."""
         return dict(document) if uri == SPEC_BASE_URI else None
 
+    # Every site's wrapper schema points into the same document, so the reference registry is
+    # the same for all of them: build it once. Building it walks the whole document for its
+    # ``$ref``s, and doing that per site made a large spec's lint grow with sites x document
+    # size — 2000 sites over the 7.6 MB REST spec took minutes and timed out its publish.
+    registry, _ref_diagnostics = build_reference_registry(
+        {"$ref": f"{SPEC_BASE_URI}#"}, retrieve=retrieve
+    )
+
     issues: List[ExampleConformanceIssue] = []
     checked = 0
     unchecked = 0
@@ -1059,6 +1071,7 @@ def check_example_conformance(
                 dialect=site.dialect,
                 retrieve=retrieve,
                 max_findings=min(max_issues_per_site, DEFAULT_MAX_FINDINGS),
+                registry=registry,
             )
         except Exception:  # noqa: BLE001 — see below; a broken schema must not break the lint
             # The governing schema is addressed by ``$ref``, so the validator's own
