@@ -242,6 +242,15 @@ def tenant_repository_refresh(tenant_slug: str, repository_id: str | UUID) -> st
     return f"{tenant_repository(tenant_slug, repository_id)}/refresh"
 
 
+def tenant_repository_branch_refresh_rules(tenant_slug: str, repository_id: str | UUID) -> str:
+    """Per-branch refresh rules of a repository (RAR-6.4, #3541).
+
+    ``GET`` reads the rules and each tracked branch's effective settings; ``PUT``
+    ``{"rules": [...]}`` replaces the whole set.
+    """
+    return f"{tenant_repository(tenant_slug, repository_id)}/branch-refresh-rules"
+
+
 def tenant_repository_refresh_history(tenant_slug: str, repository_id: str | UUID) -> str:
     """Refresh-cycle audit history for a repository (RAR-5.3).
 

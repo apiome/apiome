@@ -38,6 +38,7 @@ import {
   type DashboardRepository,
 } from '@/app/components/ade/dashboard/repositories/repositoryStoreUi';
 import { RepositoryConflictPolicy } from '@/app/components/ade/dashboard/repositories/RepositoryConflictPolicy';
+import { RepositoryBranchRefreshRules } from '@/app/components/ade/dashboard/repositories/RepositoryBranchRefreshRules';
 import { RepositoryPrBackSettings } from '@/app/components/ade/dashboard/repositories/RepositoryPrBackSettings';
 import { FederationMergeHistory } from '@/app/components/ade/versions/FederationMergeHistory';
 import { RepositoryHealthBadge } from '@/app/components/ade/dashboard/repositories/RepositoryHealthBadge';
@@ -601,6 +602,10 @@ export function RepositoryDetailClient() {
               onToggleAutoRefresh={(next) => void performToggleAutoRefresh(next)}
               onRemove={() => setRemoveDialogOpen(true)}
               removing={removing}
+              branchRefresh={
+                /* RAR-6.4 (#3541): per-branch switch, cadence and version line. */
+                <RepositoryBranchRefreshRules repositoryId={repo.id} />
+              }
               conflictPolicy={
                 /* RAR-4.5 (#3531): what a refresh does when it meets a hand-edited version. */
                 <RepositoryConflictPolicy

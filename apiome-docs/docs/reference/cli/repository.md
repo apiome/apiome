@@ -18,7 +18,102 @@ Repository auto-refresh: trigger a refresh and inspect per-file state.
 apiome repository [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`refresh`](#repository-refresh).
+Subcommands: [`branch-rules`](#repository-branch-rules), [`refresh`](#repository-refresh).
+
+## apiome repository branch-rules {#repository-branch-rules}
+
+Per-branch refresh rules: whether each branch refreshes, how often, and the version line its refreshes land in.
+
+```text
+apiome repository branch-rules [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`clear`](#repository-branch-rules-clear), [`remove`](#repository-branch-rules-remove), [`set`](#repository-branch-rules-set), [`show`](#repository-branch-rules-show).
+
+## apiome repository branch-rules clear {#repository-branch-rules-clear}
+
+Remove every branch rule of a repository (RAR-6.4).
+
+```text
+apiome repository branch-rules clear [OPTIONS] REPO
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REPOSITORY` | text | yes | Repository UUID or name (for example ``acme/api``, matched against the repository's full name and then its display name). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text |  |  | Output format: table (default) or json. |
+
+## apiome repository branch-rules remove {#repository-branch-rules-remove}
+
+Remove one branch rule; its branches follow the repository settings again (RAR-6.4).
+
+```text
+apiome repository branch-rules remove [OPTIONS] REPO BRANCH
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REPOSITORY` | text | yes | Repository UUID or name (for example ``acme/api``, matched against the repository's full name and then its display name). |
+| `PATTERN` | text | yes | The pattern of the rule to remove. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text |  |  | Output format: table (default) or json. |
+
+## apiome repository branch-rules set {#repository-branch-rules-set}
+
+Add a branch rule, or replace the rule with the same BRANCH pattern (RAR-6.4).
+
+```text
+apiome repository branch-rules set [OPTIONS] REPO BRANCH
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REPOSITORY` | text | yes | Repository UUID or name (for example ``acme/api``, matched against the repository's full name and then its display name). |
+| `PATTERN` | text | yes | A branch name (main) or a glob (release/*; ** crosses '/'). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--on` / `--off` | flag | `--on` |  | Whether matching branches refresh. |
+| `--interval` | integer |  |  | Cadence in seconds; omit to inherit the repository's. |
+| `--line` | text |  |  | Version line refreshes land in (latest, 2.x); omit for the default naming. |
+| `--format` | text |  |  | Output format: table (default) or json. |
+
+## apiome repository branch-rules show {#repository-branch-rules-show}
+
+Show a repository's branch rules and how each tracked branch refreshes (RAR-6.4).
+
+```text
+apiome repository branch-rules show [OPTIONS] REPO
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `REPOSITORY` | text | yes | Repository UUID or name (for example ``acme/api``, matched against the repository's full name and then its display name). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--format` | text |  |  | Output format: table (default) or json. |
 
 ## apiome repository refresh {#repository-refresh}
 

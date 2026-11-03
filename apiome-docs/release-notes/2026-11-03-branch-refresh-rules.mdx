@@ -1,0 +1,22 @@
+---
+slug: branch-refresh-rules
+title: Refresh each branch of a repository on its own terms
+description: Branch refresh rules set each branch's switch, cadence and version line.
+authors: [apiome]
+---
+
+A repository's branches no longer have to refresh alike. **Branch refresh rules**, on the
+repository's **Settings** tab, set for each branch whether it refreshes, how often, and the
+version line its refreshes land in. See [Branch refresh rules](/bring-in/repositories#branch-refresh-rules).
+
+{/* truncate */}
+
+- **Rules by name or pattern.** `main`, or `release/*` for every release branch. The most specific
+  rule wins, and a branch no rule matches follows the repository.
+- **Per-branch cadence and switch.** Refresh `main` every 5 minutes, release branches every 6 hours,
+  and never refresh `sandbox`. A push to a branch whose rule is off does nothing.
+- **Version lines.** A refresh of a release branch lands in `2.x`, labelled
+  `2.x-2026-11-03T21:00Z` and following the latest version of that line.
+- **Tracked branches** shows how each branch refreshes and which rule decided it.
+- **CLI and API.** `apiome repository branch-rules show|set|remove|clear`, and
+  `GET` / `PUT …/repositories/{repo}/branch-refresh-rules`.

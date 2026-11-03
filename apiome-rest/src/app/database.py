@@ -17745,6 +17745,11 @@ class Database:
         The actual rescan + enqueue is the RAR-3.2 sweep; this is the
         due-selection primitive it iterates.
 
+        Branch rules (RAR-6.4): a repository whose enabled branch rules set a shorter
+        cadence than its own is due as soon as that shortest cadence elapses; the sweep
+        then refreshes only the branches whose own cadence has elapsed
+        (:mod:`app.repository_branch_refresh_policy`).
+
         Args:
             floor_seconds: The global minimum interval; per-repo values below it
                 are treated as the floor. Defaults to
@@ -17777,7 +17782,19 @@ class Database:
               AND (
                 last_refreshed_at IS NULL
                 OR last_refreshed_at <= now() - make_interval(
-                     secs => GREATEST(refresh_interval_seconds, %s)
+                     secs => GREATEST(
+                       LEAST(
+                         refresh_interval_seconds,
+                         COALESCE(
+                           (SELECT MIN(COALESCE(r.refresh_interval_seconds, tenant_repositories.refresh_interval_seconds))
+                              FROM apiome.repository_branch_refresh_rule r
+                             WHERE r.repository_id = tenant_repositories.id
+                               AND r.refresh_enabled),
+                           refresh_interval_seconds
+                         )
+                       ),
+                       %s
+                     )
                    )
               )
             ORDER BY last_refreshed_at ASC NULLS FIRST, created_at ASC
@@ -17860,6 +17877,149 @@ class Database:
                 row = cursor.fetchone()
                 conn.commit()
                 return effective if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_repository_branch_refresh_rules(
+        self, tenant_id: str, repository_id: str
+    ) -> List[Dict[str, Any]]:
+        """Return a repository's branch refresh rules (RAR-6.4, #3541).
+
+        Args:
+            tenant_id: Owning tenant id (scopes the read).
+            repository_id: The repository.
+
+        Returns:
+            Rule rows (``branch_pattern``, ``refresh_enabled``, ``refresh_interval_seconds``,
+            ``target_version_line``, ``created_by``, ``created_at``, ``updated_at``), ordered
+            by pattern.
+        """
+        q = """
+            SELECT id, branch_pattern, refresh_enabled, refresh_interval_seconds,
+                   target_version_line, created_by, created_at, updated_at
+            FROM apiome.repository_branch_refresh_rule
+            WHERE tenant_id = %s::uuid AND repository_id = %s::uuid
+            ORDER BY branch_pattern
+        """
+        return self.execute_query(q, (tenant_id, repository_id))
+
+    def replace_repository_branch_refresh_rules(
+        self,
+        tenant_id: str,
+        repository_id: str,
+        rules: List[Dict[str, Any]],
+        *,
+        created_by: Optional[str] = None,
+    ) -> bool:
+        """Replace a repository's branch refresh rules with ``rules`` (RAR-6.4, #3541).
+
+        The whole set is written in one transaction, so a settings panel saves exactly what
+        it shows and a half-applied edit cannot leave stale rules behind. Rules for patterns
+        that are kept keep their ``created_at`` / ``created_by``.
+
+        Args:
+            tenant_id: Owning tenant id.
+            repository_id: The repository (must be a live repository of the tenant).
+            rules: Validated rules, each with ``branch_pattern``, ``refresh_enabled``,
+                ``refresh_interval_seconds`` and ``target_version_line``; patterns unique.
+            created_by: The user saving the rules, recorded on new rules.
+
+        Returns:
+            True when the repository exists and the rules were written; False when no live
+            repository matched the tenant + id.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id FROM apiome.tenant_repositories
+                    WHERE id = %s::uuid AND tenant_id = %s::uuid AND deleted_at IS NULL
+                    FOR UPDATE
+                    """,
+                    (repository_id, tenant_id),
+                )
+                if cursor.fetchone() is None:
+                    conn.rollback()
+                    return False
+                patterns = [r["branch_pattern"] for r in rules]
+                cursor.execute(
+                    """
+                    DELETE FROM apiome.repository_branch_refresh_rule
+                    WHERE repository_id = %s::uuid AND NOT (branch_pattern = ANY(%s))
+                    """,
+                    (repository_id, patterns),
+                )
+                for rule in rules:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.repository_branch_refresh_rule (
+                            tenant_id, repository_id, branch_pattern, refresh_enabled,
+                            refresh_interval_seconds, target_version_line, created_by
+                        )
+                        VALUES (%s::uuid, %s::uuid, %s, %s, %s, %s, %s::uuid)
+                        ON CONFLICT (repository_id, branch_pattern) DO UPDATE
+                        SET refresh_enabled = EXCLUDED.refresh_enabled,
+                            refresh_interval_seconds = EXCLUDED.refresh_interval_seconds,
+                            target_version_line = EXCLUDED.target_version_line,
+                            updated_at = CURRENT_TIMESTAMP
+                        """,
+                        (
+                            tenant_id,
+                            repository_id,
+                            rule["branch_pattern"],
+                            bool(rule.get("refresh_enabled", True)),
+                            rule.get("refresh_interval_seconds"),
+                            rule.get("target_version_line"),
+                            created_by,
+                        ),
+                    )
+                conn.commit()
+                return True
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_repository_branch_refresh_state(self, repository_id: str) -> Dict[str, Any]:
+        """Return when the sweep last refreshed each branch of a repository (RAR-6.4).
+
+        Args:
+            repository_id: The repository.
+
+        Returns:
+            Branch → ``last_refreshed_at``; a branch never refreshed by the sweep is absent.
+        """
+        rows = self.execute_query(
+            """
+            SELECT branch, last_refreshed_at
+            FROM apiome.repository_branch_refresh_state
+            WHERE repository_id = %s::uuid
+            """,
+            (repository_id,),
+        )
+        return {str(row["branch"]): row["last_refreshed_at"] for row in rows}
+
+    def mark_repository_branch_refreshed(self, repository_id: str, branch: str) -> None:
+        """Stamp ``branch`` of a repository as refreshed now (RAR-6.4).
+
+        Args:
+            repository_id: The repository.
+            branch: The branch the sweep just refreshed.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.repository_branch_refresh_state (repository_id, branch)
+                    VALUES (%s::uuid, %s)
+                    ON CONFLICT (repository_id, branch)
+                    DO UPDATE SET last_refreshed_at = CURRENT_TIMESTAMP
+                    """,
+                    (repository_id, branch),
+                )
+                conn.commit()
         except Exception as e:
             conn.rollback()
             raise e
@@ -18790,6 +18950,7 @@ class Database:
         remote_committed_at: Optional[Any] = None,
         remote_blob_sha: Optional[str] = None,
         refresh_reason: Optional[str] = None,
+        target_version_line: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Enqueue one spec-faithful re-import job for the EPIC-4 worker (RAR-3.2).
 
@@ -18820,6 +18981,9 @@ class Database:
             remote_committed_at: Committed-at of the observed commit.
             remote_blob_sha: Blob SHA of the file at sweep time.
             refresh_reason: Stable RAR-2.2 ``RefreshReason`` code for the enqueue.
+            target_version_line: The version line of the branch rule that matched
+                ``branch`` (RAR-6.4), or ``None``; the executor names the refreshed
+                version from it.
 
         Returns:
             The inserted job row as a dict, or ``None`` when an active job already
@@ -18837,13 +19001,15 @@ class Database:
                 tenant_id, repository_id, import_spec_id, branch, path,
                 project_id, source_kind, format_override, content_type,
                 options_json, spec_schema_version, created_by,
-                remote_commit_sha, remote_committed_at, remote_blob_sha, refresh_reason
+                remote_commit_sha, remote_committed_at, remote_blob_sha, refresh_reason,
+                target_version_line
             )
             VALUES (
                 %s::uuid, %s::uuid, %s::uuid, %s, %s,
                 %s::uuid, %s, %s, %s,
                 %s::jsonb, %s, %s::uuid,
-                %s, %s::timestamptz, %s, %s
+                %s, %s::timestamptz, %s, %s,
+                %s
             )
             ON CONFLICT (repository_id, branch, path)
                 WHERE status IN ('queued', 'running')
@@ -18852,7 +19018,7 @@ class Database:
                       project_id, source_kind, format_override, content_type,
                       options_json, spec_schema_version, created_by,
                       remote_commit_sha, remote_committed_at, remote_blob_sha,
-                      refresh_reason, status, created_at
+                      refresh_reason, target_version_line, status, created_at
         """
         params = (
             tenant_id, repository_id,
@@ -18863,6 +19029,7 @@ class Database:
             options_text, spec_schema_version,
             (str(created_by) if created_by else None),
             remote_commit_sha, remote_committed_at, remote_blob_sha, refresh_reason,
+            target_version_line,
         )
         conn = self.connect()
         try:

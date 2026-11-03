@@ -27371,6 +27371,26 @@ button.cid-entity__head {
   align-items: end;
 }
 
+/* One branch refresh rule (RAR-6.4): pattern, switch, cadence, version line, remove.
+   The pattern and line take the room; the switch and the remove button stay narrow. */
+.repo-set-branch-rule {
+  display: grid;
+  grid-template-columns: minmax(10rem, 2fr) auto minmax(9rem, 1.2fr) minmax(8rem, 1.2fr) auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+@media (max-width: 48rem) {
+  .repo-set-branch-rule {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.repo-set-branch-rule__remove {
+  display: flex;
+  justify-content: flex-end;
+}
+
 /* The danger zone, and one measured limit stated rather than hidden.
 
    The frame is `--danger` at full strength. Measured against `--bg-surface` it

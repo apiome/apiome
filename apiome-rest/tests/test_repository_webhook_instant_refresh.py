@@ -227,6 +227,19 @@ def _candidate(path: str, *, newer: bool) -> Dict[str, Any]:
 class _RefreshDb:
     """The ``Database`` surface the instant refresh touches."""
 
+    # --- RAR-6.4 branch refresh rules (none by default: repository-wide behaviour) ---
+    branch_rules: list = []
+    branch_state: dict = {}
+
+    def list_repository_branch_refresh_rules(self, tenant_id, repository_id):
+        return [dict(rule) for rule in self.branch_rules]
+
+    def list_repository_branch_refresh_state(self, repository_id):
+        return dict(self.branch_state)
+
+    def mark_repository_branch_refreshed(self, repository_id, branch):
+        self.__dict__.setdefault("branches_refreshed", []).append((repository_id, branch))
+
     def __init__(self, *, repo: Optional[Dict[str, Any]] = None, candidates=None, lock_free: bool = True) -> None:
         self.repo = repo if repo is not None else {
             "id": _REPO_ID, "tenant_id": _TENANT, "provider": "github",
@@ -441,3 +454,30 @@ def test_the_route_schedules_nothing_without_tracked_changes() -> None:
     ):
         assert _post().status_code == 200
     assert ran == []
+
+
+# ----------------------------------------------- RAR-6.4 per-branch refresh policy (#3541)
+
+
+def test_a_push_to_a_branch_whose_rule_turns_refresh_off_does_nothing() -> None:
+    db = _RefreshDb()
+    db.branch_rules = [
+        {"branch_pattern": "main", "refresh_enabled": False, "refresh_interval_seconds": None,
+         "target_version_line": None},
+    ]
+    result = _refresh(db)
+
+    assert (result.ran, result.reason) == (False, "branch-refresh-off")
+    assert db.enqueued == [] and db.scanned == []
+
+
+def test_a_push_lands_in_the_branch_version_line() -> None:
+    db = _RefreshDb()
+    db.branch_rules = [
+        {"branch_pattern": "ma*", "refresh_enabled": True, "refresh_interval_seconds": None,
+         "target_version_line": "latest"},
+    ]
+    result = _refresh(db)
+
+    assert result.enqueued == 1
+    assert db.enqueued[0]["target_version_line"] == "latest"

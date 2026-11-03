@@ -57,10 +57,17 @@ the sweep and is never quota-limited.
 from __future__ import annotations
 
 import logging
-from typing import AbstractSet, Any, Dict, NamedTuple, Optional, Union
+from typing import AbstractSet, Any, Dict, List, NamedTuple, Optional, Union
 
 from .database import Database
 from .refresh_source import GitBranchRefreshSource, decide_refresh
+from .repository_branch_refresh_policy import (
+    BranchRefreshRule,
+    EffectiveBranchRefresh,
+    effective_branch_refresh,
+    is_branch_due,
+    rule_from_row,
+)
 from .repository_file_scan import scan_repository_branch_into_index
 
 _logger = logging.getLogger(__name__)
@@ -93,6 +100,7 @@ def enqueue_stale_files_for_branch(
     *,
     path_filter: Optional[Union[str, AbstractSet[str]]] = None,
     max_enqueues: Optional[int] = None,
+    target_version_line: Optional[str] = None,
 ) -> BranchEnqueueResult:
     """Rescan one branch and enqueue a re-import job per stale + newer file.
 
@@ -117,6 +125,9 @@ def enqueue_stale_files_for_branch(
             (REPO-4.6 per-tenant polling quota). ``None`` (the manual-refresh
             default, and the value used for an unlimited tenant) applies no
             bound.
+        target_version_line: The version line of the branch rule that governs
+            ``branch`` (RAR-6.4), stamped on every enqueued job so the executor
+            names the refreshed version from it; ``None`` when no rule sets one.
 
     Returns:
         A :class:`BranchEnqueueResult` with the enqueued, skipped, and deferred
@@ -143,7 +154,10 @@ def enqueue_stale_files_for_branch(
             deferred += 1
             continue
 
-        job = db.enqueue_repository_refresh_job(**source.fetch(cand).fields)
+        fields = dict(source.fetch(cand).fields)
+        if target_version_line:
+            fields["target_version_line"] = target_version_line
+        job = db.enqueue_repository_refresh_job(**fields)
         if job is not None:
             enqueued += 1
         else:
@@ -170,6 +184,44 @@ class RepositoryRefreshResult(NamedTuple):
     failed: bool
     error: Optional[str]
     deferred: int = 0
+
+
+def load_branch_refresh_rules(db: Database, tenant_id: str, repository_id: str) -> List[BranchRefreshRule]:
+    """Load a repository's branch refresh rules (RAR-6.4), ``[]`` when it has none.
+
+    Args:
+        db: Database handle.
+        tenant_id: The repository's tenant.
+        repository_id: The repository.
+
+    Returns:
+        The rules, in pattern order.
+    """
+    return [rule_from_row(row) for row in db.list_repository_branch_refresh_rules(tenant_id, repository_id)]
+
+
+def resolve_branch_refresh(
+    rules: List[BranchRefreshRule], repo_row: Dict[str, Any], branch: str
+) -> EffectiveBranchRefresh:
+    """The settings that govern ``branch`` of ``repo_row`` under ``rules`` (RAR-6.4).
+
+    Args:
+        rules: The repository's branch rules.
+        repo_row: The repository row (``auto_refresh_enabled``, ``refresh_interval_seconds``).
+        branch: The branch.
+
+    Returns:
+        The branch's effective refresh settings, its cadence clamped to the global floor.
+    """
+    from .config import settings
+
+    return effective_branch_refresh(
+        rules,
+        branch,
+        repository_enabled=repo_row.get("auto_refresh_enabled") is not False,
+        repository_interval_seconds=repo_row.get("refresh_interval_seconds"),
+        floor_seconds=settings.refresh_min_interval_seconds,
+    )
 
 
 def _refresh_one_repository(
@@ -208,11 +260,28 @@ def _refresh_one_repository(
     if not repo_row:
         return RepositoryRefreshResult(enqueued=0, failed=False, error=None)
 
+    # RAR-6.4: with branch rules, each branch has its own switch and cadence. Without any,
+    # every tracked branch refreshes whenever the repository is due, exactly as before.
+    rules = load_branch_refresh_rules(db, tenant_id, repository_id)
+    branch_state = db.list_repository_branch_refresh_state(repository_id) if rules else {}
+
     enqueued = 0
     deferred = 0
     failed = False
     last_error: Optional[str] = None
     for branch in branches:
+        policy = resolve_branch_refresh(rules, repo_row, branch) if rules else None
+        if policy is not None and not policy.enabled:
+            _logger.info(
+                "repository refresh skipping branch (rule %r turns refresh off, RAR-6.4) "
+                "repository_id=%s branch=%s",
+                policy.rule_pattern,
+                repository_id,
+                branch,
+            )
+            continue
+        if policy is not None and not is_branch_due(branch_state.get(branch), policy.interval_seconds):
+            continue
         remaining: Optional[int] = None
         if max_enqueues is not None:
             remaining = max(0, max_enqueues - enqueued)
@@ -231,10 +300,18 @@ def _refresh_one_repository(
                 break
         try:
             result = enqueue_stale_files_for_branch(
-                db, repo_row, branch, max_enqueues=remaining
+                db,
+                repo_row,
+                branch,
+                max_enqueues=remaining,
+                target_version_line=policy.target_version_line if policy is not None else None,
             )
             enqueued += result.enqueued
             deferred += result.deferred
+            if policy is not None and result.deferred == 0:
+                # The branch is fully evaluated: its cadence restarts now. A branch the quota
+                # cut short stays due so the next tick finishes it.
+                db.mark_repository_branch_refreshed(repository_id, branch)
         except Exception as exc:
             # One bad branch (GitHub error, etc.) must not abort the others, but it
             # does make this tick count as a failed refresh (RAR-3.4).

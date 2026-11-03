@@ -17,6 +17,7 @@ option application versus the original import.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any, Dict, Mapping, Optional
 
 from .models import (
@@ -176,5 +177,41 @@ def build_auto_refresh_import_metadata(
         repository_import_spec=build_stored_spec_from_refresh_job(job_row),
         refresh_provenance=build_refresh_provenance_from_job(
             job_row, parent_version_id=parent_version_id
+        ),
+    )
+
+
+def build_version_line_target(
+    job_row: Mapping[str, Any], *, now: datetime
+) -> Optional[SpecImportVersionTarget]:
+    """The catalog version a refresh lands in when its branch rule names a version line (RAR-6.4).
+
+    The sweep stamps the line of the rule that matched the job's branch on the job row
+    (``target_version_line``). The refreshed version is labelled ``<line>-<UTC timestamp>``
+    (:func:`app.repository_branch_refresh_policy.version_line_label`), and the caller passes the
+    latest version of that line as ``parent_version_id`` to
+    :func:`build_auto_refresh_import_metadata`
+    (:func:`app.repository_branch_refresh_policy.select_version_line_parent`).
+
+    Args:
+        job_row: The enqueued refresh job row.
+        now: When the refresh runs.
+
+    Returns:
+        The version target, or ``None`` when the job carries no line (the caller keeps its
+        default naming).
+    """
+    from .repository_branch_refresh_policy import version_line_label
+
+    line = _clean_str(job_row.get("target_version_line"))
+    if line is None:
+        return None
+    branch = _clean_str(job_row.get("branch"))
+    return SpecImportVersionTarget(
+        version_id=version_line_label(line, now),
+        description=(
+            f"Refreshed from branch {branch} into version line {line}"
+            if branch
+            else f"Refreshed into version line {line}"
         ),
     )

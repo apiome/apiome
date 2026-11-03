@@ -91,12 +91,21 @@ def refresh_repository_now(
     else:
         branches = db.list_repository_import_spec_branches(repository_id)
 
+    # RAR-6.4: "Refresh now" bypasses a branch rule's switch and cadence, like the
+    # repository-wide opt-out, but still lands each branch's refresh in its version line.
+    from .repository_refresh_sweep import load_branch_refresh_rules, resolve_branch_refresh
+
+    rules = load_branch_refresh_rules(db, tenant_id, repository_id)
+
     enqueued = 0
     skipped = 0
     processed: List[str] = []
     for b in branches:
         try:
-            result = enqueue_stale_files_for_branch(db, repo_row, b, path_filter=path)
+            line = resolve_branch_refresh(rules, repo_row, b).target_version_line if rules else None
+            result = enqueue_stale_files_for_branch(
+                db, repo_row, b, path_filter=path, target_version_line=line
+            )
         except Exception:
             # A bad branch (GitHub error, etc.) must not abort the others; the
             # caller still reports what did get enqueued.

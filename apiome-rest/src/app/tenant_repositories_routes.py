@@ -31,6 +31,11 @@ from .models import (
     RefreshHistoryEntryOut,
     RefreshHistoryPageResponse,
     RefreshHistoryPaginationOut,
+    RepositoryBranchRefreshOut,
+    RepositoryBranchRefreshResponse,
+    RepositoryBranchRefreshRuleOut,
+    RepositoryBranchRefreshRulesUpdate,
+    RepositoryTrackedBranchRefreshOut,
     RepositoryConflictPolicyOut,
     RepositoryConflictPolicyOverrideOut,
     RepositoryConflictPolicyOverrideRequest,
@@ -1935,6 +1940,202 @@ async def set_repository_conflict_policy(
         stored,
     )
     return _conflict_policy_response(tenant_id, rid)
+
+
+def _branch_refresh_response(tenant_id: str, repository_id: str) -> RepositoryBranchRefreshResponse:
+    """Load a repository's branch refresh rules and their effect on each tracked branch (RAR-6.4).
+
+    Shared by the read and the update so a settings panel re-renders from one shape.
+
+    Args:
+        tenant_id: Owning tenant id.
+        repository_id: The repository.
+
+    Returns:
+        The rules, the repository-wide settings they fall back to, and every tracked branch
+        with the switch, cadence and version line it refreshes with.
+
+    Raises:
+        HTTPException: 404 when the repository does not belong to the tenant.
+    """
+    from .config import settings
+    from .repository_branch_refresh_policy import rule_from_row
+    from .repository_refresh_cadence import resolve_refresh_interval
+    from .repository_refresh_sweep import resolve_branch_refresh
+
+    row = db.get_tenant_repository(tenant_id, repository_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="repository not found")
+    rule_rows = db.list_repository_branch_refresh_rules(tenant_id, repository_id)
+    rules = [rule_from_row(r) for r in rule_rows]
+    state = db.list_repository_branch_refresh_state(repository_id)
+    branches = []
+    for branch in db.list_repository_import_spec_branches(repository_id):
+        policy = resolve_branch_refresh(rules, row, branch)
+        branches.append(
+            RepositoryTrackedBranchRefreshOut(
+                branch=branch,
+                enabled=policy.enabled,
+                interval_seconds=policy.interval_seconds,
+                target_version_line=policy.target_version_line,
+                rule_pattern=policy.rule_pattern,
+                last_refreshed_at=_ts(state.get(branch)),
+            )
+        )
+    return RepositoryBranchRefreshResponse(
+        branch_refresh=RepositoryBranchRefreshOut(
+            repository_id=repository_id,
+            auto_refresh_enabled=row.get("auto_refresh_enabled") is not False,
+            repository_interval_seconds=resolve_refresh_interval(
+                row.get("refresh_interval_seconds"),
+                floor_seconds=settings.refresh_min_interval_seconds,
+                default_seconds=settings.refresh_default_interval_seconds,
+            ),
+            min_interval_seconds=max(1, settings.refresh_min_interval_seconds),
+            rules=[
+                RepositoryBranchRefreshRuleOut(
+                    branch_pattern=str(r.get("branch_pattern") or ""),
+                    refresh_enabled=bool(r.get("refresh_enabled", True)),
+                    refresh_interval_seconds=r.get("refresh_interval_seconds"),
+                    target_version_line=r.get("target_version_line"),
+                    created_by=str(r["created_by"]) if r.get("created_by") else None,
+                    created_at=_ts(r.get("created_at")),
+                    updated_at=_ts(r.get("updated_at")),
+                )
+                for r in rule_rows
+            ],
+            branches=branches,
+        )
+    )
+
+
+def _validated_branch_rules(payload: RepositoryBranchRefreshRulesUpdate) -> List[Dict[str, Any]]:
+    """Validate requested branch rules into rows to store (RAR-6.4).
+
+    Args:
+        payload: The requested rules.
+
+    Returns:
+        One dict per rule, patterns and lines stripped.
+
+    Raises:
+        HTTPException: 400 for an invalid or duplicate pattern, an invalid version line, or a
+            cadence below the deployment minimum.
+    """
+    from .config import settings
+    from .repository_branch_refresh_policy import validate_branch_pattern, validate_version_line
+
+    floor = max(1, settings.refresh_min_interval_seconds)
+    seen: set = set()
+    rows: List[Dict[str, Any]] = []
+    for rule in payload.rules:
+        try:
+            pattern = validate_branch_pattern(rule.branch_pattern)
+            line = validate_version_line(rule.target_version_line)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        if pattern in seen:
+            raise HTTPException(status_code=400, detail=f"branch pattern {pattern!r} appears more than once")
+        seen.add(pattern)
+        interval = rule.refresh_interval_seconds
+        if interval is not None and interval < floor:
+            raise HTTPException(
+                status_code=400,
+                detail=f"refresh interval for {pattern!r} must be at least {floor} seconds",
+            )
+        rows.append(
+            {
+                "branch_pattern": pattern,
+                "refresh_enabled": rule.refresh_enabled,
+                "refresh_interval_seconds": interval,
+                "target_version_line": line,
+            }
+        )
+    return rows
+
+
+@router.get(
+    "/{tenant_slug}/repositories/{repository_id}/branch-refresh-rules",
+    response_model=RepositoryBranchRefreshResponse,
+    response_model_by_alias=True,
+)
+async def get_repository_branch_refresh_rules(
+    tenant_slug: str,
+    repository_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryBranchRefreshResponse:
+    """Read a repository's per-branch refresh rules (RAR-6.4, #3541).
+
+    A rule names a branch exactly (``main``) or by glob (``release/*``) and sets, for the
+    branches it matches, whether they refresh, how often, and the version line a refresh lands
+    in. The most specific matching rule wins; a branch no rule matches follows the
+    repository-wide settings. The response also lists every tracked branch with the settings it
+    refreshes with, so a panel can show the effect of the rules.
+
+    Args:
+        tenant_slug: Tenant slug from the path (scoping comes from the token).
+        repository_id: The repository to read.
+        auth_data: Authenticated principal; supplies the tenant scope.
+
+    Returns:
+        The rules, the repository-wide fallback, and each tracked branch's effective settings.
+
+    Raises:
+        HTTPException: 404 when the repository does not belong to the tenant.
+    """
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.VIEW)
+    _ = tenant_slug
+    return _branch_refresh_response(str(auth_data["tenant_id"]), str(repository_id))
+
+
+@router.put(
+    "/{tenant_slug}/repositories/{repository_id}/branch-refresh-rules",
+    response_model=RepositoryBranchRefreshResponse,
+    response_model_by_alias=True,
+)
+async def set_repository_branch_refresh_rules(
+    tenant_slug: str,
+    repository_id: uuid.UUID,
+    payload: RepositoryBranchRefreshRulesUpdate,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> RepositoryBranchRefreshResponse:
+    """Replace a repository's per-branch refresh rules (RAR-6.4, #3541).
+
+    The request holds the complete set: rules left out are removed, and an empty list removes
+    them all, so every branch follows the repository-wide settings again. Changes apply from the
+    next sweep tick or push; a refresh already enqueued keeps the version line it was enqueued
+    with.
+
+    Args:
+        tenant_slug: Tenant slug from the path (scoping comes from the token).
+        repository_id: The repository to configure.
+        payload: The rules to store.
+        auth_data: Authenticated principal; supplies the tenant scope.
+
+    Returns:
+        The rules and each tracked branch's effective settings after the update.
+
+    Raises:
+        HTTPException: 400 for an invalid rule; 404 when the repository does not belong to the
+            tenant.
+    """
+    enforce_permission(db, auth_data, Resource.IMPORTS, Action.EDIT)
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    rid = str(repository_id)
+    rows = _validated_branch_rules(payload)
+    user_id = get_authenticated_user_id(auth_data)
+    if not db.replace_repository_branch_refresh_rules(
+        tenant_id, rid, rows, created_by=str(user_id) if user_id else None
+    ):
+        raise HTTPException(status_code=404, detail="repository not found")
+    _logger.info(
+        "repository branch refresh rules replaced tenant_id=%s repository_id=%s rules=%d",
+        tenant_id,
+        rid,
+        len(rows),
+    )
+    return _branch_refresh_response(tenant_id, rid)
 
 
 @router.put(
