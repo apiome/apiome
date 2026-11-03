@@ -1596,6 +1596,30 @@ so exporting a plain REST, RPC or event API to Arazzo gives you only the sequenc
 of it. The fidelity report warns about this first: *this target captures workflows, not the full API
 surface*.
 
+#### When to export to Arazzo
+
+- **Round-trip an Arazzo document.** An item imported from Arazzo 1.0 or 1.1 exports back
+  **lossless**, with its workflows, steps, inputs and outputs as you wrote them.
+- **Start workflows for an API you already have.** A REST, RPC or GraphQL item exports to a
+  starting point: one workflow per service, one step per operation, ready for you to edit into the
+  real sequences.
+
+A published project version also serves an Arazzo document of its own, generated per class
+(`/v1/arazzo`, `apiome schema arazzo`). That is a different document; see
+[Download Arazzo or JSON Schema by slug](#download-arazzo-or-json-schema-by-slug).
+
+#### Arazzo export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **See** what the export keeps, approximates and synthesizes | The fidelity report on the **Arazzo** card | [What is written](#what-is-written-to-arazzo) |
+| **Choose** the Arazzo version and YAML style | **Export** dialog → **REST & HTTP** → **Arazzo** | [Where to find it](#where-to-find-the-arazzo-card) |
+| **Export** from the CLI | `apiome export arazzo <item> --out <file>.arazzo.yaml` | [Where to find it](#where-to-find-the-arazzo-card) |
+| **Trust** the file: schema check and re-import | Automatic before every download | [Arazzo export checks](#arazzo-export-checks) |
+| **Replace** the placeholder source description | In the downloaded file, before you run the workflow | [What is written](#what-is-written-to-arazzo) |
+
+#### What is written to Arazzo {#what-is-written-to-arazzo}
+
 - **An item imported from Arazzo** is written back as it was read, with its own workflows, steps,
   inputs and outputs.
 - **Any other item** gets one workflow per service. The workflow's steps call that service's
@@ -1617,7 +1641,9 @@ surface*.
 
 Every export from a non-Arazzo item shows the fidelity warning before you download.
 
-**Where to find it.** In the **Export** dialog, the **Arazzo** card is under **REST & HTTP** on the
+#### Where to find the Arazzo card {#where-to-find-the-arazzo-card}
+
+In the **Export** dialog, the **Arazzo** card is under **REST & HTTP** on the
 **Target** step, as one `<name>.arazzo.yaml` file. Its badge is **lossless** for an item imported from
 Arazzo (1.0 or 1.1) and **lossy** for an item of any other paradigm with operations: REST (OpenAPI,
 WSDL, RAML), RPC (Thrift, Smithy) or GraphQL. For an item with nothing to sequence, such as a JSON
