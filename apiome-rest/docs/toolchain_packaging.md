@@ -54,6 +54,7 @@ release binaries, pinned like `buf` by a `BundledTool` and a matching Dockerfile
 | `idlc` | Eclipse Cyclone DDS IDL compiler: checks an emitted **DDS**-profile `.idl` (MFX-28.3, `app.omg_idl_compile`). Optional: without it an OMG IDL export is re-parsed by the OMG IDL reader | `0.10` (Debian `cyclonedds-tools`) | native | `apt-get install cyclonedds-tools` in the runtime stage |
 | `capnp` | Cap'n Proto compiler: `capnp compile` re-validates an emitted `.capnp` schema (`app.capnproto_compile`, MFX-30.2). Optional: without it a Cap'n Proto export is reported *not re-validated* | `1.0.1` | native | built from the capnproto.org release tarball (static `capnp_tool` target) |
 | `kubeconform` | Kubernetes manifest validator (yannh/kubeconform): checks a Kubernetes CRD export against the `apiextensions.k8s.io/v1` `CustomResourceDefinition` schema, cached at build time so the check needs no network (MFX-21.6, `app.k8s_kubeconform`). Optional: without it the export is checked by the structural-schema rules alone | `0.7.0` | native | GitHub release tarball under `lib/` + a `bin/` wrapper passing `-schema-location` to the schema cached under `share/kubeconform` |
+| `jing` | RELAX NG validator (relaxng/jing-trang, JVM): checks an XSD export written in a RELAX NG mode (`mode=relaxng`, XML syntax; `mode=relaxng-compact`, with `-c`) — that the grammar parses, every `ref` has a `define` and each datatype and parameter is known (MFX-22.3, `app.relaxng_jing`). Optional: without it the grammar is re-parsed by the RELAX NG reader | `20220510` | jvm | Maven Central jar + isorelax and Xerces jars under `lib/`, and a `bin/` wrapper calling `com.thaiopensource.relaxng.util.Driver` |
 
 All of them land under `/opt/apiome-tools/bin` (on `PATH`); the JVM/Node tools are thin
 wrappers so the runner invokes them by bare name exactly like the native binaries. The
@@ -192,6 +193,7 @@ that format uses. A missing tool never fails an export; each validator falls bac
 | `cobolcopybook` | `cb2xml` | `app.cobolcopybook_cb2xml.check_with_cb2xml` (layout vs. the emit plan) | MFX-23.4 | built-in copybook reader |
 | `asyncapi-3` | `asyncapi-parser` | `app.asyncapi_roundtrip.round_trip_asyncapi` | MFX-11.4 | *skipped* (not re-validated) |
 | `k8s-crd` | `kubeconform` | `app.k8s_kubeconform.run_kubeconform` (after the structural-schema rules) | MFX-21.6 | structural-schema rules only |
+| `xsd` (`mode=relaxng` / `relaxng-compact`) | `jing` | `app.relaxng_jing.check_relaxng_with_jing` (before the RELAX NG reader re-parses and re-imports the grammar) | MFX-22.3 | RELAX NG reader only |
 
 A validator that uses a best-effort import helper (`run_drafter`, `validate_smithy_members`) calls it
 with `strict=True`, so a tool that is installed but gives no answer is a finding rather than a silent

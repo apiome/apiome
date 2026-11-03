@@ -2,8 +2,8 @@
 
 The standalone W3C XML Schema is a registry target (``xsd``), so the verb runs through the generic export seam
 (``export <format> <artifact>``, MFX-8.1) with no command code of its own. These tests pin that the spelling
-resolves, that the options (``xsd_version`` as a string, ``include_xml_declaration`` / ``include_comments`` as
-booleans) reach the preview and the job, that the ``.xsd`` file is written to ``--out``, that ``--json`` prints
+resolves, that the options (``xsd_version`` and ``mode`` as strings, ``include_xml_declaration`` /
+``include_comments`` as booleans) reach the preview and the job, that the ``.xsd`` file is written to ``--out``, that ``--json`` prints
 the tier, and that a types-only export (a REST source whose operations XSD does not keep) exits non-zero unless
 ``--force``.
 
@@ -80,10 +80,14 @@ def test_the_spelling_resolves_to_the_xsd_target(spelling: str) -> None:
 
 def test_the_fixture_carries_the_options_and_the_types_only_badge() -> None:
     target = _TARGETS["targets"][0]
-    assert set(target["options_schema"]["properties"]) == {"include_comments", "include_xml_declaration", "xsd_version"}
+    assert set(target["options_schema"]["properties"]) == {
+        "include_comments", "include_xml_declaration", "mode", "xsd_version",
+    }
     assert target["options_schema"]["properties"]["xsd_version"]["enum"] == ["1.0", "1.1"]
+    # MFX-22.3 (#4134): the RELAX NG and DTD output modes.
+    assert target["options_schema"]["properties"]["mode"]["enum"] == ["xsd", "relaxng", "relaxng-compact", "dtd"]
     assert target["default_options"] == {"include_comments": True, "include_xml_declaration": True,
-                                         "xsd_version": "1.0"}
+                                         "mode": "xsd", "xsd_version": "1.0"}
     assert target["descriptor"]["multi_file"] is False
     assert target["fidelity"]["tier"] == "types-only"
 
@@ -119,6 +123,14 @@ def test_the_options_reach_the_preview_and_the_job(httpx_mock: object, tmp_path:
     assert _posted(httpx_mock, "/preview")["options"] == expected
     job = _posted(httpx_mock, "/jobs")
     assert (job["target"], job["options"]) == ("xsd", expected)
+
+
+def test_the_mode_option_reaches_the_job_as_a_string(httpx_mock: object, tmp_path: Path) -> None:
+    """``--option mode=dtd`` (MFX-22.3) is sent as the string the registry's enum expects."""
+    _mock_export(httpx_mock)
+    result = runner.invoke(app, _args(str(tmp_path / "petstore.dtd"), "--force", "--option", "mode=dtd"))
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert _posted(httpx_mock, "/jobs")["options"] == {"mode": "dtd"}
 
 
 def test_json_mode_prints_the_metadata_with_the_tier(httpx_mock: object, tmp_path: Path) -> None:

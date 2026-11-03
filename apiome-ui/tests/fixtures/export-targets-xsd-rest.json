@@ -7,7 +7,7 @@
         "key": "xsd",
         "format": "xsd",
         "label": "XSD",
-        "description": "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1).",
+        "description": "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1), a RELAX NG grammar or a DTD.",
         "icon": "file-code",
         "paradigm": "data_schema",
         "multi_file": false,
@@ -48,6 +48,18 @@
             "description": "Emit an XML comment header in the generated XSD.",
             "title": "Include Comments",
             "type": "boolean"
+          },
+          "mode": {
+            "default": "xsd",
+            "description": "`xsd` (default) writes XML Schema. `relaxng` writes one RELAX NG grammar in the XML syntax (`<Name>.rng`), `relaxng-compact` the same grammar in the compact syntax (`<Name>.rnc`), and `dtd` one DTD (`<Name>.dtd`). RELAX NG keeps the types and facets; a DTD keeps only element names and content models. What each mode cannot carry is listed in the fidelity report. `xsd_version` applies to `xsd` only.",
+            "enum": [
+              "xsd",
+              "relaxng",
+              "relaxng-compact",
+              "dtd"
+            ],
+            "title": "Mode",
+            "type": "string"
           }
         },
         "title": "XsdEmitOptions",
@@ -56,7 +68,8 @@
       "default_options": {
         "xsd_version": "1.0",
         "include_xml_declaration": true,
-        "include_comments": true
+        "include_comments": true,
+        "mode": "xsd"
       },
       "fidelity": {
         "tier": "types-only",

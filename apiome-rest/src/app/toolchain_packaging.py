@@ -20,7 +20,7 @@ What lives here:
   ``zod-schema-extractor``, ``dbml-validator``, ``prisma-validator``, ``cue``, ``pkl``, ``dhall``,
   ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``, ``kubeconform``.
+  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``, ``kubeconform``, ``jing``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -395,6 +395,18 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         # exits 1 when a resource is invalid.
         parses_json=False,
         runtime="native",
+    ),
+    BundledTool(
+        key="jing",
+        executable="jing",
+        version="20220510",
+        description="RELAX NG validator (relaxng/jing-trang, JVM): `jing` (`-c` for the compact syntax) checks an "
+        "emitted RELAX NG grammar (MFX-22.3). Optional: without it the grammar is re-parsed by the RELAX NG reader.",
+        env_override_key="APIOME_JING_BIN",
+        # The RELAX NG seam (MFX-22.3, app.relaxng_jing) reads jing's `file:line:column: error:` lines itself:
+        # it exits 1 when the grammar is incorrect.
+        parses_json=False,
+        runtime="jvm",
     ),
     BundledTool(
         key="thrift",

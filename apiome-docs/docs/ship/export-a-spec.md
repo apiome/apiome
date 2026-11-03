@@ -1797,15 +1797,71 @@ The fidelity report lists, construct by construct, what XML Schema cannot say th
 | A deprecated property | Dropped (note): XSD has no deprecation marker |
 | A name that is not an XML name (`first name`) | Approximated (note): `firstName` |
 
+#### RELAX NG and DTD output {#relax-ng-and-dtd-output}
+
+Some XML tool chains — DocBook-era publishing, configuration formats — read RELAX NG or a DTD rather than
+an XML Schema. Set **mode** to write the same types in one of them instead:
+
+| **mode** | You get | Keeps |
+| --- | --- | --- |
+| `xsd` (default) | XML Schema, as above | Everything in the table above |
+| `relaxng` | One RELAX NG grammar in the XML syntax, `<Name>.rng` | Types, facets and namespaces |
+| `relaxng-compact` | The same grammar in the compact syntax, `<Name>.rnc` | The same as `relaxng` |
+| `dtd` | One DTD, `<Name>.dtd` | Element names and content models only |
+
+Each mode writes one file, even for an item whose types live in several namespaces, and is written from
+the same XML mapping as the XSD export, so element names, occurrences, choices and entry lists are the
+same in every mode. **xsd_version** applies to `xsd` only; set with another mode, the export is refused.
+
+- **RELAX NG.** Each type is a `define`; each global element is a `define` (`Pet.element`) that `start`
+  chooses from. Occurrence is `optional`, `zeroOrMore` or `oneOrMore`. Facets are datatype parameters
+  of the XML Schema datatype library — `xsd:string { minLength = "1" maxLength = "40" }` — and an
+  enumeration is a choice of values. The main namespace is the grammar's; an element of another
+  namespace names its own (`namespace ns1 = "…"` in the compact syntax). Descriptions are
+  `a:documentation`, or `##` comments in the compact syntax.
+- **DTD.** A record is a content model — `<!ELEMENT Pet (id?, name?, tags*, owner?)>` — a choice is
+  `(email | phone)`, a value is `(#PCDATA)` and free-form content is `ANY`. The first global element is
+  named in a `Root element` comment. An element of a namespace declares it as a fixed attribute
+  (`xmlns CDATA #FIXED "…"`), so a document is valid with a default namespace and no prefixes. An XSD
+  attribute stays an attribute (`CDATA`, or the list of its values when they are plain names).
+
+The fidelity report is computed for the mode you pick, and lists, construct by construct:
+
+| In the source | `relaxng` / `relaxng-compact` | `dtd` |
+| --- | --- | --- |
+| A value's type (`int`, `date-time`, `decimal` …) | Kept | Dropped: any text is valid |
+| Facets: `pattern`, lengths, bounds | Kept | Dropped |
+| An enumeration | Kept | Dropped for element content; kept for an attribute of plain names |
+| A repeat count other than 0–1, 0 or more, 1 or more (`minItems: 2`, `maxItems: 5`) | Approximated: zero or more, or one or more | Approximated: the same |
+| A default value on an element | Dropped | Dropped |
+| A nullable value | Approximated (note): optional, so null and absent read the same | Approximated (note): the same |
+| A property's examples | Dropped (note) | Dropped (note) |
+| Two elements of one name with different content | Kept: each where it is | Approximated: declared once, as `ANY` |
+| Namespaces | Kept | Approximated (note): a `#FIXED` `xmlns` attribute per element |
+
+The other rows of the XSD table — operations and channels, unions, maps, renamed names — apply to these
+modes too.
+
+Each RELAX NG or DTD export is checked before you download it:
+
+1. A RELAX NG grammar is checked with **jing** when the server has it (`jing`, or `jing -c` for the
+   compact syntax): it must parse, every `ref` must have a `define`, and every datatype and parameter
+   must exist. Each error names its file, line and column (`relaxng.schema`).
+2. The file is read by Apiome's RELAX NG or DTD reader (`relaxng.parse`, `dtd.parse`); a `.rng` must also
+   be safe, well-formed XML (`relaxng.xml`). Without jing, this is the check.
+3. The export imports again as RELAX NG or as a DTD (`relaxng.reimport`, `dtd.reimport`). Its round trip
+   is measured through that import.
+
 **Where to find it.** In the **Export** dialog, the **XSD** card is under **Data schema & graph** on the
 **Target** step. Its badge is **lossless** for an item imported from XSD and **types-only** for any
-other source (XSD keeps the types and leaves out the operations). Pick the card to see its three
+other source (XSD keeps the types and leaves out the operations). Pick the card to see its four
 options: **Xsd Version** (`1.0` by default, or `1.1`), **Include Xml Declaration** and **Include
-Comments** (both on by default). From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add
-`--option xsd_version=1.1` or `--option include_xml_declaration=false`. A types-only export exits
-non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
-Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces. RELAX NG
-and DTD output and the ISO 20022 profile are not offered yet.
+Comments** (both on by default), and **Mode** (`xsd` by default; `relaxng`, `relaxng-compact` or `dtd`).
+From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add `--option xsd_version=1.1`,
+`--option include_xml_declaration=false` or `--option mode=dtd --out <file>.dtd`. A types-only export
+exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
+Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces. The ISO 20022
+profile is not offered yet.
 
 ### ASN.1 from any source
 

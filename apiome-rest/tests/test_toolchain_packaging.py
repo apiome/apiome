@@ -59,6 +59,7 @@ _EXPECTED_KEYS = {
     "openapi-changes",
     "capnp",
     "kubeconform",
+    "jing",
     "thrift",
     "omniidl",
     "idlc",

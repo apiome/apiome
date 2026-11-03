@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.619.0] - 2026-11-03
+
+### Added
+- **RELAX NG and DTD output modes for the XSD export (MFX-22.3, #4134).** The `xsd` target takes a `mode` option:
+  `xsd` (default), `relaxng` (one RELAX NG grammar in the XML syntax, `<Name>.rng`), `relaxng-compact` (the compact
+  syntax, `<Name>.rnc`) or `dtd` (one DTD, `<Name>.dtd`; media types `application/xml`,
+  `application/relax-ng-compact-syntax`, `application/xml-dtd`). Each mode is one file, even for a multi-namespace
+  item, and is written from the XSD documents the export builds (`app.xml_schema_modes`), so element names,
+  occurrences, choices and entry lists are the same in every mode. `xsd_version` applies to `xsd` only; a 1.1 with
+  another mode is refused.
+  - **RELAX NG:** a `define` per type and per global element (`Pet.element`, chosen by `start`); `optional` /
+    `zeroOrMore` / `oneOrMore`; facets as XSD-datatype `param`s; enumerations as `choice`s of `value`s; namespaces
+    kept (`ns`, `namespace ns1 = …` in the compact syntax); descriptions as `a:documentation` / `##` comments.
+  - **DTD:** content models (`(a, b?, c*)`, `(a | b)`, `(#PCDATA)`, `EMPTY`, `ANY`); attributes as `CDATA` or an
+    enumeration of names; each namespaced element declares a `#FIXED` `xmlns`.
+  - **Fidelity:** `XsdFidelityRulePack.apply_options` computes the report for the chosen mode. RELAX NG: element
+    defaults dropped, repeat counts other than 0..1 / 0..* / 1..* widened (`occurrence-bounds`), null as optional,
+    examples dropped. DTD: every datatype (`datatype-dropped`) and facet / element enumeration (`facet-dropped`)
+    dropped, an element name with two contents declared once as `ANY` (`element-merged`), namespaces as `#FIXED`
+    `xmlns` (note). The XSD writer's own losses are restated in the mode's terms.
+  - **Checks:** a RELAX NG export is checked by **jing** when the toolchain has it (`relaxng.schema`, via
+    `app.relaxng_jing`), then parsed and re-imported by the RELAX NG reader (`relaxng.xml`, `relaxng.parse`,
+    `relaxng.reimport`); a DTD export by the DTD reader (`dtd.parse`, `dtd.reimport`). The round trip measures
+    through that import (`import_path` `relaxng` / `dtd`).
+  - **Toolchain:** `jing` 20220510 is an optional bundled JVM tool (`APIOME_JING_BIN`); the image adds the Maven
+    Central jar with isorelax and Xerces behind a `bin/jing` wrapper.
+- The format capability notes for RELAX NG and DTD say their output is an XSD export mode.
+- OpenAPI document version 1.482.0 → 1.483.0.
+
 ## [1.618.0] - 2026-11-03
 
 ### Added

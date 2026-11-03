@@ -62,7 +62,8 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``smithy`` — :func:`app.smithy_roundtrip.validate_emitted_smithy` (MFX-20.3): ``smithy validate``
   (``ERROR`` / ``DANGER`` events fail, as they fail a ``smithy build``) when the toolchain has the CLI,
   else the built-in reader; then the built model must import again;
-* ``xsd`` — :func:`app.xsd_roundtrip.check_emitted_xsd` (MFX-22.5): safe XML, every ``xs:import``
+* ``xsd`` — :func:`app.xsd_roundtrip.check_emitted_xsd` (MFX-22.5; RELAX NG and DTD modes, MFX-22.3: jing
+  when installed, then Apiome's RELAX NG / DTD reader): safe XML, every ``xs:import``
   packaged, the schema built by ``xmlschema`` (an XSD 1.0 export under the 1.0 *and* 1.1 processors, a
   1.1 export under 1.1), then a re-import through the XSD import source; pure Python;
 * ``wsdl`` — :func:`app.wsdl_bundle_validation.validate_wsdl_bundle` (MFX-14.3): the WSDL + XSD
@@ -1535,12 +1536,22 @@ async def _validate_xsd(
     The documents are checked together, as they will be unpacked (:func:`app.xsd_roundtrip.check_emitted_xsd`):
     safe XML, every ``xs:import`` packaged, and the schema built by ``xmlschema`` under each processor
     the export must satisfy. The export must then import again (``xsd.reimport``).
+
+    A RELAX NG export (MFX-22.3) is checked by **jing** when the server has it (``relaxng.schema``), then
+    parsed and re-imported by Apiome's RELAX NG reader (``relaxng.parse``, ``relaxng.reimport``); a DTD
+    export is parsed and re-imported by its DTD reader (``dtd.parse``, ``dtd.reimport``).
     """
     from .import_source import ImportSourceError
-    from .xsd_roundtrip import check_emitted_xsd, reimport_xsd
+    from .xsd_roundtrip import OUTPUT_MODE_RULE_PREFIX, check_emitted_xsd, output_mode_of, reimport_xsd
 
     if not emit_result.files:
         return _rejected(target, [_finding_from_message("The XSD export wrote no file.")])
+    mode = output_mode_of(emit_result)
+    prefix = OUTPUT_MODE_RULE_PREFIX[mode]
+    label = {"xsd": "XSD", "relaxng": "RELAX NG", "dtd": "DTD"}[prefix]
+    findings: List[ValidationFinding] = []
+    if prefix == "relaxng":
+        findings.extend(await _jing_findings(emit_result.files[0].path, str(emit_result.files[0].content)))
 
     def _run() -> List[ValidationFinding]:
         problems = check_emitted_xsd(emit_result)
@@ -1548,15 +1559,29 @@ async def _validate_xsd(
             try:
                 reimport_xsd(emit_result)
             except ImportSourceError as exc:
-                problems.append({"rule": "xsd.reimport", "message": f"The XSD export does not import: {exc}",
+                problems.append({"rule": f"{prefix}.reimport", "message": f"The {label} export does not import: {exc}",
                                  "file": emit_result.files[0].path, "path": None})
         return [
             ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
             for p in problems
         ]
 
-    findings = await asyncio.to_thread(_run)
+    findings.extend(await asyncio.to_thread(_run))
     return _passed(target) if not findings else _rejected(target, findings)
+
+
+async def _jing_findings(path: str, content: str) -> List[ValidationFinding]:
+    """jing's verdict on a RELAX NG export (MFX-22.3): one finding per error; none when jing is absent."""
+    from .relaxng_jing import RelaxNgCheckError, check_relaxng_with_jing
+
+    try:
+        await check_relaxng_with_jing(path, content)
+    except RelaxNgCheckError as exc:
+        if exc.unavailable:
+            return []
+        lines = exc.diagnostics or [str(exc)]
+        return [ValidationFinding(message=line, file=path, path=None, keyword="relaxng.schema") for line in lines]
+    return []
 
 
 async def _validate_wsdl(

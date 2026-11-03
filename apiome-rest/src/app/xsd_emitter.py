@@ -21,15 +21,20 @@ the main document — each ``xs:import`` ing the namespaces it references (deliv
 Operations and channels are dropped: XSD describes data only.
 
 **Fidelity** (MFX-22.2): :class:`XsdFidelityRulePack` predicts the report from the writer's own losses.
+
+**Output modes** (MFX-22.3, #4134): ``mode`` writes the same types as RELAX NG — ``relaxng`` (XML
+syntax, ``<Name>.rng``) or ``relaxng-compact`` (``<Name>.rnc``) — or as a DTD (``dtd``, ``<Name>.dtd``),
+one file each, built from the XSD documents by :mod:`app.xml_schema_modes`; the fidelity pack follows
+the mode (:meth:`XsdFidelityRulePack.apply_options`).
 """
 
 from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError, model_validator
 
 from .canonical_model import ApiParadigm, CanonicalApi, Channel, Operation, TypeKind
 from .emitter import (
@@ -45,15 +50,34 @@ from .emitter import (
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
 from .writer_loss_rulepack import WriterLossRulePack
+from .xml_schema_modes import (
+    DTD_MODE,
+    RELAXNG_COMPACT_MODE,
+    RELAXNG_MODE,
+    DtdWriter,
+    RelaxNgWriter,
+    merge_losses,
+    mode_label,
+    relaxng_compact,
+    restate_xsd_losses,
+)
 from .xsd_schema import TNS_PREFIX, XSD_NS, XSD_PREFIX, XsdSchemaWriter, comment_safe
 from .xsd_types import xsd_builtin
 
-__all__ = ["XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces"]
+__all__ = ["XSD_OUTPUT_MODES", "XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces"]
 
 _XSD_FORMAT = "xsd"
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 #: A namespace that is a URI (``http://…``, ``urn:…``) rather than a package name (``com.example``).
 _URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+
+#: The ``mode`` option's values → (file extension, media type, what the file is called in messages).
+XSD_OUTPUT_MODES: Dict[str, Tuple[str, str, str]] = {
+    "xsd": (".xsd", "application/xml", "an XML Schema"),
+    RELAXNG_MODE: (".rng", "application/xml", "a RELAX NG grammar"),
+    RELAXNG_COMPACT_MODE: (".rnc", "application/relax-ng-compact-syntax", "a RELAX NG grammar (compact syntax)"),
+    DTD_MODE: (".dtd", "application/xml-dtd", "a DTD"),
+}
 
 
 class XsdFidelityRulePack(WriterLossRulePack):
@@ -78,19 +102,50 @@ class XsdFidelityRulePack(WriterLossRulePack):
     """
 
     target_label = "XSD"
-    info_drops = frozenset({"deprecated-dropped"})
-    cosmetic = frozenset({"renamed-identifier", "null-as-nillable", "example-as-annotation"})
+    info_drops = frozenset({"deprecated-dropped", "example-dropped"})
+    cosmetic = frozenset({
+        "renamed-identifier", "null-as-nillable", "example-as-annotation", "null-as-optional",
+        "namespace-as-fixed-xmlns",
+    })
+    #: The emit options the report is computed for (:meth:`apply_options`; the defaults otherwise).
+    _options: Optional["XsdEmitOptions"] = None
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for these emit options — the ``mode`` (MFX-22.3) changes what is lost.
+
+        Invalid options fall back to the defaults (XSD 1.0).
+        """
+        try:
+            self._options = XsdEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = XsdEmitOptions()
+
+    @property
+    def _mode(self) -> str:
+        return (self._options or XsdEmitOptions()).mode
 
     def build_writer(self, api: CanonicalApi) -> "_XsdWriter":
-        """Build the export with the default options (XSD 1.0)."""
-        writer = _XsdWriter(api, XsdEmitOptions())
+        """Build the export with the options the report is for (default: XSD 1.0)."""
+        writer = _XsdWriter(api, self._options or XsdEmitOptions())
         writer.render()
+        self.target_label = writer.label
         return writer
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """The rewrite of another format, the element-only choice, and the types-only advisory."""
         verdicts: List[FidelityVerdict] = []
-        if api.format != _XSD_FORMAT:
+        _extension, _media, written = XSD_OUTPUT_MODES[self._mode]
+        if self._mode != "xsd":
+            reads_back = "a RELAX NG item" if self._mode in (RELAXNG_MODE, RELAXNG_COMPACT_MODE) else "a DTD item"
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is written as {written} and reads back as "
+                    f"{reads_back}; details specific to its format are not kept",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"document → {mode_label(self._mode)}",
+                )
+            )
+        elif api.format != _XSD_FORMAT:
             verdicts.append(
                 FidelityVerdict.approx(
                     message=f"The {api.format or 'source'} document is written as an XML Schema and reads back as "
@@ -99,6 +154,7 @@ class XsdFidelityRulePack(WriterLossRulePack):
                     target_mapping="document → XML Schema",
                 )
             )
+        if api.format != _XSD_FORMAT:
             if any(t.kind is TypeKind.RECORD and t.fields for t in api.types):
                 verdicts.append(
                     FidelityVerdict.synth(
@@ -141,6 +197,21 @@ class XsdEmitOptions(EmitOptions):
         default=True,
         description="Emit an XML comment header in the generated XSD.",
     )
+    mode: Literal["xsd", "relaxng", "relaxng-compact", "dtd"] = Field(
+        default="xsd",
+        description="`xsd` (default) writes XML Schema. `relaxng` writes one RELAX NG grammar in the XML syntax "
+        "(`<Name>.rng`), `relaxng-compact` the same grammar in the compact syntax (`<Name>.rnc`), and `dtd` one "
+        "DTD (`<Name>.dtd`). RELAX NG keeps the types and facets; a DTD keeps only element names and content "
+        "models. What each mode cannot carry is listed in the fidelity report. `xsd_version` applies to `xsd` "
+        "only.",
+    )
+
+    @model_validator(mode="after")
+    def _version_is_for_xsd(self) -> "XsdEmitOptions":
+        """``xsd_version`` 1.1 has no meaning for a RELAX NG or DTD export (MFX-22.3)."""
+        if self.mode != "xsd" and self.xsd_version != "1.0":
+            raise ValueError(f"mode {self.mode!r} writes no XML Schema; leave xsd_version unset")
+        return self
 
 
 class XsdEmitter(Emitter, register=True):
@@ -149,7 +220,7 @@ class XsdEmitter(Emitter, register=True):
     key = "xsd"
     format = "xsd"
     label = "XSD"
-    description = "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1)."
+    description = "Export as a W3C XML Schema Definition (XSD 1.0 or 1.1), a RELAX NG grammar or a DTD."
     icon = "file-code"
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
@@ -184,13 +255,14 @@ class XsdEmitter(Emitter, register=True):
             else XsdEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
         writer = _XsdWriter(api, options)
+        media_type = XSD_OUTPUT_MODES[options.mode][1]
         files = [
-            EmittedFile(path=path, content=content, media_type=self.OUTPUT_MEDIA_TYPE)
+            EmittedFile(path=path, content=content, media_type=media_type)
             for path, content in writer.render()
         ]
         return EmitResult(
             files=files,
-            media_type=self.OUTPUT_MEDIA_TYPE,
+            media_type=media_type,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
         )
@@ -249,14 +321,21 @@ class _XsdWriter:
             standalone=True,
         )
         self.paths = _document_paths(api, self.namespaces)
+        #: The output mode's name in messages (``XSD``, ``RELAX NG``, ``DTD``).
+        self.label = "XSD" if options.mode == "xsd" else mode_label(options.mode)
+        #: What each type became in a RELAX NG or DTD export (set by :meth:`render`).
+        self._mode_written: Optional[Dict[str, str]] = None
 
     def render(self) -> List[Tuple[str, str]]:
-        """Every schema document as ``(path, text)``, the main document first."""
+        """Every output document as ``(path, text)``, the main document first.
+
+        The XSD documents are always built; a RELAX NG or DTD export is then written from them as one file.
+        """
         ET.register_namespace(XSD_PREFIX, XSD_NS)
         if self._api.services or self._api.channels:
             self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
         from_xsd = self._api.format == _XSD_FORMAT
-        documents: List[Tuple[str, str]] = []
+        schemas: List[Tuple[Optional[str], ET.Element]] = []
         for namespace in self.namespaces:
             schema_el = self._schema.new_schema(namespace)
             if namespace:
@@ -265,11 +344,50 @@ class _XsdWriter:
             if from_xsd and namespace == self.main_namespace:
                 self._prepend_source_elements(schema_el)
             self._prepend_imports(schema_el)
-            documents.append((self.paths[namespace], self._serialize(schema_el)))
-        return documents
+            schemas.append((namespace, schema_el))
+        if self._options.mode != "xsd":
+            return [self._render_mode(schemas)]
+        return [(self.paths[namespace], self._serialize(schema_el)) for namespace, schema_el in schemas]
+
+    def _render_mode(self, schemas: List[Tuple[Optional[str], ET.Element]]) -> Tuple[str, str]:
+        """The RELAX NG or DTD file written from the XSD documents (MFX-22.3)."""
+        mode = self._options.mode
+        extension = XSD_OUTPUT_MODES[mode][0]
+        path = self.paths[self.main_namespace][: -len(".xsd")] + extension
+        mode_losses = restate_xsd_losses(self.losses, mode)
+        own = LossTracker()
+        title = self._api.title or self._api.identity.name or "schema"
+        header = f"Generated {self.label} for {title}" if self._options.include_comments else None
+        if mode == DTD_MODE:
+            writer = DtdWriter(self._schema, schemas, own)
+            text = writer.build(header=header)
+        else:
+            rng = RelaxNgWriter(self._schema, schemas, own, self.main_namespace)
+            grammar = rng.build()
+            writer = rng
+            if mode == RELAXNG_COMPACT_MODE:
+                text = relaxng_compact(grammar, header=header)
+            else:
+                text = self._serialize_grammar(grammar, header)
+        merge_losses(mode_losses, own.records())
+        self.losses = mode_losses
+        self._mode_written = writer.written
+        return path, text
+
+    def _serialize_grammar(self, grammar: ET.Element, header: Optional[str]) -> str:
+        parts: List[str] = []
+        if self._options.include_xml_declaration:
+            parts.append('<?xml version="1.0" encoding="UTF-8"?>')
+        if header:
+            parts.append(f"<!-- {comment_safe(header)} -->")
+        ET.indent(grammar, space="  ")
+        parts.append(ET.tostring(grammar, encoding="unicode"))
+        return "\n".join(parts) + "\n"
 
     def written_as(self, key: str) -> Optional[str]:
-        """What the type ``key`` became (``complexType Pet``, ``simpleType Status``), or ``None``."""
+        """What the type ``key`` became (``complexType Pet``, ``define Pet``), or ``None``."""
+        if self._mode_written is not None:
+            return self._mode_written.get(key)
         type_ = self._schema.types_by_key.get(key)
         if type_ is None or key not in self._schema.type_names:
             return None

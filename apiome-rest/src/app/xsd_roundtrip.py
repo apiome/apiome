@@ -25,6 +25,13 @@ WSDL bundle (:class:`app.wsdl_emitter.WsdlEmitter`, which round-trips WSDL lossl
 its own ``.xsd`` is replaced by this export, and the bundle is imported through
 :class:`app.wsdl_import_source.WsdlImportSource` — so the WSDL source and the re-import share one normal
 form, and any difference is the XSD export's. Everything here is pure Python.
+
+**RELAX NG and DTD modes** (MFX-22.3, #4134). The output's extension names its mode
+(:func:`output_mode_of`). A RELAX NG export (``.rng`` / ``.rnc``) must be safe XML (the XML syntax) and
+parse with Apiome's RELAX NG reader (``relaxng.parse``); a DTD export (``.dtd``) must parse with its DTD
+reader (``dtd.parse``). Each re-imports through its own import source, and its round trip is measured
+there. The jing check of a RELAX NG export runs in the export validator (:mod:`app.relaxng_jing`), which
+can call a tool; this module stays pure Python.
 """
 
 from __future__ import annotations
@@ -51,16 +58,21 @@ from .xsd_import_source import XsdImportSource
 from .zip_bundle import safe_bundle_path
 
 __all__ = [
+    "OUTPUT_MODE_RULE_PREFIX",
     "RoundTripStatus",
     "XsdRoundTripReport",
     "check_emitted_xsd",
+    "output_mode_of",
     "reimport_xsd",
     "round_trip_xsd",
     "xsd_version_of",
 ]
 
 #: Which import path the round trip measured through.
-ImportPath = Literal["xsd", "wsdl"]
+ImportPath = Literal["xsd", "wsdl", "relaxng", "dtd"]
+
+#: The rule prefix of each output mode's checks (``relaxng.parse``, ``dtd.reimport`` …).
+OUTPUT_MODE_RULE_PREFIX = {"xsd": "xsd", "relaxng": "relaxng", "relaxng-compact": "relaxng", "dtd": "dtd"}
 
 _VERSIONING_NS = "http://www.w3.org/2007/XMLSchema-versioning"
 _PROCESSORS = {"1.0": xmlschema.XMLSchema10, "1.1": xmlschema.XMLSchema11}
@@ -92,7 +104,8 @@ class XsdRoundTripReport(BaseModel):
     )
     import_path: ImportPath = Field(
         default="xsd",
-        description="``wsdl`` when a WSDL source was round-tripped through the WSDL import, else ``xsd``.",
+        description="``wsdl`` when a WSDL source was round-tripped through the WSDL import, ``relaxng`` / ``dtd`` "
+        "for a RELAX NG or DTD export (MFX-22.3), else ``xsd``.",
     )
     reimported: bool = Field(default=False, description="Whether the export imported again.")
     import_error: Optional[str] = Field(default=None, description="Why it did not import.")
@@ -148,8 +161,46 @@ def _problem(rule: str, message: str, file: Optional[str] = None, path: Optional
     return {"rule": rule, "message": message, "file": file, "path": path}
 
 
+def output_mode_of(emit_result: EmitResult) -> str:
+    """The output mode an export was written in, from its main file's extension (``xsd`` by default)."""
+    path = emit_result.files[0].path if emit_result.files else ""
+    if path.endswith(".rng"):
+        return "relaxng"
+    if path.endswith(".rnc"):
+        return "relaxng-compact"
+    if path.endswith(".dtd"):
+        return "dtd"
+    return "xsd"
+
+
+def _check_mode_file(emit_result: EmitResult, mode: str) -> List[Dict[str, Any]]:
+    """Check a RELAX NG or DTD export: one safe file that Apiome's reader for it parses (MFX-22.3)."""
+    from .dtd_import_source import DtdImportSource
+    from .relaxng_import_source import RelaxNgImportSource
+
+    emitted = emit_result.files[0]
+    path, text = emitted.path, str(emitted.content)
+    prefix = OUTPUT_MODE_RULE_PREFIX[mode]
+    if safe_bundle_path(path) != path or len(emit_result.files) != 1:
+        return [_problem(f"{prefix}.file", f"A {mode} export is one file; got {len(emit_result.files)}.", path)]
+    if mode == "relaxng":
+        try:
+            parse_xml(text, source_label=path)
+        except SecureXmlError as exc:
+            return [_problem("relaxng.xml", f"Not well-formed, safe XML: {exc}", path)]
+    source = DtdImportSource() if mode == "dtd" else RelaxNgImportSource()
+    try:
+        source.parse(text, source_label=path)
+    except Exception as exc:  # noqa: BLE001 — any reader failure means the export does not parse
+        return [_problem(f"{prefix}.parse", f"The {'DTD' if mode == 'dtd' else 'RELAX NG grammar'} does not "
+                         f"parse: {exc}", path)]
+    return []
+
+
 def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
     """Check an XSD export as it will be unpacked: XML, packaging, then the schema under each processor.
+
+    A RELAX NG or DTD export (MFX-22.3) is checked by Apiome's reader for its language instead.
 
     Args:
         emit_result: The XSD emitter's output; its first file is the main document.
@@ -162,6 +213,9 @@ def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
     """
     if not emit_result.files:
         raise ValueError("The XSD export wrote no file.")
+    mode = output_mode_of(emit_result)
+    if mode != "xsd":
+        return _check_mode_file(emit_result, mode)
     files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
     problems: List[Dict[str, Any]] = []
     roots: Dict[str, ET.Element] = {}
@@ -199,9 +253,23 @@ def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
 def reimport_xsd(emit_result: EmitResult) -> CanonicalApi:
     """Import an XSD export the way an upload of it would be (one set when there are several documents).
 
+    A RELAX NG export imports as RELAX NG and a DTD export as a DTD (MFX-22.3).
+
     Raises:
         ImportSourceError: When it does not parse or normalize.
     """
+    mode = output_mode_of(emit_result)
+    if mode != "xsd":
+        from .dtd_import_source import DtdImportSource
+        from .relaxng_import_source import RelaxNgImportSource
+
+        source = DtdImportSource() if mode == "dtd" else RelaxNgImportSource()
+        try:
+            return reimport_emitted(source, emit_result, multi_file=False)
+        except ImportSourceError:
+            raise
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            raise ImportSourceError(f"Malformed {mode} export: {exc}", code="INPUT_MALFORMED") from exc
     try:
         return reimport_emitted(XsdImportSource(), emit_result, multi_file=len(emit_result.files) > 1)
     except ImportSourceError:
@@ -249,7 +317,11 @@ def round_trip_xsd(
     if emit_result is None:
         emit_result = emitter.emit(api, opts=opts)
     predicted = list(emit_result.losses)
-    import_path: ImportPath = "wsdl" if api.format == "wsdl" else "xsd"
+    mode = output_mode_of(emit_result)
+    import_path: ImportPath = (
+        "relaxng" if mode.startswith("relaxng") else "dtd" if mode == "dtd"
+        else "wsdl" if api.format == "wsdl" else "xsd"
+    )
     try:
         problems = check_emitted_xsd(emit_result)
     except ValueError as exc:
