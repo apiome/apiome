@@ -1,0 +1,21 @@
+---
+slug: avro-export-overview
+title: Avro export, end to end
+description: A new guide section on exporting Avro schemas and their registry subjects.
+authors: [apiome]
+---
+
+Avro export is complete: the emitter, its fidelity pack, Schema Registry subjects and evolution
+defaults, validation and the push to a registry, and the **Apache Avro** target card, CLI and
+fixtures. A new section,
+[Apache Avro from any source](/ship/export-a-spec#apache-avro-from-any-source), brings it together.
+
+{/* truncate */}
+
+- **When to export to Avro:** to give Kafka producers and consumers the schemas of an API's data, one
+  `.avsc` per type, and to register them on a Confluent-compatible schema registry.
+- **How it is written:** records, enums, unions and maps; nullable fields as `["null", T]`; dates,
+  timestamps, UUIDs and decimals as logical types; a folder per namespace.
+- **Subjects:** `record_name`, `topic_name` or `topic_record_name`, with a `-value` or `-key` suffix.
+- **Fidelity:** operations and validation rules are dropped, and a `null` default is synthesized for
+  each nullable field, because schema evolution needs one.
