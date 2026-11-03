@@ -1,0 +1,84 @@
+---
+title: Healthcare and finance standards
+description: Catalog FHIR, HL7 v2, ISO 20022, FIX, EDI and ISO 8583 interfaces.
+sidebar_position: 38.6
+tags: [import, fhir, hl7, hl7v2, iso20022, swift, sepa, fix, fix-orchestra, edi, x12, edifact, peppol, ubl, iso8583, healthcare, finance]
+---
+
+Hospitals, banks, exchanges and supply chains run on their own industry standards, not on OpenAPI.
+A lab result travels as an HL7 v2 message, a payment as an ISO 20022 document, a trade as a FIX
+message and a purchase order as an EDI interchange. Apiome imports each of them into the
+[Catalog](./catalog.mdx) with its own importer, so these interfaces can be searched, versioned,
+diffed and linted next to your REST APIs.
+
+Use this page to find the right importer. Each one has its own page with the details.
+
+## Healthcare
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **FHIR** | The REST standard for healthcare APIs: a server's CapabilityStatement, its profiles, or a resource, in R4, R5 or R6 | `fhir` | [Import FHIR APIs and profiles](./fhir-import.md) |
+| **HL7 v2** | The pipe-and-hat messaging most hospital interfaces run on (`ADT^A01`, `ORU^R01` …), any 2.x release | `hl7v2` | [Import HL7 v2 messages](./hl7v2-import.md) |
+
+## Finance
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **ISO 20022** | Financial messages (`pain.001`, `pacs.008`, `camt.053` …) and the XSD message definitions behind them, SEPA included | `iso20022` | [Import ISO 20022 messages and message definitions](./iso20022-import.md) |
+| **FIX Orchestra** | The machine-readable rules of engagement of a FIX interface: messages, fields, code sets and presence | `fix-orchestra` | [Import a FIX Orchestra repository](./fix-orchestra-import.md) |
+| **FIX** | A `tag=value` message log (`8=FIX.4.4…`), with the fields it uses inferred | `fix` | [Supported formats](./supported-formats.md) |
+| **ISO 8583** | Card-transaction messages: the MTI, the bitmaps and the data elements, as a field map | `iso8583` | [Import ISO 8583 card messages](./iso8583-import.md) |
+
+## Supply chain and e-invoicing
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **EDI X12** | The North American EDI standard: an interchange of purchase orders (`850`), invoices (`810`), claims (`837`) … | `edix12` | [Import an EDI X12 interchange](./x12-import.md) |
+| **UN/EDIFACT** | The rest of the world's EDI standard: `ORDERS`, `INVOIC`, `DESADV` … | `edifact` | [Import a UN/EDIFACT interchange](./edifact-import.md) |
+| **UBL and Peppol** | UBL 2.1 document schemas; a Peppol BIS Billing 3.0 invoice is a UBL 2.1 Invoice | `xsd` | [UBL and Peppol document schemas](./xsd-import.md#ubl-and-peppol-document-schemas) |
+
+## How it works
+
+1. **Import the file.** **Go to Bring in → Catalog**, **click "Import to catalog"**, and upload or
+   paste the message, definition or interchange on **File Upload**. **Auto-detect** tells the
+   look-alikes apart: an X12 interchange from an EDIFACT one, a FIX Orchestra repository from a FIX
+   message log, an ISO 20022 definition from a plain XSD. Files that belong together, such as a
+   message definition and the schemas it imports, go in one archive (`.zip`, `.tar.gz`).
+2. **It lands in the Catalog.** The message or definition becomes a schema of types. A message is
+   kept as you sent it, and its structure is inferred from what it carries; a definition, profile or
+   repository is read as declared. For X12 and EDIFACT, the whole interchange is also kept as a
+   native analysis on the item's **Format details** tab
+   ([Read a catalog item's format details](./catalog-format-details.md)).
+3. **Lint it.** Each format adds its own rules on the item's **Lint & score** tab: FHIR profile and
+   CapabilityStatement hygiene, the HL7 v2 `MSH` header, the X12 and EDIFACT envelopes a trading
+   partner's translator checks, ISO 8583's MTI and data elements. See [FHIR](./fhir-import.md#lint),
+   [HL7 v2](./hl7v2-import.md#lint), [ISO 20022](./iso20022-import.md#versions-diffs-and-lint),
+   [FIX Orchestra](./fix-orchestra-import.md#lint), [X12](./x12-import.md#lint-rules),
+   [EDIFACT](./edifact-import.md#lint-rules) and [ISO 8583](./iso8583-import.md#lint).
+4. **Compare versions.** Import the next release with the same slug and tick two versions on the
+   item's **Versions** tab. See [HL7 v2](./hl7v2-import.md#versions-and-changes),
+   [ISO 20022](./iso20022-import.md#versions-diffs-and-lint),
+   [FIX Orchestra](./fix-orchestra-import.md#compare-dialects-and-versions), which also compares two
+   firms' dialects, [X12](./x12-import.md#versions-and-diffs),
+   [EDIFACT](./edifact-import.md#versions-and-diffs) and
+   [ISO 8583](./iso8583-import.md#versions-and-changes).
+
+## Beyond the import
+
+- **Keep a FHIR server's item fresh.** An item imported from a server's CapabilityStatement can
+  re-read `<base>/metadata` on a schedule, set up from **Live refresh** on its **Provenance** tab
+  ([Keep a server's item fresh](./fhir-import.md#keep-a-servers-item-fresh)).
+- **Plan a move from HL7 v2 to FHIR.** An HL7 v2 item says which FHIR resource each segment maps to
+  ([Migrate to FHIR](./hl7v2-import.md#migrate-to-fhir)).
+- **Link FIX messages to their Orchestra.** **"Suggest links"** in **Related artifacts** pairs an
+  Orchestra repository with the FIX message items of the same message type
+  ([Link it to FIX messages](./fix-orchestra-import.md#link-it-to-fix-messages)).
+- **Export.** FHIR, HL7 v2, ISO 20022, ISO 8583, FIX and EDI X12 are export targets too, from
+  **Export** on a catalog item; [Supported formats](./supported-formats.md) lists what each reads and
+  writes.
+
+## Where next
+
+- [Supported formats](./supported-formats.md): every format and the versions each importer reads.
+- [How importing works](./how-importing-works.mdx): every import source and import history.
+- [Find APIs across formats](./find-apis-across-formats.md): search the catalog across all of them.

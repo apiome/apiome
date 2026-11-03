@@ -106,3 +106,4 @@ The **Quality** step and the item's **Lint & score** tab add FHIR hygiene rules:
 - [Supported formats](./supported-formats.md): FHIR's input kinds and versions
 - [Keep a catalog item fresh](./catalog-refresh.mdx): live refresh and drift alerts
 - [Export a spec](../ship/export-a-spec.md): write a catalog item back out as FHIR
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.

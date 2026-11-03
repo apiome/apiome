@@ -107,3 +107,4 @@ not a message, so the **ISO 20022** target refuses it with that reason; export i
 - [Import an XML Schema (XSD)](./xsd-import.md): the reader a message definition goes through
 - [NACHA ACH and SEPA](./nacha-sepa-import.md): the SEPA profile on ISO 20022 payment files
 - [Import SWIFT MT messages](./swift-mt-import.md): the MT side of the MT/MX migration
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.

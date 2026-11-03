@@ -164,3 +164,4 @@ an archive instead.
 
 - [Supported formats](./supported-formats.md): every format and the versions it reads.
 - [Import a spec](./import-a-spec.md): every way to bring a document in.
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.

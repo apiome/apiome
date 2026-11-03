@@ -294,6 +294,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['openrpc', 'json-rpc', 'xregistry', 'cloudevents', 'thrift', 'flatbuffers', 'capnproto', 'connect', 'jtd', 'hypermedia', 'idl'],
   },
   {
+    id: 'healthcare-and-finance-standards',
+    title: 'Healthcare and finance standards',
+    summary:
+      'Import FHIR, HL7 v2, ISO 20022, FIX and FIX Orchestra, ISO 8583, EDI X12, EDIFACT and UBL / Peppol: lint, versions and export.',
+    page: 'apiome-docs/docs/bring-in/healthcare-and-finance-standards.mdx',
+    section: 'spine',
+    keywords: ['fhir', 'hl7', 'iso20022', 'swift', 'sepa', 'fix', 'orchestra', 'iso8583', 'card', 'edi', 'x12', 'edifact', 'peppol', 'ubl', 'clinical', 'payments'],
+  },
+  {
     id: 'how-importing-works',
     title: 'How importing works',
     summary:
