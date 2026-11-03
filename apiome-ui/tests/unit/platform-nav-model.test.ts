@@ -330,7 +330,7 @@ describe('platform-nav model — workspace gating', () => {
       getPlatformOffRailItems({ currentTenantId: undefined })
         .filter((navItem) => !navItem.disabled)
         .map((navItem) => navItem.id)
-    ).toEqual(['tenants', 'data-browser', 'migrations']);
+    ).toEqual(['tenants']);
     expect(
       getPlatformUserMenuItems({ currentTenantId: undefined }).every((navItem) => !navItem.disabled)
     ).toBe(true);
@@ -474,9 +474,11 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       'catalog-entities',
       'connectors',
       'consumers',
+      'data-browser',
       'dependency-graph',
       'export-studio',
       'mcp',
+      'migrations',
       'primitives',
       'schema-registry',
       'sdk-settings',
@@ -587,13 +589,14 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect(getPlatformOffRailItems({ currentTenantId: TENANT }).map((navItem) => navItem.id)).toEqual([
       'tenants',
-      'data-browser',
-      'migrations',
     ]);
+    expect(getPlatformOffRailItems({}, 'user-menu')).toEqual([]);
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
     expect(getPlatformOffRailItems({}, 'user-menu').map((navItem) => navItem.label)).toEqual([
       'Data browser',
       'Migrations',
     ]);
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     expect(getPlatformOffRailItems({}, 'workspace-switcher').map((navItem) => navItem.id)).toEqual([
       'tenants',
     ]);

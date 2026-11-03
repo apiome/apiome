@@ -6,6 +6,8 @@
 import React from 'react';
 import { cleanup, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import UnreleasedFeatureGate from '../src/app/components/shell/UnreleasedFeatureGate';
 
@@ -67,5 +69,28 @@ describe('UnreleasedFeatureGate — features embedded in Catalog and Projects', 
     expect(screen.getByTestId('unreleased-feature-gate')).toHaveTextContent(
       'Consumer contracts opens once Catalog and Projects are ready.'
     );
+  });
+});
+
+describe('UnreleasedFeatureGate — the user-menu Tools', () => {
+  it.each([
+    ['data-browser', 'Data browser', 'src/app/ade/database/layout.tsx'],
+    ['migrations', 'Migrations', 'src/app/ade/migration/layout.tsx'],
+  ] as const)('withholds %s under the Tools section, and its route layout is gated', (feature, label, layout) => {
+    render(
+      <UnreleasedFeatureGate feature={feature}>
+        <p>feature body</p>
+      </UnreleasedFeatureGate>
+    );
+
+    expect(screen.queryByText('feature body')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: label })).toBeInTheDocument();
+    expect(screen.getByText('Tools', { exact: true })).toBeInTheDocument();
+    expect(screen.getByTestId('unreleased-feature-gate')).toHaveTextContent(
+      `${label} opens once Catalog and Projects are ready.`
+    );
+    // A bookmark or typed URL reaches the layout, so the layout must wrap its pages.
+    const source = readFileSync(join(__dirname, '..', layout), 'utf8');
+    expect(source).toContain(`<UnreleasedFeatureGate feature="${feature}">`);
   });
 });

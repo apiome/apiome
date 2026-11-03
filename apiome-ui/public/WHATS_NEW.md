@@ -15,6 +15,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
+- Tools:
+  - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:

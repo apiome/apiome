@@ -1533,22 +1533,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['json schema', 'system template', 'category', 'uuid', 'disable'],
   },
   {
-    id: 'data-browser',
-    title: 'Data browser',
-    summary: 'Browse, search, insert, edit, delete and restore the records stored against a version’s class schemas.',
-    page: 'apiome-docs/docs/admin/data-browser.mdx',
-    section: 'reference',
-    keywords: ['ade/database', 'snapshot', 'show deleted', 'json schema', 'tables', 'tools'],
-  },
-  {
-    id: 'migrations',
-    title: 'Migrations',
-    summary: 'Plan how a class’s records move between schema versions with rules, and preview each record before and after.',
-    page: 'apiome-docs/docs/admin/migrations.mdx',
-    section: 'reference',
-    keywords: ['ade/migration', 'migration plan', 'passthrough', 'sparksql', 'data quality', 'explorer'],
-  },
-  {
     id: 'docs-image',
     title: 'Host the documentation site',
     summary: 'Serve this guide next to your Apiome installation from the apiome-docs Docker image.',
@@ -1593,6 +1577,22 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
  * nothing searches or links to these entries.
  */
 export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
+  {
+    id: 'data-browser',
+    title: 'Data browser',
+    summary: 'Browse, search, insert, edit, delete and restore the records stored against a version’s class schemas.',
+    page: 'apiome-docs/docs/admin/data-browser.mdx',
+    section: 'reference',
+    keywords: ['ade/database', 'snapshot', 'show deleted', 'json schema', 'tables', 'tools'],
+  },
+  {
+    id: 'migrations',
+    title: 'Migrations',
+    summary: 'Plan how a class’s records move between schema versions with rules, and preview each record before and after.',
+    page: 'apiome-docs/docs/admin/migrations.mdx',
+    section: 'reference',
+    keywords: ['ade/migration', 'migration plan', 'passthrough', 'sparksql', 'data quality', 'explorer'],
+  },
   {
     id: 'style-guide-revisions',
     title: 'Style-guide revisions & governance audit',

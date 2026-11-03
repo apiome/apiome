@@ -105,6 +105,17 @@ jest.mock('@/app/components/providers/DialogProvider', () => ({
   useDialog: () => ({ confirm: mockConfirm, alert: jest.fn(async () => undefined) }),
 }));
 
+// Both tools are unreleased (`lib/feature-release.ts`); their docs fixtures feed the pages kept
+// in `apiome-docs/unreleased/`, so the routes are re-opened for this suite.
+const PREVIEW_FEATURES = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+beforeAll(() => {
+  process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'data-browser,migrations';
+});
+afterAll(() => {
+  if (PREVIEW_FEATURES === undefined) delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW_FEATURES;
+});
+
 import DatabaseLayout from '../src/app/ade/database/layout';
 import DatabasePage from '../src/app/ade/database/page';
 import { useDatabase } from '../src/app/ade/database/DatabaseContext';
