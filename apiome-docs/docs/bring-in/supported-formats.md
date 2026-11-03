@@ -279,7 +279,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | WSDL | `wsdl` | 1.1, 2.0 | 1.1 | 1.1 |
 | X12 implementation guide | `x12-guide` | — | — | — |
 | XML-RPC | `xmlrpc` | 1.0 | 1.0 | 1.0 |
-| XSD | `xsd` | 1.0 / 1.1* | 1.0 | 1.0 |
+| XSD | `xsd` | 1.0 / 1.1*, UBL 2.x document schemas (Peppol BIS Billing 3.0)* | 1.0 | 1.0 |
 | z/OS Connect | `zosconnect` | API requester / provider descriptor* | API requester / provider descriptor* | API requester / provider descriptor |
 | Zod schemas | `zod` | Zod 3 (evaluated with Zod 3.25)* | — | — |
 | OpenAPI Overlay (applied by `openapi`) | `overlay` | 1.0, 1.1, 1.2 | — | — |
@@ -635,6 +635,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 **XSD**
 
 - Reads **1.0 / 1.1** (ungated) — Both XSD versions share one namespace and no `vc:minVersion` gate is read, so a 1.1 document is accepted; its 1.1-only constructs (assertions, conditional type assignment) are not modelled.
+- Reads **UBL 2.x document schemas (Peppol BIS Billing 3.0)** (ungated) — MFI-20.5: a schema in a UBL namespace (`urn:oasis:names:specification:ubl:schema:xsd:Invoice-2`) is labelled with its document type and the release its `version` attribute names, its `ref=` members are read as the global elements they name, and a UBL 2.1 Invoice or CreditNote is noted as the Peppol BIS Billing 3.0 document definition. Peppol's Schematron rules import separately.
 
 **z/OS Connect**
 

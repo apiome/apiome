@@ -21,6 +21,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .normalizer import Keys, Normalizer, normalize_ordering
+from .ubl_schema import ubl_extras
 from .xml_canonical_hash import xml_provenance_extras
 from .xsd_parser import XsdComplexType, XsdDocument, XsdField, XsdSimpleType
 
@@ -196,6 +197,11 @@ class XsdNormalizer(Normalizer, register=True):
         )
 
         title = source.root_element or (types[0].name if types else "schema")
+        # MFI-20.5: a UBL document schema (and so a Peppol BIS document definition) is labelled
+        # with its document type and release; any other schema gets nothing.
+        ubl = ubl_extras(namespace, source.raw)
+        if ubl.get("ubl_document", {}).get("kind") == "document":
+            title = f"{title} (UBL {ubl['ubl_document']['version'] or ubl['ubl_document']['major_version']})"
         api = CanonicalApi(
             paradigm=self.paradigm,
             format=self.format,
@@ -216,6 +222,7 @@ class XsdNormalizer(Normalizer, register=True):
                     import_graph=source.import_graph,
                     xsd_version=source.xsd_version,
                 ),
+                **ubl,
             },
         )
         return normalize_ordering(api)

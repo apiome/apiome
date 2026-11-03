@@ -1039,7 +1039,7 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog an XSD schema, or a schema split across files, as data types.',
     page: 'apiome-docs/docs/bring-in/xsd-import.md',
     section: 'reference',
-    keywords: ['schemalocation', 'redefine', 'override', 'c14n', 'canonical xml', 'vc:minversion'],
+    keywords: ['schemalocation', 'redefine', 'override', 'c14n', 'canonical xml', 'vc:minversion', 'ubl', 'peppol', 'e-invoicing', 'invoice', 'credit note'],
   },
   {
     id: 'soapui-import',
@@ -1176,7 +1176,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     summary: 'Catalog UN/EDIFACT interchanges — ORDERS, INVOIC, DESADV — beside EDI X12.',
     page: 'apiome-docs/docs/bring-in/edifact-import.md',
     section: 'reference',
-    keywords: ['una', 'unb', 'orders', 'invoic', 'desadv', 'eancom', 'iso 9735', 'b2b'],
+    keywords: ['una', 'unb', 'orders', 'invoic', 'desadv', 'eancom', 'iso 9735', 'b2b', 'unt', 'control count', 'lint', 'diff'],
+  },
+  {
+    id: 'x12-import',
+    title: 'Import an EDI X12 interchange',
+    summary: 'Catalog ANSI X12 interchanges, lint their envelopes, and diff transaction sets.',
+    page: 'apiome-docs/docs/bring-in/x12-import.md',
+    section: 'reference',
+    keywords: ['ansi', 'asc', 'isa', 'gs', 'st', '850', '810', '856', '837', '997', 'control number', 'b2b', 'lint', 'diff'],
   },
   {
     id: 'idoc-import',

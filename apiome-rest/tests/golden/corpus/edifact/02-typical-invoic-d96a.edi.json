@@ -4,6 +4,26 @@
     "channels": [],
     "description": null,
     "extras": {
+      "edifact_controls": {
+        "groups": [],
+        "interchange": {
+          "control_reference": "000000002",
+          "count": 1,
+          "declared_count": 1,
+          "test_indicator": null,
+          "trailer_reference": "000000002"
+        },
+        "messages": [
+          {
+            "declared_segment_count": 30,
+            "directory": "D:96A",
+            "message_type": "INVOIC",
+            "reference": "2",
+            "segment_count": 30,
+            "trailer_reference": "2"
+          }
+        ]
+      },
       "edifact_directory": "D:96A",
       "edifact_envelope": {
         "association_code": null,
@@ -1901,7 +1921,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:6f549849a540374eaf1cc3771c02c26120b91b1aa672414438d4aab535beda0e",
+  "fingerprint": "sha256:1a45ab9aa22d839e4abda747a20ae1201c07dd90d1f0b91743cc9d7225aa1f81",
   "lint": {
     "findings": 60,
     "grade": "F",

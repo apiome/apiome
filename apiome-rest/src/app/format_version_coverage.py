@@ -2157,7 +2157,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 note="Both XSD versions share one namespace and no `vc:minVersion` gate is read, "
                 "so a 1.1 document is accepted; its 1.1-only constructs (assertions, conditional "
                 "type assignment) are not modelled.",
-            )
+            ),
+            FormatVersion(
+                version="UBL 2.x document schemas (Peppol BIS Billing 3.0)",
+                format_key="xsd",
+                support=VersionSupport.UNGATED,
+                note="MFI-20.5: a schema in a UBL namespace (`urn:oasis:names:specification:ubl:schema:"
+                "xsd:Invoice-2`) is labelled with its document type and the release its `version` "
+                "attribute names, its `ref=` members are read as the global elements they name, and a "
+                "UBL 2.1 Invoice or CreditNote is noted as the Peppol BIS Billing 3.0 document "
+                "definition. Peppol's Schematron rules import separately.",
+            ),
         ],
         writes=[
             FormatVersion(

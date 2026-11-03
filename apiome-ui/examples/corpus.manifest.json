@@ -33178,6 +33178,144 @@
       "rung": "typical"
     },
     {
+      "path": "xsd/07-ubl-2.1-invoice-set/UBL-CommonAggregateComponents-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "ubl",
+        "cac",
+        "element-ref"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "member",
+      "notes": "Fileset member: the Common Aggregate Components (cac:) the document imports."
+    },
+    {
+      "path": "xsd/07-ubl-2.1-invoice-set/UBL-CommonBasicComponents-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "ubl",
+        "cbc",
+        "simple-content"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "member",
+      "notes": "Fileset member: the Common Basic Components (cbc:) the document and the aggregates import."
+    },
+    {
+      "path": "xsd/07-ubl-2.1-invoice-set/UBL-Invoice-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "ubl",
+        "peppol",
+        "invoice",
+        "element-ref",
+        "xsd-import",
+        "simple-content"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "root",
+      "notes": "The UBL 2.1 Invoice document schema, which a Peppol BIS Billing 3.0 invoice validates against. MFI-20.5 resolves its ref= members across the set and labels the item UBL 2.1 (Invoice) with the Peppol note."
+    },
+    {
+      "path": "xsd/08-ubl-2.1-creditnote-set/UBL-CommonAggregateComponents-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "ubl",
+        "cac",
+        "element-ref"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "member",
+      "notes": "Fileset member: the Common Aggregate Components (cac:) the document imports."
+    },
+    {
+      "path": "xsd/08-ubl-2.1-creditnote-set/UBL-CommonBasicComponents-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.0
+      },
+      "features": [
+        "ubl",
+        "cbc",
+        "simple-content"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "member",
+      "notes": "Fileset member: the Common Basic Components (cbc:) the document and the aggregates import."
+    },
+    {
+      "path": "xsd/08-ubl-2.1-creditnote-set/UBL-CreditNote-2.1.xsd",
+      "format": "xsd",
+      "adapter_key": "xsd",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "xsd",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "ubl",
+        "peppol",
+        "creditnote",
+        "element-ref",
+        "xsd-import",
+        "simple-content"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the apiome catalog import examples; a representative subset of the published OASIS UBL 2.1 schemas (element names, order and namespaces are UBL's; no OASIS text copied).",
+      "rung": "multi-file",
+      "fileset_role": "root",
+      "notes": "The UBL 2.1 CreditNote document schema, which a Peppol BIS Billing 3.0 credit note validates against. MFI-20.5 resolves its ref= members across the set and labels the item UBL 2.1 (CreditNote) with the Peppol note."
+    },
+    {
       "path": "xsd/adversarial/01-billion-laughs.xsd",
       "format": "xsd",
       "adapter_key": "xsd",
@@ -33965,9 +34103,6 @@
     },
     "xmlrpc": {
       "multi-file": "XmlRpcImportSource.parse_fileset parses only the root member and XML-RPC has no cross-file reference mechanism, so a genuine multi-file set is not importable."
-    },
-    "xsd": {
-      "multi-file": "parse_fileset in xsd_import_source.py parses only the root member; xs:include/xs:import across members is never resolved (verified in source), so a multi-file set adds no coverage."
     },
     "zosconnect": {
       "multi-file": "The zosconnect adapter's parse_fileset only parses the root member and resolves no cross-file references (copybook structures are name references only), so a multi-file set exercises nothing."

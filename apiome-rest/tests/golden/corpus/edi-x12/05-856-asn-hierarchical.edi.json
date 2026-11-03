@@ -4,6 +4,41 @@
     "channels": [],
     "description": null,
     "extras": {
+      "x12_controls": {
+        "groups": [
+          {
+            "control_number": "5",
+            "declared_transaction_count": 2,
+            "functional_id": "SH",
+            "trailer_control_number": "5",
+            "transaction_count": 2,
+            "transactions": [
+              {
+                "control_number": "0001",
+                "declared_segment_count": 16,
+                "segment_count": 16,
+                "set_id": "856",
+                "trailer_control_number": "0001"
+              },
+              {
+                "control_number": "0002",
+                "declared_segment_count": 11,
+                "segment_count": 11,
+                "set_id": "856",
+                "trailer_control_number": "0002"
+              }
+            ],
+            "version": "004010"
+          }
+        ],
+        "interchange": {
+          "control_number": "000000005",
+          "declared_group_count": 1,
+          "group_count": 1,
+          "trailer_control_number": "000000005",
+          "usage_indicator": "P"
+        }
+      },
       "x12_envelope": {
         "element_separator": "*",
         "functional_id": "SH",
@@ -913,7 +948,7 @@
     "confidence": 0.95,
     "format": "edix12"
   },
-  "fingerprint": "sha256:8773cc838f53965ab9a2961367eb9628930e7a96215bbf878599c9cdc227a679",
+  "fingerprint": "sha256:fcf7da3cc008e97e5aedd31f8f8af2653d7344ca91f1dc0d539b3b5d0ed11ec3",
   "lint": {
     "findings": 28,
     "grade": "D",

@@ -6,7 +6,7 @@ Sample source documents for exercising the catalog **Import** flow (the ImportDi
 
 > **Adding an example?** Read the [corpus contributor guide](../../docs/CORPUS_CONTRIBUTOR_GUIDE.md) first — it covers the ladder, every manifest field, the licensing rules for documents derived from third-party specs, the anonymization rule for captured payloads, and the review checklist. `python3 scripts/check_corpus_provenance.py` enforces the provenance rules in CI.
 
-The corpus holds **1530 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
+The corpus holds **1536 files** across **110 format directories**. Every file has a manifest entry declaring its format family, the adapter that must claim it, its validity class, the detection contract (format key + minimum confidence), feature tags, and the expected import outcome.
 
 ## How the corpus is used
 
@@ -127,7 +127,7 @@ The corpus holds **1530 files** across **110 format directories**. Every file ha
 | `sql-ddl/` | SQL DDL schemas and migrations | data_schema | `CREATE TABLE`/`CREATE VIEW`/`ALTER TABLE … ADD CONSTRAINT` | 15 |
 | `typescript-types/` | TypeScript type declarations | data_schema | `export interface`/`export type`/`export enum` declarations in `.ts`/`.d.ts` | 15 |
 | `vsam-idcams/` | VSAM cluster definitions | data_schema | `DEFINE CLUSTER`/`AIX`/`PATH` with parenthesised parameters, or `LISTCAT` output | 14 |
-| `xsd/` | XML Schema (XSD) | data_schema | `xs:schema` root element | 13 |
+| `xsd/` | XML Schema (XSD) | data_schema | `xs:schema` root element | 19 |
 | `zod/` | Zod schemas | data_schema | `import { z } from 'zod'` + exported `z.object(...)` values | 15 |
 
 ### Industry / domain messaging
@@ -373,7 +373,7 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/04-wrong-format-graphql.graphql` | — | `asn1` (no guarantee) | invalid | `negative`, `wrong-format`, `graphql` |
 | `negative/05-encoding-utf16.asn1` | — | `asn1` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 
-> ⚠ **`07-scalar-alias-typedefs.asn1`** — Import currently fails: the asn1 normalizer builds `Type(scalar=...)` for top-level scalar typedefs and `Type(alias_of=...)` for top-level SEQUENCE OF typedefs, but the canonical `Type` model has no `scalar` field and names the alias field `aliased`, so normalize raises a pydantic ValidationError; expected_outcome records the intended contract.
+> ⚠ **`07-scalar-alias-typedefs.asn1`** — Top-level scalar, SEQUENCE OF and BIT STRING typedefs import as aliases with their constraints and named numbers (MFI-21.5, #3995; the import used to fail on them).
 
 ### `asyncapi/` — AsyncAPI 2.x/3.0
 
@@ -964,9 +964,9 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-stress-presence-and-rules.xml` | stress | `fix-orchestra` ≥ 0.9 | valid | `presence-required`, `presence-optional`, `presence-conditional`, `presence-forbidden`, `presence-ignored`, `presence-constant`, `rule`, `when`, `scenario`, `responses` |
 | `05-real-world-execution-flow.xml` | real-world | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow`, `responses`, `conditional-rules`, `execution-report`, `cancel-reject` |
 | `06-typical-actors-and-state-machine.xml` | typical | `fix-orchestra` ≥ 0.9 | valid | `actors`, `flow-reliability`, `states`, `transition`, `state-machine` |
-| `08-typical-order-repository-venue-dialect.xml` ⚠ | typical | `fix-orchestra` ≥ 0.9 | valid | `venue-dialect`, `diff-fixture`, `presence-required`, `presence-conditional`, `presence-forbidden`, `code-removed`, `code-added`, `new-message` |
 | `07-modular-set/codesets.xml` ⚠ | multi-file (member) | `fix-orchestra` (no guarantee) | valid | `shared-code-sets`, `xinclude-target` |
 | `07-modular-set/repository.xml` | multi-file (root) | `fix-orchestra` ≥ 0.9 | valid | `xinclude`, `modular-repository`, `conditional-rule` |
+| `08-typical-order-repository-venue-dialect.xml` ⚠ | typical | `fix-orchestra` ≥ 0.9 | valid | `venue-dialect`, `diff-fixture`, `presence-required`, `presence-conditional`, `presence-forbidden`, `code-removed`, `code-added`, `new-message` |
 | `negative/01-syntactic-unclosed-message.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `syntactic`, `unclosed-element` |
 | `negative/02-semantic-no-messages.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `semantic`, `no-messages` |
 | `negative/03-truncated-mid-codeset.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `truncated`, `mid-attribute` |
@@ -974,9 +974,9 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/05-encoding-utf16.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `encoding`, `utf-16` |
 | `negative/06-unresolvable-field-ref.xml` | — | `fix-orchestra` (no guarantee) | invalid | `negative`, `unresolvable-ref`, `missing-field`, `missing-component` |
 
-> ⚠ **`08-typical-order-repository-venue-dialect.xml`** — The next release of 02-typical-order-repository.xml as a venue's dialect: a field added, presences tightened and relaxed, codes removed and added, a message added — the diff fixture for the FIX Orchestra breaking-change rules (MFI-20.4).
-
 > ⚠ **`07-modular-set/codesets.xml`** — Fileset member: the shared code-set library; on its own it types nothing.
+
+> ⚠ **`08-typical-order-repository-venue-dialect.xml`** — The next release of 02-typical-order-repository.xml as a venue's dialect: a field added, presences tightened and relaxed, codes removed and added, a message added — the diff fixture for the FIX Orchestra breaking-change rules (MFI-20.4).
 
 > ⚠ **`negative/04-wrong-format-fix-tagvalue.fix`** — A tag=value message log: the shipped fix adapter's input, and the thing Orchestra is the specification *for*. Detection must not confuse the two.
 
@@ -2751,6 +2751,12 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `04-kitchen-sink.xsd` | stress | `xsd` ≥ 0.95 | valid | `restrictions`, `union`, `list`, `choice`, `wildcard`, `annotation` |
 | `05-ubl-invoice-shape.xsd` | real-world | `xsd` ≥ 0.95 | valid | `complex-type`, `attribute`, `enumeration`, `occurrence`, `sequence` |
 | `06-employee-directory.xsd` | typical | `xsd` ≥ 0.95 | valid | `complex-type`, `simple-type`, `enumeration`, `occurrence`, `attribute` |
+| `07-ubl-2.1-invoice-set/UBL-CommonAggregateComponents-2.1.xsd` ⚠ | multi-file (member) | `xsd` (no guarantee) | valid | `ubl`, `cac`, `element-ref` |
+| `07-ubl-2.1-invoice-set/UBL-CommonBasicComponents-2.1.xsd` ⚠ | multi-file (member) | `xsd` (no guarantee) | valid | `ubl`, `cbc`, `simple-content` |
+| `07-ubl-2.1-invoice-set/UBL-Invoice-2.1.xsd` ⚠ | multi-file (root) | `xsd` ≥ 0.95 | valid | `ubl`, `peppol`, `invoice`, `element-ref`, `xsd-import`, `simple-content` |
+| `08-ubl-2.1-creditnote-set/UBL-CommonAggregateComponents-2.1.xsd` ⚠ | multi-file (member) | `xsd` (no guarantee) | valid | `ubl`, `cac`, `element-ref` |
+| `08-ubl-2.1-creditnote-set/UBL-CommonBasicComponents-2.1.xsd` ⚠ | multi-file (member) | `xsd` (no guarantee) | valid | `ubl`, `cbc`, `simple-content` |
+| `08-ubl-2.1-creditnote-set/UBL-CreditNote-2.1.xsd` ⚠ | multi-file (root) | `xsd` ≥ 0.95 | valid | `ubl`, `peppol`, `creditnote`, `element-ref`, `xsd-import`, `simple-content` |
 | `adversarial/01-billion-laughs.xsd` | — | `xsd` (no guarantee) | adversarial | `adversarial`, `billion-laughs`, `entity-expansion`, `dtd` |
 | `adversarial/02-external-entity-file-read.xsd` | — | `xsd` (no guarantee) | adversarial | `adversarial`, `xxe`, `external-entity`, `file-disclosure` |
 | `negative/01-syntactic-mismatched-close-tag.xsd` | — | `xsd` (no guarantee) | invalid | `negative`, `syntactic`, `mismatched-close-tag` |
@@ -2758,6 +2764,18 @@ Ladder rungs (IXH-1.2): `minimal` canonical hello-world · `typical` realistic s
 | `negative/03-truncated-mid-element.xsd` | — | `xsd` (no guarantee) | invalid | `negative`, `truncated`, `mid-element` |
 | `negative/04-wrong-format-openapi-document.json` | — | `xsd` (no guarantee) | invalid | `negative`, `wrong-format`, `openapi-document` |
 | `negative/05-encoding-utf16-bom.xsd` | — | `xsd` (no guarantee) | invalid | `negative`, `encoding`, `utf16-bom` |
+
+> ⚠ **`07-ubl-2.1-invoice-set/UBL-CommonAggregateComponents-2.1.xsd`** — Fileset member: the Common Aggregate Components (cac:) the document imports.
+
+> ⚠ **`07-ubl-2.1-invoice-set/UBL-CommonBasicComponents-2.1.xsd`** — Fileset member: the Common Basic Components (cbc:) the document and the aggregates import.
+
+> ⚠ **`07-ubl-2.1-invoice-set/UBL-Invoice-2.1.xsd`** — The UBL 2.1 Invoice document schema, which a Peppol BIS Billing 3.0 invoice validates against. MFI-20.5 resolves its ref= members across the set and labels the item UBL 2.1 (Invoice) with the Peppol note.
+
+> ⚠ **`08-ubl-2.1-creditnote-set/UBL-CommonAggregateComponents-2.1.xsd`** — Fileset member: the Common Aggregate Components (cac:) the document imports.
+
+> ⚠ **`08-ubl-2.1-creditnote-set/UBL-CommonBasicComponents-2.1.xsd`** — Fileset member: the Common Basic Components (cbc:) the document and the aggregates import.
+
+> ⚠ **`08-ubl-2.1-creditnote-set/UBL-CreditNote-2.1.xsd`** — The UBL 2.1 CreditNote document schema, which a Peppol BIS Billing 3.0 credit note validates against. MFI-20.5 resolves its ref= members across the set and labels the item UBL 2.1 (CreditNote) with the Peppol note.
 
 ### `zod/` — Zod schemas
 
@@ -2835,7 +2853,6 @@ Rungs that do not apply to an adapter's format, with the manifest-recorded justi
 | `wadl` | multi-file | parse_fileset in wadl_import_source.py parses only the root member and never resolves references into other members (verified in source), so a multi-file set adds no coverage. |
 | `xmlrpc` | multi-file | XmlRpcImportSource.parse_fileset parses only the root member and XML-RPC has no cross-file reference mechanism, so a genuine multi-file set is not importable. |
 | `xregistry` | multi-file | An xRegistry document is one self-contained JSON document whose references are xids into the same document; XRegistryImportSource.parse_fileset parses only the root member, so a multi-file set demonstrates nothing beyond a single file. |
-| `xsd` | multi-file | parse_fileset in xsd_import_source.py parses only the root member; xs:include/xs:import across members is never resolved (verified in source), so a multi-file set adds no coverage. |
 | `zosconnect` | multi-file | The zosconnect adapter's parse_fileset only parses the root member and resolves no cross-file references (copybook structures are name references only), so a multi-file set exercises nothing. |
 
 ## Provenance and licensing
@@ -2844,7 +2861,7 @@ Every entry declares where its bytes came from (`origin`), under what license, a
 
 | Origin | Files | Licenses |
 | --- | --- | --- |
-| `hand-authored` | 1530 | `Apache-2.0` |
+| `hand-authored` | 1536 | `Apache-2.0` |
 
 ## Trying an import
 

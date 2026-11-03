@@ -4,6 +4,51 @@
     "channels": [],
     "description": null,
     "extras": {
+      "x12_controls": {
+        "groups": [
+          {
+            "control_number": "10",
+            "declared_transaction_count": 1,
+            "functional_id": "PO",
+            "trailer_control_number": "10",
+            "transaction_count": 1,
+            "transactions": [
+              {
+                "control_number": "0001",
+                "declared_segment_count": 5,
+                "segment_count": 5,
+                "set_id": "850",
+                "trailer_control_number": "0001"
+              }
+            ],
+            "version": "004010"
+          },
+          {
+            "control_number": "11",
+            "declared_transaction_count": 1,
+            "functional_id": "FA",
+            "trailer_control_number": "11",
+            "transaction_count": 1,
+            "transactions": [
+              {
+                "control_number": "0002",
+                "declared_segment_count": 4,
+                "segment_count": 4,
+                "set_id": "997",
+                "trailer_control_number": "0002"
+              }
+            ],
+            "version": "004010"
+          }
+        ],
+        "interchange": {
+          "control_number": "000000004",
+          "declared_group_count": 2,
+          "group_count": 2,
+          "trailer_control_number": "000000004",
+          "usage_indicator": "P"
+        }
+      },
       "x12_envelope": {
         "element_separator": "*",
         "functional_id": "PO",
@@ -340,7 +385,7 @@
     "confidence": 0.95,
     "format": "edix12"
   },
-  "fingerprint": "sha256:52f3da65589f53e6739982e6483a8fb2a57bb24ae55cf01563d2026eac7cf706",
+  "fingerprint": "sha256:821f55b8711a0ad640757efc5155418fa687da82ddab258048dc1bf16ceb1cd5",
   "lint": {
     "findings": 14,
     "grade": "B",

@@ -4,6 +4,26 @@
     "channels": [],
     "description": null,
     "extras": {
+      "edifact_controls": {
+        "groups": [],
+        "interchange": {
+          "control_reference": "000000005",
+          "count": 1,
+          "declared_count": 1,
+          "test_indicator": null,
+          "trailer_reference": "000000005"
+        },
+        "messages": [
+          {
+            "declared_segment_count": 39,
+            "directory": "D:96A",
+            "message_type": "ORDERS",
+            "reference": "1",
+            "segment_count": 39,
+            "trailer_reference": "1"
+          }
+        ]
+      },
       "edifact_directory": "D:96A",
       "edifact_envelope": {
         "association_code": "EAN008",
@@ -2000,7 +2020,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:b1789b0a02b97586ded72fced382487981a0002fe82872ae8874a15e05369779",
+  "fingerprint": "sha256:885b1feb1ccd5dcfb1e9aa9eb21eb3cbaebcd001acf25a30153d9b36b7e9b594",
   "lint": {
     "findings": 67,
     "grade": "F",

@@ -1,0 +1,23 @@
+---
+slug: edi-x12-edifact-peppol
+title: EDI interchanges are linted and diffed like a trading partner reads them, and UBL / Peppol schemas import
+description: X12 and EDIFACT envelopes are linted, sample diffs graded fairly, and UBL 2.1 schemas recognised.
+authors: [apiome]
+---
+
+X12 and UN/EDIFACT items now get the lint and diff rules a trading partner's translator applies, and the
+UBL 2.1 Invoice and CreditNote schemas that Peppol e-invoicing is built on import as UBL documents.
+[Import an EDI X12 interchange](/bring-in/x12-import).
+
+{/* truncate */}
+
+- **Envelope lint.** The new `edix12` and `edifact` lint packs check that every trailer repeats its
+  header's control number and counts what it closes (`SE01`, `GE01`, `IEA01`; `UNT`, `UNE`, `UNZ`). They
+  also check for duplicate control numbers, a `GS01` that does not match the transaction set, a missing
+  version or directory, and test interchanges.
+- **Fair diffs.** An EDI item is a sample, so a version with new values is now **safe** instead of
+  dangerous. A segment or element that is no longer sent is **breaking**, and a new one is
+  **dangerous**, because a receiver validating against its guide rejects it.
+- **UBL and Peppol.** Upload `UBL-Invoice-2.1.xsd` with its component schemas and the item reads as
+  **Invoice (UBL 2.1)**, with every `cbc:` / `cac:` reference resolved and **Peppol BIS Billing 3.0**
+  noted in its provenance. [UBL and Peppol document schemas](/bring-in/xsd-import#ubl-and-peppol-document-schemas).

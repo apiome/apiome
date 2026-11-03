@@ -702,6 +702,34 @@
       ]
     },
     {
+      "id": "catalog/edix12-control-numbers-match",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "edix12.control-numbers-match"
+      ]
+    },
+    {
+      "id": "catalog/edix12-control-totals-match",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "edix12.control-totals-match"
+      ]
+    },
+    {
+      "id": "catalog/edifact-control-references-match",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "edifact.control-references-match"
+      ]
+    },
+    {
+      "id": "catalog/edifact-control-counts-match",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "edifact.control-counts-match"
+      ]
+    },
+    {
       "id": "catalog/raml-shacl-violation",
       "kind": "catalog_raml_amf",
       "expected_blocking_rule_ids": [

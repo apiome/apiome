@@ -4,6 +4,60 @@
     "channels": [],
     "description": null,
     "extras": {
+      "edifact_controls": {
+        "groups": [
+          {
+            "declared_message_count": 2,
+            "group_id": "ORDERS",
+            "message_count": 2,
+            "messages": [
+              {
+                "declared_segment_count": 13,
+                "directory": "D:96A",
+                "message_type": "ORDERS",
+                "reference": "1",
+                "segment_count": 13,
+                "trailer_reference": "1"
+              },
+              {
+                "declared_segment_count": 9,
+                "directory": "D:96A",
+                "message_type": "ORDERS",
+                "reference": "2",
+                "segment_count": 9,
+                "trailer_reference": "2"
+              }
+            ],
+            "reference": "1",
+            "trailer_reference": "1"
+          },
+          {
+            "declared_message_count": 1,
+            "group_id": "INVOIC",
+            "message_count": 1,
+            "messages": [
+              {
+                "declared_segment_count": 13,
+                "directory": "D:96A",
+                "message_type": "INVOIC",
+                "reference": "3",
+                "segment_count": 13,
+                "trailer_reference": "3"
+              }
+            ],
+            "reference": "2",
+            "trailer_reference": "2"
+          }
+        ],
+        "interchange": {
+          "control_reference": "000000004",
+          "count": 2,
+          "declared_count": 2,
+          "test_indicator": null,
+          "trailer_reference": "000000004"
+        },
+        "messages": []
+      },
       "edifact_directory": "D:96A",
       "edifact_envelope": {
         "association_code": null,
@@ -930,7 +984,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:0b1bf92a1c73d51c580f9d02002f7c4bf11f01d5fdb52974b0acd0da12f8b677",
+  "fingerprint": "sha256:5bf6f5e51c7bc729806370c3b3a93936ef5fa9b036160428ec2c9726789792d9",
   "lint": {
     "findings": 27,
     "grade": "D",
