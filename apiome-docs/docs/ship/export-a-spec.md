@@ -535,8 +535,28 @@ too: the `.smithy` file, or with `both` a zip of the two views.
 
 ### TypeSpec from any source
 
+#### When to export to TypeSpec
+
+- **Move an API to TypeSpec.** Any REST, RPC, GraphQL, JSON Schema or WSDL item becomes one `.tsp`
+  file that compiles, ready to edit as the source of truth. What TypeSpec HTTP cannot carry, and what
+  is reframed as HTTP, is listed in the fidelity report before you download.
+- **Round-trip a TypeSpec item.** An item imported from a `.tsp` file exports back **lossless**, with
+  its imports, namespace, routes and decorators.
+
+#### TypeSpec export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the TypeSpec card and its options | **Export** dialog → **REST & HTTP** → **TypeSpec** | [Where to find the TypeSpec card](#where-to-find-the-typespec-card) |
+| **See** how the document, types, members and operations are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-typespec) |
+| **See** what is dropped, approximated or reframed | The fidelity report on the card | [What the fidelity report lists](#what-the-typespec-fidelity-report-lists) |
+| **Trust** the file: it compiles and its OpenAPI imports | Automatic before every download | [How a TypeSpec export is checked](#how-a-typespec-export-is-checked) |
+| **Export** from the CLI | `apiome export typespec <item> --out <file>.tsp` | [Where to find the TypeSpec card](#where-to-find-the-typespec-card) |
+
 Exporting to **TypeSpec** writes one `.tsp` file that compiles with the TypeSpec compiler Apiome
 ships (`tsp` 0.65 with `@typespec/http`), whatever the item was imported from.
+
+#### How a TypeSpec export is checked {#how-a-typespec-export-is-checked}
 
 Each export is checked before it is offered:
 
@@ -550,6 +570,8 @@ Without the compiler on the server, the `.tsp` is read back by the TypeSpec impo
 Compiling to OpenAPI also shows what choosing TypeSpec costs compared with exporting straight to
 **OpenAPI**: `@typespec/openapi3` names each operation `<Interface>_<operation>`
 (`PetService_listPets`), writes a plain `integer` as `int32`, and makes a request body required.
+
+#### How the item is written {#how-the-item-is-written-to-typespec}
 
 - **Document.** The title becomes `@service({ title: "…" })` on the namespace, and the description
   becomes its doc comment. The version becomes `@info({ version: "…" })` (from `@typespec/openapi`),
@@ -582,6 +604,8 @@ Compiling to OpenAPI also shows what choosing TypeSpec costs compared with expor
 - **From a TypeSpec item.** An item imported from a `.tsp` file keeps its imports, namespace,
   interface routes, field types and decorators, so it exports and re-imports unchanged.
 
+#### What the fidelity report lists {#what-the-typespec-fidelity-report-lists}
+
 The fidelity report lists what TypeSpec cannot carry, on the type, field or operation it concerns:
 
 - **Dropped:** constraints with no decorator (`multipleOf`, `uniqueItems`), a default that does not
@@ -602,7 +626,9 @@ The fidelity report lists what TypeSpec cannot carry, on the type, field or oper
 - **Carried.** For each operation and type that is carried, the report names what it became, such as
   `op getPet @get /pets/{id}` or `model Pet`.
 
-**Where to find it.** In the **Export** dialog, the **TypeSpec** card is under **REST & HTTP** on the
+#### Where to find the TypeSpec card {#where-to-find-the-typespec-card}
+
+In the **Export** dialog, the **TypeSpec** card is under **REST & HTTP** on the
 **Target** step, as one file. Its badge is **lossy** for a REST, RPC, GraphQL, JSON Schema or WSDL
 source and **lossless** for an item imported from TypeSpec. Pick the card to see its two options, both
 on by default: **Include Http Imports** writes the `@typespec/http` import and `using` the document
