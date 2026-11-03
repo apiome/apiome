@@ -1,13 +1,15 @@
 name: apiome-openapi
 
 # Publishes the REST OpenAPI document to the live catalog, so it runs only for `main`: a pull
-# request or a feature-branch push must never import an unmerged spec.
+# request or a feature-branch push must never import an unmerged spec. It triggers only when
+# openapi.yaml or openapi.json itself changes: an import of an unchanged spec re-uploads a version
+# the catalog already holds and fails. Use workflow_dispatch to re-run it by hand.
 on:
   push:
     branches: [ main ]
     paths:
-      - "apiome-rest/openapi.*"
-      - ".github/workflows/apiome-openapi.yml"
+      - "apiome-rest/openapi.yaml"
+      - "apiome-rest/openapi.json"
   workflow_dispatch:
 
 jobs:
