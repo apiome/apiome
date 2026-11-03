@@ -20,14 +20,14 @@ jobs:
       APIOME_API_KEY: ${{ secrets.APIOME_API_KEY }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Python comes from uv, not actions/setup-python: the CPython builds setup-python
       # downloads for Ubuntu 26.04 declare `x86 ISA needed: x86-64-v3`, which the self-hosted
       # runner's vCPU does not provide, so they abort with "CPU ISA level is lower than
       # required". uv's python-build-standalone builds are baseline x86-64.
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           python-version: "3.12"

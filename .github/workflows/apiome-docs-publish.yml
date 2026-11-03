@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Read package version
         id: meta
@@ -59,7 +59,7 @@ jobs:
       # Build from the repository root: the docs workspace installs against the root lockfile, and
       # the build reads the REST changelog and the app's What's new for the release notes.
       - name: Build Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./apiome-docs/Dockerfile

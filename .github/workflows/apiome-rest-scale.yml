@@ -53,14 +53,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Python comes from uv, not actions/setup-python: the CPython builds setup-python
       # downloads for Ubuntu 26.04 declare `x86 ISA needed: x86-64-v3`, which the self-hosted
       # runner's vCPU does not provide, so they abort with "CPU ISA level is lower than
       # required". uv's python-build-standalone builds are baseline x86-64.
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           python-version: "3.12"
@@ -109,7 +109,7 @@ jobs:
 
       - name: Upload benchmark report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apiome-rest-scale-report
           path: |
@@ -119,7 +119,7 @@ jobs:
 
       - name: Upload refreshed baseline
         if: always() && inputs.update_baseline
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: apiome-rest-scale-baseline
           path: apiome-rest/tests/scale/scale_budgets.json

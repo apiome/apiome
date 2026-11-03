@@ -51,12 +51,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # uv-managed Python: setup-python's Ubuntu 26.04 builds need an x86-64-v3 CPU the
       # self-hosted runner does not have (see apiome-rest-test.yml).
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           python-version: "3.12"
@@ -68,7 +68,7 @@ jobs:
         run: uv sync
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: lts/*
 
