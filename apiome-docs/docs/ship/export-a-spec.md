@@ -500,8 +500,33 @@ Browse offers Thrift too, as the `.thrift` file.
 
 ### OMG IDL (CORBA or DDS) from any source
 
+#### When to export to OMG IDL
+
+- **Serve a CORBA estate.** With the `corba` profile, an API's services become IDL `interface`s with
+  their operations and exceptions, for CORBA middleware (defense, telecom, finance) that omniidl
+  compiles.
+- **Define DDS topic types.** With the `dds` profile, the item's data types — with `@key` fields and
+  one topic per event channel — are written for a DDS application that Cyclone DDS `idlc` compiles.
+- **Round-trip a CORBA IDL item.** An item imported from CORBA IDL exports **lossless**, with its
+  modules, `typedef`s and parameter directions.
+
+What IDL cannot carry is listed in the fidelity report, for the profile you pick, before you
+download.
+
+#### OMG IDL export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the CORBA IDL card and its options (profile, module, comments) | **Export** dialog → **CORBA IDL** (under **RPC**) | [Where to find the CORBA IDL card](#where-to-find-the-corba-idl-card) |
+| **See** how types, modules, interfaces, keys and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-omg-idl) |
+| **See** what the profile you picked cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-omg-idl-fidelity-report-lists) |
+| **Trust** the file: omniidl or `idlc`, then re-import | Automatic before every download | [How an IDL export is checked](#how-an-idl-export-is-checked) |
+| **Export** from the CLI | `apiome export idl <item> --out <file>.idl` | [Where to find the CORBA IDL card](#where-to-find-the-corba-idl-card) |
+
 Exporting to **CORBA IDL** writes one `<Name>.idl` file in OMG IDL 4.2 that reference IDL compilers
 accept: omniidl for the CORBA parts and Cyclone DDS `idlc` for the annotated data types.
+
+#### How an IDL export is checked {#how-an-idl-export-is-checked}
 
 Each export is checked before you download it:
 
@@ -509,6 +534,8 @@ Each export is checked before you download it:
    `corba` export, `idlc` for a `dds` export. A compile error fails the export and quotes the
    compiler's message and line (`idl.compile`).
 2. Apiome's CORBA IDL importer reads it back (`idl.reimport`). Without the compiler, this is the check.
+
+#### How the item is written {#how-the-item-is-written-to-omg-idl}
 
 - **Profile.** The **profile** option picks what is written. `corba` (the default) writes interfaces
   and exceptions. `dds` writes only the data types a DDS topic can use: no interfaces, no exceptions
@@ -545,6 +572,8 @@ Each export is checked before you download it:
   declared, and a comment names the topic (`// DDS topic "orders.placed": ::shop::Order`). A DDS
   application creates the topic from that name and type.
 
+#### What the fidelity report lists {#what-the-omg-idl-fidelity-report-lists}
+
 The fidelity report depends on the profile:
 
 | What the source has | `corba` | `dds` |
@@ -562,7 +591,9 @@ The fidelity report depends on the profile:
 An item imported from CORBA IDL exports back **lossless**: its members keep their order, which is all
 IDL records about them.
 
-**Where to find it.** In the **Export** dialog, the **CORBA IDL** card is under **RPC** on the
+#### Where to find the CORBA IDL card {#where-to-find-the-corba-idl-card}
+
+In the **Export** dialog, the **CORBA IDL** card is under **RPC** on the
 **Target** step, as one `.idl` file. Its badge is **lossless** for an item imported from CORBA IDL and
 **lossy** for any other source. Pick the card to see **Profile** (`corba` by default, or `dds`),
 **Module** (empty: the item's own module or name) and **Include Comments** (on by default). The DDS
