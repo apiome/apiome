@@ -1,0 +1,2177 @@
+{
+  "adapter": "xsd",
+  "canonical": {
+    "channels": [],
+    "description": null,
+    "extras": {
+      "format_profile": {
+        "document_type": "CreditNote",
+        "engine": "xsd",
+        "evidence": [
+          "targetNamespace urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+          "schema version 2.1"
+        ],
+        "implementation_guide_consulted": false,
+        "key": "ubl",
+        "label": "UBL 2.1",
+        "peppol": "Peppol BIS Billing 3.0"
+      },
+      "ubl_document": {
+        "document_type": "CreditNote",
+        "kind": "document",
+        "major_version": "2",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "peppol": "Peppol BIS Billing 3.0",
+        "version": "2.1"
+      },
+      "xml_c14n_algorithm": "sha256-c14n2-v1",
+      "xml_c14n_sha256": "8c7a687e361eb6ac38c70abcb09dec39aeb960aad6df95886913c97dc9f02e59",
+      "xml_import_graph": {
+        "documents": [
+          {
+            "kind": "schema",
+            "path": "UBL-CreditNote-2.1.xsd"
+          },
+          {
+            "kind": "schema",
+            "path": "UBL-CommonAggregateComponents-2.1.xsd"
+          },
+          {
+            "kind": "schema",
+            "path": "UBL-CommonBasicComponents-2.1.xsd"
+          }
+        ],
+        "unresolved": []
+      },
+      "xsd_elements": [
+        {
+          "name": "CreditNote",
+          "type": "CreditNoteType"
+        },
+        {
+          "name": "AccountingSupplierParty",
+          "type": "SupplierPartyType"
+        },
+        {
+          "name": "AccountingCustomerParty",
+          "type": "CustomerPartyType"
+        },
+        {
+          "name": "Party",
+          "type": "PartyType"
+        },
+        {
+          "name": "PartyName",
+          "type": "PartyNameType"
+        },
+        {
+          "name": "PostalAddress",
+          "type": "AddressType"
+        },
+        {
+          "name": "Country",
+          "type": "CountryType"
+        },
+        {
+          "name": "PartyLegalEntity",
+          "type": "PartyLegalEntityType"
+        },
+        {
+          "name": "PaymentMeans",
+          "type": "PaymentMeansType"
+        },
+        {
+          "name": "TaxTotal",
+          "type": "TaxTotalType"
+        },
+        {
+          "name": "TaxSubtotal",
+          "type": "TaxSubtotalType"
+        },
+        {
+          "name": "TaxCategory",
+          "type": "TaxCategoryType"
+        },
+        {
+          "name": "ClassifiedTaxCategory",
+          "type": "TaxCategoryType"
+        },
+        {
+          "name": "TaxScheme",
+          "type": "TaxSchemeType"
+        },
+        {
+          "name": "LegalMonetaryTotal",
+          "type": "MonetaryTotalType"
+        },
+        {
+          "name": "InvoiceLine",
+          "type": "InvoiceLineType"
+        },
+        {
+          "name": "CreditNoteLine",
+          "type": "CreditNoteLineType"
+        },
+        {
+          "name": "Item",
+          "type": "ItemType"
+        },
+        {
+          "name": "Price",
+          "type": "PriceType"
+        },
+        {
+          "name": "CustomizationID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "ProfileID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "ID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "IssueDate",
+          "type": "DateType"
+        },
+        {
+          "name": "DueDate",
+          "type": "DateType"
+        },
+        {
+          "name": "InvoiceTypeCode",
+          "type": "CodeType"
+        },
+        {
+          "name": "CreditNoteTypeCode",
+          "type": "CodeType"
+        },
+        {
+          "name": "Note",
+          "type": "TextType"
+        },
+        {
+          "name": "DocumentCurrencyCode",
+          "type": "CodeType"
+        },
+        {
+          "name": "BuyerReference",
+          "type": "TextType"
+        },
+        {
+          "name": "EndpointID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "Name",
+          "type": "TextType"
+        },
+        {
+          "name": "RegistrationName",
+          "type": "TextType"
+        },
+        {
+          "name": "CompanyID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "StreetName",
+          "type": "TextType"
+        },
+        {
+          "name": "CityName",
+          "type": "TextType"
+        },
+        {
+          "name": "PostalZone",
+          "type": "TextType"
+        },
+        {
+          "name": "IdentificationCode",
+          "type": "CodeType"
+        },
+        {
+          "name": "PaymentMeansCode",
+          "type": "CodeType"
+        },
+        {
+          "name": "PaymentID",
+          "type": "IdentifierType"
+        },
+        {
+          "name": "TaxAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "TaxableAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "Percent",
+          "type": "PercentType"
+        },
+        {
+          "name": "LineExtensionAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "TaxExclusiveAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "TaxInclusiveAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "PayableAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "PriceAmount",
+          "type": "AmountType"
+        },
+        {
+          "name": "InvoicedQuantity",
+          "type": "QuantityType"
+        },
+        {
+          "name": "CreditedQuantity",
+          "type": "QuantityType"
+        }
+      ],
+      "xsd_root_element": "CreditNote",
+      "xsd_target_namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"
+    },
+    "format": "xsd",
+    "identity": {
+      "extras": {},
+      "id": null,
+      "name": "CreditNote (UBL 2.1)",
+      "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"
+    },
+    "paradigm": "data_schema",
+    "protocol": null,
+    "schema_version": 1,
+    "servers": [],
+    "services": [],
+    "title": "CreditNote (UBL 2.1)",
+    "types": [
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType.CityName",
+            "name": "CityName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CountryType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType.Country",
+            "name": "Country",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CountryType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType.PostalZone",
+            "name": "PostalZone",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType.StreetName",
+            "name": "StreetName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType",
+        "key_type": null,
+        "kind": "record",
+        "name": "AddressType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType.currencyID",
+            "name": "currencyID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "decimal"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+        "key_type": null,
+        "kind": "record",
+        "name": "AmountType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType.listID",
+            "name": "listID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType",
+        "key_type": null,
+        "kind": "record",
+        "name": "CodeType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CodeType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CountryType.IdentificationCode",
+            "name": "IdentificationCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CountryType",
+        "key_type": null,
+        "kind": "record",
+        "name": "CountryType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "QuantityType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType.CreditedQuantity",
+            "name": "CreditedQuantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.QuantityType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType.ID",
+            "name": "ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "ItemType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType.Item",
+            "name": "Item",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.ItemType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType.LineExtensionAmount",
+            "name": "LineExtensionAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PriceType"
+            },
+            "field_number": 5,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PriceType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType",
+        "key_type": null,
+        "kind": "record",
+        "name": "CreditNoteLineType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "CustomerPartyType"
+            },
+            "field_number": 10,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.AccountingCustomerParty",
+            "name": "AccountingCustomerParty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CustomerPartyType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "SupplierPartyType"
+            },
+            "field_number": 9,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.AccountingSupplierParty",
+            "name": "AccountingSupplierParty",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.SupplierPartyType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 8,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.BuyerReference",
+            "name": "BuyerReference",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "1",
+              "xsd_type": "CreditNoteLineType"
+            },
+            "field_number": 14,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.CreditNoteLine",
+            "name": "CreditNoteLine",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteLineType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CodeType"
+            },
+            "field_number": 5,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.CreditNoteTypeCode",
+            "name": "CreditNoteTypeCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.CustomizationID",
+            "name": "CustomizationID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "CodeType"
+            },
+            "field_number": 7,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.DocumentCurrencyCode",
+            "name": "DocumentCurrencyCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.ID",
+            "name": "ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "DateType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.IssueDate",
+            "name": "IssueDate",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.DateType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "MonetaryTotalType"
+            },
+            "field_number": 13,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.LegalMonetaryTotal",
+            "name": "LegalMonetaryTotal",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 6,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.Note",
+            "name": "Note",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PaymentMeansType"
+            },
+            "field_number": 11,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.PaymentMeans",
+            "name": "PaymentMeans",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PaymentMeansType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.ProfileID",
+            "name": "ProfileID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TaxTotalType"
+            },
+            "field_number": 12,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType.TaxTotal",
+            "name": "TaxTotal",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxTotalType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CreditNoteType",
+        "key_type": null,
+        "kind": "record",
+        "name": "CreditNoteType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "PartyType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CustomerPartyType.Party",
+            "name": "Party",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CustomerPartyType",
+        "key_type": null,
+        "kind": "record",
+        "name": "CustomerPartyType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "date",
+          "xsd_kind": "simpleType",
+          "xsd_type": "string"
+        },
+        "fields": [],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.DateType",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "DateType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType.schemeID",
+            "name": "schemeID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+        "key_type": null,
+        "kind": "record",
+        "name": "IdentifierType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType.ID",
+            "name": "ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "QuantityType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType.InvoicedQuantity",
+            "name": "InvoicedQuantity",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.QuantityType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "ItemType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType.Item",
+            "name": "Item",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.ItemType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType.LineExtensionAmount",
+            "name": "LineExtensionAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PriceType"
+            },
+            "field_number": 5,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType.Price",
+            "name": "Price",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PriceType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.InvoiceLineType",
+        "key_type": null,
+        "kind": "record",
+        "name": "InvoiceLineType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TaxCategoryType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.ItemType.ClassifiedTaxCategory",
+            "name": "ClassifiedTaxCategory",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.ItemType.Name",
+            "name": "Name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.ItemType",
+        "key_type": null,
+        "kind": "record",
+        "name": "ItemType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType.LineExtensionAmount",
+            "name": "LineExtensionAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType.PayableAmount",
+            "name": "PayableAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType.TaxExclusiveAmount",
+            "name": "TaxExclusiveAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType.TaxInclusiveAmount",
+            "name": "TaxInclusiveAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.MonetaryTotalType",
+        "key_type": null,
+        "kind": "record",
+        "name": "MonetaryTotalType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyLegalEntityType.CompanyID",
+            "name": "CompanyID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TextType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyLegalEntityType.RegistrationName",
+            "name": "RegistrationName",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyLegalEntityType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartyLegalEntityType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "TextType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyNameType.Name",
+            "name": "Name",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyNameType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartyNameType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType.EndpointID",
+            "name": "EndpointID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PartyLegalEntityType"
+            },
+            "field_number": 4,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType.PartyLegalEntity",
+            "name": "PartyLegalEntity",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyLegalEntityType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PartyNameType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType.PartyName",
+            "name": "PartyName",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyNameType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "AddressType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType.PostalAddress",
+            "name": "PostalAddress",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AddressType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PartyType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PaymentMeansType.PaymentID",
+            "name": "PaymentID",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "CodeType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PaymentMeansType.PaymentMeansCode",
+            "name": "PaymentMeansCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.CodeType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PaymentMeansType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PaymentMeansType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_base": "decimal",
+          "xsd_kind": "simpleType",
+          "xsd_type": "double"
+        },
+        "fields": [],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PercentType",
+        "key_type": null,
+        "kind": "scalar",
+        "name": "PercentType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PriceType.PriceAmount",
+            "name": "PriceAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PriceType",
+        "key_type": null,
+        "kind": "record",
+        "name": "PriceType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "normalizedString"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.QuantityType.unitCode",
+            "name": "unitCode",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "normalizedString",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "decimal"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.QuantityType.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "double",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.QuantityType",
+        "key_type": null,
+        "kind": "record",
+        "name": "QuantityType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "PartyType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.SupplierPartyType.Party",
+            "name": "Party",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PartyType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.SupplierPartyType",
+        "key_type": null,
+        "kind": "record",
+        "name": "SupplierPartyType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType.ID",
+            "name": "ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "PercentType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType.Percent",
+            "name": "Percent",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.PercentType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TaxSchemeType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType.TaxScheme",
+            "name": "TaxScheme",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSchemeType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType",
+        "key_type": null,
+        "kind": "record",
+        "name": "TaxCategoryType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "IdentifierType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSchemeType.ID",
+            "name": "ID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.IdentifierType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSchemeType",
+        "key_type": null,
+        "kind": "record",
+        "name": "TaxSchemeType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSubtotalType.TaxAmount",
+            "name": "TaxAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "TaxCategoryType"
+            },
+            "field_number": 3,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSubtotalType.TaxCategory",
+            "name": "TaxCategory",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxCategoryType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "0",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSubtotalType.TaxableAmount",
+            "name": "TaxableAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSubtotalType",
+        "key_type": null,
+        "kind": "record",
+        "name": "TaxSubtotalType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "1",
+              "xsd_min_occurs": "1",
+              "xsd_type": "AmountType"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxTotalType.TaxAmount",
+            "name": "TaxAmount",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.AmountType",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "element",
+              "xsd_max_occurs": "unbounded",
+              "xsd_min_occurs": "0",
+              "xsd_type": "TaxSubtotalType"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxTotalType.TaxSubtotal",
+            "name": "TaxSubtotal",
+            "type": {
+              "extras": {},
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxSubtotalType",
+                "nullable": false
+              },
+              "name": null,
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TaxTotalType",
+        "key_type": null,
+        "kind": "record",
+        "name": "TaxTotalType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      },
+      {
+        "aliased": null,
+        "constraints": null,
+        "deprecated": false,
+        "description": null,
+        "enum_values": [],
+        "extras": {
+          "xsd_kind": "complexType"
+        },
+        "fields": [
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "attribute",
+              "xsd_type": "language"
+            },
+            "field_number": 2,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType.languageID",
+            "name": "languageID",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "language",
+              "nullable": false
+            }
+          },
+          {
+            "constraints": null,
+            "default": null,
+            "deprecated": false,
+            "description": null,
+            "extras": {
+              "xsd_kind": "value",
+              "xsd_type": "string"
+            },
+            "field_number": 1,
+            "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType.value",
+            "name": "value",
+            "type": {
+              "extras": {},
+              "item": null,
+              "name": "string",
+              "nullable": false
+            }
+          }
+        ],
+        "key": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2.TextType",
+        "key_type": null,
+        "kind": "record",
+        "name": "TextType",
+        "namespace": "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2",
+        "union_members": [],
+        "value_type": null
+      }
+    ],
+    "version": null
+  },
+  "corpus_path": "xsd/08-ubl-2.1-creditnote-set/UBL-CreditNote-2.1.xsd",
+  "counts": {
+    "channels": 0,
+    "operations": 0,
+    "servers": 0,
+    "services": 0,
+    "types": 25
+  },
+  "detection": {
+    "confidence": 0.98,
+    "format": "xsd"
+  },
+  "fingerprint": "sha256:fb6f4bc3a0b2daedc7c2fde298d6dc7281c98e57ea925964462a99889f20ee0f",
+  "lint": {
+    "findings": 92,
+    "grade": "F",
+    "report_fingerprint": "9990c3d56708ef37c4b28c507329e3004fbbdcf0279cba969d4eb761d17f1eb5",
+    "score": 59,
+    "severity_counts": {
+      "error": 0,
+      "info": 67,
+      "warning": 25
+    }
+  },
+  "snapshot_version": 1
+}

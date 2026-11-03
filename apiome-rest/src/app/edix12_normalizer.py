@@ -19,6 +19,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .edi_envelope_controls import X12_CONTROLS_KEY, x12_controls
 from .edix12_parser import EdiX12Document, X12Segment, X12TransactionSet
 from .normalizer import Keys, Normalizer, normalize_ordering
 
@@ -172,6 +173,9 @@ class EdiX12Normalizer(Normalizer, register=True):
                     "element_separator": source.interchange.element_separator,
                     "segment_terminator": source.interchange.segment_terminator,
                 },
+                # MFI-20.5: every envelope's control number and total, declared beside observed,
+                # for the edix12 lint pack.
+                X12_CONTROLS_KEY: x12_controls(source.raw),
                 "x12_transactions": [
                     {
                         "set_id": item.set_id,

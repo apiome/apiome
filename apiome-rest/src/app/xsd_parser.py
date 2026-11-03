@@ -181,7 +181,42 @@ def _find_descendants(element: ET.Element, local_name: str) -> List[ET.Element]:
     return [node for node in element.iter() if isinstance(node.tag, str) and _local(node.tag) == local_name]
 
 
-def _parse_complex_types(schema_el: ET.Element) -> Tuple[XsdComplexType, ...]:
+def _global_element_types(schemas: Iterable[ET.Element]) -> Dict[str, str]:
+    """Every global element's local name -> its type's local name, across a schema set.
+
+    A ``<xs:element ref="cbc:ID"/>`` declares no name or type of its own: it *is* the global
+    element it names. UBL builds every document type this way (MFI-20.5). The first schema to
+    declare a name wins, as it does for types.
+
+    Args:
+        schemas: The ``xs:schema`` elements read, the root's first.
+
+    Returns:
+        ``{element_name: type_name}`` for the global elements that name a type.
+    """
+    types: Dict[str, str] = {}
+    for schema in schemas:
+        for element in _children(schema, "element"):
+            name, type_expr = element.get("name"), element.get("type")
+            if name and type_expr and name not in types:
+                types[name] = _attr_local(type_expr) or type_expr
+    return types
+
+
+def _parse_complex_types(
+    schema_el: ET.Element, global_elements: Optional[Mapping[str, str]] = None
+) -> Tuple[XsdComplexType, ...]:
+    """Read a schema's named complex types and their fields.
+
+    Args:
+        schema_el: One ``xs:schema`` element.
+        global_elements: :func:`_global_element_types` of the whole set, so a member written as
+            ``<xs:element ref="…"/>`` reads as the global element it refers to.
+
+    Returns:
+        The named complex types, in document order.
+    """
+    global_elements = global_elements or {}
     complex_types: List[XsdComplexType] = []
     for complex_type in _children(schema_el, "complexType"):
         name = complex_type.get("name")
@@ -198,6 +233,11 @@ def _parse_complex_types(schema_el: ET.Element) -> Tuple[XsdComplexType, ...]:
                 for field_el in _children(group, "element"):
                     field_name = field_el.get("name")
                     type_expr = field_el.get("type")
+                    reference = field_el.get("ref")
+                    if not field_name and reference:
+                        # MFI-20.5: a reference to a global element takes its name and type.
+                        field_name = _attr_local(reference)
+                        type_expr = global_elements.get(field_name or "")
                     if not field_name or not type_expr or field_name in seen:
                         continue
                     seen.add(field_name)
@@ -330,8 +370,9 @@ def parse_xsd(
     complex_types_list: List[XsdComplexType] = []
     simple_types_list: List[XsdSimpleType] = []
     elements_list: List[XsdElementDecl] = []
+    global_elements = _global_element_types(schemas)
     for schema in schemas:
-        complex_types_list += _first_by_name(_parse_complex_types(schema), complex_names)
+        complex_types_list += _first_by_name(_parse_complex_types(schema, global_elements), complex_names)
         simple_types_list += _first_by_name(_parse_simple_types(schema), simple_names)
         elements_list += _first_by_name(_parse_elements(schema), element_names)
     complex_types = tuple(complex_types_list)

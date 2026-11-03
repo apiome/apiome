@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UBL 2.1 Common Basic Components (cbc:), the subset a Peppol BIS Billing 3.0
+  invoice or credit note uses. Hand-authored representative subset of the
+  OASIS UBL 2.1 library: element names and the namespace are UBL's; the
+  documentation is our own. Simplified: real UBL gives every element its own
+  type derived from the Unqualified Data Types (udt:); here the elements share
+  the data types they derive from.
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+            targetNamespace="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            version="2.1">
+
+  <!-- Data types: a value plus the attribute that qualifies it. -->
+  <xsd:complexType name="IdentifierType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:normalizedString">
+        <xsd:attribute name="schemeID" type="xsd:normalizedString" use="optional"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:complexType name="CodeType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:normalizedString">
+        <xsd:attribute name="listID" type="xsd:normalizedString" use="optional"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:complexType name="TextType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="languageID" type="xsd:language" use="optional"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:complexType name="AmountType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:decimal">
+        <xsd:attribute name="currencyID" type="xsd:normalizedString" use="required"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:complexType name="QuantityType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:decimal">
+        <xsd:attribute name="unitCode" type="xsd:normalizedString" use="optional"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+  <xsd:simpleType name="DateType">
+    <xsd:restriction base="xsd:date"/>
+  </xsd:simpleType>
+  <xsd:simpleType name="PercentType">
+    <xsd:restriction base="xsd:decimal"/>
+  </xsd:simpleType>
+
+  <!-- Document header -->
+  <xsd:element name="CustomizationID" type="IdentifierType"/>
+  <xsd:element name="ProfileID" type="IdentifierType"/>
+  <xsd:element name="ID" type="IdentifierType"/>
+  <xsd:element name="IssueDate" type="DateType"/>
+  <xsd:element name="DueDate" type="DateType"/>
+  <xsd:element name="InvoiceTypeCode" type="CodeType"/>
+  <xsd:element name="CreditNoteTypeCode" type="CodeType"/>
+  <xsd:element name="Note" type="TextType"/>
+  <xsd:element name="DocumentCurrencyCode" type="CodeType"/>
+  <xsd:element name="BuyerReference" type="TextType"/>
+
+  <!-- Parties -->
+  <xsd:element name="EndpointID" type="IdentifierType"/>
+  <xsd:element name="Name" type="TextType"/>
+  <xsd:element name="RegistrationName" type="TextType"/>
+  <xsd:element name="CompanyID" type="IdentifierType"/>
+  <xsd:element name="StreetName" type="TextType"/>
+  <xsd:element name="CityName" type="TextType"/>
+  <xsd:element name="PostalZone" type="TextType"/>
+  <xsd:element name="IdentificationCode" type="CodeType"/>
+
+  <!-- Payment, tax and totals -->
+  <xsd:element name="PaymentMeansCode" type="CodeType"/>
+  <xsd:element name="PaymentID" type="IdentifierType"/>
+  <xsd:element name="TaxAmount" type="AmountType"/>
+  <xsd:element name="TaxableAmount" type="AmountType"/>
+  <xsd:element name="Percent" type="PercentType"/>
+  <xsd:element name="LineExtensionAmount" type="AmountType"/>
+  <xsd:element name="TaxExclusiveAmount" type="AmountType"/>
+  <xsd:element name="TaxInclusiveAmount" type="AmountType"/>
+  <xsd:element name="PayableAmount" type="AmountType"/>
+  <xsd:element name="PriceAmount" type="AmountType"/>
+
+  <!-- Lines -->
+  <xsd:element name="InvoicedQuantity" type="QuantityType"/>
+  <xsd:element name="CreditedQuantity" type="QuantityType"/>
+</xsd:schema>

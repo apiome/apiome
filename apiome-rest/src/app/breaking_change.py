@@ -421,6 +421,9 @@ def load_format_breaking_change_classifiers() -> None:
     # ASN.1 breaking-change classifier (MFI-21.5): registers under ``asn1`` and grades components,
     # tags, extension additions, constraints, ENUMERATED items and CHOICE alternatives.
     from . import asn1_breaking as _asn1_breaking  # noqa: F401
+    # EDI X12 / UN/EDIFACT breaking-change classifiers (MFI-20.5): register under ``edix12`` and
+    # ``edifact`` and grade segments and element references — sample values and ordinals are safe.
+    from . import edi_breaking as _edi_breaking  # noqa: F401
 
 
 def register_breaking_change_classifier(

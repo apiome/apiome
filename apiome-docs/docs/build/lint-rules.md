@@ -824,6 +824,104 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Fixture:** `catalog/data-contract-version-missing`
 
 
+## Pack: `edifact`
+
+### `edifact.control-counts-match` {#edifact-control-counts-match}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** UNT, UNE and UNZ must count the segments, messages and groups they close.
+- **Reference:** https://unece.org/trade/uncefact/introducing-unedifact
+- **Remediation:** Set UNT 0074 to the segments from UNH to UNT inclusive, UNE 0060 to the group's messages and UNZ 0036 to the interchange's groups (or its messages when it has none).
+- **False-positive guidance:** Not a false positive: the counts are the receiver's integrity check. The interchange still imports, with the declared and observed figures recorded.
+- **Fixture:** `catalog/edifact-control-counts-match`
+- **Scan modes:** `lint`
+
+### `edifact.control-references-match` {#edifact-control-references-match}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** UNT, UNE and UNZ must repeat the control reference of UNH, UNG and UNB.
+- **Reference:** https://unece.org/trade/uncefact/introducing-unedifact
+- **Remediation:** Write the header's reference into the trailer: UNT 0062 = UNH 0062, UNE 0048 = UNG 0048, UNZ 0020 = UNB 0020.
+- **False-positive guidance:** Not a false positive: ISO 9735 requires the pair to match, and every receiver checks it.
+- **Fixture:** `catalog/edifact-control-references-match`
+- **Scan modes:** `lint`
+
+### `edifact.directory-declared` {#edifact-directory-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** UNH must name the message version and release (the directory).
+
+### `edifact.message-references-unique` {#edifact-message-references-unique}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Message references must be unique within a group or interchange.
+
+### `edifact.test-interchange` {#edifact-test-interchange}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** UNB 0035 '1' marks the interchange as test data.
+
+
+## Pack: `edix12`
+
+### `edix12.control-numbers-match` {#edix12-control-numbers-match}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** SE02, GE02 and IEA02 must repeat the control number of ST02, GS06 and ISA13.
+- **Reference:** https://x12.org/products/transaction-sets
+- **Remediation:** Write the header's control number into the trailer: SE02 = ST02, GE02 = GS06, IEA02 = ISA13.
+- **False-positive guidance:** Not a false positive: every X12 receiver compares the pair before it reads the envelope.
+- **Fixture:** `catalog/edix12-control-numbers-match`
+- **Scan modes:** `lint`
+
+### `edix12.control-numbers-unique` {#edix12-control-numbers-unique}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** Control numbers must be unique among a group's sets and an interchange's groups.
+
+### `edix12.control-totals-match` {#edix12-control-totals-match}
+
+- **Category:** structure
+- **Default severity:** error
+- **Rationale:** SE01, GE01 and IEA01 must count the segments, transaction sets and groups they close.
+- **Reference:** https://x12.org/products/transaction-sets
+- **Remediation:** Set SE01 to the segments from ST to SE inclusive, GE01 to the group's transaction sets and IEA01 to the interchange's functional groups.
+- **False-positive guidance:** Not a false positive: the totals are the receiver's integrity check. A segment pyx12 skips (an empty one) still counts, so recount from the file.
+- **Fixture:** `catalog/edix12-control-totals-match`
+- **Scan modes:** `lint`
+
+### `edix12.functional-id-matches-set` {#edix12-functional-id-matches-set}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** GS01 should be the functional identifier X12 assigns the transaction set.
+
+### `edix12.test-interchange` {#edix12-test-interchange}
+
+- **Category:** structure
+- **Default severity:** info
+- **Rationale:** ISA15 'T' marks the interchange as test data.
+
+### `edix12.usage-indicator-valid` {#edix12-usage-indicator-valid}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** ISA15 must be 'P', 'T' or 'I'.
+
+### `edix12.version-declared` {#edix12-version-declared}
+
+- **Category:** structure
+- **Default severity:** warning
+- **Rationale:** GS08 must name the X12 version the group follows.
+
+
 ## Pack: `examples`
 
 ### `examples.non-conforming-example` {#examples-non-conforming-example}

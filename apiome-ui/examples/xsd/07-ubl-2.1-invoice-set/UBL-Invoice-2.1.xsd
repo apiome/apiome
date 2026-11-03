@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  UBL 2.1 Invoice document schema: the definition a Peppol BIS Billing 3.0
+  invoice validates against (Peppol adds Schematron business rules, not a
+  schema). Hand-authored representative subset of the OASIS UBL 2.1 Invoice
+  schema: element names, their order and the namespaces are UBL's; the
+  documentation is our own. The members are references to the Common Basic
+  (cbc:) and Common Aggregate (cac:) Components imported beside it.
+-->
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+            xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+            xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+            targetNamespace="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+            elementFormDefault="qualified"
+            attributeFormDefault="unqualified"
+            version="2.1">
+
+  <xsd:import namespace="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+              schemaLocation="UBL-CommonAggregateComponents-2.1.xsd"/>
+  <xsd:import namespace="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+              schemaLocation="UBL-CommonBasicComponents-2.1.xsd"/>
+
+  <xsd:element name="Invoice" type="InvoiceType"/>
+
+  <xsd:complexType name="InvoiceType">
+    <xsd:sequence>
+      <xsd:element ref="cbc:CustomizationID" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cbc:ProfileID" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cbc:ID" minOccurs="1" maxOccurs="1"/>
+      <xsd:element ref="cbc:IssueDate" minOccurs="1" maxOccurs="1"/>
+      <xsd:element ref="cbc:DueDate" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cbc:InvoiceTypeCode" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cbc:Note" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element ref="cbc:DocumentCurrencyCode" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cbc:BuyerReference" minOccurs="0" maxOccurs="1"/>
+      <xsd:element ref="cac:AccountingSupplierParty" minOccurs="1" maxOccurs="1"/>
+      <xsd:element ref="cac:AccountingCustomerParty" minOccurs="1" maxOccurs="1"/>
+      <xsd:element ref="cac:PaymentMeans" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element ref="cac:TaxTotal" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element ref="cac:LegalMonetaryTotal" minOccurs="1" maxOccurs="1"/>
+      <xsd:element ref="cac:InvoiceLine" minOccurs="1" maxOccurs="unbounded"/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

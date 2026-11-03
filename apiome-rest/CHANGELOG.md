@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.614.0] - 2026-11-02
+
+### Added
+- **EDI X12 / UN/EDIFACT lint packs, diff rules and UBL / Peppol document schemas (MFI-20.5, #3989).** The X12 and
+  EDIFACT importers already shipped; this adds what versions, diffs and lint need, and Peppol / UBL.
+  - `edi_envelope_controls.py`: every envelope's control number / reference and control total / count, declared
+    beside observed — X12 `ISA`/`IEA`, `GS`/`GE`, `ST`/`SE` read off the raw scan (`pyx12` drops the trailers),
+    EDIFACT `UNB`/`UNZ`, `UNG`/`UNE`, `UNH`/`UNT` off the parser's trailers — recorded as `x12_controls` /
+    `edifact_controls` extras.
+  - `edix12_lint.py` (seven `edix12.*` rules: control numbers and totals match — errors —, control numbers unique,
+    functional id matches the set, `GS08` declared, `ISA15` valid, test interchange) and `edifact_lint.py` (five
+    `edifact.*` rules: control references and counts match — errors —, message references unique, directory
+    declared, test interchange). V349 reseeds the built-in style guide; the four errors carry blocking-rule
+    transparency metadata and scanner-evaluation fixtures.
+  - `edi_breaking.py`: `edix12` / `edifact` classifiers grade a sample-to-sample diff by transaction set / message
+    type, segment, element reference and repetition — new values and shifted ordinals are safe (the baseline graded
+    them dangerous / breaking), an added segment or element dangerous (it was safe). Version fixtures in
+    `tests/fixtures/edi_versions/`.
+  - UBL: `ubl_schema.py` labels a schema in a UBL namespace (`ubl_document`, the `ubl` `format_profile`, title
+    `Invoice (UBL 2.1)`) and notes Peppol BIS Billing 3.0 for a 2.1 Invoice / CreditNote; `xsd_parser` reads
+    `<xs:element ref="…"/>` members as the global element they name. Corpus sets `xsd/07-ubl-2.1-invoice-set/`
+    and `xsd/08-ubl-2.1-creditnote-set/` (the stale XSD `multi-file` rung waiver is removed).
+  - The `01-850` and `02-810` X12 examples declared the wrong `SE01`; corrected (goldens regenerated).
+- OpenAPI document version 1.477.0 → 1.478.0.
+
 ## [1.613.0] - 2026-11-02
 
 ### Added

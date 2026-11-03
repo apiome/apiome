@@ -114,6 +114,33 @@ read it:
   withheld. Envelope facts (parties, references, delimiters, counts) are structure and are always
   shown; the `UNB` recipient password never is.
 
+## Lint rules
+
+The `edifact` lint pack runs on every EDIFACT item (EANCOM and ODETTE/VDA included) with the common
+pack, and its findings count toward the item's score and grade. The analysis above *describes* a
+control mismatch; these rules *grade* it:
+
+| Rule | Severity | Fires when |
+| --- | --- | --- |
+| [`edifact.control-references-match`](../build/lint-rules.md#edifact-control-references-match) | error | A trailer does not repeat its header's reference: `UNT` 0062 ≠ `UNH` 0062, `UNE` 0048 ≠ `UNG` 0048, or `UNZ` 0020 ≠ `UNB` 0020 |
+| [`edifact.control-counts-match`](../build/lint-rules.md#edifact-control-counts-match) | error | A trailer's count is not what it closes: `UNT` 0074 ≠ the segments from `UNH` to `UNT`, `UNE` 0060 ≠ the group's messages, or `UNZ` 0036 ≠ the interchange's groups (its messages when it has none) |
+| `edifact.message-references-unique` | warning | Two messages of one group, or of an interchange without groups, share a message reference |
+| `edifact.directory-declared` | warning | A `UNH` names no message version and release (`D:96A`) |
+| `edifact.test-interchange` | info | `UNB` 0035 is `1` (test data) |
+
+`apiome-ui/examples/edifact/07-stress-control-count-mismatch.edi` imports with both counts flagged
+as `edifact.control-counts-match`. Every rule's rationale is on
+[Built-in lint rules](../build/lint-rules.md#pack-edifact).
+
+## Versions and diffs
+
+An EDIFACT item is a sample, so its diff is graded as one, by the same rules as
+[X12](./x12-import.md#versions-and-diffs): another message type (`ORDERS` → `ORDRSP`) is breaking
+(`edifact.message-type-changed`), and so are a segment or element no longer sent
+(`edifact.segment-removed`, `edifact.element-removed`). A new segment or element, or a segment whose
+repetition changed, is dangerous (`edifact.segment-added`, `edifact.element-added`,
+`edifact.segment-repetition-changed`). New values alone are safe (`edifact.sample-value-changed`).
+
 ## What Apiome does not check
 
 - **No implementation guide is consulted.** Only the UN/EDIFACT syntax is read — not the D.96A or

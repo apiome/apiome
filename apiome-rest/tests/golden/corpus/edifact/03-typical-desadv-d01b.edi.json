@@ -4,6 +4,26 @@
     "channels": [],
     "description": null,
     "extras": {
+      "edifact_controls": {
+        "groups": [],
+        "interchange": {
+          "control_reference": "000000003",
+          "count": 1,
+          "declared_count": 1,
+          "test_indicator": null,
+          "trailer_reference": "000000003"
+        },
+        "messages": [
+          {
+            "declared_segment_count": 21,
+            "directory": "D:01B",
+            "message_type": "DESADV",
+            "reference": "3",
+            "segment_count": 21,
+            "trailer_reference": "3"
+          }
+        ]
+      },
       "edifact_directory": "D:01B",
       "edifact_envelope": {
         "association_code": null,
@@ -1311,7 +1331,7 @@
     "confidence": 0.95,
     "format": "edifact"
   },
-  "fingerprint": "sha256:4b89d3323f53e4f6cc671792789cc873d7776200e58fbe2e464e4d8733e30034",
+  "fingerprint": "sha256:cf7c4e1c512545a23eae4a5477cff0d33416909e0a5a0910a2dd586e5ffbff3f",
   "lint": {
     "findings": 45,
     "grade": "F",

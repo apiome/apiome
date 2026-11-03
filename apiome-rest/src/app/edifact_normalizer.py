@@ -34,6 +34,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .edi_dialect_profiles import PROFILE_EXTRAS_KEY, edifact_profile
+from .edi_envelope_controls import EDIFACT_CONTROLS_KEY, edifact_controls
 from .edifact_parser import (
     EdifactDocument,
     EdifactElement,
@@ -249,6 +250,9 @@ class EdifactNormalizer(Normalizer, register=True):
                     "segment_terminator": delimiters.segment,
                     "service_string_advice": delimiters.declared,
                 },
+                # MFI-20.5: every envelope's control reference and count, declared beside
+                # observed, for the edifact lint pack.
+                EDIFACT_CONTROLS_KEY: edifact_controls(source),
                 "edifact_messages": [
                     {
                         "message_type": item.message_type,

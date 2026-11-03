@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/edifact-control-references-match",
+  "source_format": "edifact",
+  "description": "EDIFACT ORDERS interchange with exactly one blocking defect: UNT 0062 is 2 but UNH 0062 is 1.",
+  "document": "UNB+UNOC:3+SENDERID:14+RECEIVERID:14+260815:0830+000000001'\nUNH+1+ORDERS:D:96A:UN'\nBGM+220+PO-0001+9'\nDTM+137:20260815:102'\nNAD+BY+BUYER01::9'\nNAD+SU+SUPPLIER1::9'\nLIN+1++WIDGET-001:BP'\nQTY+21:100'\nUNS+S'\nCNT+2:1'\nUNT+10+2'\nUNZ+1+000000001'\n"
+}

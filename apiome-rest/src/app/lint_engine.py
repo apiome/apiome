@@ -416,6 +416,11 @@ def load_format_rule_packs() -> None:
     # HL7 v2 lint pack (MFI-20.2): registers under ``hl7v2`` (MSH header hygiene).
     from . import hl7v2_lint as _hl7v2_lint  # noqa: F401
 
+    # EDI X12 and UN/EDIFACT lint packs (MFI-20.5): register under ``edix12`` and ``edifact``
+    # (envelope control numbers and totals, functional ids, directories, test indicators).
+    from . import edifact_lint as _edifact_lint  # noqa: F401
+    from . import edix12_lint as _edix12_lint  # noqa: F401
+
     # FIX Orchestra lint pack (MFI-20.4): registers under ``fix-orchestra`` (msgType, code sets, presence rules).
     from . import fix_orchestra_lint as _fix_orchestra_lint  # noqa: F401
 

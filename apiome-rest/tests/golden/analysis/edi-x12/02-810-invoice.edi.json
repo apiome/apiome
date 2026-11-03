@@ -61,7 +61,7 @@
     },
     "schemaVersion": "1.1.0",
     "sourceFormat": "edix12",
-    "sourceHash": "sha256:b9522b3f51528810ec151e6df5bff568295ce0c0eda2dfedefcf3e97a9d5c009",
+    "sourceHash": "sha256:d77280b0d78645b0877c95dd5edadd15d8445e163e1f176e9b81127f40d3483a",
     "status": "available",
     "statusReason": null,
     "tree": [
@@ -101,7 +101,7 @@
               {
                 "attributes": {
                   "controlNumber": "0002",
-                  "declaredSegmentCount": 6,
+                  "declaredSegmentCount": 7,
                   "envelopeSegmentCount": 7,
                   "segmentCount": 5,
                   "setId": "810"

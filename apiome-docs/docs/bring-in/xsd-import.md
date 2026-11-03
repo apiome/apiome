@@ -45,7 +45,41 @@ The XSD importer records the same keys as the WSDL importer:
 See [What the catalog item keeps about its files](./wsdl-import.md#what-the-catalog-item-keeps-about-its-files)
 for each key and what XSD 1.1 support covers.
 
+## UBL and Peppol document schemas
+
+OASIS **UBL** publishes one schema per business document: `UBL-Invoice-2.1.xsd`,
+`UBL-CreditNote-2.1.xsd`, `UBL-Order-2.1.xsd` and so on. Each one imports the shared Common Aggregate
+(`cac:`) and Common Basic (`cbc:`) Components. **Peppol BIS Billing 3.0**, the e-invoicing profile EU
+mandates build on, has no schema of its own. A Peppol invoice *is* a UBL 2.1 Invoice, and a Peppol
+credit note a UBL 2.1 CreditNote, restricted by Peppol's Schematron rules.
+
+To bring one in, upload the document schema **together with** the component schemas it imports, as a
+`.zip` or a folder (see [A schema split across files](#a-schema-split-across-files)). A document schema
+uploaded on its own reads almost empty, because every member of a UBL type is a reference to a
+component in another file. Try `apiome-ui/examples/xsd/07-ubl-2.1-invoice-set/` or
+`08-ubl-2.1-creditnote-set/`:
+
+```bash
+apiome import xsd ./07-ubl-2.1-invoice-set/
+```
+
+Apiome recognises the schema by its target namespace
+(`urn:oasis:names:specification:ubl:schema:xsd:Invoice-2`) and imports it as an XSD item:
+
+- **Title:** the document and release, such as **Invoice (UBL 2.1)**.
+- **References:** every `<xs:element ref="cbc:IssueDate"/>` member is read as the global element it
+  names, with that element's type, so the Invoice type lists `IssueDate`, `AccountingSupplierParty`,
+  `InvoiceLine` and the rest.
+- **`ubl_document`:** the document type, the namespace, the major version, the release (the schema's
+  `version` attribute) and whether it is a document or a component library.
+- **Provenance:** the `ubl` profile (`formatProfile` on the revision) with the evidence it was
+  recognised on. For a UBL 2.1 Invoice or CreditNote it also notes **Peppol BIS Billing 3.0**.
+
+The item versions, diffs, lints and exports like any other XML Schema. Peppol's business rules are a
+Schematron file: import that separately as a [Schematron item](./schematron-import.md).
+
 ## Related
 
 - [Import a SOAP / WSDL service](./wsdl-import.md)
+- [Import an EDI X12 interchange](./x12-import.md)
 - [Supported formats](./supported-formats.md)

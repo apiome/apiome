@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/edix12-control-numbers-match",
+  "source_format": "edix12",
+  "description": "X12 850 interchange with exactly one blocking defect: SE02 is 0002 but ST02 is 0001.",
+  "document": "ISA*00*          *00*          *ZZ*SENDERID       *ZZ*RECEIVERID     *260115*0830*U*00401*000000001*0*P*>~\nGS*PO*SENDERID*RECEIVERID*20260115*0830*1*X*004010~\nST*850*0001~\nBEG*00*SA*PO-0001**20260115~\nREF*DP*DEPT-42~\nPER*BD*Jane Buyer*TE*5555550100~\nN1*BT*Example Corp*92*BUYER01~\nPO1*1*100*EA*185.50*PE*BP*WIDGET-001~\nPO1*2*50*EA*42.00*PE*BP*GADGET-007~\nCTT*2~\nSE*9*0002~\nGE*1*1~\nIEA*1*000000001~\n"
+}
