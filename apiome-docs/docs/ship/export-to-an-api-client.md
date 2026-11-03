@@ -13,6 +13,34 @@ collection imported from [Postman](../bring-in/postman-import.md),
 can be exported back to the same client or to another one, and an OpenAPI or `.http` source can be
 exported to any of them.
 
+## When to export to an API client
+
+- **Hand an API to the people who call it.** Testers, support and partner developers get one saved
+  request per HTTP operation, in folders, with example bodies built from the schemas and the base
+  URL as a variable — ready to run in Postman, Insomnia, Bruno, Hoppscotch or Thunder Client.
+- **Move a collection to another client.** A collection imported from one client exports to any of
+  the others, through the same operations, folders and auth.
+- **Round-trip a collection.** A Postman collection is written back as it was read and re-imports
+  unchanged; an Insomnia or Bruno one re-imports to the same operations, parameters, folders and auth.
+- **Share it without secrets.** No credential value is ever written: auth and every secret-looking
+  value become empty variables you fill in in the client.
+
+A collection saves calls, not a contract, so every client export is **lossy**: types become example
+bodies and responses become saved examples or are left out. The fidelity report lists each trade
+before you download.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** a client: Postman, Insomnia, Bruno, Hoppscotch or Thunder Client | **Export** dialog → the client's card | [The client targets](#the-client-targets) · [Export it](#export-it) |
+| **Choose** folders, server variables, example depth and flavor | The card's options, or `--option` | [Postman options](#postman-options) · [Insomnia and Bruno options](#insomnia-and-bruno-options) |
+| **See** how each operation becomes a saved request | — | [What you get](#what-you-get) · [What Postman carries beyond the other clients](#what-postman-carries-beyond-the-other-clients) |
+| **See** what a collection cannot carry | The fidelity report on the card | [What a collection cannot carry](#what-a-collection-cannot-carry) · [How a Postman export's fidelity report reads](#how-a-postman-exports-fidelity-report-reads) |
+| **Trust** the collection: the Postman schema, then a re-import by the client's importer | Automatic before every download | [What Postman carries beyond the other clients](#what-postman-carries-beyond-the-other-clients) · [Insomnia and Bruno options](#insomnia-and-bruno-options) |
+| **Fill in** the credentials | Your client's environment or collection variables | [Credentials are placeholders](#credentials-are-placeholders) |
+| **Export** from the CLI | `apiome export postman <item> --out <folder>/` (or `insomnia`, `bruno`, `hoppscotch`, `thunder-client`) | [Export it](#export-it) |
+
 ## The client targets
 
 | Target | What you get | Re-imports as |
