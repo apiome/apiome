@@ -10,10 +10,25 @@ The **OData** importer (`odata`) reads an OData service's metadata into the
 entity set becomes a set of operations, and every function and action becomes an operation of its
 own. You can then search, version, diff, lint and convert it like any other catalog item.
 
+## When to use it
+
+Use the OData importer for any service that publishes OData metadata: OData v4 and 4.01, and the
+older v2 and v3 services that SAP Gateway and many Microsoft products still expose. Bring in the
+metadata as a CSDL XML or CSDL JSON file, or point Apiome at the running service.
+
+## At a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Import** a CSDL file or a service's `$metadata` | **Import to catalog** → **File Upload** or **URL Import**, or `apiome import odata` | [Import it](#import-it) |
+| **Discover** a running service from its service root | **URL Import** with the service root, or `apiome import odata --discover` | [Discover a live service](#discover-a-live-service) |
+| **Check** the metadata against the OASIS schemas, references and keys | Automatic on every import; problems show in lint | [How the metadata is checked](#how-the-metadata-is-checked) |
+| **Compare** two versions with the OData model-versioning rules | Tick two versions on the catalog item's **Versions** tab | [Breaking changes between versions](#breaking-changes-between-versions) |
+| **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
+| **Export** back to OData | **Export** on the catalog item | [OData (CSDL) from any source](../ship/export-a-spec.md#odata-csdl-from-any-source) |
 
 An item imported from OData exports back to OData with its entity sets, keys, types, functions and
-actions unchanged. See
-[OData (CSDL) from any source](../ship/export-a-spec.md#odata-csdl-from-any-source).
+actions unchanged.
 
 ## Import it
 
