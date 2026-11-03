@@ -1688,6 +1688,31 @@ and DTD output and the ISO 20022 profile are not offered yet.
 
 ### ASN.1 from any source
 
+#### When to export to ASN.1
+
+- **Hand the data types to an ASN.1 tool chain.** Any item — an OpenAPI or AsyncAPI API, a JSON
+  Schema, a gRPC or Avro schema — becomes one X.680 module of its types for telecom (5G, NAS), LDAP,
+  PKI and aviation protocols. Operations and channels are left out, and the card says so
+  (**types-only**).
+- **Keep the rules enforceable.** Lengths, bounds, item counts and simple patterns become ASN.1
+  subtype constraints, so `asn1tools` checks them when it encodes. What ASN.1 cannot carry is listed
+  in the fidelity report before you download.
+- **Round-trip an ASN.1 item.** An item imported from ASN.1 exports **lossless**, back to an
+  equivalent module.
+
+#### ASN.1 export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the ASN.1 card and its options (module name, OID, automatic tags, comments) | **Export** dialog → **ASN.1** (under **Data schema & graph**) | [Options](#asn1-export-options) · [Where to find the ASN.1 card](#where-to-find-the-asn1-card) |
+| **See** how types, scalars, optional fields and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-asn1) |
+| **See** how each rule becomes subtype notation | The fidelity report on the card | [How constraints are written](#how-constraints-are-written-in-asn1) |
+| **See** what ASN.1 cannot carry | The fidelity report on the card | [What the fidelity report lists](#what-the-asn1-fidelity-report-lists) |
+| **Trust** the module: `asn1tools` parses and compiles it | Automatic before every download | [How an ASN.1 export is checked](#how-an-asn1-export-is-checked) |
+| **Export** from the CLI | `apiome export asn1 <item> --out <file>.asn1` | [Where to find the ASN.1 card](#where-to-find-the-asn1-card) |
+
+#### How the item is written {#how-the-item-is-written-to-asn1}
+
 Exporting to **ASN.1** writes the item's data types as one ITU-T X.680 module, `<Module>.asn1`,
 for telecom, PKI and aviation tool chains. The module compiles with `asn1tools`. Operations and
 channels are left out: an ASN.1 module describes data only.
@@ -1707,6 +1732,8 @@ channels are left out: an ASN.1 module describes data only.
 - **Descriptions** are written as `--` comments. An ASN.1 import does not read comments, so the report
   notes each one.
 
+#### How constraints are written {#how-constraints-are-written-in-asn1}
+
 Constraints are kept as ASN.1 subtype notation, so a validator such as `asn1tools` checks them when
 encoding:
 
@@ -1722,7 +1749,7 @@ encoding:
 | Any other `pattern` (`^[A-Z]{3}-\d+$`) | A `-- pattern: …` comment above the field — `asn1tools` does not check it |
 | `multipleOf`, `uniqueItems`, an `enum` of strings, formats such as `email` | Dropped, and listed in the report |
 
-Options:
+#### Options {#asn1-export-options}
 
 - **module_name** — the module name, such as `Shop-Orders`. By default it is the imported module's
   name, else the item's namespace when that is already a valid module name, else the item's name.
@@ -1737,6 +1764,8 @@ An item imported from ASN.1 exports back to an equivalent module that reads back
 types such as `OBJECT IDENTIFIER` and `PrintableString` included. A type the module imports from
 another module has no definition to write, so it is written as `UTF8String` and listed in the report.
 
+#### What the fidelity report lists {#what-the-asn1-fidelity-report-lists}
+
 The fidelity report lists, on each type or field:
 
 | In the source | In the report |
@@ -1750,6 +1779,8 @@ The fidelity report lists, on each type or field:
 | A type that refers to itself (`Node.next: Node`) | Carried |
 | A description, a document of another format, types read back under the module name | Approximated (note) |
 
+#### How an ASN.1 export is checked {#how-an-asn1-export-is-checked}
+
 Each export is checked with **asn1tools** before you download it:
 
 1. The module parses. A syntax error fails the export and names its line and column
@@ -1762,7 +1793,9 @@ Each export is checked with **asn1tools** before you download it:
 
 A failed check fails the export job and lists each problem with its rule.
 
-**Where to find it.** In the **Export** dialog, the **ASN.1** card is under **Data schema & graph** on
+#### Where to find the ASN.1 card {#where-to-find-the-asn1-card}
+
+In the **Export** dialog, the **ASN.1** card is under **Data schema & graph** on
 the **Target** step, as one file. Its badge is **lossless** for an item imported from ASN.1 and
 **types-only** for any other source (ASN.1 keeps the types and leaves out the operations). Pick the
 card to see its four options: **Module Name**, **Oid**, **Automatic Tags** and **Include Comments**.
