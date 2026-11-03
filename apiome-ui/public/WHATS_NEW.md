@@ -18,6 +18,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Collections and captured traffic — **Help & docs** lists a new guide, **Collections and captured traffic**: importing Postman, Insomnia, Bruno, Hoppscotch and Thunder Client collections, `.http` files and HAR recordings, how the API is inferred from the requests with every credential removed, and converting the result to OpenAPI
   - How importing works — **Help & docs** lists a new guide, **How importing works**: every import source, the preview-then-commit flow, importing several specs from one archive with **Import all**, and where to find import history
   - OData service roots — **URL Import** in **Import to catalog** now accepts an OData service root (`https://host/odata/trippin/`): the wizard recognizes the service document it returns and imports the service's `$metadata` instead, keeping a query string such as `?sap-client=100`
   - OData functions and actions — an OData item now lists every function and action as an operation, with its parameters, return type and route: a bound one through its entity set (`/Products({key})/Shop.Discount`), an unbound one through its import (`/Search`). Each overload stays separate, a v2/v3 `FunctionImport` (SAP Gateway) is kept too, and exporting the item to OData writes them back unchanged

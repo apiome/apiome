@@ -105,6 +105,7 @@ Apiome records these in the import's coverage ledger instead of guessing:
 
 ## Related
 
+- [Collections and captured traffic](./collections-and-captures.mdx): how every collection and capture import works.
 - [Supported formats](./supported-formats.md): what this importer reads.
 - [Declared, inferred and synthesized](./inference-provenance.mdx): why everything a collection
   import builds is labelled inferred.

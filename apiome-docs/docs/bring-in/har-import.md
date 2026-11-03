@@ -137,6 +137,7 @@ The coverage ledger records what the import left out or withheld:
 
 ## Related
 
+- [Collections and captured traffic](./collections-and-captures.mdx): how every collection and capture import works.
 - [Supported formats](./supported-formats.md): what this importer reads.
 - [Declared, inferred and synthesized](./inference-provenance.mdx): why everything a capture import
   builds is labelled inferred.
