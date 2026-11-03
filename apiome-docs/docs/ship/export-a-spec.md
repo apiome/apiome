@@ -1148,6 +1148,27 @@ Browse offers the guide too, as a `.zip`.
 
 ### WSDL and XSD from any source
 
+#### When to export to WSDL
+
+- **Hand a SOAP description to a SOAP toolchain.** Any REST, RPC, GraphQL or JSON Schema item becomes
+  a WS-I document/literal SOAP 1.1 service: one SOAP operation per operation, its types as XML Schema.
+  The HTTP method and path, and what JSON says that XML Schema cannot, are listed in the fidelity
+  report before you download.
+- **Round-trip a WSDL.** An item imported from WSDL exports back **lossless**, with its own messages,
+  parts, bindings and SOAP versions.
+
+#### WSDL export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the WSDL card and its layout (bundle or single file) | **Export** dialog → **REST & HTTP** → **WSDL** | [Where to find the WSDL card](#where-to-find-the-wsdl-card) |
+| **See** how types, rules, operations and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-wsdl) |
+| **See** what XML Schema cannot say the way JSON does | The fidelity report on the card | [What the fidelity report lists](#what-the-wsdl-fidelity-report-lists) |
+| **Trust** the bundle: packaged, WS-I, valid, re-imports | Automatic before every download | [How a WSDL export is checked](#how-a-wsdl-export-is-checked) |
+| **Export** from the CLI | `apiome export wsdl <item> --out <folder>` | [Where to find the WSDL card](#where-to-find-the-wsdl-card) |
+
+#### How the item is written {#how-the-item-is-written-to-wsdl}
+
 Exporting to **WSDL** writes a SOAP 1.1 description in the WS-I document/literal style, whatever the
 item was imported from. By default you get two files, downloaded together as a `.zip`:
 
@@ -1188,7 +1209,9 @@ versions and XSD details round-trip unchanged.
   WSDL 1.1 has no message-exchange pattern, so importing the file again reads it as a request/response
   operation; the report says so for each one.
 
-**What the fidelity report lists.** For an item that is not XML already (OpenAPI, JSON Schema,
+#### What the fidelity report lists {#what-the-wsdl-fidelity-report-lists}
+
+For an item that is not XML already (OpenAPI, JSON Schema,
 GraphQL, Protobuf …), the report names each place where XML Schema cannot say what JSON says, on the
 type or field it concerns:
 
@@ -1202,7 +1225,9 @@ type or field it concerns:
 
 An item imported from WSDL or XSD is XML already, so none of these is listed for it.
 
-**Where to find it.** In the **Export** dialog, the **WSDL** card is under **REST & HTTP** on the
+#### Where to find the WSDL card {#where-to-find-the-wsdl-card}
+
+In the **Export** dialog, the **WSDL** card is under **REST & HTTP** on the
 **Target** step, marked multi-file. Its badge is **lossy** for a REST, RPC, GraphQL or JSON Schema
 source (the HTTP method and path, field numbers and JSON-only rules are not carried) and **lossless**
 for an item imported from WSDL. Pick the card and choose the **Layout**: **bundle** (the default, the
@@ -1210,6 +1235,8 @@ WSDL and its XSD) or **single** (the types inline). From the CLI, run
 `apiome export wsdl <item> --out <folder>` (the files are unpacked into the folder) and add
 `--option layout=single` for one file. A lossy export exits non-zero unless you add `--force`, and
 `--json` prints the tier. A public item's **Export** dialog on Browse offers WSDL too, as a `.zip`.
+
+#### How a WSDL export is checked {#how-a-wsdl-export-is-checked}
 
 Every WSDL export is checked before you can download it, the way it arrives once you unzip it:
 
