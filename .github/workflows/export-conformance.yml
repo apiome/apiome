@@ -56,7 +56,7 @@ jobs:
       # uv-managed Python: setup-python's Ubuntu 26.04 builds need an x86-64-v3 CPU the
       # self-hosted runner does not have (see apiome-rest-test.yml).
       - name: Install uv
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: true
           python-version: "3.12"
