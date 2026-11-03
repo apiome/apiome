@@ -1617,6 +1617,25 @@ surface*.
 
 Every export from a non-Arazzo item shows the fidelity warning before you download.
 
+**Where to find it.** In the **Export** dialog, the **Arazzo** card is under **REST & HTTP** on the
+**Target** step, as one `<name>.arazzo.yaml` file. Its badge is **lossless** for an item imported from
+Arazzo (1.0 or 1.1) and **lossy** for an item of any other paradigm with operations: REST (OpenAPI,
+WSDL, RAML), RPC (Thrift, Smithy) or GraphQL. For an item with nothing to sequence, such as a JSON
+Schema set of types, the card is greyed out. Pick the card to set its options:
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| **Pretty Print** | On | Writes block-style YAML, one key per line. Turn it off for compact flow-style YAML. |
+| **Arazzo Version** | Empty | The Arazzo version to write, `1.0.1` or `1.1.0`. Empty keeps the version the item was imported from; otherwise `1.1.0` when the item has an AsyncAPI source description and `1.0.1` when it does not. |
+
+From the CLI, run `apiome export arazzo <item> --out <file>.arazzo.yaml`, and add
+`--option pretty_print=false` or `--option arazzo_version=1.1.0`. The CLI prints the fidelity report:
+the tier and preserved share, the counts, and the losses worst first, with the *workflows, not the
+full API surface* warning among them. A lossy export exits non-zero unless you add `--force`, and
+`--json` prints the tier. For an item with nothing to sequence, the CLI stops with the reason before
+it starts an export. A public item's **Export** dialog on Browse offers Arazzo too, as the
+`.arazzo.yaml` file.
+
 #### Arazzo export checks
 
 Before you download, Apiome checks the document:

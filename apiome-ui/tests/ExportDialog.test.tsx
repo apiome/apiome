@@ -57,6 +57,9 @@
  * 24. The OpenRPC card (MFX-33.4): `lossy` with its preserved share for a REST source, `lossless` for an
  *     imported OpenRPC document, one file; its one option (the JSON indent, a number) draws no panel — from
  *     the recorded live registry.
+ * 25. The Arazzo card (MFX-10.4): `lossy` for a REST source, `lossless` for an imported Arazzo document, one
+ *     file, with its pretty-print and Arazzo-version options; unavailable for a set of types (nothing to
+ *     sequence) — from the recorded live registry.
  */
 
 import React from 'react';
@@ -92,6 +95,7 @@ import {
   copybookTargets,
   jsonSchemaTargets,
   apiblueprintTargets,
+  arazzoTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1475,5 +1479,40 @@ describe('ExportDialog — OpenRPC target card (MFX-33.4)', () => {
     expect(screen.queryByText('Target options')).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/Indent/i)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^continue$/i })).toBeEnabled();
+  });
+});
+
+describe('ExportDialog — Arazzo target card (MFX-10.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['arazzo', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(arazzoTargets(source)));
+
+    const card = screen.getByTestId('export-target-arazzo');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Arazzo')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .arazzo.yaml document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the pretty-print and Arazzo version options', async () => {
+    await renderAtTargetStep(mockFetch(arazzoTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-arazzo'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Pretty Print/i)).toBeChecked();
+    // Empty means "the imported version, else 1.0.1".
+    expect(screen.getByLabelText(/Arazzo Version/i)).toHaveValue('');
+  });
+
+  it('disables the card for a set of types: there is nothing to sequence into a workflow', async () => {
+    await renderAtTargetStep(mockFetch(arazzoTargets('data')));
+
+    const card = screen.getByTestId('export-target-arazzo');
+    expect(card).toBeDisabled();
+    fireEvent.click(card);
+    expect(screen.queryByText('Target options')).not.toBeInTheDocument();
   });
 });

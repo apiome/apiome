@@ -159,6 +159,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'capnproto').key).toBe('rpc');
   });
 
+  it('files Arazzo under REST & HTTP by paradigm (MFX-10.4)', () => {
+    expect(familyForTarget('rest', 'arazzo').key).toBe('rest');
+  });
+
   it('files OpenRPC under RPC by paradigm (MFX-33.4)', () => {
     expect(familyForTarget('rpc', 'openrpc').key).toBe('rpc');
   });
