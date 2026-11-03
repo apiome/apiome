@@ -276,6 +276,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['x12', 'edifact', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
   {
+    id: 'how-importing-works',
+    title: 'How importing works',
+    summary:
+      'Every import source, the preview-then-commit flow, importing several specs at once and where to find import history.',
+    page: 'apiome-docs/docs/bring-in/how-importing-works.mdx',
+    section: 'spine',
+    keywords: ['upload', 'archive', 'zip', 'bulk', 'history', 'jobs', 'preview', 'commit', 'git', 'url'],
+  },
+  {
     id: 'keep-imports-fresh',
     title: 'Keep imports up to date',
     summary:

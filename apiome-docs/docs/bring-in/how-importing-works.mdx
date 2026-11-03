@@ -1,0 +1,101 @@
+---
+title: How importing works
+description: Import sources, the preview-then-commit flow, bulk imports and import history.
+sidebar_position: 1.05
+tags: [import, catalog, upload, git, url-import, bulk]
+---
+
+Importing brings an API that starts outside Apiome into it: a file, a URL, pasted text, a Git
+repository, or several specs in one archive. Every import follows the same flow. Apiome reads the
+source, shows you what it found and what will change, and saves nothing until you commit. This page
+gives an overview of the import system and links to the page with the steps for each part.
+
+## The flow
+
+1. **Choose a source.** Start the [Import wizard](./import-wizard.mdx), the
+   [CLI](../reference/cli-quickstart.md) or the REST API.
+2. **Analyze.** Apiome detects the format and decides where the import goes. OpenAPI and Swagger
+   become a [project](../build/projects.mdx); every other format becomes a [catalog](./catalog.mdx)
+   item in its original format ([Two importers, one registry](./import-a-spec.md#two-importers-one-registry)).
+3. **Preview.** Before anything is saved, you see what the import holds and what could go wrong:
+   - the schemas, operations or types it found,
+   - warnings for properties defined differently and references that won't resolve,
+   - for a new version of an existing project, the **Changes** step: what is added, changed, removed
+     and breaking.
+
+   A **Dry run** answers the same questions and saves nothing.
+4. **Commit.** The import runs as a job. You can close the wizard and it keeps going.
+5. **Record.** The new version stores where it came from and how it was read
+   ([What an import records](./what-an-import-records.md)). Its import job joins the import history.
+
+If the import fails, nothing is saved. **“Undo import”** on the **Done** step of **Import specification** reverses an
+import that finished.
+
+## Where an import can come from
+
+| Source | Where | Steps |
+| --- | --- | --- |
+| **A file** | **File Upload** in either wizard | [File Upload](./import-wizard.mdx#file-upload) |
+| **An archive of several specs** | **File Upload** in **Import to catalog** (`.zip`, `.tar.gz`, `.tgz`, `.tar`) | [Import several specs at once](#import-several-specs-at-once) |
+| **A URL** | **URL Import** in either wizard | [URL Import](./import-wizard.mdx#url-import) |
+| **Pasted text** | **Clipboard Paste** in either wizard | [Clipboard Paste](./import-wizard.mdx#clipboard-paste) |
+| **A Git repository** | **Git Repository** in either wizard, or a connected repository | [Git Repository](./import-wizard.mdx#git-repository), [Repositories](./repositories.mdx) |
+| **SwaggerHub** | **SwaggerHub** in **Import specification** | [SwaggerHub](./import-wizard.mdx#swaggerhub) |
+| **A live endpoint** | GraphQL introspection, gRPC server reflection or a FHIR server's `/metadata`, for a catalog item | [Keep a catalog item fresh](./catalog-refresh.mdx) |
+| **A gateway or platform export** | An exported file, such as an [AWS API Gateway export](./aws-api-gateway-import.md), uploaded as a file | [Supported formats](./supported-formats.md) |
+
+[Supported formats](./supported-formats.md) lists every format Apiome imports and which importer
+handles it. [Keep imports up to date](./keep-imports-fresh.mdx) explains which of these sources
+Apiome checks again for changes.
+
+## Import several specs at once
+
+An archive or a repository folder often holds more than one API. **Import to catalog** splits it
+into independent specs and imports each one separately. Files that belong together, such as a WSDL
+and the XSDs it imports, stay together as one spec.
+
+1. On the [Catalog](./catalog.mdx), **click “Import to catalog”**.
+2. Choose **File Upload** and drop an archive, or choose **Git Repository** and point
+   **Path or glob** at a folder.
+3. On **Detect & route**, a banner says **This source holds 3 independent specs**. It lists each
+   spec with its format and where it will go (the catalog or a project).
+4. **Click “Import all 3”.** Each spec runs as its own import job. Its row shows its state and
+   progress. **“Progress”** or **“Summary”** opens that spec's job.
+5. When every job has finished, the line at the top says, for example, **Bulk import finished: 2
+   imported, 1 failed of 3.** A failed spec shows its reason and does not stop the others.
+
+Files that belong to no spec are listed under **… files are part of no spec**, each with the reason.
+One batch imports up to 50 specs by default; a larger archive says that only the first 50 can be
+imported. If the source changed between the banner and the import, nothing is imported and the
+panel lists what changed.
+
+From the CLI, `apiome import auto --bulk ./apis.zip` does the same
+([`apiome import auto`](../reference/cli/import.md#import-auto)).
+
+## Import history
+
+Every import is a job, and the jobs are kept:
+
+- **The wizard's first step** lists your three most recent imports with their state.
+  **“All import jobs”** opens **Recent import jobs**: every import job with its **Job** id, **State**
+  and **Progress**, a page at a time (**Previous** / **Next**).
+- **A repository's page** shows the imports and sync runs for that repository
+  ([A repository's page](./repositories.mdx#a-repositorys-page)).
+- **A catalog item's Provenance tab** shows where each version came from
+  ([What an import records](./what-an-import-records.md)).
+- **The REST API** returns an import job's state and result with `GET /v1/tenants/{tenant}/imports/{job}`.
+
+## Not yet available
+
+These are planned and not in the product yet:
+
+- **Importing straight from another Apiome workspace.** To copy an API between workspaces, export it
+  from one and import the file into the other ([Export a spec](../ship/export-a-spec.md)).
+
+## Where next
+
+- [Import wizard](./import-wizard.mdx): every source, step by step, with sample files.
+- [Import a specification](./import-a-spec.md): the two importers and the formats that need a
+  bundled tool.
+- [What an import records](./what-an-import-records.md): the format, source and settings stored with
+  each version.
