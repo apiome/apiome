@@ -133,12 +133,15 @@
   /* ---- Surfaces — warm neutrals ("paper"), never pure grey ------------ */
   --color-canvas: #F6F5F2;
   --color-rail: #EFEEEA;
-  /* How much of the brand navy the rail carries (facelift "rail"): the light themes the whole
-     hue, a dark theme a cast of it, High contrast none; and whether a hairline edges it.
-     Percentages rather than colours so a theme steers the one `.rail` rule without a rule
-     of its own. */
-  --color-rail-navy-mix: 100%;
-  --color-rail-edge-mix: 0%;
+  /* How much of the brand navy the dark rail carries (facelift "rail"): a dark theme a cast
+     of it, High contrast none, a light theme none (its rail is the paper above); and whether
+     a hairline edges the rail (the light themes, against the page). Percentages rather than
+     colours so a theme steers the one `.rail` rule without a rule of its own. */
+  --color-rail-navy-mix: 0%;
+  --color-rail-edge-mix: 100%;
+  /* Whether the rail is the white-on-ink rail (100%, every dark theme) or follows the page's
+     own ink on its paper (0%, the light themes). */
+  --color-rail-dark-mix: 0%;
   /* The active pill tab and filter chip (facelift "color"): brand navy under white on a light
      base; a dark theme restates it as its ink under its surface, as before. */
   --color-pill-active: var(--color-brand-navy);
@@ -222,6 +225,8 @@
      indicator; `--accent` clears 3:1 in every theme (tests/a11y-token-contrast.test.ts). */
   --shadow-focus: 0 0 0 1px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
   --shadow-raised: 0 1px 2px rgba(20, 18, 14, 0.08), 0 0 0 1px rgba(20, 18, 14, 0.06);
+  /* The current rail row: raised on a light rail; a dark rail tints it instead. */
+  --shadow-rail-active: var(--shadow-raised);
   /* Facelift "layers" (PROPOSALS_FACELIFT.md §2): a card is a surface that sits *above* the
      canvas — a soft, slightly warm shadow with no hairline — and lifts further on hover.
      Dark themes restate both as an inset highlight over a deeper drop. */
@@ -540,6 +545,9 @@ html .radix-themes {
 html[data-theme="dark"],
 html.dark:not([data-theme]) {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
+  --color-rail-edge-mix: 0%;
   /* The rail (facelift "rail") keeps a navy cast on a dark base rather than the light
      themes' full navy. */
   --color-rail-navy-mix: 52%;
@@ -618,6 +626,8 @@ html.dark:not([data-theme]) {
    opaque enough to survive without a shadow — every elevation is a white hairline. */
 html[data-theme="high-contrast"] {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
   /* The rail (facelift "rail") stays black, edged by the white hairline every elevation is. */
   --color-rail-navy-mix: 0%;
   --color-pill-active: var(--color-fg);
@@ -688,6 +698,9 @@ html[data-theme="high-contrast"] {
 
 html[data-theme="blueprint"] {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
+  --color-rail-edge-mix: 0%;
   --color-rail-navy-mix: 52%;
   --color-pill-active: var(--color-fg);
   --color-pill-active-fg: var(--color-surface);
@@ -775,6 +788,9 @@ html[data-theme="whiteboard"] {
 
 html[data-theme="solarized"] {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
+  --color-rail-edge-mix: 0%;
   --color-rail-navy-mix: 52%;
   --color-pill-active: var(--color-fg);
   --color-pill-active-fg: var(--color-surface);
@@ -840,6 +856,9 @@ html[data-theme="solarized"] {
 
 html[data-theme="nord"] {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
+  --color-rail-edge-mix: 0%;
   --color-rail-navy-mix: 52%;
   --color-pill-active: var(--color-fg);
   --color-pill-active-fg: var(--color-surface);
@@ -905,6 +924,9 @@ html[data-theme="nord"] {
 
 html[data-theme="darcula"] {
   color-scheme: dark;
+  --color-rail-dark-mix: 100%;
+  --shadow-rail-active: none;
+  --color-rail-edge-mix: 0%;
   --color-rail-navy-mix: 52%;
   --color-pill-active: var(--color-fg);
   --color-pill-active-fg: var(--color-surface);
@@ -39636,26 +39658,33 @@ a.tm-list__name {
    rows set their ink with Tailwind utilities, which these rules must outrank.
    ========================================================================== */
 
-/* ---- rail — the navy brand spine ------------------------------------------
-   The rail is the mark's navy with white type, a honey marker on the active row and the
-   bee in a honey hexagon; the page stays on warm paper. Every tint is mixed from
-   `--brand-navy`, and a theme steers the mix through two tokens it may swap at the root
-   (`--color-rail-navy-mix`, `--color-rail-edge-mix`): a dark theme keeps a navy cast, High
-   contrast keeps its black and its white hairline. No rule here reaches into a theme. */
+/* ---- rail — the brand spine ------------------------------------------------
+   On a dark theme the rail is the mark's navy with white type, a honey marker on the active
+   row and the bee in a honey hexagon. On a light theme it follows the page: the warm paper
+   rail (`--bg-rail`) with the page's ink, the raised surface pill on the current row and the
+   same honey marker. A theme steers it through three tokens it may swap at the root:
+
+     `--color-rail-dark-mix`  100% = white-on-ink rail (every dark theme), 0% = page ink (light);
+     `--color-rail-navy-mix`  how much `--brand-navy` the dark rail carries (High contrast 0%);
+     `--color-rail-edge-mix`  whether a hairline edges the rail.
+
+   Every value below is mixed `dark-value var(--rail-dark), light-value`, so a theme picks one
+   end without a rule of its own. No rule here reaches into a theme. */
 .rail {
+  --rail-dark: var(--color-rail-dark-mix);
   --rail-ink: color-mix(in srgb, var(--brand-navy) var(--color-rail-navy-mix), var(--bg-rail));
-  --rail-ink-top: color-mix(in srgb, var(--rail-ink) 86%, white);
-  --rail-ink-deep: color-mix(in srgb, var(--rail-ink) 82%, black);
-  --rail-fg-resolved: color-mix(in srgb, white 94%, transparent);
-  --rail-fg-muted-resolved: color-mix(in srgb, white 70%, transparent);
-  --rail-fg-subtle-resolved: color-mix(in srgb, white 48%, transparent);
-  --rail-line-resolved: color-mix(in srgb, white 12%, transparent);
-  --rail-hover-resolved: color-mix(in srgb, white 8%, transparent);
-  --rail-active-resolved: color-mix(in srgb, white 14%, transparent);
+  --rail-ink-top: color-mix(in srgb, color-mix(in srgb, var(--rail-ink) 86%, white) var(--rail-dark), var(--rail-ink));
+  --rail-ink-deep: color-mix(in srgb, color-mix(in srgb, var(--rail-ink) 82%, black) var(--rail-dark), var(--rail-ink));
+  --rail-fg-resolved: color-mix(in srgb, color-mix(in srgb, white 94%, transparent) var(--rail-dark), var(--fg));
+  --rail-fg-muted-resolved: color-mix(in srgb, color-mix(in srgb, white 70%, transparent) var(--rail-dark), var(--fg-muted));
+  --rail-fg-subtle-resolved: color-mix(in srgb, color-mix(in srgb, white 48%, transparent) var(--rail-dark), var(--fg-subtle));
+  --rail-line-resolved: color-mix(in srgb, color-mix(in srgb, white 12%, transparent) var(--rail-dark), var(--border));
+  --rail-hover-resolved: color-mix(in srgb, color-mix(in srgb, white 8%, transparent) var(--rail-dark), color-mix(in srgb, var(--fg) 5%, transparent));
+  --rail-active-resolved: color-mix(in srgb, color-mix(in srgb, white 14%, transparent) var(--rail-dark), var(--bg-surface));
   background: linear-gradient(180deg, var(--rail-ink-top) 0%, var(--rail-ink) 42%, var(--rail-ink-deep) 100%);
   color: var(--rail-fg-resolved);
   border-right-color: color-mix(in srgb, var(--border-strong) var(--color-rail-edge-mix), transparent);
-  box-shadow: inset -1px 0 0 color-mix(in srgb, black 18%, transparent);
+  box-shadow: inset -1px 0 0 color-mix(in srgb, color-mix(in srgb, black 18%, transparent) var(--rail-dark), transparent);
 }
 
 /* Rows: the ink of the rail, not of the page. Menus that open from a row are surfaces
@@ -39677,11 +39706,12 @@ a.tm-list__name {
 .rail .rail-item:hover {
   background: var(--rail-hover-resolved);
 }
+/* The current row: a white tint on the dark rail, the raised surface pill on a light one. */
 .rail .rail-item[aria-current="page"] {
   position: relative;
   background: var(--rail-active-resolved);
   color: var(--rail-fg-resolved);
-  box-shadow: none;
+  box-shadow: var(--shadow-rail-active);
 }
 .rail .rail-item[aria-current="page"] .rail-label {
   color: var(--rail-fg-resolved);
@@ -39697,8 +39727,9 @@ a.tm-list__name {
   border-radius: 0 3px 3px 0;
   background: var(--brand-honey);
 }
+/* Honey reads on the navy; on paper it would not, so a light rail's icon takes the ink. */
 .rail .rail-item[aria-current="page"] > svg {
-  color: var(--brand-honey);
+  color: color-mix(in srgb, var(--brand-honey) var(--rail-dark), var(--fg));
 }
 .rail .rail-group button,
 .rail .rail-group button:hover {
@@ -39719,7 +39750,7 @@ a.tm-list__name {
 .rail .brand-lockup__sub {
   color: var(--rail-fg-subtle-resolved);
 }
-/* The bee sits in a honey hexagon on the navy. */
+/* The bee sits in a honey hexagon. */
 .rail .brand-lockup > :first-child {
   color: var(--brand-navy);
   background: var(--brand-honey);
@@ -39749,21 +39780,22 @@ a.tm-list__name {
 .rail .rail-item:hover .text-fg-muted {
   color: var(--rail-fg-muted-resolved);
 }
-/* Search trigger and shortcut hints read as cut into the navy. */
+/* Search trigger and shortcut hints: cut into the navy on a dark rail; on a light rail the
+   trigger keeps its own border and the hints their page look. */
 .rail .rail-search {
-  background: color-mix(in srgb, black 22%, transparent);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 6%, transparent);
+  background: color-mix(in srgb, color-mix(in srgb, black 22%, transparent) var(--rail-dark), transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, color-mix(in srgb, white 6%, transparent) var(--rail-dark), transparent);
   color: var(--rail-fg-subtle-resolved);
 }
 .rail .rail-search:hover {
   color: var(--rail-fg-muted-resolved);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 14%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, color-mix(in srgb, white 14%, transparent) var(--rail-dark), transparent);
 }
 .rail .hive-kbd,
 .rail kbd {
-  background: color-mix(in srgb, white 10%, transparent);
+  background: color-mix(in srgb, color-mix(in srgb, white 10%, transparent) var(--rail-dark), var(--bg-surface));
   color: var(--rail-fg-muted-resolved);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, color-mix(in srgb, white 12%, transparent) var(--rail-dark), var(--border-strong));
   border-color: transparent;
 }
 /* The nav fades out at the bottom rather than stopping dead. */
