@@ -98,6 +98,7 @@ own folders, headers, bodies and example responses.
 
 ## Related
 
+- [Collections and captured traffic](./collections-and-captures.mdx): how every collection and capture import works.
 - [Supported formats](./supported-formats.md): what this importer reads.
 - [Import an Insomnia collection](./insomnia-import.md) and [Import a Bruno collection](./bruno-import.md):
   the same import for other clients.

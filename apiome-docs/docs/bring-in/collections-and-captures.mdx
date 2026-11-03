@@ -1,0 +1,79 @@
+---
+title: Collections and captured traffic
+description: Catalog the APIs your team already calls from API clients and recordings.
+sidebar_position: 35.5
+tags: [import, collection, har, postman, insomnia, bruno, hoppscotch, thunder-client, inferred]
+---
+
+Most teams have an API before they have a spec for it. It lives in an API client's saved requests
+or in recorded traffic. Apiome imports both into the [Catalog](./catalog.mdx) as a **REST** API. It
+infers the operations and schemas from the requests, removes every credential, and labels what it
+built as **inferred**. When you're ready, convert the item to an OpenAPI project.
+
+Use these importers when the API has no spec, when the spec is out of date, or when you want to see
+what clients actually call.
+
+## What you can import
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **HAR capture** | Traffic recorded in browser devtools or a debugging proxy | `har` | [Import a HAR capture](./har-import.md) |
+| **Postman collection** | Collection v2.0 or v2.1, with its environments | `postman` | [Import a Postman collection](./postman-import.md) |
+| **Insomnia collection** | Export format 4 (JSON) or 5 (YAML), with its environments | `insomnia` | [Import an Insomnia collection](./insomnia-import.md) |
+| **Bruno collection** | A collection folder of `.bru` files, as an archive or from git | `bruno` | [Import a Bruno collection](./bruno-import.md) |
+| **Hoppscotch collection** | A collection export, with its environments | `hoppscotch` | [Import a Hoppscotch collection](./hoppscotch-import.md) |
+| **Thunder Client collection** | A collection export from VS Code, with its environments | `thunder-client` | [Import a Thunder Client collection](./thunder-client-import.md) |
+| **Request files** | `.http` / `.rest` files (VS Code, JetBrains) and cURL snippets | `http-file` | [Supported formats](./supported-formats.md) |
+
+## How it works
+
+1. **Import the file.** In **Import to catalog**, upload it on **File Upload** (or paste it) and
+   Apiome detects the format. Several files that belong together, such as a collection and its
+   environments or several recording sessions, go in one archive (`.zip`, `.tar.gz`). From the CLI,
+   use `apiome import har`, `apiome import postman` and so on, with `--dry-run` to preview without
+   saving.
+2. **Credentials are removed first.** Before anything is stored, Apiome strips tokens, cookies, API
+   keys and passwords. Variables keep their names (`{{baseUrl}}`) but not secret values, and auth
+   becomes a security-scheme stub (`bearer`, `apiKey` …). For these formats scrubbing is always on,
+   whatever your workspace's scrub policy says
+   ([Secrets in collections and captures](./collection-secret-scrubbing.md)).
+3. **The API is inferred.** A collection or capture is a list of concrete requests, not a spec. One
+   shared engine merges them for every format:
+   - requests with the same method and path shape become one operation. `GET /v1/users/101` and
+     `GET /v1/users/102` become `GET /v1/users/{id}`;
+   - query parameters and the headers your app sets become parameters. One that only some requests
+     send is optional;
+   - JSON request and response bodies become schemas, merged across every sample;
+   - folders group operations, and each operation records how many samples it came from.
+4. **It lands in the Catalog.** The item is labelled **inferred** (for example **HAR (inferred)**)
+   and can't be published as it is. You can search, version, diff and lint it like any other catalog
+   item. The **Provenance** tab shows what was declared, inferred or synthesized
+   ([Declared, inferred and synthesized](./inference-provenance.mdx)).
+5. **Convert it when you're ready.** **Convert to OpenAPI** turns the item into a publishable project
+   and shows what the conversion had to infer before it creates anything
+   ([Convert to OpenAPI](./convert-to-openapi.md)).
+
+## More samples, better results
+
+An inferred API is only as complete as the requests it saw. An endpoint that was never called isn't
+there, and a field that was always empty has no type. To get a fuller result:
+
+- **For a capture,** use every screen of the app while recording: create, edit and delete things, not
+  just list them.
+- **For a collection,** save an example response on each request.
+- **Import again** when you have more. An import with the same slug adds a new revision of the same
+  catalog item, so you can compare it with the last one.
+
+## Going the other way
+
+Any HTTP API in Apiome, specified or inferred, can be exported as a Postman, Insomnia, Bruno,
+Hoppscotch or Thunder Client collection ([Export to an API client](../ship/export-to-an-api-client.md)).
+HAR is import only.
+
+## Where next
+
+- [Secrets in collections and captures](./collection-secret-scrubbing.md): what is removed and the
+  scrub report.
+- [Declared, inferred and synthesized](./inference-provenance.mdx): the labels, the inferred-share lint
+  rule, and keeping inferred APIs from being published.
+- [How importing works](./how-importing-works.mdx): every import source and import history.

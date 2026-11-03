@@ -276,6 +276,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['x12', 'edifact', 'edi', 'cobol', 'copybook', 'redaction', 'payload', 'analysis'],
   },
   {
+    id: 'collections-and-captures',
+    title: 'Collections and captured traffic',
+    summary:
+      'Import Postman, Insomnia, Bruno, Hoppscotch and Thunder Client collections or HAR recordings: inferred operations, credentials removed.',
+    page: 'apiome-docs/docs/bring-in/collections-and-captures.mdx',
+    section: 'spine',
+    keywords: ['postman', 'insomnia', 'bruno', 'hoppscotch', 'thunder', 'har', 'inferred', 'requests', 'scrub', 'secrets'],
+  },
+  {
     id: 'how-importing-works',
     title: 'How importing works',
     summary:

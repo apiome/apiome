@@ -113,6 +113,7 @@ client](../ship/export-to-an-api-client.md).
 
 ## Related
 
+- [Collections and captured traffic](./collections-and-captures.mdx): how every collection and capture import works.
 - [Supported formats](./supported-formats.md): what this importer reads.
 - [Import an Insomnia collection](./insomnia-import.md): the same import for Insomnia.
 - [Declared, inferred and synthesized](./inference-provenance.mdx): why everything a collection import
