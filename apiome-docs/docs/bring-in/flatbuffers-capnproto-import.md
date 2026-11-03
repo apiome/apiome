@@ -88,3 +88,4 @@ does not compile.
 
 - [Supported formats](./supported-formats.md): version coverage and export support
 - [Lint rules](../build/lint-rules.md#pack-flatbuffers): the `flatbuffers` and `capnproto` packs
+- [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.

@@ -91,3 +91,4 @@ On top of the common rules, every OpenRPC catalog item is checked by the `openrp
 - [Import a specification](./import-a-spec.md): the import paths every format shares
 - [Supported formats](./supported-formats.md): OpenRPC's version coverage and export support
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.

@@ -1,0 +1,87 @@
+---
+title: RPC and event formats
+description: Catalog OpenRPC, xRegistry, Thrift, FlatBuffers, Cap'n Proto, Connect and hypermedia APIs.
+sidebar_position: 38.5
+tags: [import, openrpc, json-rpc, cloudevents, xregistry, thrift, flatbuffers, capnproto, connectrpc, json-api, hal, hydra, jtd]
+---
+
+Not every API is described in OpenAPI. JSON-RPC services publish OpenRPC, event-driven systems keep
+their CloudEvents in an xRegistry, and many services are defined in a cross-language IDL such as
+Thrift, FlatBuffers or Cap'n Proto. Apiome imports each of them into the [Catalog](./catalog.mdx)
+with its own importer, so you can search, version, diff, lint and convert them next to your REST
+APIs.
+
+Use this page to find the right importer. Each one has its own page with the details.
+
+## What you can import
+
+| Source | What it is | Importer | Steps |
+| --- | --- | --- | --- |
+| **OpenRPC** | The description of a JSON-RPC 2.0 service, common across web3 | `openrpc` | [Import an OpenRPC / JSON-RPC API](./openrpc-import.md) |
+| **xRegistry** | The CNCF CloudEvents catalog: schemas, message definitions and endpoints | `xregistry` | [Import a CNCF xRegistry](./xregistry-import.md) |
+| **CloudEvents** | A single CloudEvent (`specversion`, `type`, `source`, `data`) | `cloudevents` | [Import a CNCF xRegistry](./xregistry-import.md#what-you-can-import) |
+| **Apache Thrift** | Cross-language IDL and RPC (`.thrift`), one file or a set joined by `include` | `thrift` | [Import an Apache Thrift API](./thrift-import.md) |
+| **FlatBuffers** | A zero-copy binary schema (`.fbs`) | `flatbuffers` | [Import a FlatBuffers or Cap'n Proto schema](./flatbuffers-capnproto-import.md) |
+| **Cap'n Proto** | A zero-copy binary schema with RPC interfaces (`.capnp`) | `capnproto` | [Import a FlatBuffers or Cap'n Proto schema](./flatbuffers-capnproto-import.md) |
+| **Connect RPC** | A Protobuf contract served the Connect way, with an HTTP/JSON route per method | `connectrpc` | [Import a Connect-RPC service](./connect-rpc-import.md) |
+| **JSON Type Definition** | A JTD schema (RFC 8927), imported as a data schema | `jtd` | [JSON Type Definition](./rest-hypermedia-conventions.md#json-type-definition) |
+
+JSON:API, HAL, HAL-FORMS, JSON-LD and Hydra are not imported on their own: they are conventions an
+OpenAPI, Swagger or RAML document follows. Apiome recognizes them when you import that document. See
+[REST hypermedia conventions](./rest-hypermedia-conventions.md).
+
+## How it works
+
+1. **Import the file.** In **Import to catalog**, choose the format, or let **Auto-detect** find it,
+   and upload, paste or link the document. From the CLI, use `apiome import openrpc`,
+   `apiome import thrift` and so on. A Thrift IDL split across files, or a Buf module for Connect,
+   goes in one archive (`.zip`, `.tar.gz`, `.tar`).
+2. **Or read it from a running service.** Some formats can be fetched live:
+   - **OpenRPC**: `apiome import openrpc --discover` calls the service's `rpc.discover` method
+     ([Discover a live service](./openrpc-import.md#discover-a-live-service)).
+   - **Connect RPC**: the contract is fetched over gRPC server reflection
+     ([Import it](./connect-rpc-import.md#import-it)).
+   - **xRegistry**: a running registry is crawled, one catalog item per schema, message group and
+     endpoint ([What you can import](./xregistry-import.md#what-you-can-import)).
+3. **It lands in the Catalog.** Methods and messages become operations, and schemas, structs and
+   tables become types. Each import is fingerprinted, so importing an unchanged document again does
+   not create a new version.
+4. **Compare versions by the format's own rules.** Tick two versions on the catalog item's
+   **Versions** tab. Each format grades its changes by what breaks its clients:
+   - [OpenRPC](./openrpc-import.md#breaking-changes-between-versions)
+   - [xRegistry](./xregistry-import.md#versions-and-changes)
+   - [Thrift](./thrift-import.md#breaking-changes-between-versions)
+   - [FlatBuffers and Cap'n Proto](./flatbuffers-capnproto-import.md#breaking-changes-between-versions),
+     by field id
+5. **Lint it.** Each format has its own lint pack, on top of the checks every catalog item gets:
+   [OpenRPC](./openrpc-import.md#lint-rules), [xRegistry](./xregistry-import.md#lint-rules),
+   [Thrift](./thrift-import.md#lint-rules),
+   [FlatBuffers and Cap'n Proto](./flatbuffers-capnproto-import.md#lint-rules), and the
+   [hypermedia conformance checks](./rest-hypermedia-conventions.md#conformance-checks).
+6. **Convert it when you're ready.** **Convert to OpenAPI** turns the item into a publishable
+   project and shows what the conversion keeps and loses before it creates anything
+   ([Convert to OpenAPI](./convert-to-openapi.md)).
+
+## Find them in the catalog
+
+On **Bring in → Catalog**, narrow by **Formats** to list the items of one importer. Items imported from
+an OpenAPI, Swagger or RAML document that follows a hypermedia convention can also be filtered by
+that convention ([Filter the catalog by convention](./rest-hypermedia-conventions.md#filter-the-catalog-by-convention)).
+
+## Going the other way
+
+Every format on this page is also an export target: choose it from **Export** on a catalog item.
+OpenRPC, Thrift, FlatBuffers and Cap'n Proto can be written from an item of any format; see
+[OpenRPC](../ship/export-a-spec.md#openrpc-from-any-source),
+[Thrift](../ship/export-a-spec.md#thrift-from-any-source),
+[FlatBuffers](../ship/export-a-spec.md#flatbuffers-from-any-source) and
+[Cap'n Proto](../ship/export-a-spec.md#capn-proto-from-any-source) from any source.
+[Supported formats](./supported-formats.md) lists the export support of the others.
+
+## Where next
+
+- [Supported formats](./supported-formats.md): every format, the versions each importer reads, and
+  export support.
+- [How importing works](./how-importing-works.mdx): every import source and import history.
+- [Convert to OpenAPI](./convert-to-openapi.md#per-format-conversion-packs): what each format's
+  conversion keeps.

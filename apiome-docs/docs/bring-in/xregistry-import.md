@@ -113,3 +113,4 @@ Give each schema a `description` (Apiome uses it for the type when the schema do
   message group and endpoint.
 - [Supported formats](./supported-formats.md): the versions this importer reads.
 - [Import a spec](./import-a-spec.md): every way to bring a document in.
+- [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.
