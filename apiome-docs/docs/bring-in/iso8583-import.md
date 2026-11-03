@@ -113,3 +113,4 @@ An ISO 8583 item writes back out as the same field-map JSON through the **ISO 85
 - [Supported formats](./supported-formats.md): ISO 8583's coverage and export support
 - [Import ISO 20022 messages and message definitions](./iso20022-import.md): the other payments standard
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.

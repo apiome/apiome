@@ -20,6 +20,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
 - Import:
+  - Healthcare and finance standards — **Help & docs** lists a new guide, **Healthcare and finance standards**: which importer to use for FHIR, HL7 v2, ISO 20022, FIX and FIX Orchestra, ISO 8583, EDI X12, UN/EDIFACT and UBL / Peppol, how they are linted and compared between versions, and what comes after the import: FHIR live refresh, the HL7 v2 to FHIR map, FIX links and export
   - RPC and event formats — **Help & docs** lists a new guide, **RPC and event formats**: which importer to use for OpenRPC, xRegistry and CloudEvents, Thrift, FlatBuffers, Cap'n Proto, Connect RPC and JSON Type Definition, reading a running service, comparing versions by each format's rules, lint, converting to OpenAPI and exporting
   - Smithy — the **Import a Smithy model** guide in **Help & docs** now opens with when to use it and a table of every step: import a file, a JSON AST or a multi-file model, Smithy lint, comparing versions with `smithy diff`, converting to OpenAPI and exporting back to Smithy
   - API Blueprint — the **Import an API Blueprint** guide in **Help & docs** now opens with when to use it and a table of every step: import, what the catalog item holds, drafter's checks, lint, moving to OpenAPI and exporting back to API Blueprint

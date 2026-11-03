@@ -114,3 +114,4 @@ maximum use, which Apiome does not read, so a change in repetition is **dangerou
 - [Import an XML Schema (XSD)](./xsd-import.md#ubl-and-peppol-document-schemas), for UBL 2.1 and
   Peppol e-invoicing
 - [Built-in lint rules](../build/lint-rules.md#pack-edix12)
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.

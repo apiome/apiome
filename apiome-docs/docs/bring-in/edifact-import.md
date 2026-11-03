@@ -162,3 +162,7 @@ repetition changed, is dangerous (`edifact.segment-added`, `edifact.element-adde
 | A `UNH` has no `UNT`, a segment sits outside any message, or the interchange carries no message | `INPUT_SEMANTIC_INVALID` |
 | The file was sent as `edifact` but is X12, TRADACOMS, or some other format | `FORMAT_MISMATCH` |
 | The file is not UTF-8 text (UTF-16, for example) | `INPUT_ENCODING_INVALID` |
+
+## Related
+
+- [Healthcare and finance standards](./healthcare-and-finance-standards.mdx): every healthcare, finance and EDI importer, and how they work together.
