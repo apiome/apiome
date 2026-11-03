@@ -62,3 +62,7 @@ binding.
 The binding is part of the descriptor's model, so importing a new version of the descriptor and
 comparing versions shows an operation that now passes a different structure: the operation is
 **modified**, and the old and new structures are removed and added.
+
+## Related
+
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

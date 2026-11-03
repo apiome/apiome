@@ -184,3 +184,4 @@ marks it partial with the reason.
 - [Import PL/I structures](./pli-structure-import.md): the same records, declared in PL/I
 - [Import VSAM cluster definitions and CICS BMS maps](./vsam-cics-bms-import.md): the files and screens copybooks describe
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

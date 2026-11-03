@@ -163,3 +163,4 @@ interfaces, attributes and `oneway` operations as declared; see
 - [Supported formats](./supported-formats.md): CORBA IDL's coverage and export support
 - [Import ONC RPC (XDR) definitions](./oncrpc-import.md): another positional RPC format
 - [Built-in lint rules](../build/lint-rules.md): every rule with its rationale
+- [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx): every legacy, mainframe and middleware importer, and how they work together.

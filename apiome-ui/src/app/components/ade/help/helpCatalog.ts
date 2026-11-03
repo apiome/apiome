@@ -303,6 +303,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['fhir', 'hl7', 'iso20022', 'swift', 'sepa', 'fix', 'orchestra', 'iso8583', 'card', 'edi', 'x12', 'edifact', 'peppol', 'ubl', 'clinical', 'payments'],
   },
   {
+    id: 'legacy-and-mainframe-formats',
+    title: 'Legacy, mainframe and middleware formats',
+    summary:
+      'Import COBOL copybooks, z/OS Connect, WADL, CORBA IDL, ASN.1, XML-RPC and ONC RPC: wire-aware diffs, lint and a way forward.',
+    page: 'apiome-docs/docs/bring-in/legacy-and-mainframe-formats.mdx',
+    section: 'spine',
+    keywords: ['cobol', 'copybook', 'zos', 'cics', 'ims', 'wadl', 'corba', 'idl', 'asn1', 'xmlrpc', 'oncrpc', 'xdr', 'rpcgen', 'migrate', 'modernization'],
+  },
+  {
     id: 'how-importing-works',
     title: 'How importing works',
     summary:
