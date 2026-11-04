@@ -639,6 +639,15 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 support=VersionSupport.FULL,
             )
         ],
+        # MFX-29.2 (#4174): the Discovery export writes v1 rest descriptions.
+        writes=[
+            FormatVersion(
+                version="Discovery Document v1 (`rest`)",
+                format_key="discovery",
+                support=VersionSupport.FULL,
+            )
+        ],
+        default_write="Discovery Document v1 (`rest`)",
     ),
     "edix12": VersionCoverage(
         reads=[

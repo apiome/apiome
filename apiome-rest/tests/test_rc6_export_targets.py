@@ -64,6 +64,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "cobolcopybook",
     "connectrpc",
     "corbaidl",
+    "discovery",
     "edifact-guide",
     "edix12",
     "envoy-xds",

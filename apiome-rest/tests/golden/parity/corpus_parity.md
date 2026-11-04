@@ -38,7 +38,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `dbt` | dbt Project | data_schema | 10 | 6 | 0 | 0 | 16 | 6/6 | 7 | — |
 | `dhall` | Dhall | data_schema | 8 | 6 | 0 | 0 | 14 | 6/6 | 7 | — |
 | `dicom` | DICOM | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
-| `discovery` | Google API Discovery | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
+| `discovery` | Google API Discovery | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `discovery` |
 | `dtd` | DTD | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `edifact` | UN/EDIFACT | data_schema | 10 | 7 | 0 | 0 | 17 | 6/6 | 9 | — |
 | `edix12` | EDI X12 | data_schema | 7 | 5 | 0 | 0 | 12 | 5/6 (+1 waived) | 7 | `edix12` |

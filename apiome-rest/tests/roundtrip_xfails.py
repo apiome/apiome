@@ -5824,4 +5824,11 @@ KNOWN_ROUNDTRIP_XFAILS: Dict[Tuple[str, str], str] = {
     ('pkl', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
     ('typescript-types', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
     ('zod', 'arazzo'): 'Emit failed: Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).',
+    # MFX-29.2 (#4174): the representative has no HTTP operation and no type, so the Discovery export is
+    # unavailable for it (`requires_source`), as for API Blueprint.
+    ('a2a', 'discovery'): 'Emit failed: Google API Discovery export needs at least one HTTP operation or one type; this source has neither.',
+    ('acp', 'discovery'): 'Emit failed: Google API Discovery export needs at least one HTTP operation or one type; this source has neither.',
+    ('agents-manifest', 'discovery'): 'Emit failed: Google API Discovery export needs at least one HTTP operation or one type; this source has neither.',
+    ('arazzo', 'discovery'): 'Emit failed: Google API Discovery export needs at least one HTTP operation or one type; this source has neither.',
+    ('asyncapi', 'discovery'): 'Emit failed: Google API Discovery export needs at least one HTTP operation or one type; this source has neither.',
 }
