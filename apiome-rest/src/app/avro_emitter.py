@@ -54,6 +54,7 @@ from .emitter import (
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .lossiness import LossinessReport, LossinessSeverity
+from .schema_registry_subjects import registry_subject
 
 __all__ = [
     "AvroEmitOptions",
@@ -893,19 +894,13 @@ def resolve_avro_subject(
     options: AvroEmitOptions,
     default_namespace: Optional[str],
 ) -> str:
-    """Return the Confluent Schema Registry subject for one emitted Avro type (MFX-19.3)."""
-    role_suffix = f"-{options.subject_role}"
+    """Return the Confluent Schema Registry subject for one emitted Avro type (MFX-19.3).
+
+    The record name is the type's full Avro name; the strategy is shared with the JSON Schema and
+    Protobuf registry pushes (:func:`app.schema_registry_subjects.registry_subject`, MFX-19.6).
+    """
     qualified = _qualified_name(type_, default_namespace) or _sanitize_name(type_.name) or type_.key
-
-    if options.subject_naming is AvroSubjectNamingStrategy.TOPIC_NAME:
-        topic = (options.topic or "").strip()
-        return f"{topic}{role_suffix}"
-
-    if options.subject_naming is AvroSubjectNamingStrategy.TOPIC_RECORD_NAME:
-        topic = (options.topic or "").strip()
-        return f"{topic}-{qualified}{role_suffix}"
-
-    return f"{qualified}{role_suffix}"
+    return registry_subject(qualified, options.subject_naming.value, options.topic, options.subject_role)
 
 
 def _synthesized_evolution_default(avro_type: Any) -> Any:

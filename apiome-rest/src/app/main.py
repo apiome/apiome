@@ -26,6 +26,7 @@ from .sso_provider_routes import admin_router as sso_provider_admin_router
 from .sso_provider_routes import internal_router as sso_provider_internal_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .avro_registry_push_routes import router as avro_registry_push_router
+from .schema_registry_push_routes import router as schema_registry_push_router
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
 from .bulk_import_routes import router as bulk_import_router
@@ -549,6 +550,7 @@ app.include_router(export_tenant_router)
 app.include_router(export_job_router)
 # Avro push (MFX-19.4, #3912): register an Avro export on a schema-registry connector's registry.
 app.include_router(avro_registry_push_router)
+app.include_router(schema_registry_push_router)
 # Export test-drive mocks (MFX-44.5, #4371): provision a short-lived mock from an emitted
 # artifact. Bound to the Mock Server engine below — this surface only provisions and inspects;
 # the mock itself is served by the public /v1/mock data plane.

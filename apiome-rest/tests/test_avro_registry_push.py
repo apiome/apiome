@@ -16,11 +16,9 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import Any, Dict, List, Mapping, Optional, Set
+from typing import Any, Dict, List, Mapping, Optional
 from unittest.mock import MagicMock, patch
-from urllib.parse import unquote
 
-import httpx
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -43,6 +41,7 @@ from app.export_source import ExportSource
 from app.export_validation import EmittedArtifactValidation
 from app.main import app
 from app.schema_registry_connector_source import SchemaRegistrySource
+from tests.fake_push_registry import PushRegistry
 
 _TENANT = "550e8400-e29b-41d4-a716-446655440000"
 _ACTOR = "11111111-1111-4111-8111-111111111111"
@@ -65,107 +64,6 @@ def _registries() -> None:
 @pytest.fixture(autouse=True)
 def _ssrf(monkeypatch) -> None:
     monkeypatch.setattr(settings, "ssrf_allow_private", True)
-
-
-# ---------------------------------------------------------------------------
-# A fake registry that accepts writes
-# ---------------------------------------------------------------------------
-
-
-class PushRegistry:
-    """An in-memory Confluent registry: lookup, compatibility check and register.
-
-    Args:
-        subjects: ``{subject: [schema text, …]}`` already registered (version = index + 1).
-        incompatible: Subjects whose compatibility check answers ``is_compatible: false``.
-        conflict: Subjects whose register answers ``409`` (Confluent's incompatible-schema error).
-        refuse: Subjects whose register answers ``422`` (invalid schema).
-        basic: ``(username, password)`` every call must carry.
-        version_on_register: Include ``version`` in the register answer (newer registries do).
-    """
-
-    def __init__(
-        self,
-        subjects: Optional[Dict[str, List[str]]] = None,
-        *,
-        incompatible: Set[str] = frozenset(),
-        conflict: Set[str] = frozenset(),
-        refuse: Set[str] = frozenset(),
-        basic: Optional[tuple] = (_CREDS["username"], _CREDS["password"]),
-        version_on_register: bool = False,
-    ) -> None:
-        self.subjects: Dict[str, List[Dict[str, Any]]] = {
-            s: [{"schema": text, "references": []} for text in texts] for s, texts in (subjects or {}).items()
-        }
-        self.ids: Dict[str, int] = {}
-        self.incompatible = set(incompatible)
-        self.conflict = set(conflict)
-        self.refuse = set(refuse)
-        self.basic = basic
-        self.version_on_register = version_on_register
-        self.requests: List[httpx.Request] = []
-
-    def transport(self) -> httpx.MockTransport:
-        return httpx.MockTransport(self._handle)
-
-    def calls(self) -> List[str]:
-        """``METHOD path`` of every request, decoded."""
-        return [f"{r.method} {unquote(r.url.raw_path.decode().split('?', 1)[0])}" for r in self.requests]
-
-    def writes(self) -> List[str]:
-        return [c for c in self.calls() if c.endswith("/versions")]
-
-    def _id(self, text: str) -> int:
-        return self.ids.setdefault(text, 100 + len(self.ids))
-
-    @staticmethod
-    def _error(status: int, code: int, message: str) -> httpx.Response:
-        return httpx.Response(status, json={"error_code": code, "message": message})
-
-    def _handle(self, request: httpx.Request) -> httpx.Response:
-        self.requests.append(request)
-        if self.basic is not None:
-            expected = base64.b64encode(f"{self.basic[0]}:{self.basic[1]}".encode()).decode()
-            if request.headers.get("authorization") != f"Basic {expected}":
-                return self._error(401, 40101, f"Unauthorized: bad password {self.basic[1]}")
-        parts = [unquote(p) for p in request.url.raw_path.decode().split("?", 1)[0].strip("/").split("/")]
-        body = json.loads(request.content or b"{}")
-        text, references = body.get("schema"), body.get("references") or []
-        if request.method != "POST":
-            return self._error(405, 405, "Method not allowed")
-        if parts[0] == "compatibility" and parts[1] == "subjects":
-            subject = parts[2]
-            if subject not in self.subjects:
-                return self._error(404, 40401, f"Subject '{subject}' not found.")
-            if subject in self.incompatible:
-                return httpx.Response(200, json={"is_compatible": False,
-                                                 "messages": ["READER_FIELD_MISSING_DEFAULT_VALUE: id"]})
-            return httpx.Response(200, json={"is_compatible": True})
-        if parts[0] == "subjects" and len(parts) == 2:
-            versions = self.subjects.get(parts[1])
-            if versions is None:
-                return self._error(404, 40401, f"Subject '{parts[1]}' not found.")
-            for index, entry in enumerate(versions):
-                if entry["schema"] == text and entry["references"] == references:
-                    return httpx.Response(200, json={"subject": parts[1], "id": self._id(text),
-                                                     "version": index + 1, "schema": text})
-            return self._error(404, 40403, "Schema not found")
-        if parts[0] == "subjects" and len(parts) == 3 and parts[2] == "versions":
-            subject = parts[1]
-            if subject in self.conflict:
-                return self._error(409, 409, "Schema being registered is incompatible with an earlier schema")
-            if subject in self.refuse:
-                return self._error(422, 42201, "Invalid schema")
-            for ref in references:
-                held = self.subjects.get(ref["subject"]) or []
-                if not 1 <= ref["version"] <= len(held):
-                    return self._error(422, 42201, f"Invalid reference {ref}")
-            self.subjects.setdefault(subject, []).append({"schema": text, "references": references})
-            answer: Dict[str, Any] = {"id": self._id(text)}
-            if self.version_on_register:
-                answer["version"] = len(self.subjects[subject])
-            return httpx.Response(200, json=answer)
-        return self._error(404, 404, "HTTP 404 Not Found")
 
 
 def _connector(base_url: str = _URL, kind: str = "schema-registry") -> Dict[str, Any]:
@@ -437,16 +335,19 @@ class _Route:
 
     def __enter__(self) -> TestClient:
         module = "app.avro_registry_push_routes"
+        # The route runs the pipeline every format's push shares (MFX-19.6).
+        shared = "app.schema_registry_push_routes"
         fake = self.fake
         self._patches = [
             patch(f"{module}.enforce_permission", self.permission),
             patch(f"{module}.db", self.db),
-            patch(f"{module}.store.get_connector",
+            patch(f"{shared}.db", self.db),
+            patch(f"{shared}.store.get_connector",
                   lambda db, tenant, cid: self.connector if cid == _CONNECTOR else None),
-            patch(f"{module}.unseal_connector_credentials",
+            patch(f"{shared}.unseal_connector_credentials",
                   lambda db, cid: (None, True) if self.unreadable else (dict(_CREDS), False)),
-            patch(f"{module}.load_export_source", self.load),
-            patch(f"{module}.SchemaRegistrySource",
+            patch(f"{shared}.load_export_source", self.load),
+            patch(f"{shared}.SchemaRegistrySource",
                   lambda c, creds: SchemaRegistrySource(c, creds, transport=fake.transport())),
         ]
         for p in self._patches:
@@ -517,6 +418,7 @@ def test_the_route_refuses_another_kind_of_connector() -> None:
     with route as client:
         response = client.post(_ROUTE, json=_body())
     assert response.status_code == 422 and response.json()["detail"]["code"] == "AVRO_PUSH_CONNECTOR_KIND"
+    assert "an Avro push" in response.json()["detail"]["message"]
     route.load.assert_not_called()
 
 
@@ -551,7 +453,7 @@ def test_an_export_that_fails_its_check_pushes_nothing() -> None:
                                          errors=["acme/Widget.avsc: Invalid Avro schema"])
 
     route = _Route(PushRegistry())
-    with route as client, patch("app.avro_registry_push_routes.validate_emitted_artifact", failing):
+    with route as client, patch("app.schema_registry_push_routes.validate_emitted_artifact", failing):
         response = client.post(_ROUTE, json=_body())
     assert response.status_code == 422
     assert response.json()["detail"]["code"] == "EMITTED_ARTIFACT_INVALID"

@@ -1,0 +1,21 @@
+---
+slug: registry-json-schema-protobuf
+title: Push JSON Schema and Protobuf to a schema registry
+description: "Register Avro, JSON Schema or Protobuf subjects through a schema registry connector."
+authors: [apiome]
+---
+
+A push to a Confluent-compatible schema registry now takes **JSON Schema** and **Protobuf** as well as Avro.
+See [Push to a schema registry](/ship/push-avro-to-a-schema-registry).
+
+{/* truncate */}
+
+- **One route, three formats:** `POST /v1/export/{tenant_slug}/schema-registry/push` with `format` `avro`,
+  `json-schema` or `protobuf`. Each schema is registered with its `schemaType`, after the schemas it references.
+- **JSON Schema:** one subject per type, each `$ref` to another type sent as a Confluent reference.
+- **Protobuf:** one subject per `.proto` file, named by its first message, each import of another file sent as a
+  reference.
+- **Same subject naming everywhere:** `record_name`, `topic_name` or `topic_record_name`, `-value` or `-key`, from
+  each format's record name.
+- **Compatibility levels:** set `compatibility_level` (`BACKWARD_TRANSITIVE`, `FULL`, `NONE` …) to set each subject's
+  level before its check. The Avro-only `/avro/push` takes it too.
