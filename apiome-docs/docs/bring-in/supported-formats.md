@@ -280,7 +280,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | VSAM cluster definitions (IDCAMS) | `vsam-idcams` | IDCAMS access-method services commands and LISTCAT output* | — | — |
 | WADL | `wadl` | 2009-02-09 | 2009-02-09 | 2009-02-09 |
 | WIT (WebAssembly) | `wit` | Component Model WIT (0.2 surface) | Component Model WIT (0.2 surface) | Component Model WIT (0.2 surface) |
-| WSDL | `wsdl` | 1.1, 2.0 | 1.1 | 1.1 |
+| WSDL | `wsdl` | 1.1, 2.0 | 1.1, 2.0 | 1.1 |
 | X12 implementation guide | `x12-guide` | — | — | — |
 | XML-RPC | `xmlrpc` | 1.0 | 1.0 | 1.0 |
 | XSD | `xsd` | 1.0 / 1.1*, UBL 2.x document schemas (Peppol BIS Billing 3.0)* | 1.0 | 1.0 |

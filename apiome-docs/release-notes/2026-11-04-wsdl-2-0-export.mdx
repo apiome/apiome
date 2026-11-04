@@ -1,0 +1,22 @@
+---
+slug: wsdl-2-0-export
+title: Export WSDL 2.0
+description: "The WSDL export writes a W3C WSDL 2.0 description when you ask for one."
+authors: [apiome]
+---
+
+The **WSDL** export can now write **WSDL 2.0** as well as WSDL 1.1: set **Wsdl Version** to `2.0` on the card.
+See [WSDL 2.0](/ship/export-a-spec#wsdl-2-0-output).
+
+{/* truncate */}
+
+- **The 2.0 grammar:** a `description` with `interface`, `binding`, `service` and `endpoint`. Each operation names its
+  payload elements directly and states its message-exchange pattern — `in-out`, `in-only` for an operation with no
+  reply — so a one-way operation reads back one-way.
+- **Same types, same files:** the XML Schema, the **bundle** and **single** layouts and the SOAP 1.1 / 1.2 and HTTP
+  bindings carry over.
+- **What 2.0 cannot say is listed:** the fidelity report names each multi-part message written as one element, each
+  `rpc` operation written document/literal, and the description name WSDL 2.0 has no place for.
+- **Checked before download:** the export validates against the W3C WSDL 2.0 schema, every element and reference it
+  names exists, and it imports back into Apiome.
+- **CLI:** `apiome export wsdl <item> --out <folder> --option wsdl_version=2.0`.

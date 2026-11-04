@@ -55,10 +55,12 @@ SOURCES: Dict[str, tuple[str, str]] = {
     "xsd": ("xsd/01-purchase-order.xsd", "xsd"),
 }
 
-#: The layout choices pinned, and the emit options that pick each.
+#: The layout (and WSDL version, MFX-14.5) choices pinned, and the emit options that pick each.
 LAYOUTS: Dict[str, Dict[str, Any]] = {
     "bundle": {},
     "single": {"layout": "single"},
+    "bundle-2.0": {"wsdl_version": "2.0"},
+    "single-2.0": {"wsdl_version": "2.0", "layout": "single"},
 }
 
 #: The sources whose exports are pinned for every layout.
@@ -177,14 +179,15 @@ def test_each_layout_writes_a_bundle_that_passes_the_checks(kind: str, layout: s
     outcome = _outcome(_source(kind), LAYOUTS[layout])
     assert outcome["problems"] == []
     suffixes = [path.rsplit(".", 1)[-1] for path in outcome["files"]]
-    assert suffixes == (["wsdl", "xsd"] if layout == "bundle" else ["wsdl"])
+    assert suffixes == (["wsdl", "xsd"] if layout.startswith("bundle") else ["wsdl"])
 
 
 def test_the_layout_picker_is_in_the_descriptor() -> None:
     card = _card(_source("rest"))
     layout = card.options_schema["properties"]["layout"]
     assert layout["enum"] == ["bundle", "single"]
-    assert card.default_options == {"include_comments": True, "layout": "bundle"}
+    assert card.options_schema["properties"]["wsdl_version"]["enum"] == ["1.1", "2.0"]
+    assert card.default_options == {"include_comments": True, "layout": "bundle", "wsdl_version": "1.1"}
 
 
 def test_browse_delivers_the_bundle_as_one_zip() -> None:

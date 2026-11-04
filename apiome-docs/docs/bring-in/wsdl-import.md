@@ -28,7 +28,7 @@ endpoints included). For an XML Schema on its own, with no service around it, us
 | **Check** the bindings and imports against the WS-I Basic Profile | Automatic on every import; problems show in lint | [WS-I Basic Profile checks](#ws-i-basic-profile-checks) |
 | **Compare** two versions by SOAP and XML Schema compatibility | Tick two versions on the catalog item's **Versions** tab | [Breaking changes between versions](#breaking-changes-between-versions) |
 | **Convert** to an OpenAPI project | **Convert to OpenAPI** on the catalog item | [Per-format conversion packs](./convert-to-openapi.md#per-format-conversion-packs) |
-| **Export** back to WSDL and XSD | **Export** on the catalog item | [WSDL and XSD from any source](../ship/export-a-spec.md#wsdl-and-xsd-from-any-source) |
+| **Export** back to WSDL (1.1 or 2.0) and XSD | **Export** on the catalog item | [WSDL and XSD from any source](../ship/export-a-spec.md#wsdl-and-xsd-from-any-source) · [WSDL 2.0](../ship/export-a-spec.md#wsdl-2-0-output) |
 
 ## Import it
 

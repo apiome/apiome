@@ -1,4 +1,4 @@
-"""WSDL emitter: canonical model → WSDL 1.1 + XSD (document/literal) — MFX-18.1, MFX-14.1 (#3889).
+"""WSDL emitter: canonical model → WSDL 1.1 or 2.0 + XSD (document/literal) — MFX-18.1, MFX-14.1 (#3889).
 
 The inverse of :class:`app.wsdl_normalizer.WsdlNormalizer` and an implementation of
 the :class:`app.emitter.Emitter` SPI.
@@ -29,6 +29,11 @@ reported. The HTTP method and path of a REST operation are not carried (reported
 **Fidelity** (MFX-14.2, #3890): :class:`WsdlFidelityRulePack` adds the JSON → XSD mapping losses the writer
 records for a source that is not XML (a WSDL or XSD source has none) to the capability verdicts — a union
 as an ``xs:choice``, a nullable value as ``nillable``, examples and constraints with no facet not written.
+
+**WSDL 2.0** (MFX-14.5, #4182): ``wsdl_version="2.0"`` writes the same types and operations as a WSDL 2.0
+``description`` (:mod:`app.wsdl20_writer`): ``interface`` / ``binding`` / ``service`` / ``endpoint``, each
+operation naming its payload elements directly with a message-exchange pattern. The 1.1-only constructs a
+WSDL source may carry (multi-part messages, ``type`` parts, the ``rpc`` style) are reported where they change.
 """
 
 from __future__ import annotations
@@ -37,9 +42,9 @@ import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
-from typing import Dict, List, Literal, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Set, Tuple, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from .canonical_model import (
     ApiParadigm,
@@ -65,7 +70,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, rename_verdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .writer_loss_rulepack import filed_writer_verdicts
 from .xsd_schema import (
@@ -114,6 +119,13 @@ class WsdlFidelityRulePack(CapabilityRulePack):
     no XSD form; a REST operation loses its HTTP method and path. A field number is kept when it is only
     a sequence position (a WSDL or XSD source) and dropped when it is a real one (Protobuf, Thrift, …).
 
+    **WSDL 2.0** (MFX-14.5): the report is computed for the emit options (:meth:`apply_options`). In 2.0 a
+    one-way operation is an ``in-only`` operation and reads back one-way, so it is not reported; the
+    1.1-only constructs the 2.0 writer changes are (:data:`_WRITER_LOSSES`) — a multi-part message written
+    as one wrapper element, a built-in-type payload given an element, an ``rpc`` operation written
+    document-style, a 1.1 service split because its ports expose different port types, the API name a
+    2.0 ``description`` has no place for, and the empty ``interface`` a model with no services is given.
+
     **JSON → XSD mapping** (MFX-14.2). The pack builds the export once with the WSDL writer (default
     options) and files the mapping losses it records on the type or field they concern
     (:data:`_WRITER_LOSSES`), so the report names exactly what the export does:
@@ -137,9 +149,36 @@ class WsdlFidelityRulePack(CapabilityRulePack):
         "null-as-nillable": (LossinessKind.APPROX, LossinessSeverity.INFO),
         "example-dropped": (LossinessKind.DROP, LossinessSeverity.INFO),
         "unsupported-facet": (LossinessKind.DROP, LossinessSeverity.WARN),
+        # MFX-14.5: WSDL 1.1-only constructs the 2.0 writer changes.
+        "message-parts-wrapped": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "scalar-payload-as-element": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "rpc-style-as-document": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "service-split": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "description-name-dropped": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "empty-interface-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
     }
     #: Set by :meth:`evaluate`: construct key → the verdicts of its writer mapping losses.
     _filed: Dict[str, List[FidelityVerdict]] = {}
+    #: Set by :meth:`apply_options`: the emit options the report is for (``None`` = the defaults).
+    _options: Optional["WsdlEmitOptions"] = None
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Compute the report for these emit options — ``wsdl_version`` (MFX-14.5) changes what is lost.
+
+        Invalid options fall back to the defaults (WSDL 1.1).
+
+        Args:
+            options: The raw emit options.
+        """
+        try:
+            self._options = WsdlEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = WsdlEmitOptions()
+
+    @property
+    def _wsdl_20(self) -> bool:
+        """Whether the report is for a WSDL 2.0 export."""
+        return (self._options or WsdlEmitOptions()).wsdl_version == "2.0"
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Build the export once and file its mapping losses, then run the drive loop.
@@ -153,7 +192,7 @@ class WsdlFidelityRulePack(CapabilityRulePack):
             The predicted fidelity report.
         """
         self._positional_field_numbers = api.format in _POSITIONAL_FIELD_NUMBER_FORMATS
-        writer = _WsdlWriter(api, WsdlEmitOptions())
+        writer = new_wsdl_writer(api, self._options or WsdlEmitOptions())
         writer.render()
         self._filed = filed_writer_verdicts(api, writer.losses.records(), self._WRITER_LOSSES)
         return super().evaluate(api)
@@ -177,14 +216,18 @@ class WsdlFidelityRulePack(CapabilityRulePack):
 
         A re-import keys each construct by that namespace (``Money`` becomes
         ``<namespace>.Money``), so the report says which namespace was used — and that it was
-        invented when the source gave none. A WSDL source already has one: nothing changes.
+        invented when the source gave none. A WSDL source already has one: nothing changes. A 2.0
+        export also lists the writer's description-level changes (the API name, a 1.1 service split in two).
         """
-        return target_namespace_verdicts(
-            api,
-            target_label=self.target_label,
-            namespace=_target_namespace(api),
-            source_has_own=api.format == _WSDL_FORMAT and bool(api.extras.get("wsdl_target_namespace")),
-        )
+        return [
+            *target_namespace_verdicts(
+                api,
+                target_label=self.target_label,
+                namespace=_target_namespace(api),
+                source_has_own=api.format == _WSDL_FORMAT and bool(api.extras.get("wsdl_target_namespace")),
+            ),
+            *self._filed.get(ROOT_CONSTRUCT_KEY, []),
+        ]
 
     def event_verdict(self, event) -> FidelityVerdict:
         return FidelityVerdict.drop(
@@ -215,7 +258,9 @@ class WsdlFidelityRulePack(CapabilityRulePack):
         WSDL 1.1 writes a one-way operation correctly — an ``input`` and no ``output`` — but a WSDL 1.1
         document has no message-exchange pattern, so ``app.wsdl_versions.operation_kind_for_pattern`` reads
         every 1.1 operation back as request/response. The round trip changes the operation's kind; the
-        report says so rather than leaving a silent difference.
+        report says so rather than leaving a silent difference. WSDL 2.0 states the pattern (``in-only``),
+        so a 2.0 export reports nothing for it. The 2.0 writer's changes to the operation (an ``rpc`` style,
+        a built-in-type payload) are added.
 
         Args:
             operation: The source operation.
@@ -224,7 +269,13 @@ class WsdlFidelityRulePack(CapabilityRulePack):
             The verdicts for the operation, in order.
         """
         verdicts = super().operation_verdicts(operation)
-        if operation.kind is OperationKind.ONE_WAY and all(v.kind is not LossinessKind.DROP for v in verdicts):
+        if self._filed.get(operation.key):
+            verdicts = _without_ok_beside_loss([*verdicts, *self._filed[operation.key]])
+        if (
+            not self._wsdl_20
+            and operation.kind is OperationKind.ONE_WAY
+            and all(v.kind is not LossinessKind.DROP for v in verdicts)
+        ):
             emitted = ncname(operation.name or operation.key, fallback="operation")
             # The operation changes, so an ``OK`` beside this would claim it is preserved (an over-claim).
             verdicts = [v for v in verdicts if v.kind is not LossinessKind.OK]
@@ -276,6 +327,14 @@ def _without_ok_beside_loss(verdicts: List[FidelityVerdict]) -> List[FidelityVer
 class WsdlEmitOptions(EmitOptions):
     """Per-target options for :class:`WsdlEmitter`."""
 
+    wsdl_version: Literal["1.1", "2.0"] = Field(
+        default="1.1",
+        description="`1.1` (default) writes `definitions` / `message` / `portType` / `binding` / `service`. "
+        "`2.0` writes a W3C WSDL 2.0 `description`: `interface` / `binding` / `service` / `endpoint`, each "
+        "operation naming its payload elements directly with a message-exchange pattern (`in-out`, "
+        "`in-only` …). What a WSDL 1.1 source has that 2.0 cannot say (multi-part messages, `type` parts, "
+        "the `rpc` style) is listed in the fidelity report.",
+    )
     include_comments: bool = Field(
         default=True,
         description="Emit an XML comment header in the generated WSDL.",
@@ -288,12 +347,12 @@ class WsdlEmitOptions(EmitOptions):
 
 
 class WsdlEmitter(Emitter, register=True):
-    """Emit a :class:`CanonicalApi` as a WSDL 1.1 description with XSD types."""
+    """Emit a :class:`CanonicalApi` as a WSDL 1.1 (or, by option, 2.0) description with XSD types."""
 
     key = "wsdl"
     format = "wsdl"
     label = "WSDL"
-    description = "Export as a SOAP WSDL 1.1 web service description with XSD types."
+    description = "Export as a SOAP WSDL 1.1 or 2.0 web service description with XSD types."
     icon = "file-code"
     paradigm = ApiParadigm.REST
     multi_file = True
@@ -328,7 +387,7 @@ class WsdlEmitter(Emitter, register=True):
             if isinstance(opts, WsdlEmitOptions)
             else WsdlEmitOptions.model_validate(opts.model_dump() if opts else {})
         )
-        writer = _WsdlWriter(api, options)
+        writer = new_wsdl_writer(api, options)
         wsdl_text, schema_text = writer.render()
         files = [EmittedFile(path=writer.output_path, content=wsdl_text, media_type=self.OUTPUT_MEDIA_TYPE)]
         if schema_text is not None:
@@ -341,6 +400,24 @@ class WsdlEmitter(Emitter, register=True):
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
         )
+
+
+def new_wsdl_writer(api: CanonicalApi, options: WsdlEmitOptions) -> "_WsdlWriter":
+    """The writer for ``options.wsdl_version``: :class:`_WsdlWriter` (1.1) or the 2.0 writer.
+
+    Args:
+        api: The source model. Never mutated.
+        options: The validated emit options.
+
+    Returns:
+        A writer whose ``render()`` returns ``(wsdl text, xsd text or None)``.
+    """
+    if options.wsdl_version == "2.0":
+        # Imported here: the 2.0 writer extends ``_WsdlWriter``, so it imports this module.
+        from .wsdl20_writer import Wsdl20Writer
+
+        return Wsdl20Writer(api, options)
+    return _WsdlWriter(api, options)
 
 
 @dataclass

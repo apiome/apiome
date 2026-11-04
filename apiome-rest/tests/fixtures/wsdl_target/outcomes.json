@@ -36,11 +36,28 @@
         "problems": [],
         "tier": "lossy"
       },
+      "bundle-2.0": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.wsdl",
+          "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+        ],
+        "preserved_percent": 12,
+        "problems": [],
+        "tier": "lossy"
+      },
       "single": {
         "files": [
           "Sample_Pet_Store_API_OpenAPI_3_0.wsdl"
         ],
         "preserved_percent": 13,
+        "problems": [],
+        "tier": "lossy"
+      },
+      "single-2.0": {
+        "files": [
+          "Sample_Pet_Store_API_OpenAPI_3_0.wsdl"
+        ],
+        "preserved_percent": 12,
         "problems": [],
         "tier": "lossy"
       }
@@ -55,6 +72,15 @@
         "problems": [],
         "tier": "lossless"
       },
+      "bundle-2.0": {
+        "files": [
+          "OrderService.wsdl",
+          "OrderService.xsd"
+        ],
+        "preserved_percent": 92,
+        "problems": [],
+        "tier": "lossy"
+      },
       "single": {
         "files": [
           "OrderService.wsdl"
@@ -62,6 +88,14 @@
         "preserved_percent": 100,
         "problems": [],
         "tier": "lossless"
+      },
+      "single-2.0": {
+        "files": [
+          "OrderService.wsdl"
+        ],
+        "preserved_percent": 92,
+        "problems": [],
+        "tier": "lossy"
       }
     }
   }

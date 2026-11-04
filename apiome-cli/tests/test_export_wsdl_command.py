@@ -1,9 +1,10 @@
 """``apiome export wsdl`` — MFX-14.4 (#3892).
 
-The SOAP / WSDL 1.1 description is a registry target (``wsdl``), so the verb runs through the generic export
+The SOAP / WSDL description is a registry target (``wsdl``), so the verb runs through the generic export
 seam (``export <format> <artifact>``, MFX-8.1) with no command code of its own. These tests pin that the
-spelling resolves, that the layout picker (``layout=bundle|single``) and ``include_comments`` reach the
-preview and the job with their types intact, that the WSDL + XSD zip unpacks into ``--out``, that ``--json``
+spelling resolves, that the layout picker (``layout=bundle|single``), the WSDL version
+(``wsdl_version=1.1|2.0``, MFX-14.5) and ``include_comments`` reach the preview and the job with their types
+intact, that the WSDL + XSD zip unpacks into ``--out``, that ``--json``
 prints the tier, and that a lossy export (a REST source loses its HTTP method and path) exits non-zero
 unless ``--force``.
 
@@ -93,7 +94,7 @@ def test_the_fixture_carries_the_layout_picker_and_the_lossy_badge() -> None:
     target = _TARGETS["targets"][0]
     layout = target["options_schema"]["properties"]["layout"]
     assert layout["enum"] == ["bundle", "single"] and layout["default"] == "bundle"
-    assert target["default_options"] == {"include_comments": True, "layout": "bundle"}
+    assert target["default_options"] == {"include_comments": True, "layout": "bundle", "wsdl_version": "1.1"}
     assert target["descriptor"]["multi_file"] is True
     assert target["fidelity"]["tier"] == "lossy"
 
@@ -126,6 +127,21 @@ def test_the_layout_picker_reaches_the_preview_and_the_job(httpx_mock: object, t
     assert _posted(httpx_mock, "/preview")["options"] == expected
     job = _posted(httpx_mock, "/jobs")
     assert (job["target"], job["options"]) == ("wsdl", expected)
+
+
+def test_the_fixture_carries_the_wsdl_version_picker() -> None:
+    """MFX-14.5 (#4182): ``wsdl_version`` picks WSDL 1.1 (the default) or 2.0."""
+    version = _TARGETS["targets"][0]["options_schema"]["properties"]["wsdl_version"]
+    assert version["enum"] == ["1.1", "2.0"] and version["default"] == "1.1"
+
+
+def test_the_wsdl_version_reaches_the_preview_and_the_job_as_text(httpx_mock: object, tmp_path: Path) -> None:
+    _mock_export(httpx_mock)
+    result = runner.invoke(app, _args(str(tmp_path / "wsdl"), "--force", "--option", "wsdl_version=2.0"))
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    # ``2.0`` stays the string the options schema enumerates, not the number 2.0.
+    assert _posted(httpx_mock, "/preview")["options"] == {"wsdl_version": "2.0"}
+    assert _posted(httpx_mock, "/jobs")["options"] == {"wsdl_version": "2.0"}
 
 
 def test_json_mode_prints_the_metadata_with_the_tier(httpx_mock: object, tmp_path: Path) -> None:

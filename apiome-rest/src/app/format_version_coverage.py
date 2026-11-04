@@ -2138,12 +2138,15 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
             FormatVersion(version="2.0", format_key="wsdl-2.0", support=VersionSupport.FULL),
         ],
         writes=[
+            FormatVersion(version="1.1", format_key="wsdl", support=VersionSupport.FULL),
             FormatVersion(
-                version="1.1",
+                version="2.0",
                 format_key="wsdl",
                 support=VersionSupport.FULL,
-                note="WSDL 2.0 output is not implemented (#4182), so 2.0 is import-only.",
-            )
+                note="Written with `wsdl_version='2.0'` (MFX-14.5): what a WSDL 1.1 source has that 2.0 "
+                "cannot say (multi-part messages, the `rpc` style, the description name) is reported in "
+                "the fidelity report.",
+            ),
         ],
         default_write="1.1",
     ),

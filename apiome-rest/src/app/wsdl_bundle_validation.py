@@ -20,11 +20,14 @@ five checks in order and reports every problem as a :class:`WsdlBundleProblem`:
    (:func:`inherited_wsi_rules`) is carried over rather than introduced, and is not reported —
    the import's lint already shows it. Every other source is written document/literal wrapped and
    must come out clean.
-5. **Structure** (``wsdl.structure``) — the bundle is unpacked into a private temporary folder
-   and read by ``xmlschema`` 's WSDL 1.1 reader (:class:`xmlschema.extras.wsdl.Wsdl11Document`),
-   which validates the description against the WSDL 1.1 schema, builds every XSD schema (inline
-   and imported — an unknown type, a broken facet or a dangling ``ref`` fails here), and resolves
-   every message, part element, port type, binding and port reference. Only files inside that
+5. **Structure** (``wsdl.structure``) — a WSDL 2.0 description (MFX-14.5, #4182) is checked by
+   :func:`app.wsdl20_validation.wsdl20_structure_problems`: valid against the W3C WSDL 2.0 schema, every
+   schema builds, every element, fault, interface, binding and operation reference resolves. For WSDL
+   1.1, the bundle is unpacked into a private temporary folder and read by ``xmlschema`` 's WSDL 1.1
+   reader (:class:`xmlschema.extras.wsdl.Wsdl11Document`), which validates the description against the
+   WSDL 1.1 schema, builds every XSD schema (inline and imported — an unknown type, a broken facet or a
+   dangling ``ref`` fails here), and resolves every message, part element, port type, binding and port
+   reference. Only files inside that
    folder are readable (``allow="sandbox"``); nothing is fetched.
 6. **Re-import** (``wsdl.reimport``) — the bundle imports through the WSDL import source
    (:class:`app.wsdl_import_source.WsdlImportSource`), as it would if a user uploaded it.
@@ -50,6 +53,7 @@ from .canonical_model import CanonicalApi
 from .fileset import IntakeFileset
 from .import_source import ImportSourceError
 from .secure_xml import SecureXmlError, parse_xml
+from .wsdl20_validation import wsdl20_structure_problems
 from .wsdl_import_source import WsdlImportSource
 from .wsdl_versions import VERSION_1_1, VERSION_2_0, WSDL_1_1_NAMESPACE, WSDL_2_0_NAMESPACE
 from .wsdl_wsi import check_wsi
@@ -176,6 +180,11 @@ def validate_wsdl_bundle(
     )
     if version == VERSION_1_1:
         problems.extend(_structure_problems(root_path, roots[root_path], files))
+    else:
+        problems.extend(
+            WsdlBundleProblem("wsdl.structure", message, file=file)
+            for message, file in wsdl20_structure_problems(root_path, roots[root_path], files)
+        )
     if not any(problem.rule == "wsdl.structure" for problem in problems):
         problems.extend(_reimport_problems(root_path, files))
     return problems
