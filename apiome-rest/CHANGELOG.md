@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.650.0] - 2026-11-04
+
+### Added
+- **Git repository delivery for exports (MFX-38.1, #4328).**
+  - `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/git` delivers a **completed** export job's bundle into a
+    registered repository: `repositoryId`, `targetPath` (a multi-file bundle keeps its directory tree; a multi-target
+    job one directory per target), `baseBranch`, and `mode` — `pr` (default: a commit on
+    `apiome/export-<artifact>-<target>[-<path digest>]` rebuilt on the latest base, and one pull request whose body
+    carries the fidelity summary table, the report headline and a link to the full report in Export studio; a
+    re-export updates the same branch and pull request — `opened` / `updated` / `unchanged` / `up_to_date`) or
+    `commit` (a fast-forward-only commit onto the base branch — `committed`, or `failed` when the branch moved or is
+    protected). `GET` on the same path lists the job's deliveries. Requires `versions:publish` (listing:
+    `projects:view`); audited as `export.git_delivery`.
+  - A delivery manifest (`<targetPath>/.apiome/export-delivery.json`, no clock or job id) lets a later delivery remove
+    files the export no longer produces while never touching files Apiome did not write.
+  - Credentials are the repository's existing linked-account token (no new credential store); failures are
+    `failed` runs with stable `export-git-delivery-*` codes and a redacted log.
+  - `app/export_git_delivery.py` (rules), `app/export_git_delivery_providers.py` (provider seam: GitHub today, via the
+    SDK-4.2 Git Data API client), `app/export_git_delivery_pipeline.py`, `app/export_git_delivery_routes.py`;
+    table `export_git_delivery_runs` (V354). Files come from the job's retained emit result, or its stored artifact
+    on any other instance (`410` once expired).
+  - OpenAPI: the new path and its three schemas merged into the committed documents.
+
 ## [1.649.0] - 2026-11-04
 
 ### Added

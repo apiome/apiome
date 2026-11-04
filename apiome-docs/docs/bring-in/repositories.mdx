@@ -225,6 +225,10 @@ write access to **Contents** and **Pull requests**. A repository registered from
 account, so it cannot receive pull requests. Every pull request PR-back opens is recorded in the
 audit log as `repository.pr_back_opened`, and every update as `repository.pr_back_updated`.
 
+The same linked account can also receive **exports**: any finished export, in any format, can be
+delivered to a registered repository as a pull request or a direct commit. See
+[Deliver an export to a git repository](../ship/deliver-an-export-to-git.md).
+
 ## Formats a scan finds
 
 A scan reads every file's name, and the content where the name is not enough, to decide which
