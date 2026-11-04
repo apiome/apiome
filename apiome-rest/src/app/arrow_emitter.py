@@ -710,6 +710,24 @@ class ArrowFidelityRulePack(CapabilityRulePack):
                 severity=LossinessSeverity.INFO, target_mapping="identity → schema metadata"))
         return verdicts
 
+    def _mode(self) -> str:
+        """The output mode the report is for: ``arrow``, ``bigquery`` or ``spark`` (``iceberg`` in its pack)."""
+        return (getattr(self, "_options", None) or ArrowEmitOptions()).output
+
+    def _union_verdict(self, type_: Type) -> FidelityVerdict:
+        """A union is ``APPROX`` in every mode — MFX-36.4: kept as a dense union by Arrow, flattened elsewhere."""
+        return FidelityVerdict.approx(message=_UNION_MESSAGES[self._mode()].format(key=type_.key),
+                                      severity=LossinessSeverity.INFO,
+                                      target_mapping=f"union → {_UNION_MAPPINGS[self._mode()]}")
+
+    def type_verdict(self, type_: Type) -> FidelityVerdict:
+        """An enumeration is ``APPROX`` (its column keeps no list of allowed values); else the profile's verdict."""
+        if type_.kind is TypeKind.ENUM:
+            return FidelityVerdict.approx(message=_ENUM_MESSAGES[self._mode()].format(key=type_.key),
+                                          severity=LossinessSeverity.INFO,
+                                          target_mapping="enum → string column (no allowed values)")
+        return super().type_verdict(type_)
+
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
         # A BigQuery / Spark approximation is filed under its table, and replaces the table's OK.
         filed = self._filed_verdicts(type_.key)
@@ -717,8 +735,12 @@ class ArrowFidelityRulePack(CapabilityRulePack):
             return filed
         change = self._changes.get(type_.key)
         if change is DiffChangeKind.REMOVED:
-            return [FidelityVerdict.drop(message=self._removed_reason(type_), severity=LossinessSeverity.INFO,
-                                         target_mapping="type → re-keyed or not kept")]
+            dropped = FidelityVerdict.drop(message=self._removed_reason(type_), severity=LossinessSeverity.INFO,
+                                           target_mapping="type → re-keyed or not kept")
+            # A union or enumeration also says how it is written (MFX-36.4), not only that it is re-keyed.
+            if type_.kind in (TypeKind.UNION, TypeKind.ENUM):
+                return [dropped, self.type_verdict(type_)]
+            return [dropped]
         if change is DiffChangeKind.CHANGED:
             return [FidelityVerdict.approx(
                 message=f"{type_.kind.value} {type_.key!r} reads back from the Arrow schema changed (types, "
@@ -775,6 +797,27 @@ class ArrowFidelityRulePack(CapabilityRulePack):
     def service_verdicts(self, service: Any) -> List[FidelityVerdict]:
         return [FidelityVerdict.drop(message=f"{self.target_label} is types-only; the service {service.key!r} has "
                                      "no schema", target_mapping="service → dropped (types-only export)")]
+
+
+#: MFX-36.4 (#4320): how each mode writes a union and an enumeration, for the fidelity report.
+_UNION_MESSAGES = {
+    "arrow": "union {key!r} is a dense Arrow union of its members; Parquet has no union type, so a table that "
+    "holds it gets no Parquet message",
+    "bigquery": "BigQuery has no union type; {key!r} is flattened to a RECORD with one NULLABLE field per member, "
+    "so exactly-one-of is not enforced",
+    "spark": "Spark has no union type; {key!r} is flattened to a STRUCT with one optional field per member, so "
+    "exactly-one-of is not enforced",
+    "iceberg": "Iceberg has no union type; {key!r} is flattened to a struct with one optional field per member, "
+    "so exactly-one-of is not enforced",
+}
+_UNION_MAPPINGS = {"arrow": "dense union", "bigquery": "RECORD of optional members",
+                   "spark": "STRUCT of optional members", "iceberg": "struct of optional members"}
+_ENUM_MESSAGES = {
+    "arrow": "enum {key!r} is a dictionary-encoded utf8 column; Arrow keeps no list of allowed values",
+    "bigquery": "enum {key!r} is a STRING column; BigQuery keeps no list of allowed values",
+    "spark": "enum {key!r} is a STRING column; Spark keeps no list of allowed values",
+    "iceberg": "enum {key!r} is a string column; Iceberg keeps no list of allowed values",
+}
 
 
 def _kept_facets(member: CanonicalField) -> Set[str]:

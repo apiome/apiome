@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.644.0] - 2026-11-04
+
+### Changed
+- **Data-lake fidelity packs + validation (MFX-36.4, #4320).**
+  - `ArrowFidelityRulePack` (and `IcebergFidelityRulePack` through `_mode()`): a union is `APPROX` in every mode
+    (Arrow: a dense union, no Parquet message; BigQuery / Spark / Iceberg: flattened to a record of optional
+    members), and an enumeration is `APPROX` (no mode keeps the allowed values) instead of `OK`. A union or
+    enumeration an Arrow re-import re-keys gets both the measured `DROP` and the `APPROX`.
+  - `tests/test_data_lake_fidelity.py`: per mode (arrow, bigquery, spark, iceberg) — operations `DROP` under the
+    critical types-only advisory (guard `near-empty`), constraints `DROP`, unions `APPROX`, field IDs `SYNTH` only
+    for Iceberg, enumerations never `OK`; invalid output (pyarrow, BigQuery rules, Spark grammar, pyiceberg) fails
+    validation and the delivery gate blocks the job.
+  - Round-trip and conformance goldens regenerated.
+
 ## [1.643.0] - 2026-11-04
 
 ### Added

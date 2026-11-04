@@ -393,14 +393,9 @@ class IcebergFidelityRulePack(ArrowFidelityRulePack):
         self._reached = _reached_types(api, self._tables)
         return CapabilityRulePack.evaluate(self, api)
 
-    def _union_verdict(self, type_: Any) -> FidelityVerdict:
-        """A union is a struct with one optional field per member: its alternatives are not enforced."""
-        return FidelityVerdict.approx(
-            message=f"{self.target_label} has no union type; {type_.key!r} is a struct with one optional field "
-            "per member, so exactly-one-of is not enforced",
-            severity=LossinessSeverity.INFO,
-            target_mapping="union → struct of optional members",
-        )
+    def _mode(self) -> str:
+        """Iceberg's union and enumeration wording (MFX-36.4)."""
+        return "iceberg"
 
     def _field_identity_verdict(self, member: CanonicalField) -> Optional[FidelityVerdict]:
         """``SYNTH`` unless the source carries the column's Iceberg ID (an Arrow ``PARQUET:field_id``)."""

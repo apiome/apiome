@@ -1,0 +1,20 @@
+---
+slug: data-lake-fidelity
+title: Honest fidelity reports for data-lake exports
+description: "Arrow, BigQuery, Spark and Iceberg reports list unions and enumerations as approximated."
+authors: [apiome]
+---
+
+The fidelity reports for **Apache Arrow / Parquet** (with its BigQuery and Spark outputs) and **Apache
+Iceberg** now follow one set of rules, with each format's differences spelled out. See the
+[rules per mode](/ship/export-a-spec#what-the-arrow-fidelity-report-lists).
+
+{/* truncate */}
+
+- **Unions are approximated, not kept:** Arrow writes a dense union, while BigQuery, Spark and Iceberg
+  flatten it to a record with one optional field per member.
+- **Enumerations are approximated:** no data-lake format keeps the list of allowed values.
+- **The rest is unchanged:** operations are dropped under a critical "types only" warning, constraints
+  are dropped, and Iceberg lists every field ID it makes up.
+- **Invalid output fails the job:** every export is checked by pyarrow, BigQuery's schema rules, Spark's
+  DDL grammar or pyiceberg before it is delivered.

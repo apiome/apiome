@@ -861,11 +861,27 @@ Spark schemas, so nothing about a re-import is reported for these outputs.
   nested record is named after the path of its column (`Category` reads back as `category`). A second
   table lives in its own file, so importing the export's first schema does not read it. An enumeration
   reads back as a string, and an alias as the type it names.
-- **Approximated:** an enumeration written as a dictionary column, a recursive record or untyped value
-  written as JSON, and an Arrow interval unit pyarrow cannot build, written as `MONTH_DAY_NANO`.
+- **Approximated:** a union (a dense Arrow union, with no Parquet message for its table), an enumeration
+  (a dictionary column that keeps no list of allowed values), a recursive record or untyped value written
+  as JSON, and an Arrow interval unit pyarrow cannot build, written as `MONTH_DAY_NANO`.
 - **Made up:** a decimal's precision and scale when the source states none.
 
-An item imported from Arrow reports no loss: it exports back as it was read.
+An item imported from Arrow exports back as it was read; only its unions are listed as approximated.
+
+The same rules apply to every output mode, and to [Iceberg](#apache-iceberg), with the differences each
+format brings:
+
+| Construct | Arrow / Parquet | BigQuery | Spark | Iceberg |
+| --- | --- | --- | --- | --- |
+| Operations, channels, services | Dropped (critical "types only") | Dropped (critical) | Dropped (critical) | Dropped (critical) |
+| Validation constraints | Dropped | Dropped | Dropped | Dropped |
+| A union | Approximated: dense union | Approximated: a `RECORD` of optional members | Approximated: a `STRUCT` of optional members | Approximated: a `struct` of optional members |
+| An enumeration | Approximated: dictionary column | Approximated: `STRING` | Approximated: `STRING` | Approximated: `string` |
+| Field IDs | None to report | None to report | None to report | Made up: one per field, kept by re-exports |
+| What a re-import reads back | Measured | No importer | No importer | No importer |
+| Checked by | pyarrow, then re-import | BigQuery's schema rules | Spark's DDL grammar | pyiceberg, unique field IDs |
+
+An export that fails its check is never delivered: the export job fails and names the problem.
 
 #### How an Arrow export is checked {#how-an-arrow-export-is-checked}
 
@@ -951,11 +967,13 @@ An item imported from Arrow whose columns carry `PARQUET:field_id` keeps those I
   kept by every re-export.
 - **Dropped:** every operation, channel and service, under a critical "types only" warning, and
   validation constraints, except a fixed length that `fixed[n]` keeps.
-- **Approximated:** a union written as a struct of optional fields, and each type Iceberg does not
-  have, listed under its table (a duration as `long`, a JSON value as `string` …).
+- **Approximated:** a union written as a struct of optional fields, an enumeration written as a
+  `string`, and each type Iceberg does not have, listed under its table (a duration as `long`, a JSON
+  value as `string` …). See the [rules per mode](#what-the-arrow-fidelity-report-lists).
 
 Before an export is delivered, **pyiceberg** must parse every schema, and every field ID in it must be
-unique and positive. No importer reads Iceberg, so an Iceberg export is not re-imported.
+unique and positive, or the export job fails. No importer reads Iceberg, so an Iceberg export is not
+re-imported.
 
 ### Apache Avro from any source
 
