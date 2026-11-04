@@ -1,0 +1,16 @@
+---
+slug: cli-import-allow-breaking
+title: Publish an import past breaking changes from the CLI
+description: "apiome import --publish --allow-breaking publishes despite breaking changes."
+authors: [apiome]
+---
+
+`apiome import openapi`, `swagger` and `auto` have a new `--allow-breaking` flag. With `--publish`,
+it publishes the imported version even when it has breaking changes versus the last published one
+(the request sends `allowBreaking=true`). Unlike `--force`, every other publish check still applies.
+See the [CLI import reference](/reference/cli/import).
+
+{/* truncate */}
+
+- **Use it in pipelines** that publish a versioned API whose breaking changes are reviewed before they
+  merge, so the publish is not refused with `409`.

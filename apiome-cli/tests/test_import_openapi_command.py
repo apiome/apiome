@@ -845,3 +845,69 @@ def test_import_openapi_invalid_project_slug_exits_usage(tmp_path: Path) -> None
 
     assert result.exit_code == EXIT_USAGE
     assert "Project slug" in result.stderr
+
+
+def _publish_bodies(httpx_mock: object) -> list[dict[str, object]]:
+    """The JSON bodies of every publish POST the command made."""
+    return [
+        json.loads(r.content)
+        for r in httpx_mock.get_requests()  # type: ignore[attr-defined]
+        if r.method == "POST" and str(r.url) == _PUBLISH_URL
+    ]
+
+
+def test_import_openapi_allow_breaking_sends_allow_breaking_on_the_first_publish(
+    httpx_mock: object,
+    tmp_path: Path,
+) -> None:
+    """--allow-breaking publishes past breaking changes in one request, without skipping other checks."""
+    spec_path = tmp_path / "petstore.json"
+    _write_spec(spec_path)
+    _mock_import_completed(httpx_mock)
+    _mock_publish(httpx_mock, visibility="public")
+
+    result = runner.invoke(
+        app,
+        ["import", "openapi", "--publish", "public", "--allow-breaking", str(spec_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    [body] = _publish_bodies(httpx_mock)
+    assert body["allowBreaking"] is True
+    assert "skipPublishChecks" not in body and "forcePublishReason" not in body
+    assert body["visibility"] == "public"
+
+
+def test_import_openapi_publish_without_allow_breaking_sends_no_flag(
+    httpx_mock: object,
+    tmp_path: Path,
+) -> None:
+    spec_path = tmp_path / "petstore.json"
+    _write_spec(spec_path)
+    _mock_import_completed(httpx_mock)
+    _mock_publish(httpx_mock, visibility="public")
+
+    result = runner.invoke(app, ["import", "openapi", "--publish", "public", str(spec_path)])
+
+    assert result.exit_code == 0, result.output
+    [body] = _publish_bodies(httpx_mock)
+    assert "allowBreaking" not in body
+
+
+def test_import_auto_passes_allow_breaking_to_the_openapi_publish(
+    httpx_mock: object,
+    tmp_path: Path,
+) -> None:
+    spec_path = tmp_path / "petstore.json"
+    _write_spec(spec_path)
+    _mock_import_completed(httpx_mock)
+    _mock_publish(httpx_mock, visibility="public")
+
+    result = runner.invoke(
+        app,
+        ["import", "auto", "--publish", "public", "--allow-breaking", str(spec_path)],
+    )
+
+    assert result.exit_code == 0, result.output
+    [body] = _publish_bodies(httpx_mock)
+    assert body["allowBreaking"] is True

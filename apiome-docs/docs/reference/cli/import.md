@@ -182,6 +182,7 @@ apiome import auto [OPTIONS] PATH
 | `--wait` / `--no-wait` | flag | `--wait` |  | Poll async OpenAPI/Arazzo imports until complete (default: wait). |
 | `--poll-interval` | float range | `1.0` |  | Seconds between ``GET /imports/{job_id}`` polls when waiting. |
 | `--force` | flag |  |  | With --publish, bypass publish gates (e.g. classes missing required descriptions, breaking changes) so the version still publishes. (OpenAPI/Arazzo). |
+| `--allow-breaking` | flag |  |  | With --publish, publish even when the version has breaking changes versus the last published one (sends allowBreaking=true). Unlike --force, every other publish check still applies. (OpenAPI/Swagger). |
 | `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
@@ -370,6 +371,7 @@ apiome import openapi [OPTIONS] PATH
 | `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
 | `--poll-interval` | float range | `1.0` |  | Seconds between ``GET /imports/{job_id}`` polls when waiting. |
 | `--force` | flag |  |  | With --publish, bypass publish gates (e.g. classes missing required descriptions, breaking changes) so the version still publishes. |
+| `--allow-breaking` | flag |  |  | With --publish, publish even when the version has breaking changes versus the last published one (sends allowBreaking=true). Unlike --force, every other publish check still applies. |
 | `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
@@ -461,6 +463,7 @@ apiome import swagger [OPTIONS] PATH
 | `--wait` / `--no-wait` | flag | `--wait` |  | Poll async imports until complete (default: wait). |
 | `--poll-interval` | float range | `1.0` |  | Seconds between ``GET /imports/{job_id}`` polls when waiting. |
 | `--force` | flag |  |  | With --publish, bypass publish gates (e.g. classes missing required descriptions, breaking changes) so the version still publishes. |
+| `--allow-breaking` | flag |  |  | With --publish, publish even when the version has breaking changes versus the last published one (sends allowBreaking=true). Unlike --force, every other publish check still applies. |
 | `--import-timeout` | float range |  |  | Max seconds to wait for an async import job to finish, and the per-request HTTP timeout used while waiting (default 120). Increase for large specs that take longer than the default to import. Overrides the global --timeout for this import. |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
