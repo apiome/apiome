@@ -1,0 +1,17 @@
+---
+slug: fix-orchestra-validation
+title: FIX Orchestra exports are checked against the official schema
+description: "Every FIX Orchestra export is validated and re-imported before download."
+authors: [apiome]
+---
+
+Every **FIX Orchestra** export is now checked before it is delivered. See
+[How a FIX Orchestra export is checked](/ship/export-a-spec#how-a-fix-orchestra-export-is-checked).
+
+{/* truncate */}
+
+- **Against the official schema:** the repository must validate against the FIX Orchestra 1.0 XSD from FIX
+  Trading Community, checked offline.
+- **Round trip:** it must import again through the FIX Orchestra importer, with every message reading back.
+- **Fails with detail:** an export that fails is never delivered. The job's validation report lists every
+  problem with its rule, its path in the repository and the file.

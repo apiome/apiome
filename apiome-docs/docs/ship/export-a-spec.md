@@ -2575,12 +2575,13 @@ critical warning at the top of the fidelity report.
 | **Pick** the target (option: `version`) | Export-target registry key `fix-orchestra` | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
 | **See** which types become messages, components, groups and code sets | This section | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-fix-orchestra-fidelity-report-lists) |
+| **Trust** the file | Checked against the official Orchestra XSD and re-imported before every download | [How a FIX Orchestra export is checked](#how-a-fix-orchestra-export-is-checked) |
 
 #### How the item is written {#how-the-item-is-written-to-fix-orchestra}
 
 You get one `<name>.orchestra.xml`: an Orchestra 1.0 repository in the
-`http://fixprotocol.io/2020/orchestra/repository` namespace, written to validate against the official FIX
-Orchestra 1.0 repository XSD, which Apiome ships with.
+`http://fixprotocol.io/2020/orchestra/repository` namespace, checked against the official FIX Orchestra 1.0
+repository XSD before you download it (see [How a FIX Orchestra export is checked](#how-a-fix-orchestra-export-is-checked)).
 
 | In the item | In the repository |
 | --- | --- |
@@ -2628,6 +2629,19 @@ enumeration gets an empty `NoCodeSet`. Each of these is reported.
 What a re-import gives back is measured, not guessed: an entity reads back under its Orchestra name, and the
 API's identity as the repository's name, version and title. An item imported from Orchestra reports no made-up
 tag and no flattening.
+
+#### How a FIX Orchestra export is checked {#how-a-fix-orchestra-export-is-checked}
+
+Before an export is delivered, the repository must pass two checks:
+
+1. **The official schema:** it validates against the FIX Orchestra 1.0 repository XSD from FIX Trading
+   Community, which Apiome ships with and checks offline.
+2. **Round trip:** it imports again through the FIX Orchestra importer
+   ([Import a FIX Orchestra repository](../bring-in/fix-orchestra-import.md)), and every message it declares
+   reads back as a message.
+
+An export that fails either check is never delivered. The export job fails, and its validation report lists
+every problem with its rule (`orchestra.xsd`, `xml` or `reimport`), its path in the repository and the file.
 
 ### WSDL and XSD from any source
 

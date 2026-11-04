@@ -1748,6 +1748,28 @@ async def _validate_iceberg(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_fix_orchestra(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted FIX Orchestra repository (MFX-37.3, #4325).
+
+    The repository must validate against the official FIX Orchestra 1.0 XSD (vendored, loaded offline; one
+    finding per violation with its path), then import again through the FIX Orchestra importer with every
+    message reading back (:func:`app.fix_orchestra_emitter.check_emitted_fix_orchestra`). Findings carry the rule
+    as ``keyword`` (``orchestra.xsd``, ``xml``, ``reimport``).
+    """
+    from .fix_orchestra_emitter import check_emitted_fix_orchestra
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The FIX Orchestra export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_fix_orchestra, emit_result)
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1970,6 +1992,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "arrow": _validate_arrow,
     # MFX-36.3 (#4319)
     "iceberg": _validate_iceberg,
+    # MFX-37.3 (#4325)
+    "fix-orchestra": _validate_fix_orchestra,
 }
 
 

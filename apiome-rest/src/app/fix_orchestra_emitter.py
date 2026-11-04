@@ -76,6 +76,7 @@ __all__ = [
     "FixOrchestraEmitOptions",
     "FixOrchestraEmitter",
     "FixOrchestraFidelityRulePack",
+    "check_emitted_fix_orchestra",
     "orchestra_schema_problems",
 ]
 
@@ -1027,6 +1028,50 @@ def orchestra_schema_problems(text: str) -> List[Dict[str, str]]:
         return [{"rule": "xml", "path": "/", "message": str(exc)}]
     return [{"rule": "orchestra.xsd", "path": error.path or "/", "message": error.reason or str(error)}
             for error in orchestra_schema().iter_errors(resource)]
+
+
+def check_emitted_fix_orchestra(emit_result: EmitResult) -> List[Dict[str, str]]:
+    """The export gate's check (MFX-37.3, #4325): the official XSD, then a round trip through the importer.
+
+    In order, for each ``.xml`` file: the official FIX Orchestra 1.0 repository schema
+    (:func:`orchestra_schema_problems`, one finding per violation with its path); a re-import through the FIX
+    Orchestra import source (FMT-6.9); and every message the file declares reads back as a message.
+
+    Args:
+        emit_result: The emitter's output.
+
+    Returns:
+        ``{"rule", "path", "message", "file"}`` per problem; empty when every file passes.
+    """
+    from .import_source import ImportSourceError, get_import_source  # noqa: PLC0415
+
+    files = [f for f in emit_result.files if f.path.endswith(".xml")]
+    if not files:
+        return [{"rule": "orchestra.file", "path": "/", "file": "",
+                 "message": "The FIX Orchestra export wrote no `.xml` repository."}]
+    problems: List[Dict[str, str]] = []
+    for emitted in files:
+        text = str(emitted.content)
+        schema_problems = orchestra_schema_problems(text)
+        problems += [{**p, "file": emitted.path} for p in schema_problems]
+        if any(p["rule"] == "xml" for p in schema_problems):
+            continue
+        source = get_import_source(ORCHESTRA_FORMAT_KEY)
+        if source is None:
+            continue
+        try:
+            back = source.normalize(source.parse(text, source_label=emitted.path), include_raw=False)
+        except (ImportSourceError, ValueError) as exc:
+            problems.append({"rule": "reimport", "path": "/", "file": emitted.path,
+                             "message": f"the repository does not import: {exc}"})
+            continue
+        declared = {m.get("name") for m in ET.fromstring(text).iter(f"{{{ORCHESTRA_NAMESPACE}}}message")}
+        read_back = {(t.extras or {}).get("fix_msg_name") for t in back.types
+                     if (t.extras or {}).get("fix_kind") == "message"}
+        for name in sorted(n for n in declared - read_back if n):
+            problems.append({"rule": "reimport", "path": f"/repository/messages/{name}", "file": emitted.path,
+                             "message": f"the message {name!r} does not read back"})
+    return problems
 
 
 # ===========================================================================
