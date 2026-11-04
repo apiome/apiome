@@ -68,6 +68,9 @@
  * 27. The xRegistry card (MFX-34.4): `lossy` with its preserved share for a REST source and an imported
  *     xRegistry, one file, with its `registry_id`, `source` and `indent` options; unavailable for a gateway
  *     configuration (neither a type nor an event) — from the recorded live registry.
+ * 28. The SQL DDL card (MFX-35.5): `types-only` for a REST source, one file, with every output (`ddl`, `dbml`,
+ *     `prisma`, `liquibase`, `flyway`) and dialect (`postgres`, `mysql`, `ansi`) on offer; unavailable for a
+ *     gateway configuration (no record type) — from the recorded live registry.
  */
 
 import React from 'react';
@@ -107,6 +110,7 @@ import {
   mcpTargets,
   a2aTargets,
   xregistryTargets,
+  sqlDdlTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1773,5 +1777,53 @@ describe('ExportDialog — xRegistry target card (MFX-34.4)', () => {
     expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one type or event/);
     fireEvent.click(card);
     expect(screen.queryByText('Target options')).not.toBeInTheDocument();
+  });
+});
+
+describe('ExportDialog — SQL DDL target card (MFX-35.5)', () => {
+  it.each(['rest', 'sql'] as const)('badges a %s source types-only as a one-file target', async (source) => {
+    const targets = sqlDdlTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-sql-ddl');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('SQL DDL')).toBeInTheDocument();
+    // A SQL schema holds data only: every source badges types-only.
+    expect(card).toHaveTextContent('types-only');
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe('types-only');
+  });
+
+  it('offers every output and dialect, ddl in postgres by default', async () => {
+    await renderAtTargetStep(mockFetch(sqlDdlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-sql-ddl'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const output = screen.getByRole('radiogroup', { name: 'Output' });
+    expect(within(output).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'ddl',
+      'dbml',
+      'prisma',
+      'liquibase',
+      'flyway',
+    ]);
+    expect(within(output).getByRole('radio', { name: 'ddl' })).toBeChecked();
+    const dialect = screen.getByRole('radiogroup', { name: 'Dialect' });
+    expect(within(dialect).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'postgres',
+      'mysql',
+      'ansi',
+    ]);
+    fireEvent.click(within(output).getByRole('radio', { name: 'liquibase' }));
+    expect(within(output).getByRole('radio', { name: 'liquibase' })).toBeChecked();
+  });
+
+  it('disables the card for a gateway configuration: it has no record type', async () => {
+    const targets = sqlDdlTargets('gateway');
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-sql-ddl');
+    expect(card).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one record type/);
   });
 });

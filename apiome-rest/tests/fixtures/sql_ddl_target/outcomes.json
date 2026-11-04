@@ -1,0 +1,195 @@
+{
+  "cards": {
+    "gateway": {
+      "available": false,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "graphql": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "preserved_percent": 13,
+      "tier": "types-only"
+    },
+    "sql": {
+      "available": true,
+      "preserved_percent": 15,
+      "tier": "types-only"
+    }
+  },
+  "picks": {
+    "rest": {
+      "dbml": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.dbml"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-ansi": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-mysql": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-postgres": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-tables": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 12,
+        "tier": "types-only",
+        "valid": true
+      },
+      "flyway": {
+        "failed": false,
+        "files": [
+          "V1__initial_schema.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "liquibase": {
+        "failed": false,
+        "files": [
+          "0001-Sample-Pet-Store-API-OpenAPI-3.0.changelog.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "prisma": {
+        "failed": false,
+        "files": [
+          "schema.prisma"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      }
+    },
+    "sql": {
+      "dbml": {
+        "failed": false,
+        "files": [
+          "commerce.dbml"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 15,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-ansi": {
+        "failed": false,
+        "files": [
+          "commerce.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 11,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-mysql": {
+        "failed": false,
+        "files": [
+          "commerce.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 9,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-postgres": {
+        "failed": false,
+        "files": [
+          "commerce.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 15,
+        "tier": "types-only",
+        "valid": true
+      },
+      "ddl-tables": {
+        "failed": false,
+        "files": [
+          "commerce.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 13,
+        "tier": "types-only",
+        "valid": true
+      },
+      "flyway": {
+        "failed": false,
+        "files": [
+          "V1__initial_schema.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 9,
+        "tier": "types-only",
+        "valid": true
+      },
+      "liquibase": {
+        "failed": false,
+        "files": [
+          "0001-commerce.changelog.sql"
+        ],
+        "media_type": "application/sql",
+        "preserved_percent": 15,
+        "tier": "types-only",
+        "valid": true
+      },
+      "prisma": {
+        "failed": false,
+        "files": [
+          "schema.prisma"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      }
+    }
+  }
+}

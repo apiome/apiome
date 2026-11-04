@@ -1,0 +1,235 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "sql-ddl",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "sql-ddl",
+        "format": "sql-ddl",
+        "label": "SQL DDL",
+        "description": "Export the types as SQL CREATE TABLE statements for PostgreSQL, MySQL or standard SQL: typed columns, NOT NULL and CHECK constraints, enums, and nested objects as JSON columns or tables. The same tables can be written as DBML or as a Prisma schema.",
+        "icon": "database",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "types-only",
+        "preserved_percent": 13,
+        "total": 15,
+        "preserved": 2,
+        "dropped": 9,
+        "approximated": 2,
+        "synthesized": 2
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only \u2014 only data schemas are exported: 1 service(s) with 5 operation(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+            "target_mapping": "types-only"
+          },
+          {
+            "construct": "",
+            "kind": "approx",
+            "severity": "info",
+            "message": "a SQL script has no title, version or description; the header comment names the API, and a re-import names the item after its file",
+            "target_mapping": "document identity \u2192 comment"
+          },
+          {
+            "construct": "Category",
+            "kind": "drop",
+            "severity": "info",
+            "message": "type 'Category' is written as the table 'category' and reads back under that name",
+            "target_mapping": "Category \u2192 table category"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the request_response operation has no table",
+            "target_mapping": "operation \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the request_response operation has no table",
+            "target_mapping": "operation \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the request_response operation has no table",
+            "target_mapping": "operation \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the request_response operation has no table",
+            "target_mapping": "operation \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the request_response operation has no table",
+            "target_mapping": "operation \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "Pet",
+            "kind": "drop",
+            "severity": "info",
+            "message": "type 'Pet' is written as the table 'pet' and reads back under that name",
+            "target_mapping": "Pet \u2192 table pet"
+          },
+          {
+            "construct": "Pet.category",
+            "kind": "approx",
+            "severity": "info",
+            "message": "'Pet.category' (record 'Category') is written as one JSON column",
+            "target_mapping": "sql-as-json"
+          },
+          {
+            "construct": "category",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'category' is the table for 'Category'",
+            "target_mapping": "sql table"
+          },
+          {
+            "construct": "default",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "SQL DDL is types-only; the service 'default' has no table",
+            "target_mapping": "service \u2192 dropped (types-only export)"
+          },
+          {
+            "construct": "pet",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'pet' is the table for 'Pet'",
+            "target_mapping": "sql table"
+          },
+          {
+            "construct": "pet.age",
+            "kind": "ok",
+            "severity": "info",
+            "message": "SQL DDL keeps the constraints of 'Pet.age' on pet.age: exclusive_minimum as CHECK (age > 0)",
+            "target_mapping": "constraints \u2192 SQL column rules"
+          },
+          {
+            "construct": "pet.weight",
+            "kind": "ok",
+            "severity": "info",
+            "message": "SQL DDL keeps the constraints of 'Pet.weight' on pet.weight: exclusive_maximum as CHECK (weight < 500)",
+            "target_mapping": "constraints \u2192 SQL column rules"
+          }
+        ],
+        "kind_counts": {
+          "drop": 9,
+          "approx": 2,
+          "synth": 2,
+          "ok": 2
+        },
+        "severity_counts": {
+          "info": 8,
+          "warn": 0,
+          "critical": 7
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "requires_ack": true,
+        "target_format": "SQL DDL",
+        "dropped": 9,
+        "approximated": 2,
+        "synthesized": 2,
+        "affected": 13,
+        "headline": "Fidelity notice \u2014 exporting to SQL DDL may lose detail.",
+        "message": "Exporting to SQL DDL may lose some fidelity. The destination format can't represent everything in this API, so 13 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      },
+      "projection": {
+        "manifest_hash": "f83fca491a06425364ebfebf74b3051ce6d5071be55d09e0453810636af25999",
+        "target": {
+          "key": "sql-ddl",
+          "format": "sql-ddl",
+          "label": "SQL DDL",
+          "paradigm": "data_schema",
+          "emitter_version": "1",
+          "apiome_version": "1.6.5",
+          "capability_profile": {
+            "operations": false,
+            "events": false,
+            "unions": false,
+            "nullability": true,
+            "constraints": true,
+            "field_identity": false
+          },
+          "needs_toolchain": false,
+          "available": true,
+          "availability": "available",
+          "registry_version": "1",
+          "documentation": {
+            "specification": null,
+            "version": null,
+            "url": null,
+            "anchor": null,
+            "documentation_unavailable": true,
+            "note": "No authoritative specification link is registered for this destination yet."
+          }
+        },
+        "status_counts": {
+          "retained": 2,
+          "transformed": 0,
+          "approximated": 2,
+          "synthesized": 2,
+          "dropped": 9,
+          "unavailable": 0,
+          "not-applicable": 0
+        },
+        "reason_counts": {
+          "destination_unsupported": 13,
+          "emitter_unsupported": 0,
+          "source_incomplete": 0,
+          "source_parse_limit": 0,
+          "option_excluded": 0,
+          "security_redacted": 0,
+          "target_tool_unavailable": 0,
+          "not_applicable": 0
+        },
+        "total_constructs": 13,
+        "node_count": 28,
+        "edge_count": 29,
+        "evidence_count": 15,
+        "is_lossless": false,
+        "worst_severity": "critical",
+        "truncated": false
+      }
+    },
+    "files": [
+      {
+        "path": "Sample-Pet-Store-API-OpenAPI-3.0.sql",
+        "media_type": "application/sql",
+        "size_bytes": 330
+      }
+    ],
+    "media_type": "application/sql",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

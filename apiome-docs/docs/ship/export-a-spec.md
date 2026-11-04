@@ -612,8 +612,8 @@ read in, it also keeps its column types, defaults and checks exactly. In another
 or check expression written for the original dialect is dropped and listed.
 
 **Checked before you download it.** Every script is parsed with sqlglot in its dialect, and read back
-by Apiome's SQL reader. From the CLI, run `apiome export sql-ddl <item> --out schema.sql --option
-dialect=mysql --option nested=tables`.
+by Apiome's SQL reader. From the CLI, run `apiome export sql <item> --out schema.sql --dialect mysql
+--option nested=tables`.
 
 #### DBML and Prisma
 
@@ -636,8 +636,8 @@ interval type and no nullable list. It also cannot relate a foreign key that ref
 is neither a primary nor a unique key, so that one stays as plain columns.
 
 **Checked before you download it.** A DBML file is parsed by `@dbml/core`, and a Prisma schema must
-pass `prisma validate`. From the CLI, run `apiome export sql-ddl <item> --out schema.prisma --option
-output=prisma`.
+pass `prisma validate`. From the CLI, run `apiome export prisma <item> --out schema.prisma` or
+`apiome export dbml <item> --out schema.dbml`.
 
 #### Liquibase and Flyway changelogs {#liquibase-and-flyway-changelogs}
 
@@ -686,8 +686,35 @@ again and start a new baseline — for a new database, or after a changelog you 
 
 **Checked before you download it.** Every statement must parse in its dialect, and a Liquibase
 changelog must pass `liquibase validate` (run against an offline database, so nothing is applied).
-From the CLI, run `apiome export sql-ddl <item> --out <folder> --option output=liquibase`, or
-`--option output=flyway --option dialect=mysql`.
+From the CLI, run `apiome export liquibase <item> --out <folder>`, or
+`apiome export flyway <item> --out <folder> --dialect mysql`.
+
+#### Where to find the SQL DDL card {#where-to-find-the-sql-ddl-card}
+
+The **Export** dialog offers **SQL DDL** under **Data schema & graph**. One card writes every output:
+pick **Output** (`ddl`, `dbml`, `prisma`, `liquibase` or `flyway`) and **Dialect** (`postgres`, `mysql`
+or `ansi`) in its options.
+
+| Source | Badge |
+| --- | --- |
+| Any item with a record type — a REST, GraphQL or RPC API, a JSON Schema item, an imported SQL script | **types-only**, with its preserved share: SQL holds data schemas only |
+| A gateway configuration, an agent card, or anything else with no record type | Greyed out, with the reason |
+
+An API with operations also starts its fidelity report with the critical "types only" warning (see
+[What the fidelity report lists](#what-the-sql-ddl-fidelity-report-lists)).
+
+From the CLI, each output has a verb of its own; all take `--dialect`:
+
+| Command | Writes |
+| --- | --- |
+| `apiome export sql <item> --out schema.sql` (also `sql-ddl`, `ddl`) | A SQL script |
+| `apiome export dbml <item> --out schema.dbml` | DBML |
+| `apiome export prisma <item> --out schema.prisma` | A Prisma schema |
+| `apiome export liquibase <item> --out <folder>` | A Liquibase changelog |
+| `apiome export flyway <item> --out <folder>` | A Flyway migration |
+
+`--dialect mysql` is the same as `--option dialect=mysql`. Each command prints the fidelity report and,
+because SQL keeps types only, exits non-zero unless you add `--force`.
 
 ### Apache Avro from any source
 
