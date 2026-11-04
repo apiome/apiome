@@ -938,9 +938,29 @@ async def _validate_cobolcopybook(
     finding with cb2xml's message, and each way the layout it read differs from the emit plan — the trees
     the emitter rendered with the export's ``options`` — is a ``cb2xml.layout`` finding at the item's
     path. Without cb2xml (or when it goes missing mid-run), the re-parse alone checks the export.
+
+    A PL/I include member (``mode="pli"``, MFX-23.3) is re-parsed by Apiome's PL/I reader instead, and each
+    way it differs from the emit plan — a structure or item missing, an item taking other bytes than the
+    copybook item, an attribute the reader does not know — is a ``pli.layout`` finding
+    (:func:`app.cobolcopybook_pli.layout_problems`).
     """
     from .cobolcopybook_cb2xml import Cb2xmlError, cb2xml_available, check_with_cb2xml
     from .cobolcopybook_emitter import copybook_emit_options, copybook_emit_plan, validate_cobolcopybook_document
+    from .cobolcopybook_pli import PLI_EXTENSION, layout_problems
+
+    if emit_result.files and all(f.path.endswith(PLI_EXTENSION) for f in emit_result.files):
+        plan = await asyncio.to_thread(copybook_emit_plan, api, copybook_emit_options(options))
+        pli_findings: List[ValidationFinding] = []
+        for emitted in emit_result.files:
+            try:
+                problems = await asyncio.to_thread(layout_problems, str(emitted.content), plan)
+            except Exception as exc:  # noqa: BLE001 — any reader failure means the member does not parse
+                pli_findings.append(_finding_from_message(f"{emitted.path}: {exc}"))
+                continue
+            pli_findings.extend(
+                ValidationFinding(message=problem, file=emitted.path, keyword="pli.layout") for problem in problems
+            )
+        return _passed(target) if not pli_findings else _rejected(target, pli_findings)
 
     errors: List[str] = []
     for emitted in emit_result.files:

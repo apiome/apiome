@@ -87,8 +87,19 @@ def test_the_fixture_carries_the_layout_options_and_the_types_only_badge() -> No
     assert properties["numeric_usage"]["enum"] == ["comp", "display"]
     assert {"fixed_format", "default_string_length", "default_occurs", "decimal_scale"} <= set(properties)
     assert target["default_options"]["default_occurs"] == 10
+    # MFX-23.3 (#4141): the PL/I include structure output mode.
+    assert properties["mode"]["enum"] == ["copybook", "pli"]
+    assert target["default_options"]["mode"] == "copybook"
     # The card's tier for a REST source: operations dropped, lengths and names synthesized.
     assert target["fidelity"]["tier"] == "types-only"
+
+
+def test_the_pli_mode_reaches_the_job_as_a_string(httpx_mock: object, tmp_path: Path) -> None:
+    """``--option mode=pli`` (MFX-23.3) is sent as the string the registry's enum expects."""
+    _mock_export(httpx_mock, job=_JOB_LOSSLESS)
+    result = runner.invoke(app, _args(str(tmp_path / "Order.pli"), "--option", "mode=pli"))
+    assert result.exit_code == EXIT_SUCCESS, result.output
+    assert _posted(httpx_mock, "/jobs")["options"] == {"mode": "pli"}
 
 
 def test_a_rest_source_exits_nonzero_without_force(httpx_mock: object, tmp_path: Path) -> None:
