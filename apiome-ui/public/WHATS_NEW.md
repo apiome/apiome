@@ -68,6 +68,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Catalog:
   - Catalog cards — the ⋯ actions menu now sits beside the status pill in the card's header row, always visible, instead of appearing on hover on top of the **Active** pill
 - Export:
+  - FIX Orchestra overview — **Export a spec** in **Help & docs** opens its FIX Orchestra section with **When to export to FIX Orchestra** and **FIX Orchestra export at a glance**, now including how the FIX tags stay stable across exports
   - FIX Orchestra card — the **Export** dialog's **FIX Orchestra** card (under **Data schema & graph**) badges every source `types-only` with its preserved share and offers the repository **Version**; from the CLI, `apiome export fix-orchestra` (also `orchestra`) exports it and prints the fidelity report
   - FIX Orchestra checks — every **FIX Orchestra** export is validated against the official FIX Orchestra 1.0 XSD and imported again before you download it; one that fails is never delivered, and the export lists each problem with its path
   - FIX Orchestra fidelity — the **FIX Orchestra** export keeps the FIX tags it assigns, so every re-export of an item gives each field the same tag; an operation whose request or response body is a message is written as a message scenario, an inline enumeration as a code set, and bounds as Orchestra's field attributes, and the fidelity report lists each of these

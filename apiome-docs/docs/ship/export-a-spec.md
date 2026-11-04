@@ -2574,6 +2574,7 @@ critical warning at the top of the fidelity report.
 | --- | --- | --- |
 | **Pick** the card (option: **Version**) | **Export** dialog → **Data schema & graph** → **FIX Orchestra** | [Where to find the FIX Orchestra card](#where-to-find-the-fix-orchestra-card) |
 | **See** which types become messages, components, groups and code sets | This section | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
+| **Keep** the FIX tags stable across exports | Automatic, per item | [How the item is written](#how-the-item-is-written-to-fix-orchestra) (**Tags and ids**) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-fix-orchestra-fidelity-report-lists) |
 | **Trust** the file | Checked against the official Orchestra XSD and re-imported before every download | [How a FIX Orchestra export is checked](#how-a-fix-orchestra-export-is-checked) |
 | **Export** from the CLI | `apiome export fix-orchestra` (also `orchestra`) | [Where to find the FIX Orchestra card](#where-to-find-the-fix-orchestra-card) |

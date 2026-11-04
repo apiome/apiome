@@ -1,0 +1,22 @@
+---
+slug: fix-orchestra-export-overview
+title: FIX Orchestra export, end to end
+description: "Publish a trading venue's FIX dialect as an Orchestra repository."
+authors: [apiome]
+---
+
+Apiome now exports to **FIX Orchestra**, the machine-readable spec of a trading venue's FIX dialect, and so
+covers capital markets on the export side as well as the import side. See
+[FIX Orchestra from any source](/ship/export-a-spec#fix-orchestra-from-any-source).
+
+{/* truncate */}
+
+- **A repository from any typed item:** messages, components, repeating groups, fields with their FIX tags,
+  and code sets, with presence, rules, scenarios, actors and flows when the item carries them.
+- **Stable tags:** tags Apiome assigns are kept for the item, so every re-export gives each field the same tag.
+- **An honest report:** operations written as message scenarios or dropped, constraints kept as code sets or
+  field attributes, and every made-up tag listed.
+- **Checked:** every export validates against the official FIX Orchestra 1.0 XSD and imports again before
+  download.
+- **Everywhere:** the **FIX Orchestra** card in the **Export** dialog and on Browse, and
+  `apiome export fix-orchestra` in the CLI.
