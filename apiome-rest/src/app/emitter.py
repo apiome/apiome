@@ -318,6 +318,17 @@ def _has_tool_operation(api: CanonicalApi) -> bool:
     return any(op.key not in non_tool for _service, op in selectable_operations(api, include_deprecated=True))
 
 
+def _has_skill_operation(api: CanonicalApi) -> bool:
+    """Whether ``api`` has something an A2A skill can be made of (MFX-32.2).
+
+    An agent descriptor, or any operation that is not an event flow (an A2A skill answers a message,
+    streamed or not).
+    """
+    from .tool_projection import EVENT_OPERATION_KINDS  # noqa: PLC0415 - tool_projection imports this module
+
+    return bool(api.agents) or any(op.kind not in EVENT_OPERATION_KINDS for op in api.operations())
+
+
 #: The source requirements an emitter may declare in ``requires_source``: each maps to a test
 #: and the reader-facing sentence that names what is missing.
 SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
@@ -338,7 +349,13 @@ SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
         _has_tool_operation,
         "{label} export needs at least one operation an agent can call (not an event, a stream, an "
         "MCP resource or a prompt); this source has none.",
-    ),    "http-operation-or-type": (
+    ),
+    "skill-operation": (
+        _has_skill_operation,
+        "{label} export needs an agent or at least one operation that is not an event; this source "
+        "has neither.",
+    ),
+    "http-operation-or-type": (
         lambda api: _has_http_operation(api) or bool(api.types),
         "{label} export needs at least one HTTP operation or one type; this source has neither.",
     ),
@@ -761,6 +778,7 @@ def load_builtin_emitters() -> None:
     if _builtins_loaded:
         return
     _builtins_loaded = True
+    from . import a2a_emitter as _a2a_emitter  # noqa: F401
     from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
     from . import apigee_emitter as _apigee_emitter  # noqa: F401
     from . import arazzo_emitter as _arazzo_emitter  # noqa: F401

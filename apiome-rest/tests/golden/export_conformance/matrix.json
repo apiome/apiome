@@ -2,6 +2,12 @@
   "cells": [
     {
       "family": "a2a",
+      "reason": null,
+      "status": "ok",
+      "target": "a2a"
+    },
+    {
+      "family": "a2a",
       "reason": "API Blueprint export needs at least one HTTP operation or one type; this source has neither.",
       "status": "refused",
       "target": "apiblueprint"
@@ -148,6 +154,12 @@
     },
     {
       "family": "a2a",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "a2a",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -211,6 +223,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "a2a",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "a2a",
@@ -524,6 +542,18 @@
     },
     {
       "family": "acp",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "acp",
       "reason": "API Blueprint export needs at least one HTTP operation or one type; this source has neither.",
       "status": "refused",
       "target": "apiblueprint"
@@ -670,6 +700,12 @@
     },
     {
       "family": "acp",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "acp",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -733,6 +769,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "acp",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "acp",
@@ -1062,6 +1104,18 @@
     },
     {
       "family": "agents-manifest",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "agents-manifest",
       "reason": "API Blueprint export needs at least one HTTP operation or one type; this source has neither.",
       "status": "refused",
       "target": "apiblueprint"
@@ -1208,6 +1262,12 @@
     },
     {
       "family": "agents-manifest",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "agents-manifest",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -1273,6 +1333,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "agents-manifest",
@@ -1602,6 +1668,18 @@
     },
     {
       "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "api-blueprint",
       "reason": null,
       "status": "ok",
       "target": "apiblueprint"
@@ -1788,6 +1866,18 @@
     },
     {
       "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "api-blueprint",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -1863,6 +1953,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "api-blueprint",
@@ -2209,7 +2311,7 @@
     {
       "family": "api-blueprint",
       "loss_counts": {
-        "approx": 3,
+        "approx": 6,
         "drop": 6,
         "synth": 1
       },
@@ -2253,6 +2355,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "apigee",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "apigee",
@@ -2438,6 +2552,12 @@
     },
     {
       "family": "apigee",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "apigee",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -2513,6 +2633,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "apigee",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "apigee",
@@ -2885,6 +3011,18 @@
     },
     {
       "family": "arazzo",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "arazzo",
       "reason": "API Blueprint export needs at least one HTTP operation or one type; this source has neither.",
       "status": "refused",
       "target": "apiblueprint"
@@ -3025,6 +3163,12 @@
     },
     {
       "family": "arazzo",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "arazzo",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -3090,6 +3234,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "arazzo",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "arazzo",
@@ -3378,7 +3528,7 @@
     {
       "family": "arazzo",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -3424,6 +3574,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "arrow",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "arrow",
@@ -3589,6 +3745,18 @@
     },
     {
       "family": "arrow",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "arrow",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -3652,6 +3820,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "arrow",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "arrow",
@@ -3944,7 +4124,7 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 7,
         "synth": 1
       },
@@ -3988,6 +4168,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "asn1",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "asn1",
@@ -4147,6 +4333,18 @@
     },
     {
       "family": "asn1",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "asn1",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -4210,6 +4408,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "asn1",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "asn1",
@@ -4502,7 +4712,7 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 13,
         "synth": 0
       },
@@ -4546,6 +4756,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "asyncapi",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "asyncapi",
@@ -4682,6 +4898,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "asyncapi",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -4745,6 +4967,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "asyncapi",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "asyncapi",
@@ -5042,6 +5270,12 @@
     },
     {
       "family": "avro",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "avro",
       "loss_counts": {
         "approx": 4,
         "drop": 1,
@@ -5204,6 +5438,18 @@
     },
     {
       "family": "avro",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "avro",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -5267,6 +5513,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "avro",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "avro",
@@ -5559,7 +5817,7 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 6,
         "synth": 0
       },
@@ -5603,6 +5861,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "avro-idl",
@@ -5774,6 +6044,18 @@
     },
     {
       "family": "avro-idl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "avro-idl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -5837,6 +6119,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "avro-idl",
@@ -6135,7 +6429,7 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 11,
         "synth": 0
       },
@@ -6187,6 +6481,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "aws-apigateway",
@@ -6379,6 +6685,18 @@
     },
     {
       "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 5,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "aws-apigateway",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -6454,6 +6772,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 5,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "aws-apigateway",
@@ -6801,7 +7131,7 @@
     {
       "family": "aws-apigateway",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 0,
         "synth": 1
       },
@@ -6845,6 +7175,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "azure-apim",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "azure-apim",
@@ -7026,6 +7368,12 @@
     },
     {
       "family": "azure-apim",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "azure-apim",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -7101,6 +7449,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "azure-apim",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "azure-apim",
@@ -7471,6 +7825,18 @@
     {
       "family": "bruno",
       "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
         "approx": 4,
         "drop": 0,
         "synth": 0
@@ -7662,6 +8028,18 @@
     },
     {
       "family": "bruno",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "bruno",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -7737,6 +8115,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "bruno",
@@ -8132,6 +8522,18 @@
     {
       "family": "capnproto",
       "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
         "approx": 10,
         "drop": 13,
         "synth": 1
@@ -8293,6 +8695,18 @@
     },
     {
       "family": "capnproto",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "capnproto",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -8356,6 +8770,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "capnproto",
@@ -8656,7 +9082,7 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 0,
+        "approx": 9,
         "drop": 11,
         "synth": 1
       },
@@ -8708,6 +9134,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "cddl",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "cddl",
@@ -8873,6 +9305,18 @@
     },
     {
       "family": "cddl",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 19
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cddl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -8936,6 +9380,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "cddl",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "cddl",
@@ -9228,7 +9684,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 19,
         "synth": 1
       },
@@ -9272,6 +9728,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "cics-bms",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "cics-bms",
@@ -9437,6 +9899,18 @@
     },
     {
       "family": "cics-bms",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cics-bms",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -9500,6 +9974,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "cics-bms",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "cics-bms",
@@ -9839,6 +10325,12 @@
     },
     {
       "family": "cloudevents",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "cloudevents",
       "loss_counts": {
         "approx": 2,
         "drop": 2,
@@ -9989,6 +10481,18 @@
     },
     {
       "family": "cloudevents",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cloudevents",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -10052,6 +10556,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "cloudevents",
@@ -10391,9 +10907,15 @@
     },
     {
       "family": "cobolcopybook",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
-        "drop": 0,
+        "approx": 8,
+        "drop": 10,
         "synth": 0
       },
       "reason": null,
@@ -10416,9 +10938,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 8,
+        "approx": 10,
         "drop": 0,
-        "synth": 7
+        "synth": 11
       },
       "reason": null,
       "status": "lossy",
@@ -10429,7 +10951,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 0,
-        "drop": 7,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10441,7 +10963,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 0,
-        "drop": 7,
+        "drop": 21,
         "synth": 0
       },
       "reason": null,
@@ -10470,9 +10992,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 17,
+        "approx": 36,
         "drop": 0,
-        "synth": 8
+        "synth": 12
       },
       "reason": null,
       "status": "lossy",
@@ -10494,8 +11016,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
-        "drop": 7,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10512,7 +11034,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 21,
         "drop": 0,
         "synth": 0
       },
@@ -10524,9 +11046,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 8,
-        "drop": 9,
-        "synth": 1
+        "approx": 19,
+        "drop": 15,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -10547,6 +11069,18 @@
     },
     {
       "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cobolcopybook",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -10560,9 +11094,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 6,
-        "drop": 7,
-        "synth": 8
+        "approx": 1,
+        "drop": 11,
+        "synth": 14
       },
       "reason": null,
       "status": "lossy",
@@ -10578,9 +11112,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 18,
+        "approx": 36,
         "drop": 0,
-        "synth": 7
+        "synth": 11
       },
       "reason": null,
       "status": "lossy",
@@ -10596,8 +11130,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
-        "drop": 7,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10610,6 +11144,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -10656,8 +11202,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 6,
-        "drop": 7,
+        "approx": 7,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10681,7 +11227,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 5,
-        "drop": 7,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10692,8 +11238,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
-        "drop": 7,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10710,8 +11256,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 2,
-        "drop": 7,
+        "approx": 4,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10728,8 +11274,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 11,
-        "drop": 8,
+        "approx": 15,
+        "drop": 12,
         "synth": 1
       },
       "reason": null,
@@ -10741,7 +11287,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 0,
-        "drop": 7,
+        "drop": 11,
         "synth": 7
       },
       "reason": null,
@@ -10752,7 +11298,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 21,
         "drop": 0,
         "synth": 0
       },
@@ -10764,7 +11310,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 11,
         "drop": 0,
         "synth": 0
       },
@@ -10776,8 +11322,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 4,
-        "drop": 7,
+        "approx": 2,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10794,7 +11340,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 7,
+        "approx": 21,
         "drop": 0,
         "synth": 0
       },
@@ -10807,8 +11353,8 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 5,
-        "drop": 1,
-        "synth": 2
+        "drop": 3,
+        "synth": 4
       },
       "reason": null,
       "status": "lossy",
@@ -10818,8 +11364,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 11,
-        "drop": 8,
+        "approx": 15,
+        "drop": 12,
         "synth": 0
       },
       "reason": null,
@@ -10831,8 +11377,8 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 3,
-        "drop": 8,
-        "synth": 8
+        "drop": 14,
+        "synth": 14
       },
       "reason": null,
       "status": "lossy",
@@ -10842,9 +11388,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 8,
-        "drop": 2,
-        "synth": 1
+        "approx": 24,
+        "drop": 4,
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -10866,7 +11412,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 4,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -10879,7 +11425,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 3,
-        "drop": -4,
+        "drop": 0,
         "synth": 1
       },
       "reason": null,
@@ -10890,8 +11436,8 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 0,
-        "drop": 7,
+        "approx": 10,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10903,7 +11449,7 @@
       "family": "cobolcopybook",
       "loss_counts": {
         "approx": 1,
-        "drop": 7,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -10914,9 +11460,9 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 4,
+        "approx": 16,
         "drop": 0,
-        "synth": 5
+        "synth": 3
       },
       "reason": null,
       "status": "lossy",
@@ -10932,7 +11478,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 3,
+        "approx": 1,
         "drop": 0,
         "synth": 1
       },
@@ -10946,6 +11492,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "connectrpc",
@@ -10970,7 +11528,7 @@
       "loss_counts": {
         "approx": 5,
         "drop": 7,
-        "synth": 5
+        "synth": 7
       },
       "reason": null,
       "status": "lossy",
@@ -11117,6 +11675,18 @@
     },
     {
       "family": "connectrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "connectrpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -11180,6 +11750,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "connectrpc",
@@ -11250,7 +11832,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 19,
         "synth": 0
       },
@@ -11478,7 +12060,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 13,
         "drop": 15,
         "synth": 0
       },
@@ -11530,6 +12112,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "consul",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "consul",
@@ -11707,6 +12301,12 @@
     },
     {
       "family": "consul",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "consul",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -11782,6 +12382,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "consul",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "consul",
@@ -12148,6 +12754,18 @@
       "loss_counts": {
         "approx": 5,
         "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -12307,6 +12925,18 @@
     },
     {
       "family": "corbaidl",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "corbaidl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -12370,6 +13000,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "corbaidl",
@@ -12723,6 +13365,12 @@
     },
     {
       "family": "cue",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "cue",
       "loss_counts": {
         "approx": 3,
         "drop": 9,
@@ -12874,6 +13522,30 @@
     },
     {
       "family": "cue",
+      "loss_counts": {
+        "approx": 25,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "cue",
+      "loss_counts": {
+        "approx": 17,
+        "drop": 0,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "cue",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -12937,6 +13609,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "cue",
+      "loss_counts": {
+        "approx": 17,
+        "drop": 0,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "cue",
@@ -13006,9 +13690,15 @@
     },
     {
       "family": "cue",
-      "reason": "Predicted, not measured (MFX-21.6): the structural-schema losses of the spec wrapper are now reported, so this pair is no longer a silent loss; regenerate where the toolchain sandbox runs to record its loss counts.",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
       "status": "lossy",
-      "target": "k8s-crd"
+      "target": "k8s-crd",
+      "tier": "types-only"
     },
     {
       "family": "cue",
@@ -13199,7 +13889,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 2
       },
@@ -13223,7 +13913,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -13267,6 +13957,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "dbt",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "dbt",
@@ -13431,6 +14127,18 @@
     },
     {
       "family": "dbt",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "dbt",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -13494,6 +14202,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "dbt",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "dbt",
@@ -13785,7 +14505,7 @@
     {
       "family": "dbt",
       "loss_counts": {
-        "approx": 0,
+        "approx": 4,
         "drop": 0,
         "synth": 1
       },
@@ -13829,6 +14549,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "dhall",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "dhall",
@@ -13984,6 +14710,30 @@
     },
     {
       "family": "dhall",
+      "loss_counts": {
+        "approx": 25,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "dhall",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "dhall",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -14047,6 +14797,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "dhall",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "dhall",
@@ -14116,9 +14878,15 @@
     },
     {
       "family": "dhall",
-      "reason": "Predicted, not measured (MFX-21.6): the structural-schema losses of the spec wrapper are now reported, so this pair is no longer a silent loss; regenerate where the toolchain sandbox runs to record its loss counts.",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
       "status": "lossy",
-      "target": "k8s-crd"
+      "target": "k8s-crd",
+      "tier": "types-only"
     },
     {
       "family": "dhall",
@@ -14310,7 +15078,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 2
       },
@@ -14334,7 +15102,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 0,
         "synth": 1
       },
@@ -14378,6 +15146,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "dicom",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "dicom",
@@ -14543,6 +15317,18 @@
     },
     {
       "family": "dicom",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "dicom",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -14606,6 +15392,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "dicom",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -14898,7 +15696,7 @@
     {
       "family": "dicom",
       "loss_counts": {
-        "approx": 1,
+        "approx": 4,
         "drop": 36,
         "synth": 0
       },
@@ -14942,6 +15740,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "discovery",
@@ -15137,6 +15947,18 @@
     },
     {
       "family": "discovery",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "discovery",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -15212,6 +16034,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "discovery",
@@ -15560,7 +16394,7 @@
     {
       "family": "discovery",
       "loss_counts": {
-        "approx": 5,
+        "approx": 15,
         "drop": 0,
         "synth": 1
       },
@@ -15604,6 +16438,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "dtd",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "dtd",
@@ -15769,6 +16609,18 @@
     },
     {
       "family": "dtd",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 0,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "dtd",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -15832,6 +16684,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "dtd",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 0,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "dtd",
@@ -16124,7 +16988,7 @@
     {
       "family": "dtd",
       "loss_counts": {
-        "approx": 10,
+        "approx": 13,
         "drop": 15,
         "synth": 1
       },
@@ -16168,6 +17032,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "edifact",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "edifact",
@@ -16335,6 +17205,18 @@
     },
     {
       "family": "edifact",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 50
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "edifact",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -16398,6 +17280,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 50
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -16739,6 +17633,12 @@
     },
     {
       "family": "edix12",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "edix12",
       "loss_counts": {
         "approx": 3,
         "drop": 0,
@@ -16903,6 +17803,18 @@
     {
       "family": "edix12",
       "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 25
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
         "approx": 23,
         "drop": 0,
         "synth": 0
@@ -16971,6 +17883,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 23
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -17315,6 +18239,18 @@
       "loss_counts": {
         "approx": 5,
         "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -17488,6 +18424,12 @@
     },
     {
       "family": "envoy-xds",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "envoy-xds",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -17563,6 +18505,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "envoy-xds",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "envoy-xds",
@@ -17929,6 +18877,18 @@
     {
       "family": "fhir",
       "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
         "approx": 6,
         "drop": 0,
         "synth": 0
@@ -18120,6 +19080,18 @@
     },
     {
       "family": "fhir",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fhir",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -18195,6 +19167,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "fhir",
@@ -18588,6 +19572,12 @@
     },
     {
       "family": "fix",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "fix",
       "loss_counts": {
         "approx": 2,
         "drop": 0,
@@ -18749,6 +19739,18 @@
     },
     {
       "family": "fix",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -18818,6 +19820,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "fix",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "fix",
@@ -19157,6 +20171,12 @@
     },
     {
       "family": "fix-orchestra",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "fix-orchestra",
       "loss_counts": {
         "approx": 7,
         "drop": 15,
@@ -19319,6 +20339,18 @@
     },
     {
       "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix-orchestra",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -19382,6 +20414,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "fix-orchestra",
@@ -19674,7 +20718,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 13,
         "synth": 0
       },
@@ -19718,6 +20762,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "flatbuffers",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "flatbuffers",
@@ -19885,6 +20935,18 @@
     },
     {
       "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "flatbuffers",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -19942,6 +21004,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -20230,7 +21304,7 @@
     {
       "family": "flatbuffers",
       "loss_counts": {
-        "approx": 1,
+        "approx": 11,
         "drop": 12,
         "synth": 0
       },
@@ -20274,6 +21348,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "gateway-api",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "gateway-api",
@@ -20459,6 +21545,12 @@
     },
     {
       "family": "gateway-api",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "gateway-api",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -20534,6 +21626,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "gateway-api",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "gateway-api",
@@ -20908,6 +22006,18 @@
     {
       "family": "graphql",
       "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
         "approx": 14,
         "drop": 2,
         "synth": 1
@@ -21075,6 +22185,18 @@
     },
     {
       "family": "graphql",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 3,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "graphql",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -21135,6 +22257,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 3,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "graphql",
@@ -21437,7 +22571,7 @@
     {
       "family": "graphql",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 0,
         "synth": 1
       },
@@ -21487,6 +22621,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "haproxy",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "haproxy",
@@ -21666,6 +22812,12 @@
     },
     {
       "family": "haproxy",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "haproxy",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -21741,6 +22893,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "haproxy",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "haproxy",
@@ -22107,6 +23265,18 @@
     {
       "family": "har",
       "loss_counts": {
+        "approx": 6,
+        "drop": 6,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
         "approx": 18,
         "drop": 0,
         "synth": 0
@@ -22298,6 +23468,18 @@
     },
     {
       "family": "har",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 19
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "har",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -22373,6 +23555,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "har",
@@ -22721,7 +23915,7 @@
     {
       "family": "har",
       "loss_counts": {
-        "approx": 5,
+        "approx": 11,
         "drop": 0,
         "synth": 1
       },
@@ -22765,6 +23959,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "hl7v2",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "hl7v2",
@@ -22931,6 +24131,18 @@
     },
     {
       "family": "hl7v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 51
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -22999,6 +24211,18 @@
       "reason": null,
       "status": "lossy",
       "target": "hl7v2",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 49
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
       "tier": "types-only"
     },
     {
@@ -23341,6 +24565,12 @@
     },
     {
       "family": "hl7v3",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "hl7v3",
       "loss_counts": {
         "approx": 38,
         "drop": 2,
@@ -23503,6 +24733,18 @@
     },
     {
       "family": "hl7v3",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 127
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v3",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -23566,6 +24808,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 134
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -23858,7 +25112,7 @@
     {
       "family": "hl7v3",
       "loss_counts": {
-        "approx": 1,
+        "approx": 56,
         "drop": 132,
         "synth": 0
       },
@@ -23902,6 +25156,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "hoppscotch",
@@ -24097,6 +25363,18 @@
     },
     {
       "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "hoppscotch",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -24172,6 +25450,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "hoppscotch",
@@ -24568,6 +25858,18 @@
     {
       "family": "http-file",
       "loss_counts": {
+        "approx": 3,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
         "approx": 4,
         "drop": 0,
         "synth": 0
@@ -24759,6 +26061,18 @@
     },
     {
       "family": "http-file",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "http-file",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -24834,6 +26148,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "http-file",
@@ -25229,6 +26555,12 @@
     },
     {
       "family": "idoc",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "idoc",
       "loss_counts": {
         "approx": 10,
         "drop": 0,
@@ -25393,6 +26725,18 @@
     },
     {
       "family": "idoc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 39
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "idoc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -25456,6 +26800,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "idoc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 37
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "idoc",
@@ -25756,7 +27112,7 @@
     {
       "family": "idoc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 27,
         "drop": 34,
         "synth": 0
       },
@@ -25800,6 +27156,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "ims",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "ims",
@@ -25965,6 +27327,18 @@
     },
     {
       "family": "ims",
+      "loss_counts": {
+        "approx": 18,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "ims",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -26028,6 +27402,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 18,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -26368,6 +27754,18 @@
     {
       "family": "insomnia",
       "loss_counts": {
+        "approx": 6,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
         "approx": 7,
         "drop": 0,
         "synth": 0
@@ -26559,6 +27957,18 @@
     },
     {
       "family": "insomnia",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "insomnia",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -26634,6 +28044,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "insomnia",
@@ -27029,6 +28451,12 @@
     },
     {
       "family": "iso20022",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "iso20022",
       "loss_counts": {
         "approx": 19,
         "drop": 0,
@@ -27193,6 +28621,18 @@
     },
     {
       "family": "iso20022",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 42
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso20022",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -27256,6 +28696,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "iso20022",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 49
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "iso20022",
@@ -27603,9 +29055,15 @@
     },
     {
       "family": "iso8583",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "iso8583",
       "loss_counts": {
         "approx": 13,
-        "drop": 0,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -27767,6 +29225,18 @@
     },
     {
       "family": "iso8583",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 34
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso8583",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -27830,6 +29300,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 34
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -28035,7 +29517,7 @@
       "family": "iso8583",
       "loss_counts": {
         "approx": 14,
-        "drop": 12,
+        "drop": 23,
         "synth": 13
       },
       "reason": null,
@@ -28095,7 +29577,7 @@
       "family": "iso8583",
       "loss_counts": {
         "approx": 2,
-        "drop": 0,
+        "drop": 11,
         "synth": 0
       },
       "reason": null,
@@ -28174,6 +29656,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "istio",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "istio",
@@ -28359,6 +29853,12 @@
     },
     {
       "family": "istio",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "istio",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -28434,6 +29934,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "istio",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "istio",
@@ -28805,6 +30311,12 @@
     },
     {
       "family": "json-schema",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "json-schema",
       "loss_counts": {
         "approx": 2,
         "drop": 0,
@@ -28902,7 +30414,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 5c26a2cb-3d3f-4d22-ad89-73106c1d5562",
+        "added operation b89a5261-e133-40e0-9b26-0bb7c4bd9ed0",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -28959,6 +30471,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -29025,6 +30549,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -29306,7 +30842,7 @@
     {
       "family": "json-schema",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -29350,6 +30886,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "jsonld",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "jsonld",
@@ -29509,6 +31051,18 @@
     },
     {
       "family": "jsonld",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "jsonld",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -29572,6 +31126,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "jsonld",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "jsonld",
@@ -29864,7 +31430,7 @@
     {
       "family": "jsonld",
       "loss_counts": {
-        "approx": 1,
+        "approx": 13,
         "drop": 0,
         "synth": 1
       },
@@ -29908,6 +31474,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "jtd",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "jtd",
@@ -30008,7 +31580,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 25d341f7-7847-4c81-ade2-e2aa3dbb876d",
+        "added operation 023ad2d1-0cfa-4aea-bdb7-b3a8e6aa79a8",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -30066,6 +31638,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "jtd",
@@ -30134,6 +31718,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "jtd",
@@ -30427,7 +32023,7 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -30471,6 +32067,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "k8s-crd",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "k8s-crd",
@@ -30576,7 +32178,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 6a8513e1-3d96-4d34-ad62-9bbda1049138",
+        "added operation b78e5803-94a7-4dd4-9b5d-31bc05568863",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -30634,6 +32236,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -30701,6 +32315,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -30986,7 +32612,7 @@
     {
       "family": "k8s-crd",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 0,
         "synth": 0
       },
@@ -31030,6 +32656,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "kafka-connect",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "kafka-connect",
@@ -31194,6 +32826,18 @@
     },
     {
       "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "kafka-connect",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -31257,6 +32901,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -31548,7 +33204,7 @@
     {
       "family": "kafka-connect",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 8,
         "synth": 0
       },
@@ -31592,6 +33248,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "kong",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "kong",
@@ -31777,6 +33445,12 @@
     },
     {
       "family": "kong",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "kong",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -31852,6 +33526,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "kong",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "kong",
@@ -32226,6 +33906,18 @@
     {
       "family": "llm-tools",
       "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
         "approx": 2,
         "drop": 4,
         "synth": 0
@@ -32393,6 +34085,18 @@
     },
     {
       "family": "llm-tools",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "llm-tools",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -32456,6 +34160,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "llm-tools",
@@ -32756,7 +34472,7 @@
     {
       "family": "llm-tools",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 0,
         "synth": 1
       },
@@ -32806,6 +34522,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "lwm2m",
@@ -32977,6 +34705,18 @@
     },
     {
       "family": "lwm2m",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "lwm2m",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -33040,6 +34780,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "lwm2m",
@@ -33338,7 +35090,7 @@
     {
       "family": "lwm2m",
       "loss_counts": {
-        "approx": 1,
+        "approx": 7,
         "drop": 6,
         "synth": 0
       },
@@ -33390,6 +35142,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "matter",
@@ -33561,6 +35325,18 @@
     },
     {
       "family": "matter",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "matter",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -33624,6 +35400,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "matter",
@@ -33922,7 +35710,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 0,
+        "approx": 6,
         "drop": 10,
         "synth": 1
       },
@@ -33974,6 +35762,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "mcp",
@@ -34145,6 +35945,18 @@
     },
     {
       "family": "mcp",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "mcp",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -34208,6 +36020,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "mcp",
@@ -34508,7 +36332,7 @@
     {
       "family": "mcp",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -34558,6 +36382,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "nacha",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "nacha",
@@ -34725,6 +36555,18 @@
     },
     {
       "family": "nacha",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 67
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "nacha",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -34788,6 +36630,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "nacha",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 67
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "nacha",
@@ -35129,6 +36983,12 @@
     },
     {
       "family": "natural-ddm",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "natural-ddm",
       "loss_counts": {
         "approx": 5,
         "drop": 8,
@@ -35291,6 +37151,18 @@
     },
     {
       "family": "natural-ddm",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "natural-ddm",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -35354,6 +37226,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "natural-ddm",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "natural-ddm",
@@ -35693,6 +37577,12 @@
     },
     {
       "family": "ncpdp",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "ncpdp",
       "loss_counts": {
         "approx": 32,
         "drop": 0,
@@ -35857,6 +37747,18 @@
     },
     {
       "family": "ncpdp",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 92
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "ncpdp",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -35920,6 +37822,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 98
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -36214,7 +38128,7 @@
     {
       "family": "ncpdp",
       "loss_counts": {
-        "approx": 1,
+        "approx": 9,
         "drop": 92,
         "synth": 0
       },
@@ -36258,6 +38172,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "nginx",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "nginx",
@@ -36437,6 +38363,12 @@
     },
     {
       "family": "nginx",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "nginx",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -36512,6 +38444,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "nginx",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "nginx",
@@ -36878,6 +38816,18 @@
     {
       "family": "odata",
       "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
         "approx": 8,
         "drop": 0,
         "synth": 1
@@ -37069,6 +39019,18 @@
     },
     {
       "family": "odata",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -37144,6 +39106,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -37484,7 +39458,7 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 5,
         "synth": 0
       },
@@ -37532,7 +39506,19 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 11,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
+        "approx": 15,
         "drop": 0,
         "synth": 1
       },
@@ -37544,7 +39530,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 10,
+        "approx": 11,
         "drop": 3,
         "synth": 0
       },
@@ -37556,9 +39542,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 10,
+        "approx": 11,
         "drop": 3,
-        "synth": 11
+        "synth": 12
       },
       "reason": null,
       "status": "lossy",
@@ -37569,7 +39555,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 2,
-        "drop": 10,
+        "drop": 11,
         "synth": 10
       },
       "reason": null,
@@ -37580,7 +39566,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 9,
+        "approx": 10,
         "drop": 12,
         "synth": 0
       },
@@ -37593,7 +39579,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 8,
-        "drop": 21,
+        "drop": 22,
         "synth": 8
       },
       "reason": null,
@@ -37604,7 +39590,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 10,
+        "approx": 11,
         "drop": 12,
         "synth": 0
       },
@@ -37616,7 +39602,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 10,
+        "approx": 11,
         "drop": 12,
         "synth": 0
       },
@@ -37628,9 +39614,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 17,
-        "drop": 24,
-        "synth": 9
+        "approx": 18,
+        "drop": 25,
+        "synth": 10
       },
       "reason": null,
       "status": "lossy",
@@ -37640,9 +39626,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 25,
+        "approx": 27,
         "drop": 0,
-        "synth": 22
+        "synth": 23
       },
       "reason": null,
       "status": "lossy",
@@ -37653,7 +39639,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 0,
-        "drop": 9,
+        "drop": 10,
         "synth": 0
       },
       "reason": null,
@@ -37665,7 +39651,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 0,
-        "drop": 21,
+        "drop": 22,
         "synth": 0
       },
       "reason": null,
@@ -37677,7 +39663,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 9,
-        "drop": 10,
+        "drop": 11,
         "synth": 17
       },
       "reason": null,
@@ -37700,9 +39686,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 12,
-        "drop": 37,
-        "synth": 15
+        "approx": 13,
+        "drop": 40,
+        "synth": 17
       },
       "reason": null,
       "status": "lossy",
@@ -37723,6 +39709,18 @@
     },
     {
       "family": "odata-v2",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 11,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -37730,7 +39728,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 11,
+        "approx": 12,
         "drop": 3,
         "synth": 0
       },
@@ -37742,7 +39740,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 11,
+        "approx": 12,
         "drop": 12,
         "synth": 12
       },
@@ -37761,7 +39759,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 4,
-        "drop": 10,
+        "drop": 11,
         "synth": 12
       },
       "reason": null,
@@ -37784,7 +39782,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 9,
+        "approx": 10,
         "drop": 12,
         "synth": 0
       },
@@ -37802,7 +39800,19 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 3,
+        "drop": 11,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
+        "approx": 15,
         "drop": 15,
         "synth": 0
       },
@@ -37814,7 +39824,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 17,
+        "approx": 18,
         "drop": 12,
         "synth": 0
       },
@@ -37832,9 +39842,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 17,
-        "drop": 24,
-        "synth": 9
+        "approx": 18,
+        "drop": 25,
+        "synth": 10
       },
       "reason": null,
       "status": "lossy",
@@ -37856,7 +39866,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 11,
+        "approx": 12,
         "drop": 3,
         "synth": 0
       },
@@ -37869,7 +39879,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 7,
-        "drop": 22,
+        "drop": 23,
         "synth": 0
       },
       "reason": null,
@@ -37881,7 +39891,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 0,
-        "drop": 9,
+        "drop": 10,
         "synth": 0
       },
       "reason": null,
@@ -37893,7 +39903,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 1,
-        "drop": 21,
+        "drop": 22,
         "synth": 0
       },
       "reason": null,
@@ -37905,7 +39915,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 0,
-        "drop": 21,
+        "drop": 22,
         "synth": 0
       },
       "reason": null,
@@ -37952,8 +39962,8 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 2,
-        "drop": 12,
+        "approx": 3,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -37965,7 +39975,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 0,
-        "drop": 21,
+        "drop": 22,
         "synth": 6
       },
       "reason": null,
@@ -37976,7 +39986,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 13,
+        "approx": 14,
         "drop": 0,
         "synth": 0
       },
@@ -38000,8 +40010,8 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 8,
-        "drop": 24,
+        "approx": 9,
+        "drop": 25,
         "synth": 0
       },
       "reason": null,
@@ -38012,9 +40022,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 26,
+        "approx": 28,
         "drop": 15,
-        "synth": 9
+        "synth": 10
       },
       "reason": null,
       "status": "lossy",
@@ -38036,8 +40046,8 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 13,
-        "drop": 6,
+        "approx": 14,
+        "drop": 7,
         "synth": 5
       },
       "reason": null,
@@ -38061,7 +40071,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 1,
-        "drop": 28,
+        "drop": 30,
         "synth": 15
       },
       "reason": null,
@@ -38072,9 +40082,9 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 20,
-        "drop": 19,
-        "synth": 12
+        "approx": 21,
+        "drop": 21,
+        "synth": 14
       },
       "reason": null,
       "status": "lossy",
@@ -38084,7 +40094,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 14,
+        "approx": 15,
         "drop": 15,
         "synth": 0
       },
@@ -38096,7 +40106,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 11,
+        "approx": 12,
         "drop": 3,
         "synth": 0
       },
@@ -38120,7 +40130,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 11,
+        "approx": 12,
         "drop": 0,
         "synth": 1
       },
@@ -38132,7 +40142,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 9,
+        "approx": 10,
         "drop": 12,
         "synth": 0
       },
@@ -38144,7 +40154,7 @@
     {
       "family": "odata-v2",
       "loss_counts": {
-        "approx": 10,
+        "approx": 19,
         "drop": 12,
         "synth": 0
       },
@@ -38157,7 +40167,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 3,
-        "drop": 10,
+        "drop": 11,
         "synth": 12
       },
       "reason": null,
@@ -38175,7 +40185,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 9,
-        "drop": 10,
+        "drop": 11,
         "synth": 1
       },
       "reason": null,
@@ -38188,6 +40198,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "odcs",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "odcs",
@@ -38287,7 +40303,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 122cf095-0c60-4632-9841-ac3915144c4a",
+        "added operation 2da84842-5c2e-4fdc-917b-eeb1e64ece5a",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -38344,6 +40360,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -38410,6 +40438,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -38699,7 +40739,7 @@
       "family": "odcs",
       "loss_counts": {
         "approx": 1,
-        "drop": 0,
+        "drop": 2,
         "synth": 0
       },
       "reason": null,
@@ -38746,6 +40786,18 @@
     {
       "family": "oncrpc",
       "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
         "approx": 6,
         "drop": 8,
         "synth": 1
@@ -38776,7 +40828,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 4,
         "synth": 7
       },
@@ -38830,7 +40882,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 18,
+        "approx": 19,
         "drop": 0,
         "synth": 11
       },
@@ -38913,6 +40965,18 @@
     },
     {
       "family": "oncrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 5,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "oncrpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -38944,9 +41008,9 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 8,
-        "drop": 5,
-        "synth": 5
+        "approx": 10,
+        "drop": 4,
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -38976,6 +41040,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 5,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -39148,7 +41224,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 4,
         "synth": 0
       },
@@ -39190,7 +41266,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 4,
         "synth": 0
       },
@@ -39238,7 +41314,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 2,
         "synth": 0
       },
@@ -39274,7 +41350,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 4,
         "synth": 0
       },
@@ -39324,6 +41400,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "opcua-nodeset",
@@ -39495,6 +41583,18 @@
     },
     {
       "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "opcua-nodeset",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -39558,6 +41658,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "opcua-nodeset",
@@ -39911,6 +42023,12 @@
     },
     {
       "family": "openapi",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "openapi",
       "loss_counts": {
         "approx": 2,
         "drop": 4,
@@ -40071,6 +42189,18 @@
     },
     {
       "family": "openapi",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "openapi",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -40134,6 +42264,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "openapi",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "openapi",
@@ -40420,8 +42562,8 @@
     {
       "family": "openapi",
       "loss_counts": {
-        "approx": 1,
-        "drop": 0,
+        "approx": 4,
+        "drop": 1,
         "synth": 1
       },
       "reason": null,
@@ -40464,6 +42606,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "openrpc",
@@ -40635,6 +42789,18 @@
     },
     {
       "family": "openrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "openrpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -40698,6 +42864,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "openrpc",
@@ -40992,7 +43170,7 @@
     {
       "family": "openrpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 1
       },
@@ -41042,6 +43220,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "owl",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "owl",
@@ -41142,7 +43326,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 1f7805ee-27a3-441f-a389-d1ccdd14c8db",
+        "added operation 171aa66a-69f7-47f5-8105-e7374413ed98",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -41200,6 +43384,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "owl",
@@ -41268,6 +43464,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "owl",
@@ -41552,7 +43760,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -41596,6 +43804,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "pkl",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "pkl",
@@ -41751,6 +43965,30 @@
     },
     {
       "family": "pkl",
+      "loss_counts": {
+        "approx": 26,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "pkl",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "pkl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -41814,6 +44052,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "pkl",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -41883,9 +44133,15 @@
     },
     {
       "family": "pkl",
-      "reason": "Predicted, not measured (MFX-21.6): the structural-schema losses of the spec wrapper are now reported, so this pair is no longer a silent loss; regenerate where the toolchain sandbox runs to record its loss counts.",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
       "status": "lossy",
-      "target": "k8s-crd"
+      "target": "k8s-crd",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -42077,7 +44333,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 2
       },
@@ -42101,7 +44357,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -42145,6 +44401,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "pli",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "pli",
@@ -42310,6 +44572,18 @@
     },
     {
       "family": "pli",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "pli",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -42373,6 +44647,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "pli",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -42713,6 +44999,18 @@
     {
       "family": "postman",
       "loss_counts": {
+        "approx": 4,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
         "approx": 5,
         "drop": 0,
         "synth": 0
@@ -42904,6 +45202,18 @@
     },
     {
       "family": "postman",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -42979,6 +45289,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -43369,6 +45691,18 @@
     {
       "family": "postman-v2",
       "loss_counts": {
+        "approx": 5,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
         "approx": 10,
         "drop": 0,
         "synth": 0
@@ -43560,6 +45894,18 @@
     },
     {
       "family": "postman-v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman-v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -43635,6 +45981,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "postman-v2",
@@ -44031,6 +46389,18 @@
     {
       "family": "protobuf",
       "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
         "approx": 13,
         "drop": 3,
         "synth": 1
@@ -44051,7 +46421,7 @@
       "loss_counts": {
         "approx": 4,
         "drop": 7,
-        "synth": 4
+        "synth": 6
       },
       "reason": null,
       "status": "lossy",
@@ -44198,6 +46568,18 @@
     },
     {
       "family": "protobuf",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -44261,6 +46643,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "protobuf",
@@ -44331,7 +46725,7 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 18,
         "synth": 0
       },
@@ -44559,7 +46953,7 @@
     {
       "family": "protobuf",
       "loss_counts": {
-        "approx": 2,
+        "approx": 15,
         "drop": 15,
         "synth": 0
       },
@@ -44615,6 +47009,18 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf-editions",
+      "loss_counts": {
         "approx": 7,
         "drop": 2,
         "synth": 1
@@ -44635,7 +47041,7 @@
       "loss_counts": {
         "approx": 3,
         "drop": 4,
-        "synth": 3
+        "synth": 5
       },
       "reason": null,
       "status": "lossy",
@@ -44782,6 +47188,18 @@
     },
     {
       "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf-editions",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -44845,6 +47263,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "protobuf-editions",
@@ -44915,7 +47345,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 12,
         "synth": 0
       },
@@ -45143,7 +47573,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 1,
+        "approx": 9,
         "drop": 10,
         "synth": 0
       },
@@ -45195,6 +47625,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "pydantic",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "pydantic",
@@ -45361,6 +47797,18 @@
     },
     {
       "family": "pydantic",
+      "loss_counts": {
+        "approx": 22,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "pydantic",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -45424,6 +47872,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 22,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -45717,7 +48177,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 0,
+        "approx": 4,
         "drop": 0,
         "synth": 1
       },
@@ -45761,6 +48221,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "raml",
@@ -45956,6 +48428,18 @@
     },
     {
       "family": "raml",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "raml",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -46031,6 +48515,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "raml",
@@ -46371,7 +48867,7 @@
     {
       "family": "raml",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 8,
         "synth": 1
       },
@@ -46415,6 +48911,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "relaxng",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "relaxng",
@@ -46580,6 +49082,18 @@
     },
     {
       "family": "relaxng",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "relaxng",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -46643,6 +49157,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "relaxng",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "relaxng",
@@ -46935,7 +49461,7 @@
     {
       "family": "relaxng",
       "loss_counts": {
-        "approx": 0,
+        "approx": 2,
         "drop": 10,
         "synth": 1
       },
@@ -46979,6 +49505,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "ros2",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "ros2",
@@ -47078,7 +49610,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation ec00feb3-df65-43a6-8156-23bf55927905",
+        "added operation 31f1d0c1-812b-4b53-85f1-2809fcda42f2",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -47136,6 +49668,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -47203,6 +49747,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -47542,6 +50098,12 @@
     },
     {
       "family": "sepa",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "sepa",
       "loss_counts": {
         "approx": 26,
         "drop": 0,
@@ -47706,6 +50268,18 @@
     },
     {
       "family": "sepa",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 66
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "sepa",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -47769,6 +50343,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "sepa",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 71
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "sepa",
@@ -48116,6 +50702,12 @@
     },
     {
       "family": "shacl",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "shacl",
       "loss_counts": {
         "approx": 5,
         "drop": 5,
@@ -48272,6 +50864,18 @@
     },
     {
       "family": "shacl",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "shacl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -48335,6 +50939,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "shacl",
@@ -48626,7 +51242,7 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -48670,6 +51286,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "smithy",
@@ -48841,6 +51469,18 @@
     },
     {
       "family": "smithy",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "smithy",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -48906,6 +51546,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -49202,7 +51854,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 1,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -49252,6 +51904,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "soapui",
@@ -49447,6 +52111,18 @@
     },
     {
       "family": "soapui",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "soapui",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -49522,6 +52198,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "soapui",
@@ -49917,6 +52605,12 @@
     },
     {
       "family": "sparkplug",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "sparkplug",
       "loss_counts": {
         "approx": 3,
         "drop": 2,
@@ -50014,7 +52708,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 5e008420-cd37-4ccf-b5b9-e3d5fc123837",
+        "added operation 1a65b919-ab47-4975-8581-a079a73ad6fa",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -50072,6 +52766,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -50138,6 +52844,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -50430,7 +53148,7 @@
     {
       "family": "sparkplug",
       "loss_counts": {
-        "approx": 7,
+        "approx": 14,
         "drop": 2,
         "synth": 0
       },
@@ -50474,6 +53192,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "sql-ddl",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "sql-ddl",
@@ -50633,6 +53357,18 @@
     },
     {
       "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "sql-ddl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -50696,6 +53432,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 0,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -50990,7 +53738,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 1
       },
@@ -51034,6 +53782,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "swagger",
@@ -51229,6 +53989,18 @@
     },
     {
       "family": "swagger",
+      "loss_counts": {
+        "approx": 43,
+        "drop": 7,
+        "synth": 30
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -51304,6 +54076,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 43,
+        "drop": 7,
+        "synth": 28
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "swagger",
@@ -51648,7 +54432,7 @@
     {
       "family": "swagger",
       "loss_counts": {
-        "approx": 7,
+        "approx": 36,
         "drop": 0,
         "synth": 1
       },
@@ -51692,6 +54476,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "swagger-1.2",
@@ -51887,6 +54683,18 @@
     },
     {
       "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 5,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger-1.2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -51962,6 +54770,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 5,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "swagger-1.2",
@@ -52305,7 +55125,7 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 0,
         "synth": 1
       },
@@ -52349,6 +55169,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "swift-mt",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "swift-mt",
@@ -52516,6 +55342,18 @@
     },
     {
       "family": "swift-mt",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 45
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "swift-mt",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -52579,6 +55417,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "swift-mt",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 44
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "swift-mt",
@@ -52873,7 +55723,7 @@
     {
       "family": "swift-mt",
       "loss_counts": {
-        "approx": 14,
+        "approx": 33,
         "drop": 36,
         "synth": 0
       },
@@ -52917,6 +55767,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "thrift",
@@ -53088,6 +55950,18 @@
     },
     {
       "family": "thrift",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "thrift",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -53151,6 +56025,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "thrift",
@@ -53443,7 +56329,7 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 1,
+        "approx": 7,
         "drop": 9,
         "synth": 0
       },
@@ -53495,6 +56381,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "thunder-client",
@@ -53690,6 +56588,18 @@
     },
     {
       "family": "thunder-client",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "thunder-client",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -53765,6 +56675,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "thunder-client",
@@ -54160,6 +57082,12 @@
     },
     {
       "family": "tradacoms",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "tradacoms",
       "loss_counts": {
         "approx": 3,
         "drop": 0,
@@ -54323,6 +57251,18 @@
     },
     {
       "family": "tradacoms",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "tradacoms",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -54386,6 +57326,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "tradacoms",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 19
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "tradacoms",
@@ -54730,6 +57682,18 @@
       "loss_counts": {
         "approx": 4,
         "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "traefik",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -54903,6 +57867,12 @@
     },
     {
       "family": "traefik",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "traefik",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -54978,6 +57948,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "traefik",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "traefik",
@@ -55344,6 +58320,18 @@
     {
       "family": "trpc",
       "loss_counts": {
+        "approx": 5,
+        "drop": 10,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
         "approx": 13,
         "drop": 23,
         "synth": 0
@@ -55364,7 +58352,7 @@
       "loss_counts": {
         "approx": 5,
         "drop": 10,
-        "synth": 5
+        "synth": 7
       },
       "reason": null,
       "status": "lossy",
@@ -55499,6 +58487,30 @@
     },
     {
       "family": "trpc",
+      "loss_counts": {
+        "approx": 60,
+        "drop": 13,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 35,
+        "drop": 5,
+        "synth": 23
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "trpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -55562,6 +58574,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 35,
+        "drop": 5,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "trpc",
@@ -55632,7 +58656,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 4,
         "synth": 0
       },
@@ -55839,7 +58863,7 @@
       "family": "trpc",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
+        "drop": 5,
         "synth": 2
       },
       "reason": null,
@@ -55862,7 +58886,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 0,
+        "approx": 5,
         "drop": 0,
         "synth": 1
       },
@@ -55912,6 +58936,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "tyk",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "tyk",
@@ -56097,6 +59133,12 @@
     },
     {
       "family": "tyk",
+      "reason": "A UN/EDIFACT message guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "edifact-guide"
+    },
+    {
+      "family": "tyk",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -56172,6 +59214,12 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "tyk",
+      "reason": "An HL7 v2 segment guide lays out record types, and this model has none (only enums, scalars or operations).",
+      "status": "refused",
+      "target": "hl7v2-guide"
     },
     {
       "family": "tyk",
@@ -56545,6 +59593,12 @@
     },
     {
       "family": "typescript-types",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "typescript-types",
       "loss_counts": {
         "approx": 3,
         "drop": 0,
@@ -56650,7 +59704,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 6fb2e008-b967-42ad-9aa0-47eb21e78562",
+        "added operation 8522cc25-fabc-4f15-83be-afcd851874c6",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -56708,6 +59762,18 @@
       "status": "lossy",
       "target": "discovery",
       "tier": "lossy"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 24
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -56776,6 +59842,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 24
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -57072,7 +60150,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 0,
+        "approx": 3,
         "drop": 0,
         "synth": 1
       },
@@ -57116,6 +60194,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "typespec",
@@ -57311,6 +60401,18 @@
     },
     {
       "family": "typespec",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "typespec",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -57386,6 +60488,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
@@ -57726,7 +60840,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 4,
+        "approx": 6,
         "drop": 8,
         "synth": 0
       },
@@ -57770,6 +60884,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "vsam-idcams",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "vsam-idcams",
@@ -57935,6 +61055,18 @@
     },
     {
       "family": "vsam-idcams",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "vsam-idcams",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -57998,6 +61130,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "vsam-idcams",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "vsam-idcams",
@@ -58338,7 +61482,19 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
+        "drop": 1,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 2,
         "drop": 0,
         "synth": 1
       },
@@ -58398,9 +61554,9 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 4,
+        "approx": 0,
         "drop": 7,
-        "synth": 4
+        "synth": 0
       },
       "reason": null,
       "status": "lossy",
@@ -58434,7 +61590,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 9,
         "drop": 8,
         "synth": 3
       },
@@ -58446,7 +61602,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 7,
         "drop": 0,
         "synth": 8
       },
@@ -58482,7 +61638,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 1,
         "drop": 4,
         "synth": 4
       },
@@ -58529,6 +61685,18 @@
     },
     {
       "family": "wadl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wadl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -58566,7 +61734,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 5,
         "drop": 4,
         "synth": 4
       },
@@ -58608,7 +61776,19 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 4,
+        "approx": 2,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 8,
         "drop": 5,
         "synth": 0
       },
@@ -58620,7 +61800,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 9,
         "drop": 4,
         "synth": 0
       },
@@ -58638,7 +61818,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 9,
         "drop": 8,
         "synth": 3
       },
@@ -58782,7 +61962,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 7,
         "drop": 0,
         "synth": 0
       },
@@ -58807,7 +61987,7 @@
       "family": "wadl",
       "loss_counts": {
         "approx": 5,
-        "drop": 8,
+        "drop": 10,
         "synth": 0
       },
       "reason": null,
@@ -58818,7 +61998,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 8,
+        "approx": 12,
         "drop": 5,
         "synth": 3
       },
@@ -58878,7 +62058,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 8,
+        "approx": 4,
         "drop": 9,
         "synth": 6
       },
@@ -58890,7 +62070,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 4,
+        "approx": 8,
         "drop": 5,
         "synth": 0
       },
@@ -58915,7 +62095,7 @@
       "family": "wadl",
       "loss_counts": {
         "approx": 1,
-        "drop": 1,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -58974,7 +62154,7 @@
     {
       "family": "wadl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 1,
         "drop": 4,
         "synth": 1
       },
@@ -58988,6 +62168,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "wit",
@@ -59159,6 +62351,18 @@
     },
     {
       "family": "wit",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wit",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -59222,6 +62426,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "wit",
@@ -59516,7 +62732,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 0
       },
@@ -59566,6 +62782,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 9,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "wsdl",
@@ -59737,6 +62965,18 @@
     },
     {
       "family": "wsdl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wsdl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -59800,6 +63040,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 24
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "wsdl",
@@ -60150,6 +63402,18 @@
     {
       "family": "wsdl2",
       "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
         "approx": 10,
         "drop": 3,
         "synth": 1
@@ -60317,6 +63581,18 @@
     },
     {
       "family": "wsdl2",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "wsdl2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -60380,6 +63656,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "wsdl2",
@@ -60680,8 +63968,8 @@
     {
       "family": "wsdl2",
       "loss_counts": {
-        "approx": 0,
-        "drop": 15,
+        "approx": 1,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -60732,6 +64020,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "xmlrpc",
@@ -60903,6 +64203,18 @@
     },
     {
       "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "xmlrpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -60966,6 +64278,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "xmlrpc",
@@ -61311,6 +64635,12 @@
     },
     {
       "family": "xregistry",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "xregistry",
       "loss_counts": {
         "approx": 1,
         "drop": 6,
@@ -61467,6 +64797,18 @@
     },
     {
       "family": "xregistry",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "xregistry",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -61530,6 +64872,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "xregistry",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "xregistry",
@@ -61869,6 +65223,12 @@
     },
     {
       "family": "xsd",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
+    },
+    {
+      "family": "xsd",
       "loss_counts": {
         "approx": 6,
         "drop": 1,
@@ -62031,6 +65391,18 @@
     },
     {
       "family": "xsd",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "xsd",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -62094,6 +65466,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "xsd",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "xsd",
@@ -62387,7 +65771,7 @@
       "family": "xsd",
       "loss_counts": {
         "approx": 1,
-        "drop": 14,
+        "drop": 0,
         "synth": 0
       },
       "reason": null,
@@ -62424,6 +65808,12 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "zod",
+      "reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
+      "status": "refused",
+      "target": "a2a"
     },
     {
       "family": "zod",
@@ -62578,6 +65968,30 @@
     },
     {
       "family": "zod",
+      "loss_counts": {
+        "approx": 29,
+        "drop": 15,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 26,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "zod",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -62641,6 +66055,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 26,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -62710,9 +66136,15 @@
     },
     {
       "family": "zod",
-      "reason": "Predicted, not measured (MFX-21.6): the structural-schema losses of the spec wrapper are now reported, so this pair is no longer a silent loss; regenerate where the toolchain sandbox runs to record its loss counts.",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
       "status": "lossy",
-      "target": "k8s-crd"
+      "target": "k8s-crd",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -62904,7 +66336,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 2
       },
@@ -62928,7 +66360,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 0,
+        "approx": 4,
         "drop": 0,
         "synth": 1
       },
@@ -62972,6 +66404,18 @@
       "reason": "Only a source imported as z/OS Connect can be exported to z/OS Connect.",
       "status": "refused",
       "target": "zosconnect"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "a2a",
+      "tier": "lossy"
     },
     {
       "family": "zosconnect",
@@ -63167,6 +66611,18 @@
     },
     {
       "family": "zosconnect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "edifact-guide",
+      "tier": "types-only"
+    },
+    {
+      "family": "zosconnect",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -63242,6 +66698,18 @@
       "reason": "Only a source imported as HL7 v2 can be exported to HL7 v2.",
       "status": "refused",
       "target": "hl7v2"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "hl7v2-guide",
+      "tier": "types-only"
     },
     {
       "family": "zosconnect",
@@ -63588,7 +67056,7 @@
     {
       "family": "zosconnect",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 2,
         "synth": 0
       },
@@ -63636,9 +67104,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4037,
-    "ok": 40,
-    "refused": 2120,
+    "lossy": 4282,
+    "ok": 41,
+    "refused": 2203,
     "silent-loss": 170,
     "skipped": 0
   },
@@ -63754,6 +67222,7 @@
   ],
   "matrix_version": 1,
   "targets": [
+    "a2a",
     "apiblueprint",
     "apigee",
     "arazzo",
@@ -63770,6 +67239,7 @@
     "connectrpc",
     "corbaidl",
     "discovery",
+    "edifact-guide",
     "edix12",
     "envoy-xds",
     "fhir",
@@ -63778,6 +67248,7 @@
     "gateway-api",
     "graphql",
     "hl7v2",
+    "hl7v2-guide",
     "hoppscotch",
     "http-file",
     "idoc",
