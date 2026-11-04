@@ -27,6 +27,7 @@ from .sso_provider_routes import internal_router as sso_provider_internal_router
 from .auth_provider_secret_crypto import validate_auth_config_encryption_keys
 from .avro_registry_push_routes import router as avro_registry_push_router
 from .schema_registry_push_routes import router as schema_registry_push_router
+from .browse_agentic_routes import router as browse_agentic_router
 from .browse_export_routes import router as browse_export_router
 from .browse_public_routes import router as browse_public_router
 from .bulk_import_routes import router as bulk_import_router
@@ -201,7 +202,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.494.0",
+    version="1.495.0",
 )
 
 
@@ -330,6 +331,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 # Include routers (browse_public_router first for unauthenticated /v1/browse/* routes;
 # data_router next so /v1/data/* is matched before any generic patterns)
 app.include_router(browse_public_router)
+app.include_router(browse_agentic_router)
 # public_types_router: anonymous dereference of a registry $id at /types/* (unauthenticated). Serves
 # only is_system AND is_public rows, so the std/* core set and nothing a tenant owns.
 app.include_router(public_types_router)

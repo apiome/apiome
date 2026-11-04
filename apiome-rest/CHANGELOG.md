@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.631.0] - 2026-11-04
+
+### Added
+- **Agentic-web site manifests over a tenant's published surface (MFX-32.3, #4297).** Two anonymous routes,
+  `GET /v1/browse/tenants/{tenant_slug}/agents.json` and `GET /v1/browse/tenants/{tenant_slug}/llms.txt`
+  (`app/browse_agentic_routes.py`), built by `app/agentic_web_manifest.py` over the tenant's **published, public**
+  artifacts only (the anonymous browse queries, whatever the caller's credentials), one per project at its latest
+  published public version.
+  - `agents.json` (agents.txt companion): `site`, the standard `a2a` / `mcp` / `acp` lists (always present) and
+    `x-apiome-apis` — each artifact's Browse page with protocol, format and version. An agent artifact is also listed
+    at the endpoint its own source declares: an A2A card at its origin's well-known URI, an MCP or ACP server URL
+    (loaded through the public export gate, `load_public_export_source`).
+  - `llms.txt`: `## APIs`, `## Agents`, and the agents.json under `## Optional`; link text is escaped.
+  - Both re-import through the MFI-18.3 agents-manifest importer (agents-json / llms-txt dialects); the agent
+    endpoints are its discovery seeds.
+  - Links start at `site_url` (validated absolute http(s), no query; 422 otherwise), else the new
+    `APIOME_PUBLIC_BROWSE_URL` setting, else are site-relative. Unknown tenant → 404. Public-export rate limit;
+    `Cache-Control: public, max-age=300`. Tests: `tests/test_agentic_web_manifest.py`.
+- OpenAPI 1.495.0.
+
 ## [1.630.0] - 2026-11-04
 
 ### Added

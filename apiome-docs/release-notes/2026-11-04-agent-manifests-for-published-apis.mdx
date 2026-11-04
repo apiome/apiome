@@ -1,0 +1,21 @@
+---
+slug: agent-manifests-for-published-apis
+title: agents.json and llms.txt for your published APIs
+description: "Each organization's browse page now serves agents.json and llms.txt."
+authors: [apiome]
+---
+
+Every organization in the browse app now serves two files for agents and crawlers,
+`/tenant/{slug}/agents.json` and `/tenant/{slug}/llms.txt`, linked from its page under
+**For agents**. See [Agent manifests](/ship/browse-published-specs#agent-manifests).
+
+{/* truncate */}
+
+- **Only what is public:** both list the organization's published, public projects, each at its
+  latest published version. Private and draft versions are never listed, even when you are signed in.
+- **Every API, and every agent's own address:** each project links to its version page. An A2A agent
+  is also listed at its Agent Card, and an MCP or ACP server at its URL, so an agent can follow the
+  file straight to it.
+- **Reads back:** both files import as an Agentic-web site manifest.
+- **Over the API:** `GET /v1/browse/tenants/{tenant_slug}/agents.json` and `/llms.txt`, with
+  `site_url` for the browse app's address.

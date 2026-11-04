@@ -1,6 +1,6 @@
 ---
 title: "Browse"
-description: "REST endpoints tagged browse: 9 operations."
+description: "REST endpoints tagged browse: 11 operations."
 sidebar_position: 10
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.494.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.495.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `browse` · 9 operations
+Tag: `browse` · 11 operations
 
 ## `GET /v1/browse/tenants` {#list-public-browse-tenants-v1-browse-tenants-get}
 
@@ -34,6 +34,54 @@ Operation id: `list_public_browse_tenants_v1_browse_tenants_get`
 | --- | --- | --- |
 | 200 | Successful response for list public browse tenants. | `application/json` [`BrowsePublicTenantsResponse`](#schema-browsepublictenantsresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/browse/tenants/{tenant_slug}/agents.json` {#get-tenant-agents-json-v1-browse-tenants-tenant-slug-agents-json-get}
+
+**The tenant's agents.json over its published public artifacts (no auth)**
+
+An agents.txt-companion `agents.json` listing every published public artifact of the tenant (its latest published version): its Browse page under `x-apiome-apis`, and for an A2A, MCP or ACP artifact the agent endpoint its source declares under `a2a` / `mcp` / `acp` (MFX-32.3). Private and draft artifacts are never listed. Re-imports as an Agentic-web Site Manifest.
+
+Operation id: `get_tenant_agents_json_v1_browse_tenants__tenant_slug__agents_json_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `site_url` | query | string or null | no | The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`) the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without either, links are site-relative. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the tenant's agents.json over its published public artifacts (no auth). | `application/json` any |
+| 404 | Tenant not found. | — |
+| 422 | `site_url` is not an absolute http(s) URL. | — |
+| 429 | Public export rate limit exceeded. | — |
+
+## `GET /v1/browse/tenants/{tenant_slug}/llms.txt` {#get-tenant-llms-txt-v1-browse-tenants-tenant-slug-llms-txt-get}
+
+**The tenant's llms.txt over its published public artifacts (no auth)**
+
+An `llms.txt` (llmstxt.org) for the tenant: an `## APIs` section linking every published public artifact's Browse page, an `## Agents` section with each agent artifact's endpoint, and the matching agents.json under `## Optional` (MFX-32.3). Private and draft artifacts are never listed.
+
+Operation id: `get_tenant_llms_txt_v1_browse_tenants__tenant_slug__llms_txt_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `site_url` | query | string or null | no | The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`) the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without either, links are site-relative. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for the tenant's llms.txt over its published public artifacts (no auth). | `text/plain` any |
+| 404 | Tenant not found. | — |
+| 422 | `site_url` is not an absolute http(s) URL. | — |
+| 429 | Public export rate limit exceeded. | — |
 
 ## `GET /v1/browse/tenants/{tenant_slug}/projects` {#list-public-browse-projects-v1-browse-tenants-tenant-slug-projects-get}
 

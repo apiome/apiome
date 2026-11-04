@@ -86,6 +86,7 @@ function projectFacetMeta(project: Project): { label: string; value?: string }[]
 }
 
 export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
   const [layout, setLayout] = useState<LayoutMode>(readLayoutPreference);
   const [query, setQuery] = useState('');
   const [facets, setFacets] = useState<BrowseFacetSelection>(NO_FACET_SELECTION);
@@ -162,6 +163,25 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
             { label: 'Visibility', value: 'Public' },
           ]}
         />
+
+        {/* Agentic-web manifests (MFX-32.3, #4297): plain anchors to route handlers, basePath-prefixed. */}
+        <div className="flex flex-wrap items-center gap-2 text-[13px] text-zinc-500 dark:text-zinc-400">
+          <span>For agents:</span>
+          {(['agents.json', 'llms.txt'] as const).map((file) => (
+            <a
+              key={file}
+              href={`${basePath}/tenant/${encodeURIComponent(tenantSlug)}/${file}`}
+              className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2.5 py-1 font-mono text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              title={
+                file === 'agents.json'
+                  ? 'Site manifest listing every published API and agent endpoint'
+                  : 'Markdown index of every published API, for language models'
+              }
+            >
+              {file}
+            </a>
+          ))}
+        </div>
 
         <section className="space-y-4">
           <header className="flex flex-wrap items-end justify-between gap-3">

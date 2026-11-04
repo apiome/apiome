@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.494.0
+  version: 1.495.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -92,6 +92,101 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for list public browse tenantsresponse422.
+  /v1/browse/tenants/{tenant_slug}/agents.json:
+    get:
+      tags:
+      - browse
+      summary: The tenant's agents.json over its published public artifacts (no auth)
+      description: 'An agents.txt-companion `agents.json` listing every published public
+        artifact of the tenant (its latest published version): its Browse page under
+        `x-apiome-apis`, and for an A2A, MCP or ACP artifact the agent endpoint its
+        source declares under `a2a` / `mcp` / `acp` (MFX-32.3). Private and draft artifacts
+        are never listed. Re-imports as an Agentic-web Site Manifest.'
+      operationId: get_tenant_agents_json_v1_browse_tenants__tenant_slug__agents_json_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: site_url
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thetenantsagentsjsonoveritspublishedpublsiteurl schema.
+          - type: 'null'
+            description: Thetenantsagentsjsonoveritspublishedpublsiteurl schema.
+          description: The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`)
+            the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without
+            either, links are site-relative.
+          title: Site Url
+        description: The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`)
+          the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without
+          either, links are site-relative.
+      responses:
+        '200':
+          description: Successful response for the tenant's agents.json over its published
+            public artifacts (no auth).
+          content:
+            application/json: {}
+        '404':
+          description: Tenant not found.
+        '422':
+          description: '`site_url` is not an absolute http(s) URL.'
+        '429':
+          description: Public export rate limit exceeded.
+  /v1/browse/tenants/{tenant_slug}/llms.txt:
+    get:
+      tags:
+      - browse
+      summary: The tenant's llms.txt over its published public artifacts (no auth)
+      description: 'An `llms.txt` (llmstxt.org) for the tenant: an `## APIs` section
+        linking every published public artifact''s Browse page, an `## Agents` section
+        with each agent artifact''s endpoint, and the matching agents.json under `##
+        Optional` (MFX-32.3). Private and draft artifacts are never listed.'
+      operationId: get_tenant_llms_txt_v1_browse_tenants__tenant_slug__llms_txt_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: site_url
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thetenantsllmstxtoveritspublishedpublicasiteurl schema.
+          - type: 'null'
+            description: Thetenantsllmstxtoveritspublishedpublicasiteurl schema.
+          description: The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`)
+            the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without
+            either, links are site-relative.
+          title: Site Url
+        description: The apiome-browse site root (origin plus base path, e.g. `https://browse.example.com`)
+          the manifest's links point at. Defaults to `APIOME_PUBLIC_BROWSE_URL`; without
+          either, links are site-relative.
+      responses:
+        '200':
+          description: Successful response for the tenant's llms.txt over its published
+            public artifacts (no auth).
+          content:
+            text/plain: {}
+        '404':
+          description: Tenant not found.
+        '422':
+          description: '`site_url` is not an absolute http(s) URL.'
+        '429':
+          description: Public export rate limit exceeded.
   /v1/browse/tenants/{tenant_slug}/projects:
     get:
       tags:

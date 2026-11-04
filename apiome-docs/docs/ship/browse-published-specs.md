@@ -84,6 +84,43 @@ By default a search covers each project's most recently published version. Choos
 in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
 per version.
 
+## Agent manifests: agents.json and llms.txt {#agent-manifests}
+
+Each organization's page in the browse app has two files for agents and crawlers, linked under the
+header as **For agents: `agents.json` · `llms.txt`**:
+
+| File | URL in the browse app | What it is |
+|---|---|---|
+| `agents.json` | `/tenant/{tenant_slug}/agents.json` | A site manifest in the [agents.txt](https://agents-txt.com) `agents.json` shape |
+| `llms.txt` | `/tenant/{tenant_slug}/llms.txt` | A Markdown index in the [llms.txt](https://llmstxt.org) shape |
+
+Both list the organization's **published, public** projects only — never a private or draft
+version, even when you are signed in. Each project appears once, at its latest published version:
+
+- **Every project** links to that version's page in the browse app, with its paradigm, format and
+  version. In `agents.json` they are under `x-apiome-apis`; in `llms.txt`, under `## APIs`.
+- **An agent** — a project imported from an A2A Agent Card, an MCP server manifest or an ACP agent
+  manifest — is also listed at the address its own source declares, so an agent following the file
+  reaches the agent itself:
+
+  | Imported from | Listed under | Address |
+  |---|---|---|
+  | A2A Agent Card | `a2a` | The card at the agent's well-known address, `https://<agent host>/.well-known/agent-card.json` |
+  | MCP server manifest | `mcp` | The server's URL (a server that only runs locally, over stdio, has none) |
+  | ACP agent manifest | `acp` | The ACP server's URL |
+
+  In `llms.txt` they are under `## Agents`. An agent whose source names no web address is listed by
+  its version page only.
+
+`llms.txt` also links the matching `agents.json` under `## Optional`. Both files can be imported
+back as an [Agentic-web site manifest](../bring-in/agents-manifest-import.md). Clients may reuse
+them for five minutes.
+
+The browse app builds both files with the REST API, from its server rather than your browser. If the
+API's public address is not reachable from that server (inside a container network, for example), set
+`APIOME_REST_INTERNAL_BASE_URL` on the browse app to the address that is, such as
+`http://rest:8000/v1`.
+
 ## Interactive Swagger UI for a published spec
 
 Every published version has its own hosted Swagger UI:
@@ -101,7 +138,14 @@ documents the Apiome REST API itself — see [API reference](../reference/api-re
 ```http
 GET /v1/browse/tenants/{tenant_slug}/projects                              # public projects
 GET /v1/browse/tenants/{tenant_slug}/projects/{project_slug}/versions      # published versions
+GET /v1/browse/tenants/{tenant_slug}/agents.json?site_url=…                # the agents.json
+GET /v1/browse/tenants/{tenant_slug}/llms.txt?site_url=…                   # the llms.txt
 ```
+
+`site_url` is the browse app's address (for example `https://browse.apiome.dev`), which the links in
+the two manifests start with. Without it, the server's `APIOME_PUBLIC_BROWSE_URL` setting is used;
+without either, the links start at `/tenant/…`. A `site_url` that is not an `http`/`https` address,
+or has a query, is refused with `422`; an unknown organization is `404`.
 
 These browse routes serve public content without authentication.
 
