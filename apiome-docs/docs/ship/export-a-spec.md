@@ -2528,6 +2528,13 @@ listing every problem with its file and rule, when:
 4. **A representation names an element the grammar does not declare** (`wadl.representation`).
 5. **Apiome's WADL importer cannot read the export back** (`wadl.reimport`).
 
+**Where to find it.** In the **Export** dialog, pick the **WADL** card on the **Target** step (in **Export
+studio** it is under **REST & HTTP**), marked multi-file. A REST item is badged **lossy**, and an item
+imported from WADL exports back **lossless**. Pick the **Layout**: `bundle` (the default) downloads the
+`.wadl` and its `.xsd` grammar as a `.zip`, and `single` writes one `.wadl` with the grammar inline. From
+the CLI, run `apiome export wadl <item> --out <folder>`, and add `--option layout=single` for one file. A
+public item's **Export** dialog on Browse offers WADL too.
+
 ### Google API Discovery from any source
 
 Google's API client libraries and generated clients are built from **Discovery documents**: one JSON
@@ -2606,9 +2613,14 @@ problem with its JSON pointer and rule, when:
    `parameterOrder` lists an undeclared parameter (`discovery.parameter-order`).
 5. **Apiome's Discovery importer cannot read the document back** (`discovery.reimport`).
 
-When the source has no server, `https://api.example.com/` is used, and the report says so. From the CLI,
-run `apiome export discovery <item> --out petstore.discovery.json`; add `--option name=pets` or
-`--option version=v2` to choose the name or version.
+When the source has no server, `https://api.example.com/` is used, and the report says so.
+
+**Where to find it.** In the **Export** dialog, pick the **Google API Discovery** card on the **Target**
+step (in **Export studio** it is under **REST & HTTP**). A REST item is badged **lossy**, and an item
+imported from Discovery exports back **lossless**. Leave **Name** and **Version** empty for the item's own
+(else a name made from the item's name, and `v1`), or type others (`pets`, `v2`). From the CLI, run
+`apiome export discovery <item> --out petstore.discovery.json`, and add `--option name=pets` or
+`--option version=v2`. A public item's **Export** dialog on Browse offers the document too.
 
 ### RAML from any source
 

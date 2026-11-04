@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.627.0] - 2026-11-04
+
+### Added
+- **WADL & Google API Discovery target cards + fixtures (MFX-29.4, #4176).** `tests/test_legacy_rest_target_cards.py`
+  pins both cards per source kind (REST, GraphQL, JSON Schema `lossy`; an imported WADL / Discovery item `lossless`;
+  Discovery unavailable for a source with no HTTP operation and no type), WADL's `layout` and Discovery's `name` /
+  `version` choices (each passing the export gate), Browse delivery (a WADL bundle as one zip, a Discovery document
+  as JSON), and keeps the CLI and UI registry fixtures equal to the live registry (`fixtures/legacy_rest_target/
+  outcomes.json`, regenerate with `APIOME_REGEN_LEGACY_REST_TARGET=1`).
+
+### Fixed
+- **WADL keeps 1…n field numbers.** The WADL pack no longer reports a record's field numbers dropped when they are
+  exactly 1…n: the grammar writes fields in number order and the WADL / XSD readers number them by position, so they
+  read back unchanged. An imported WADL now exports back `lossless`. Round-trip and conformance goldens: the `wadl`
+  loss counts and the `wadl → wadl` cell (`ok`) move accordingly.
+
 ## [1.626.0] - 2026-11-04
 
 ### Added

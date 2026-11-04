@@ -1,0 +1,18 @@
+---
+slug: legacy-rest-target-cards
+title: WADL and Google API Discovery on every export surface
+description: "Both legacy REST exports are on the Export dialog, Export studio, Browse and the CLI."
+authors: [apiome]
+---
+
+The WADL and Google API Discovery exports are on every export surface, with their options and an honest badge.
+See [WADL from any source](/ship/export-a-spec#wadl-from-any-source) and
+[Google API Discovery from any source](/ship/export-a-spec#google-api-discovery-from-any-source).
+
+{/* truncate */}
+
+- **Cards:** **WADL** (multi-file, **Layout** `bundle` or `single`) and **Google API Discovery** (**Name**,
+  **Version**) on the Export dialog, under **REST & HTTP** in Export studio, and on Browse.
+- **Badges:** a REST item is **lossy**; an item imported from WADL or Discovery exports back **lossless**. An
+  imported WADL's field numbers are no longer reported lost: they read back unchanged.
+- **CLI:** `apiome export wadl <item> --out <folder>` and `apiome export discovery <item> --out <file>`.
