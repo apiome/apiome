@@ -196,6 +196,12 @@
     },
     {
       "family": "a2a",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "a2a",
       "loss_counts": {
         "approx": 1,
         "drop": 5,
@@ -757,6 +763,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "acp",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "acp",
@@ -1337,6 +1349,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "agents-manifest",
@@ -1982,6 +2000,18 @@
       "family": "api-blueprint",
       "loss_counts": {
         "approx": 3,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 3,
         "drop": 4,
         "synth": 6
       },
@@ -2690,6 +2720,12 @@
     },
     {
       "family": "apigee",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "apigee",
       "loss_counts": {
         "approx": 0,
         "drop": 4,
@@ -3313,6 +3349,12 @@
     },
     {
       "family": "arazzo",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "arazzo",
       "loss_counts": {
         "approx": 0,
         "drop": 4,
@@ -3916,6 +3958,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "arrow",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 1,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "arrow",
@@ -4544,6 +4598,18 @@
     {
       "family": "asn1",
       "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "asn1",
+      "loss_counts": {
         "approx": 12,
         "drop": 0,
         "synth": 13
@@ -5132,6 +5198,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "asyncapi",
       "loss_counts": {
         "approx": 0,
         "drop": 5,
@@ -5705,6 +5777,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "avro",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 2,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "avro",
@@ -6347,6 +6431,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 10,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "avro-idl",
@@ -7030,6 +7126,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 7,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "aws-apigateway",
@@ -7740,6 +7848,12 @@
     },
     {
       "family": "azure-apim",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "azure-apim",
       "loss_counts": {
         "approx": 0,
         "drop": 3,
@@ -8427,6 +8541,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "bruno",
@@ -9128,6 +9254,18 @@
     {
       "family": "capnproto",
       "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
         "approx": 0,
         "drop": 3,
         "synth": 11
@@ -9774,6 +9912,18 @@
     {
       "family": "cddl",
       "loss_counts": {
+        "approx": 14,
+        "drop": 2,
+        "synth": 17
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "cddl",
+      "loss_counts": {
         "approx": 28,
         "drop": 0,
         "synth": 19
@@ -10404,6 +10554,18 @@
     {
       "family": "cics-bms",
       "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "cics-bms",
+      "loss_counts": {
         "approx": 12,
         "drop": 0,
         "synth": 6
@@ -11018,6 +11180,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 5,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "cloudevents",
@@ -11642,6 +11816,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 13,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -12284,6 +12470,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 14,
+        "synth": 17
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "connectrpc",
@@ -12943,6 +13141,12 @@
     },
     {
       "family": "consul",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "consul",
       "loss_counts": {
         "approx": 0,
         "drop": 2,
@@ -13592,6 +13796,18 @@
     {
       "family": "corbaidl",
       "loss_counts": {
+        "approx": 1,
+        "drop": 11,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
         "approx": 6,
         "drop": 5,
         "synth": 6
@@ -14237,6 +14453,18 @@
     {
       "family": "cue",
       "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "cue",
+      "loss_counts": {
         "approx": 20,
         "drop": 0,
         "synth": 13
@@ -14862,6 +15090,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "dbt",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "dbt",
@@ -15497,6 +15737,18 @@
     {
       "family": "dhall",
       "loss_counts": {
+        "approx": 6,
+        "drop": 2,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "dhall",
+      "loss_counts": {
         "approx": 15,
         "drop": 0,
         "synth": 13
@@ -16124,6 +16376,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "dicom",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 14,
+        "synth": 43
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -16796,6 +17060,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 8,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "discovery",
@@ -17492,6 +17768,18 @@
     {
       "family": "dtd",
       "loss_counts": {
+        "approx": 17,
+        "drop": 2,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "dtd",
+      "loss_counts": {
         "approx": 29,
         "drop": 2,
         "synth": 15
@@ -18120,6 +18408,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 24,
+        "drop": 10,
+        "synth": 52
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -18759,6 +19059,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 26
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -19405,6 +19717,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "envoy-xds",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "envoy-xds",
@@ -20091,6 +20409,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 12,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "fhir",
@@ -20790,6 +21120,18 @@
     {
       "family": "fix",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix",
+      "loss_counts": {
         "approx": 22,
         "drop": 21,
         "synth": 21
@@ -21416,6 +21758,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "fix-orchestra",
@@ -22048,6 +22402,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -22688,6 +23054,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "gateway-api",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "gateway-api",
@@ -23356,6 +23728,18 @@
     {
       "family": "graphql",
       "loss_counts": {
+        "approx": 6,
+        "drop": 7,
+        "synth": 19
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
         "approx": 13,
         "drop": 3,
         "synth": 16
@@ -24009,6 +24393,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "haproxy",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "haproxy",
@@ -24695,6 +25085,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 8,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "har",
@@ -25392,6 +25794,18 @@
     {
       "family": "hl7v2",
       "loss_counts": {
+        "approx": 50,
+        "drop": 2,
+        "synth": 53
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
+      "loss_counts": {
         "approx": 99,
         "drop": 32,
         "synth": 49
@@ -26026,6 +26440,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 38,
+        "synth": 79
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -26698,6 +27124,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "hoppscotch",
@@ -27437,6 +27875,18 @@
       "family": "http-file",
       "loss_counts": {
         "approx": 2,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
+        "approx": 2,
         "drop": 3,
         "synth": 2
       },
@@ -28130,6 +28580,18 @@
     {
       "family": "idoc",
       "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 35
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "idoc",
+      "loss_counts": {
         "approx": 9,
         "drop": 0,
         "synth": 34
@@ -28764,6 +29226,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 18,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -29436,6 +29910,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 8,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "insomnia",
@@ -30134,6 +30620,18 @@
     {
       "family": "iso20022",
       "loss_counts": {
+        "approx": 1,
+        "drop": 18,
+        "synth": 33
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso20022",
+      "loss_counts": {
         "approx": 37,
         "drop": 17,
         "synth": 36
@@ -30770,6 +31268,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 26
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -31431,6 +31941,12 @@
     },
     {
       "family": "istio",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "istio",
       "loss_counts": {
         "approx": 0,
         "drop": 6,
@@ -31974,7 +32490,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation ddccac39-f109-434a-9ebd-b50e70de93df",
+        "added operation 78b58f8a-cebe-4cf4-b3be-714f7251f003",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -32073,6 +32589,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -32690,6 +33218,18 @@
     {
       "family": "jsonld",
       "loss_counts": {
+        "approx": 13,
+        "drop": 1,
+        "synth": 17
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "jsonld",
+      "loss_counts": {
         "approx": 12,
         "drop": 0,
         "synth": 18
@@ -33212,7 +33752,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation f967c2c1-6526-4b58-9139-8594b143a66a",
+        "added operation ed96bf24-8816-4093-9c07-79e8e5ef3168",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -33312,6 +33852,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "jtd",
@@ -33846,7 +34398,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 02d6f2a2-714e-4167-8544-8008bdd28980",
+        "added operation 96dd0076-539f-44cb-aabf-0838060c4716",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -33946,6 +34498,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 3,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -34569,6 +35133,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -35218,6 +35794,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "kong",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "kong",
@@ -35886,6 +36468,18 @@
     {
       "family": "llm-tools",
       "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
         "approx": 5,
         "drop": 3,
         "synth": 5
@@ -36538,6 +37132,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "lwm2m",
@@ -37199,6 +37805,18 @@
       "family": "matter",
       "loss_counts": {
         "approx": 6,
+        "drop": 10,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
+        "approx": 6,
         "drop": 6,
         "synth": 10
       },
@@ -37854,6 +38472,18 @@
     {
       "family": "mcp",
       "loss_counts": {
+        "approx": 5,
+        "drop": 14,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
         "approx": 12,
         "drop": 8,
         "synth": 9
@@ -38500,6 +39130,18 @@
     {
       "family": "nacha",
       "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 52
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "nacha",
+      "loss_counts": {
         "approx": 63,
         "drop": 0,
         "synth": 62
@@ -39132,6 +39774,18 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
+        "approx": 13,
+        "drop": 9,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "natural-ddm",
+      "loss_counts": {
         "approx": 31,
         "drop": 0,
         "synth": 12
@@ -39760,6 +40414,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 31,
+        "synth": 78
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -40406,6 +41072,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "nginx",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "nginx",
@@ -41092,6 +41764,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 9,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -41822,6 +42506,18 @@
     {
       "family": "odata-v2",
       "loss_counts": {
+        "approx": 2,
+        "drop": 19,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
         "approx": 4,
         "drop": 11,
         "synth": 12
@@ -42403,7 +43099,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 2f98b54e-d49d-4885-aca1-26c854959b29",
+        "added operation 68ff936d-9971-42cf-9c0d-3c9fb4a03cab",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -42502,6 +43198,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -43140,6 +43848,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 14,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -43794,6 +44514,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "opcua-nodeset",
@@ -44440,6 +45172,18 @@
     {
       "family": "openapi",
       "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "openapi",
+      "loss_counts": {
         "approx": 6,
         "drop": 0,
         "synth": 6
@@ -45076,6 +45820,18 @@
     {
       "family": "openrpc",
       "loss_counts": {
+        "approx": 4,
+        "drop": 5,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
         "approx": 7,
         "drop": 3,
         "synth": 6
@@ -45606,7 +46362,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 385f00c7-73cc-4e5d-a2cd-df7fa31dd43b",
+        "added operation f3267bb1-b851-4144-bf13-0ba2efa94f4a",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -45706,6 +46462,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "owl",
+      "reason": "No record has a field an Orchestra message can hold.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "owl",
@@ -46332,6 +47094,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "pkl",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -46963,6 +47737,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "pli",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 16,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -47635,6 +48421,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -48367,6 +49165,18 @@
     {
       "family": "postman-v2",
       "loss_counts": {
+        "approx": 8,
+        "drop": 7,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
         "approx": 4,
         "drop": 6,
         "synth": 3
@@ -49072,6 +49882,18 @@
       "family": "protobuf",
       "loss_counts": {
         "approx": 3,
+        "drop": 13,
+        "synth": 20
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
+        "approx": 3,
         "drop": 4,
         "synth": 17
       },
@@ -49727,6 +50549,18 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf-editions",
+      "loss_counts": {
         "approx": 2,
         "drop": 3,
         "synth": 10
@@ -50368,6 +51202,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 9,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -51041,6 +51887,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 6,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "raml",
@@ -51729,6 +52587,18 @@
     {
       "family": "relaxng",
       "loss_counts": {
+        "approx": 5,
+        "drop": 1,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "relaxng",
+      "loss_counts": {
         "approx": 8,
         "drop": 0,
         "synth": 10
@@ -52250,7 +53120,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 2bdac12b-e319-409e-b293-72fefcb27ed9",
+        "added operation 881556b1-e5fe-4761-9833-265c23206272",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -52350,6 +53220,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 0,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -52987,6 +53869,18 @@
     {
       "family": "sepa",
       "loss_counts": {
+        "approx": 1,
+        "drop": 25,
+        "synth": 51
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "sepa",
+      "loss_counts": {
         "approx": 66,
         "drop": 30,
         "synth": 59
@@ -53615,6 +54509,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 3,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "shacl",
@@ -54256,6 +55162,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 11,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -54944,6 +55862,18 @@
     {
       "family": "soapui",
       "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
         "approx": 2,
         "drop": 5,
         "synth": 2
@@ -55528,7 +56458,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation dcab6a79-999d-4986-80cd-9760b7dff286",
+        "added operation d6361027-5f3a-4ed4-946b-0bb0b2ae09ea",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -55628,6 +56558,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 5,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -56252,6 +57194,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 20
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -56926,6 +57880,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 14,
+        "drop": 15,
+        "synth": 28
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "swagger",
@@ -57660,6 +58626,18 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
+        "approx": 6,
+        "drop": 8,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
         "approx": 11,
         "drop": 5,
         "synth": 12
@@ -58349,6 +59327,18 @@
     {
       "family": "swift-mt",
       "loss_counts": {
+        "approx": 3,
+        "drop": 15,
+        "synth": 31
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "swift-mt",
+      "loss_counts": {
         "approx": 31,
         "drop": 0,
         "synth": 36
@@ -58989,6 +59979,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 10,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "thrift",
@@ -59669,6 +60671,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "thunder-client",
@@ -60366,6 +61380,18 @@
     {
       "family": "tradacoms",
       "loss_counts": {
+        "approx": 9,
+        "drop": 2,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "tradacoms",
+      "loss_counts": {
         "approx": 27,
         "drop": 17,
         "synth": 18
@@ -61008,6 +62034,12 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "traefik",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
     },
     {
       "family": "traefik",
@@ -61664,6 +62696,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 13,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "trpc",
@@ -62331,6 +63375,12 @@
     },
     {
       "family": "tyk",
+      "reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "fix-orchestra"
+    },
+    {
+      "family": "tyk",
       "loss_counts": {
         "approx": 0,
         "drop": 5,
@@ -62884,7 +63934,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation d26bc65a-876c-4ed1-b295-2e5020891cc0",
+        "added operation 9c7c0856-8592-47d3-ae3d-e7f3d9b128b0",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -62984,6 +64034,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -63662,6 +64724,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 9,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
@@ -64350,6 +65424,18 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "vsam-idcams",
+      "loss_counts": {
         "approx": 2,
         "drop": 0,
         "synth": 1
@@ -65018,6 +66104,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "wadl",
@@ -65718,6 +66816,18 @@
     {
       "family": "wit",
       "loss_counts": {
+        "approx": 2,
+        "drop": 9,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
         "approx": 6,
         "drop": 3,
         "synth": 5
@@ -66364,6 +67474,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 15,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "wsdl",
@@ -67016,6 +68138,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 13,
+        "synth": 17
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "wsdl2",
@@ -67679,6 +68813,18 @@
       "family": "xmlrpc",
       "loss_counts": {
         "approx": 2,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 2,
         "drop": 2,
         "synth": 2
       },
@@ -68304,6 +69450,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "xregistry",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 8,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "xregistry",
@@ -68938,6 +70096,18 @@
     {
       "family": "xsd",
       "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "xsd",
+      "loss_counts": {
         "approx": 16,
         "drop": 0,
         "synth": 14
@@ -69559,6 +70729,18 @@
       "reason": "Only a source imported as FIX can be exported to FIX.",
       "status": "refused",
       "target": "fix"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 12,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -70236,6 +71418,18 @@
     {
       "family": "zosconnect",
       "loss_counts": {
+        "approx": 8,
+        "drop": 11,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "fix-orchestra",
+      "tier": "types-only"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
         "approx": 6,
         "drop": 3,
         "synth": 2
@@ -70704,9 +71898,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4558,
+    "lossy": 4649,
     "ok": 42,
-    "refused": 2250,
+    "refused": 2267,
     "silent-loss": 170,
     "skipped": 0
   },
@@ -70845,6 +72039,7 @@
     "envoy-xds",
     "fhir",
     "fix",
+    "fix-orchestra",
     "flatbuffers",
     "gateway-api",
     "graphql",

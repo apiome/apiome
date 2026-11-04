@@ -72,6 +72,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "envoy-xds",
     "fhir",
     "fix",
+    "fix-orchestra",
     "flatbuffers",
     "gateway-api",
     "graphql",

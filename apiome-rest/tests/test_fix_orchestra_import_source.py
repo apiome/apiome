@@ -572,7 +572,9 @@ def test_version_coverage_names_orchestra():
     assert coverage is not None
     assert coverage.reads[0].support is VersionSupport.FULL
     assert "Orchestra" in coverage.reads[0].version
-    assert not coverage.writes
+    # MFX-37.1 (#4323): the FIX Orchestra emitter writes the same 1.0 repository.
+    assert [row.support for row in coverage.writes] == [VersionSupport.FULL]
+    assert coverage.default_write == coverage.writes[0].version
 
 
 def test_repository_type_is_exported():

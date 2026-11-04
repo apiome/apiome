@@ -3,9 +3,9 @@
   "capability_registry_version": "39",
   "total": 104,
   "importable": 100,
-  "exportable": 65,
-  "round_trip": 61,
-  "import_only": 39,
+  "exportable": 66,
+  "round_trip": 62,
+  "import_only": 38,
   "export_only": 4,
   "live_discovery": 12,
   "publishable": 1,
@@ -45,7 +45,7 @@
       "label": "Data schema",
       "total": 49,
       "importable": 45,
-      "exportable": 23
+      "exportable": 24
     },
     {
       "id": "agent",

@@ -816,6 +816,7 @@ def load_builtin_emitters() -> None:
     # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.
     from . import envoy_xds_emitter as _envoy_xds_emitter  # noqa: F401
     from . import fhir_emitter as _fhir  # noqa: F401
+    from . import fix_orchestra_emitter as _fix_orchestra_emitter  # noqa: F401
     from . import fix_emitter as _fix  # noqa: F401
     from . import flatbuffers_emitter as _flatbuffers  # noqa: F401
     from . import gateway_api_emitter as _gateway_api_emitter  # noqa: F401

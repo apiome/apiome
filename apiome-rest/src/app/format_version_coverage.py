@@ -880,8 +880,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "branched on. `xi:include` resolves only inside an uploaded fileset.",
             )
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="FIX Orchestra 1.0 repository",
+                format_key="fix-orchestra",
+                support=VersionSupport.FULL,
+                note="Written as `<name>.orchestra.xml` (MFX-37.1) in the 2020 namespace and valid against the "
+                "official Orchestra 1.0 XSD: datatypes, code sets, fields with their tags, components, groups and "
+                "messages, with presence, rules, scenarios, responses, actors and flows the source carries.",
+            )
+        ],
+        default_write="FIX Orchestra 1.0 repository",
     ),
     "flatbuffers": VersionCoverage(
         reads=[

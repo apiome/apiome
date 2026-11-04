@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.646.0] - 2026-11-04
+
+### Added
+- **FIX Orchestra emitter (MFX-37.1, #4323).**
+  - `app/fix_orchestra_emitter.py`: export target `fix-orchestra` ("FIX Orchestra", data schema, needs a record
+    type). Writes an Orchestra 1.0 repository (`<name>.orchestra.xml`, namespace
+    `http://fixprotocol.io/2020/orchestra/repository`): messages (the source's, else root records, with `msgType`,
+    `flow`, scenario and `responses`), components (held records), repeating groups (lists of records, with a
+    `NumInGroup` counter), code sets (enumerations), fields declared once with tags and datatypes and referenced by
+    tag, presence / constant values / `rule` + `when`, and actors, state machines and flows when the model carries
+    them. Tags: the source's, else from 5000 (user-defined range); ids: the source's, else from 1. Lists of plain
+    values and maps become groups, unions components; names, the version and an empty `NoCodeSet` are rewritten
+    or synthesized as the XSD requires — each reported. Option `version`.
+  - The official FIX Orchestra 1.0 repository XSD vendored under `app/data/fix_orchestra_xsd/` (FIX Trading
+    Community, tag `v1.6`, Apache-2.0), loaded offline (`orchestra_schema_problems`); every corpus repository and
+    typed source exports valid against it. (Wiring it into the export gate is MFX-37.3.)
+  - `FixOrchestraFidelityRulePack`: types-only advisory, synthesized tags `SYNTH`, groups / components `APPROX`,
+    dropped constraints, and the re-import measured with the Orchestra importer (MFX-37.2 refines the rules).
+  - Registry fallout: version coverage (write row), RC6 list, projection corpus, round-trip matrix (17 xfails:
+    sources with no record type, or none with a field), conformance and parity goldens, format counts.
+
 ## [1.645.0] - 2026-11-04
 
 ### Added
