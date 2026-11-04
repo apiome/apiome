@@ -168,6 +168,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'openrpc').key).toBe('rpc');
   });
 
+  it('files the xRegistry target under Events by paradigm (MFX-34.4)', () => {
+    expect(familyForTarget('event', 'xregistry')).toMatchObject({ key: 'event', label: 'Events' });
+  });
+
   it('files the MCP and A2A targets under Agents & tools by paradigm (MFX-32.5)', () => {
     expect(familyForTarget('agent', 'mcp')).toMatchObject({ key: 'agent', label: 'Agents & tools' });
     expect(familyForTarget('agent', 'a2a')).toMatchObject({ key: 'agent', label: 'Agents & tools' });

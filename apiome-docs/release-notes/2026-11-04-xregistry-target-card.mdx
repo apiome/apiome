@@ -1,0 +1,18 @@
+---
+slug: xregistry-target-card
+title: The xRegistry target, end to end
+description: "The xRegistry export card, CLI report and fixtures on every surface."
+authors: [apiome]
+---
+
+The **xRegistry** export target is now covered on every surface. See
+[Where to find the xRegistry card](/ship/export-a-spec#where-to-find-the-xregistry-card).
+
+{/* truncate */}
+
+- **The card:** under **Events** in the **Export** dialog, with a fidelity badge for each source. An
+  event API or imported xRegistry exports without confirmation; an API with operations asks you to
+  confirm; a gateway configuration or agent card gets a greyed-out card with the reason.
+- **From the CLI with the report:** `apiome export xregistry <item>` prints the preserved share and the
+  worst losses, and exits non-zero for a lossy export unless you add `--force`.
+- **Round trip:** every document re-imports with its schemas and messages.

@@ -1,0 +1,207 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "xregistry",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "xregistry",
+        "format": "xregistry",
+        "label": "xRegistry",
+        "description": "Export as a CNCF xRegistry document: the types as a JSON Schema registry and the event operations as CloudEvents message definitions (type, source, datacontenttype, payload schema).",
+        "icon": "cloud",
+        "paradigm": "event",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 11,
+        "preserved": 0,
+        "dropped": 8,
+        "approximated": 2,
+        "synthesized": 1
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "xRegistry is an event registry \u2014 only types (as schemas) and events (as CloudEvents message definitions) are exported: 5 request/response operation(s) in 1 service(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+            "target_mapping": "event-registry-only"
+          },
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: the document holds schema and message registries, not endpoints; the 1 declared server(s) are dropped",
+            "target_mapping": "servers \u2192 dropped (no endpoints)"
+          },
+          {
+            "construct": "",
+            "kind": "synth",
+            "severity": "info",
+            "message": "xRegistry: the registry id 'sample-pet-store-api-openapi-3-0' is a slug of the item's name",
+            "target_mapping": "/registryid \u2192 synthesized"
+          },
+          {
+            "construct": "Category",
+            "kind": "approx",
+            "severity": "info",
+            "message": "xRegistry: type 'Category' is projected to the JSON Schema 'Category' and reads back as JSON Schema",
+            "target_mapping": "type \u2192 JSON Schema Category"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: a request_response operation is not an event; an xRegistry message definition describes an event; 'DELETE /pets/{petId}' is dropped",
+            "target_mapping": "operation \u2192 no message"
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: a request_response operation is not an event; an xRegistry message definition describes an event; 'GET /pets' is dropped",
+            "target_mapping": "operation \u2192 no message"
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: a request_response operation is not an event; an xRegistry message definition describes an event; 'GET /pets/{petId}' is dropped",
+            "target_mapping": "operation \u2192 no message"
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: a request_response operation is not an event; an xRegistry message definition describes an event; 'POST /pets' is dropped",
+            "target_mapping": "operation \u2192 no message"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: a request_response operation is not an event; an xRegistry message definition describes an event; 'PUT /pets/{petId}' is dropped",
+            "target_mapping": "operation \u2192 no message"
+          },
+          {
+            "construct": "Pet",
+            "kind": "approx",
+            "severity": "info",
+            "message": "xRegistry: type 'Pet' is projected to the JSON Schema 'Pet' and reads back as JSON Schema",
+            "target_mapping": "type \u2192 JSON Schema Pet"
+          },
+          {
+            "construct": "default",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "xRegistry: service 'default' has no event operation, so it has no message group",
+            "target_mapping": "service \u2192 dropped"
+          }
+        ],
+        "kind_counts": {
+          "drop": 8,
+          "approx": 2,
+          "synth": 1,
+          "ok": 0
+        },
+        "severity_counts": {
+          "info": 3,
+          "warn": 7,
+          "critical": 1
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "requires_ack": true,
+        "target_format": "xRegistry",
+        "dropped": 8,
+        "approximated": 2,
+        "synthesized": 1,
+        "affected": 11,
+        "headline": "Fidelity notice \u2014 exporting to xRegistry may lose detail.",
+        "message": "Exporting to xRegistry may lose some fidelity. The destination format can't represent everything in this API, so 11 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      },
+      "projection": {
+        "manifest_hash": "06096474e42a86164d0c2e9e9c3e5578c64b7f066b481794e2285a1497125e2d",
+        "target": {
+          "key": "xregistry",
+          "format": "xregistry",
+          "label": "xRegistry",
+          "paradigm": "event",
+          "emitter_version": "1",
+          "apiome_version": "1.6.5",
+          "capability_profile": {
+            "operations": false,
+            "events": true,
+            "unions": true,
+            "nullability": true,
+            "constraints": true,
+            "field_identity": false
+          },
+          "needs_toolchain": false,
+          "available": true,
+          "availability": "available",
+          "registry_version": "1",
+          "documentation": {
+            "specification": null,
+            "version": null,
+            "url": null,
+            "anchor": null,
+            "documentation_unavailable": true,
+            "note": "No authoritative specification link is registered for this destination yet."
+          }
+        },
+        "status_counts": {
+          "retained": 0,
+          "transformed": 0,
+          "approximated": 2,
+          "synthesized": 1,
+          "dropped": 8,
+          "unavailable": 0,
+          "not-applicable": 0
+        },
+        "reason_counts": {
+          "destination_unsupported": 11,
+          "emitter_unsupported": 0,
+          "source_incomplete": 0,
+          "source_parse_limit": 0,
+          "option_excluded": 0,
+          "security_redacted": 0,
+          "target_tool_unavailable": 0,
+          "not_applicable": 0
+        },
+        "total_constructs": 8,
+        "node_count": 18,
+        "edge_count": 20,
+        "evidence_count": 11,
+        "is_lossless": false,
+        "worst_severity": "critical",
+        "truncated": false
+      }
+    },
+    "files": [
+      {
+        "path": "sample-pet-store-api-openapi-3-0.xregistry.json",
+        "media_type": "application/json",
+        "size_bytes": 3315
+      }
+    ],
+    "media_type": "application/json",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}
