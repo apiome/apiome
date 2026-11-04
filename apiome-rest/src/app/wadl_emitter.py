@@ -40,6 +40,7 @@ from .canonical_model import (
     Parameter,
     ParameterLocation,
     Type,
+    TypeKind,
 )
 from .emitter import (
     CapabilityProfile,
@@ -53,7 +54,7 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict, rest_only_advisory
-from .lossiness import LossinessKind, LossinessSeverity
+from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .wadl_normalizer import explicit_method_id
 from .xsd_schema import (
     TNS_PREFIX,
@@ -108,6 +109,26 @@ class WadlFidelityRulePack(CapabilityRulePack):
     """
 
     target_label = "WADL"
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Note the records whose field numbers are exactly 1…n, then run the drive loop."""
+        self._kept_numbers = {
+            field.key
+            for type_ in api.types if type_.kind is TypeKind.RECORD
+            if sorted(f.field_number or 0 for f in type_.fields) == list(range(1, len(type_.fields) + 1))
+            for field in type_.fields
+        }
+        return super().evaluate(api)
+
+    def _field_identity_verdict(self, field: CanonicalField) -> Optional[FidelityVerdict]:
+        """Field numbers that are exactly 1…n in their record are kept — MFX-29.4 (#4176).
+
+        The grammar writes a record's fields in field-number order and the WADL / XSD readers number them by
+        position, so such numbers (an imported WADL's own) read back unchanged; any other numbering is dropped.
+        """
+        if field.key in getattr(self, "_kept_numbers", set()):
+            return None
+        return super()._field_identity_verdict(field)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         # A source that is not a REST API: "WADL captures REST only", with what is not written (MFX-29.3).

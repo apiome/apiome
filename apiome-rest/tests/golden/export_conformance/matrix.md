@@ -6,8 +6,8 @@ Every corpus source family exported to every production target through the catal
 
 | Status | Cells |
 | --- | --- |
-| ok | 39 |
-| lossy | 4038 |
+| ok | 40 |
+| lossy | 4037 |
 | refused | 2120 |
 | silent-loss | 170 |
 | crash | 0 |
@@ -114,7 +114,7 @@ Every corpus source family exported to every production target through the catal
 | typescript-types | L | R | R | L | S | L | R | R | R | L | L | S | L | L | L | L | R | R | L | R | L | R | S | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | S | L | L | R | L | R |
 | typespec | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | ok | L | L | L | L | R | L | R |
 | vsam-idcams | L | R | R | L | L | L | R | R | R | L | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | R | L | L | L | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | R | L | R |
-| wadl | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | R |
+| wadl | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | R | L | L | R | L | L | L | R | L | L | R | L | R | R | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | L | ok | L | L | L | R | L | R |
 | wit | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | L | S | L | R | L | L | L | L | L | R | R | L | L | ok | L | L | L | L | R |
 | wsdl | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | L | L | R | R | L | L | L | ok | L | S | L | R |
 | wsdl2 | L | R | L | L | L | L | R | R | R | L | L | L | L | L | L | L | R | R | L | R | L | R | L | R | R | R | R | R | R | R | R | L | L | L | L | R | L | L | L | L | S | L | L | R | L | L | L | L | L | R | R | L | L | L | L | L | S | L | R |

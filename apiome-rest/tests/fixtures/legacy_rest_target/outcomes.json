@@ -1,0 +1,128 @@
+{
+  "cards": {
+    "discovery": {
+      "discovery": {
+        "available": true,
+        "tier": "lossless"
+      },
+      "graphql": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "json-schema": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "rest": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "wadl": {
+        "available": true,
+        "tier": "lossy"
+      }
+    },
+    "wadl": {
+      "discovery": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "graphql": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "json-schema": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "rest": {
+        "available": true,
+        "tier": "lossy"
+      },
+      "wadl": {
+        "available": true,
+        "tier": "lossless"
+      }
+    }
+  },
+  "picks": {
+    "discovery": {
+      "discovery": {
+        "default": {
+          "files": [
+            "webfonts.discovery.json"
+          ],
+          "findings": [],
+          "media_type": "application/json",
+          "valid": true
+        },
+        "named": {
+          "files": [
+            "pets.discovery.json"
+          ],
+          "findings": [],
+          "media_type": "application/json",
+          "valid": true
+        }
+      },
+      "rest": {
+        "default": {
+          "files": [
+            "samplepetstoreapiopenapi30.discovery.json"
+          ],
+          "findings": [],
+          "media_type": "application/json",
+          "valid": true
+        },
+        "named": {
+          "files": [
+            "pets.discovery.json"
+          ],
+          "findings": [],
+          "media_type": "application/json",
+          "valid": true
+        }
+      }
+    },
+    "wadl": {
+      "rest": {
+        "bundle": {
+          "files": [
+            "Sample_Pet_Store_API_OpenAPI_3_0.wadl",
+            "Sample_Pet_Store_API_OpenAPI_3_0.xsd"
+          ],
+          "findings": [],
+          "media_type": "application/vnd.sun.wadl+xml",
+          "valid": true
+        },
+        "single": {
+          "files": [
+            "Sample_Pet_Store_API_OpenAPI_3_0.wadl"
+          ],
+          "findings": [],
+          "media_type": "application/vnd.sun.wadl+xml",
+          "valid": true
+        }
+      },
+      "wadl": {
+        "bundle": {
+          "files": [
+            "WADL_API.wadl",
+            "WADL_API.xsd"
+          ],
+          "findings": [],
+          "media_type": "application/vnd.sun.wadl+xml",
+          "valid": true
+        },
+        "single": {
+          "files": [
+            "WADL_API.wadl"
+          ],
+          "findings": [],
+          "media_type": "application/vnd.sun.wadl+xml",
+          "valid": true
+        }
+      }
+    }
+  }
+}

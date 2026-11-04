@@ -18,6 +18,10 @@ import hl7v2GuideTargetsForRest from '../fixtures/export-targets-hl7v2-guide-res
 import hl7v2GuideTargetsForHl7v2 from '../fixtures/export-targets-hl7v2-guide-hl7v2.json';
 import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
 import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
+import wadlTargetsForRest from '../fixtures/export-targets-wadl-rest.json';
+import wadlTargetsForWadl from '../fixtures/export-targets-wadl-wadl.json';
+import discoveryTargetsForRest from '../fixtures/export-targets-discovery-rest.json';
+import discoveryTargetsForDiscovery from '../fixtures/export-targets-discovery-discovery.json';
 import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.json';
 import typespecTargetsForTypespec from '../fixtures/export-targets-typespec-typespec.json';
 import odataTargetsForRest from '../fixtures/export-targets-odata-rest.json';
@@ -509,6 +513,31 @@ export function mockExportDialogFetch(targets: ExportTargetsResponse = EXPORT_DI
  */
 export function wsdlTargets(source: 'rest' | 'wsdl'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? wsdlTargetsForRest : wsdlTargetsForWsdl);
+}
+
+/**
+ * The WADL target as the registry lists it (MFX-29.4, #4176), for a REST source and for an imported WADL —
+ * recorded from the live REST registry by `apiome-rest/tests/test_legacy_rest_target_cards.py`. A REST source
+ * is `lossy`; an imported WADL exports back `lossless`.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `wadl` (an imported WADL bookstore).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function wadlTargets(source: 'rest' | 'wadl'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? wadlTargetsForRest : wadlTargetsForWadl);
+}
+
+/**
+ * The Google API Discovery target as the registry lists it (MFX-29.4, #4176), for a REST source and for an
+ * imported Discovery document — recorded from the live REST registry by
+ * `apiome-rest/tests/test_legacy_rest_target_cards.py`. A REST source is `lossy`; an imported Discovery
+ * document exports back `lossless`.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `discovery` (an imported Google Web Fonts document).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function discoveryTargets(source: 'rest' | 'discovery'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? discoveryTargetsForRest : discoveryTargetsForDiscovery);
 }
 
 /**

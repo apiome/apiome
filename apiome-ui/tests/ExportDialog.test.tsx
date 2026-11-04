@@ -111,6 +111,8 @@ import {
   hl7v2GuideTargets,
   typespecTargets,
   wsdlTargets,
+  wadlTargets,
+  discoveryTargets,
 } from './helpers/export-dialog-fixture';
 
 
@@ -1195,6 +1197,62 @@ describe('ExportDialog — WSDL target card (MFX-14.4)', () => {
   });
 });
 
+
+describe('ExportDialog — WADL target card (MFX-29.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['wadl', 'lossless'],
+  ] as const)('badges a %s source %s and marks the WADL multi-file', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(wadlTargets(source)));
+
+    const card = screen.getByTestId('export-target-wadl');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('WADL')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // The WADL and its XSD grammar come as one download.
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+  });
+
+  it('offers the layout picker, bundle by default', async () => {
+    await renderAtTargetStep(mockFetch(wadlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-wadl'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const layout = screen.getByRole('radiogroup', { name: 'Layout' });
+    expect(within(layout).getAllByRole('radio').map((option) => option.textContent)).toEqual(['bundle', 'single']);
+    expect(within(layout).getByRole('radio', { name: 'bundle' })).toBeChecked();
+  });
+});
+
+describe('ExportDialog — Google API Discovery target card (MFX-29.4)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['discovery', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    await renderAtTargetStep(mockFetch(discoveryTargets(source)));
+
+    const card = screen.getByTestId('export-target-discovery');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Google API Discovery')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One .discovery.json document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+  });
+
+  it('offers the API name and version, empty for the defaults', async () => {
+    await renderAtTargetStep(mockFetch(discoveryTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-discovery'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const name = screen.getByLabelText('Name');
+    const version = screen.getByLabelText('Version');
+    // Empty means the server default: an imported Discovery item's own name, else one made from the item's name.
+    expect(name).toHaveValue('');
+    expect(version).toHaveValue('');
+    fireEvent.change(name, { target: { value: 'pets' } });
+    expect(name).toHaveValue('pets');
+  });
+});
 
 describe('ExportDialog — TypeSpec target card (MFX-15.4)', () => {
   it.each([

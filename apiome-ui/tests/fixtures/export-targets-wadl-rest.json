@@ -1,0 +1,72 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "wadl",
+        "format": "wadl",
+        "label": "WADL",
+        "description": "Export as a WADL REST service description with an XSD grammar.",
+        "icon": "file-code",
+        "paradigm": "rest",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`WadlEmitter`.",
+        "properties": {
+          "include_comments": {
+            "default": true,
+            "description": "Emit an XML comment header in the generated WADL.",
+            "title": "Include Comments",
+            "type": "boolean"
+          },
+          "media_type": {
+            "default": "application/xml",
+            "description": "Representation media type for a body whose message declares none.",
+            "title": "Media Type",
+            "type": "string"
+          },
+          "layout": {
+            "default": "bundle",
+            "description": "`bundle` writes the WADL and its XSD grammar as two files linked by `<grammars><include>`; `single` inlines the schema in `<grammars>`.",
+            "enum": [
+              "bundle",
+              "single"
+            ],
+            "title": "Layout",
+            "type": "string"
+          }
+        },
+        "title": "WadlEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "include_comments": true,
+        "media_type": "application/xml",
+        "layout": "bundle"
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 22,
+        "total": 9,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 6,
+        "synthesized": 1
+      }
+    }
+  ]
+}
