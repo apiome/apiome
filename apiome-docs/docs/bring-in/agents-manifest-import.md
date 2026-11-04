@@ -132,6 +132,7 @@ addresses, and it reports a site that answers with an error rather than retrying
 
 ## Related
 
+- [Browse published specs](../ship/browse-published-specs.md#agent-manifests): the agents.json and llms.txt Apiome serves for each organization.
 - [Import an A2A Agent Card](./a2a-agent-card-import.md): the descriptors an `a2a` seed points at.
 - [Import ACP agent manifests](./acp-agent-manifest-import.md): the servers an `acp` seed points at.
 - [Supported formats](./supported-formats.md): the dialects and versions this importer reads.

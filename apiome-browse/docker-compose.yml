@@ -11,6 +11,8 @@ services:
     environment:
       # REST API Base URL
       - NEXT_PUBLIC_REST_API_BASE_URL=${NEXT_PUBLIC_REST_API_BASE_URL:-http://localhost:8000/v1}
+      # REST API Base URL the Browse server itself uses (agents.json / llms.txt); defaults to the one above
+      - APIOME_REST_INTERNAL_BASE_URL=${APIOME_REST_INTERNAL_BASE_URL:-}
       # Database Connection (for PostgreSQL)
       - PGHOST=${PGHOST:-localhost}
       - PGPORT=${PGPORT:-5432}

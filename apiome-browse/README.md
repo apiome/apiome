@@ -64,6 +64,11 @@ POSTGRES_PORT=5432
 # REST API Base URL (for fetching specifications)
 NEXT_PUBLIC_REST_API_BASE_URL=http://localhost:8000/v1
 
+# REST API Base URL the Browse *server* uses for /tenant/{slug}/agents.json and /llms.txt (optional;
+# defaults to NEXT_PUBLIC_REST_API_BASE_URL). Set it when the browser-facing address is not reachable
+# from the server, e.g. APIOME_REST_INTERNAL_BASE_URL=http://rest:8000/v1 in a container network.
+APIOME_REST_INTERNAL_BASE_URL=
+
 # Base path for sub-path hosting (optional)
 # Example: NEXT_PUBLIC_BASE_PATH=/browse
 NEXT_PUBLIC_BASE_PATH=

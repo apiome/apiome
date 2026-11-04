@@ -1023,6 +1023,14 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Public apiome-browse site root (MFX-32.3, #4297): what the tenant ``agents.json`` /
+    # ``llms.txt`` links point at when the caller passes no ``site_url`` (apiome-browse passes its
+    # own). Empty → site-relative links.
+    public_browse_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_PUBLIC_BROWSE_URL", "public_browse_url"),
+    )
+
     # Async export job artifact retention (MFX-4.3, #3850). A completed export job keeps its
     # emitted artifact bytes in memory so the download route can serve them without re-emitting.
     # That retained artifact is *temporary*: after this many hours it is dropped and the
