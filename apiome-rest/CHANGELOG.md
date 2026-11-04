@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.637.0] - 2026-11-04
+
+### Added
+- **xRegistry target card + CLI + fixtures (MFX-34.4, #4309).** `tests/test_xregistry_target_card.py` +
+  `tests/fixtures/xregistry_target/outcomes.json` (regenerate with `APIOME_REGEN_XREGISTRY_TARGET=1`) pin the
+  `xregistry` card per source kind (imported xRegistry, CloudEvents, REST, GraphQL, JSON Schema lossy with their
+  preserved share; a Kong gateway configuration unavailable with the reason), the transcoding guard (event sources
+  need no confirmation, REST and GraphQL do), the `registry_id` / `source` / `indent` picks each passing the export
+  gate, the round trip through the xRegistry importer and Browse `…/document` delivery. The CLI
+  (`export-targets-xregistry.json`, `export-job-completed-xregistry-lossy.json` with the live report) and UI
+  (`export-targets-xregistry-{rest,xregistry,gateway}.json`) fixtures are kept equal to the live registry.
+  No API change.
+- OpenAPI 1.501.0.
+
 ## [1.636.0] - 2026-11-04
 
 ### Added

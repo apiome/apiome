@@ -65,6 +65,9 @@
  *     REST API, an imported A2A agent `lossless` on its own card, one file each, with their options (MCP's
  *     protocol revision and grouping, A2A's skills_from); unavailable for a set of types — from the recorded
  *     live registry.
+ * 27. The xRegistry card (MFX-34.4): `lossy` with its preserved share for a REST source and an imported
+ *     xRegistry, one file, with its `registry_id`, `source` and `indent` options; unavailable for a gateway
+ *     configuration (neither a type nor an event) — from the recorded live registry.
  */
 
 import React from 'react';
@@ -103,6 +106,7 @@ import {
   arazzoTargets,
   mcpTargets,
   a2aTargets,
+  xregistryTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1730,5 +1734,44 @@ describe('ExportDialog — A2A Agent Card target card (MFX-32.5)', () => {
     const card = screen.getByTestId('export-target-a2a');
     expect(card).toBeDisabled();
     expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/needs an agent or at least one operation/);
+  });
+});
+
+describe('ExportDialog — xRegistry target card (MFX-34.4)', () => {
+  it.each(['rest', 'xregistry'] as const)('badges a %s source lossy as a one-file target', async (source) => {
+    const targets = xregistryTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-xregistry');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('xRegistry')).toBeInTheDocument();
+    expect(within(card).getByText('lossy')).toBeInTheDocument();
+    // One <registry id>.xregistry.json document: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe('lossy');
+    expect(targets.targets[0].descriptor.paradigm).toBe('event');
+  });
+
+  it('offers the registry id and the CloudEvents source, empty for the defaults', async () => {
+    await renderAtTargetStep(mockFetch(xregistryTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-xregistry'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    // Empty means the server default: a slug of the item's name, and `/<registry id>`.
+    expect(screen.getByLabelText(/Registry Id/i)).toHaveValue('');
+    expect(screen.getByLabelText(/^Source/i)).toHaveValue('');
+    fireEvent.change(screen.getByLabelText(/Registry Id/i), { target: { value: 'shop' } });
+    expect(screen.getByLabelText(/Registry Id/i)).toHaveValue('shop');
+  });
+
+  it('disables the card for a gateway configuration: it has neither a type nor an event', async () => {
+    const targets = xregistryTargets('gateway');
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-xregistry');
+    expect(card).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one type or event/);
+    fireEvent.click(card);
+    expect(screen.queryByText('Target options')).not.toBeInTheDocument();
   });
 });

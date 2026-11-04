@@ -1,0 +1,84 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "xregistry",
+        "format": "xregistry",
+        "label": "xRegistry",
+        "description": "Export as a CNCF xRegistry document: the types as a JSON Schema registry and the event operations as CloudEvents message definitions (type, source, datacontenttype, payload schema).",
+        "icon": "cloud",
+        "paradigm": "event",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": false,
+        "unavailable_reason": "xRegistry export needs at least one type or event (publish / subscribe) operation; this source has neither."
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": true,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`XRegistryEmitter`.",
+        "properties": {
+          "registry_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The document's `registryid`, which also names the schema group. Empty means a slug of the item's name.",
+            "title": "Registry Id"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The CloudEvents `source` written for a message whose source states none. Empty means `/<registry id>`.",
+            "title": "Source"
+          },
+          "indent": {
+            "default": 2,
+            "description": "JSON indentation width (0 for compact output).",
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Indent",
+            "type": "integer"
+          }
+        },
+        "title": "XRegistryEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "registry_id": null,
+        "source": null,
+        "indent": 2
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 3,
+        "preserved": 0,
+        "dropped": 3,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

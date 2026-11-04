@@ -269,11 +269,21 @@ A document that fails any check is never offered for download, and the reason is
 
 #### Where to find the xRegistry card {#where-to-find-the-xregistry-card}
 
-The **Export** dialog offers **xRegistry** under **Events**. It is greyed out for a source with no type
-and no publish or subscribe operation (a gateway configuration, an agent card), with that reason.
+The **Export** dialog offers **xRegistry** under **Events**, with a fidelity badge for the item you
+are exporting:
+
+| Source | Badge | Confirmation |
+| --- | --- | --- |
+| An event API (AsyncAPI, CloudEvents) or an imported xRegistry | **lossy**, with its preserved share | Not needed |
+| A REST, RPC or GraphQL API, or a JSON Schema item | **lossy** | Needed for an API with operations: only its types are exported |
+| A gateway configuration or an agent card | Greyed out, with the reason | — |
+
+The card's options are **Registry Id** and **Source** (both empty for the defaults) and **Indent**.
+
 From the CLI, run `apiome export xregistry <item> --out orders.xregistry.json`; add
-`--option registry_id=orders` or `--option source=/orders` to set them. A lossy export exits non-zero
-unless you add `--force`.
+`--option registry_id=orders` or `--option source=/orders` to set them. The command prints the
+fidelity report (the preserved share and the worst losses first) and exits non-zero for a lossy
+export unless you add `--force`. A REST, RPC or GraphQL source also needs `--confirm`.
 
 To let a tool read your published APIs live instead of downloading a file, point it at the
 [xRegistry API](./serve-an-xregistry.md).

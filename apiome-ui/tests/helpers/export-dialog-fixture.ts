@@ -57,6 +57,9 @@ import mcpTargetsForData from '../fixtures/export-targets-mcp-data.json';
 import a2aTargetsForRest from '../fixtures/export-targets-a2a-rest.json';
 import a2aTargetsForA2a from '../fixtures/export-targets-a2a-a2a.json';
 import a2aTargetsForData from '../fixtures/export-targets-a2a-data.json';
+import xregistryTargetsForRest from '../fixtures/export-targets-xregistry-rest.json';
+import xregistryTargetsForXregistry from '../fixtures/export-targets-xregistry-xregistry.json';
+import xregistryTargetsForGateway from '../fixtures/export-targets-xregistry-gateway.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -731,5 +734,24 @@ export function mcpTargets(source: 'rest' | 'mcp' | 'data'): ExportTargetsRespon
  */
 export function a2aTargets(source: 'rest' | 'a2a' | 'data'): ExportTargetsResponse {
   const recorded = { rest: a2aTargetsForRest, a2a: a2aTargetsForA2a, data: a2aTargetsForData };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The xRegistry target as the registry lists it (MFX-34.4, #4309), recorded from the live REST registry by
+ * `apiome-rest/tests/test_xregistry_target_card.py`. A REST API keeps only its types (`lossy`, and its export needs
+ * confirmation); an imported xRegistry exports back `lossy` only for its endpoints and re-keys; a gateway
+ * configuration has neither a type nor an event, so the card is unavailable with its reason.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `xregistry` (an imported order-events registry) or `gateway`
+ *   (an imported Kong configuration).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function xregistryTargets(source: 'rest' | 'xregistry' | 'gateway'): ExportTargetsResponse {
+  const recorded = {
+    rest: xregistryTargetsForRest,
+    xregistry: xregistryTargetsForXregistry,
+    gateway: xregistryTargetsForGateway,
+  };
   return recordedTargets(recorded[source]);
 }

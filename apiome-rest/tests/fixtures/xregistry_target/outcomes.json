@@ -1,0 +1,166 @@
+{
+  "cards": {
+    "cloudevents": {
+      "available": true,
+      "guard": "lossy",
+      "preserved_percent": 0,
+      "requires_confirmation": false,
+      "tier": "lossy"
+    },
+    "gateway": {
+      "available": false,
+      "guard": "severe",
+      "preserved_percent": 0,
+      "requires_confirmation": true,
+      "tier": "lossy"
+    },
+    "graphql": {
+      "available": true,
+      "guard": "severe",
+      "preserved_percent": 0,
+      "requires_confirmation": true,
+      "tier": "lossy"
+    },
+    "json-schema": {
+      "available": true,
+      "guard": "lossy",
+      "preserved_percent": 0,
+      "requires_confirmation": false,
+      "tier": "lossy"
+    },
+    "rest": {
+      "available": true,
+      "guard": "severe",
+      "preserved_percent": 0,
+      "requires_confirmation": true,
+      "tier": "lossy"
+    },
+    "xregistry": {
+      "available": true,
+      "guard": "lossy",
+      "preserved_percent": 40,
+      "requires_confirmation": false,
+      "tier": "lossy"
+    }
+  },
+  "picks": {
+    "rest": {
+      "compact": {
+        "files": [
+          "sample-pet-store-api-openapi-3-0.xregistry.json"
+        ],
+        "lines": 1,
+        "messages": [],
+        "preserved_percent": 0,
+        "registryid": "sample-pet-store-api-openapi-3-0",
+        "reimported_messages": [],
+        "schemas": [
+          "Category",
+          "Pet"
+        ],
+        "tier": "lossy",
+        "valid": true
+      },
+      "default": {
+        "files": [
+          "sample-pet-store-api-openapi-3-0.xregistry.json"
+        ],
+        "lines": 104,
+        "messages": [],
+        "preserved_percent": 0,
+        "registryid": "sample-pet-store-api-openapi-3-0",
+        "reimported_messages": [],
+        "schemas": [
+          "Category",
+          "Pet"
+        ],
+        "tier": "lossy",
+        "valid": true
+      },
+      "named": {
+        "files": [
+          "shop.xregistry.json"
+        ],
+        "lines": 104,
+        "messages": [],
+        "preserved_percent": 0,
+        "registryid": "shop",
+        "reimported_messages": [],
+        "schemas": [
+          "Category",
+          "Pet"
+        ],
+        "tier": "lossy",
+        "valid": true
+      }
+    },
+    "xregistry": {
+      "compact": {
+        "files": [
+          "orders.xregistry.json"
+        ],
+        "lines": 1,
+        "messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "preserved_percent": 40,
+        "registryid": "orders",
+        "reimported_messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "schemas": [
+          "OrderCreated",
+          "OrderShipped"
+        ],
+        "tier": "lossy",
+        "valid": true
+      },
+      "default": {
+        "files": [
+          "orders.xregistry.json"
+        ],
+        "lines": 123,
+        "messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "preserved_percent": 40,
+        "registryid": "orders",
+        "reimported_messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "schemas": [
+          "OrderCreated",
+          "OrderShipped"
+        ],
+        "tier": "lossy",
+        "valid": true
+      },
+      "named": {
+        "files": [
+          "shop.xregistry.json"
+        ],
+        "lines": 123,
+        "messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "preserved_percent": 40,
+        "registryid": "shop",
+        "reimported_messages": [
+          "orders.mqtt.com.example.orders.created",
+          "orders.mqtt.com.example.orders.shipped"
+        ],
+        "schemas": [
+          "OrderCreated",
+          "OrderShipped"
+        ],
+        "tier": "lossy",
+        "valid": true
+      }
+    }
+  }
+}
