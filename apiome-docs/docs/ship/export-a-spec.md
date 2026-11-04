@@ -598,7 +598,8 @@ dialect=mysql --option nested=tables`.
 
 #### DBML and Prisma
 
-Set **output** to write the same tables, columns, keys, enums and foreign keys in another language.
+Set **output** to write the same tables, columns, keys, enums and foreign keys in another language
+(or, for migrations, as [Liquibase or Flyway changesets](#liquibase-and-flyway-changelogs)).
 The **dialect**, **nested** and **schema_name** options still apply.
 
 - **`dbml`** writes `<Name>.dbml` for [dbdiagram.io](https://dbdiagram.io) and dbdocs: one `Table` per
@@ -618,6 +619,56 @@ is neither a primary nor a unique key, so that one stays as plain columns.
 **Checked before you download it.** A DBML file is parsed by `@dbml/core`, and a Prisma schema must
 pass `prisma validate`. From the CLI, run `apiome export sql-ddl <item> --out schema.prisma --option
 output=prisma`.
+
+#### Liquibase and Flyway changelogs {#liquibase-and-flyway-changelogs}
+
+A one-off `CREATE TABLE` script is not how a team changes a live database: it runs migrations. Set
+**output** to `liquibase` or `flyway` to get the same tables as migration changesets instead. The
+**dialect**, **nested** and **schema_name** options still apply.
+
+- **`liquibase`** writes a Liquibase *formatted SQL* changelog, `NNNN-<Name>.changelog.sql`: the
+  `--liquibase formatted sql` header and one `--changeset apiome:<id>` per statement, each with a
+  `--comment` saying what it does. Set **changeset_author** to use your own author instead of
+  `apiome`. Ids keep counting across exports, so each changelog can be added to your master changelog
+  next to the earlier ones.
+- **`flyway`** writes one Flyway versioned migration, `V<n>__initial_schema.sql` and then
+  `V<n>__update_schema.sql`, holding the same statements.
+
+**The first export creates everything; the next ones write only the changes.** The first time you
+export an item in a dialect and mode, the changelog creates every enum type, table and foreign key.
+Apiome then keeps that export as the item's **baseline**. Each later export compares the item with
+the baseline and writes only what changed since:
+
+1. it compares the two models type by type and field by field, and finds the types that were added,
+   removed or changed;
+2. for those tables only, it writes the statements, in an order that never breaks a reference:
+   dropped foreign keys, dropped tables, new enum types and values, new tables, added, dropped and
+   altered columns, then new foreign keys.
+
+| Change in the item | PostgreSQL | MySQL | Standard SQL |
+| --- | --- | --- | --- |
+| A new type | `CREATE TABLE` | `CREATE TABLE` | `CREATE TABLE` |
+| A removed type | `DROP TABLE` (after its foreign keys) | `DROP TABLE` | `DROP TABLE` |
+| A new field | `ADD COLUMN` | `ADD COLUMN` | `ADD COLUMN` |
+| A removed field | `DROP COLUMN` | `DROP COLUMN` | `DROP COLUMN` |
+| A new type, required or default | `ALTER COLUMN … TYPE` / `SET NOT NULL` / `SET DEFAULT` | `MODIFY COLUMN` | `ALTER COLUMN … SET DATA TYPE` / `SET NOT NULL` / `SET DEFAULT` |
+| A new enum value | `ALTER TYPE … ADD VALUE` (outside a transaction) | `MODIFY COLUMN … ENUM(…)` | Reported, not altered |
+| A new reference | `ADD CONSTRAINT … FOREIGN KEY` | `ADD CONSTRAINT … FOREIGN KEY` | `ADD CONSTRAINT … FOREIGN KEY` |
+
+A change SQL cannot apply in place is not written and is listed in the fidelity report, so you can
+migrate it by hand: a column's `CHECK` constraint or identity, a table's primary or unique key, and a
+removed PostgreSQL enum value. An export with nothing to change writes a changelog with no
+changesets.
+
+Every real export (a download or an export job) moves the baseline forward; a preview never does.
+The baseline is kept per item, dialect and mode, so a PostgreSQL Liquibase changelog and a MySQL
+Flyway migration of the same item each keep their own. Set **from_scratch** to write everything
+again and start a new baseline — for a new database, or after a changelog you did not apply.
+
+**Checked before you download it.** Every statement must parse in its dialect, and a Liquibase
+changelog must pass `liquibase validate` (run against an offline database, so nothing is applied).
+From the CLI, run `apiome export sql-ddl <item> --out <folder> --option output=liquibase`, or
+`--option output=flyway --option dialect=mysql`.
 
 ### Apache Avro from any source
 

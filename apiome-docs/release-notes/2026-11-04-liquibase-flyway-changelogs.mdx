@@ -1,0 +1,20 @@
+---
+slug: liquibase-flyway-changelogs
+title: SQL exports as Liquibase and Flyway migrations
+description: "Export tables as Liquibase changesets or Flyway migrations — then only the changes."
+authors: [apiome]
+---
+
+The **SQL DDL** export can now write migrations instead of a one-off script. Set **output** to
+`liquibase` for a formatted-SQL changelog or `flyway` for a versioned migration. See
+[Liquibase and Flyway changelogs](/ship/export-a-spec#liquibase-and-flyway-changelogs).
+
+{/* truncate */}
+
+- **First export, then only the changes:** the first export creates every table; Apiome keeps it as
+  the item's baseline, and each later export writes only what changed since — new and dropped tables
+  and columns, changed types, required flags and defaults, new enum values and references.
+- **Per dialect and mode:** PostgreSQL, MySQL and standard SQL each get their own statements and
+  their own baseline. **from_scratch** starts over.
+- **Checked:** every statement parses in its dialect, and a Liquibase changelog passes
+  `liquibase validate`. A change SQL cannot apply in place is listed in the fidelity report.

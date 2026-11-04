@@ -28846,6 +28846,59 @@ class Database:
         )
         return rows[0]
 
+    def get_export_schema_baseline(
+        self, tenant_id: str, project_id: str, target: str, variant: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the last exported SQL changelog baseline of one artifact, or ``None`` (MFX-35.3, #4313).
+
+        Args:
+            tenant_id: The owning tenant.
+            project_id: The exported artifact (project).
+            target: The export target key (``sql-ddl``).
+            variant: The dialect and changelog mode (``postgres:liquibase``).
+
+        Returns:
+            The stored baseline document (the JSON the export wrote), or ``None`` when there is none.
+        """
+        query = """
+            SELECT baseline
+            FROM apiome.export_schema_baselines
+            WHERE tenant_id = %s::uuid
+              AND project_id = %s::uuid
+              AND target = %s
+              AND variant = %s
+        """
+        rows = self.execute_query(query, (tenant_id, project_id, target, variant))
+        if not rows:
+            return None
+        baseline = rows[0].get("baseline")
+        if isinstance(baseline, str):
+            baseline = json.loads(baseline)
+        return baseline if isinstance(baseline, dict) else None
+
+    def upsert_export_schema_baseline(
+        self, tenant_id: str, project_id: str, target: str, variant: str, baseline: Dict[str, Any]
+    ) -> None:
+        """Insert or replace one artifact's SQL changelog baseline (MFX-35.3, #4313).
+
+        Args:
+            tenant_id: The owning tenant.
+            project_id: The exported artifact (project).
+            target: The export target key (``sql-ddl``).
+            variant: The dialect and changelog mode (``postgres:liquibase``).
+            baseline: The baseline document the export wrote (JSON-serializable).
+        """
+        query = """
+            INSERT INTO apiome.export_schema_baselines (tenant_id, project_id, target, variant, baseline)
+            VALUES (%s::uuid, %s::uuid, %s, %s, %s::jsonb)
+            ON CONFLICT ON CONSTRAINT uq_export_schema_baselines_scope
+            DO UPDATE SET
+                baseline = EXCLUDED.baseline,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING id
+        """
+        self.execute_query(query, (tenant_id, project_id, target, variant, json.dumps(baseline)))
+
     # ───────────────────────── async job store (shared status) ─────────────────────────
     # Round-robin deployments run several REST instances; a job is driven by whichever
     # instance received the POST, but status polls are load-balanced across all of them.
