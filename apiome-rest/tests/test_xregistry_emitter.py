@@ -48,13 +48,17 @@ from app.export_validation import validate_emitted_artifact
 from app.fidelity_engine import compute_lossiness_for_emitter
 from app.import_source import get_import_source, load_builtin_import_sources
 from app.lossiness import LossinessKind
+from app.transcoding_guards import TranscodeVerdict, classify_transcode
 from app.xregistry_emitter import (
+    EVENT_REGISTRY_MAPPING,
     LOSS_ATTRIBUTE_SYNTHESIZED,
     LOSS_NOT_AN_EVENT,
     SCHEMA_FORMAT,
     XRegistryEmitter,
     check_emitted_xregistry,
+    event_registry_advisory,
     xregistry_document_problems,
+    xregistry_schema_violations,
 )
 
 _EXAMPLES = Path(__file__).resolve().parents[2] / "apiome-ui" / "examples"
@@ -303,17 +307,26 @@ def test_the_registry_id_and_indent_options() -> None:
     assert json.loads(text)["registryid"] == "shop"
 
 
-def test_an_opaque_schema_is_written_back_as_read() -> None:
+def test_an_opaque_schema_is_written_back_or_reported_dropped() -> None:
     api = _corpus("xregistry/04-stress-edge-cases.json", "xregistry")
     opaque = [t for t in api.types if (t.extras or {}).get("xregistry_opaque")]
     if not opaque:
         pytest.skip("the stress document has no opaque schema")
-    document = _document(api)
-    schemas = next(iter(document["schemagroups"].values()))["schemas"]
+    schemas = next(iter(_document(api)["schemagroups"].values()))["schemas"]
+    report = compute_lossiness_for_emitter(api, XRegistryEmitter)
     for type_ in opaque:
-        entry = next(entry for entry in schemas.values() if entry.get("format") == type_.extras.get("xregistry_format")
-                     or "schemauri" in next(iter(entry["versions"].values())))
-        assert entry
+        extras = type_.extras
+        entry = schemas.get(type_.name)
+        if extras.get("xregistry_document") or extras.get("xregistry_schema_uri"):
+            version = entry["versions"][entry["defaultversionid"]]
+            assert version.get("schema") == extras.get("xregistry_document") or \
+                version.get("schemaurl") == extras.get("xregistry_schema_uri")
+            assert version["format"] == extras["xregistry_format"]
+        else:
+            # Neither a document nor a URL: an xRegistry schema version needs one, so it is not written.
+            assert entry is None
+            item = next(i for i in report.items if i.construct_key == type_.key)
+            assert item.kind is LossinessKind.DROP and "neither a document nor a URL" in item.message
 
 
 # ===========================================================================
@@ -420,3 +433,90 @@ def test_an_xregistry_source_round_trips_without_unexplained_change() -> None:
     back = _reimport(str(_emit(api).files[0].content))
     result = reconcile(canonical_diff(api, back), compute_lossiness_for_emitter(api, XRegistryEmitter))
     assert not result.unexplained and not result.overclaims
+
+
+# ===========================================================================
+# MFX-34.3: the event-registry advisory, the official schema, the gate
+# ===========================================================================
+
+
+def test_an_operation_bearing_source_gets_the_critical_event_registry_advisory() -> None:
+    api = _corpus("openapi/30-openapi-3.0-petstore.yaml", "openapi")
+    report = compute_lossiness_for_emitter(api, XRegistryEmitter)
+    [advisory] = [i for i in report.items if i.target_mapping == EVENT_REGISTRY_MAPPING]
+    assert advisory.construct_key == "" and advisory.kind is LossinessKind.DROP
+    assert advisory.severity.value == "critical"
+    assert "event registry" in advisory.message and "request/response operation(s)" in advisory.message
+    guard = classify_transcode(api, XRegistryEmitter, report=report)
+    assert guard.verdict is TranscodeVerdict.SEVERE and guard.requires_confirmation
+    assert any("event registry" in reason for reason in guard.reasons)
+
+
+def test_an_event_source_gets_no_advisory_and_needs_no_confirmation() -> None:
+    for api in (_event_api(), _corpus("xregistry/02-typical-order-events.json", "xregistry"),
+                _corpus("cloudevents/06-user-signedup.json", "cloudevents")):
+        assert event_registry_advisory(api) is None
+        guard = classify_transcode(api, XRegistryEmitter)
+        assert guard.dropped_operations == 0 and not guard.requires_confirmation, guard.reasons
+
+
+def test_a_mixed_source_counts_only_its_request_response_operations() -> None:
+    call = Operation(key="GET /orders", name="listOrders", kind=OperationKind.REQUEST_RESPONSE,
+                     http_method="GET", http_path="/orders")
+    api = _event_api()
+    api.services[0].operations.append(call)
+    advisory = event_registry_advisory(api)
+    assert advisory is not None and "1 request/response operation(s) in 1 service(s)" in advisory.message
+    assert classify_transcode(api, XRegistryEmitter).dropped_operations == 1
+
+
+@pytest.mark.parametrize("name", XREGISTRY_CORPUS)
+def test_every_corpus_export_is_valid_against_the_official_xregistry_schema(name: str) -> None:
+    assert xregistry_schema_violations(_document(_corpus(f"xregistry/{name}", "xregistry"))) == []
+
+
+@pytest.mark.parametrize(("path", "fmt"), [
+    ("cloudevents/06-user-signedup.json", "cloudevents"),
+    ("openapi/30-openapi-3.0-petstore.yaml", "openapi"),
+    ("graphql/06-union-types.graphql", "graphql"),
+    ("json-schema/03-multiple-defs.json", "json-schema"),
+])
+def test_other_sources_export_documents_valid_against_the_official_schema(path: str, fmt: str) -> None:
+    assert xregistry_schema_violations(_document(_corpus(path, fmt))) == []
+
+
+def test_every_schema_version_carries_its_format() -> None:
+    document = _document(_event_api())
+    for schema in document["schemagroups"]["order-events"]["schemas"].values():
+        assert all(version["format"] == SCHEMA_FORMAT for version in schema["versions"].values())
+
+
+def test_the_official_schema_catches_what_the_spec_requires() -> None:
+    document = _valid()
+    document["schemagroups"]["order-events"]["schemas"]["Order"]["versions"]["1"].pop("format")
+    problems = xregistry_schema_violations(document)
+    assert problems and problems[0]["rule"] == "xregistry-spec"
+    assert problems[0]["path"] == "/schemagroups/order-events/schemas/Order"
+
+
+def test_validation_gates_delivery() -> None:
+    """A document the official schema rejects fails the export gate, so it is never delivered."""
+    document = _valid()
+    document["schemagroups"]["order-events"]["schemas"]["Order"]["versions"]["1"].pop("format")
+    broken = EmitResult(files=[EmittedFile(path="x.xregistry.json", content=json.dumps(document),
+                                           media_type="application/json")], media_type="application/json")
+    verdict = asyncio.run(validate_emitted_artifact("xregistry", broken, api=_event_api()))
+    assert verdict.failed and any(f.keyword == "xregistry-spec" for f in verdict.findings)
+    good = asyncio.run(validate_emitted_artifact("xregistry", _emit(_event_api()), api=_event_api()))
+    assert good.valid and not good.failed
+
+
+def test_the_round_trip_check_finds_a_message_that_does_not_read_back() -> None:
+    from app import xregistry_emitter
+
+    document = _valid()
+    back = _reimport(json.dumps(document))
+    assert xregistry_emitter._round_trip_problems(document, back) == []
+    back.services[0].operations.pop()
+    lost = xregistry_emitter._round_trip_problems(document, back)
+    assert [p["rule"] for p in lost] == ["reimport-lost"]

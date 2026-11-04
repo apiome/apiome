@@ -1,0 +1,21 @@
+---
+slug: xregistry-validation
+title: xRegistry exports, checked against the spec
+description: "Critical warnings for operations, and official-schema validation for xRegistry exports."
+authors: [apiome]
+---
+
+xRegistry exports now say plainly what an event registry cannot hold, and every document is checked
+against the official xRegistry schema before you can download it. See
+[xRegistry from any source](/ship/export-a-spec#what-the-xregistry-fidelity-report-lists).
+
+{/* truncate */}
+
+- **A critical warning for operations:** exporting a REST, RPC or GraphQL item to **xRegistry** starts
+  the fidelity report with a critical warning — only its types and events are exported — and asks you
+  to confirm. Export to OpenAPI or AsyncAPI as well to keep the operations.
+- **No confirmation for event APIs:** an AsyncAPI, CloudEvents or xRegistry item exported to
+  **xRegistry** or **CloudEvents** no longer asks you to confirm a "severe" conversion.
+- **Checked against the specification:** every document validates against the official xRegistry
+  CloudEvents registry schema and must import back with all its schemas and messages; one that fails
+  is never delivered.

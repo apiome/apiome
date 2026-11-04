@@ -2360,7 +2360,7 @@
       "family": "api-blueprint",
       "loss_counts": {
         "approx": 2,
-        "drop": 11,
+        "drop": 12,
         "synth": 1
       },
       "reason": null,
@@ -6558,7 +6558,7 @@
       "family": "avro-idl",
       "loss_counts": {
         "approx": 4,
-        "drop": 19,
+        "drop": 20,
         "synth": 5
       },
       "reason": null,
@@ -7264,7 +7264,7 @@
       "family": "aws-apigateway",
       "loss_counts": {
         "approx": 3,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -8625,7 +8625,7 @@
       "family": "bruno",
       "loss_counts": {
         "approx": 1,
-        "drop": 3,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -9253,7 +9253,7 @@
       "family": "capnproto",
       "loss_counts": {
         "approx": 5,
-        "drop": 16,
+        "drop": 17,
         "synth": 3
       },
       "reason": null,
@@ -12291,7 +12291,7 @@
       "family": "connectrpc",
       "loss_counts": {
         "approx": 7,
-        "drop": 27,
+        "drop": 28,
         "synth": 8
       },
       "reason": null,
@@ -13559,7 +13559,7 @@
       "family": "corbaidl",
       "loss_counts": {
         "approx": 4,
-        "drop": 15,
+        "drop": 16,
         "synth": 5
       },
       "reason": null,
@@ -16695,7 +16695,7 @@
       "family": "discovery",
       "loss_counts": {
         "approx": 5,
-        "drop": 7,
+        "drop": 8,
         "synth": 1
       },
       "reason": null,
@@ -19880,7 +19880,7 @@
       "family": "fhir",
       "loss_counts": {
         "approx": 2,
-        "drop": 15,
+        "drop": 16,
         "synth": 3
       },
       "reason": null,
@@ -22986,7 +22986,7 @@
       "family": "graphql",
       "loss_counts": {
         "approx": 4,
-        "drop": 3,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -24342,7 +24342,7 @@
       "family": "har",
       "loss_counts": {
         "approx": 6,
-        "drop": 7,
+        "drop": 8,
         "synth": 1
       },
       "reason": null,
@@ -26273,7 +26273,7 @@
       "family": "hoppscotch",
       "loss_counts": {
         "approx": 1,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -26983,7 +26983,7 @@
       "family": "http-file",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
+        "drop": 5,
         "synth": 1
       },
       "reason": null,
@@ -28915,7 +28915,7 @@
       "family": "insomnia",
       "loss_counts": {
         "approx": 1,
-        "drop": 7,
+        "drop": 8,
         "synth": 1
       },
       "reason": null,
@@ -30936,7 +30936,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation f778672b-d494-406f-abb6-3a30ce09193e",
+        "added operation a744d636-bc17-4490-b367-2104cb77f7c4",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -32126,7 +32126,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 9d16c446-e0cf-4941-992b-5c0e57e46496",
+        "added operation 6bd11758-5c6d-4759-af70-26f97ae50964",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -32736,7 +32736,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation f7db5fc1-d530-4b59-b13f-79eb9955ac3b",
+        "added operation 57dd0ca2-5a0b-4699-b5f5-3b56294db29f",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -35097,7 +35097,7 @@
       "family": "llm-tools",
       "loss_counts": {
         "approx": 2,
-        "drop": 3,
+        "drop": 4,
         "synth": 1
       },
       "reason": null,
@@ -35729,7 +35729,7 @@
       "family": "lwm2m",
       "loss_counts": {
         "approx": 1,
-        "drop": 8,
+        "drop": 9,
         "synth": 1
       },
       "reason": null,
@@ -36361,7 +36361,7 @@
       "family": "matter",
       "loss_counts": {
         "approx": 5,
-        "drop": 18,
+        "drop": 19,
         "synth": 3
       },
       "reason": null,
@@ -36993,7 +36993,7 @@
       "family": "mcp",
       "loss_counts": {
         "approx": 3,
-        "drop": 10,
+        "drop": 11,
         "synth": 1
       },
       "reason": null,
@@ -40167,7 +40167,7 @@
       "family": "odata",
       "loss_counts": {
         "approx": 3,
-        "drop": 12,
+        "drop": 13,
         "synth": 4
       },
       "reason": null,
@@ -40875,7 +40875,7 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 3,
-        "drop": 29,
+        "drop": 30,
         "synth": 4
       },
       "reason": null,
@@ -41005,7 +41005,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation cfa78ede-303e-4217-8f48-f3db8e2d286c",
+        "added operation c790404c-1d6b-4a2b-a4dc-f1e83571b185",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -42101,7 +42101,7 @@
       "family": "oncrpc",
       "loss_counts": {
         "approx": 4,
-        "drop": 12,
+        "drop": 13,
         "synth": 5
       },
       "reason": null,
@@ -42733,7 +42733,7 @@
       "family": "opcua-nodeset",
       "loss_counts": {
         "approx": 3,
-        "drop": 2,
+        "drop": 3,
         "synth": 1
       },
       "reason": null,
@@ -43957,7 +43957,7 @@
       "family": "openrpc",
       "loss_counts": {
         "approx": 2,
-        "drop": 4,
+        "drop": 5,
         "synth": 1
       },
       "reason": null,
@@ -44088,7 +44088,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation b35eb5a0-4b58-437c-9019-7ab1ad74480b",
+        "added operation 2e222280-7834-4d71-896b-087dbdac4126",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -46472,7 +46472,7 @@
       "family": "postman",
       "loss_counts": {
         "approx": 1,
-        "drop": 5,
+        "drop": 6,
         "synth": 1
       },
       "reason": null,
@@ -47182,7 +47182,7 @@
       "family": "postman-v2",
       "loss_counts": {
         "approx": 2,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -47814,7 +47814,7 @@
       "family": "protobuf",
       "loss_counts": {
         "approx": 7,
-        "drop": 26,
+        "drop": 27,
         "synth": 8
       },
       "reason": null,
@@ -48446,7 +48446,7 @@
       "family": "protobuf-editions",
       "loss_counts": {
         "approx": 4,
-        "drop": 17,
+        "drop": 18,
         "synth": 5
       },
       "reason": null,
@@ -49756,7 +49756,7 @@
       "family": "raml",
       "loss_counts": {
         "approx": 2,
-        "drop": 13,
+        "drop": 14,
         "synth": 1
       },
       "reason": null,
@@ -50492,7 +50492,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation e66e5b37-021f-49c7-b101-7a893638155d",
+        "added operation eaa557ac-4354-4d25-a39a-38f8fef02cda",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -52809,7 +52809,7 @@
       "family": "smithy",
       "loss_counts": {
         "approx": 6,
-        "drop": 9,
+        "drop": 10,
         "synth": 7
       },
       "reason": null,
@@ -53519,7 +53519,7 @@
       "family": "soapui",
       "loss_counts": {
         "approx": 1,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -53650,7 +53650,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation dcb5cf7a-5604-4212-ab07-d45b0142880c",
+        "added operation e5c44838-8285-46d8-af95-b83298638123",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -55429,7 +55429,7 @@
       "family": "swagger",
       "loss_counts": {
         "approx": 8,
-        "drop": 8,
+        "drop": 9,
         "synth": 1
       },
       "reason": null,
@@ -56134,7 +56134,7 @@
       "family": "swagger-1.2",
       "loss_counts": {
         "approx": 4,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -57370,7 +57370,7 @@
       "family": "thrift",
       "loss_counts": {
         "approx": 4,
-        "drop": 17,
+        "drop": 18,
         "synth": 5
       },
       "reason": null,
@@ -58080,7 +58080,7 @@
       "family": "thunder-client",
       "loss_counts": {
         "approx": 1,
-        "drop": 6,
+        "drop": 7,
         "synth": 1
       },
       "reason": null,
@@ -59967,7 +59967,7 @@
       "family": "trpc",
       "loss_counts": {
         "approx": 10,
-        "drop": 5,
+        "drop": 6,
         "synth": 1
       },
       "reason": null,
@@ -60766,7 +60766,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation e6bf51be-ef9e-4f59-91e5-57646d18ca1e",
+        "added operation 062fe8ba-4b15-47fb-8dd0-fe9afe5b7c67",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -61945,7 +61945,7 @@
       "family": "typespec",
       "loss_counts": {
         "approx": 3,
-        "drop": 15,
+        "drop": 16,
         "synth": 4
       },
       "reason": null,
@@ -63253,7 +63253,7 @@
       "family": "wadl",
       "loss_counts": {
         "approx": 1,
-        "drop": 10,
+        "drop": 11,
         "synth": 2
       },
       "reason": null,
@@ -63879,7 +63879,7 @@
       "family": "wit",
       "loss_counts": {
         "approx": 3,
-        "drop": 7,
+        "drop": 8,
         "synth": 4
       },
       "reason": null,
@@ -64507,7 +64507,7 @@
       "family": "wsdl",
       "loss_counts": {
         "approx": 9,
-        "drop": 32,
+        "drop": 33,
         "synth": 10
       },
       "reason": null,
@@ -65141,7 +65141,7 @@
       "family": "wsdl2",
       "loss_counts": {
         "approx": 7,
-        "drop": 27,
+        "drop": 28,
         "synth": 8
       },
       "reason": null,
@@ -65765,7 +65765,7 @@
       "family": "xmlrpc",
       "loss_counts": {
         "approx": 1,
-        "drop": 4,
+        "drop": 5,
         "synth": 1
       },
       "reason": null,
@@ -68281,7 +68281,7 @@
       "family": "zosconnect",
       "loss_counts": {
         "approx": 4,
-        "drop": 10,
+        "drop": 11,
         "synth": 5
       },
       "reason": null,
