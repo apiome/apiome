@@ -35607,6 +35607,240 @@ class Database:
         return dict(rows[0]) if rows else None
 
     # -------------------------------------------------------------------------------------------
+    # MFX-38.1 (#4328) — export git delivery runs
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of an export git delivery run.
+    _EXPORT_GIT_DELIVERY_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        job_id,
+        artifact_id,
+        version_record_id,
+        version_label,
+        export_target,
+        repository_id::text AS repository_id,
+        mode,
+        status,
+        repository_full_name,
+        base_branch,
+        target_path,
+        branch_name,
+        base_sha,
+        commit_sha,
+        pull_request_number,
+        pull_request_url,
+        changes,
+        fidelity,
+        log,
+        error_code,
+        error_message,
+        started_at,
+        finished_at,
+        created_by::text AS created_by
+    """
+
+    def insert_export_git_delivery_run(
+        self,
+        *,
+        tenant_id: str,
+        job_id: str,
+        artifact_id: str,
+        repository_id: Optional[str],
+        mode: str,
+        status: str,
+        version_record_id: Optional[str] = None,
+        version_label: Optional[str] = None,
+        export_target: Optional[str] = None,
+        base_branch: Optional[str] = None,
+        target_path: str = "",
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Open one export git delivery run (MFX-38.1).
+
+        Inserted ``in_progress`` before anything is written to the provider, so a delivery that fails
+        at any later step is recorded as a failed run rather than leaving no trace.
+
+        Args:
+            tenant_id: Owning tenant.
+            job_id: The export job being delivered.
+            artifact_id: The exported artifact (project or catalog item).
+            repository_id: The registered repository it delivers into.
+            mode: ``pr`` or ``commit``.
+            status: The initial status (``in_progress``).
+            version_record_id: The exported revision.
+            version_label: Its version label.
+            export_target: The resolved export target (``openapi-3.1``…), or ``multi`` for a
+                multi-target job.
+            base_branch: The requested base branch, when one was given.
+            target_path: The normalised repository path.
+            actor_id: The user who asked for the delivery.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+
+        def _uuid_or_none(value: Optional[str]) -> Optional[str]:
+            return value if is_uuid_string(str(value or "")) else None
+
+        query = f"""
+            INSERT INTO apiome.export_git_delivery_runs (
+                tenant_id, job_id, artifact_id, version_record_id, version_label, export_target,
+                repository_id, mode, status, base_branch, target_path, created_by
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, %s,
+                %s::uuid, %s, %s, %s, %s, %s::uuid
+            )
+            RETURNING {self._EXPORT_GIT_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            tenant_id,
+            str(job_id),
+            str(artifact_id),
+            version_record_id,
+            version_label,
+            export_target,
+            _uuid_or_none(repository_id),
+            mode,
+            status,
+            base_branch,
+            target_path or "",
+            _uuid_or_none(actor_id),
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def finish_export_git_delivery_run(
+        self,
+        run_id: str,
+        tenant_id: str,
+        *,
+        status: str,
+        log: Optional[List[Dict[str, Any]]] = None,
+        repository_full_name: Optional[str] = None,
+        base_branch: Optional[str] = None,
+        branch_name: Optional[str] = None,
+        base_sha: Optional[str] = None,
+        commit_sha: Optional[str] = None,
+        pull_request_number: Optional[int] = None,
+        pull_request_url: Optional[str] = None,
+        changes: Optional[Dict[str, Any]] = None,
+        fidelity: Optional[Dict[str, Any]] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Close an export git delivery run with its outcome (MFX-38.1).
+
+        Every coordinate is ``COALESCE``d onto what the insert recorded, so a failure part-way through
+        keeps what the run had learned.
+
+        Args:
+            run_id: The run to close.
+            tenant_id: The caller's tenant, which also scopes the update.
+            status: The final status.
+            log: The complete event log.
+            repository_full_name: ``owner/repo`` as the provider reported it.
+            base_branch: The base branch actually used.
+            branch_name: The delivery branch (the base branch itself in commit mode).
+            base_sha: The base commit the delivery was built on.
+            commit_sha: The commit that was pushed.
+            pull_request_number: The pull request opened or updated.
+            pull_request_url: Its web URL.
+            changes: The changed-files overview.
+            fidelity: The export's fidelity summary.
+            error_code: Machine-readable failure code.
+            error_message: Redacted failure message.
+
+        Returns:
+            The updated row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        query = f"""
+            UPDATE apiome.export_git_delivery_runs
+            SET status = %s,
+                log = COALESCE(%s, log),
+                repository_full_name = COALESCE(%s, repository_full_name),
+                base_branch = COALESCE(%s, base_branch),
+                branch_name = COALESCE(%s, branch_name),
+                base_sha = COALESCE(%s, base_sha),
+                commit_sha = COALESCE(%s, commit_sha),
+                pull_request_number = COALESCE(%s, pull_request_number),
+                pull_request_url = COALESCE(%s, pull_request_url),
+                changes = COALESCE(%s, changes),
+                fidelity = COALESCE(%s, fidelity),
+                error_code = %s,
+                error_message = %s,
+                finished_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING {self._EXPORT_GIT_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            status,
+            Json(log) if log is not None else None,
+            repository_full_name,
+            base_branch,
+            branch_name,
+            base_sha,
+            commit_sha,
+            pull_request_number,
+            pull_request_url,
+            Json(changes) if changes is not None else None,
+            Json(fidelity) if fidelity is not None else None,
+            error_code,
+            error_message,
+            run_id,
+            tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_git_delivery_runs(
+        self, tenant_id: str, job_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List one export job's git deliveries, newest first (MFX-38.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            job_id: The export job.
+            limit: The most rows to return.
+
+        Returns:
+            The matching rows. Empty when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_GIT_DELIVERY_RUN_COLUMNS}
+            FROM apiome.export_git_delivery_runs
+            WHERE tenant_id = %s::uuid AND job_id = %s
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s
+            """,
+            (tenant_id, str(job_id), max(1, int(limit))),
+        )
+        return [dict(row) for row in rows or []]
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 

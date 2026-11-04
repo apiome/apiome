@@ -86,7 +86,10 @@ Content-Type: application/json
 1. The `202` response carries the `job_id` and a `status_path`.
 2. Poll `GET /v1/export/{tenant_slug}/jobs/{job_id}` until `state` is `completed`, `failed` or
    `canceled`.
-3. Download the result from `GET /v1/export/{tenant_slug}/jobs/{job_id}/download`.
+3. Download the result from `GET /v1/export/{tenant_slug}/jobs/{job_id}/download`, or deliver it to a
+   GitHub repository as a pull request or a commit with
+   `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/git` (see
+   [Deliver an export to a git repository](./deliver-an-export-to-git.md)).
 
 Set `"dry_run": true` to stop after the fidelity report, and `"confirm": true` to run a severe
 conversion. Pass the preview's snapshot hash as `acknowledged_snapshot` to make sure the export is the

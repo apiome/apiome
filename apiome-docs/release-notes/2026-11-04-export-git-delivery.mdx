@@ -1,0 +1,24 @@
+---
+slug: export-git-delivery
+title: Deliver exports to a git repository
+description: "Send a finished export to GitHub as a pull request or a commit."
+authors: [apiome]
+---
+
+A finished export can now go straight into a GitHub repository instead of a downloads folder: as a
+**pull request** carrying the export's fidelity summary, or as a **direct commit**. See
+[Deliver an export to a git repository](/ship/deliver-an-export-to-git).
+
+{/* truncate */}
+
+- **Pull requests with the fidelity summary:** the description shows the tier, the preserved share, what was
+  dropped, approximated or made up, and a link to the full report.
+- **Directory trees kept:** a multi-file bundle lands under your chosen path with its own directories.
+- **One pull request per export:** a re-export updates the same branch and pull request, and a delivery that
+  changes nothing writes nothing.
+- **Only Apiome's files:** a delivery manifest lets later deliveries remove files the export no longer
+  produces, and files you wrote are never touched.
+- **Direct commits, safely:** `mode: commit` only fast-forwards the branch, so it fails rather than discard
+  anyone's work.
+- **Your existing credential:** delivery uses the repository's linked GitHub account. GitLab, Bitbucket and
+  Azure DevOps are not supported yet.
