@@ -13,6 +13,7 @@ import {
   serverRestApiBaseUrl,
   siteManifestLinks,
   siteManifestRestUrl,
+  xregistryRegistryUrl,
   siteRoot,
 } from '../siteManifest';
 
@@ -128,5 +129,17 @@ describe('siteManifestLinks (the tenant page entry point, MFX-32.5)', () => {
       '/browse/tenant/a%20b%2Fc/agents.json',
       '/browse/tenant/a%20b%2Fc/llms.txt',
     ]);
+  });
+});
+
+describe('xregistryRegistryUrl (MFX-34.2)', () => {
+  it('points at the public xRegistry root of the tenant on the REST API', () => {
+    expect(xregistryRegistryUrl('acme', 'https://api.example.com/v1/')).toBe(
+      'https://api.example.com/v1/browse/tenants/acme/xregistry',
+    );
+  });
+
+  it('encodes the slug and falls back to the local REST API', () => {
+    expect(xregistryRegistryUrl('a b')).toBe('http://localhost:8000/v1/browse/tenants/a%20b/xregistry');
   });
 });

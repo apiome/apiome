@@ -19,7 +19,7 @@ import { EntityHeader } from '../../components/EntityHeader';
 import { FacetFilter, FacetValueChips } from '../../components/FacetFilter';
 import { SpecCard } from '../../components/SpecCard';
 import { sanitizeSearchInput, SAFE_SEARCH_HTML_PATTERN } from '../../utils/searchValidation';
-import { siteManifestLinks } from '../../../../lib/agentic/siteManifest';
+import { siteManifestLinks, xregistryRegistryUrl } from '../../../../lib/agentic/siteManifest';
 
 interface Tenant {
   id: string;
@@ -178,6 +178,14 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
               {link.kind}
             </a>
           ))}
+          {/* The read-only xRegistry over the same public artifacts (MFX-34.2): for CloudEvents tooling. */}
+          <a
+            href={xregistryRegistryUrl(tenantSlug, process.env.NEXT_PUBLIC_REST_API_BASE_URL)}
+            className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2.5 py-1 font-mono text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title="Read-only xRegistry of every published schema and CloudEvents message definition"
+          >
+            xRegistry
+          </a>
         </div>
 
         <section className="space-y-4">

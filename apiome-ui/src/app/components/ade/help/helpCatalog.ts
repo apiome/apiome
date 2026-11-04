@@ -224,6 +224,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['catalog', 'discover', 'search', 'public', 'api key'],
   },
   {
+    id: 'serve-an-xregistry',
+    title: 'Serve your catalog as an xRegistry',
+    summary:
+      'A read-only xRegistry API over your published APIs: schemas and CloudEvents message definitions, public or for members.',
+    page: 'apiome-docs/docs/ship/serve-an-xregistry.md',
+    section: 'spine',
+    keywords: ['cloudevents', 'schema groups', 'message groups', 'registry api', 'read-only'],
+  },
+  {
     id: 'export-a-spec',
     title: 'Export / download a spec',
     summary:

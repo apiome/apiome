@@ -261,6 +261,9 @@ From the CLI, run `apiome export xregistry <item> --out orders.xregistry.json`; 
 `--option registry_id=orders` or `--option source=/orders` to set them. A lossy export exits non-zero
 unless you add `--force`.
 
+To let a tool read your published APIs live instead of downloading a file, point it at the
+[xRegistry API](./serve-an-xregistry.md).
+
 ### Agent interfaces: MCP, A2A and agent manifests {#agent-interfaces}
 
 Apiome can hand an API to an AI agent in three ways. **MCP Tool Definitions** turns its operations into

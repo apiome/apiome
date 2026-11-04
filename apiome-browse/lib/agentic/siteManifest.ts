@@ -42,6 +42,23 @@ export function siteManifestLinks(tenantSlug: string, basePath: string): SiteMan
   }));
 }
 
+/** The local REST API root used when `NEXT_PUBLIC_REST_API_BASE_URL` is unset. */
+const DEFAULT_REST_API_BASE_URL = 'http://localhost:8000/v1';
+
+/**
+ * The tenant's public, read-only xRegistry (MFX-34.2, #4307): the root of the xRegistry core API the
+ * REST service serves over the tenant's published, public artifacts. An xRegistry client is pointed
+ * here directly; it follows the registry's own `*url` links from there.
+ *
+ * @param tenantSlug - The tenant's slug (encoded into the path).
+ * @param restApiBaseUrl - The REST API root ending in `/v1` (`NEXT_PUBLIC_REST_API_BASE_URL`).
+ * @returns The absolute registry URL, `…/v1/browse/tenants/{slug}/xregistry`.
+ */
+export function xregistryRegistryUrl(tenantSlug: string, restApiBaseUrl?: string): string {
+  const root = (restApiBaseUrl || DEFAULT_REST_API_BASE_URL).replace(/\/+$/, '');
+  return `${root}/browse/tenants/${encodeURIComponent(tenantSlug)}/xregistry`;
+}
+
 /** What the route handlers need to reach the REST API (injectable for tests). */
 export interface SiteManifestDeps {
   /** The REST API root, ending in `/v1` (`NEXT_PUBLIC_REST_API_BASE_URL`). */
