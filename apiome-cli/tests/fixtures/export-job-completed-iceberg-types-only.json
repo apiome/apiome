@@ -1,0 +1,270 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "iceberg",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "iceberg",
+        "format": "iceberg",
+        "label": "Apache Iceberg",
+        "description": "Export the types as Apache Iceberg table schemas: one table per root record, with nested structs, lists and maps, logical types, and field IDs that stay the same on every re-export.",
+        "icon": "database",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "types-only",
+        "preserved_percent": 10,
+        "total": 20,
+        "preserved": 2,
+        "dropped": 9,
+        "approximated": 0,
+        "synthesized": 9
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg is types-only \u2014 only data schemas are exported: 1 service(s) with 5 operation(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+            "target_mapping": "types-only"
+          },
+          {
+            "construct": "Category",
+            "kind": "ok",
+            "severity": "info",
+            "message": "object carried to Apache Iceberg",
+            "target_mapping": null
+          },
+          {
+            "construct": "Category.description",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Category.description' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Category.id",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Category.id' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Category.name",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Category.name' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg cannot represent operations; the operation is dropped",
+            "target_mapping": null
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg cannot represent operations; the operation is dropped",
+            "target_mapping": null
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg cannot represent operations; the operation is dropped",
+            "target_mapping": null
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg cannot represent operations; the operation is dropped",
+            "target_mapping": null
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg cannot represent operations; the operation is dropped",
+            "target_mapping": null
+          },
+          {
+            "construct": "Pet",
+            "kind": "ok",
+            "severity": "info",
+            "message": "object carried to Apache Iceberg",
+            "target_mapping": null
+          },
+          {
+            "construct": "Pet.age",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Apache Iceberg has no validation constraints; exclusive_minimum of 'Pet.age' are dropped",
+            "target_mapping": "constraints \u2192 dropped"
+          },
+          {
+            "construct": "Pet.age",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.age' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Pet.category",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.category' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Pet.id",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.id' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Pet.name",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.name' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Pet.tag",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.tag' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "Pet.weight",
+            "kind": "drop",
+            "severity": "info",
+            "message": "Apache Iceberg has no validation constraints; exclusive_maximum of 'Pet.weight' are dropped",
+            "target_mapping": "constraints \u2192 dropped"
+          },
+          {
+            "construct": "Pet.weight",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Apache Iceberg identifies every column by a field ID; one is assigned to 'Pet.weight' on the first export and kept by every re-export",
+            "target_mapping": "synthesized field ID (persisted)"
+          },
+          {
+            "construct": "default",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "Apache Iceberg is types-only; the service 'default' has no schema",
+            "target_mapping": "service \u2192 dropped (types-only export)"
+          }
+        ],
+        "kind_counts": {
+          "drop": 9,
+          "approx": 0,
+          "synth": 9,
+          "ok": 2
+        },
+        "severity_counts": {
+          "info": 13,
+          "warn": 0,
+          "critical": 7
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "requires_ack": true,
+        "target_format": "Apache Iceberg",
+        "dropped": 9,
+        "approximated": 0,
+        "synthesized": 9,
+        "affected": 18,
+        "headline": "Fidelity notice \u2014 exporting to Apache Iceberg may lose detail.",
+        "message": "Exporting to Apache Iceberg may lose some fidelity. The destination format can't represent everything in this API, so 18 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      },
+      "projection": {
+        "manifest_hash": "29e1cd45f359d191532e47fde6182e13946520315fac9d3f5d4e39ceac98a58a",
+        "target": {
+          "key": "iceberg",
+          "format": "iceberg",
+          "label": "Apache Iceberg",
+          "paradigm": "data_schema",
+          "emitter_version": "1",
+          "apiome_version": "1.6.5",
+          "capability_profile": {
+            "operations": false,
+            "events": false,
+            "unions": true,
+            "nullability": true,
+            "constraints": false,
+            "field_identity": true
+          },
+          "needs_toolchain": false,
+          "available": true,
+          "availability": "available",
+          "registry_version": "1",
+          "documentation": {
+            "specification": null,
+            "version": null,
+            "url": null,
+            "anchor": null,
+            "documentation_unavailable": true,
+            "note": "No authoritative specification link is registered for this destination yet."
+          }
+        },
+        "status_counts": {
+          "retained": 2,
+          "transformed": 0,
+          "approximated": 0,
+          "synthesized": 9,
+          "dropped": 9,
+          "unavailable": 0,
+          "not-applicable": 0
+        },
+        "reason_counts": {
+          "destination_unsupported": 18,
+          "emitter_unsupported": 0,
+          "source_incomplete": 0,
+          "source_parse_limit": 0,
+          "option_excluded": 0,
+          "security_redacted": 0,
+          "target_tool_unavailable": 0,
+          "not_applicable": 0
+        },
+        "total_constructs": 17,
+        "node_count": 36,
+        "edge_count": 38,
+        "evidence_count": 20,
+        "is_lossless": false,
+        "worst_severity": "critical",
+        "truncated": false
+      }
+    },
+    "files": [
+      {
+        "path": "Pet.iceberg.json",
+        "media_type": "application/json",
+        "size_bytes": 1340
+      }
+    ],
+    "media_type": "application/json",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

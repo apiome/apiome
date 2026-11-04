@@ -766,11 +766,13 @@ the fidelity report.
 
 | Step | Where | Details |
 | --- | --- | --- |
-| **Pick** the target (options: `output`, `table`, `parquet`, `bundle`, `indent`) | Export-target registry key `arrow` | [How the item is written](#how-the-item-is-written-to-arrow) |
+| **Pick** the card and its **Output** (`arrow`, `bigquery`, `spark`) | **Export** dialog → **Data schema & graph** → **Apache Arrow / Parquet** | [Where to find the data-lake cards](#where-to-find-the-data-lake-cards) |
+| **Set** the options (`table`, `parquet`, `bundle`, `indent`) | The options on the card | [How the item is written](#how-the-item-is-written-to-arrow) |
 | **Write** BigQuery or Spark schemas instead | **output** `bigquery` / `spark` | [BigQuery and Spark](#bigquery-and-spark) |
 | **See** how records, lists, maps, unions and logical types become columns | This section | [Types](#arrow-types) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-arrow-fidelity-report-lists) |
 | **Trust** the file | Constructed by pyarrow, then re-imported (BigQuery and Spark: checked against their rules), before every download | [How an Arrow export is checked](#how-an-arrow-export-is-checked) |
+| **Export** from the CLI | `apiome export parquet`, `bigquery`, `spark` or `arrow` | [Where to find the data-lake cards](#where-to-find-the-data-lake-cards) |
 
 #### How the item is written {#how-the-item-is-written-to-arrow}
 
@@ -920,10 +922,11 @@ of the fidelity report.
 
 | Step | Where | Details |
 | --- | --- | --- |
-| **Pick** the target (options: `table`, `indent`) | Export-target registry key `iceberg` | [How the item is written](#how-the-item-is-written-to-iceberg) |
+| **Pick** the card (options: `table`, `indent`) | **Export** dialog → **Data schema & graph** → **Apache Iceberg** | [Where to find the data-lake cards](#where-to-find-the-data-lake-cards) |
 | **Keep** field IDs stable across exports | Automatic, per item | [Field IDs](#iceberg-field-ids) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-iceberg-fidelity-report-lists) |
 | **Trust** the file | Parsed by pyiceberg, with every field ID checked unique, before every download | [What the fidelity report lists](#what-the-iceberg-fidelity-report-lists) |
+| **Export** from the CLI | `apiome export iceberg` | [Where to find the data-lake cards](#where-to-find-the-data-lake-cards) |
 
 #### How the item is written {#how-the-item-is-written-to-iceberg}
 
@@ -974,6 +977,40 @@ An item imported from Arrow whose columns carry `PARQUET:field_id` keeps those I
 Before an export is delivered, **pyiceberg** must parse every schema, and every field ID in it must be
 unique and positive, or the export job fails. No importer reads Iceberg, so an Iceberg export is not
 re-imported.
+
+#### Where to find the data-lake cards {#where-to-find-the-data-lake-cards}
+
+The **Export** dialog and **Export studio** offer two cards under **Data schema & graph**, both marked
+**multi-file** (one file per table):
+
+- **Apache Arrow / Parquet** writes every Arrow mode. Pick **Output** `arrow` (the default), `bigquery` or
+  `spark`. **Parquet** (on by default) adds the Parquet messages, and **Bundle** puts every BigQuery or Spark
+  table into one file.
+- **Apache Iceberg** writes Iceberg schemas. Field IDs are not an option: Apiome keeps them for you (see
+  [Field IDs](#iceberg-field-ids)).
+
+| Source | Apache Arrow / Parquet | Apache Iceberg |
+| --- | --- | --- |
+| A REST, GraphQL or RPC API, a JSON Schema item, an imported SQL script | **types-only**, with its preserved share | **types-only**, with its preserved share |
+| An imported Arrow schema | **lossless**: it exports back as it was read | **types-only** (its field IDs are made up) |
+| A gateway configuration, an agent card, or anything else with no record type | Greyed out, with the reason | Greyed out, with the reason |
+
+An API with operations also starts its fidelity report with the critical "types only" warning. A public
+item's **Export** dialog on Browse offers both cards too; a multi-file export downloads as a `.zip`.
+
+From the CLI, each mode has a verb of its own:
+
+| Command | Writes |
+| --- | --- |
+| `apiome export parquet <item> --out <folder>` | Arrow schemas and Parquet messages (`output=arrow`) |
+| `apiome export bigquery <item> --out <folder>` | BigQuery table schemas (`output=bigquery`) |
+| `apiome export spark <item> --out <folder>` | Spark StructType DDL (`output=spark`) |
+| `apiome export arrow <item> --out <folder>` | Any mode, picked with `--option output=…` |
+| `apiome export iceberg <item> --out <folder>` | Iceberg schemas |
+
+Add `--option bundle=true` for one BigQuery or Spark file, or `--option table=<record>` for one table.
+`apiome export bigquery` with `--option output=spark` is a usage error. Each command prints the fidelity
+report and, because these formats keep types only, exits non-zero unless you add `--force`.
 
 ### Apache Avro from any source
 

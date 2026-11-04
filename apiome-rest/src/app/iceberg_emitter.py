@@ -31,6 +31,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from pydantic import Field, ValidationError
+from pydantic.json_schema import SkipJsonSchema
 
 from .arrow_emitter import (
     ArrowEmitOptions,
@@ -89,7 +90,9 @@ class IcebergEmitOptions(EmitOptions):
         "(a record no other record holds), each as its own schema.",
     )
     indent: int = Field(default=2, ge=0, le=8, description="JSON indentation width (0 for compact output).")
-    persisted_field_numbers: Dict[str, int] = Field(
+    # Not in the options schema (MFX-36.5): the card never offers it, the export service fills it. It is still
+    # dumped, so the service can merge the stored IDs into the options it validates.
+    persisted_field_numbers: SkipJsonSchema[Dict[str, int]] = Field(
         default_factory=dict,
         description="Field IDs earlier exports assigned, keyed by column path (`Order/lines/element/sku`); "
         "filled from the MFX-12.2 field-identity store by the export service.",

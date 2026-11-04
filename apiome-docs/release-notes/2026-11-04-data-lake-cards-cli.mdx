@@ -1,0 +1,22 @@
+---
+slug: data-lake-cards-cli
+title: Data-lake exports in the Export dialog and the CLI
+description: "Arrow, Parquet, BigQuery, Spark and Iceberg cards, and CLI verbs for each."
+authors: [apiome]
+---
+
+The **Export** dialog has two data-lake cards under **Data schema & graph**: **Apache Arrow / Parquet**, with
+an **Output** of `arrow`, `bigquery` or `spark`, and **Apache Iceberg**. The CLI has a verb for every mode. See
+[Where to find the data-lake cards](/ship/export-a-spec#where-to-find-the-data-lake-cards).
+
+{/* truncate */}
+
+- **Cards with honest badges:** an API with operations badges **types-only** on both cards. An imported Arrow
+  schema is **lossless** on the Arrow card. A source with no record type is greyed out with the reason.
+- **Every mode on one card:** pick **Output** `arrow`, `bigquery` or `spark` on **Apache Arrow / Parquet**;
+  **Parquet** adds the Parquet messages and **Bundle** writes one BigQuery or Spark file.
+- **From the CLI:** `apiome export parquet`, `bigquery`, `spark` and `iceberg` (and `arrow` with
+  `--option output=…`). Each prints the fidelity report and exits non-zero for a types-only export unless you
+  add `--force`.
+- **On Browse too:** a public item's **Export** dialog offers both cards, and a multi-file export downloads as
+  a `.zip`.

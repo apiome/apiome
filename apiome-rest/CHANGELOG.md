@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.645.0] - 2026-11-04
+
+### Added
+- **Data-lake target cards + CLI + fixtures (MFX-36.5, #4321).**
+  - `tests/test_data_lake_target_cards.py` + `tests/fixtures/data_lake_targets/outcomes.json` (regenerate with
+    `APIOME_REGEN_DATA_LAKE_TARGETS=1`): the `arrow` and `iceberg` cards per source kind (REST / JSON Schema
+    `types-only`, an imported Arrow schema `lossless` on the Arrow card, a Kong configuration greyed out — no record
+    type), every mode (`arrow` ± Parquet, `bigquery` / `spark` per table and bundled, `iceberg`) passing the gate, file
+    names, Browse delivery; the CLI (`export-targets-{arrow,iceberg}.json`,
+    `export-job-completed-{bigquery,iceberg}-types-only.json`) and UI (`export-targets-arrow-{rest,arrow,gateway}.json`,
+    `export-targets-iceberg-{rest,gateway}.json`) fixtures from the live registry.
+
+### Changed
+- `IcebergEmitOptions.persisted_field_numbers` is left out of the options schema (`SkipJsonSchema`): the card never
+  offers it; the export service still fills it from the field-identity store.
+
 ## [1.644.0] - 2026-11-04
 
 ### Changed
