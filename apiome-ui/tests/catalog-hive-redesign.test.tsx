@@ -461,6 +461,19 @@ describe('the card', () => {
     expect(within(card).queryByRole('button', { name: /Debt/ })).not.toBeInTheDocument();
   });
 
+  it('puts the ⋯ menu in the header row after the status pill, so the two never overlap', async () => {
+    await renderCatalog();
+    const card = (await screen.findAllByTestId('catalog-card'))[0];
+    const status = within(card).getByTestId('catalog-card-status');
+    const menu = within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`);
+    // Both live in the head row, the menu after the pill — in flow, not an overlay pinned to
+    // the card's corner on top of the "Active" pill.
+    const head = status.closest('.cat-card__head');
+    expect(head).not.toBeNull();
+    expect(head).toContainElement(menu);
+    expect(status.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it('links a converted item to the project it produced', async () => {
     await renderCatalog();
     const card = (await screen.findAllByTestId('catalog-card'))[0];

@@ -122,7 +122,6 @@ const CATALOG_PRELUDES = [
   '.cat-card__promotion',
   '.cat-card__above',
   '.cat-card__actions',
-  '.cat-card:hover .cat-card__actions, .cat-card:focus-within .cat-card__actions',
   '.cat-card__footer',
   '.cat-card[data-lifecycle="deleted"] .cat-card__footer',
   '.cat-card__creator',
@@ -356,25 +355,18 @@ describe('the catalog section of globals.css', () => {
     expect(findUnfencedHex(css).map((entry) => `${entry.line}: ${entry.text}`)).toEqual([]);
   });
 
-  it('fades a control that is revealed on hover, and never a word of text', () => {
+  it('fades no word of text, and keeps the card menu always visible', () => {
     // The card this replaces put `opacity: .9` on a whole deleted card — which fades the
     // amber warning along with everything else. The frame and the tinted footer carry that
-    // now. The two `opacity` rules left are the row-actions reveal `DataTable` also uses.
+    // now. The ⋯ menu used to fade in on hover as an overlay pinned to the card's corner,
+    // which covered the "Active" pill; it is now in the header row and never faded.
     const faded = rules.filter(
       (rule) =>
         CATALOG_PRELUDES.includes(rule.prelude as (typeof CATALOG_PRELUDES)[number]) &&
         parseDeclarations(rule.body).has('opacity')
     );
-    expect(faded.map((rule) => rule.prelude)).toEqual([
-      '.cat-card__actions',
-      '.cat-card:hover .cat-card__actions, .cat-card:focus-within .cat-card__actions',
-    ]);
-    expect(
-      declaration(
-        '.cat-card:hover .cat-card__actions, .cat-card:focus-within .cat-card__actions',
-        'opacity'
-      )
-    ).toBe('1');
+    expect(faded.map((rule) => rule.prelude)).toEqual([]);
+    expect(parseDeclarations(catalogRule('.cat-card__actions').body).has('position')).toBe(false);
   });
 });
 
@@ -470,8 +462,9 @@ describe('density and font-scale independence', () => {
 
   it('states every breakpoint in rem, so each one follows the font scale', () => {
     const media = SECTION.match(/@media \([^)]*\)/g) ?? [];
-    // Four since HIVE-11.6 retired the supported-formats gallery and its two width queries.
-    expect(media.length).toBeGreaterThanOrEqual(4);
+    // Four since HIVE-11.6 retired the supported-formats gallery and its two width queries; three
+    // since the card's ⋯ menu moved into the header row and its `(hover: none)` reveal went with it.
+    expect(media.length).toBeGreaterThanOrEqual(3);
     for (const query of media) {
       // `(hover: none)` is a capability query, not a width — it has no unit to get wrong.
       if (query.includes('hover')) continue;
@@ -717,12 +710,11 @@ describe('the card’s stretched link', () => {
     );
   });
 
-  it('keeps the row menu reachable where there is no hover to reveal it', () => {
+  it('has no hover-only reveal for the card menu, so touch needs no special case', () => {
     const touch = rules.find(
       (rule) => rule.prelude === '@media (hover: none)' && rule.body.includes('.cat-card__actions')
     );
-    expect(touch).toBeDefined();
-    expect(touch!.body).toContain('opacity: 1');
+    expect(touch).toBeUndefined();
   });
 });
 
