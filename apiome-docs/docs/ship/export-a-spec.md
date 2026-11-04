@@ -1260,6 +1260,28 @@ too, as the `.fbs` file.
 Exporting to **COBOL Copybook** writes the item's data types as copybook record layouts, `<Name>.cpy`,
 for z/OS Connect, CICS and IMS programs. An item imported from a copybook is written back exactly as
 it was imported — its pictures, usages, tables and `REDEFINES` — and the options below do not change it.
+
+#### When to export to a COBOL copybook
+
+- **Hand a record layout to a mainframe program.** Any REST, RPC, JSON Schema or other item becomes
+  fixed-width `01` records for z/OS Connect, CICS, IMS or batch COBOL. Lengths, table sizes and names are
+  synthesized where the source does not say, operations are left out, and the card says **types-only**.
+- **Round-trip a copybook.** An item imported from a copybook exports back **lossless**, with its own
+  pictures, usages, tables and `REDEFINES`.
+- **Serve a PL/I program.** The same record layout as PL/I `DECLARE` structures, with **mode** `pli`.
+
+#### COBOL copybook export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the COBOL Copybook card and its options (numeric usage, format, mode) | **Export** dialog → **Data schema & graph** → **COBOL Copybook** | Below, *Where to find it* |
+| **See** how records, names, text, numbers, lists and unions are laid out | The fidelity report on the card | The list below |
+| **See** everything the layout had to invent or change, field by field | The fidelity report on the card | The table below |
+| **Write** PL/I include structures instead | **mode** `pli` | [PL/I include structure output](#pli-include-structure-output) |
+| **Trust** the export: read back, and checked with cb2xml when the server has it | Automatic before every download | Below, *Checked with cb2xml* |
+| **Export** from the CLI | `apiome export copybook <item> --out <Name>.cpy` | Below, *Where to find it* |
+| **Download** from a public item | Browse → **Export** | Below, *Where to find it* |
+
 Any other item is laid out like this:
 
 - **Records.** Each object that no other object contains is an `01` record. Objects inside it are
