@@ -63,10 +63,12 @@
           },
           "profile": {
             "default": "generic",
-            "description": "`generic` (default) writes the types as they are. `iso20022` writes an ISO 20022 message definition: one `urn:iso:std:iso:20022:tech:xsd:<message_identifier>` namespace, a `Document` root element wrapping the business element, UpperCamelCase names, descriptions as `xs:documentation`, and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `xsd` mode only.",
+            "description": "`generic` (default) writes the types as they are. `iso20022` writes an ISO 20022 message definition: one `urn:iso:std:iso:20022:tech:xsd:<message_identifier>` namespace, a `Document` root element wrapping the business element, UpperCamelCase names, descriptions as `xs:documentation`, and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `ubl` writes a UBL 2.1 document schema (UBL data types, `cbc:` components, a document element headed by the UBL header) with the OASIS UBL schemas it imports; `peppol` the same with the Peppol BIS Billing 3.0 conventions. `xsd` mode only.",
             "enum": [
               "generic",
-              "iso20022"
+              "iso20022",
+              "ubl",
+              "peppol"
             ],
             "title": "Profile",
             "type": "string"
@@ -109,6 +111,45 @@
             "default": null,
             "description": "ISO 20022 profile: the record type (name or key) `Document` wraps as the message. Defaults to an ISO 20022 source's business element, else the one record no other record uses.",
             "title": "Message Type"
+          },
+          "ubl_document": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "UBL / Peppol profile: the document element, UpperCamelCase (`Invoice`, `Order` \u2026). Peppol: `Invoice` or `CreditNote`. Defaults to an imported UBL item's own, else `Invoice` for Peppol, else the item's name.",
+            "title": "Ubl Document"
+          },
+          "ubl_namespace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "UBL / Peppol profile: the schema's target namespace (a URI). Defaults to `urn:apiome:names:specification:ubl:schema:xsd:<Document>-2`.",
+            "title": "Ubl Namespace"
+          },
+          "document_record": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "UBL / Peppol profile: the record type (name or key) the document is made from. Defaults to the one record no other record uses.",
+            "title": "Document Record"
           }
         },
         "title": "XsdEmitOptions",
@@ -122,7 +163,10 @@
         "profile": "generic",
         "message_identifier": null,
         "business_area": null,
-        "message_type": null
+        "message_type": null,
+        "ubl_document": null,
+        "ubl_namespace": null,
+        "document_record": null
       },
       "fidelity": {
         "tier": "types-only",

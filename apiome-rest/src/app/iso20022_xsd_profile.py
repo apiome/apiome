@@ -56,6 +56,7 @@ __all__ = [
     "iso20022_name",
     "message_catalog",
     "resolve_message",
+    "unused_records",
 ]
 
 #: The namespace every ISO 20022 message definition is in, before its identifier.
@@ -188,7 +189,7 @@ def resolve_message(
         chosen, candidates = by_name[str(definition["business_type"])], []
     else:
         # The one record no other record uses; an ISO 20022 source's Document is not a candidate.
-        candidates = [t for t in _unused_records(api, records) if source_document is None or t is not source_document]
+        candidates = [t for t in unused_records(api, records) if source_document is None or t is not source_document]
         chosen = (candidates or records or [None])[0]
 
     business_element = None
@@ -209,8 +210,11 @@ def resolve_message(
     )
 
 
-def _unused_records(api: CanonicalApi, records: List[Type]) -> List[Type]:
-    """The record types no field of another record refers to — the candidates for the message type."""
+def unused_records(api: CanonicalApi, records: List[Type]) -> List[Type]:
+    """The record types no field of another record refers to — the candidates for the message (or document) type.
+
+    Shared with the UBL profile (:mod:`app.ubl_xsd_profile`, MFX-24.6).
+    """
     used: Set[str] = set()
 
     def walk(ref: Any) -> None:

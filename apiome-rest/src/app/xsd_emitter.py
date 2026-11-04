@@ -32,6 +32,12 @@ definition — one ``urn:iso:std:iso:20022:tech:xsd:<identifier>`` namespace, a 
 business element, UpperCamelCase names — plus a message-catalog manifest
 (:mod:`app.iso20022_xsd_profile`). ``message_identifier``, ``business_area`` and ``message_type`` name the
 message; what the source cannot meet is reported ``SYNTH`` or ``APPROX``.
+
+**UBL and Peppol profiles** (MFX-24.6, #4346): ``profile="ubl"`` writes the types as a UBL 2.1 document schema —
+UBL data types, ``cbc:`` references, UBL names, a document element headed by the UBL header — and ``"peppol"`` the
+same with the Peppol BIS Billing 3.0 conventions (:mod:`app.ubl_xsd_profile`). The export ships the OASIS UBL 2.1
+component schemas it imports, their notice and a guide. ``ubl_document``, ``ubl_namespace`` and
+``document_record`` name the document.
 """
 
 from __future__ import annotations
@@ -68,6 +74,20 @@ from .iso20022_xsd_profile import (
     record_message_losses,
     resolve_message,
 )
+from .ubl_xsd_profile import (
+    PEPPOL_DOCUMENTS,
+    UBL_NOTICE_PATH,
+    UblDocument,
+    UblSchemaWriter,
+    bundled_files,
+    notice_text,
+    profile_appinfo,
+    record_document_losses,
+    resolve_document,
+    ubl_guide,
+)
+from .ubl_xsd_profile import SYNTHESIZED_SUBJECTS as UBL_SYNTHESIZED_SUBJECTS
+from .ubl_xsd_profile import append_document as append_ubl_document
 from .lossiness import LossinessSeverity
 from .writer_loss_rulepack import WriterLossRulePack
 from .xml_schema_modes import (
@@ -85,12 +105,16 @@ from .xsd_schema import TNS_PREFIX, XSD_NS, XSD_PREFIX, XsdSchemaWriter, comment
 from .xsd_types import xsd_builtin
 
 __all__ = [
-    "ISO20022_PROFILE", "XSD_OUTPUT_MODES", "XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces",
+    "ISO20022_PROFILE", "UBL_PROFILES", "XSD_OUTPUT_MODES", "XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces",
 ]
 
 _XSD_FORMAT = "xsd"
 #: The ``profile`` option's value for an ISO 20022 message definition (MFX-22.4).
 ISO20022_PROFILE = "iso20022"
+#: The ``profile`` values for a UBL 2.1 document schema, plain and with the Peppol conventions (MFX-24.6).
+UBL_PROFILES = ("ubl", "peppol")
+_UDT_NS = "urn:oasis:names:specification:ubl:schema:xsd:UnqualifiedDataTypes-2"
+_CBC_NS = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 #: A namespace that is a URI (``http://…``, ``urn:…``) rather than a package name (``com.example``).
 _URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
@@ -130,7 +154,7 @@ class XsdFidelityRulePack(WriterLossRulePack):
 
     target_label = "XSD"
     info_drops = frozenset({"deprecated-dropped", "example-dropped"})
-    synthesized = SYNTHESIZED_SUBJECTS
+    synthesized = SYNTHESIZED_SUBJECTS | UBL_SYNTHESIZED_SUBJECTS
     cosmetic = frozenset({
         "renamed-identifier", "null-as-nillable", "example-as-annotation", "null-as-optional",
         "namespace-as-fixed-xmlns",
@@ -171,8 +195,19 @@ class XsdFidelityRulePack(WriterLossRulePack):
         """The rewrite of another format, the element-only choice, and the types-only advisory."""
         verdicts: List[FidelityVerdict] = []
         _extension, _media, written = XSD_OUTPUT_MODES[self._mode]
-        iso = (self._options or XsdEmitOptions()).profile == ISO20022_PROFILE
-        if iso:
+        profile = (self._options or XsdEmitOptions()).profile
+        iso = profile == ISO20022_PROFILE
+        if profile in UBL_PROFILES:
+            what = "a Peppol BIS Billing 3.0 document schema" if profile == "peppol" else "a UBL 2.1 document schema"
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} types are written as {what}: UBL data types and names, "
+                    "and a document element headed by the UBL header; it reads back as an XSD item",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"document → {'Peppol BIS' if profile == 'peppol' else 'UBL'} document schema",
+                )
+            )
+        elif iso:
             if api.format != ISO20022_PROFILE:
                 verdicts.append(
                     FidelityVerdict.approx(
@@ -253,12 +288,14 @@ class XsdEmitOptions(EmitOptions):
         "only.",
     )
 
-    profile: Literal["generic", "iso20022"] = Field(
+    profile: Literal["generic", "iso20022", "ubl", "peppol"] = Field(
         default="generic",
         description="`generic` (default) writes the types as they are. `iso20022` writes an ISO 20022 message "
         "definition: one `urn:iso:std:iso:20022:tech:xsd:<message_identifier>` namespace, a `Document` root "
         "element wrapping the business element, UpperCamelCase names, descriptions as `xs:documentation`, "
-        "and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `xsd` mode only.",
+        "and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `ubl` writes a UBL 2.1 document "
+        "schema (UBL data types, `cbc:` components, a document element headed by the UBL header) with the OASIS UBL "
+        "schemas it imports; `peppol` the same with the Peppol BIS Billing 3.0 conventions. `xsd` mode only.",
     )
     message_identifier: Optional[str] = Field(
         default=None,
@@ -276,6 +313,47 @@ class XsdEmitOptions(EmitOptions):
         description="ISO 20022 profile: the record type (name or key) `Document` wraps as the message. Defaults "
         "to an ISO 20022 source's business element, else the one record no other record uses.",
     )
+
+    ubl_document: Optional[str] = Field(
+        default=None,
+        description="UBL / Peppol profile: the document element, UpperCamelCase (`Invoice`, `Order` …). Peppol: "
+        "`Invoice` or `CreditNote`. Defaults to an imported UBL item's own, else `Invoice` for Peppol, else the "
+        "item's name.",
+    )
+    ubl_namespace: Optional[str] = Field(
+        default=None,
+        description="UBL / Peppol profile: the schema's target namespace (a URI). Defaults to "
+        "`urn:apiome:names:specification:ubl:schema:xsd:<Document>-2`.",
+    )
+    document_record: Optional[str] = Field(
+        default=None,
+        description="UBL / Peppol profile: the record type (name or key) the document is made from. Defaults to the "
+        "one record no other record uses.",
+    )
+
+    @model_validator(mode="after")
+    def _ubl_options(self) -> "XsdEmitOptions":
+        """The UBL options (MFX-24.6) need a UBL profile, which needs ``xsd`` mode; Peppol takes Invoice or
+        CreditNote only; the document is an UpperCamelCase name and the namespace a URI."""
+        named = [n for n in ("ubl_document", "ubl_namespace", "document_record") if getattr(self, n)]
+        if self.profile not in UBL_PROFILES:
+            if named:
+                raise ValueError(f"{', '.join(named)} apply to profile 'ubl' or 'peppol' only")
+            return self
+        if self.mode != "xsd":
+            raise ValueError(f"profile {self.profile!r} writes an XML Schema; mode {self.mode!r} is not available "
+                             "with it")
+        if self.ubl_document is not None:
+            self.ubl_document = self.ubl_document.strip()
+            if not re.fullmatch(r"[A-Z][A-Za-z0-9]*", self.ubl_document):
+                raise ValueError("ubl_document must be an UpperCamelCase name, such as Invoice")
+            if self.profile == "peppol" and self.ubl_document not in PEPPOL_DOCUMENTS:
+                raise ValueError("profile 'peppol' writes an Invoice or a CreditNote; set ubl_document to one of them")
+        if self.ubl_namespace is not None:
+            self.ubl_namespace = self.ubl_namespace.strip()
+            if not _URI.match(self.ubl_namespace):
+                raise ValueError("ubl_namespace must be a URI, such as urn:example:ubl:schema:xsd:Invoice-2")
+        return self
 
     @model_validator(mode="after")
     def _version_is_for_xsd(self) -> "XsdEmitOptions":
@@ -360,7 +438,7 @@ class XsdEmitter(Emitter, register=True):
             EmittedFile(
                 path=path,
                 content=content,
-                media_type="application/json" if path == MESSAGE_CATALOG_PATH else media_type,
+                media_type=_file_media_type(path, media_type),
             )
             for path, content in writer.render()
         ]
@@ -406,8 +484,13 @@ class _XsdWriter:
         self.losses = LossTracker()
         #: The ISO 20022 message (MFX-22.4), or ``None`` for the generic profile.
         self.message: Optional[Iso20022Message] = None
+        #: The UBL document (MFX-24.6), or ``None`` for any other profile.
+        self.document: Optional[UblDocument] = None
         if options.profile == ISO20022_PROFILE:
             self._init_iso20022()
+            return
+        if options.profile in UBL_PROFILES:
+            self._init_ubl()
             return
         self.main_namespace, type_namespaces = xsd_namespaces(api)
         #: Every namespace written, the main one first.
@@ -471,6 +554,64 @@ class _XsdWriter:
         self.label = "ISO 20022 XSD"
         self._mode_written = None
 
+    def _init_ubl(self) -> None:
+        """Set up a UBL document schema: one namespace, UBL data types and names (MFX-24.6).
+
+        Raises:
+            EmitOptionsError: When ``document_record`` names no record type of the model.
+        """
+        api, options = self._api, self._options
+        try:
+            document = resolve_document(api, peppol=options.profile == "peppol", document=options.ubl_document,
+                                        namespace=options.ubl_namespace, record=options.document_record)
+        except ValueError as exc:
+            raise EmitOptionsError(str(exc)) from exc
+        self.document = document
+        record_document_losses(api, document, self.losses)
+        self.main_namespace = document.namespace
+        self.namespaces = [document.namespace]
+        self._schema = UblSchemaWriter(
+            api,
+            target_namespace=document.namespace,
+            target_label="UBL XSD",
+            losses=self.losses,
+            tracker=self.tracker,
+            type_namespaces={t.key: document.namespace for t in api.types},
+            prefixes={document.namespace: TNS_PREFIX},
+            xsd_version=options.xsd_version,
+            standalone=True,
+            reserved_type_names=frozenset({f"{document.name}Type"}),
+        )
+        self.paths = {document.namespace: document.schema_path}
+        self.label = "Peppol BIS XSD" if document.peppol else "UBL XSD"
+        self._mode_written = None
+
+    def _render_ubl(self) -> List[Tuple[str, str]]:
+        """The document schema, the OASIS component schemas it imports, their notice and the guide (MFX-24.6)."""
+        document = self.document
+        assert document is not None
+        if self._api.services or self._api.channels:
+            self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
+        schema_el = self._schema.new_schema(document.namespace)
+        schema_el.set("elementFormDefault", "qualified")
+        schema_el.set("xmlns:cbc", _CBC_NS)
+        schema_el.set("xmlns:udt", _UDT_NS)
+        self._schema.append_types(schema_el, document.namespace, declare_elements=False)
+        append_ubl_document(schema_el, self._schema, document, self.losses)
+        for index, (namespace, location) in enumerate((
+            (_CBC_NS, "common/UBL-CommonBasicComponents-2.1.xsd"),
+            (_UDT_NS, "common/UBL-UnqualifiedDataTypes-2.1.xsd"),
+        )):
+            schema_el.insert(index, ET.Element(ET.QName(XSD_NS, "import"),
+                                               {"namespace": namespace, "schemaLocation": location}))
+        profile_appinfo(schema_el, self._options.profile)
+        return [
+            (document.schema_path, self._serialize(schema_el)),
+            *bundled_files().items(),
+            (UBL_NOTICE_PATH, notice_text()),
+            (document.guide_path, ubl_guide(self._api, self._schema, document)),
+        ]
+
     def _render_iso20022(self) -> List[Tuple[str, str]]:
         """The message definition, then the message-catalog manifest (MFX-22.4)."""
         message = self.message
@@ -494,6 +635,8 @@ class _XsdWriter:
         ET.register_namespace(XSD_PREFIX, XSD_NS)
         if self.message is not None:
             return self._render_iso20022()
+        if self.document is not None:
+            return self._render_ubl()
         if self._api.services or self._api.channels:
             self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
         from_xsd = self._api.format == _XSD_FORMAT
@@ -602,6 +745,19 @@ class _XsdWriter:
         ET.indent(schema_el, space="  ")
         parts.append(ET.tostring(schema_el, encoding="unicode"))
         return "\n".join(parts) + "\n"
+
+
+def _file_media_type(path: str, schema_media_type: str) -> str:
+    """A file's media type: the schema's for an ``.xsd`` (or RELAX NG / DTD), else by its extension.
+
+    The ISO 20022 profile ships a JSON catalog (MFX-22.4) and the UBL profiles a notice and a guide in Markdown
+    (MFX-24.6) beside the schema.
+    """
+    if path.endswith(".json"):
+        return "application/json"
+    if path.endswith(".md"):
+        return "text/markdown"
+    return schema_media_type
 
 
 def _types_only_advisory(api: CanonicalApi) -> str:

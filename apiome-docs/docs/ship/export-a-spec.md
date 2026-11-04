@@ -1928,6 +1928,8 @@ the same name, so a document can start with it.
 - **Serve an older XML toolchain.** The same types as a RELAX NG grammar or a DTD, with **mode**.
 - **Publish a payments message.** The types as an ISO 20022 message definition, with **profile**
   `iso20022`.
+- **Exchange business documents or e-invoices.** The types as a UBL 2.1 document schema, with **profile**
+  `ubl`, or a Peppol BIS Billing 3.0 invoice or credit note, with **profile** `peppol`.
 
 Need the operations too? Export to [WSDL](#wsdl-and-xsd-from-any-source): its schema is written by the
 same mapping, so the types come out the same in both.
@@ -1940,6 +1942,7 @@ same mapping, so the types come out the same in both.
 | **See** how types, rules and names are written, and what XML Schema cannot say | The fidelity report on the card | The table below |
 | **Write** RELAX NG (`.rng`, `.rnc`) or a DTD (`.dtd`) instead | **mode** | [RELAX NG and DTD output](#relax-ng-and-dtd-output) |
 | **Write** an ISO 20022 message definition and its message catalog | **profile** `iso20022` | [ISO 20022 message profile](#iso-20022-message-profile) |
+| **Write** a UBL 2.1 document schema, or a Peppol BIS invoice or credit note | **profile** `ubl` or `peppol` | [UBL and Peppol BIS profiles](#ubl-and-peppol-bis-profiles) |
 | **Trust** the export: XML, packaging, both XSD processors, re-import | Automatic before every download | The numbered checks below |
 | **Export** from the CLI | `apiome export xsd <item> --out <file>.xsd` | Below, *Where to find it* |
 | **Download** from a public item | Browse → **Export** | Below, *Where to find it* |
@@ -2100,18 +2103,90 @@ To try it, export an item to **XSD** with **profile** `iso20022` and **message_i
 `pain.001.001.09`, or export the sample `apiome-ui/examples/iso20022/07-pain.001.001.09-message-definition.xsd`
 after importing it, with no options.
 
+#### UBL and Peppol BIS profiles {#ubl-and-peppol-bis-profiles}
+
+Business documents — orders, invoices, despatch advice — are exchanged as OASIS **UBL** (Universal Business
+Language), and EU e-invoicing runs on **Peppol BIS Billing 3.0**, whose invoices and credit notes are UBL 2.1
+documents. Set **profile** to `ubl` to write the item's types as a UBL 2.1 document schema, or to `peppol` for
+the same with the Peppol BIS conventions applied.
+
+| Convention | What the export writes |
+| --- | --- |
+| **UBL data types** | Every value is typed by a UBL data type: `udt:TextType`, `udt:CodeType` (an enumeration), `udt:IdentifierType` (an ID or UUID), `udt:NameType`, `udt:AmountType` (a decimal named like an amount, price or total), `udt:NumericType`, `udt:IndicatorType` (a boolean), `udt:DateType`, `udt:TimeType`, `udt:DateTimeType`, `udt:BinaryObjectType`. |
+| **UBL components** | A value whose name and data type match a UBL basic component is a reference to it — `issueDate` is `cbc:IssueDate`, `totalAmount` `cbc:TotalAmount`, `note` `cbc:Note` — so the schema reuses UBL's own definitions. |
+| **UBL names** | UpperCamelCase, each value ending with its representation term: `status` (an enumeration) is `StatusCode`, `paid` `PaidIndicator`, `orderId` `OrderID`. An object is an aggregate type, `<Name>Type`. |
+| **The document** | One global element, the document (**ubl_document**: `Invoice`, `Order` …), whose type is the document object headed by `cbc:UBLVersionID`, `cbc:CustomizationID` and `cbc:ProfileID`. |
+| **Namespace** | The document's own namespace (**ubl_namespace**, by default `urn:apiome:names:specification:ubl:schema:xsd:<Document>-2`); the OASIS namespaces belong to the OASIS documents. |
+| **Rules** | UBL data types carry no facets or code lists, so a `maxLength`, a pattern or an enumeration's codes are written as documentation. An optional value is left out when absent (UBL has no `nil`). |
+
+**The UBL schemas ship with it.** The export is a `.zip`: `<Document>.xsd`, the OASIS UBL 2.1 schemas it
+imports (`common/UBL-CommonBasicComponents-2.1.xsd`, `UBL-UnqualifiedDataTypes-2.1.xsd`,
+`UBL-QualifiedDataTypes-2.1.xsd` and UN/CEFACT's `CCTS_CCT_SchemaModule-2.1.xsd`, unmodified), their
+`NOTICE.md`, and a guide, `<Document>.ubl-guide.md`, listing the header and every value with its UBL type,
+cardinality and source. Everything a receiver needs to validate documents is in the one download.
+
+**Peppol BIS Billing 3.0** (`peppol`) applies its conventions on top:
+
+- The document is an `Invoice` (the default) or a `CreditNote`.
+- `cbc:CustomizationID` and `cbc:ProfileID` are mandatory, and documented with the BIS values
+  (`urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0` and
+  `urn:fdc:peppol.eu:2017:poacc:billing:01:1.0`).
+- `cbc:ID`, `cbc:IssueDate`, the type code (`cbc:InvoiceTypeCode` or `cbc:CreditNoteTypeCode`) and
+  `cbc:DocumentCurrencyCode` are mandatory, right after the header. The item's own values are used when it has
+  them (a field named `issueDate` of type date is `cbc:IssueDate`); any it lacks are added.
+
+Peppol also publishes Schematron business rules (EN 16931 and the Peppol rules). **The export does not run
+them**: it applies the document, header and mandatory-component conventions above. Validate the invoices
+themselves with the Peppol validation artifacts too; the guide says so.
+
+The profile options, all optional:
+
+- **ubl_document** — the document element, in UpperCamelCase. By default an imported UBL item's own document,
+  else `Invoice` for Peppol, else the item's name. Peppol takes `Invoice` or `CreditNote` only.
+- **ubl_namespace** — the schema's target namespace, a URI.
+- **document_record** — the object the document is made from, by name. By default the one object no other
+  object uses; an unknown name is refused.
+
+Both profiles write XML Schema only: with **mode** set to `relaxng`, `relaxng-compact` or `dtd`, the export is
+refused.
+
+The fidelity report lists what the item could not meet of the conventions:
+
+| When | The report says |
+| --- | --- |
+| Always | Synthesized (note): the document element and its UBL header |
+| Peppol, and the item has no value for a mandatory component | Synthesized: the component the export adds, such as `cbc:InvoiceTypeCode` |
+| A `maxLength`, pattern or bounds; an enumeration's codes | Approximated: written as documentation, which nothing checks |
+| A name that needs a representation term or another case (`status` → `StatusCode`) | Approximated (note) |
+| Several objects could be the document | Approximated: the first is used. Set **document_record** to choose another. |
+| Types from another namespace | Approximated: written in the document's namespace |
+
+Each UBL or Peppol export is checked like any XSD export (above): the document schema is built by an XML
+Schema processor **against the shipped OASIS UBL 2.1 schemas**, reading only the export's own files. Also:
+
+1. Every shipped `common/` schema is the OASIS file, byte for byte (`ubl.bundled-schemas`), and `NOTICE.md`
+   is there (`ubl.notice`).
+2. A Peppol export meets the conventions above (`ubl.peppol`): an `Invoice` or `CreditNote`, a mandatory
+   `cbc:CustomizationID` and `cbc:ProfileID` with the BIS values, and the four mandatory components.
+3. The schema imports again as an XSD item.
+
+To try it, export an item to **XSD** with **profile** `peppol`, or import the sample
+`apiome-ui/examples/xsd/07-ubl-2.1-invoice-set` and export it with **profile** `ubl`.
+
 **Where to find it.** In the **Export** dialog, the **XSD** card is under **Data schema & graph** on the
 **Target** step. Its badge is **lossless** for an item imported from XSD and **types-only** for any
 other source (XSD keeps the types and leaves out the operations). Pick the card to see its options:
 **Xsd Version** (`1.0` by default, or `1.1`), **Include Xml Declaration** and **Include Comments** (both
 on by default), **Mode** (`xsd` by default; `relaxng`, `relaxng-compact` or `dtd`), **Profile**
-(`generic` by default, or `iso20022`), and the profile's **Message Identifier**, **Business Area** and
-**Message Type**. From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add
+(`generic` by default, `iso20022`, `ubl` or `peppol`), the ISO 20022 profile's **Message Identifier**,
+**Business Area** and **Message Type**, and the UBL profiles' **Ubl Document**, **Ubl Namespace** and
+**Document Record**. From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add
 `--option xsd_version=1.1`, `--option include_xml_declaration=false`, `--option mode=dtd --out <file>.dtd`
-or `--option profile=iso20022 --option message_identifier=pain.001.001.09 --out <file>.zip`. A types-only
+`--option profile=iso20022 --option message_identifier=pain.001.001.09 --out <file>.zip` or
+`--option profile=peppol --option ubl_document=CreditNote --out <file>.zip`. A types-only
 export exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export**
 dialog on Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces or
-uses the ISO 20022 profile.
+uses the ISO 20022, UBL or Peppol profile.
 
 ### ASN.1 from any source
 

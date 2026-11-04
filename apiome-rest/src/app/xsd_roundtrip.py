@@ -38,6 +38,13 @@ can call a tool; this module stays pure Python.
 (``xsd.iso20022-catalog``: JSON, naming this schema and its namespace) and set aside; the schema is then
 checked as any XSD export is, and re-imported through :class:`app.iso20022_import_source.Iso20022ImportSource`,
 the adapter an upload of it is detected as.
+
+**UBL and Peppol profiles** (MFX-24.6, #4346). A UBL export ships the OASIS UBL 2.1 component schemas it imports
+(``common/…``), their ``NOTICE.md`` and a Markdown guide. The Markdown files are set aside like the ISO 20022 catalog;
+the schemas are built together as any multi-file XSD export is — which validates the document schema against the
+real UBL 2.1 schemas. Besides: every shipped ``common/`` schema is the bundled OASIS file, byte for byte
+(``ubl.bundled-schemas``); the notice is there (``ubl.notice``); and a Peppol export meets the Peppol BIS Billing 3.0
+conventions (``ubl.peppol``, :func:`app.ubl_xsd_profile.peppol_problems`).
 """
 
 from __future__ import annotations
@@ -76,6 +83,9 @@ __all__ = [
     "split_message_catalog",
     "xsd_version_of",
 ]
+
+#: The XML Schema namespace (``xsd:appinfo`` names a UBL export's profile, MFX-24.6).
+_XSD_NS = "http://www.w3.org/2001/XMLSchema"
 
 #: Which import path the round trip measured through.
 ImportPath = Literal["xsd", "wsdl", "relaxng", "dtd", "iso20022"]
@@ -171,20 +181,50 @@ def _problem(rule: str, message: str, file: Optional[str] = None, path: Optional
 
 
 def split_message_catalog(emit_result: EmitResult) -> tuple[EmitResult, Optional[str]]:
-    """Set an ISO 20022 export's message-catalog manifest aside (MFX-22.4).
+    """Set an export's side files aside: the ISO 20022 message catalog (MFX-22.4) and Markdown files (MFX-24.6).
 
     Args:
         emit_result: An XSD emitter output.
 
     Returns:
-        ``(the output without the manifest, the manifest text)``; the output unchanged and ``None`` when it
-        has no manifest.
+        ``(the output without its side files, the ISO 20022 catalog text or None)``; the output unchanged when it
+        has none.
     """
     catalog = next((f for f in emit_result.files if f.path == MESSAGE_CATALOG_PATH), None)
-    if catalog is None:
+    schemas = [f for f in emit_result.files if f.path != MESSAGE_CATALOG_PATH and not f.path.endswith(".md")]
+    if len(schemas) == len(emit_result.files):
         return emit_result, None
-    schemas = [f for f in emit_result.files if f.path != MESSAGE_CATALOG_PATH]
-    return emit_result.model_copy(update={"files": schemas}), str(catalog.content)
+    return emit_result.model_copy(update={"files": schemas}), str(catalog.content) if catalog else None
+
+
+def _check_ubl(emit_result: EmitResult) -> List[Dict[str, Any]]:
+    """A UBL export: shipped OASIS schemas unmodified, the notice present, Peppol conventions (MFX-24.6)."""
+    from .ubl_xsd_profile import PROFILE_APPINFO_SOURCE, UBL_NOTICE_PATH, bundled_files, peppol_problems
+
+    main = emit_result.files[0]
+    try:
+        root = parse_xml(str(main.content), source_label=main.path)
+    except SecureXmlError:
+        return []  # the XML check reports it
+    profile = next((el.text for el in root.iter(f"{{{_XSD_NS}}}appinfo")
+                    if el.get("source") == PROFILE_APPINFO_SOURCE), None)
+    if profile not in ("ubl", "peppol"):
+        return []
+    problems: List[Dict[str, Any]] = []
+    bundled = bundled_files()
+    files = {f.path: str(f.content) for f in emit_result.files}
+    for path, text in files.items():
+        if path.startswith("common/") and bundled.get(path) != text:
+            problems.append(_problem("ubl.bundled-schemas", f"{path} is not the OASIS UBL 2.1 schema it is named after",
+                                     path))
+    for path in bundled:
+        if path not in files:
+            problems.append(_problem("ubl.bundled-schemas", f"the export does not ship {path}", path))
+    if UBL_NOTICE_PATH not in files:
+        problems.append(_problem("ubl.notice", f"the OASIS UBL schemas must travel with their {UBL_NOTICE_PATH}"))
+    if profile == "peppol":
+        problems += [_problem("ubl.peppol", message, main.path) for message in peppol_problems(str(main.content))]
+    return problems
 
 
 def _check_message_catalog(text: str, emit_result: EmitResult) -> List[Dict[str, Any]]:
@@ -266,10 +306,12 @@ def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
     mode = output_mode_of(emit_result)
     if mode != "xsd":
         return _check_mode_file(emit_result, mode)
+    whole = emit_result
     emit_result, catalog = split_message_catalog(emit_result)
     if not emit_result.files:
         raise ValueError("The XSD export wrote no schema.")
     problems: List[Dict[str, Any]] = _check_message_catalog(catalog, emit_result) if catalog is not None else []
+    problems += _check_ubl(whole)
     files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
     roots: Dict[str, ET.Element] = {}
     for path, text in files.items():

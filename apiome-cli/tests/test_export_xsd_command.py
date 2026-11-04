@@ -83,15 +83,17 @@ def test_the_fixture_carries_the_options_and_the_types_only_badge() -> None:
     assert set(target["options_schema"]["properties"]) == {
         "include_comments", "include_xml_declaration", "mode", "xsd_version",
         "profile", "message_identifier", "business_area", "message_type",
+        "ubl_document", "ubl_namespace", "document_record",
     }
     assert target["options_schema"]["properties"]["xsd_version"]["enum"] == ["1.0", "1.1"]
     # MFX-22.3 (#4134): the RELAX NG and DTD output modes.
     assert target["options_schema"]["properties"]["mode"]["enum"] == ["xsd", "relaxng", "relaxng-compact", "dtd"]
     # MFX-22.4 (#4135): the ISO 20022 message profile.
-    assert target["options_schema"]["properties"]["profile"]["enum"] == ["generic", "iso20022"]
+    assert target["options_schema"]["properties"]["profile"]["enum"] == ["generic", "iso20022", "ubl", "peppol"]
     assert target["default_options"] == {"include_comments": True, "include_xml_declaration": True,
                                          "mode": "xsd", "xsd_version": "1.0", "profile": "generic",
-                                         "message_identifier": None, "business_area": None, "message_type": None}
+                                         "message_identifier": None, "business_area": None, "message_type": None,
+                                         "ubl_document": None, "ubl_namespace": None, "document_record": None}
     assert target["descriptor"]["multi_file"] is False
     assert target["fidelity"]["tier"] == "types-only"
 

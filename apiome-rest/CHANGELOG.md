@@ -5,6 +5,37 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.623.0] - 2026-11-04
+
+### Added
+- **UBL and Peppol BIS profiles for the XSD export (MFX-24.6, #4346).** The `xsd` target's `profile` takes `ubl` —
+  the item's types as a UBL 2.1 document schema — and `peppol` — the same with the Peppol BIS Billing 3.0 conventions
+  (`app.ubl_xsd_profile`, on the shared XSD writer):
+  - **UBL conventions:** values typed by UBL unqualified data types (`udt:TextType`, `CodeType`, `IdentifierType`,
+    `NameType`, `AmountType`, `NumericType`, `IndicatorType`, `DateType`, `TimeType`, `DateTimeType`,
+    `BinaryObjectType`); a value whose name and data type match a UBL basic component is a `cbc:` reference
+    (`cbc:IssueDate`, `cbc:TotalAmount`); names UpperCamelCase ending with their representation term (`StatusCode`,
+    `PaidIndicator`, `OrderID`); aggregates `<Name>Type`; no `nillable`; facets and code lists as documentation.
+  - **The document:** one global element (`ubl_document`; an imported UBL item's own, else `Invoice` for Peppol, else
+    the item's name) whose type is the document record (`document_record`, else the one unused record) headed by
+    `cbc:UBLVersionID`, `cbc:CustomizationID`, `cbc:ProfileID`, in the document's own namespace (`ubl_namespace`,
+    default `urn:apiome:names:specification:ubl:schema:xsd:<Document>-2`).
+  - **Peppol BIS Billing 3.0:** `Invoice` or `CreditNote` only; `cbc:CustomizationID` / `cbc:ProfileID` mandatory and
+    documented with the BIS values; `cbc:ID`, `cbc:IssueDate`, the type code and `cbc:DocumentCurrencyCode`
+    mandatory — the item's own, else added (`peppol-element-synthesized`, SYNTH). Peppol's Schematron business rules
+    are not run (no XSLT 2.0 processor is bundled); the export's guide says so.
+  - **Files:** `<Document>.xsd`, the OASIS UBL 2.1 schemas it imports (`common/…`), `NOTICE.md` and
+    `<Document>.ubl-guide.md` (Markdown, `text/markdown`), delivered as a zip.
+  - **Fidelity:** `ubl-document-root` and `peppol-element-synthesized` (SYNTH); `facets-as-documentation`,
+    `codes-as-documentation`, `ubl-document-record-inferred`, `ubl-namespace-merged`, renames (APPROX).
+  - **Checks:** the export builds against the shipped OASIS UBL 2.1 schemas (sandboxed); `ubl.bundled-schemas` (each
+    `common/` schema is the OASIS file, byte for byte), `ubl.notice`, `ubl.peppol`
+    (`app.ubl_xsd_profile.peppol_problems`); Markdown side files are set aside for the XML checks.
+- **Vendored OASIS UBL 2.1 schemas** (`src/app/data/ubl_2_1_xsd/`, unmodified, with `NOTICE.md`): the basic
+  components, qualified and unqualified data types, and UN/CEFACT's CCTS core component type module — exactly the
+  import closure an export needs.
+- `app.iso20022_xsd_profile.unused_records` is public (shared with the UBL profile).
+
 ## [1.622.0] - 2026-11-04
 
 ### Added
