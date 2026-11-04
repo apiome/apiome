@@ -1,0 +1,19 @@
+---
+slug: legacy-rest-export-overview
+title: Legacy REST descriptors, end to end
+description: "One overview of the WADL and Google API Discovery exports."
+authors: [apiome]
+---
+
+The legacy REST descriptor exports are complete: the WADL emitter with its XSD grammar, the Google API
+Discovery document emitter, their fidelity packs and checks, and the target cards, CLI and fixtures.
+[Legacy REST descriptors](/ship/export-a-spec#legacy-rest-descriptors) brings them together.
+
+{/* truncate */}
+
+- **When to use which:** WADL for a JAX-RS stack, a gateway or a tool that imports WADL, Google API Discovery
+  for a client built by Google's API client libraries, and OpenAPI for anything new.
+- **At a glance:** the two side by side — what each exports from, the files you get, the options, what types
+  become, which parameters and responses are kept, what checks it, and the CLI command.
+- **In its place:** the note on WADL import (the `<wadl:application>` root, request params and an included
+  grammar) now sits in the WADL section of **Export a spec**.
