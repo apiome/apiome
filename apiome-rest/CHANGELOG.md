@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.647.0] - 2026-11-04
+
+### Added
+- **FIX Orchestra fidelity pack (MFX-37.2, #4324).**
+  - Tags persist: `FixOrchestraEmitOptions.persisted_field_numbers` (not in the options schema) is filled from the
+    MFX-12.2 field-identity store under target `fix-orchestra` (`field/<name>[@<scenario>]`); a stored tag is reused,
+    a new field gets the next free tag (stored tags of dropped fields stay taken), and `EmitResult
+    .field_identity_assignments` carries the new ones for the export service to persist.
+  - Operations: one whose request / response payload is written as a message is a **scenario** — the request
+    message gets a `responses` entry naming the response messages — reported `APPROX` (plus an info `DROP` for the
+    operation itself); any other operation `DROP`; the critical advisory counts dropped operations and scenarios.
+  - Constraints: an inline `enum` becomes a code set (`<field>CodeSet`); `minimum` / `maximum` /
+    `minLength` / `maxLength` become the fieldRef's `minInclusive` / `maxInclusive` / `implMinLength` /
+    `implMaxLength`; a list's item counts the groupRef's `implMinOccurs` / `implMaxOccurs`; anything else the
+    fieldRef's documentation — each `APPROX`, none dropped.
+  - Non-FIX records are flattened into a message / component / group (`APPROX`).
+  - `tests/test_fix_orchestra_fidelity.py`; round-trip and conformance goldens regenerated.
+
 ## [1.646.0] - 2026-11-04
 
 ### Added

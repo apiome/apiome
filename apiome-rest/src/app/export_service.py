@@ -37,6 +37,7 @@ from .emitter import (
 )
 from .field_identity_store import (
     CAPNP_TARGET,
+    FIX_ORCHESTRA_TARGET,
     FLATBUFFERS_TARGET,
     ICEBERG_TARGET,
     PROTO3_TARGET,
@@ -44,6 +45,7 @@ from .field_identity_store import (
     load_persisted_field_numbers,
     persist_field_number_assignments,
 )
+from .fix_orchestra_emitter import FixOrchestraEmitter
 from .flatbuffers_emitter import FlatBuffersEmitter
 from .iceberg_emitter import IcebergEmitter
 from .proto_emitter import ProtoEmitter
@@ -74,7 +76,8 @@ class ExportPersistenceContext(BaseModel):
     """Optional tenant/artifact coordinates for persisting synthesized field identities.
 
     Used by the targets that number fields positionally: Protobuf (MFX-12.2), Thrift (MFX-25.2),
-    Cap'n Proto (MFX-30.2, which also keeps its file id there), FlatBuffers and Iceberg (MFX-36.3).
+    Cap'n Proto (MFX-30.2, which also keeps its file id there), FlatBuffers, Iceberg (MFX-36.3) and FIX Orchestra
+    (MFX-37.2).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -94,7 +97,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
         :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift,
         :data:`~app.field_identity_store.CAPNP_TARGET` for Cap'n Proto,
         :data:`~app.field_identity_store.FLATBUFFERS_TARGET` for FlatBuffers,
-        :data:`~app.field_identity_store.ICEBERG_TARGET` for Iceberg (MFX-36.3), ``None`` for every other
+        :data:`~app.field_identity_store.ICEBERG_TARGET` for Iceberg (MFX-36.3),
+        :data:`~app.field_identity_store.FIX_ORCHESTRA_TARGET` for FIX Orchestra (MFX-37.2), ``None`` for every other
         target.
     """
     if issubclass(emitter_cls, ProtoEmitter):
@@ -107,6 +111,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
         return FLATBUFFERS_TARGET
     if issubclass(emitter_cls, IcebergEmitter):
         return ICEBERG_TARGET
+    if issubclass(emitter_cls, FixOrchestraEmitter):
+        return FIX_ORCHESTRA_TARGET
     return None
 
 

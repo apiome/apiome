@@ -2592,11 +2592,18 @@ Orchestra 1.0 repository XSD, which Apiome ships with.
 | An enumeration | A `codeSet`; each value is a `code` (`char` for one-character codes, `int`, else `String`) |
 | A field | A `field`, declared once with its tag (`id`) and datatype, and a `fieldRef` by tag |
 | A required field / constant / conditional rule | `presence="required"` / `presence="constant"` with its `value` / a `rule` with its `when` |
+| An inline `enum` on a field | A code set of its own (`<field>CodeSet`) |
+| `minimum` / `maximum`, `minLength` / `maxLength` | The fieldRef's `minInclusive` / `maxInclusive`, `implMinLength` / `implMaxLength` |
+| A list's `minItems` / `maxItems` | The groupRef's `implMinOccurs` / `implMaxOccurs` |
+| Any other constraint (`pattern`, `multipleOf` …) | The fieldRef's documentation (`Constraints: pattern …`) |
+| An operation whose request or response body is a message | A scenario: the request message's `responses` name the response messages |
 | Actors, state machines and flows | `actors`, when the source carries them |
 
 **Tags and ids.** An item imported from FIX or Orchestra keeps its tags and its message, component, group
 and code-set ids. Any other source has none, so tags are assigned from **5000**, FIX's user-defined range,
-skipping every tag the source already uses, and ids from 1. Datatypes are the standard FIX ones (`String`,
+skipping every tag the source already uses, and ids from 1. Apiome keeps every tag it assigns for the item:
+the next export of the same item reuses each field's tag, and a new field gets a tag no field of the item has
+had, so a counterparty's FIX dictionary stays valid. Datatypes are the standard FIX ones (`String`,
 `int`, `float`, `Boolean`, `UTCTimestamp`, `LocalMktDate`, `UTCTimeOnly`, `data`).
 
 **What the schema requires.** A name Orchestra does not allow is rewritten (`placed-at` → `placed_at`).
@@ -2606,13 +2613,21 @@ enumeration gets an empty `NoCodeSet`. Each of these is reported.
 
 #### What the fidelity report lists {#what-the-fix-orchestra-fidelity-report-lists}
 
-- **Dropped:** every operation, channel and service, under a critical "types only" warning, and validation
-  constraints other than presence and code sets.
-- **Made up:** every tag the source does not carry, and the placeholder code set.
-- **Approximated:** a list of plain values or a map written as a group, a union written as a component,
-  and a renamed name.
-- **Read back differently:** what a re-import gives back is measured, not guessed. An entity reads back under
-  its Orchestra name, and the API's identity as the repository's name, version and title.
+| Construct | Reported as | Why |
+| --- | --- | --- |
+| An operation whose request or response body is written as a message | **Approximated** (a message scenario) and the operation itself **dropped** (info) | The messages and their responses survive; the binding, parameters and errors do not |
+| Any other operation, channel or service | **Dropped**, under a critical "types only" warning that counts the dropped operations and the scenarios | Orchestra describes messages, not an API |
+| A FIX tag the source does not carry | **Made up** | Assigned once, then kept by every re-export of the item |
+| An inline enumeration | **Approximated**: a code set | The values are kept as codes; a re-import types the field by the code set |
+| Bounds, lengths, list counts | **Approximated**: fieldRef and groupRef attributes | Orchestra records them for implementations; it does not validate with them |
+| Any other constraint | **Approximated**: written in the documentation | Orchestra has no form for it |
+| A record from another format | **Approximated**: flattened into a message, component or group | Its fields become refs to fields declared once for the repository |
+| A list of plain values, a map, a union | **Approximated**: a group, a group of key / value entries, a component | Orchestra has no lists of values, maps or unions |
+| A name Orchestra does not allow, the version, a placeholder code set | **Approximated** / **made up** | What the schema requires |
+
+What a re-import gives back is measured, not guessed: an entity reads back under its Orchestra name, and the
+API's identity as the repository's name, version and title. An item imported from Orchestra reports no made-up
+tag and no flattening.
 
 ### WSDL and XSD from any source
 
