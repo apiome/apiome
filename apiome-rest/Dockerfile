@@ -52,6 +52,9 @@ ARG AMF_VERSION=5.7.1
 ARG FHIR_VALIDATOR_VERSION=6.10.4
 # cb2xml (MFX-23.4, #4142) — optional: it parses an emitted COBOL copybook.
 ARG CB2XML_VERSION=1.01.08
+# Liquibase CLI (MFX-35.3, #4313) — optional: `validate` checks an emitted formatted-SQL changelog.
+# 4.33.0 is the last Apache-2.0 release (Liquibase 5 changed its license).
+ARG LIQUIBASE_VERSION=4.33.0
 # jing (MFX-22.3) — RELAX NG validator jar from Maven Central, with the two libraries it loads.
 ARG JING_VERSION=20220510
 ARG ISORELAX_VERSION=20030108
@@ -238,6 +241,28 @@ RUN curl -fsSL "https://github.com/bmTas/cb2xml/releases/download/${CB2XML_VERSI
     && ${TOOLS_PREFIX}/bin/cb2xml -cobol /tmp/smoke.cpy -xml /tmp/smoke.xml \
     && grep -q 'name="SMOKE-ID"' /tmp/smoke.xml \
     && rm /tmp/smoke.cpy /tmp/smoke.xml
+
+# Liquibase (MFX-35.3, #4313) — the official CLI tarball, unpacked under the tools prefix behind a
+# `liquibase` wrapper (it runs on the JRE above). The commercial extensions and the JDBC drivers an offline
+# `validate` never loads (~330 MB of the tarball) are removed. It checks an emitted formatted-SQL changelog with
+# `validate` against an offline database (app.liquibase_validation); the smoke test validates a
+# one-changeset changelog the same way. Analytics and the banner are off for every run.
+RUN mkdir -p ${TOOLS_PREFIX}/lib/liquibase \
+    && curl -fsSL "https://github.com/liquibase/liquibase/releases/download/v${LIQUIBASE_VERSION}/liquibase-${LIQUIBASE_VERSION}.tar.gz" \
+      | tar -xz -C ${TOOLS_PREFIX}/lib/liquibase \
+    && rm -rf ${TOOLS_PREFIX}/lib/liquibase/internal/extensions/* ${TOOLS_PREFIX}/lib/liquibase/examples \
+      ${TOOLS_PREFIX}/lib/liquibase/internal/lib/snowflake-jdbc.jar ${TOOLS_PREFIX}/lib/liquibase/internal/lib/sqlite-jdbc.jar \
+      ${TOOLS_PREFIX}/lib/liquibase/internal/lib/jcc.jar ${TOOLS_PREFIX}/lib/liquibase/internal/lib/ojdbc8.jar \
+      ${TOOLS_PREFIX}/lib/liquibase/internal/lib/mssql-jdbc.jar ${TOOLS_PREFIX}/lib/liquibase/internal/lib/jaybird.jar \
+    && printf '#!/bin/sh\nexport LIQUIBASE_ANALYTICS_ENABLED=false LIQUIBASE_SHOW_BANNER=false\nexec %s/lib/liquibase/liquibase "$@"\n' "${TOOLS_PREFIX}" \
+      > ${TOOLS_PREFIX}/bin/liquibase \
+    && chmod +x ${TOOLS_PREFIX}/bin/liquibase \
+    && mkdir -p /tmp/lb-smoke \
+    && printf -- '--liquibase formatted sql\n\n--changeset smoke:1\nCREATE TABLE smoke (id INTEGER);\n' \
+      > /tmp/lb-smoke/smoke.changelog.sql \
+    && (cd /tmp/lb-smoke && HOME=/tmp/lb-smoke ${TOOLS_PREFIX}/bin/liquibase --changelog-file=smoke.changelog.sql \
+      --url=offline:postgresql --search-path=/tmp/lb-smoke validate) \
+    && rm -rf /tmp/lb-smoke
 
 # jing (MFX-22.3, #4134) — the relaxng/jing-trang validator, from Maven Central, behind a `jing` wrapper
 # (com.thaiopensource.relaxng.util.Driver; `-c` reads the compact syntax). Given a grammar and no

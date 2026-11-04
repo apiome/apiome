@@ -40,6 +40,7 @@ _EXPECTED_KEYS = {
     "amf",
     "fhir-validator",
     "cb2xml",
+    "liquibase",
     "asyncapi",
     "asyncapi-parser",
     "typescript-types-extractor",

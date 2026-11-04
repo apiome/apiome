@@ -20,7 +20,7 @@ What lives here:
   ``zod-schema-extractor``, ``dbml-validator``, ``prisma-validator``, ``cue``, ``pkl``, ``dhall``,
   ``asyncapi-diff``, ``rover``,
   ``graphql-inspector-diff``, ``spectral``, ``vacuum``, ``redocly``, ``oasdiff``,
-  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``, ``kubeconform``, ``jing``.
+  ``openapi-changes``, ``capnp``, ``flatc``, ``cb2xml``, ``liquibase``, ``kubeconform``, ``jing``.
 * :func:`register_bundled_tools` — register every bundled tool into the runner registry
   (idempotent; safe to call repeatedly / on re-import).
 * :func:`probe_tool` / :func:`probe_all` — **cheap, lazy** availability resolution (a
@@ -214,6 +214,20 @@ BUNDLED_TOOLS: Tuple[BundledTool, ...] = (
         version_probe_args=("-h",),
         default_timeout_seconds=120.0,
         parses_json=False,
+        runtime="jvm",
+    ),
+    BundledTool(
+        key="liquibase",
+        executable="liquibase",
+        # 4.33.0 is the last Apache-2.0 release; Liquibase 5 moved to another license.
+        version="4.33.0",
+        description="Liquibase CLI (liquibase/liquibase, JVM): `validate` checks an emitted formatted-SQL "
+        "changelog against an offline database (MFX-35.3). Optional: without it the check is reported skipped.",
+        env_override_key="APIOME_LIQUIBASE_BIN",
+        # The changelog seam (MFX-35.3, app.liquibase_validation) reads the exit code and the error text;
+        # Liquibase prints a progress log, never JSON.
+        parses_json=False,
+        default_timeout_seconds=180.0,
         runtime="jvm",
     ),
     BundledTool(

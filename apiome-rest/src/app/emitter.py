@@ -442,6 +442,11 @@ class EmitResult(BaseModel):
         description="Newly synthesized field-identity numbers from this emit (MFX-12.2), "
         "keyed by canonical field key. Empty when no new assignments were made.",
     )
+    changelog_baseline: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="The baseline a SQL DDL changelog export (Liquibase / Flyway, MFX-35.3) leaves for the "
+        "next export of the same artifact to diff against; ``None`` for every other emit.",
+    )
 
     @property
     def document(self) -> Dict[str, Any]:

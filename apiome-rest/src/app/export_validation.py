@@ -754,6 +754,81 @@ async def _validate_hl7v2_guide(
     return _passed(target)
 
 
+#: A Liquibase changelog the SQL DDL export writes (MFX-35.3): ``0001-<name>.changelog.sql``.
+_LIQUIBASE_CHANGELOG = re.compile(r"\d{4,}-.+\.changelog\.sql$")
+#: A Flyway versioned migration: ``V<n>__<description>.sql``.
+_FLYWAY_MIGRATION = re.compile(r"V\d+__[A-Za-z0-9_]+\.sql$")
+#: One Liquibase formatted-SQL changeset line: ``--changeset author:id [attributes]``.
+_CHANGESET_LINE = re.compile(r"^--changeset\s+(\S+):(\S+)(?:\s+.*)?$")
+
+
+def _changelog_kind(path: str) -> Optional[str]:
+    """``liquibase`` / ``flyway`` for a changelog file of the SQL DDL export, else ``None``."""
+    name = path.rsplit("/", 1)[-1]
+    if _LIQUIBASE_CHANGELOG.match(name):
+        return "liquibase"
+    if _FLYWAY_MIGRATION.match(name):
+        return "flyway"
+    return None
+
+
+async def _check_changelog(
+    kind: str, path: str, text: str, api: CanonicalApi
+) -> Tuple[List[Tuple[str, str]], Optional[str]]:
+    """Check one Liquibase changelog or Flyway migration (MFX-35.3, #4313).
+
+    Both: every statement parses in the export's dialect (``changelog.parse``). A Liquibase changelog
+    also has its ``--liquibase formatted sql`` header and unique ``author:id`` changesets
+    (``liquibase.structure``), then must pass ``liquibase validate`` against an offline database
+    (``liquibase.validate``, :mod:`app.liquibase_validation`) — reported skipped when the tool is not
+    installed in this runtime.
+
+    Returns:
+        ``([(keyword, message)], None)``, or ``([], why)`` when the check is skipped.
+    """
+    from .liquibase_validation import LiquibaseUnavailableError, validate_liquibase_changelog
+    from .sql_changelog import changelog_statements
+    from .sql_ddl_emitter import parse_sql_script
+
+    dialect = _changelog_dialect(text)
+    problems: List[Tuple[str, str]] = []
+    for statement in changelog_statements(text):
+        if statement.upper().startswith("ALTER TYPE"):
+            continue  # PostgreSQL ADD VALUE, which sqlglot does not read
+        try:
+            parse_sql_script(statement + ";", dialect)
+        except ValueError as exc:
+            problems.append(("changelog.parse", f"{statement.splitlines()[0][:80]}: {exc}"))
+    if kind == "flyway":
+        return problems, None
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "--liquibase formatted sql":
+        problems.append(("liquibase.structure", "the first line must be `--liquibase formatted sql`"))
+    seen: Dict[str, int] = {}
+    for line in lines:
+        match = _CHANGESET_LINE.match(line.strip())
+        if match:
+            ident = f"{match.group(1)}:{match.group(2)}"
+            seen[ident] = seen.get(ident, 0) + 1
+    problems += [("liquibase.structure", f"changeset {ident} appears {count} times") for ident, count in
+                 seen.items() if count > 1]
+    try:
+        messages = await asyncio.to_thread(validate_liquibase_changelog, text, dialect=dialect,
+                                           name=path.rsplit("/", 1)[-1])
+    except LiquibaseUnavailableError:
+        if problems:
+            return problems, None
+        return [], f"liquibase is not installed in this runtime, so {path} was not checked with `liquibase validate`"
+    problems += [("liquibase.validate", message) for message in messages]
+    return problems, None
+
+
+def _changelog_dialect(text: str) -> str:
+    """The dialect a changelog's header names (``… (postgres, full schema) …``); PostgreSQL otherwise."""
+    match = re.search(r"\((postgres|mysql|ansi), ", text[:400])
+    return match.group(1) if match else "postgres"
+
+
 async def _validate_sql_ddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -789,6 +864,14 @@ async def _validate_sql_ddl(
     findings: List[ValidationFinding] = []
     for emitted in emit_result.files:
         text = str(emitted.content)
+        changelog = _changelog_kind(emitted.path)
+        if changelog is not None:
+            problems, skipped = await _check_changelog(changelog, emitted.path, text, api)
+            if skipped:
+                return _skipped(target, skipped)
+            findings.extend(ValidationFinding(message=message, file=emitted.path, keyword=keyword)
+                            for keyword, message in problems)
+            continue
         if emitted.path.endswith(".dbml") or emitted.path.endswith(".prisma"):
             dbml = emitted.path.endswith(".dbml")
             tool_key, check, keyword = (

@@ -22,6 +22,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .canonical_model import CanonicalApi
 from .capnproto_emitter import CapnpEmitter
+from .database import db
 from .emitter import (
     EmitOptions,
     EmitOptionsError,
@@ -44,6 +45,8 @@ from .field_identity_store import (
 )
 from .flatbuffers_emitter import FlatBuffersEmitter
 from .proto_emitter import ProtoEmitter
+from .sql_changelog import CHANGELOG_MODES, baseline_variant
+from .sql_ddl_emitter import SqlDdlEmitter
 from .thrift_emitter import ThriftEmitter
 
 __all__ = [
@@ -100,6 +103,25 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
     if issubclass(emitter_cls, FlatBuffersEmitter):
         return FLATBUFFERS_TARGET
     return None
+
+
+def _changelog_variant(emitter_cls: type[Emitter], options: Optional[EmitOptions]) -> Optional[str]:
+    """The baseline store variant of a SQL DDL changelog export (MFX-35.3), else ``None``.
+
+    Args:
+        emitter_cls: The resolved emitter class.
+        options: The validated options.
+
+    Returns:
+        ``<dialect>:<mode>`` (``postgres:liquibase``) for the SQL DDL emitter in ``liquibase`` or ``flyway``
+        output; ``None`` for every other export.
+    """
+    if not issubclass(emitter_cls, SqlDdlEmitter) or options is None:
+        return None
+    output = getattr(options, "output", None)
+    if output not in CHANGELOG_MODES:
+        return None
+    return baseline_variant(getattr(options, "dialect", "postgres"), output)
 
 
 def _with_persisted_field_numbers(
@@ -286,6 +308,13 @@ def emit_canonical(
     options = _normalize_opts(emitter_cls, opts)
 
     identity_target = _field_identity_target(emitter_cls) if persistence is not None else None
+    changelog_variant = _changelog_variant(emitter_cls, options) if persistence is not None else None
+    if persistence is not None and changelog_variant is not None and not getattr(options, "from_scratch", False):
+        stored = db.get_export_schema_baseline(
+            persistence.tenant_id, persistence.artifact_id, emitter_cls.key, changelog_variant
+        )
+        options = options.model_copy(update={"changelog_baseline": stored})
+
     if persistence is not None and identity_target is not None:
         persisted = load_persisted_field_numbers(
             persistence.tenant_id,
@@ -300,6 +329,14 @@ def emit_canonical(
         # X1 (#6222): the source lacks what the target writes — a refusal with the emitter's
         # reason (422), never a crash. `source_unsupported_reason` catches most of these first.
         raise ExportError(str(exc), status_code=422) from exc
+
+    if persistence is not None and changelog_variant is not None and result.changelog_baseline is not None:
+        # Every real export in a changelog mode advances the baseline (MFX-35.3); a preview never
+        # reaches here, so it never does.
+        db.upsert_export_schema_baseline(
+            persistence.tenant_id, persistence.artifact_id, emitter_cls.key, changelog_variant,
+            result.changelog_baseline,
+        )
 
     if persistence is not None and identity_target is not None and result.field_identity_assignments:
         persist_field_number_assignments(

@@ -5,6 +5,33 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.638.0] - 2026-11-04
+
+### Added
+- **Liquibase / Flyway changelog mode for the SQL DDL export (MFX-35.3, #4313).** `output` gains `liquibase` (a
+  formatted-SQL changelog, `NNNN-<Name>.changelog.sql`, one `--changeset <author>:<id>` per statement, ids continuing
+  across exports, PostgreSQL `ALTER TYPE … ADD VALUE` marked `runInTransaction:false`) and `flyway`
+  (`V<n>__initial_schema.sql`, then `V<n>__update_schema.sql`). New options `from_scratch` and `changeset_author`.
+  - **Deltas** (`app/sql_changelog.py`): with a stored baseline, the MFI-3.2 canonical diff picks the changed records
+    (a field change counts for its record; a junction/child table for its field's record) and only their tables are
+    compared with the baseline's projection — dropped FKs, dropped tables, new enum types/values, new tables,
+    added/dropped/altered columns (PostgreSQL `ALTER COLUMN … TYPE / SET|DROP NOT NULL / SET|DROP DEFAULT`, MySQL
+    `MODIFY COLUMN`, standard SQL `SET DATA TYPE`), then new FKs named clear of the kept ones. Changes SQL cannot
+    apply in place (a column check or identity, a table key or check, a removed enum value) are reported
+    (`sql-changelog-not-altered`); untouched tables keep the database's view in the next baseline.
+  - **Baseline store:** `apiome.export_schema_baselines` (V353; tenant, project, target, variant
+    `<dialect>:<mode>`, JSONB) with `get_export_schema_baseline` / `upsert_export_schema_baseline`;
+    `export_service.emit_canonical` loads it before and persists `EmitResult.changelog_baseline` after every
+    persisted (non-preview) changelog export, like the MFX-12.2 field-identity store. A baseline written with another
+    `nested` / `schema_name` / version is ignored (full changesets, reported).
+  - **Validation:** every statement parses with sqlglot in its dialect; the export gate checks a Liquibase
+    changelog's structure (header, unique `author:id`) and runs `liquibase validate --url=offline:<db>`
+    (`app/liquibase_validation.py`), skipped when the tool is absent. The Liquibase CLI 4.33.0 (last Apache-2.0
+    release) is a new optional bundled tool (`liquibase`, `APIOME_LIQUIBASE_BIN`), installed in the image with
+    the unused commercial extensions and JDBC drivers removed and smoke-tested at build time.
+  - Tests: `tests/test_sql_changelog.py` (32).
+- OpenAPI 1.502.0.
+
 ## [1.637.0] - 2026-11-04
 
 ### Added
