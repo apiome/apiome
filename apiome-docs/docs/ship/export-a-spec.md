@@ -185,7 +185,45 @@ is listed with where it was (`/servers/robot/bindings/ros2`), as dropped or appr
 version is checked with the AsyncAPI parser before you download it. From the CLI, run
 `apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
 
-### MCP tool definitions
+### Agent interfaces: MCP, A2A and agent manifests {#agent-interfaces}
+
+Apiome can hand an API to an AI agent in three ways. **MCP Tool Definitions** turns its operations into
+the tools an MCP host lists. An **A2A Agent Card** describes it as an agent with skills. And each
+organization's Browse page publishes **`agents.json`** and **`llms.txt`**, which list every public API
+for agents and crawlers. In the **Export** dialog and in **Export studio**, the two export cards sit
+under **Agents & tools**.
+
+#### When to use which {#when-to-use-an-agent-interface}
+
+- **An agent should call the API: MCP Tool Definitions.** Export [MCP tool definitions](#mcp-tool-definitions)
+  for one tool per operation, with an input schema an MCP host accepts. Serve the tools from an MCP
+  server; the descriptor describes them, it is not a server.
+- **The API should be offered as an agent, or an A2A agent republished: A2A Agent Card.** Export an
+  [A2A Agent Card](#a2a-agent-card) for the `agent-card.json` an A2A agent serves. An imported A2A agent
+  exports back **lossless**; a REST or RPC API becomes one agent whose skills are its operations.
+- **Agents and crawlers should find every public API: agent manifests.** Nothing to export — Browse
+  serves [`agents.json` and `llms.txt`](./browse-published-specs.md#agent-manifests) for each
+  organization, over its published, public versions.
+
+#### Agent interfaces at a glance
+
+| | MCP Tool Definitions | A2A Agent Card | `agents.json` / `llms.txt` |
+| --- | --- | --- | --- |
+| **From** | Any source with an operation an agent can call | An agent, or any source with an operation that is not an event | Every published, public version of an organization |
+| **You get** | `<server>.mcp.json` (one per service with **grouping** `per-service`, in a `.zip`) | `agent-card.json` (one per agent for an ACP listing, in a `.zip`) | Two files Browse serves at `/tenant/{tenant_slug}/agents.json` and `/llms.txt` |
+| **Options** | `protocol_version`, `grouping`, `output_schema`, `include_deprecated` | `skills_from`, `url`, `include_deprecated` | — |
+| **An operation becomes** | A tool: name, description (with its HTTP binding), `inputSchema`, `outputSchema` | A skill: id, name, tags and media types (no schemas) | A link to its Browse page |
+| **Fidelity report** | [What the MCP fidelity report lists](#what-the-mcp-fidelity-report-lists) | [What the fidelity report lists](#what-the-a2a-fidelity-report-lists) | — |
+| **Too many tools or skills** | More than 128 in one descriptor needs confirmation — the [grouping guard](#mcp-grouping-guard) | The same, for a card's skills | — |
+| **Checked by** | The MCP Tool schema of the chosen revision, and re-import | The A2A AgentCard schema, and re-import | — |
+| **Imports back with** | **Import to catalog** (MCP) | [Import an A2A Agent Card](../bring-in/a2a-agent-card-import.md) | [Import agentic-web site manifests](../bring-in/agents-manifest-import.md) |
+| **CLI** | `apiome export mcp` | `apiome export a2a` | — |
+| **Where** | [The MCP card](#where-to-find-the-mcp-tool-definitions-card) | [The A2A card](#where-to-find-the-a2a-agent-card-card) | **For agents** on the organization's Browse page |
+
+Each export's fidelity report lists, with a reason, what an agent interface cannot carry: servers,
+events and streams, auth beyond bearer and OAuth 2, and every name Apiome had to make up.
+
+### MCP tool definitions {#mcp-tool-definitions}
 
 Exporting to **MCP Tool Definitions** turns the API's operations into the tools an MCP host lists,
 so an agent can call them. You get an MCP **server descriptor**, `<server>.mcp.json`. It holds the
