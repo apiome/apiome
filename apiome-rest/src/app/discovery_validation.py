@@ -1,8 +1,8 @@
 """Validation of emitted Google API Discovery documents — MFX-29.2 (#4174).
 
-The rules a Google API Discovery document must keep: every Discovery export is tested against them, and the
-export gate checks each export with them once MFX-29.3 (#4175) wires them into the alternate-validator seam.
-Every problem has its rule and a JSON Pointer:
+The rules a Google API Discovery document must keep. The export gate checks every Discovery export with them
+through the alternate-validator seam (:mod:`app.export_validation`, target ``discovery``, MFX-29.3 #4175), and an
+export that breaks one fails its job. Every problem has its rule (``keyword``) and a JSON Pointer:
 
 1. **Metaschema** (``discovery.schema``) — the document validates against the Discovery metaschema
    (``data/discovery_v1_meta_schema.json``: the ``RestDescription``, ``RestResource``, ``RestMethod`` and

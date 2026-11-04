@@ -99,6 +99,8 @@ way the last column says.
 | ASN.1 | asn1tools parses and compiles the module, and it must define exactly the planned types | Always checked: asn1tools ships with Apiome |
 | AsyncAPI | The AsyncAPI parser | Not parsed; the export says it was not re-validated |
 | Kubernetes CRD | Apiome's structural-schema rules, then kubeconform against the `apiextensions.k8s.io/v1` schema | Checked by Apiome's structural-schema rules only |
+| WADL | The W3C WADL schema, and an XML Schema processor builds its grammar | Always checked: the schema and processor ship with Apiome |
+| Google API Discovery | The Discovery metaschema and the document's rules | Always checked: the metaschema ships with Apiome |
 
 The sections below say what each check rejects. [How an export is checked](./check-an-export.mdx)
 explains the four verdicts and the lint of the exported file.
@@ -2510,6 +2512,22 @@ WADL describes HTTP resources and nothing else, so the fidelity report lists wha
 
 When the source has no server, the base URI `https://api.example.com/` is used, and the report says so.
 
+**WADL captures REST only.** A GraphQL, gRPC, event or data-schema item gets a warning at the top of its
+fidelity report: **WADL captures REST only**. The warning counts the operations and channels that are not
+written, and it is critical when no operation can be written, so only the item's types are exported.
+
+**Checked before you download it.** Every WADL export is checked as it will be unpacked, and the job fails,
+listing every problem with its file and rule, when:
+
+1. **A file is not safe, well-formed XML** (`wadl.xml`) — a DTD or entity is refused.
+2. **The description does not validate against the W3C WADL schema** (`wadl.schema`): an element or
+   attribute WADL does not have, or a type that is not a declared QName.
+3. **The grammar is missing or does not build**: `<grammars><include>` names a file that is not in the
+   export (`wadl.bundle-reference`), or an XML Schema processor rejects the grammar, included or inline
+   (`wadl.grammar`).
+4. **A representation names an element the grammar does not declare** (`wadl.representation`).
+5. **Apiome's WADL importer cannot read the export back** (`wadl.reimport`).
+
 ### Google API Discovery from any source
 
 Google's API client libraries and generated clients are built from **Discovery documents**: one JSON
@@ -2567,6 +2585,26 @@ The fidelity report lists what a Discovery document cannot carry:
 
 A source with no HTTP operation and no type has nothing a Discovery document can hold, so the card is
 greyed out for it.
+
+**Google API Discovery captures REST only.** A GraphQL, gRPC, event or data-schema item gets a warning at
+the top of its fidelity report: **Google API Discovery captures REST only**. The warning counts the
+operations and channels that are not written, and it is critical when only the item's types are exported.
+
+**Checked before you download it.** Every Discovery export is checked, and the job fails, listing every
+problem with its JSON pointer and rule, when:
+
+1. **The document does not validate against the Discovery metaschema** (`discovery.schema`): a missing
+   `kind`, `name`, `version`, `rootUrl` or `servicePath`, a parameter with no `type` or `location`, a
+   `location` other than `path` or `query`, or a lower-case HTTP method.
+2. **The URLs disagree** (`discovery.urls`): `rootUrl` is not an absolute URL ending in `/`, `servicePath`
+   starts with `/`, or `baseUrl` is not `rootUrl` + `servicePath`.
+3. **A schema is wrong**: its `id` is not its key (`discovery.schema-id`), a `$ref` names no schema of the
+   document (`discovery.ref`), or a `type` / `format` pair is not one of Discovery's
+   (`discovery.type-format`).
+4. **A method is wrong**: its id is used twice (`discovery.method-id`), its path names a variable that is
+   not a required path parameter, or a path parameter is not in its path (`discovery.path-parameter`), or
+   `parameterOrder` lists an undeclared parameter (`discovery.parameter-order`).
+5. **Apiome's Discovery importer cannot read the document back** (`discovery.reimport`).
 
 When the source has no server, `https://api.example.com/` is used, and the report says so. From the CLI,
 run `apiome export discovery <item> --out petstore.discovery.json`; add `--option name=pets` or

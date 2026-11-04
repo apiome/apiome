@@ -23,7 +23,8 @@ Google's generated and dynamic clients (``googleapiclient.discovery.build_from_d
 parameters (Discovery parameters go in the path or the query), every response but the method's success body
 (Discovery has one ``response``; errors are Google's standard error), servers beyond the first, and each schema
 keyword the subset has no place for. :mod:`app.discovery_validation` holds the Discovery metaschema and the
-document's rules; every export keeps them, and Google's client library builds a client from it.
+document's rules; the export gate checks every export with them before delivery (MFX-29.3), and Google's client
+library builds a client from it.
 """
 
 from __future__ import annotations
@@ -64,7 +65,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
 __all__ = ["DiscoveryEmitOptions", "DiscoveryEmitter", "DiscoveryFidelityRulePack"]
@@ -126,7 +127,11 @@ class DiscoveryEmitOptions(EmitOptions):
 
 
 class DiscoveryFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for Discovery export — MFX-29.2 (#4174).
+    """Fidelity rules for Discovery export — MFX-29.2 (#4174), MFX-29.3 (#4175).
+
+    A source that is not a REST API (GraphQL, RPC, event, data schema, agent) gets the root advisory
+    **Google API Discovery captures REST only** (:func:`app.fidelity_rulepack.rest_only_advisory`, the RAML
+    wording): a ``DROP`` with the operations and channels that are not written, critical when only the types are.
 
     The pack builds the export once (for the options the report is computed for) and files every loss its
     writer records under the construct it is in — a schema keyword under its type or field, a parameter or body
@@ -226,6 +231,13 @@ class DiscoveryFidelityRulePack(CapabilityRulePack):
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         verdicts: List[FidelityVerdict] = []
+        # A source that is not a REST API: "Discovery captures REST only", with what is not written (MFX-29.3).
+        written = sum(1 for op in api.operations() if _writable(op))
+        advisory = rest_only_advisory(api, target_label=self.target_label,
+                                      dropped_operations=len(api.operations()) - written, written_operations=written,
+                                      written_as="HTTP methods", place="an HTTP method")
+        if advisory is not None:
+            verdicts.append(advisory)
         if api.format != _DISCOVERY_FORMAT:
             verdicts.append(FidelityVerdict.approx(
                 message=f"The {api.format or 'source'} document is written as a Google API Discovery document and "
@@ -569,7 +581,7 @@ class _DiscoveryWriter:
                 self.losses.record(LossKind.NA, "event-operation-dropped",
                                    f"Operation {operation.key!r} is an event; Discovery has no representation for "
                                    "it.", pointer=operation.key)
-            elif not operation.http_method or not operation.http_path:
+            elif not _writable(operation):
                 self.losses.record(LossKind.NA, "operation-without-http-binding",
                                    f"Operation {operation.key!r} has no HTTP method and path; Discovery describes "
                                    "HTTP methods only, so it is not written.", pointer=operation.key)
@@ -822,6 +834,12 @@ def _without_ok(verdict: FidelityVerdict, filed: List[FidelityVerdict]) -> List[
     if verdict.kind is LossinessKind.OK and filed:
         return list(filed)
     return [verdict, *filed]
+
+
+def _writable(operation: Operation) -> bool:
+    """Whether the Discovery export writes ``operation``: an HTTP operation (method and path), not an event."""
+    return (operation.kind not in _EVENT_OPERATION_KINDS and bool(operation.http_method)
+            and bool(operation.http_path))
 
 
 def _status(message: Message) -> Optional[str]:

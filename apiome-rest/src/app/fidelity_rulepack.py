@@ -56,6 +56,7 @@ from typing import Any, List, Mapping, Optional, Tuple
 from pydantic import BaseModel, ConfigDict
 
 from .canonical_model import (
+    ApiParadigm,
     CanonicalApi,
     CanonicalField,
     Channel,
@@ -80,6 +81,7 @@ __all__ = [
     "FidelityRulePack",
     "CapabilityRulePack",
     "rename_verdict",
+    "rest_only_advisory",
     "types_only_advisory",
 ]
 
@@ -213,6 +215,60 @@ class FidelityVerdict(BaseModel):
             message=message,
             target_mapping=target_mapping,
         )
+
+
+def rest_only_advisory(
+    api: CanonicalApi,
+    *,
+    target_label: str,
+    dropped_operations: int,
+    written_operations: int,
+    written_as: str = "HTTP resources",
+    place: str = "an HTTP resource",
+) -> Optional["FidelityVerdict"]:
+    """The root advisory of a REST-only export of a source that is not a REST API — MFX-17.2, MFX-29.3 (#4175).
+
+    RAML, WADL and Google API Discovery describe REST APIs only. A GraphQL, RPC, event, data-schema or agent
+    source gets ``"<target> captures REST only"`` at the top of its report, with what is not written. The
+    per-construct verdicts still drop each operation the target cannot place.
+
+    Args:
+        api: The source model.
+        target_label: The target's label (``"WADL"``), which starts the message and names the warning.
+        dropped_operations: How many operations the export does not write (no HTTP binding, an event …).
+        written_operations: How many it writes.
+        written_as: What the written operations become (``"HTTP resources"``, ``"HTTP methods"``).
+        place: Where an operation would have to go (``"an HTTP resource"``, ``"an HTTP method"``).
+
+    Returns:
+        ``None`` for a REST source. Otherwise a ``DROP`` naming the operations and channels that are not
+        written (``critical`` when no operation is written and only the types are exported), or an
+        ``APPROX`` when every operation is written and only the paradigm changes.
+    """
+    if api.paradigm is ApiParadigm.REST:
+        return None
+    warning = f"{target_label} captures REST only"
+    paradigm = api.paradigm.value.replace("_", " ")
+    mapping = f"{api.paradigm.value} → REST"
+    lost = []
+    if dropped_operations:
+        lost.append(f"{dropped_operations} operation(s) {target_label} cannot place on {place}")
+    if api.channels:
+        lost.append(f"{len(api.channels)} channel(s)")
+    if not lost:
+        return FidelityVerdict.approx(
+            message=f"{target_label}: {warning}; this {paradigm} API is written as {written_as} and reads back as "
+            "a REST API",
+            target_mapping=mapping,
+        )
+    nothing_written = not written_operations
+    return FidelityVerdict.drop(
+        message=f"{target_label}: {warning}; this {paradigm} API reads back as a REST API, and "
+        f"{' and '.join(lost)} are not written"
+        + ("; only its types are exported" if nothing_written else ""),
+        severity=LossinessSeverity.CRITICAL if nothing_written else LossinessSeverity.WARN,
+        target_mapping=mapping,
+    )
 
 
 def types_only_advisory(api: CanonicalApi, *, target_label: str, keep_in: str) -> Optional["FidelityVerdict"]:

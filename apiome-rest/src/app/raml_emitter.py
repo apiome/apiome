@@ -71,7 +71,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import scalar_kind
 
@@ -696,40 +696,10 @@ def _verdict(notes: Sequence[Note], target_mapping: str) -> Optional[FidelityVer
 
 
 def _rest_only_verdict(api: CanonicalApi, plan: _Plan) -> Optional[FidelityVerdict]:
-    """The root advisory of a source that is not a REST API: :data:`REST_ONLY_WARNING`, with counts.
-
-    Args:
-        api: The source model.
-        plan: Where its operations are written (:func:`_plan`).
-
-    Returns:
-        ``None`` for a REST source. Otherwise a ``DROP`` naming the operations and channels that are
-        not written (``critical`` when no operation is written at all), or an ``APPROX`` when every
-        operation has an HTTP binding and only the paradigm changes.
-    """
-    if api.paradigm is ApiParadigm.REST:
-        return None
-    paradigm = api.paradigm.value.replace("_", " ")
-    mapping = f"{api.paradigm.value} → REST"
-    lost = []
-    if plan.dropped:
-        lost.append(f"{len(plan.dropped)} operation(s) RAML cannot place on an HTTP resource")
-    if api.channels:
-        lost.append(f"{len(api.channels)} channel(s)")
-    if not lost:
-        return FidelityVerdict.approx(
-            message=f"RAML: {REST_ONLY_WARNING}; this {paradigm} API is written as HTTP resources and reads back as "
-            "a REST API",
-            target_mapping=mapping,
-        )
-    nothing_written = not plan.kept
-    return FidelityVerdict.drop(
-        message=f"RAML: {REST_ONLY_WARNING}; this {paradigm} API reads back as a REST API, and "
-        f"{' and '.join(lost)} are not written"
-        + ("; only its types are exported" if nothing_written else ""),
-        severity=LossinessSeverity.CRITICAL if nothing_written else LossinessSeverity.WARN,
-        target_mapping=mapping,
-    )
+    """The root advisory of a source that is not a REST API: :data:`REST_ONLY_WARNING`, with counts
+    (:func:`app.fidelity_rulepack.rest_only_advisory`, where the operations are the plan's, :func:`_plan`)."""
+    return rest_only_advisory(api, target_label="RAML", dropped_operations=len(plan.dropped),
+                              written_operations=len(plan.kept))
 
 
 class RamlFidelityRulePack(CapabilityRulePack):
