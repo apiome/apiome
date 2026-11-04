@@ -1418,6 +1418,40 @@ A types-only export exits non-zero unless you add `--force`; `--out -` writes th
 standard output, and `--json` prints the file written and its tier as JSON. A public item's **Export**
 dialog on Browse offers the same target.
 
+### EDI and e-invoicing guides
+
+Trading partners agree on the documents they exchange before they exchange any: which segments or elements a
+purchase order or an invoice carries, how long each value is, which codes it may hold. Apiome writes that
+agreement from an item's types, for the three families B2B partners use. Each is a guide or schema partners
+build their documents from, not a document itself.
+
+#### When to use which
+
+- **North American partners: X12.** Retail, logistics and healthcare in North America exchange X12
+  transaction sets (`850` purchase order, `810` invoice, `837` claim). Export an
+  [X12 implementation guide](#x12-implementation-guide-from-any-source).
+- **International partners: UN/EDIFACT.** Most other partners exchange UN/EDIFACT messages (`ORDERS`, `INVOIC`,
+  `DESADV`). Export a [UN/EDIFACT message guide](#unedifact-message-guide-from-any-source). It is laid out by the
+  same plan as the X12 guide, so an item's two guides list the same segments in the same order.
+- **E-invoicing and XML business documents: UBL and Peppol.** EU e-invoicing runs on Peppol BIS Billing 3.0,
+  whose invoices and credit notes are UBL 2.1 documents. Export **XSD** with the
+  [UBL and Peppol BIS profiles](#ubl-and-peppol-bis-profiles) for a UBL document schema, validated against the
+  official UBL 2.1 schemas it ships with.
+
+#### EDI and e-invoicing at a glance
+
+| | X12 implementation guide | UN/EDIFACT message guide | UBL / Peppol (XSD profile) |
+| --- | --- | --- | --- |
+| **Card** (**Data schema & graph**) | **X12 implementation guide** | **UN/EDIFACT message guide** | **XSD**, **Profile** `ubl` or `peppol` |
+| **You get** | JSON guide, segment CSV, Markdown guide | JSON guide, segment CSV, Markdown guide | Document schema, the OASIS UBL 2.1 schemas, notice, guide |
+| **Pick the document** | **Transaction Set**, **Version** | **Message Type**, **Release** | **Ubl Document** (Peppol: `Invoice` or `CreditNote`) |
+| **Units** | Segments and loops, X12 element types | Segments and segment groups, simple and composite data elements | UBL aggregates and data types, `cbc:` components |
+| **Checked by** | Apiome's guide rules, pyx12's dictionary when installed | Apiome's guide rules | An XML Schema processor against the UBL 2.1 schemas, the Peppol conventions |
+| **CLI** | `apiome export x12` | `apiome export edifact` | `apiome export xsd --option profile=peppol` |
+
+All three describe types only — operations and channels are left out — and every length, code and identifier
+the guide invents is listed in the fidelity report.
+
 ### X12 implementation guide from any source
 
 Exporting to **X12 implementation guide** describes the item's types as an X12 transaction set, for
