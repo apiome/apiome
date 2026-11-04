@@ -4358,7 +4358,7 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 5,
         "synth": 3
       },
@@ -4604,7 +4604,7 @@
     {
       "family": "asn1",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 0,
         "synth": 13
       },
@@ -5517,7 +5517,7 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 2,
         "synth": 1
       },
@@ -5769,7 +5769,7 @@
     {
       "family": "avro",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 6
       },
@@ -6159,7 +6159,7 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 9,
         "synth": 2
       },
@@ -6411,7 +6411,7 @@
     {
       "family": "avro-idl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 5,
         "synth": 11
       },
@@ -8942,7 +8942,7 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 8,
         "synth": 3
       },
@@ -9188,7 +9188,7 @@
     {
       "family": "capnproto",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 4,
         "synth": 11
       },
@@ -12096,7 +12096,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 13,
         "synth": 1
       },
@@ -12348,7 +12348,7 @@
     {
       "family": "connectrpc",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 6,
         "synth": 15
       },
@@ -13406,7 +13406,7 @@
     {
       "family": "corbaidl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 10,
         "synth": 1
       },
@@ -13652,7 +13652,7 @@
     {
       "family": "corbaidl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 6,
         "synth": 6
       },
@@ -14044,7 +14044,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 12,
         "synth": 3
       },
@@ -14297,7 +14297,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 9,
         "synth": 13
       },
@@ -15303,7 +15303,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 5,
+        "approx": 7,
         "drop": 6,
         "synth": 3
       },
@@ -15557,7 +15557,7 @@
     {
       "family": "dhall",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 2,
         "synth": 13
       },
@@ -21228,7 +21228,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 7,
+        "approx": 10,
         "drop": 4,
         "synth": 0
       },
@@ -21480,7 +21480,7 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
-        "approx": 4,
+        "approx": 7,
         "drop": 0,
         "synth": 15
       },
@@ -21858,7 +21858,7 @@
     {
       "family": "flatbuffers",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 4,
         "synth": 3
       },
@@ -22106,7 +22106,7 @@
     {
       "family": "flatbuffers",
       "loss_counts": {
-        "approx": 7,
+        "approx": 8,
         "drop": 0,
         "synth": 12
       },
@@ -31974,7 +31974,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation d37fefc6-54b1-4ba5-8336-a0ad5e4fd446",
+        "added operation ddccac39-f109-434a-9ebd-b50e70de93df",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -33128,7 +33128,7 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 2,
         "synth": 1
       },
@@ -33212,7 +33212,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation f0a6d8ca-924c-4697-9972-bb99fa56f013",
+        "added operation f967c2c1-6526-4b58-9139-8594b143a66a",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -33378,7 +33378,7 @@
     {
       "family": "jtd",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 0,
         "synth": 11
       },
@@ -33846,7 +33846,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 951bd44b-2599-4673-95d8-ee8e16fb9b73",
+        "added operation 02d6f2a2-714e-4167-8544-8008bdd28980",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -37006,7 +37006,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 4,
+        "approx": 6,
         "drop": 12,
         "synth": 1
       },
@@ -37258,7 +37258,7 @@
     {
       "family": "matter",
       "loss_counts": {
-        "approx": 5,
+        "approx": 7,
         "drop": 7,
         "synth": 10
       },
@@ -40880,7 +40880,7 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 8,
         "synth": 2
       },
@@ -41174,7 +41174,7 @@
     {
       "family": "odata",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 5,
         "synth": 5
       },
@@ -42403,7 +42403,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation b123431c-04e6-49a5-8fb8-cdccf7bddc21",
+        "added operation 2f98b54e-d49d-4885-aca1-26c854959b29",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -42952,7 +42952,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 3,
         "drop": 13,
         "synth": 1
       },
@@ -43204,7 +43204,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 9,
         "synth": 4
       },
@@ -43606,7 +43606,7 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 5,
         "synth": 0
       },
@@ -43858,7 +43858,7 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 3,
         "synth": 4
       },
@@ -45522,7 +45522,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 6,
         "synth": 0
       },
@@ -45606,7 +45606,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation affd82d9-54f2-4e6b-83cf-acb56cc94dcd",
+        "added operation 385f00c7-73cc-4e5d-a2cd-df7fa31dd43b",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -45772,7 +45772,7 @@
     {
       "family": "owl",
       "loss_counts": {
-        "approx": 0,
+        "approx": 1,
         "drop": 0,
         "synth": 9
       },
@@ -46142,7 +46142,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 13,
         "synth": 4
       },
@@ -46396,7 +46396,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 8,
         "synth": 14
       },
@@ -49535,7 +49535,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 8,
         "synth": 1
       },
@@ -49787,7 +49787,7 @@
     {
       "family": "protobuf-editions",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 4,
         "synth": 10
       },
@@ -50179,7 +50179,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 12,
         "synth": 1
       },
@@ -50432,7 +50432,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 9,
         "synth": 16
       },
@@ -52167,7 +52167,7 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 1,
         "synth": 0
       },
@@ -52250,7 +52250,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 62492276-d2c3-4d56-b8b9-1305b5c11c5b",
+        "added operation 2bdac12b-e319-409e-b293-72fefcb27ed9",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -52415,7 +52415,7 @@
     {
       "family": "ros2",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 14
       },
@@ -54068,7 +54068,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 10,
         "synth": 1
       },
@@ -54322,7 +54322,7 @@
     {
       "family": "smithy",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 4,
         "synth": 11
       },
@@ -55528,7 +55528,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation af772972-9676-4b15-87df-10840470296f",
+        "added operation dcab6a79-999d-4986-80cd-9760b7dff286",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -56070,7 +56070,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 7,
         "synth": 5
       },
@@ -56316,7 +56316,7 @@
     {
       "family": "sql-ddl",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 25
       },
@@ -58801,7 +58801,7 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 9,
         "synth": 1
       },
@@ -59053,7 +59053,7 @@
     {
       "family": "thrift",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 5,
         "synth": 9
       },
@@ -62792,7 +62792,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 5,
         "synth": 1
       },
@@ -62884,7 +62884,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 6bbe4dde-5a7f-4914-8844-cf2586587f81",
+        "added operation d26bc65a-876c-4ed1-b295-2e5020891cc0",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -63050,7 +63050,7 @@
     {
       "family": "typescript-types",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 0,
         "synth": 25
       },
@@ -63450,7 +63450,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 8,
         "synth": 1
       },
@@ -63744,7 +63744,7 @@
     {
       "family": "typespec",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 5,
         "synth": 8
       },
@@ -65526,7 +65526,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 2,
+        "approx": 4,
         "drop": 8,
         "synth": 1
       },
@@ -65778,7 +65778,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 5,
         "synth": 3
       },
@@ -68746,7 +68746,7 @@
     {
       "family": "xsd",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 4,
         "synth": 4
       },
@@ -68998,7 +68998,7 @@
     {
       "family": "xsd",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 0,
         "synth": 14
       },
@@ -69370,7 +69370,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 15,
         "synth": 1
       },
@@ -69623,7 +69623,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 12,
         "synth": 16
       },
