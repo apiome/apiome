@@ -42,7 +42,7 @@ from app.arazzo_spec import SUPPORTED_ARAZZO_VERSIONS
 from app.asyncapi_parser import ASYNCAPI_SUPPORTED_VERSIONS
 from app.auth import validate_session_credentials
 from app.format_capability_registry import capability_for, registry_snapshot
-from app.format_matrix import build_format_matrix, shipped_emitters
+from app.format_matrix import FormatDirection, build_format_matrix, shipped_emitters
 from app.format_version_coverage import (
     UNDECLARED_VERSION_COVERAGE,
     FormatVersion,
@@ -384,6 +384,11 @@ def test_the_format_matrix_carries_the_coverage_on_every_row() -> None:
     matrix = build_format_matrix()
     assert matrix.formats
     for row in matrix.formats:
+        if row.direction is FormatDirection.EXPORT_ONLY:
+            # Coverage is declared per import source (`test_no_declaration_exists_for_an_unregistered_format`
+            # forbids any other key), so a format no adapter reads — a segment guide, Iceberg — has none.
+            assert not row.capability.version_coverage.declared, row.key
+            continue
         assert row.capability.version_coverage.declared, row.key
         assert row.capability.version_coverage.reads, row.key
 

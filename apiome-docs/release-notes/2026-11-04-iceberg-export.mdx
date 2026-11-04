@@ -1,0 +1,22 @@
+---
+slug: iceberg-export
+title: Export Apache Iceberg schemas
+description: "Write an item's tables as Iceberg schemas with stable field IDs."
+authors: [apiome]
+---
+
+A new **Apache Iceberg** export target writes an item's tables as
+[Apache Iceberg](https://iceberg.apache.org) table schemas, the schema JSON a table's metadata holds.
+See [Apache Iceberg](/ship/export-a-spec#apache-iceberg).
+
+{/* truncate */}
+
+- **One schema per table:** `<table>.iceberg.json`, from the same tables and columns as the Arrow
+  export. Nested objects are `struct`s, lists `list`s and maps `map`s, with `uuid`, `fixed[n]`,
+  `decimal(p, s)`, `timestamptz` and `date` for logical types.
+- **Field IDs that stay put:** every column, list element and map key and value gets a field ID on the
+  first export, and every re-export of the same item keeps it. A new column gets a new ID, and a removed
+  column's ID is never reused, so the table evolves the way Iceberg expects.
+- **Reported:** the fidelity report lists each synthesized field ID, and each type Iceberg does not have
+  (a union, a duration, a JSON value).
+- **Checked before you download:** pyiceberg parses every schema, and every field ID is checked unique.

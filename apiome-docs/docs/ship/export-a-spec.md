@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**64<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**65<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **64<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **65<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -885,6 +885,77 @@ a Java runtime):
   levels, `NUMERIC` / `BIGNUMERIC` precision and scale in range, descriptions of at most 1,024 characters.
 - **Spark:** every DDL line must parse under Spark's column-type grammar, the one `DataType.fromDDL`
   reads, with only type names Spark defines.
+
+### Apache Iceberg from any source {#apache-iceberg}
+
+#### When to export to Iceberg
+
+- **Create an Iceberg table with the columns an API carries.** Export the item's types as
+  [Apache Iceberg](https://iceberg.apache.org) table schemas, the schema JSON a table's metadata holds.
+  Use it to create the table in a catalog (with pyiceberg, Spark, Trino or Flink).
+- **Evolve the table as the API changes.** Every column has a field ID, and every re-export of the same
+  item keeps it. A reordered column keeps its ID, a new column gets a new one, and a removed column's ID
+  is never used again. That is what Iceberg schema evolution needs.
+
+Iceberg describes tables only, so an API's operations are left out, with a critical warning at the top
+of the fidelity report.
+
+#### Iceberg export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the target (options: `table`, `indent`) | Export-target registry key `iceberg` | [How the item is written](#how-the-item-is-written-to-iceberg) |
+| **Keep** field IDs stable across exports | Automatic, per item | [Field IDs](#iceberg-field-ids) |
+| **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-iceberg-fidelity-report-lists) |
+| **Trust** the file | Parsed by pyiceberg, with every field ID checked unique, before every download | [What the fidelity report lists](#what-the-iceberg-fidelity-report-lists) |
+
+#### How the item is written {#how-the-item-is-written-to-iceberg}
+
+You get one `<table>.iceberg.json` per table: `{"type": "struct", "schema-id": 0, "fields": [ … ]}`. The
+tables and columns are the same as the [Arrow export's](#how-the-item-is-written-to-arrow): one table per
+root record, every record it reaches nested inside it. **table** exports one record instead, and
+**indent** sets the JSON indentation.
+
+| In the Arrow schema | In the Iceberg schema |
+| --- | --- |
+| `struct` | `struct` |
+| `list` | `list` with its own `element-id` |
+| `map` | `map` with its own `key-id` and `value-id` |
+| `union` | A `struct` with one optional field per member (reported) |
+| A non-null column | `"required": true` |
+| `utf8`, dictionary columns / `binary` / `fixedsizebinary(n)` | `string` / `binary` / `fixed[n]` |
+| A UUID (`arrow.uuid`) | `uuid` |
+| `int` 8–32 bits / 64 bits | `int` / `long` (an unsigned integer takes the next signed width; unsigned 64-bit is `decimal(20, 0)`, reported) |
+| `float32` / `float64` | `float` / `double` |
+| `decimal128(p, s)` | `decimal(p, s)` (at most 38 digits) |
+| `date32` / `time64` | `date` / `time` |
+| `timestamp` with a time zone / without | `timestamptz` / `timestamp` |
+| `duration` / `interval` / JSON | `long` / `string` / `string` (reported) |
+
+A field's description is its `doc`.
+
+#### Field IDs {#iceberg-field-ids}
+
+Iceberg identifies every column, nested fields, list elements, map keys and values included, by a
+field ID. A source rarely has them, so Apiome assigns them on the first export and keeps them for the
+item. The next export of the same item reuses each column's ID, even after columns were added, removed
+or reordered. A new column gets an ID above every ID the table has ever had, so a removed column's ID is
+never handed out again. Columns are matched by their path in the table (`lines` → `element` → `sku`), so
+a renamed column counts as a new column and gets a new ID.
+
+An item imported from Arrow whose columns carry `PARQUET:field_id` keeps those IDs.
+
+#### What the fidelity report lists {#what-the-iceberg-fidelity-report-lists}
+
+- **Made up:** every field ID the source does not carry, one item per field. It is assigned once and
+  kept by every re-export.
+- **Dropped:** every operation, channel and service, under a critical "types only" warning, and
+  validation constraints, except a fixed length that `fixed[n]` keeps.
+- **Approximated:** a union written as a struct of optional fields, and each type Iceberg does not
+  have, listed under its table (a duration as `long`, a JSON value as `string` …).
+
+Before an export is delivered, **pyiceberg** must parse every schema, and every field ID in it must be
+unique and positive. No importer reads Iceberg, so an Iceberg export is not re-imported.
 
 ### Apache Avro from any source
 
@@ -3572,6 +3643,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | A2A Agent Card | Agent tools | An agent, or a source with an operation that is not an event |
 | Apache Arrow / Parquet | Data schema | Any source with a record type |
 | Apache Avro | Data schema | Any source |
+| Apache Iceberg | Data schema | Any source with a record type |
 | Apache Thrift | RPC | Any source |
 | API Blueprint | REST | Any source |
 | Apigee API proxy | REST | Any source |

@@ -1729,6 +1729,25 @@ async def _validate_arrow(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_iceberg(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Iceberg export (MFX-36.3, #4319).
+
+    pyiceberg must parse every ``<table>.iceberg.json`` as a ``Schema``, and its field IDs (columns, list
+    elements, map keys and values) must be unique and positive
+    (:func:`app.iceberg_emitter.check_emitted_iceberg`). No importer reads Iceberg, so there is no
+    re-import. Findings carry the rule as ``keyword``.
+    """
+    from .iceberg_emitter import check_emitted_iceberg
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Iceberg export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_iceberg, emit_result)
+    findings = [ValidationFinding(message=p["message"], file=p.get("file"), keyword=p["rule"]) for p in problems]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1949,6 +1968,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "xregistry": _validate_xregistry,
     # MFX-36.1 (#4317)
     "arrow": _validate_arrow,
+    # MFX-36.3 (#4319)
+    "iceberg": _validate_iceberg,
 }
 
 

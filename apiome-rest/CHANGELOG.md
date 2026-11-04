@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.643.0] - 2026-11-04
+
+### Added
+- **Iceberg schema emitter (MFX-36.3, #4319).**
+  - `app/iceberg_emitter.py`: export target `iceberg` ("Apache Iceberg", data schema, needs a record type; export-only).
+    Serializes the Arrow export's typed projection as Iceberg schema JSON (`<table>.iceberg.json`, `schema-id` 0):
+    `struct`, `list` (`element-id`), `map` (`key-id` / `value-id`), `uuid`, `fixed[n]`, `decimal(p, s)`,
+    `timestamptz` / `timestamp`, `date`, `time`; unions as structs of optional members, durations as `long` and
+    intervals / JSON as `string` (reported). Options `table`, `indent`, `persisted_field_numbers`.
+  - Field IDs: assigned per table (an Arrow source's `PARQUET:field_id` wins, then stored IDs, then fresh IDs above
+    every ID the table has had) and persisted in the MFX-12.2 field-identity store under target `iceberg`, keyed by
+    column path (`Order/lines/element/sku`); `export_service` loads and persists them.
+  - Export gate `_validate_iceberg` / `check_emitted_iceberg`: pyiceberg parses each schema; IDs unique and positive.
+  - `IcebergFidelityRulePack`: a `SYNTH` item per synthesized field ID, union `APPROX`, Iceberg approximations under
+    each table, types-only advisory, dropped constraints.
+  - Dependency: `pyiceberg>=0.12.0`.
+  - Registry fallout: RC6 list, projection corpus, `KNOWN_EXPORT_ONLY_DESTINATIONS`, round-trip / conformance /
+    parity goldens, format counts. `test_the_format_matrix_carries_the_coverage_on_every_row` now exempts
+    export-only formats (coverage is declared per import source).
+
 ## [1.642.0] - 2026-11-04
 
 ### Added
