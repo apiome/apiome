@@ -21,9 +21,15 @@ module adds the MCP *packaging*:
 * ``outputSchema`` (2025-06-18) — the 2xx response body's schema when it is an object, as MCP
   requires; an array or scalar response stays in the description (``mcp-output-not-object``).
 
+* the **HTTP binding** — a tool has no HTTP fields, so the verb, path, status codes and response
+  headers are written as a last ``HTTP: …`` sentence of the description (MFX-32.4,
+  :func:`app.agent_interface_fidelity.http_binding_note`).
+
 **Grouping** (``grouping``): ``single`` writes one descriptor; ``per-service`` writes one per
 service (a large API split into smaller tool surfaces), named ``<server>-<service>``. Names are
-compiled over the whole API either way, so a tool keeps its name whichever grouping you pick.
+compiled over the whole API either way, so a tool keeps its name whichever grouping you pick. A
+descriptor of more than :data:`app.agent_interface_fidelity.MAX_AGENT_SURFACE` tools trips the
+grouping guard (MFX-32.4): a critical advisory, so the export needs confirmation.
 
 Every tool is checked against the MCP Tool schema of the chosen revision (vendored in
 ``data/mcp_tool_schema.json``) and against the compiler's own contract before the descriptor is
@@ -41,7 +47,15 @@ from typing import Any, Dict, List, Literal, Mapping, Optional, Tuple, Union
 from jsonschema import Draft7Validator
 from pydantic import Field, ValidationError
 
-from .canonical_model import ApiParadigm, CanonicalApi, Channel, Operation, Type
+from .agent_interface_fidelity import (
+    auth_scheme_verdicts,
+    constraints_verdict,
+    grouping_guard_verdicts,
+    http_binding_note,
+    http_binding_verdict,
+    streaming_drop_reason,
+)
+from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Channel, Operation, Type, TypeKind
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -58,7 +72,7 @@ from .emitter import (
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessReport, LossinessSeverity
 from .mcp_tool_mapping import McpToolDefinition, McpToolset, compile_mcp_tools, validate_mcp_tool
-from .tool_projection import EVENT_OPERATION_KINDS, selectable_operations
+from .tool_projection import selectable_operations
 
 __all__ = [
     "MCP_FORMAT_KEY",
@@ -192,9 +206,33 @@ def _tool_operations(
     return keys
 
 
-def _render_tool(tool: McpToolDefinition, options: McpEmitOptions, losses: LossTracker) -> Dict[str, Any]:
-    """One ``tools`` entry: the compiled MCP entry, plus ``outputSchema`` where it applies."""
-    entry = tool.to_mcp()
+def _with_http_note(entry: Dict[str, Any], operation: Optional[Operation]) -> Dict[str, Any]:
+    """Append the operation's HTTP binding to the tool's description (MFX-32.4).
+
+    Args:
+        entry: The compiled ``tools`` entry (``name``, ``description?``, ``inputSchema``).
+        operation: The operation the tool calls, or ``None`` when it is not found.
+
+    Returns:
+        A copy of ``entry`` whose description ends with the ``HTTP: …`` sentence, in the key order
+        MCP lists (``name``, ``description``, ``inputSchema``); ``entry`` unchanged when the
+        operation has no HTTP binding.
+    """
+    note = http_binding_note(operation) if operation is not None else None
+    if note is None:
+        return entry
+    description = entry.get("description")
+    text = f"{description}\n\n{note}" if description else note
+    rendered: Dict[str, Any] = {"name": entry["name"], "description": text}
+    rendered.update({key: value for key, value in entry.items() if key not in rendered})
+    return rendered
+
+
+def _render_tool(
+    tool: McpToolDefinition, options: McpEmitOptions, losses: LossTracker, operation: Optional[Operation] = None
+) -> Dict[str, Any]:
+    """One ``tools`` entry: the compiled MCP entry with its HTTP note, plus ``outputSchema`` where it applies."""
+    entry = _with_http_note(tool.to_mcp(), operation)
     schema = tool.output.schema if tool.output is not None else None
     if schema is None or not options.output_schema:
         return entry
@@ -252,19 +290,15 @@ def build_mcp_descriptors(
             "operation (an event, streaming or schema-only model has none)."
         )
 
-    server_name = _slug(api.identity.name or api.title or "api")
-    # A per-service descriptor is named and titled after the service's name (its key may be qualified).
-    service_of = {op.key: service.name or service.key for service in api.services for op in service.operations}
-    groups: Dict[str, List[McpToolDefinition]] = {}
-    for tool in toolset.tools:
-        group = service_of.get(tool.operation, "") if options.grouping == "per-service" else ""
-        groups.setdefault(group, []).append(tool)
+    server_name = _server_name(api)
+    groups = _group_tools(api, toolset, options)
+    operations = {operation.key: operation for operation in api.operations()}
 
     descriptors: List[Tuple[str, Dict[str, Any]]] = []
     problems: List[str] = []
     for group, tools in groups.items():
-        name = f"{server_name}-{_slug(group)}" if group else server_name
-        rendered = [_render_tool(tool, options, losses) for tool in tools]
+        name = _descriptor_name(server_name, group)
+        rendered = [_render_tool(tool, options, losses, operations.get(tool.operation)) for tool in tools]
         for entry in rendered:
             problems += [f"{entry['name']!r}{p}" for p in validate_mcp_tool(entry)]
             problems += [f"{entry['name']!r}{p}" for p in mcp_tool_schema_violations(entry, options.protocol_version)]
@@ -299,23 +333,58 @@ def build_mcp_descriptors(
     return descriptors, toolset
 
 
+def _server_name(api: CanonicalApi) -> str:
+    """The descriptor's server name: a slug of the API's name (or title)."""
+    return _slug(api.identity.name or api.title or "api")
+
+
+def _group_tools(
+    api: CanonicalApi, toolset: McpToolset, options: McpEmitOptions
+) -> Dict[str, List[McpToolDefinition]]:
+    """Group the tools into descriptors: one group (``""``) for ``single``, one per service otherwise.
+
+    A per-service group is keyed by the service's name (its key may be qualified), in the order the
+    tools are compiled.
+    """
+    service_of = {op.key: service.name or service.key for service in api.services for op in service.operations}
+    groups: Dict[str, List[McpToolDefinition]] = {}
+    for tool in toolset.tools:
+        group = service_of.get(tool.operation, "") if options.grouping == "per-service" else ""
+        groups.setdefault(group, []).append(tool)
+    return groups
+
+
+def _descriptor_name(server_name: str, group: str) -> str:
+    """The name of one descriptor: the server name, suffixed with the group's slug when grouped."""
+    return f"{server_name}-{_slug(group)}" if group else server_name
+
+
 # ===========================================================================
 # Fidelity
 # ===========================================================================
 
 
 class McpFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for MCP tool-definition export.
+    """Fidelity rules for MCP tool-definition export — MFX-32.1 (#4295), MFX-32.4 (#4298).
 
     A tool carries a callable's name, its documentation and JSON Schemas for its input (and, from
     2025-06-18, an object output). So:
 
     * an operation is ``OK`` when its tool keeps the operation's own name, and **``SYNTH``** when
       the name was synthesized (sanitized, deduplicated or made from the method and path);
-    * an event or streaming operation has no tool and is ``DROP``ped, as is a deprecated one
-      unless ``include_deprecated`` and an imported MCP manifest's resources and prompts;
+    * its **HTTP binding** (verb, path, status codes, response headers) has no tool field and is
+      written into the description as text (``APPROX``);
+    * an event or streaming operation has no tool and is ``DROP``ped (a server stream with a note on
+      MCP's SSE transport), as is a deprecated one unless ``include_deprecated`` and an imported MCP
+      manifest's resources and prompts;
     * a channel is ``DROP``ped; a named type is inlined into each tool that uses it (``APPROX``);
-    * the API's servers have no field in a descriptor (``DROP``).
+      constraint keywords survive as JSON Schema (``OK``);
+    * the API's servers have no field in a descriptor (``DROP``); each **auth scheme** is ``OK``
+      (bearer, OAuth 2), ``APPROX`` (API key, basic, digest, OpenID Connect, removed OAuth flows) or
+      ``DROP`` (mutual TLS, cookie, others) against MCP's OAuth 2.1 authorization;
+    * the server name and each **grouping** decision are ``SYNTH``; a descriptor of more tools than
+      an agent can be handed trips the **grouping guard** (a critical advisory → the MFX-3.3
+      ``severe`` tier), and an export that keeps little of the source is flagged near-empty.
     """
 
     target_label = "MCP server descriptor"
@@ -328,8 +397,9 @@ class McpFidelityRulePack(CapabilityRulePack):
             self._options = McpEmitOptions()
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Compile once to learn each tool's name, then walk the model."""
+        """Compile once to learn each tool's name and descriptor, then walk the model."""
         options = getattr(self, "_options", None) or McpEmitOptions()
+        self._options = options
         self._non_tools = {
             op.key for service in api.services
             if (service.extras or {}).get("mcp_kind") in _NON_TOOL_KINDS for op in service.operations
@@ -339,30 +409,76 @@ class McpFidelityRulePack(CapabilityRulePack):
         except ValueError:
             toolset = McpToolset(tools=())
         self._tools = {tool.operation: tool for tool in toolset.tools}
+        self._groups = _group_tools(api, toolset, options)
         return super().evaluate(api)
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """The servers a descriptor has no field for."""
-        if not api.servers:
-            return []
-        return [
-            FidelityVerdict.drop(
+        """Servers, auth schemes, the synthesized names and grouping, and the grouping guard."""
+        verdicts: List[FidelityVerdict] = []
+        if api.servers:
+            verdicts.append(FidelityVerdict.drop(
                 message=f"an {self.target_label} lists tools, not the API's servers; the "
                 f"{len(api.servers)} declared server(s) are dropped — the MCP server that serves the "
                 "tools decides where calls go",
                 severity=LossinessSeverity.WARN,
                 target_mapping="servers → dropped",
-            )
-        ]
+            ))
+        verdicts += auth_scheme_verdicts(api, target_label=self.target_label)
+        groups = getattr(self, "_groups", {})
+        if not groups:
+            return verdicts
+        server_name = _server_name(api)
+        source_name = api.identity.name or api.title or ""
+        if server_name != source_name:
+            verdicts.append(FidelityVerdict.synth(
+                message=f"the server name {server_name!r} is a slug of the API's name {source_name!r}"
+                if source_name else f"the API has no name; the server is named {server_name!r}",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"API name → server {server_name}",
+            ))
+        services = sum(1 for service in api.services if any(op.key in self._tools for op in service.operations))
+        if self._options.grouping == "per-service":
+            for group, tools in groups.items():
+                name = _descriptor_name(server_name, group)
+                verdicts.append(FidelityVerdict.synth(
+                    message=f"grouping: the {len(tools)} tool(s) of service {group or '(none)'!r} are written as "
+                    f"the descriptor {name!r} (grouping=per-service)",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping=f"service → descriptor {name}",
+                ))
+        elif services > 1:
+            verdicts.append(FidelityVerdict.synth(
+                message=f"grouping: the tools of {services} services are written as one descriptor "
+                f"{server_name!r} (grouping=single); MCP has no service level",
+                severity=LossinessSeverity.INFO,
+                target_mapping=f"services → descriptor {server_name}",
+            ))
+        surfaces = {_descriptor_name(server_name, group): len(tools) for group, tools in groups.items()}
+        verdicts += grouping_guard_verdicts(
+            api, surfaces, covered=len(self._tools), target_label=self.target_label, unit="tool",
+            split_hint="grouping=per-service" if self._options.grouping == "single" and services > 1
+            else "smaller services",
+        )
+        return verdicts
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's tool verdict, plus the HTTP binding written as description text."""
+        verdicts = [self.operation_verdict(operation)]
+        if operation.key in getattr(self, "_tools", {}):
+            http = http_binding_verdict(operation, target_label=self.target_label, unit="tool")
+            if http is not None:
+                verdicts.append(http)
+        return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """OK or SYNTH by the tool's name; DROP when the operation gets no tool."""
         tool = getattr(self, "_tools", {}).get(operation.key)
         if tool is None:
+            streaming = streaming_drop_reason(operation)
             if operation.key in getattr(self, "_non_tools", set()):
                 reason = "an MCP resource or prompt is not a tool"
-            elif operation.kind in EVENT_OPERATION_KINDS or operation.streaming.value != "none":
-                reason = "an event or streaming operation has no tool form"
+            elif streaming is not None:
+                reason = streaming
             elif operation.deprecated:
                 reason = "a deprecated operation gets a tool only with include_deprecated"
             else:
@@ -383,9 +499,19 @@ class McpFidelityRulePack(CapabilityRulePack):
     def channel_verdict(self, channel: Channel) -> FidelityVerdict:
         """A channel has no tool representation."""
         return FidelityVerdict.drop(
-            message=f"{self.target_label} has no channel vocabulary; channel {channel.key!r} is dropped",
+            message=f"{self.target_label} has no channel vocabulary; channel {channel.key!r} is dropped — "
+            "an event stream has no tool form",
             target_mapping="channel → dropped",
         )
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The inlining verdict, plus the constraint keywords of a scalar type (OK)."""
+        verdicts = [self.type_verdict(type_)]
+        if type_.kind is TypeKind.SCALAR:
+            kept = constraints_verdict(type_.constraints, target_label=self.target_label)
+            if kept is not None:
+                verdicts.append(kept)
+        return verdicts
 
     def type_verdict(self, type_: Type) -> FidelityVerdict:
         """A named type is inlined into every tool schema that uses it."""
@@ -395,6 +521,14 @@ class McpFidelityRulePack(CapabilityRulePack):
             severity=LossinessSeverity.INFO,
             target_mapping="named type → inlined schema",
         )
+
+    def field_verdicts(self, field: CanonicalField) -> List[FidelityVerdict]:
+        """The profile's field verdicts, plus the field's constraint keywords (OK)."""
+        verdicts = super().field_verdicts(field)
+        kept = constraints_verdict(field.constraints, target_label=self.target_label)
+        if kept is not None:
+            verdicts.append(kept)
+        return verdicts
 
 
 # ===========================================================================

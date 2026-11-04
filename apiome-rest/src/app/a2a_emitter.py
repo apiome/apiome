@@ -47,6 +47,7 @@ from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Tuple,
 from jsonschema import Draft7Validator
 from pydantic import Field, ValidationError
 
+from .agent_interface_fidelity import grouping_guard_verdicts
 from .canonical_model import (
     AgentDescriptor,
     AgentSecurityScheme,
@@ -594,6 +595,11 @@ class A2aFidelityRulePack(CapabilityRulePack):
     operation written as (part of) a skill; an event operation, or a deprecated one without
     ``include_deprecated``, is ``DROP``ped. A skill has no schema vocabulary, so every named type is
     ``DROP``ped (a skill keeps media types only), as is every channel.
+
+    **Grouping guard** (MFX-32.4): a card of more skills than an agent can be handed at once is a
+    critical advisory (the MFX-3.3 ``severe`` tier), and one that keeps under a quarter of the
+    source's operations and channels is flagged near-empty
+    (:func:`app.agent_interface_fidelity.grouping_guard_verdicts`).
     """
 
     target_label = "A2A Agent Card"
@@ -646,6 +652,12 @@ class A2aFidelityRulePack(CapabilityRulePack):
                 verdicts.append(FidelityVerdict.drop(
                     message=reason, severity=LossinessSeverity.WARN, target_mapping=f"{pointer} → dropped",
                 ))
+        # The grouping guard (MFX-32.4): a card of more skills than an agent can be handed at once.
+        surfaces = {plan.file: len(plan.card.get("skills") or []) for plan in self._plans}
+        verdicts += grouping_guard_verdicts(
+            api, surfaces, covered=len(self._skill_of), target_label=self.target_label, unit="skill",
+            split_hint="skills_from=tags" if not self._grouped else "finer tags",
+        )
         return verdicts
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:

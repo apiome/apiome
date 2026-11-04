@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.632.0] - 2026-11-04
+
+### Added
+- **Agent-interface fidelity packs (MFX-32.4, #4298).** The MCP (`McpFidelityRulePack`) and A2A (`A2aFidelityRulePack`)
+  fidelity packs now enumerate what an operation→tool / API→agent-card conversion loses, each with its reason. Shared
+  rules live in `app/agent_interface_fidelity.py`:
+  - **HTTP semantics → description text (APPROX):** each MCP tool's `description` ends with
+    `HTTP: <VERB> <path> — returns <2xx>; errors <codes>; response headers <names>.` (`http_binding_note`), and the
+    report lists the binding as APPROX (`HTTP binding → tool description text`).
+  - **Auth (OK / APPROX / DROP):** schemes read from `components.securitySchemes` / `securityDefinitions` on
+    `api.raw`, the recorded stubs, agent schemes and operation requirements (`declared_auth_schemes`). Bearer and
+    OAuth 2 map onto MCP authorization (OK); API key, HTTP basic/digest/other, OpenID Connect and the OAuth 2
+    implicit/password flows are APPROX; mutual TLS, cookie API keys and unknown types are DROP.
+  - **Streaming / events → DROP** with a specific reason (a server stream notes that MCP streams only progress over
+    SSE); channels DROP.
+  - **Constraints → OK:** a constrained field or scalar gets an OK item naming the keywords kept as JSON Schema.
+  - **Names + grouping → SYNTH:** the slugged server name, the multi-service `single` descriptor and each
+    `per-service` descriptor are SYNTH (tool-name SYNTH unchanged).
+  - **Grouping guard:** a descriptor (or A2A card) of more than 128 tools (skills) is a critical APPROX
+    (`grouping guard: surface too large`), so the MFX-3.3 transcoding guard classifies the export `severe` and
+    requires confirmation; a split hint names `grouping=per-service` / `skills_from=tags`. An export covering under a
+    quarter of the source's operations and channels gets a WARN DROP (`grouping guard: near-empty`).
+- `transcoding_guards`: a root-level critical item is listed in `reasons` without an empty `: ` key prefix.
+- Tests: `tests/test_agent_interface_fidelity.py`.
+- OpenAPI 1.496.0.
+
 ## [1.631.0] - 2026-11-04
 
 ### Added

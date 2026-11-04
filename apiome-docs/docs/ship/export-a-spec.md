@@ -197,8 +197,11 @@ Each tool has:
 - a **`name`** — the operationId when it is a legal MCP tool name, else one made from it (or from
   the method and path), unique in the descriptor (`listPets`, `GET_orders_id`, `listOrders_2`). A
   name Apiome made up is listed as **synthesized** in the fidelity report;
-- a **`description`** — the summary and description, plus a sentence saying what a successful call
-  returns;
+- a **`description`** — the summary and description, a sentence saying what a successful call
+  returns, and, for an HTTP operation, a last sentence with its HTTP binding — the verb and path, the
+  success and error status codes, and the response headers
+  (`HTTP: GET /pets/{petId} — returns 200; errors 404; response headers X-Rate-Limit.`). A tool has
+  no HTTP fields, so this text is all an agent sees of them;
 - an **`inputSchema`** — one object holding the path, query and header parameters and the request
   body, as JSON Schema;
 - an **`outputSchema`** (2025-06-18) — the success response's schema, when the response is an
@@ -218,6 +221,39 @@ Options:
 - **output_schema** — on by default. A server that serves these tools must return
   `structuredContent` matching each `outputSchema`; turn it off if yours does not.
 - **include_deprecated** — also write a tool for each deprecated operation.
+
+#### What the MCP fidelity report lists {#what-the-mcp-fidelity-report-lists}
+
+Each item says why it is kept, approximated, dropped or synthesized:
+
+| What | In the report | Why |
+| --- | --- | --- |
+| Each operation that becomes a tool | Kept, or **synthesized** when Apiome made its name | A name Apiome made up is not the operationId |
+| Its HTTP binding (verb, path, status codes, response headers) | **Approximated** | Written into the tool's description as text; the server that serves the tool makes the HTTP call |
+| A **bearer** or **OAuth 2** auth scheme | Kept | MCP authorization is OAuth 2.1 with bearer tokens |
+| An **API key**, **basic** or **digest** auth, **OpenID Connect**, or the OAuth 2 **implicit** or **password** flow | **Approximated** | The server that serves the tools must hold the credential (OAuth 2.1 removed the implicit and password flows) |
+| **Mutual TLS**, a **cookie** API key or any other scheme | **Dropped** | MCP authorization has nowhere to put it |
+| Event and streaming operations, and channels | **Dropped** | A tool returns one result. MCP can stream progress (over SSE) while one call runs, not a series of results |
+| Deprecated operations (unless **include_deprecated**) and an MCP server's resources and prompts | **Dropped** | They are not tools |
+| Named types | **Approximated** | Inlined into each tool schema that uses them |
+| Constraint keywords (`minimum`, `pattern`, `format` …) | Kept | They stay JSON Schema keywords in the tool schemas |
+| The servers | **Dropped** | The MCP server that serves the tools decides where calls go |
+| The server name and each grouping decision | **Synthesized** | The name is made from the API's name; **grouping** decides which tools share a descriptor |
+
+#### Grouping guard {#mcp-grouping-guard}
+
+Model providers cap how many tools one request can carry (often at 128), and hosts trim long tool
+lists. When one descriptor would hold **more than 128 tools**, the fidelity report has a critical
+**grouping guard** item, so the export is a *severe* conversion: the **Export** dialog, the CLI
+(`--confirm`) and [export jobs](./export-jobs.mdx) ask you to confirm before anything is written.
+To clear it, set **grouping** to `per-service` so each service gets its own descriptor, or export
+fewer operations. When fewer than a quarter of the source's operations and channels become tools
+(an event API with one callable operation, say), the report warns that the export is
+**near-empty**.
+
+The [A2A Agent Card](#a2a-agent-card) export has the same guard for a card of more than 128 skills.
+
+#### How MCP tools are checked {#how-mcp-tools-are-checked}
 
 Every tool is checked against the MCP Tool schema of the chosen revision before you download it. The
 descriptor describes the tools; it is not a running server. From the CLI, run
@@ -292,6 +328,10 @@ Options:
   `type` A2A does not define, and a `provider` with no `url`.
 - **Synthesized:** a field A2A requires that the source left out — `description`, `url`,
   `version`, `protocolVersion` or a skill's `description`.
+- **Grouping guard:** a card of more than 128 skills is a critical item, so you confirm before
+  exporting; set **skills_from** to `tags` to write one skill per tag instead. A card that covers
+  fewer than a quarter of the source's operations and channels is flagged **near-empty**. See
+  [Grouping guard](#mcp-grouping-guard).
 
 An A2A agent's skills are **kept** as they are.
 
