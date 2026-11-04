@@ -1,0 +1,21 @@
+---
+slug: xregistry-export
+title: Export a CNCF xRegistry document
+description: "Write types and events as an xRegistry schema and message registry."
+authors: [apiome]
+---
+
+The **Export** dialog has a new **xRegistry** target under **Events**. It writes one
+[xRegistry](https://xregistry.io) document — the same file Apiome imports, so it reads back. See
+[xRegistry from any source](/ship/export-a-spec#xregistry-from-any-source).
+
+{/* truncate */}
+
+- **A schema registry:** each type becomes a JSON Schema (draft 2020-12) that is valid on its own,
+  carrying the types it references.
+- **CloudEvents message definitions:** each publish or subscribe operation becomes a message with
+  its CloudEvents `type`, `source` and `datacontenttype`, and a `dataschemaxid` that names its payload
+  schema. A value the source did not state is filled in and listed as synthesized.
+- **Checked before you download:** ids, schemas, CloudEvents attributes and payload references are
+  checked, and the document must import again.
+- **From the CLI:** `apiome export xregistry <item> --out orders.xregistry.json`.

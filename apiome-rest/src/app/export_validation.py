@@ -1595,6 +1595,29 @@ async def _validate_openrpc(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_xregistry(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted xRegistry document (MFX-34.1, #4306).
+
+    The document's structure (:func:`app.xregistry_emitter.xregistry_document_problems`: legal ids,
+    every projected JSON Schema a valid draft 2020-12 schema with its references resolving, every
+    message's CloudEvents envelope, ``type`` / ``source`` values, ``datacontenttype`` and
+    ``dataschemaxid``), then a re-import through the xRegistry import source. Findings carry the rule
+    as ``keyword``.
+    """
+    from .xregistry_emitter import check_emitted_xregistry
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The xRegistry export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_xregistry, emit_result)
+    findings = [
+        ValidationFinding(message=p["message"], file=p.get("file"), path=p.get("path"), keyword=p["rule"])
+        for p in problems
+    ]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1811,6 +1834,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "xsd": _validate_xsd,
     # MFX-35.1 (#4311)
     "sql-ddl": _validate_sql_ddl,
+    # MFX-34.1 (#4306)
+    "xregistry": _validate_xregistry,
 }
 
 

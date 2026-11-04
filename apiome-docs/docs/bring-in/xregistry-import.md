@@ -112,5 +112,6 @@ Give each schema a `description` (Apiome uses it for the type when the schema do
 - [Registry crawl](../reference/rest/connectors.md): import a live xRegistry, one item per schema,
   message group and endpoint.
 - [Supported formats](./supported-formats.md): the versions this importer reads.
+- [xRegistry from any source](../ship/export-a-spec.md#xregistry-from-any-source): export any item as an xRegistry document, which imports back here.
 - [Import a spec](./import-a-spec.md): every way to bring a document in.
 - [RPC and event formats](./rpc-and-event-formats.mdx): every RPC, event and IDL importer, and how they work together.

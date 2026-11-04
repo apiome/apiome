@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**62<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**63<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **62<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **63<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -184,6 +184,82 @@ The fidelity report is computed for the version you pick. Each thing the older v
 is listed with where it was (`/servers/robot/bindings/ros2`), as dropped or approximated. Every
 version is checked with the AsyncAPI parser before you download it. From the CLI, run
 `apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
+
+### xRegistry from any source {#xregistry-from-any-source}
+
+#### When to export to xRegistry
+
+- **Publish an event catalog as a CNCF xRegistry.** An AsyncAPI, CloudEvents or other event item
+  becomes one [xRegistry](https://xregistry.io) document: its types as a schema registry and its
+  events as CloudEvents message definitions, with each event's `type`, `source`, `datacontenttype`
+  and payload schema. Tools that read xRegistry (an xRegistry server, the CloudEvents SDK
+  generators) can load it as is.
+- **Share an API's types as a schema registry.** A REST, gRPC, GraphQL or data-schema item exports
+  its types as JSON Schemas. Its request/response operations are not events, so the fidelity report
+  lists them as dropped.
+- **Round-trip an xRegistry item.** An item imported from xRegistry exports back with its registry
+  id, schemas, message groups and CloudEvents attributes, and re-imports to the same types and events.
+
+#### xRegistry export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the xRegistry card (options: `registry_id`, `source`, `indent`) | **Export** dialog → **xRegistry** (under **Events**) | [Where to find the xRegistry card](#where-to-find-the-xregistry-card) |
+| **See** how schemas, message groups, CloudEvents attributes and payloads are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-xregistry) |
+| **Check** what is approximated, dropped or synthesized | The fidelity report | [What the fidelity report lists](#what-the-xregistry-fidelity-report-lists) |
+| **Trust** the file | Checked, then re-imported, before every download | [How an xRegistry export is checked](#how-an-xregistry-export-is-checked) |
+| **Export** from the CLI | `apiome export xregistry <item> --out orders.xregistry.json` | [Export from the CLI](./export-from-the-cli.md) |
+
+#### How the item is written {#how-the-item-is-written-to-xregistry}
+
+You get one `<registry id>.xregistry.json` document (xRegistry `specversion` `1.0-rc1`). It is the
+same file [Import a CNCF xRegistry](../bring-in/xregistry-import.md) reads, so it imports back.
+
+| In the source | In the document |
+| --- | --- |
+| The item's name | `registryid` (a slug, unless you set **registry_id**; an imported registry keeps its own), `name` and `description` |
+| Each type | One schema in the schema group named after the registry: format `JsonSchema/draft/2020-12`, one version `1`. A reference to another type is `#/definitions/<schema>`, and the schema carries the types it reaches under `definitions`, so each schema is valid on its own |
+| Each service with an event operation | A message group, with the `CloudEvents/1.0` envelope |
+| Each publish or subscribe operation | A message: its `envelopemetadata` holds the CloudEvents `type` and `source` (each with a `value`) and the message's other headers (`subject` …) |
+| The event's payload | `dataschemaformat` and a `dataschemaxid` that names the type's schema (`/schemagroups/orders/schemas/Order`), or an inline `dataschema` |
+
+The CloudEvents `type` is the event's own, else its channel's address, else its name. The `source` is
+the event's own (or its channel's, or a `source` header's default), else the **source** option, else
+`/<registry id>`. `datacontenttype` is the event's media type, else `application/json`. A value Apiome
+fills in is listed as synthesized.
+
+Request/response operations have no message form and are not written. The document has no
+`endpoints`: the item's servers, and the usage, protocol and URIs of an imported endpoint, are not
+written (an imported endpoint's messages are written in a message group of the same name).
+
+#### What the fidelity report lists {#what-the-xregistry-fidelity-report-lists}
+
+- **Approximated:** for a source in another format, each type (projected to JSON Schema), each
+  channel (its bindings, protocol and parameters are not written), and each service written as a
+  message group. An imported xRegistry endpoint, written as a message group.
+- **Dropped:** request/response operations and services with no event, and the servers. An
+  operation or type that reads back under another key (a message is keyed `<group>.<message>`, a
+  schema by its schema id) is listed as dropped under its old key, with the new one.
+- **Synthesized:** the registry id, a group, schema or message id made legal or unique, and every
+  CloudEvents `type`, `source` or `datacontenttype` the source did not state.
+
+An imported schema-only registry exports **lossless**.
+
+#### How an xRegistry export is checked {#how-an-xregistry-export-is-checked}
+
+Every document is checked before you download it: legal ids that match their keys; a `format` and a
+default version on every schema; every JSON Schema valid (draft 2020-12) with its references resolving
+inside it; and on every message the `CloudEvents/1.0` envelope, a `type` and a `source` value, a
+`datacontenttype`, and a `dataschemaxid` that names a schema of the document. The document must then
+import again through the xRegistry importer. A document that fails is never offered for download.
+
+#### Where to find the xRegistry card {#where-to-find-the-xregistry-card}
+
+The **Export** dialog offers **xRegistry** under **Events**. It is greyed out for a source with no type
+and no publish or subscribe operation (a gateway configuration, an agent card), with that reason.
+From the CLI, run `apiome export xregistry <item> --out orders.xregistry.json`; add
+`--option registry_id=orders` or `--option source=/orders` to set them. A lossy export exits non-zero
+unless you add `--force`.
 
 ### Agent interfaces: MCP, A2A and agent manifests {#agent-interfaces}
 
@@ -3221,6 +3297,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | WSDL | REST | Any source |
 | X12 implementation guide | Data schema | Any source with a record type |
 | XML-RPC | RPC | A source with an RPC operation |
+| xRegistry | Events | A source with a type or an event (publish / subscribe) operation |
 | XSD | Data schema | Any source |
 | z/OS Connect | REST | A source imported as z/OS Connect |
 

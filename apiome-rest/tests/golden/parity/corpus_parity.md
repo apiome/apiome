@@ -109,7 +109,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 | `wit` | WIT (WebAssembly) | rpc | 11 | 5 | 0 | 0 | 16 | 6/6 | 9 | `wit` |
 | `wsdl` | WSDL | rest | 13 | 11 | 2 | 0 | 26 | 6/6 | 12 | `wsdl` |
 | `xmlrpc` | XML-RPC | rpc | 6 | 5 | 2 | 0 | 13 | 5/6 (+1 waived) | 6 | `xmlrpc` |
-| `xregistry` | CNCF xRegistry | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
+| `xregistry` | CNCF xRegistry | event | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `xregistry` |
 | `xsd` | XSD | data_schema | 12 | 5 | 2 | 0 | 19 | 6/6 | 8 | `xsd` |
 | `zod` | Zod schemas | data_schema | 9 | 6 | 0 | 0 | 15 | 6/6 | 7 | — |
 | `zosconnect` | z/OS Connect | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `zosconnect` |
