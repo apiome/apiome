@@ -808,6 +808,44 @@ header comment. From the CLI, run `apiome export typespec <item> --out <file>.ts
 non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
 Browse offers TypeSpec too, as the `.tsp` file.
 
+### Healthcare exports
+
+Healthcare interfaces describe their data in two generations of HL7 standards: FHIR for modern REST
+APIs, and HL7 v2 for the pipe-and-hat messages most hospital integration engines still run on. Apiome
+writes both from an item's types, plus the original message for an item imported from HL7 v2. In
+**Export studio**, the three cards sit together under **Healthcare** on the **Target** step.
+
+#### When to use which
+
+- **A FHIR server or profile author: FHIR.** Export [FHIR](#fhir-structuredefinition-from-any-source)
+  for a StructureDefinition logical model per type (R4 or R5), a CodeSystem and ValueSet per enum, and the
+  source's operations summarized in a CapabilityStatement. It is checked by the official HL7 FHIR
+  validator when the server has it.
+- **An interface partner on HL7 v2: HL7 v2 segment guide.** Export an
+  [HL7 v2 segment guide](#hl7-v2-segment-guide-from-any-source) for the message and segment definitions an
+  integration engine (Mirth Connect, Rhapsody, Cloverleaf) is configured from: Z-segments, typed fields
+  and a user-defined table per enum. It is laid out by the same plan as the X12 and UN/EDIFACT guides.
+- **An HL7 v2 message back out: HL7 v2.** An item imported from an HL7 v2 message exports back to
+  **HL7 v2**, its segments and envelope as they were imported. It is not offered for any other source.
+
+Moving from HL7 v2 to FHIR? An HL7 v2 item names the FHIR resource each segment maps to; see
+[Migrate to FHIR](../bring-in/hl7v2-import.md#migrate-to-fhir).
+
+#### Healthcare exports at a glance
+
+| | FHIR | HL7 v2 segment guide | HL7 v2 |
+| --- | --- | --- | --- |
+| **From** | Any source | Any source with a record type | An item imported from HL7 v2 |
+| **You get** | A `collection` Bundle, or one JSON file per resource | JSON guide, segment CSV, Markdown guide | The HL7 v2 message |
+| **Options** | `fhir_version` (`R4`, `R5`), `packaging`, `capability_statement` | `message_type`, `version`, `first_table_number` … | — |
+| **Enums become** | A CodeSystem and a ValueSet, with a `required` binding | A user-defined table (`9001` …) | — |
+| **Operations** | Summarized in a CapabilityStatement | Left out (types-only) | Left out (types-only) |
+| **Checked by** | The HL7 FHIR validator, else Apiome's structural FHIR rules | Apiome's guide rules | Apiome's HL7 v2 parser |
+| **CLI** | `apiome export fhir` | `apiome export hl7guide` | `apiome export hl7v2` |
+
+Every length, code, name and identifier an export invents is listed in its fidelity report before you
+download.
+
 ### FHIR (StructureDefinition) from any source
 
 Exporting to **FHIR** writes each cataloged type as a FHIR **StructureDefinition logical model**
@@ -1748,8 +1786,8 @@ and fails — listing every problem with its file, JSON pointer and rule — whe
 6. **The files disagree** (`hl7v2-guide.files`): the `.csv` or `.md` file does not list exactly what the
    JSON guide says, or one of the three files is missing.
 
-**Where to find it.** In the **Export** dialog, the **HL7 v2 segment guide** card is under **Data
-schema & graph** on the **Target** step, marked multi-file. Its badge is **types-only** for every source,
+**Where to find it.** In the **Export** dialog, pick the **HL7 v2 segment guide** card on the **Target**
+step (in **Export studio** it is under **Healthcare**, with FHIR and HL7 v2), marked multi-file. Its badge is **types-only** for every source,
 an imported HL7 v2 item included. Pick the card and type the **Message Type** (`ADT^A01`, `ORU^R01` …) and
 **Version** (`2.5.1`, `2.8` …); leave them empty for the item's own, else `ZZZ^Z01` and `2.5.1`. From the CLI,
 run `apiome export hl7guide <item> --out <folder>` and add `--option message_type=ORU^R01` or

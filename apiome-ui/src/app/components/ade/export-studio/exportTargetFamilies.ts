@@ -105,7 +105,8 @@ const PARADIGM_FAMILY: Readonly<Record<string, string>> = {
  *
  * The keys are emitter registry keys (`descriptor.key`): the API-client collections and request
  * files (a set of saved calls a developer opens in their client), and the healthcare targets —
- * FHIR StructureDefinition logical models (R4 / R5) and HL7 v2 segment definitions.
+ * FHIR StructureDefinition logical models (R4 / R5), HL7 v2 messages and the HL7 v2 segment guide
+ * (MFX-26.3, #4159).
  */
 const TARGET_FAMILY: Readonly<Record<string, string>> = {
   postman: 'client',
@@ -116,6 +117,7 @@ const TARGET_FAMILY: Readonly<Record<string, string>> = {
   'http-file': 'client',
   fhir: 'healthcare',
   hl7v2: 'healthcare',
+  'hl7v2-guide': 'healthcare',
 };
 
 /**
