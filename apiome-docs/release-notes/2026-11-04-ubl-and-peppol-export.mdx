@@ -1,0 +1,21 @@
+---
+slug: ubl-and-peppol-export
+title: Export UBL documents and Peppol e-invoices
+description: "The XSD export can now write UBL 2.1 and Peppol BIS document schemas."
+authors: [apiome]
+---
+
+UBL and Peppol schemas already import; now the mirror exports. The **XSD** export's **Profile** option has
+`ubl` and `peppol`. See [UBL and Peppol BIS profiles](/ship/export-a-spec#ubl-and-peppol-bis-profiles).
+
+{/* truncate */}
+
+- **UBL 2.1 document schemas:** every value typed by a UBL data type, names ending with their representation
+  term, values that match a UBL basic component written as `cbc:` references, and a document element such as
+  `Invoice` headed by the UBL header.
+- **Peppol BIS Billing 3.0:** an `Invoice` or `CreditNote` with its mandatory `CustomizationID`, `ProfileID`,
+  `ID`, `IssueDate`, type code and currency — the item's own, or added and reported.
+- **Validated against the real UBL schemas:** the download ships the official OASIS UBL 2.1 schemas it imports,
+  unmodified with their notice, and every export is built against them before you get it.
+- **Honest about Peppol:** the export applies the document conventions; Peppol's Schematron business rules are
+  not run, and the guide in the download says so.

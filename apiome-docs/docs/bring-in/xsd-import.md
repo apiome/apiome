@@ -78,6 +78,9 @@ Apiome recognises the schema by its target namespace
 The item versions, diffs, lints and exports like any other XML Schema. Peppol's business rules are a
 Schematron file: import that separately as a [Schematron item](./schematron-import.md).
 
+To go the other way — write any item's types as a UBL 2.1 document schema or a Peppol BIS invoice or credit
+note — export it to XSD with the [UBL and Peppol BIS profiles](../ship/export-a-spec.md#ubl-and-peppol-bis-profiles).
+
 ## Related
 
 - [Import a SOAP / WSDL service](./wsdl-import.md)

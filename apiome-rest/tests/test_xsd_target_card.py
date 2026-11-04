@@ -15,7 +15,8 @@ What the standalone ``xsd`` export target shows and writes, pinned in ``fixtures
   ``relaxng``, ``relaxng-compact`` and ``dtd``, MFX-22.3 — covered in ``test_xsd_output_modes.py``). Every
   pinned choice passes the export gate's check (:func:`app.xsd_roundtrip.check_emitted_xsd`). ``profile``
   (``generic`` default; ``iso20022`` with ``message_identifier``, ``business_area`` and ``message_type``,
-  MFX-22.4 — covered in ``test_xsd_iso20022_profile.py``) is in the descriptor too;
+  MFX-22.4 — covered in ``test_xsd_iso20022_profile.py``; ``ubl`` and ``peppol`` with ``ubl_document``,
+  ``ubl_namespace`` and ``document_record``, MFX-24.6 — ``test_xsd_ubl_profile.py``) is in the descriptor too;
 * **browse** — the public ``…/document`` route delivers a one-namespace ``.xsd`` itself;
 * **the CLI and UI fixtures** — ``apiome-cli/tests/fixtures/export-targets-xsd.json`` and
   ``apiome-ui/tests/fixtures/export-targets-xsd-{rest,xsd}.json`` carry the live descriptor, options schema,
@@ -228,13 +229,15 @@ def test_the_options_are_in_the_descriptor() -> None:
     assert set(card.options_schema["properties"]) == {
         "include_comments", "include_xml_declaration", "mode", "xsd_version",
         "profile", "message_identifier", "business_area", "message_type",
+        "ubl_document", "ubl_namespace", "document_record",
     }
     assert card.options_schema["properties"]["xsd_version"]["enum"] == ["1.0", "1.1"]
     assert card.options_schema["properties"]["mode"]["enum"] == ["xsd", "relaxng", "relaxng-compact", "dtd"]
-    assert card.options_schema["properties"]["profile"]["enum"] == ["generic", "iso20022"]
+    assert card.options_schema["properties"]["profile"]["enum"] == ["generic", "iso20022", "ubl", "peppol"]
     assert card.default_options == {
         "include_comments": True, "include_xml_declaration": True, "mode": "xsd", "xsd_version": "1.0",
         "profile": "generic", "message_identifier": None, "business_area": None, "message_type": None,
+        "ubl_document": None, "ubl_namespace": None, "document_record": None,
     }
 
 
