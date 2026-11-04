@@ -1,0 +1,23 @@
+---
+slug: fix-orchestra-export
+title: Export a FIX Orchestra repository
+description: "Write an item's types as FIX Orchestra messages, fields, groups and code sets."
+authors: [apiome]
+---
+
+A new **FIX Orchestra** export target writes an item's types as a
+[FIX Orchestra](https://www.fixtrading.org/standards/fix-orchestra/) 1.0 repository: the machine-readable
+rules of engagement of a FIX interface. See
+[FIX Orchestra from any source](/ship/export-a-spec#fix-orchestra-from-any-source).
+
+{/* truncate */}
+
+- **Messages, components and groups:** root records become messages, held records components, and lists
+  of records repeating groups with their `NumInGroup` counter. Enumerations become code sets.
+- **Fields with tags:** every field is declared once with its FIX tag and datatype. An item imported from FIX
+  or Orchestra keeps its tags. Any other source gets tags from 5000, FIX's user-defined range.
+- **Round-trips an Orchestra item:** its ids, `msgType`s, scenarios, presence and rules, responses, actors
+  and flows are written back.
+- **To the official schema:** the repository is written to validate against the FIX Orchestra 1.0 XSD.
+  What the schema requires and the item lacks (a version, a code set, a legal name) is filled in and listed
+  in the fidelity report.

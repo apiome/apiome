@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**65<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**66<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **65<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **66<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -2551,6 +2551,69 @@ run `apiome export hl7guide <item> --out <folder>` and add `--option message_typ
 `--option version=2.8`. A types-only export exits non-zero unless you add `--force`. A public item's
 **Export** dialog on Browse offers the guide too, as a `.zip`.
 
+### FIX Orchestra from any source {#fix-orchestra-from-any-source}
+
+#### When to export to FIX Orchestra
+
+- **Publish the rules of engagement of a FIX interface.** Export the item's types as a
+  [FIX Orchestra](https://www.fixtrading.org/standards/fix-orchestra/) repository: the machine-readable
+  description of messages, components, repeating groups, fields with their tags, and code sets that FIX
+  engines and tools read.
+- **Describe an API's payloads to a capital-markets counterparty.** A REST, JSON Schema or GraphQL item
+  becomes Orchestra messages and fields, with FIX tags assigned for you.
+- **Round-trip an Orchestra item.** An item imported from Orchestra
+  ([Import a FIX Orchestra repository](../bring-in/fix-orchestra-import.md)) exports back with its tags, ids,
+  `msgType`s, scenarios, presence and rules, actors and flows.
+
+An Orchestra repository describes messages, not an API's operations, so those are left out, with a
+critical warning at the top of the fidelity report.
+
+#### FIX Orchestra export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the target (option: `version`) | Export-target registry key `fix-orchestra` | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
+| **See** which types become messages, components, groups and code sets | This section | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
+| **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-fix-orchestra-fidelity-report-lists) |
+
+#### How the item is written {#how-the-item-is-written-to-fix-orchestra}
+
+You get one `<name>.orchestra.xml`: an Orchestra 1.0 repository in the
+`http://fixprotocol.io/2020/orchestra/repository` namespace, written to validate against the official FIX
+Orchestra 1.0 repository XSD, which Apiome ships with.
+
+| In the item | In the repository |
+| --- | --- |
+| An Orchestra message, else a root record (one no other record holds) | A `message`, with its `msgType`, `flow`, scenario and `responses` when the source has them |
+| A record another record holds | A `component`, used by a `componentRef` |
+| A list of records | A repeating `group` with its `NumInGroup` counter field, used by a `groupRef` |
+| A list of plain values / a map | A group with one entry field / a group of `key` and `value` (reported) |
+| A union | A component with one optional member per alternative (reported) |
+| An enumeration | A `codeSet`; each value is a `code` (`char` for one-character codes, `int`, else `String`) |
+| A field | A `field`, declared once with its tag (`id`) and datatype, and a `fieldRef` by tag |
+| A required field / constant / conditional rule | `presence="required"` / `presence="constant"` with its `value` / a `rule` with its `when` |
+| Actors, state machines and flows | `actors`, when the source carries them |
+
+**Tags and ids.** An item imported from FIX or Orchestra keeps its tags and its message, component, group
+and code-set ids. Any other source has none, so tags are assigned from **5000**, FIX's user-defined range,
+skipping every tag the source already uses, and ids from 1. Datatypes are the standard FIX ones (`String`,
+`int`, `float`, `Boolean`, `UTCTimestamp`, `LocalMktDate`, `UTCTimeOnly`, `data`).
+
+**What the schema requires.** A name Orchestra does not allow is rewritten (`placed-at` → `placed_at`).
+The repository `version` is the source's FIX version, else the item's version as `major.minor`, else
+`FIX.Latest`, or what the **version** option says. Orchestra requires a code set, so a model without an
+enumeration gets an empty `NoCodeSet`. Each of these is reported.
+
+#### What the fidelity report lists {#what-the-fix-orchestra-fidelity-report-lists}
+
+- **Dropped:** every operation, channel and service, under a critical "types only" warning, and validation
+  constraints other than presence and code sets.
+- **Made up:** every tag the source does not carry, and the placeholder code set.
+- **Approximated:** a list of plain values or a map written as a group, a union written as a component,
+  and a renamed name.
+- **Read back differently:** what a re-import gives back is measured, not guessed. An entity reads back under
+  its Orchestra name, and the API's identity as the repository's name, version and title.
+
 ### WSDL and XSD from any source
 
 #### When to export to WSDL
@@ -3756,6 +3819,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | Envoy xDS RouteConfiguration | REST | Any source |
 | FHIR | REST | Any source |
 | FIX | Data schema | A source imported as FIX |
+| FIX Orchestra | Data schema | Any source with a record type |
 | FlatBuffers | Data schema | Any source |
 | Gateway API HTTPRoute | REST | Any source |
 | Google API Discovery | REST | Any source |
