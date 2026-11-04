@@ -795,6 +795,7 @@ def load_builtin_emitters() -> None:
     from . import apigee_emitter as _apigee_emitter  # noqa: F401
     from . import arazzo_emitter as _arazzo_emitter  # noqa: F401
     from . import asn1_emitter as _asn1  # noqa: F401
+    from . import arrow_emitter as _arrow_emitter  # noqa: F401
     from . import asyncapi_emitter as _asyncapi  # noqa: F401
     from . import avro_emitter as _avro  # noqa: F401
     from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401

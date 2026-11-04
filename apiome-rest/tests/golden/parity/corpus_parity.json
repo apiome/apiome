@@ -323,9 +323,16 @@
       "golden_directories": [
         "arrow"
       ],
-      "emit_key": null,
+      "emit_key": "arrow",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "arrow",
+          "emit_key": "arrow",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "reviewed",
       "requirements": {
         "valid-examples": "satisfied",

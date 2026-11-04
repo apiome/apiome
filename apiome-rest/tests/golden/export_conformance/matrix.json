@@ -32,6 +32,12 @@
     },
     {
       "family": "a2a",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "a2a",
       "loss_counts": {
         "approx": 1,
         "drop": 5,
@@ -581,6 +587,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "acp",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "acp",
@@ -1149,6 +1161,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "agents-manifest",
@@ -1725,6 +1743,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "api-blueprint",
@@ -2436,6 +2466,12 @@
     },
     {
       "family": "apigee",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "apigee",
       "loss_counts": {
         "approx": 1,
         "drop": 4,
@@ -3077,6 +3113,12 @@
     },
     {
       "family": "arazzo",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "arazzo",
       "loss_counts": {
         "approx": 1,
         "drop": 4,
@@ -3646,6 +3688,12 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "arrow",
+      "reason": null,
+      "status": "ok",
+      "target": "arrow"
     },
     {
       "family": "arrow",
@@ -4255,6 +4303,18 @@
     },
     {
       "family": "asn1",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "asn1",
       "reason": null,
       "status": "ok",
       "target": "asn1"
@@ -4849,6 +4909,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "asyncapi",
       "loss_counts": {
         "approx": 1,
         "drop": 5,
@@ -5375,6 +5441,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "avro",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "avro",
@@ -5993,6 +6071,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 9,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "avro-idl",
@@ -6631,6 +6721,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 8,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "aws-apigateway",
@@ -7340,6 +7442,12 @@
     },
     {
       "family": "azure-apim",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "azure-apim",
       "loss_counts": {
         "approx": 1,
         "drop": 3,
@@ -7989,6 +8097,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "bruno",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "bruno",
@@ -8696,6 +8816,18 @@
     {
       "family": "capnproto",
       "loss_counts": {
+        "approx": 4,
+        "drop": 8,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "capnproto",
+      "loss_counts": {
         "approx": 2,
         "drop": 3,
         "synth": 0
@@ -9312,6 +9444,18 @@
     {
       "family": "cddl",
       "loss_counts": {
+        "approx": 6,
+        "drop": 6,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "cddl",
+      "loss_counts": {
         "approx": 4,
         "drop": 1,
         "synth": 7
@@ -9914,6 +10058,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "cics-bms",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "cics-bms",
@@ -10524,6 +10680,18 @@
     {
       "family": "cloudevents",
       "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
         "approx": 2,
         "drop": 3,
         "synth": 6
@@ -11114,6 +11282,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 13,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -11726,6 +11906,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 13,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "connectrpc",
@@ -12367,6 +12559,12 @@
     },
     {
       "family": "consul",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
+    },
+    {
+      "family": "consul",
       "loss_counts": {
         "approx": 1,
         "drop": 2,
@@ -13004,6 +13202,18 @@
     {
       "family": "corbaidl",
       "loss_counts": {
+        "approx": 2,
+        "drop": 10,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
         "approx": 1,
         "drop": 5,
         "synth": 3
@@ -13618,6 +13828,18 @@
     {
       "family": "cue",
       "loss_counts": {
+        "approx": 3,
+        "drop": 12,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "cue",
+      "loss_counts": {
         "approx": 2,
         "drop": 3,
         "synth": 13
@@ -14225,6 +14447,18 @@
     {
       "family": "dbt",
       "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "dbt",
+      "loss_counts": {
         "approx": 10,
         "drop": 2,
         "synth": 15
@@ -14825,6 +15059,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "dhall",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 6,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "dhall",
@@ -15434,6 +15680,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "dicom",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 14,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -16058,6 +16316,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 12,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "discovery",
@@ -16755,6 +17025,18 @@
       "family": "dtd",
       "loss_counts": {
         "approx": 4,
+        "drop": 9,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "dtd",
+      "loss_counts": {
+        "approx": 4,
         "drop": 4,
         "synth": 15
       },
@@ -17356,6 +17638,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 10,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -17966,6 +18260,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -18599,6 +18905,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "envoy-xds",
@@ -19245,6 +19557,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "fhir",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "fhir",
@@ -19939,6 +20263,18 @@
     {
       "family": "fix",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix",
+      "loss_counts": {
         "approx": 24,
         "drop": 0,
         "synth": 21
@@ -20550,6 +20886,18 @@
     {
       "family": "fix-orchestra",
       "loss_counts": {
+        "approx": 7,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix-orchestra",
+      "loss_counts": {
         "approx": 4,
         "drop": 0,
         "synth": 22
@@ -21152,6 +21500,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -21768,6 +22128,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "gateway-api",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "gateway-api",
@@ -22426,6 +22792,18 @@
     {
       "family": "graphql",
       "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
         "approx": 23,
         "drop": 3,
         "synth": 16
@@ -23059,6 +23437,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "haproxy",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "haproxy",
@@ -23705,6 +24089,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 12,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "har",
@@ -24402,6 +24798,18 @@
       "family": "hl7v2",
       "loss_counts": {
         "approx": 1,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
+      "loss_counts": {
+        "approx": 1,
         "drop": 0,
         "synth": 49
       },
@@ -25012,6 +25420,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 38,
+        "synth": 91
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -25636,6 +26056,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "hoppscotch",
@@ -26351,6 +26783,18 @@
       "family": "http-file",
       "loss_counts": {
         "approx": 2,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "http-file",
+      "loss_counts": {
+        "approx": 2,
         "drop": 3,
         "synth": 2
       },
@@ -27042,6 +27486,18 @@
     {
       "family": "idoc",
       "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "idoc",
+      "loss_counts": {
         "approx": 2,
         "drop": 0,
         "synth": 32
@@ -27654,6 +28110,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 18,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -28278,6 +28746,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "insomnia",
@@ -28974,6 +29454,18 @@
     {
       "family": "iso20022",
       "loss_counts": {
+        "approx": 1,
+        "drop": 18,
+        "synth": 20
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso20022",
+      "loss_counts": {
         "approx": 2,
         "drop": 0,
         "synth": 30
@@ -29586,6 +30078,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -30220,6 +30724,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "istio",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "istio",
@@ -30864,6 +31374,18 @@
     {
       "family": "json-schema",
       "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
         "approx": 11,
         "drop": 0,
         "synth": 7
@@ -30936,7 +31458,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation e14e2ad4-f408-4a61-a5e7-79681546054c",
+        "added operation 4fc1dbf3-ff37-4a2a-b10e-4bdbfef3c542",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -31450,6 +31972,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "jsonld",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "jsonld",
@@ -32054,6 +32588,18 @@
     {
       "family": "jtd",
       "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
         "approx": 2,
         "drop": 0,
         "synth": 11
@@ -32126,7 +32672,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation f72036e0-88cc-4062-ad0b-4e03f8eb1715",
+        "added operation 521d28c8-3aaa-4369-b6e8-dcdc3ca73d3c",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -32660,6 +33206,18 @@
       "family": "k8s-crd",
       "loss_counts": {
         "approx": 3,
+        "drop": 3,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 3,
         "drop": 1,
         "synth": 2
       },
@@ -32736,7 +33294,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 0bdee9b5-7e78-44d0-b8dd-4623ee2ebc3d",
+        "added operation ff6e5c18-9bf5-4e6d-be84-3b36c52dd030",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -33256,6 +33814,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -33878,6 +34448,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "kong",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "kong",
@@ -34536,6 +35112,18 @@
     {
       "family": "llm-tools",
       "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
         "approx": 7,
         "drop": 4,
         "synth": 7
@@ -35164,6 +35752,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "lwm2m",
@@ -35800,6 +36400,18 @@
     {
       "family": "matter",
       "loss_counts": {
+        "approx": 4,
+        "drop": 12,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
         "approx": 5,
         "drop": 6,
         "synth": 14
@@ -36432,6 +37044,18 @@
     {
       "family": "mcp",
       "loss_counts": {
+        "approx": 2,
+        "drop": 17,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "mcp",
+      "loss_counts": {
         "approx": 3,
         "drop": 11,
         "synth": 12
@@ -37052,6 +37676,18 @@
     {
       "family": "nacha",
       "loss_counts": {
+        "approx": 1,
+        "drop": 7,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "nacha",
+      "loss_counts": {
         "approx": 65,
         "drop": 0,
         "synth": 0
@@ -37662,6 +38298,18 @@
     {
       "family": "natural-ddm",
       "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "natural-ddm",
+      "loss_counts": {
         "approx": 15,
         "drop": 0,
         "synth": 12
@@ -38264,6 +38912,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 31,
+        "synth": 40
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -38892,6 +39552,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "nginx",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "nginx",
@@ -39538,6 +40204,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 8,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -40245,6 +40923,18 @@
       "family": "odata-v2",
       "loss_counts": {
         "approx": 2,
+        "drop": 18,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
+      "loss_counts": {
+        "approx": 2,
         "drop": 11,
         "synth": 10
       },
@@ -40934,6 +41624,18 @@
     {
       "family": "odcs",
       "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
         "approx": 4,
         "drop": 0,
         "synth": 11
@@ -41005,7 +41707,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 8a2295ae-cae6-4cfe-b66f-1ce3f81dc335",
+        "added operation 61827ce5-dde1-4861-b994-7920a108016c",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -41538,6 +42240,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 13,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -42172,6 +42886,18 @@
     {
       "family": "opcua-nodeset",
       "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
         "approx": 4,
         "drop": 2,
         "synth": 13
@@ -42792,6 +43518,18 @@
     {
       "family": "openapi",
       "loss_counts": {
+        "approx": 2,
+        "drop": 2,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "openapi",
+      "loss_counts": {
         "approx": 7,
         "drop": 2,
         "synth": 6
@@ -43398,6 +44136,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "openrpc",
@@ -44016,6 +44766,18 @@
     {
       "family": "owl",
       "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
         "approx": 3,
         "drop": 0,
         "synth": 13
@@ -44088,7 +44850,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation d18fd397-bee4-4ebc-b459-a98e1d6b7403",
+        "added operation eb09c634-c3fe-4a72-b40c-5753393ce912",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -44608,6 +45370,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "pkl",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 13,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -45217,6 +45991,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "pli",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 16,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -45841,6 +46627,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 5,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -46549,6 +47347,18 @@
     {
       "family": "postman-v2",
       "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman-v2",
+      "loss_counts": {
         "approx": 2,
         "drop": 5,
         "synth": 4
@@ -47253,6 +48063,18 @@
     {
       "family": "protobuf",
       "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf",
+      "loss_counts": {
         "approx": 3,
         "drop": 4,
         "synth": 7
@@ -47886,6 +48708,18 @@
       "family": "protobuf-editions",
       "loss_counts": {
         "approx": 2,
+        "drop": 8,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 2,
         "drop": 3,
         "synth": 9
       },
@@ -48501,6 +49335,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 12,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -49127,6 +49973,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "raml",
@@ -49816,6 +50674,18 @@
       "family": "relaxng",
       "loss_counts": {
         "approx": 2,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "relaxng",
+      "loss_counts": {
+        "approx": 2,
         "drop": 2,
         "synth": 3
       },
@@ -50421,6 +51291,18 @@
     {
       "family": "ros2",
       "loss_counts": {
+        "approx": 3,
+        "drop": 1,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
         "approx": 12,
         "drop": 0,
         "synth": 27
@@ -50492,7 +51374,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 217b5fa3-3a2e-483b-b51c-5c61a9f080bb",
+        "added operation 71ff4ecd-ff8c-4df0-9f80-ce6990793c99",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -51019,6 +51901,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "sepa",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 25,
+        "synth": 58
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "sepa",
@@ -51639,6 +52533,18 @@
     {
       "family": "shacl",
       "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
         "approx": 3,
         "drop": 2,
         "synth": 8
@@ -52246,6 +53152,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 10,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -52882,6 +53800,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "soapui",
@@ -53578,6 +54508,18 @@
     {
       "family": "sparkplug",
       "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
         "approx": 3,
         "drop": 3,
         "synth": 13
@@ -53650,7 +54592,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation 1c96684d-b631-4bf4-838e-9bce989451d3",
+        "added operation ab9e166b-d90d-4986-a086-151998d9be82",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -54176,6 +55118,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -54796,6 +55750,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 25,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "swagger",
@@ -55506,6 +56472,18 @@
     {
       "family": "swagger-1.2",
       "loss_counts": {
+        "approx": 2,
+        "drop": 11,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger-1.2",
+      "loss_counts": {
         "approx": 3,
         "drop": 6,
         "synth": 12
@@ -56193,6 +57171,18 @@
     {
       "family": "swift-mt",
       "loss_counts": {
+        "approx": 1,
+        "drop": 15,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "swift-mt",
+      "loss_counts": {
         "approx": 15,
         "drop": 0,
         "synth": 13
@@ -56811,6 +57801,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 9,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "thrift",
@@ -57443,6 +58445,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 6,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "thunder-client",
@@ -58140,6 +59154,18 @@
       "family": "tradacoms",
       "loss_counts": {
         "approx": 1,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "tradacoms",
+      "loss_counts": {
+        "approx": 1,
         "drop": 0,
         "synth": 18
       },
@@ -58762,6 +59788,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "traefik",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "traefik",
@@ -59407,6 +60439,18 @@
       "family": "trpc",
       "loss_counts": {
         "approx": 2,
+        "drop": 26,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 2,
         "drop": 14,
         "synth": 30
       },
@@ -60040,6 +61084,12 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "tyk",
+      "reason": "Apache Arrow / Parquet export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "arrow"
     },
     {
       "family": "tyk",
@@ -60687,6 +61737,18 @@
       "family": "typescript-types",
       "loss_counts": {
         "approx": 4,
+        "drop": 5,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 4,
         "drop": 0,
         "synth": 26
       },
@@ -60766,7 +61828,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 6339f454-091a-492f-b9c8-a34dafebd3dd",
+        "added operation 12f64bf0-8d43-4630-a0cf-9658fc55c323",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -61316,6 +62378,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 8,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "typespec",
@@ -62004,6 +63078,18 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
+        "approx": 1,
+        "drop": 1,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "vsam-idcams",
+      "loss_counts": {
         "approx": 4,
         "drop": 0,
         "synth": 2
@@ -62624,6 +63710,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "wadl",
@@ -63325,6 +64423,18 @@
       "family": "wit",
       "loss_counts": {
         "approx": 2,
+        "drop": 8,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "wit",
+      "loss_counts": {
+        "approx": 2,
         "drop": 3,
         "synth": 6
       },
@@ -63946,6 +65056,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 14,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "wsdl",
@@ -64574,6 +65696,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 12,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "wsdl2",
@@ -65213,6 +66347,18 @@
       "family": "xmlrpc",
       "loss_counts": {
         "approx": 2,
+        "drop": 3,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 2,
         "drop": 2,
         "synth": 0
       },
@@ -65825,6 +66971,18 @@
       "family": "xregistry",
       "loss_counts": {
         "approx": 2,
+        "drop": 9,
+        "synth": 0
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
+    },
+    {
+      "family": "xregistry",
+      "loss_counts": {
+        "approx": 2,
         "drop": 6,
         "synth": 5
       },
@@ -66420,6 +67578,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "xsd",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "xsd",
@@ -67020,6 +68190,18 @@
       "reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
       "status": "refused",
       "target": "arazzo"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 15,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -67646,6 +68828,18 @@
       "status": "lossy",
       "target": "arazzo",
       "tier": "lossy"
+    },
+    {
+      "family": "zosconnect",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "arrow",
+      "tier": "types-only"
     },
     {
       "family": "zosconnect",
@@ -68310,9 +69504,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4375,
-    "ok": 41,
-    "refused": 2218,
+    "lossy": 4466,
+    "ok": 42,
+    "refused": 2234,
     "silent-loss": 170,
     "skipped": 0
   },
@@ -68432,6 +69626,7 @@
     "apiblueprint",
     "apigee",
     "arazzo",
+    "arrow",
     "asn1",
     "asyncapi",
     "avro",

@@ -130,6 +130,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "apiblueprint": GENERIC,
     "apigee": GENERIC,
     "arazzo": GENERIC,
+    "arrow": GENERIC,
     "asn1": GENERIC,
     "aws-apigateway": GENERIC,
     "azure-apim": GENERIC,

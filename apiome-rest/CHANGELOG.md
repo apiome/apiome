@@ -5,6 +5,29 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.641.0] - 2026-11-04
+
+### Added
+- **Parquet / Arrow schema emitter (MFX-36.1, #4317).**
+  - `app/arrow_emitter.py`: export target `arrow` ("Apache Arrow / Parquet", data schema, needs a record type).
+    `project_arrow_tables` maps canonical types onto Apiome's `ArrowSchema` (one table per root record; records
+    nested as `struct`, lists `list<item>` / `fixedsizelist`, maps `map<entries<key, value>>`, unions dense
+    `union`, enums dictionary-encoded `utf8`; logical types `date32`, `timestamp[us, UTC]`, `time64[us]`,
+    `duration[us]`, `decimal128(p, s)` with the scale from `multipleOf`, UUID `fixedsizebinary(16)` +
+    `arrow.uuid`). An Arrow source's declared column types, dictionary encodings, extensions and metadata are
+    written back exactly. Output per table: `<table>.arrow.json` (JSON integration form) and
+    `<table>.parquet.txt` (the Parquet message pyarrow derives; none for a union). Options `table`, `parquet`,
+    `indent`.
+  - Export gate `_validate_arrow` / `check_emitted_arrow`: parse, construct with pyarrow, re-import.
+  - `ArrowFidelityRulePack`: types-only advisory, constraints dropped (a fixed width / list size is kept),
+    projection losses filed per field, and what a re-import reads back measured with the matrix's reader
+    (nested records re-keyed by column path, second tables, enums, aliases).
+  - Arrow importer: a map's key and value keep their declared Arrow type (`arrow_key` / `arrow_value` extras),
+    so a decimal map value round-trips; corpus goldens regenerated.
+  - Format version coverage, the capability registry's Arrow boundary text, RC6 target list, projection corpus,
+    round-trip matrix (`arrow` column; 16 xfails for sources with no record type), conformance and parity
+    goldens, format counts.
+
 ## [1.640.0] - 2026-11-04
 
 ### Added

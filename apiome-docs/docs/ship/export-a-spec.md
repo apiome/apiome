@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**63<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**64<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **63<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **64<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -742,6 +742,95 @@ From the CLI, each output has a verb of its own; all take `--dialect`:
 
 `--dialect mysql` is the same as `--option dialect=mysql`. Each command prints the fidelity report and,
 because SQL keeps types only, exits non-zero unless you add `--force`.
+
+### Apache Arrow and Parquet from any source {#apache-arrow-and-parquet}
+
+#### When to export to Arrow / Parquet
+
+- **Give a data platform the schema of what an API carries.** Export the item's types as
+  [Apache Arrow](https://arrow.apache.org) schemas. DuckDB, Polars, Spark, pandas, Flight services
+  and every Parquet reader understand them, so a lake table or a dataframe gets the same columns as
+  the API.
+- **Create Parquet files with the right columns.** Each table comes with the Parquet message its Arrow
+  schema becomes, the `message schema { … }` a Parquet writer declares.
+- **Round-trip an Arrow item.** An item imported from Arrow exports back to the schema it was read
+  from: each column's unit, time zone, width, precision, dictionary encoding, extension and metadata.
+
+Arrow describes tables only, so an API's operations are left out, with a critical warning at the top of
+the fidelity report.
+
+#### Arrow / Parquet export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the target (options: `table`, `parquet`, `indent`) | Export-target registry key `arrow` | [How the item is written](#how-the-item-is-written-to-arrow) |
+| **See** how records, lists, maps, unions and logical types become columns | This section | [Types](#arrow-types) |
+| **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-arrow-fidelity-report-lists) |
+| **Trust** the file | Constructed by pyarrow, then re-imported, before every download | [How an Arrow export is checked](#how-an-arrow-export-is-checked) |
+
+#### How the item is written {#how-the-item-is-written-to-arrow}
+
+An Arrow schema is one table. The tables are the item's **root records**: the records no other record
+holds. Every record a table reaches is nested inside it. For each table you get:
+
+- **`<table>.arrow.json`**: the Arrow schema in Arrow's JSON integration form, the same file
+  [Import a spec](../bring-in/import-a-spec.md) reads, so it imports back. The table's name is the
+  schema's `name` metadata, and descriptions are `description` metadata on the schema and its fields.
+- **`<table>.parquet.txt`**: the Parquet message pyarrow's Parquet writer derives from that schema. A
+  schema with a union has none, because Parquet has no union type. The fidelity report says so.
+
+Options:
+
+- **table**: export only this record (its name or key) as the table. Empty (the default) exports every
+  root record.
+- **parquet**: also write the Parquet messages (on by default).
+- **indent**: JSON indentation (`2` by default, `0` for compact output).
+
+#### Types {#arrow-types}
+
+| In the item | In the Arrow schema |
+| --- | --- |
+| An object (record) | `struct` of its fields, in field-number order when the source numbers them |
+| A list | `list` with an element named `item` (`fixedsizelist` when an Arrow source declared one) |
+| A map | `map` of `entries`: a non-null `key` and a `value` |
+| A union (one-of) | Dense `union` of its members |
+| An enumeration | Dictionary-encoded `utf8` (`int32` index) |
+| A date / date-time | `date32` (`DAY`) / `timestamp` in microseconds, UTC |
+| A time / duration | `time64` / `duration`, both in microseconds |
+| A decimal | `decimal128(38, s)`, the scale from `multipleOf` (else 9, reported) |
+| A UUID | 16-byte `fixedsizebinary` with the `arrow.uuid` extension |
+| An integer / float | `int` with its width and sign / `float32` or `float64` |
+| Bytes | `binary` (`fixedsizebinary` when its length is fixed) |
+| An untyped value | `utf8` with the `arrow.json` extension |
+
+A required field is a non-nullable column. A record that contains itself cannot be a `struct` of
+itself, so its inner occurrence is a JSON string column (`arrow.json`). A record with no fields is
+the same, because Arrow defines a struct by its children.
+
+#### What the fidelity report lists {#what-the-arrow-fidelity-report-lists}
+
+- **Dropped:** every operation, channel and service, under a critical "types only" warning
+  (the export is `near-empty` and needs confirmation). Validation constraints are dropped too, except
+  a fixed length or list size that the column's own type keeps.
+- **Read back differently:** what a re-import of the export gives back is measured, not guessed. A
+  nested record is named after the path of its column (`Category` reads back as `category`). A second
+  table lives in its own file, so importing the export's first schema does not read it. An enumeration
+  reads back as a string, and an alias as the type it names.
+- **Approximated:** an enumeration written as a dictionary column, a recursive record or untyped value
+  written as JSON, and an Arrow interval unit pyarrow cannot build, written as `MONTH_DAY_NANO`.
+- **Made up:** a decimal's precision and scale when the source states none.
+
+An item imported from Arrow reports no loss: it exports back as it was read.
+
+#### How an Arrow export is checked {#how-an-arrow-export-is-checked}
+
+Before an export is delivered, every `.arrow.json` file must:
+
+1. parse as the Arrow JSON integration form;
+2. be constructed by **pyarrow**, so a schema pyarrow cannot build cannot ship;
+3. import again through the Arrow importer.
+
+The Parquet messages are pyarrow's own output and are not checked again.
 
 ### Apache Avro from any source
 
@@ -3427,6 +3516,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | Format | Kind | Exports from |
 | --- | --- | --- |
 | A2A Agent Card | Agent tools | An agent, or a source with an operation that is not an event |
+| Apache Arrow / Parquet | Data schema | Any source with a record type |
 | Apache Avro | Data schema | Any source |
 | Apache Thrift | RPC | Any source |
 | API Blueprint | REST | Any source |

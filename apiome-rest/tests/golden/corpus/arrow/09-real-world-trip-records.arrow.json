@@ -513,8 +513,26 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "arrow_key": {
+            "type": {
+              "name": "utf8"
+            }
+          },
           "arrow_keys_sorted": false,
-          "arrow_kind": "map"
+          "arrow_kind": "map",
+          "arrow_value": {
+            "arrow_decimal": {
+              "bitWidth": 128,
+              "precision": 12,
+              "scale": 2
+            },
+            "type": {
+              "bitWidth": 128,
+              "name": "decimal",
+              "precision": 12,
+              "scale": 2
+            }
+          }
         },
         "fields": [],
         "key": "surcharges",
@@ -550,7 +568,7 @@
     "confidence": 0.95,
     "format": "arrow"
   },
-  "fingerprint": "sha256:b390e594ac84068dee743779aa4e532d79cbc92b196547d53cfc55e9c9548439",
+  "fingerprint": "sha256:3d9e42170e99fc5bfaa6fb1afcdcbbab2e9d98bce3ebaa95622779ad9480c09e",
   "lint": {
     "findings": 19,
     "grade": "C",

@@ -1711,6 +1711,24 @@ async def _validate_xregistry(
     return _passed(target) if not findings else _rejected(target, findings)
 
 
+async def _validate_arrow(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Arrow export (MFX-36.1, #4317).
+
+    Every ``<table>.arrow.json`` must parse as the Arrow JSON integration form, pyarrow must construct
+    it, and it must import again through the Arrow import source
+    (:func:`app.arrow_emitter.check_emitted_arrow`). Findings carry the rule as ``keyword``.
+    """
+    from .arrow_emitter import check_emitted_arrow
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Arrow export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_arrow, emit_result)
+    findings = [ValidationFinding(message=p["message"], file=p.get("file"), keyword=p["rule"]) for p in problems]
+    return _passed(target) if not findings else _rejected(target, findings)
+
+
 async def _validate_postman(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1929,6 +1947,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "sql-ddl": _validate_sql_ddl,
     # MFX-34.1 (#4306)
     "xregistry": _validate_xregistry,
+    # MFX-36.1 (#4317)
+    "arrow": _validate_arrow,
 }
 
 

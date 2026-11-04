@@ -53,6 +53,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "apiblueprint",
     "apigee",
     "arazzo",
+    "arrow",
     "asn1",
     "asyncapi",
     "avro",
