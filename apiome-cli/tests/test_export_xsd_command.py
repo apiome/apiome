@@ -2,7 +2,7 @@
 
 The standalone W3C XML Schema is a registry target (``xsd``), so the verb runs through the generic export seam
 (``export <format> <artifact>``, MFX-8.1) with no command code of its own. These tests pin that the spelling
-resolves, that the options (``xsd_version`` and ``mode`` as strings, ``include_xml_declaration`` /
+resolves, that the options (``xsd_version``, ``mode`` and the ISO 20022 ``profile`` options as strings, ``include_xml_declaration`` /
 ``include_comments`` as booleans) reach the preview and the job, that the ``.xsd`` file is written to ``--out``, that ``--json`` prints
 the tier, and that a types-only export (a REST source whose operations XSD does not keep) exits non-zero unless
 ``--force``.
@@ -82,12 +82,16 @@ def test_the_fixture_carries_the_options_and_the_types_only_badge() -> None:
     target = _TARGETS["targets"][0]
     assert set(target["options_schema"]["properties"]) == {
         "include_comments", "include_xml_declaration", "mode", "xsd_version",
+        "profile", "message_identifier", "business_area", "message_type",
     }
     assert target["options_schema"]["properties"]["xsd_version"]["enum"] == ["1.0", "1.1"]
     # MFX-22.3 (#4134): the RELAX NG and DTD output modes.
     assert target["options_schema"]["properties"]["mode"]["enum"] == ["xsd", "relaxng", "relaxng-compact", "dtd"]
+    # MFX-22.4 (#4135): the ISO 20022 message profile.
+    assert target["options_schema"]["properties"]["profile"]["enum"] == ["generic", "iso20022"]
     assert target["default_options"] == {"include_comments": True, "include_xml_declaration": True,
-                                         "mode": "xsd", "xsd_version": "1.0"}
+                                         "mode": "xsd", "xsd_version": "1.0", "profile": "generic",
+                                         "message_identifier": None, "business_area": None, "message_type": None}
     assert target["descriptor"]["multi_file"] is False
     assert target["fidelity"]["tier"] == "types-only"
 
@@ -131,6 +135,16 @@ def test_the_mode_option_reaches_the_job_as_a_string(httpx_mock: object, tmp_pat
     result = runner.invoke(app, _args(str(tmp_path / "petstore.dtd"), "--force", "--option", "mode=dtd"))
     assert result.exit_code == EXIT_SUCCESS, result.output
     assert _posted(httpx_mock, "/jobs")["options"] == {"mode": "dtd"}
+
+
+def test_the_iso20022_profile_options_reach_the_job_as_strings(httpx_mock: object, tmp_path: Path) -> None:
+    """``--option profile=iso20022 --option message_identifier=pain.001.001.09`` (MFX-22.4) are sent as strings."""
+    _mock_export(httpx_mock)
+    result = runner.invoke(app, _args(str(tmp_path / "pain.001.001.09.zip"), "--force",
+                                      "--option", "profile=iso20022",
+                                      "--option", "message_identifier=pain.001.001.09"))
+    assert result.exit_code == 0, result.output
+    assert _posted(httpx_mock, "/jobs")["options"] == {"profile": "iso20022", "message_identifier": "pain.001.001.09"}
 
 
 def test_json_mode_prints_the_metadata_with_the_tier(httpx_mock: object, tmp_path: Path) -> None:

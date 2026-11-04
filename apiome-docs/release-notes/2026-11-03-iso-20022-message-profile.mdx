@@ -1,0 +1,26 @@
+---
+slug: iso-20022-message-profile
+title: Export ISO 20022 message definitions
+description: "The XSD export can now write a bank-consumable ISO 20022 message schema."
+authors: [apiome]
+---
+
+The **XSD** export has a **Profile** option for banks and payment schemes: `iso20022` writes the item's
+types as an ISO 20022 message definition. See
+[ISO 20022 message profile](/ship/export-a-spec#iso-20022-message-profile).
+
+{/* truncate */}
+
+- **The standard's shape:** one `urn:iso:std:iso:20022:tech:xsd:pain.001.001.09` namespace in
+  `pain.001.001.09.xsd`, a single `Document` root around the business element, UpperCamelCase names and
+  descriptions as `xs:documentation`.
+- **A message catalog:** `message-catalog.json` beside the schema lists the message, its business area,
+  namespace, root and business elements, components and data types.
+- **Name the message:** **Message Identifier** (`pain.001.001.09`), **Business Area** (`pain`) and
+  **Message Type**. An item imported from ISO 20022 keeps its own identifier, `Document` and names.
+- **Every deviation reported:** a missing identifier, the added `Document` root and invented names are
+  synthesized; a name ISO 20022 cannot hold, a guessed message type and merged namespaces are approximated.
+- **Checked before download:** the schema under XSD 1.0 and 1.1, the catalog against it, and a re-import
+  as an ISO 20022 message definition.
+- **CLI:** `apiome export xsd <item> --option profile=iso20022 --option message_identifier=pain.001.001.09
+  --out <file>.zip`.

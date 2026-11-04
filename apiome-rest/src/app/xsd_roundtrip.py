@@ -32,10 +32,17 @@ parse with Apiome's RELAX NG reader (``relaxng.parse``); a DTD export (``.dtd``)
 reader (``dtd.parse``). Each re-imports through its own import source, and its round trip is measured
 there. The jing check of a RELAX NG export runs in the export validator (:mod:`app.relaxng_jing`), which
 can call a tool; this module stays pure Python.
+
+**ISO 20022 profile** (MFX-22.4, #4135). An ISO 20022 export carries a message-catalog manifest
+(:data:`app.iso20022_xsd_profile.MESSAGE_CATALOG_PATH`) beside its schema. The manifest is checked on its own
+(``xsd.iso20022-catalog``: JSON, naming this schema and its namespace) and set aside; the schema is then
+checked as any XSD export is, and re-imported through :class:`app.iso20022_import_source.Iso20022ImportSource`,
+the adapter an upload of it is detected as.
 """
 
 from __future__ import annotations
 
+import json
 import tempfile
 import xml.etree.ElementTree as ET
 from enum import Enum
@@ -50,6 +57,7 @@ from .emitter import EmitOptions, EmitResult, Loss
 from .fidelity_engine import compute_lossiness_for_emitter
 from .fileset import IntakeFileset
 from .import_source import CanonicalDiff, CanonicalDiffEntry, ImportSourceError, canonical_diff
+from .iso20022_xsd_profile import MESSAGE_CATALOG_PATH
 from .roundtrip_matrix import reconcile, reimport_emitted
 from .secure_xml import SecureXmlError, parse_xml
 from .wsdl_bundle_validation import bundle_reference_problems, reader_file, reader_message
@@ -65,11 +73,12 @@ __all__ = [
     "output_mode_of",
     "reimport_xsd",
     "round_trip_xsd",
+    "split_message_catalog",
     "xsd_version_of",
 ]
 
 #: Which import path the round trip measured through.
-ImportPath = Literal["xsd", "wsdl", "relaxng", "dtd"]
+ImportPath = Literal["xsd", "wsdl", "relaxng", "dtd", "iso20022"]
 
 #: The rule prefix of each output mode's checks (``relaxng.parse``, ``dtd.reimport`` …).
 OUTPUT_MODE_RULE_PREFIX = {"xsd": "xsd", "relaxng": "relaxng", "relaxng-compact": "relaxng", "dtd": "dtd"}
@@ -161,6 +170,47 @@ def _problem(rule: str, message: str, file: Optional[str] = None, path: Optional
     return {"rule": rule, "message": message, "file": file, "path": path}
 
 
+def split_message_catalog(emit_result: EmitResult) -> tuple[EmitResult, Optional[str]]:
+    """Set an ISO 20022 export's message-catalog manifest aside (MFX-22.4).
+
+    Args:
+        emit_result: An XSD emitter output.
+
+    Returns:
+        ``(the output without the manifest, the manifest text)``; the output unchanged and ``None`` when it
+        has no manifest.
+    """
+    catalog = next((f for f in emit_result.files if f.path == MESSAGE_CATALOG_PATH), None)
+    if catalog is None:
+        return emit_result, None
+    schemas = [f for f in emit_result.files if f.path != MESSAGE_CATALOG_PATH]
+    return emit_result.model_copy(update={"files": schemas}), str(catalog.content)
+
+
+def _check_message_catalog(text: str, emit_result: EmitResult) -> List[Dict[str, Any]]:
+    """The manifest is JSON whose one message names the export's schema file and its target namespace."""
+    rule = "xsd.iso20022-catalog"
+    try:
+        manifest = json.loads(text)
+    except ValueError as exc:
+        return [_problem(rule, f"The message catalog is not JSON: {exc}", MESSAGE_CATALOG_PATH)]
+    messages = manifest.get("messages") if isinstance(manifest, dict) else None
+    if not isinstance(messages, list) or len(messages) != 1 or not isinstance(messages[0], dict):
+        return [_problem(rule, "The message catalog must list exactly one message.", MESSAGE_CATALOG_PATH)]
+    message, main = messages[0], emit_result.files[0] if emit_result.files else None
+    if main is None or message.get("schema") != main.path:
+        return [_problem(rule, f"The message catalog names schema {message.get('schema')!r}, which the export "
+                         "does not hold.", MESSAGE_CATALOG_PATH)]
+    try:
+        target = parse_xml(str(main.content), source_label=main.path).get("targetNamespace")
+    except SecureXmlError:
+        return []  # the schema check reports it
+    if message.get("namespace") != target:
+        return [_problem(rule, f"The message catalog names namespace {message.get('namespace')!r}; the schema's "
+                         f"targetNamespace is {target!r}.", MESSAGE_CATALOG_PATH)]
+    return []
+
+
 def output_mode_of(emit_result: EmitResult) -> str:
     """The output mode an export was written in, from its main file's extension (``xsd`` by default)."""
     path = emit_result.files[0].path if emit_result.files else ""
@@ -216,8 +266,11 @@ def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
     mode = output_mode_of(emit_result)
     if mode != "xsd":
         return _check_mode_file(emit_result, mode)
+    emit_result, catalog = split_message_catalog(emit_result)
+    if not emit_result.files:
+        raise ValueError("The XSD export wrote no schema.")
+    problems: List[Dict[str, Any]] = _check_message_catalog(catalog, emit_result) if catalog is not None else []
     files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
-    problems: List[Dict[str, Any]] = []
     roots: Dict[str, ET.Element] = {}
     for path, text in files.items():
         if safe_bundle_path(path) != path:
@@ -253,11 +306,22 @@ def check_emitted_xsd(emit_result: EmitResult) -> List[Dict[str, Any]]:
 def reimport_xsd(emit_result: EmitResult) -> CanonicalApi:
     """Import an XSD export the way an upload of it would be (one set when there are several documents).
 
-    A RELAX NG export imports as RELAX NG and a DTD export as a DTD (MFX-22.3).
+    A RELAX NG export imports as RELAX NG and a DTD export as a DTD (MFX-22.3); an ISO 20022 export (its
+    manifest set aside) as an ISO 20022 message definition (MFX-22.4).
 
     Raises:
         ImportSourceError: When it does not parse or normalize.
     """
+    emit_result, catalog = split_message_catalog(emit_result)
+    if catalog is not None:
+        from .iso20022_import_source import Iso20022ImportSource
+
+        try:
+            return reimport_emitted(Iso20022ImportSource(), emit_result, multi_file=len(emit_result.files) > 1)
+        except ImportSourceError:
+            raise
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            raise ImportSourceError(f"Malformed ISO 20022 export: {exc}", code="INPUT_MALFORMED") from exc
     mode = output_mode_of(emit_result)
     if mode != "xsd":
         from .dtd_import_source import DtdImportSource
@@ -320,6 +384,7 @@ def round_trip_xsd(
     mode = output_mode_of(emit_result)
     import_path: ImportPath = (
         "relaxng" if mode.startswith("relaxng") else "dtd" if mode == "dtd"
+        else "iso20022" if split_message_catalog(emit_result)[1] is not None
         else "wsdl" if api.format == "wsdl" else "xsd"
     )
     try:

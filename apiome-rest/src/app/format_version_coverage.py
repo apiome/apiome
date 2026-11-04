@@ -1257,7 +1257,8 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 format_key="iso20022",
                 support=VersionSupport.UNGATED,
                 note="The written message carries whatever message-definition identifier the "
-                "model records.",
+                "model records. A message *definition* (`pain.001.001.09.xsd`) is written by the XSD "
+                "export's `iso20022` profile (MFX-22.4).",
             )
         ],
         default_write="message XML (any message definition)",
