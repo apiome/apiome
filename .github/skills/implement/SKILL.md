@@ -138,7 +138,8 @@ gh pr create \
 - **Documentation:** the `apiome-docs` pages added or changed (paths), the screenshot ids regenerated, the reference pages regenerated, and the release-notes entry (the *Pull request checklist* on the Contribute to the docs page) — or, if the site is not on `main` yet, the `docs/guide/` files written for migration
 - Risk/notes
 - Issue link: `Closes #<number>` (or `Fixes #<number>`)
-- Notate: `Made with <agent name> using model <model name>`
+- Notate: `Work orchestrated by **Ouroboros**.
+Made with <agent name> using model <model name>`
 
 ## Phase 8: Explain How to Test
 
