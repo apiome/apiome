@@ -645,6 +645,28 @@ async def _validate_x12_guide(
     return verdict
 
 
+async def _validate_edifact_guide(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Machine-check an emitted UN/EDIFACT message guide (MFX-24.2, #4146).
+
+    The EDIFACT counterpart of :func:`_validate_x12_guide`: :func:`app.edifact_guide_validation.check_guide_files`
+    checks the JSON guide's schema, its tags, data elements, composites and code lists, its envelope and
+    structure, and that the CSV and Markdown files say what the JSON says. Every problem is a finding with its
+    rule (``keyword``), file and JSON Pointer.
+    """
+    from .edifact_guide_validation import check_guide_files
+
+    files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    problems = await asyncio.to_thread(check_guide_files, files)
+    if problems:
+        return _rejected(target, [
+            ValidationFinding(message=problem.message, path=problem.path, file=problem.file, keyword=problem.rule)
+            for problem in problems
+        ])
+    return _passed(target)
+
+
 async def _validate_sql_ddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1638,6 +1660,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "edix12": _validate_edix12,
     # MFX-24.4 (#4148)
     "x12-guide": _validate_x12_guide,
+    # MFX-24.2 (#4146)
+    "edifact-guide": _validate_edifact_guide,
     "idoc": _validate_idoc,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,

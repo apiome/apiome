@@ -1,0 +1,102 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "edifact-guide",
+        "format": "edifact-guide",
+        "label": "UN/EDIFACT message guide",
+        "description": "Export the types as a UN/EDIFACT message implementation guide (JSON, CSV and Markdown).",
+        "icon": "table",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`EdifactGuideEmitter`.",
+        "properties": {
+          "message_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The message type: six letters (`ORDERS`, `INVOIC`, `DESADV` \u2026). Default: an imported EDIFACT item's own, else `ORDERS`.",
+            "title": "Message Type"
+          },
+          "release": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The directory release (`96A`, `01B` \u2026), written with version `D`. Default: an imported EDIFACT item's own, else `01B`.",
+            "title": "Release"
+          },
+          "default_element_length": {
+            "default": 35,
+            "description": "Maximum length of a text element with no maxLength (`an..35`).",
+            "maximum": 9999,
+            "minimum": 1,
+            "title": "Default Element Length",
+            "type": "integer"
+          },
+          "max_code_length": {
+            "default": 3,
+            "description": "The longest code an enum value may be used as directly; a longer value (or one that is not upper-case letters and digits) gets a synthesized code.",
+            "maximum": 35,
+            "minimum": 1,
+            "title": "Max Code Length",
+            "type": "integer"
+          },
+          "default_max_use": {
+            "default": 9999,
+            "description": "How many times a segment or segment group from a list with no maxItems may repeat.",
+            "maximum": 99999,
+            "minimum": 1,
+            "title": "Default Max Use",
+            "type": "integer"
+          }
+        },
+        "title": "EdifactGuideEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "message_type": null,
+        "release": null,
+        "default_element_length": 35,
+        "max_code_length": 3,
+        "default_max_use": 9999
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 9,
+        "total": 22,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 1,
+        "synthesized": 19
+      }
+    }
+  ]
+}

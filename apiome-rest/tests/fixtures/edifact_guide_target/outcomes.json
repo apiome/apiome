@@ -1,0 +1,182 @@
+{
+  "cards": {
+    "edifact": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "x12": {
+      "available": true,
+      "tier": "types-only"
+    }
+  },
+  "picks": {
+    "edifact": {
+      "default": {
+        "files": [
+          "EDIFACT-ORDERS.edifact-guide.json",
+          "EDIFACT-ORDERS.edifact-segments.csv",
+          "EDIFACT-ORDERS.edifact-guide.md"
+        ],
+        "message": "ORDERS",
+        "problems": [],
+        "release": "96A",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "ORDERS"
+          ],
+          [
+            "D"
+          ],
+          [
+            "96A"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      },
+      "desadv-d01b": {
+        "files": [
+          "EDIFACT-ORDERS.edifact-guide.json",
+          "EDIFACT-ORDERS.edifact-segments.csv",
+          "EDIFACT-ORDERS.edifact-guide.md"
+        ],
+        "message": "DESADV",
+        "problems": [],
+        "release": "01B",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "DESADV"
+          ],
+          [
+            "D"
+          ],
+          [
+            "01B"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      },
+      "invoic-96a": {
+        "files": [
+          "EDIFACT-ORDERS.edifact-guide.json",
+          "EDIFACT-ORDERS.edifact-segments.csv",
+          "EDIFACT-ORDERS.edifact-guide.md"
+        ],
+        "message": "INVOIC",
+        "problems": [],
+        "release": "96A",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "INVOIC"
+          ],
+          [
+            "D"
+          ],
+          [
+            "96A"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.md"
+        ],
+        "message": "ORDERS",
+        "problems": [],
+        "release": "01B",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "ORDERS"
+          ],
+          [
+            "D"
+          ],
+          [
+            "01B"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      },
+      "desadv-d01b": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.md"
+        ],
+        "message": "DESADV",
+        "problems": [],
+        "release": "01B",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "DESADV"
+          ],
+          [
+            "D"
+          ],
+          [
+            "01B"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      },
+      "invoic-96a": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.edifact-guide.md"
+        ],
+        "message": "INVOIC",
+        "problems": [],
+        "release": "96A",
+        "tier": "types-only",
+        "unh02_codes": [
+          [
+            "INVOIC"
+          ],
+          [
+            "D"
+          ],
+          [
+            "96A"
+          ],
+          [
+            "UN"
+          ],
+          null
+        ]
+      }
+    }
+  }
+}

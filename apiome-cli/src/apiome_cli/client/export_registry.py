@@ -173,7 +173,8 @@ def fetch_projection_evidence(
 # User-facing target aliases that differ from the emitter registry key. ``jsonschema`` is the
 # hyphen-free spelling of the ``json-schema`` target (MFX-21.5): ``apiome export jsonschema``;
 # ``copybook`` names the ``cobolcopybook`` target (MFX-23.5): ``apiome export copybook``; ``x12`` names
-# the ``x12-guide`` implementation guide (MFX-24.5): ``apiome export x12``.
+# the ``x12-guide`` implementation guide (MFX-24.5): ``apiome export x12``; ``edifact`` names the
+# ``edifact-guide`` message guide (MFX-24.2): ``apiome export edifact``.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",
     "jsonschema": "json-schema",
@@ -185,6 +186,9 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     # ``apiome export x12`` (MFX-24.5): the X12 implementation guide. The interchange is ``edix12``.
     "x12": "x12-guide",
     "x12guide": "x12-guide",
+    # ``apiome export edifact`` (MFX-24.2): the UN/EDIFACT message implementation guide.
+    "edifact": "edifact-guide",
+    "edifactguide": "edifact-guide",
     # ``apiome export idl`` (MFX-28.4): the OMG IDL target (CORBA and DDS profiles) is keyed ``corbaidl``.
     "idl": "corbaidl",
     "omg-idl": "corbaidl",

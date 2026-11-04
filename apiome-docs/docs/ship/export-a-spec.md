@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**58<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**59<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **58<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **59<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -1531,7 +1531,101 @@ not state, and leaves operations out. Pick the card and type the **Transaction S
 the folder) and add `--option transaction_set=810` or `--option version=004010`. `apiome export x12`
 writes the guide; the X12 interchange itself is `apiome export edix12`. A types-only export exits
 non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
-Browse offers the guide too, as a `.zip`.
+Browse offers the guide too, as a `.zip`. For trading partners who use UN/EDIFACT instead, see the
+[UN/EDIFACT message guide](#unedifact-message-guide-from-any-source): the same layout in EDIFACT terms.
+
+### UN/EDIFACT message guide from any source
+
+International trading partners exchange UN/EDIFACT messages — `ORDERS`, `INVOIC`, `DESADV` — rather than
+X12 transaction sets. Exporting to **UN/EDIFACT message guide** describes the item's types as one EDIFACT
+message, for onboarding those partners. Like the X12 guide, it is the guide partners build their messages
+from, not a message. You get three files, downloaded together as a `.zip`:
+
+- `<Name>.edifact-guide.json` — the machine-readable guide: the message, every segment with its data
+  elements, and the structure (positions, segment groups, status and maximum repetitions);
+- `<Name>.edifact-segments.csv` — the segment directory, one row per data element and per component;
+- `<Name>.edifact-guide.md` — the same guide for people to read.
+
+**One layout for both guides.** The EDIFACT guide is laid out by the same plan as the
+[X12 implementation guide](#x12-implementation-guide-from-any-source): the same segments, in the same
+order, with the same values, the same loops (segment groups here) and the same usage and repetitions.
+Only the spelling differs, so an item's two guides never disagree. Everything the X12 section says about
+segments, loops, notes and codes applies; in EDIFACT terms:
+
+- **Tags.** A segment's tag is three letters, made from its name (`PurchaseOrder` is `PUR`), and never a
+  service tag — none starts with `U`. Data elements are referred to by tag and position: `PUR01`, `PUR02`
+  …; a composite's components by `PUR02-1`, `PUR02-2` …
+- **Segment groups.** A loop is a segment group, `SG1`, `SG2` … in order, started by its trigger segment.
+  The message sits between the `UNH` header and the `UNT` trailer, and positions number the structure
+  `0010`, `0020` …
+- **Status.** A required field is mandatory (`M`), any other conditional (`C`); a position the item leaves
+  empty is not used (`N`).
+- **Repetitions.** Every repetition is a number: a list with no `maxItems` repeats at most
+  **default_max_use** times (9999).
+- **Codes.** An enum's values are the code list of a coded value (what EDIFACT calls a qualifier when it
+  says what the next value means), with the same rule for values that are not valid codes as the X12 guide.
+
+| In the source | In the guide |
+|---|---|
+| Text | `an..35` — `maxLength` (or the **default_element_length**, 35) as its maximum; `an36` for a UUID |
+| An enumeration, a boolean | A coded value with its code list — the enum's values, or `Y`/`N` (`an2`, `an1` …) |
+| An integer | `n..10`, as many digits as its width allows (3, 5, 10 or 18) |
+| A decimal | `n..15` with its `decimals` count when `multipleOf` gives its scale: EDIFACT always sends the decimal mark |
+| A float | `n..15` |
+| A date | `n8`, format `102` (`CCYYMMDD`) |
+| A time | `n..8` (`HHMM[SS]`) |
+| A timestamp | One composite of two components, its date and its time |
+
+`UNH02` identifies the message: its type, version `D`, release and agency `UN`.
+
+An item imported from EDIFACT keeps its tags, the order of its segments, and its composites: `NAD02` is a
+composite whose components are `NAD02-1`, `NAD02-2` … , and a component the sample left empty is not used.
+An item imported from X12 keeps its segments and their order; a segment whose X12 ID is not a valid tag
+(`N1`, `PO1`) gets a new one. A service segment the item carries (`UNS`) gets a new tag too.
+
+Options:
+
+- **message_type** — six letters (`ORDERS`, `INVOIC`, `DESADV` …). By default an imported EDIFACT item's
+  own, else `ORDERS`.
+- **release** — the directory release (`96A`, `01B` …; `D.01B` works too). By default an imported EDIFACT
+  item's own, else `01B`.
+- **default_element_length** — the maximum of a text value whose source has no `maxLength` (35).
+- **max_code_length** — the longest enum value used as a code as it is (3).
+- **default_max_use** — how often a segment or group from a list with no `maxItems` may repeat (9999).
+
+The fidelity report lists the same entries as the X12 guide's, on the same fields and with the same
+grades, in EDIFACT terms. One entry is the EDIFACT guide's own:
+
+| In the source | In the report |
+|---|---|
+| A list with no `maxItems` | Synthesized (note): the default maximum repetitions |
+
+**Checked before you download it.** As for the X12 guide, every export is checked instead of read back,
+and fails — listing every problem with its file, JSON pointer and rule — when:
+
+1. **The JSON guide is not the guide format** (`edifact-guide.schema`).
+2. **A segment or data element is wrong**: a tag that is not three letters, or is a service tag
+   (`edifact-guide.segment-tag`), or is defined twice; data element references that are not `<TAG>01`
+   upward, or components that are not `<ref>-1` upward (`edifact-guide.element-ref`); a representation that
+   is not `an` or `n` with a length, or does not match the lengths (`edifact-guide.representation`,
+   `edifact-guide.lengths`); a status other than `M`, `C` or `N`.
+3. **The message is wrong**: a message type that is not six letters, a release that is not a directory
+   release (`edifact-guide.message`), or `UNH02` not naming them (`edifact-guide.envelope`).
+4. **The structure and the segments disagree**: an undefined or unused segment, a segment group that does
+   not start with its trigger or is numbered out of order (`edifact-guide.group`), positions not in
+   increasing order, a repetition that is not a positive count, or a guide that does not start with `UNH`
+   and end with `UNT`.
+5. **A code list is wrong**: a code longer or shorter than its value, or listed twice.
+6. **The files disagree** (`edifact-guide.files`): the `.csv` or `.md` file does not list exactly what the
+   JSON guide says, or one of the three files is missing.
+
+**Where to find it.** In the **Export** dialog, the **UN/EDIFACT message guide** card is under **Data
+schema & graph** on the **Target** step, marked multi-file. Its badge is **types-only** for every source,
+an imported EDIFACT item included. Pick the card and type the **Message Type** (`ORDERS`, `INVOIC` …) and
+**Release** (`96A`, `01B` …); leave them empty for the item's own, else `ORDERS` and `01B`. From the CLI,
+run `apiome export edifact <item> --out <folder>` and add `--option message_type=INVOIC` or
+`--option release=96A`. A types-only export exits non-zero unless you add `--force`. A public item's
+**Export** dialog on Browse offers the guide too, as a `.zip`.
 
 ### WSDL and XSD from any source
 
@@ -2504,6 +2598,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | Thunder Client | REST | Any source |
 | Traefik dynamic configuration | REST | Any source |
 | TypeSpec | REST | Any source |
+| UN/EDIFACT message guide | Data schema | Any source with a record type |
 | WADL | REST | Any source |
 | WIT (WebAssembly) | RPC | Any source |
 | WSDL | REST | Any source |

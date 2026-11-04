@@ -156,6 +156,7 @@ The **Direction** column below says whether a format can be imported, exported, 
 | TRADACOMS | `tradacoms` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `tradacoms` | `.edi`, `.tra`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Format-native (reviewed)](#format-tradacoms) | Ready |
 | TypeScript types | `typescript-types` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `typescript-types` | `.d.ts`, `.ts`, `.d.mts`, `.mts`, `.d.cts`, `.cts`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-typescript-types) | Ready |
 | UN/EDIFACT | `edifact` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `edifact`, `un-edifact` | `.edi`, `.edifact`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Format-native (reviewed)](#format-edifact) | Ready |
+| UN/EDIFACT message guide | `edifact-guide` | Export only | Catalog | — | — | — | — | — | Ready |
 | VSAM cluster definitions (IDCAMS) | `vsam-idcams` | Import only | Catalog | `file`, `url`, `paste`, `fileset` | — | `vsam-idcams`, `vsam`, `idcams` | `.idcams`, `.jcl`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | [Generic (reviewed)](#format-vsam-idcams) | Ready |
 | X12 implementation guide | `x12-guide` | Export only | Catalog | — | — | — | — | — | Ready |
 | XSD | `xsd` | Import + export | Catalog | `file`, `url`, `paste`, `fileset` | — | `xsd`, `xmlschema` | `.xsd`, `.zip`, `.tar.gz`, `.tgz`, `.tar` | Generic | Ready |
@@ -273,6 +274,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 | TypeScript types | `typescript-types` | TypeScript 6.0 (reads modules written for any earlier release)* | — | — |
 | TypeSpec | `typespec` | TypeSpec (.tsp)* | TypeSpec (.tsp)* | TypeSpec (.tsp) |
 | UN/EDIFACT | `edifact` | UN/EDIFACT syntax 1–4 (ISO 9735), any directory (D.96A, D.01B, …)* | — | — |
+| UN/EDIFACT message guide | `edifact-guide` | — | — | — |
 | VSAM cluster definitions (IDCAMS) | `vsam-idcams` | IDCAMS access-method services commands and LISTCAT output* | — | — |
 | WADL | `wadl` | 2009-02-09 | 2009-02-09 | 2009-02-09 |
 | WIT (WebAssembly) | `wit` | Component Model WIT (0.2 surface) | Component Model WIT (0.2 surface) | Component Model WIT (0.2 surface) |

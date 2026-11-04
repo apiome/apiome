@@ -1,0 +1,23 @@
+---
+slug: unedifact-message-guide
+title: Export UN/EDIFACT message implementation guides
+description: "A new export target writes the item's types as a UN/EDIFACT message guide."
+authors: [apiome]
+---
+
+International trading partners use UN/EDIFACT rather than X12. The new **UN/EDIFACT message guide** export
+describes the item's types as one EDIFACT message. See
+[UN/EDIFACT message guide from any source](/ship/export-a-spec#unedifact-message-guide-from-any-source).
+
+{/* truncate */}
+
+- **Three files:** a JSON guide, a segment directory CSV and a Markdown guide, downloaded as one `.zip`.
+- **EDIFACT terms:** three-letter tags, simple and composite data elements, `an..35` / `n..15`
+  representations, coded values from enums, segment groups and the `UNH` / `UNT` envelope.
+- **The same layout as the X12 guide:** both come from one plan, so an item's X12 and EDIFACT guides have the
+  same segments, values, groups and repetitions.
+- **Pick the message:** **Message Type** (`ORDERS`, `INVOIC`, `DESADV` …) and **Release** (`96A`, `01B` …). An
+  imported EDIFACT item keeps its own message, tags and composites.
+- **Checked before download:** tags, data elements, the envelope, the structure and code lists, and the three
+  files agreeing.
+- **CLI:** `apiome export edifact <item> --out <folder>`.
