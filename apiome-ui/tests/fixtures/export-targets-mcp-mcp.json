@@ -1,0 +1,83 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "mcp",
+        "format": "mcp",
+        "label": "MCP Tool Definitions",
+        "description": "Export as an MCP server descriptor: one tool per operation, with a unique name, a description, an inputSchema from the parameters and body, and an outputSchema where the protocol revision supports it.",
+        "icon": "bot",
+        "paradigm": "agent",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`McpEmitter`.",
+        "properties": {
+          "protocol_version": {
+            "default": "2025-06-18",
+            "description": "MCP protocol revision the descriptor targets. `2025-06-18` (default) adds `outputSchema`; `2025-03-26` has none, so what a tool returns stays in its description.",
+            "enum": [
+              "2025-06-18",
+              "2025-03-26"
+            ],
+            "title": "Protocol Version",
+            "type": "string"
+          },
+          "grouping": {
+            "default": "single",
+            "description": "`single` writes one server descriptor; `per-service` writes one descriptor per service (`<server>-<service>.mcp.json`), for large APIs.",
+            "enum": [
+              "single",
+              "per-service"
+            ],
+            "title": "Grouping",
+            "type": "string"
+          },
+          "output_schema": {
+            "default": true,
+            "description": "Write a tool's `outputSchema` from its success response when the response is an object (2025-06-18). A server built from the descriptor must then return matching `structuredContent`; turn it off to describe the result in the description only.",
+            "title": "Output Schema",
+            "type": "boolean"
+          },
+          "include_deprecated": {
+            "default": false,
+            "description": "Also write a tool for each deprecated operation (its description says so).",
+            "title": "Include Deprecated",
+            "type": "boolean"
+          }
+        },
+        "title": "McpEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "protocol_version": "2025-06-18",
+        "grouping": "single",
+        "output_schema": true,
+        "include_deprecated": false
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 56,
+        "total": 16,
+        "preserved": 9,
+        "dropped": 4,
+        "approximated": 3,
+        "synthesized": 0
+      }
+    }
+  ]
+}

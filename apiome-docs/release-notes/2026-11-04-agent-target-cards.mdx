@@ -1,0 +1,22 @@
+---
+slug: agent-target-cards
+title: MCP and A2A exports, end to end
+description: "MCP and A2A export cards, CLI reports and round-trip fixtures."
+authors: [apiome]
+---
+
+The **MCP Tool Definitions** and **A2A Agent Card** targets are now covered on every export
+surface. See [MCP tool definitions](/ship/export-a-spec#where-to-find-the-mcp-tool-definitions-card)
+and [A2A Agent Card](/ship/export-a-spec#where-to-find-the-a2a-agent-card-card).
+
+{/* truncate */}
+
+- **Cards with fidelity badges:** under **Agents & tools** in the **Export** dialog. A REST API badges
+  **lossy** with its preserved share, an imported A2A agent badges **lossless**, and a schema-only item
+  gets a greyed-out card with the reason.
+- **From the CLI with the report:** `apiome export mcp <item>` and `apiome export a2a <item>` print
+  the preserved share and the worst losses, and exit non-zero for a lossy export unless you add
+  `--force`.
+- **Round trip:** every MCP descriptor and A2A card Apiome writes imports back to the same tools or
+  skills.
+- **For agents in Browse:** the organization page links its `agents.json` and `llms.txt`.

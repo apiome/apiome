@@ -168,6 +168,11 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rpc', 'openrpc').key).toBe('rpc');
   });
 
+  it('files the MCP and A2A targets under Agents & tools by paradigm (MFX-32.5)', () => {
+    expect(familyForTarget('agent', 'mcp')).toMatchObject({ key: 'agent', label: 'Agents & tools' });
+    expect(familyForTarget('agent', 'a2a')).toMatchObject({ key: 'agent', label: 'Agents & tools' });
+  });
+
   it('matches the target key in any case and with surrounding space', () => {
     expect(familyForTarget('rest', ' Hoppscotch ').key).toBe('client');
   });

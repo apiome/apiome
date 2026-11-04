@@ -5,6 +5,19 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.633.0] - 2026-11-04
+
+### Added
+- **MCP & A2A target cards + CLI + fixtures (MFX-32.5, #4299).** `tests/test_agent_target_cards.py` +
+  `tests/fixtures/agent_target/outcomes.json` (regenerate with `APIOME_REGEN_AGENT_TARGET=1`) pin the `mcp` and `a2a`
+  cards per source kind (REST / GraphQL / RPC lossy with their preserved share; imported MCP server lossy for its
+  resources and prompts; imported A2A agent lossless; JSON Schema — and an A2A agent for `mcp` — unavailable with the
+  reason), the option picks (MCP `grouping`, `protocol_version`; A2A `skills_from`) each passing the export gate, the
+  round trip through the MCP and MFI-18.1 A2A importers (same tools / skill ids), and Browse `…/document` delivery.
+  The CLI (`export-targets-{mcp,a2a}.json`, `export-job-completed-{mcp,a2a}-lossy.json`, with the live report) and UI
+  (`export-targets-{mcp,a2a}-{rest,mcp|a2a,data}.json`) fixtures are kept equal to the live registry. No API change.
+- OpenAPI 1.497.0.
+
 ## [1.632.0] - 2026-11-04
 
 ### Added

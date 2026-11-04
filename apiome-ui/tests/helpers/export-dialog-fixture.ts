@@ -51,6 +51,12 @@ import openrpcTargetsForOpenrpc from '../fixtures/export-targets-openrpc-openrpc
 import arazzoTargetsForRest from '../fixtures/export-targets-arazzo-rest.json';
 import arazzoTargetsForArazzo from '../fixtures/export-targets-arazzo-arazzo.json';
 import arazzoTargetsForData from '../fixtures/export-targets-arazzo-data.json';
+import mcpTargetsForRest from '../fixtures/export-targets-mcp-rest.json';
+import mcpTargetsForMcp from '../fixtures/export-targets-mcp-mcp.json';
+import mcpTargetsForData from '../fixtures/export-targets-mcp-data.json';
+import a2aTargetsForRest from '../fixtures/export-targets-a2a-rest.json';
+import a2aTargetsForA2a from '../fixtures/export-targets-a2a-a2a.json';
+import a2aTargetsForData from '../fixtures/export-targets-a2a-data.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -698,5 +704,32 @@ export function openrpcTargets(source: 'rest' | 'openrpc'): ExportTargetsRespons
  */
 export function arazzoTargets(source: 'rest' | 'arazzo' | 'data'): ExportTargetsResponse {
   const recorded = { rest: arazzoTargetsForRest, arazzo: arazzoTargetsForArazzo, data: arazzoTargetsForData };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The MCP Tool Definitions target as the registry lists it (MFX-32.5, #4299), recorded from the live REST
+ * registry by `apiome-rest/tests/test_agent_target_cards.py`. A REST API is `lossy` (each tool's HTTP binding
+ * becomes description text); an imported MCP server is `lossy` too, because its resources and prompts are not
+ * tools; a set of types has no operation to make a tool of, so the card is unavailable with its reason.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `mcp` (an imported MCP tickets server) or `data` (a JSON Schema item).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function mcpTargets(source: 'rest' | 'mcp' | 'data'): ExportTargetsResponse {
+  const recorded = { rest: mcpTargetsForRest, mcp: mcpTargetsForMcp, data: mcpTargetsForData };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The A2A Agent Card target as the registry lists it (MFX-32.5, #4299), recorded from the live REST registry by
+ * `apiome-rest/tests/test_agent_target_cards.py`. A REST API is reframed as an agent (`lossy`); an imported A2A
+ * agent exports back `lossless`; a set of types has neither an agent nor an operation, so the card is unavailable.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `a2a` (an imported travel-concierge card) or `data` (a JSON Schema item).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function a2aTargets(source: 'rest' | 'a2a' | 'data'): ExportTargetsResponse {
+  const recorded = { rest: a2aTargetsForRest, a2a: a2aTargetsForA2a, data: a2aTargetsForData };
   return recordedTargets(recorded[source]);
 }

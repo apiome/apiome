@@ -256,9 +256,25 @@ The [A2A Agent Card](#a2a-agent-card) export has the same guard for a card of mo
 #### How MCP tools are checked {#how-mcp-tools-are-checked}
 
 Every tool is checked against the MCP Tool schema of the chosen revision before you download it. The
-descriptor describes the tools; it is not a running server. From the CLI, run
-`apiome export mcp <item> --out petstore.mcp.json`, or
-`apiome export mcp <item> --out <folder> --option grouping=per-service` for one file per service.
+descriptor describes the tools; it is not a running server. The descriptor also imports back: **Import to
+catalog** reads the same tools, with the same names and input schemas.
+
+#### Where to find the MCP Tool Definitions card {#where-to-find-the-mcp-tool-definitions-card}
+
+The **Export** dialog offers **MCP Tool Definitions** under **Agents & tools**, with a fidelity badge
+for the item you are exporting:
+
+| Source | Badge | Why |
+| --- | --- | --- |
+| A REST, GraphQL or RPC API | **lossy**, with its preserved share | Each tool's HTTP binding becomes description text; servers, events and streams are dropped |
+| An imported MCP server | **lossy** | Its resources and prompts are not tools, so they are dropped. Its tools export back unchanged |
+| A schema-only item, an event-only API or an A2A agent | Greyed out, with the reason | There is no operation an agent can call |
+
+From the CLI, run `apiome export mcp <item> --out petstore.mcp.json`, or
+`apiome export mcp <item> --out <folder> --option grouping=per-service` for one file per service. The
+command prints the fidelity report — the preserved share and the worst losses first — and exits
+non-zero for a lossy export unless you add `--force`. An export that trips the
+[grouping guard](#mcp-grouping-guard) needs `--confirm`.
 
 ### A2A Agent Card {#a2a-agent-card}
 
@@ -343,8 +359,15 @@ and each security scheme's required members. A card that fails is never offered 
 
 #### Where to find the A2A Agent Card card {#where-to-find-the-a2a-agent-card-card}
 
-The **Export** dialog offers **A2A Agent Card** under **Agents & tools**. It is greyed out for a source
-with no agent and no operation that is not an event (a schema-only item), with that reason.
+The **Export** dialog offers **A2A Agent Card** under **Agents & tools**. Its badge reads **lossless**
+for an imported A2A agent and **lossy** for a REST, GraphQL or RPC API (or an MCP server), which is
+reframed as an agent. It is greyed out for a source with no agent and no operation that is not an
+event (a schema-only item), with that reason.
+
+From the CLI, `apiome export a2a <item> --out agent-card.json` prints the fidelity report and exits
+non-zero for a lossy export unless you add `--force`; add `--option skills_from=tags` for one skill
+per tag. The card imports back through [Import A2A Agent Cards](../bring-in/a2a-agent-card-import.md)
+with the same skills.
 
 ### SQL DDL from any source
 

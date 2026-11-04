@@ -61,6 +61,10 @@
  * 25. The Arazzo card (MFX-10.4): `lossy` for a REST source, `lossless` for an imported Arazzo document, one
  *     file, with its pretty-print and Arazzo-version options; unavailable for a set of types (nothing to
  *     sequence) — from the recorded live registry.
+ * 26. The MCP Tool Definitions and A2A Agent Card cards (MFX-32.5): `lossy` with their preserved share for a
+ *     REST API, an imported A2A agent `lossless` on its own card, one file each, with their options (MCP's
+ *     protocol revision and grouping, A2A's skills_from); unavailable for a set of types — from the recorded
+ *     live registry.
  */
 
 import React from 'react';
@@ -97,6 +101,8 @@ import {
   jsonSchemaTargets,
   apiblueprintTargets,
   arazzoTargets,
+  mcpTargets,
+  a2aTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1638,5 +1644,91 @@ describe('ExportDialog — Arazzo target card (MFX-10.4)', () => {
     expect(card).toBeDisabled();
     fireEvent.click(card);
     expect(screen.queryByText('Target options')).not.toBeInTheDocument();
+  });
+});
+
+describe('ExportDialog — MCP Tool Definitions target card (MFX-32.5)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['mcp', 'lossy'],
+  ] as const)('badges a %s source %s as a one-file target with its preserved share', async (source, tier) => {
+    const targets = mcpTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-mcp');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('MCP Tool Definitions')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One <server>.mcp.json descriptor (per-service grouping zips several): not a multi-file target.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe(tier);
+    expect(targets.targets[0].fidelity.preserved_percent).toBeGreaterThan(0);
+  });
+
+  it('offers the protocol revision and the grouping, 2025-06-18 and single by default', async () => {
+    await renderAtTargetStep(mockFetch(mcpTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-mcp'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const revision = screen.getByRole('radiogroup', { name: 'Protocol Version' });
+    expect(within(revision).getByRole('radio', { name: '2025-06-18' })).toBeChecked();
+    const grouping = screen.getByRole('radiogroup', { name: 'Grouping' });
+    expect(within(grouping).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'single',
+      'per-service',
+    ]);
+    expect(within(grouping).getByRole('radio', { name: 'single' })).toBeChecked();
+    expect(screen.getByLabelText(/Output Schema/i)).toBeChecked();
+    expect(screen.getByLabelText(/Include Deprecated/i)).not.toBeChecked();
+  });
+
+  it('disables the card for a set of types: there is no operation to make a tool of', async () => {
+    const targets = mcpTargets('data');
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-mcp');
+    expect(card).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one operation an agent can call/);
+    fireEvent.click(card);
+    expect(screen.queryByText('Target options')).not.toBeInTheDocument();
+  });
+});
+
+describe('ExportDialog — A2A Agent Card target card (MFX-32.5)', () => {
+  it.each([
+    ['rest', 'lossy'],
+    ['a2a', 'lossless'],
+  ] as const)('badges a %s source %s as a one-file target', async (source, tier) => {
+    const targets = a2aTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-a2a');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('A2A Agent Card')).toBeInTheDocument();
+    expect(within(card).getByText(tier)).toBeInTheDocument();
+    // One agent-card.json: not a multi-file bundle.
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe(tier);
+  });
+
+  it('offers the skills_from choice, one skill per operation by default', async () => {
+    await renderAtTargetStep(mockFetch(a2aTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-a2a'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const skills = screen.getByRole('radiogroup', { name: 'Skills From' });
+    expect(within(skills).getAllByRole('radio').map((option) => option.textContent)).toEqual(['operations', 'tags']);
+    expect(within(skills).getByRole('radio', { name: 'operations' })).toBeChecked();
+    // Empty means the source's first server, else a placeholder the fidelity report flags.
+    expect(screen.getByLabelText(/^Url/i)).toHaveValue('');
+  });
+
+  it('disables the card for a set of types: there is neither an agent nor an operation', async () => {
+    const targets = a2aTargets('data');
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-a2a');
+    expect(card).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/needs an agent or at least one operation/);
   });
 });
