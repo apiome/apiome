@@ -142,6 +142,12 @@
     },
     {
       "family": "a2a",
+      "reason": "Google API Discovery export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "discovery"
+    },
+    {
+      "family": "a2a",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -655,6 +661,12 @@
       "status": "lossy",
       "target": "corbaidl",
       "tier": "lossy"
+    },
+    {
+      "family": "acp",
+      "reason": "Google API Discovery export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "discovery"
     },
     {
       "family": "acp",
@@ -1187,6 +1199,12 @@
       "status": "lossy",
       "target": "corbaidl",
       "tier": "lossy"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "Google API Discovery export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "discovery"
     },
     {
       "family": "agents-manifest",
@@ -1754,6 +1772,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 20,
+        "drop": 7,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -2396,6 +2426,18 @@
     },
     {
       "family": "apigee",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "apigee",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -2977,6 +3019,12 @@
     },
     {
       "family": "arazzo",
+      "reason": "Google API Discovery export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "discovery"
+    },
+    {
+      "family": "arazzo",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -3529,6 +3577,18 @@
     },
     {
       "family": "arrow",
+      "loss_counts": {
+        "approx": 21,
+        "drop": 10,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "arrow",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -4075,6 +4135,18 @@
     },
     {
       "family": "asn1",
+      "loss_counts": {
+        "approx": 31,
+        "drop": 21,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "asn1",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -4604,6 +4676,12 @@
     },
     {
       "family": "asyncapi",
+      "reason": "Google API Discovery export needs at least one HTTP operation or one type; this source has neither.",
+      "status": "refused",
+      "target": "discovery"
+    },
+    {
+      "family": "asyncapi",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -5110,6 +5188,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "avro",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 11,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -5668,6 +5758,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 27,
+        "drop": 21,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -6261,6 +6363,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 10,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -6900,6 +7014,18 @@
     },
     {
       "family": "azure-apim",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "azure-apim",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -7524,6 +7650,18 @@
     },
     {
       "family": "bruno",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "bruno",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -8143,6 +8281,18 @@
     },
     {
       "family": "capnproto",
+      "loss_counts": {
+        "approx": 31,
+        "drop": 17,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "capnproto",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -8711,6 +8861,18 @@
     },
     {
       "family": "cddl",
+      "loss_counts": {
+        "approx": 52,
+        "drop": 21,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "cddl",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -9263,6 +9425,18 @@
     },
     {
       "family": "cics-bms",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 14,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "cics-bms",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -9799,6 +9973,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -10345,6 +10531,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 33,
+        "drop": 22,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -10903,6 +11101,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 28,
+        "drop": 29,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -11481,6 +11691,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "consul",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -12070,6 +12292,18 @@
       "reason": null,
       "status": "ok",
       "target": "corbaidl"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 24,
+        "drop": 17,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
     },
     {
       "family": "corbaidl",
@@ -13185,6 +13419,18 @@
     },
     {
       "family": "dbt",
+      "loss_counts": {
+        "approx": 17,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "dbt",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -14285,6 +14531,18 @@
     },
     {
       "family": "dicom",
+      "loss_counts": {
+        "approx": 82,
+        "drop": 59,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "dicom",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -14863,6 +15121,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "discovery",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -15487,6 +15757,18 @@
     },
     {
       "family": "dtd",
+      "loss_counts": {
+        "approx": 37,
+        "drop": 16,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "dtd",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -16037,6 +16319,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 60,
+        "drop": 60,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -16592,6 +16886,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 26,
+        "drop": 26,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -17166,6 +17472,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -17790,6 +18108,18 @@
     },
     {
       "family": "fhir",
+      "loss_counts": {
+        "approx": 27,
+        "drop": 16,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "fhir",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -18407,6 +18737,18 @@
     },
     {
       "family": "fix",
+      "loss_counts": {
+        "approx": 45,
+        "drop": 23,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "fix",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -18965,6 +19307,18 @@
     },
     {
       "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 43,
+        "drop": 14,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "fix-orchestra",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -19515,6 +19869,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 24,
+        "drop": 18,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -20077,6 +20443,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "gateway-api",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 5,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -20685,6 +21063,18 @@
     },
     {
       "family": "graphql",
+      "loss_counts": {
+        "approx": 32,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "graphql",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -21260,6 +21650,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "haproxy",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 7,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -21880,6 +22282,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "har",
+      "loss_counts": {
+        "approx": 42,
+        "drop": 14,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -22505,6 +22919,18 @@
     },
     {
       "family": "hl7v2",
+      "loss_counts": {
+        "approx": 103,
+        "drop": 52,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "hl7v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -23061,6 +23487,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 130,
+        "drop": 169,
+        "synth": 39
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -23643,6 +24081,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 11,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -24297,6 +24747,18 @@
     },
     {
       "family": "http-file",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 6,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "http-file",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -24919,6 +25381,18 @@
     },
     {
       "family": "idoc",
+      "loss_counts": {
+        "approx": 18,
+        "drop": 44,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "idoc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -25475,6 +25949,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 47,
+        "drop": 38,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -26057,6 +26543,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "insomnia",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 12,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -26683,6 +27181,18 @@
     },
     {
       "family": "iso20022",
+      "loss_counts": {
+        "approx": 109,
+        "drop": 55,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "iso20022",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -27241,6 +27751,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 58,
+        "drop": 35,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -27821,6 +28343,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "istio",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 7,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -28416,6 +28950,18 @@
     },
     {
       "family": "json-schema",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "json-schema",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -28947,6 +29493,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "jsonld",
+      "loss_counts": {
+        "approx": 23,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -29495,6 +30053,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
+        "approx": 11,
+        "drop": 0,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -30055,6 +30625,18 @@
     },
     {
       "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "k8s-crd",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -30596,6 +31178,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 23,
+        "drop": 10,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -31167,6 +31761,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "kong",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 7,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -31775,6 +32381,18 @@
     },
     {
       "family": "llm-tools",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "llm-tools",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -32343,6 +32961,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "lwm2m",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 9,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -32919,6 +33549,18 @@
     },
     {
       "family": "matter",
+      "loss_counts": {
+        "approx": 37,
+        "drop": 21,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "matter",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -33491,6 +34133,18 @@
     },
     {
       "family": "mcp",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 12,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "mcp",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -34059,6 +34713,18 @@
     },
     {
       "family": "nacha",
+      "loss_counts": {
+        "approx": 139,
+        "drop": 70,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "nacha",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -34613,6 +35279,18 @@
     },
     {
       "family": "natural-ddm",
+      "loss_counts": {
+        "approx": 31,
+        "drop": 22,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "natural-ddm",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -35163,6 +35841,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 239,
+        "drop": 124,
+        "synth": 34
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -35731,6 +36421,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "nginx",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 11,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -36351,6 +37053,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 19,
+        "drop": 14,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -36997,6 +37711,18 @@
     },
     {
       "family": "odata-v2",
+      "loss_counts": {
+        "approx": 38,
+        "drop": 31,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "odata-v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -37609,6 +38335,18 @@
     },
     {
       "family": "odcs",
+      "loss_counts": {
+        "approx": 17,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "odcs",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -38159,6 +38897,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 21,
+        "drop": 18,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -38733,6 +39483,18 @@
     },
     {
       "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 16,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "opcua-nodeset",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -39297,6 +40059,18 @@
     },
     {
       "family": "openapi",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "openapi",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -39845,6 +40619,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "openrpc",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 3,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -40401,6 +41187,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
+        "approx": 26,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -41500,6 +42298,18 @@
     },
     {
       "family": "pli",
+      "loss_counts": {
+        "approx": 52,
+        "drop": 39,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "pli",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -42078,6 +42888,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 7,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -42726,6 +43548,18 @@
     },
     {
       "family": "postman-v2",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 11,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "postman-v2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -43352,6 +44186,18 @@
     },
     {
       "family": "protobuf",
+      "loss_counts": {
+        "approx": 30,
+        "drop": 26,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -43924,6 +44770,18 @@
     },
     {
       "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 23,
+        "drop": 19,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "protobuf-editions",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -44487,6 +45345,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 29,
+        "drop": 9,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -45070,6 +45940,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "raml",
+      "loss_counts": {
+        "approx": 23,
+        "drop": 12,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -45686,6 +46568,18 @@
     },
     {
       "family": "relaxng",
+      "loss_counts": {
+        "approx": 25,
+        "drop": 11,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "relaxng",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -46229,6 +47123,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 46,
+        "drop": 2,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -46788,6 +47694,18 @@
     },
     {
       "family": "sepa",
+      "loss_counts": {
+        "approx": 169,
+        "drop": 85,
+        "synth": 28
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "sepa",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -47338,6 +48256,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
+        "approx": 20,
+        "drop": 4,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -47895,6 +48825,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 28,
+        "drop": 11,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -48489,6 +49431,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "soapui",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -49109,6 +50063,18 @@
     },
     {
       "family": "sparkplug",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "sparkplug",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -49651,6 +50617,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 59,
+        "drop": 8,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -50235,6 +51213,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 38,
+        "drop": 27,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -50885,6 +51875,18 @@
     },
     {
       "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 19,
+        "drop": 12,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "swagger-1.2",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -51502,6 +52504,18 @@
     },
     {
       "family": "swift-mt",
+      "loss_counts": {
+        "approx": 33,
+        "drop": 52,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "swift-mt",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -52058,6 +53072,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 24,
+        "drop": 19,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -52648,6 +53674,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "thunder-client",
+      "loss_counts": {
+        "approx": 10,
+        "drop": 11,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -53273,6 +54311,18 @@
     },
     {
       "family": "tradacoms",
+      "loss_counts": {
+        "approx": 21,
+        "drop": 21,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "tradacoms",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -53837,6 +54887,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "traefik",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 7,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -55023,6 +56085,18 @@
     },
     {
       "family": "tyk",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "tyk",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -55625,6 +56699,18 @@
     },
     {
       "family": "typescript-types",
+      "loss_counts": {
+        "approx": 43,
+        "drop": 1,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "typescript-types",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -56209,6 +57295,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "typespec",
+      "loss_counts": {
+        "approx": 27,
+        "drop": 17,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -56825,6 +57923,18 @@
     },
     {
       "family": "vsam-idcams",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "vsam-idcams",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -57403,6 +58513,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "wadl",
+      "loss_counts": {
+        "approx": 15,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -58031,6 +59153,18 @@
     },
     {
       "family": "wit",
+      "loss_counts": {
+        "approx": 12,
+        "drop": 8,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "wit",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -58593,6 +59727,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 40,
+        "drop": 32,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -59161,6 +60307,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 33,
+        "drop": 27,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -59739,6 +60897,18 @@
     },
     {
       "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "xmlrpc",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -60291,6 +61461,18 @@
     },
     {
       "family": "xregistry",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "xregistry",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -60839,6 +62021,18 @@
       "reason": null,
       "status": "lossy",
       "target": "corbaidl",
+      "tier": "lossy"
+    },
+    {
+      "family": "xsd",
+      "loss_counts": {
+        "approx": 41,
+        "drop": 20,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
       "tier": "lossy"
     },
     {
@@ -61967,6 +63161,18 @@
     },
     {
       "family": "zosconnect",
+      "loss_counts": {
+        "approx": 9,
+        "drop": 12,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "discovery",
+      "tier": "lossy"
+    },
+    {
+      "family": "zosconnect",
       "reason": "Only a source imported as EDI X12 can be exported to EDI X12.",
       "status": "refused",
       "target": "edix12"
@@ -62436,9 +63642,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 3940,
+    "lossy": 4038,
     "ok": 39,
-    "refused": 2115,
+    "refused": 2120,
     "silent-loss": 170,
     "skipped": 0
   },
@@ -62569,6 +63775,7 @@
     "cobolcopybook",
     "connectrpc",
     "corbaidl",
+    "discovery",
     "edix12",
     "envoy-xds",
     "fhir",

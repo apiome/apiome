@@ -1232,9 +1232,16 @@
       "golden_directories": [
         "discovery"
       ],
-      "emit_key": null,
+      "emit_key": "discovery",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "discovery",
+          "emit_key": "discovery",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",

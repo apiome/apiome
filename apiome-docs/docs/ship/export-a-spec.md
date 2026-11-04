@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**60<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**61<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **60<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **61<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -2510,6 +2510,68 @@ WADL describes HTTP resources and nothing else, so the fidelity report lists wha
 
 When the source has no server, the base URI `https://api.example.com/` is used, and the report says so.
 
+### Google API Discovery from any source
+
+Google's API client libraries and generated clients are built from **Discovery documents**: one JSON
+description of an API's resources, methods, parameters and schemas. Exporting to **Google API
+Discovery** writes the item as one, `<name>.discovery.json`. It follows the Discovery format's own
+metaschema, and Google's API client library for Python builds a working client from it, with a call for
+every method.
+
+- **Document.** `kind` `discovery#restDescription`, the API's `name` (lower-case letters and digits,
+  made from the item's name: *Pet Store* is `petstore`), its `version` (the item's, else `v1`), `id`
+  `<name>:<version>`, the title and description. The first server gives `rootUrl` (scheme and host) and
+  `servicePath` (its path, `api/v1/`); server variables take their defaults. Set the **name** and
+  **version** options to choose others.
+- **Resources and methods.** An operation is filed under the resource its path starts with
+  (`/pets/{petId}` is in `pets`) and named after its operation name (`listPets`); an operation whose path
+  starts with a parameter is a top-level method. Each method has an `id` (`petstore.pets.listPets`), a
+  `path` relative to `servicePath`, its HTTP verb and description.
+- **Parameters.** Path and query parameters, with their type, `required`, `default`, `enum`, `pattern`,
+  `minimum` and `maximum`. A list is a `repeated` parameter. A path parameter is always required, and
+  the required parameters are listed in `parameterOrder`, path ones first.
+- **Bodies.** The request and the success response are `$ref`s to schemas. A body that is not one named
+  type (a list, a scalar, an inline schema) gets a schema of its own, `ListPetsResponse`.
+- **Schemas.** Each type, in Discovery's JSON Schema subset, through the same draft-04 mapping as a
+  [JSON Schema export](#json-schema-from-any-source). A required field is marked `required: true`, and
+  `deprecated` is kept.
+
+| In the source | In the Discovery document |
+|---|---|
+| A 32-bit or unsized integer | `integer`, `format: int32` |
+| A 64-bit integer | `string`, `format: int64`: Discovery sends 64-bit integers as strings |
+| A float or a double (a decimal too) | `number`, `format: float` or `double` |
+| Base64 bytes, a date, a date-time | `string`, `format: byte`, `date` or `date-time` |
+| An enum | `string` with `enum`, and each value's description in `enumDescriptions` |
+| A map | `object` with `additionalProperties` |
+| A union, or a type that may be several | `type: any`, its alternatives named in the description |
+
+An item imported from Discovery keeps its name, resource tree, method names and ids, and its parameters'
+values, so it reads back unchanged. When its `baseUrl` leaves out its `servicePath`, the export writes the
+full `baseUrl`, and the report says so.
+
+The fidelity report lists what a Discovery document cannot carry:
+
+- operations with no HTTP method and path (from gRPC, GraphQL or WSDL sources), event operations and
+  channels;
+- header and cookie parameters: Discovery parameters go in the path or the query;
+- every response but the success body (a Discovery method has one response; errors are Google's
+  standard error), and every server but the first;
+- schema keywords Discovery has no place for: lengths, list sizes, `multipleOf`, closed objects,
+  non-string enums, object defaults and string formats other than `byte`, `date` and `date-time`;
+- what it changes: nullable types written as their type, exclusive bounds written inclusive, renamed path
+  parameters, and 64-bit integers as strings;
+- how it reads back: services become one API named after the title, an operation is named by its method
+  id and keyed by its full path (`servicePath` included), and `required: true` is a hint Discovery clients
+  do not enforce, so a required field reads back optional.
+
+A source with no HTTP operation and no type has nothing a Discovery document can hold, so the card is
+greyed out for it.
+
+When the source has no server, `https://api.example.com/` is used, and the report says so. From the CLI,
+run `apiome export discovery <item> --out petstore.discovery.json`; add `--option name=pets` or
+`--option version=v2` to choose the name or version.
+
 ### RAML from any source
 
 #### When to export to RAML
@@ -2811,6 +2873,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | FIX | Data schema | A source imported as FIX |
 | FlatBuffers | Data schema | Any source |
 | Gateway API HTTPRoute | REST | Any source |
+| Google API Discovery | REST | Any source |
 | GraphQL SDL | Graph | Any source |
 | HL7 v2 | Data schema | A source imported as HL7 v2 |
 | HL7 v2 segment guide | Data schema | Any source with a record type |

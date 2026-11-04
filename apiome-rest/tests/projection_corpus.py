@@ -139,6 +139,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "cobolcopybook": GENERIC,
     "connectrpc": GENERIC,
     "corbaidl": GENERIC,
+    "discovery": GENERIC,
     "edifact-guide": GENERIC,
     "edix12": GENERIC,
     "envoy-xds": GENERIC,

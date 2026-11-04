@@ -1,0 +1,21 @@
+---
+slug: google-discovery-export
+title: Export Google API Discovery documents
+description: "A new export target writes any REST item as a Google API Discovery document."
+authors: [apiome]
+---
+
+Google's client libraries and generated clients are built from Discovery documents. The new **Google API
+Discovery** export writes an item as one. See
+[Google API Discovery from any source](/ship/export-a-spec#google-api-discovery-from-any-source).
+
+{/* truncate */}
+
+- **One file:** `<name>.discovery.json`, a `discovery#restDescription` with resources, methods, parameters and
+  schemas.
+- **Works with Google's client:** every export follows the Discovery metaschema, and Google's API client
+  library for Python builds a client from it, with a call for every method.
+- **Discovery's schema subset:** the same draft-04 mapping as the JSON Schema export, in Discovery terms —
+  `int64` as strings, `required: true`, `enumDescriptions`.
+- **Round trip:** an imported Discovery item keeps its resource tree, method names and ids.
+- **CLI:** `apiome export discovery <item> --out petstore.discovery.json`.

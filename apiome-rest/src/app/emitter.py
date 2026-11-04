@@ -778,6 +778,7 @@ def load_builtin_emitters() -> None:
     from . import cobolcopybook_emitter as _cobolcopybook  # noqa: F401
     from . import connectrpc_emitter as _connectrpc  # noqa: F401
     from . import corbaidl_emitter as _corbaidl  # noqa: F401
+    from . import discovery_emitter as _discovery  # noqa: F401
     from . import edifact_guide_emitter as _edifact_guide  # noqa: F401
     from . import edix12_emitter as _edix12  # noqa: F401
 
