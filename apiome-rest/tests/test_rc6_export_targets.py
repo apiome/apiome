@@ -109,6 +109,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "wsdl",
     "x12-guide",
     "xmlrpc",
+    "xregistry",
     "xsd",
     "zosconnect",
 )

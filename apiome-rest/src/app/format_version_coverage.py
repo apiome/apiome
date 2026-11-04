@@ -498,6 +498,16 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "draft names (`definitiongroups`, `definitions`, `metadata`) read the same way.",
             )
         ],
+        writes=[
+            FormatVersion(
+                version="1.0-rc1",
+                format_key="xregistry",
+                support=VersionSupport.FULL,
+                note="Written as `<registry id>.xregistry.json` (MFX-34.1): a JSON Schema registry "
+                "(`JsonSchema/draft/2020-12`) and CloudEvents 1.0 message definitions; no endpoints.",
+            )
+        ],
+        default_write="1.0-rc1",
     ),
     "cobolcopybook": VersionCoverage(
         reads=[

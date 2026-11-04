@@ -52,6 +52,7 @@ from .canonical_model import (
     ApiParadigm,
     CanonicalApi,
     Constraints,
+    OperationKind,
     Type,
     TypeKind,
     TypeRef,
@@ -353,6 +354,12 @@ SOURCE_REQUIREMENTS: Dict[str, Tuple[Callable[[CanonicalApi], bool], str]] = {
     "skill-operation": (
         _has_skill_operation,
         "{label} export needs an agent or at least one operation that is not an event; this source "
+        "has neither.",
+    ),
+    "event-or-type": (
+        lambda api: bool(api.types)
+        or any(op.kind in (OperationKind.PUBLISH, OperationKind.SUBSCRIBE) for op in api.operations()),
+        "{label} export needs at least one type or event (publish / subscribe) operation; this source "
         "has neither.",
     ),
     "http-operation-or-type": (
@@ -845,6 +852,7 @@ def load_builtin_emitters() -> None:
     from . import wsdl_emitter as _wsdl  # noqa: F401
     from . import x12_guide_emitter as _x12_guide  # noqa: F401
     from . import xmlrpc_emitter as _xmlrpc  # noqa: F401
+    from . import xregistry_emitter as _xregistry_emitter  # noqa: F401
     from . import xsd_emitter as _xsd  # noqa: F401
     from . import zosconnect_emitter as _zosconnect  # noqa: F401
 

@@ -182,6 +182,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "wsdl": GENERIC,
     "x12-guide": GENERIC,
     "xmlrpc": GENERIC,
+    "xregistry": GENERIC,
     "xsd": GENERIC,
     "zosconnect": GENERIC,
 }

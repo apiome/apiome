@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.634.0] - 2026-11-04
+
+### Added
+- **xRegistry document emitter (MFX-34.1, #4306).** New export target `xregistry` (`app/xregistry_emitter.py`,
+  `XRegistryEmitter`) writes one CNCF xRegistry document (`specversion` 1.0-rc1) in the shape the MFI-19.2 importer
+  reads, so it imports straight back.
+  - **Schema registry:** one schema group (the registry id) with one schema per canonical type, projected with the
+    MFX-21.1 mapping (`build_bundle_schemas`) as `JsonSchema/draft/2020-12`; references are `#/definitions/<schema>`
+    and each schema carries the types it reaches under `definitions`. An opaque imported schema is written back as read.
+  - **Message definitions:** one message group per service with an event operation, one message per publish/subscribe
+    operation with the `CloudEvents/1.0` envelope; `envelopemetadata` carries `type` (the event's, else the channel
+    address, else its name) and `source` (stated, else the `source` option, else `/<registry id>`) plus the other
+    headers; `datacontenttype` (else `application/json`); payload as `dataschemaformat` + `dataschemaxid`, or an
+    inline `dataschema`. Options `registry_id`, `source`, `indent`.
+  - **Checks:** `xregistry_document_problems` (ids, schema formats and default versions, JSON Schema validity and
+    reference resolution, envelope, CloudEvents values, `datacontenttype`, `dataschemaxid` resolution) before return,
+    and the export gate (`_validate_xregistry`) adds a re-import.
+  - `XRegistryFidelityRulePack`: events OK/SYNTH, request/response operations and event-less services DROP, servers
+    DROP (no endpoints), re-keyed messages/types DROP (info) + SYNTH under the read-back key, other formats' types and
+    channels APPROX. New source requirement `event-or-type`; `format_version_coverage` writes xRegistry 1.0-rc1.
+  - Registry fallout: CORPUS_COVERAGE, RC6 targets, format counts (63 exportable), supported formats, target tiers,
+    round-trip matrix (93 `-> xregistry` cells pass incl. `xregistry -> xregistry`; 15 refusals xfailed), conformance
+    matrix, corpus parity. Tests: `tests/test_xregistry_emitter.py` (41).
+- OpenAPI 1.498.0.
+
 ## [1.633.0] - 2026-11-04
 
 ### Added

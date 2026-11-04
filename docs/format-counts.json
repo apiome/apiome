@@ -3,9 +3,9 @@
   "capability_registry_version": "39",
   "total": 103,
   "importable": 100,
-  "exportable": 62,
-  "round_trip": 59,
-  "import_only": 41,
+  "exportable": 63,
+  "round_trip": 60,
+  "import_only": 40,
   "export_only": 3,
   "live_discovery": 12,
   "publishable": 1,
@@ -31,7 +31,7 @@
       "label": "Event-driven",
       "total": 4,
       "importable": 4,
-      "exportable": 2
+      "exportable": 3
     },
     {
       "id": "graph",
