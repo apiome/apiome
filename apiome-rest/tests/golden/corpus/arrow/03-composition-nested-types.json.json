@@ -151,8 +151,18 @@
         "description": null,
         "enum_values": [],
         "extras": {
+          "arrow_key": {
+            "type": {
+              "name": "utf8"
+            }
+          },
           "arrow_keys_sorted": false,
-          "arrow_kind": "map"
+          "arrow_kind": "map",
+          "arrow_value": {
+            "type": {
+              "name": "utf8"
+            }
+          }
         },
         "fields": [],
         "key": "attributes",
@@ -431,7 +441,7 @@
     "confidence": 0.95,
     "format": "arrow"
   },
-  "fingerprint": "sha256:415c476653b7296cf3381edd984270b4fb2ff4bee1b389b72f4117c441223f65",
+  "fingerprint": "sha256:6e3d10b165b0fd8999cfa7c9b31cd4a51c6c91bbec3ff57092cf2f82a4c4e3cf",
   "lint": {
     "findings": 18,
     "grade": "D",

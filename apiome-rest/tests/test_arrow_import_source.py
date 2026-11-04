@@ -8,8 +8,8 @@ Organised around the ticket's acceptance criteria:
 #. nested, dictionary-encoded and decimal types are modelled or declared limits;
 #. a Flight ``GetSchema`` discovery path imports from a live endpoint
    (``tests/test_arrow_flight_discovery.py``);
-#. round-trip against #4317's emitter is asserted once both exist — #4317 has not landed,
-   so the matrix records ``arrow`` as a source-only row.
+#. round-trip against #4317's emitter: an imported schema exports back to the same schema
+   (``tests/test_arrow_emitter.py``), and the matrix runs ``arrow -> arrow``.
 
 The shipped corpus fixtures are asserted against directly, so the suite fails if one is
 deleted rather than only if one changes.
@@ -738,11 +738,12 @@ def test_the_capability_registry_carries_a_reviewed_seed() -> None:
     assert sorted(capability.canonical_projection.dropped_constructs) == sorted(LIMIT_DETAILS)
 
 
-def test_version_coverage_declares_one_ungated_read_and_no_write() -> None:
+def test_version_coverage_declares_one_ungated_read_and_the_emitter_write() -> None:
     coverage = version_coverage_for("arrow")
     assert [row.support for row in coverage.reads] == [VersionSupport.UNGATED]
-    assert list(coverage.writes) == []
-    assert coverage.default_write is None
+    # MFX-36.1 (#4317): the Arrow / Parquet emitter writes the JSON integration form.
+    assert [row.support for row in coverage.writes] == [VersionSupport.FULL]
+    assert coverage.default_write == coverage.writes[0].version
 
 
 def test_the_projection_record_is_provenance_not_a_source_construct() -> None:

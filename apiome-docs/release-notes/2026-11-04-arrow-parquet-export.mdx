@@ -1,0 +1,25 @@
+---
+slug: arrow-parquet-export
+title: Export Apache Arrow and Parquet schemas
+description: "Write an item's types as Arrow schemas and Parquet messages."
+authors: [apiome]
+---
+
+A new **Apache Arrow / Parquet** export target writes an item's types as
+[Apache Arrow](https://arrow.apache.org) schemas, one per table, with the Parquet message each one
+becomes. See [Apache Arrow and Parquet](/ship/export-a-spec#apache-arrow-and-parquet).
+
+{/* truncate */}
+
+- **One table per root record:** `<table>.arrow.json` in Arrow's JSON integration form (the file
+  Apiome imports, so it reads back) and `<table>.parquet.txt`, the `message schema { … }` pyarrow's
+  Parquet writer derives from it. The `table` option exports one record.
+- **Nested types map natively:** an object is a `struct`, a list a `list<item>`, a map a `map` of
+  `key` and `value`, a union a dense `union` and an enumeration a dictionary-encoded column.
+- **Logical types:** dates are `date32`, date-times `timestamp` in microseconds, UTC, decimals
+  `decimal128` with the scale from `multipleOf`, and UUIDs a 16-byte `fixedsizebinary` with the
+  `arrow.uuid` extension.
+- **Arrow round-trips:** an item imported from Arrow exports back to the same schema, with each column's
+  unit, time zone, precision, dictionary encoding and metadata.
+- **Checked before you download:** pyarrow constructs every schema and it imports again. The fidelity
+  report lists what a re-import reads back differently, such as a nested record named after its column.

@@ -119,11 +119,12 @@ server is greyed out in the app with the missing tool named, whatever its tier.
 
 {/* export-target-tiers:begin — generated, do not edit by hand. Regenerate with: cd apiome-rest && uv run python scripts/generate_export_target_tiers_doc.py */}
 
-Each of the 63 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
+Each of the 64 targets, measured against four small sources: **From a REST API** is an OpenAPI 3.1 API with `GET /pets/{petId}` and `POST /pets`; **From an RPC service** is a Protobuf service with one `GetPet` call; **From an event API** is an AsyncAPI 3.0 API that publishes to one `pets.adopted` channel; **From types only** is a JSON Schema with the types and no operations or channels. All of them share a `Pet` record (a required id, a name of up to 64 characters, an optional tag and a status) and a `PetStatus` enum.
 
 | Target | Kind | From a REST API | From an RPC service | From an event API | From types only |
 | --- | --- | --- | --- | --- | --- |
 | A2A Agent Card | Agent tools | `lossy` | `lossy` | not offered | not offered |
+| Apache Arrow / Parquet | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | Apache Avro | Data schema | `types-only` | `types-only` | `types-only` | `types-only` |
 | Apache Thrift | RPC | `lossy` | `lossy` | `lossy` | `lossy` |
 | API Blueprint | REST | `lossy` | `lossy` | `lossy` | `lossy` |

@@ -503,13 +503,17 @@ class _Projection:
             entries = children[0]
             key_field, value_field = entries.children[0], entries.children[1]
             child_name, child_key = self.collector.claim(path)
+            # Like a list element, a key or value has no field to hang its declared type on
+            # (a decimal's precision, a timestamp's unit …), so each keeps it in a bag.
+            key_extras: Dict[str, Any] = {"type": _type_extra(key_field.type)}
+            value_extras: Dict[str, Any] = {"type": _type_extra(value_field.type)}
             key_ref, _ = self.type_ref(
                 key_field.type,
                 key_field.children,
                 path=path + (key_field.name,),
                 nullable=key_field.nullable,
                 location=f"{location}/{key_field.name}",
-                extras={},
+                extras=key_extras,
             )
             value_ref, _ = self.type_ref(
                 value_field.type,
@@ -517,7 +521,7 @@ class _Projection:
                 path=path + (value_field.name,),
                 nullable=value_field.nullable,
                 location=f"{location}/{value_field.name}",
-                extras={},
+                extras=value_extras,
             )
             self.collector.add(
                 Type(
@@ -530,6 +534,8 @@ class _Projection:
                     extras={
                         "arrow_kind": "map",
                         "arrow_keys_sorted": bool(type_.parameter("keysSorted", False)),
+                        "arrow_key": key_extras,
+                        "arrow_value": value_extras,
                     },
                 )
             )

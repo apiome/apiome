@@ -1671,8 +1671,17 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "versions of it.",
             )
         ],
-        writes=[],
-        default_write=None,
+        writes=[
+            FormatVersion(
+                version="Arrow columnar format 1.x (JSON integration form) + Parquet message",
+                format_key="arrow",
+                support=VersionSupport.FULL,
+                note="Written as `<table>.arrow.json` (MFX-36.1): one Arrow schema per root record, "
+                "constructed by pyarrow before it is written, plus `<table>.parquet.txt`, the Parquet "
+                "message pyarrow's Parquet writer derives from it (none for a schema with a union).",
+            )
+        ],
+        default_write="Arrow columnar format 1.x (JSON integration form) + Parquet message",
     ),
     "odcs": VersionCoverage(
         reads=[

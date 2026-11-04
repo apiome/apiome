@@ -2141,9 +2141,10 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "A live Flight endpoint is vetted against the SSRF policy before a client is "
             "constructed, and its credentials come from the shared credential vault as call "
             "headers. Nothing else is fetched: a schema names no external references.",
-            "Arrow *output* is not implemented here (#4317 files the Parquet/Arrow emitter), so "
-            "a schema imported through this adapter is exported through another target's "
-            "emitter and is not written back as Arrow.",
+            "Arrow is read *and* written. The reader keeps each column's declared type — unit, "
+            "time zone, width, precision, dictionary encoding, extension and metadata — and the "
+            "Arrow / Parquet emitter (MFX-36.1) writes every one of them back, so a schema imported "
+            "and re-exported is the schema that arrived.",
         ],
     ),
     "kafka-connect": _Seed(
