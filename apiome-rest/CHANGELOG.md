@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.648.0] - 2026-11-04
+
+### Added
+- **Validate FIX Orchestra exports (MFX-37.3, #4325).** Export gate `_validate_fix_orchestra` /
+  `check_emitted_fix_orchestra`: each `.xml` repository must validate against the vendored official FIX Orchestra
+  1.0 repository XSD (offline; one finding per violation with its path, `keyword=orchestra.xsd`, or `xml` when it
+  does not parse), then import again through the FIX Orchestra importer with every declared message reading back
+  (`keyword=reimport`). A rejected export blocks delivery, so the job fails with the findings.
+  `tests/test_fix_orchestra_validation.py`.
+
 ## [1.647.0] - 2026-11-04
 
 ### Added
