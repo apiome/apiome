@@ -667,6 +667,27 @@ async def _validate_edifact_guide(
     return _passed(target)
 
 
+async def _validate_hl7v2_guide(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Machine-check an emitted HL7 v2 segment guide (MFX-26.3, #4159).
+
+    :func:`app.hl7v2_guide_validation.check_guide_files` checks the JSON guide's schema, its segments, fields, data
+    types and tables, its ``MSH`` and structure, and that the CSV and Markdown files say what the JSON says. Every
+    problem is a finding with its rule (``keyword``), file and JSON Pointer.
+    """
+    from .hl7v2_guide_validation import check_guide_files
+
+    files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+    problems = await asyncio.to_thread(check_guide_files, files)
+    if problems:
+        return _rejected(target, [
+            ValidationFinding(message=problem.message, path=problem.path, file=problem.file, keyword=problem.rule)
+            for problem in problems
+        ])
+    return _passed(target)
+
+
 async def _validate_sql_ddl(
     target: str, emit_result: EmitResult, api: CanonicalApi
 ) -> EmittedArtifactValidation:
@@ -1662,6 +1683,8 @@ _VALIDATORS: Dict[str, _Validator] = {
     "x12-guide": _validate_x12_guide,
     # MFX-24.2 (#4146)
     "edifact-guide": _validate_edifact_guide,
+    # MFX-26.3 (#4159)
+    "hl7v2-guide": _validate_hl7v2_guide,
     "idoc": _validate_idoc,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,

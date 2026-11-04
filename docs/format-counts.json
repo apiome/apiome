@@ -1,12 +1,12 @@
 {
   "version": "1",
   "capability_registry_version": "39",
-  "total": 102,
+  "total": 103,
   "importable": 100,
-  "exportable": 59,
+  "exportable": 60,
   "round_trip": 57,
   "import_only": 43,
-  "export_only": 2,
+  "export_only": 3,
   "live_discovery": 12,
   "publishable": 1,
   "catalog": 99,
@@ -43,9 +43,9 @@
     {
       "id": "data_schema",
       "label": "Data schema",
-      "total": 47,
+      "total": 48,
       "importable": 45,
-      "exportable": 20
+      "exportable": 21
     },
     {
       "id": "agent",

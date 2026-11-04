@@ -1,0 +1,146 @@
+{
+  "cards": {
+    "hl7v2": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "tier": "types-only"
+    },
+    "x12": {
+      "available": true,
+      "tier": "types-only"
+    }
+  },
+  "picks": {
+    "hl7v2": {
+      "default": {
+        "files": [
+          "ADT-A01.hl7v2-guide.json",
+          "ADT-A01.hl7v2-segments.csv",
+          "ADT-A01.hl7v2-guide.md"
+        ],
+        "message": "ADT^A01",
+        "msh12": "2.5",
+        "msh9": "ADT^A01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "EVN",
+          "PID",
+          "NK1",
+          "PV1"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.5"
+      },
+      "oru-r01-251": {
+        "files": [
+          "ADT-A01.hl7v2-guide.json",
+          "ADT-A01.hl7v2-segments.csv",
+          "ADT-A01.hl7v2-guide.md"
+        ],
+        "message": "ORU^R01",
+        "msh12": "2.5.1",
+        "msh9": "ORU^R01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "EVN",
+          "PID",
+          "NK1",
+          "PV1"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.5.1"
+      },
+      "zpm-z01-28": {
+        "files": [
+          "ADT-A01.hl7v2-guide.json",
+          "ADT-A01.hl7v2-segments.csv",
+          "ADT-A01.hl7v2-guide.md"
+        ],
+        "message": "ZPM^Z01",
+        "msh12": "2.8",
+        "msh9": "ZPM^Z01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "EVN",
+          "PID",
+          "NK1",
+          "PV1"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.8"
+      }
+    },
+    "rest": {
+      "default": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.md"
+        ],
+        "message": "ZZZ^Z01",
+        "msh12": "2.5.1",
+        "msh9": "ZZZ^Z01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "ZPE",
+          "ZCA"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.5.1"
+      },
+      "oru-r01-251": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.md"
+        ],
+        "message": "ORU^R01",
+        "msh12": "2.5.1",
+        "msh9": "ORU^R01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "ZPE",
+          "ZCA"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.5.1"
+      },
+      "zpm-z01-28": {
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.json",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-segments.csv",
+          "Sample-Pet-Store-API-OpenAPI-3.0.hl7v2-guide.md"
+        ],
+        "message": "ZPM^Z01",
+        "msh12": "2.8",
+        "msh9": "ZPM^Z01",
+        "problems": [],
+        "segments": [
+          "MSH",
+          "ZPE",
+          "ZCA"
+        ],
+        "tables": [],
+        "tier": "types-only",
+        "version": "2.8"
+      }
+    }
+  }
+}

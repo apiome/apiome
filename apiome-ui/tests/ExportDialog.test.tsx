@@ -108,6 +108,7 @@ import {
   xsdTargets,
   x12GuideTargets,
   edifactGuideTargets,
+  hl7v2GuideTargets,
   typespecTargets,
   wsdlTargets,
 } from './helpers/export-dialog-fixture';
@@ -1137,6 +1138,33 @@ describe('ExportDialog — UN/EDIFACT message guide target card (MFX-24.2)', () 
     expect(release).toHaveValue('');
     fireEvent.change(messageType, { target: { value: 'INVOIC' } });
     expect(messageType).toHaveValue('INVOIC');
+  });
+});
+
+describe('ExportDialog — HL7 v2 segment guide target card (MFX-26.3)', () => {
+  it.each(['rest', 'hl7v2'] as const)('badges a %s source types-only and marks the guide multi-file', async (source) => {
+    await renderAtTargetStep(mockFetch(hl7v2GuideTargets(source)));
+
+    const card = screen.getByTestId('export-target-hl7v2-guide');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('HL7 v2 segment guide')).toBeInTheDocument();
+    expect(within(card).getByText('types-only')).toBeInTheDocument();
+    // The JSON guide, the segment CSV and the Markdown guide come as one download.
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+  });
+
+  it('offers the message type and version as the picker', async () => {
+    await renderAtTargetStep(mockFetch(hl7v2GuideTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-hl7v2-guide'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const messageType = screen.getByLabelText('Message Type');
+    const version = screen.getByLabelText('Version');
+    // Empty means the server default: an imported HL7 v2 item's own message and version, else ZZZ^Z01 / 2.5.1.
+    expect(messageType).toHaveValue('');
+    expect(version).toHaveValue('');
+    fireEvent.change(messageType, { target: { value: 'ORU^R01' } });
+    expect(messageType).toHaveValue('ORU^R01');
   });
 });
 

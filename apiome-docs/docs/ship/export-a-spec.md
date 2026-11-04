@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**59<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**60<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **59<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **60<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -1422,7 +1422,7 @@ dialog on Browse offers the same target.
 
 Trading partners agree on the documents they exchange before they exchange any: which segments or elements a
 purchase order or an invoice carries, how long each value is, which codes it may hold. Apiome writes that
-agreement from an item's types, for the three families B2B partners use. Each is a guide or schema partners
+agreement from an item's types, for the three families B2B partners use and for HL7 v2 healthcare interfaces. Each is a guide or schema partners
 build their documents from, not a document itself.
 
 #### When to use which
@@ -1437,19 +1437,22 @@ build their documents from, not a document itself.
   whose invoices and credit notes are UBL 2.1 documents. Export **XSD** with the
   [UBL and Peppol BIS profiles](#ubl-and-peppol-bis-profiles) for a UBL document schema, validated against the
   official UBL 2.1 schemas it ships with.
+- **Healthcare interface partners: HL7 v2.** Hospital interfaces exchange HL7 v2 messages (`ADT^A01`,
+  `ORU^R01`). Export an [HL7 v2 segment guide](#hl7-v2-segment-guide-from-any-source) — the message and
+  segment definitions an integration engine is configured from, laid out by the same plan as the X12 guide.
 
 #### EDI and e-invoicing at a glance
 
-| | X12 implementation guide | UN/EDIFACT message guide | UBL / Peppol (XSD profile) |
-| --- | --- | --- | --- |
-| **Card** (**Data schema & graph**) | **X12 implementation guide** | **UN/EDIFACT message guide** | **XSD**, **Profile** `ubl` or `peppol` |
-| **You get** | JSON guide, segment CSV, Markdown guide | JSON guide, segment CSV, Markdown guide | Document schema, the OASIS UBL 2.1 schemas, notice, guide |
-| **Pick the document** | **Transaction Set**, **Version** | **Message Type**, **Release** | **Ubl Document** (Peppol: `Invoice` or `CreditNote`) |
-| **Units** | Segments and loops, X12 element types | Segments and segment groups, simple and composite data elements | UBL aggregates and data types, `cbc:` components |
-| **Checked by** | Apiome's guide rules, pyx12's dictionary when installed | Apiome's guide rules | An XML Schema processor against the UBL 2.1 schemas, the Peppol conventions |
-| **CLI** | `apiome export x12` | `apiome export edifact` | `apiome export xsd --option profile=peppol` |
+| | X12 implementation guide | UN/EDIFACT message guide | UBL / Peppol (XSD profile) || HL7 v2 segment guide |
+| --- | --- | --- | --- |--- |
+| **Card** (**Data schema & graph**) | **X12 implementation guide** | **UN/EDIFACT message guide** | **XSD**, **Profile** `ubl` or `peppol` | **HL7 v2 segment guide** |
+| **You get** | JSON guide, segment CSV, Markdown guide | JSON guide, segment CSV, Markdown guide | Document schema, the OASIS UBL 2.1 schemas, notice, guide | JSON guide, segment CSV, Markdown guide |
+| **Pick the document** | **Transaction Set**, **Version** | **Message Type**, **Release** | **Ubl Document** (Peppol: `Invoice` or `CreditNote`) | **Message Type**, **Version** |
+| **Units** | Segments and loops, X12 element types | Segments and segment groups, simple and composite data elements | UBL aggregates and data types, `cbc:` components | Z-segments and segment groups, HL7 data types and tables |
+| **Checked by** | Apiome's guide rules, pyx12's dictionary when installed | Apiome's guide rules | An XML Schema processor against the UBL 2.1 schemas, the Peppol conventions | Apiome's guide rules |
+| **CLI** | `apiome export x12` | `apiome export edifact` | `apiome export xsd --option profile=peppol` | `apiome export hl7guide` |
 
-All three describe types only — operations and channels are left out — and every length, code and identifier
+All four describe types only — operations and channels are left out — and every length, code and identifier
 the guide invents is listed in the fidelity report.
 
 ### X12 implementation guide from any source
@@ -1659,6 +1662,98 @@ an imported EDIFACT item included. Pick the card and type the **Message Type** (
 **Release** (`96A`, `01B` …); leave them empty for the item's own, else `ORDERS` and `01B`. From the CLI,
 run `apiome export edifact <item> --out <folder>` and add `--option message_type=INVOIC` or
 `--option release=96A`. A types-only export exits non-zero unless you add `--force`. A public item's
+**Export** dialog on Browse offers the guide too, as a `.zip`.
+
+### HL7 v2 segment guide from any source
+
+Hospital integration engines — Mirth Connect, Rhapsody, Cloverleaf — are configured from HL7 v2 message and
+segment definitions: which segments a message holds, in what order and how often, and each segment's fields.
+Exporting to **HL7 v2 segment guide** writes that definition for the item's types, for onboarding an interface
+partner. It is the guide partners build their messages from, not a message (to write an imported HL7 v2 message
+back out, export to **HL7 v2**). You get three files, downloaded together as a `.zip`:
+
+- `<Name>.hl7v2-guide.json` — the machine-readable definition: the message, every segment with its fields,
+  the tables and the structure (segment groups, optionality and repetition);
+- `<Name>.hl7v2-segments.csv` — the segment definitions, one row per field;
+- `<Name>.hl7v2-guide.md` — the same guide for people to read, with the message's abstract message syntax
+  (`MSH ZPU ZPA { ZOR } [ { ZNO } ]`: `[ ]` optional, `{ }` repeating).
+
+**One layout for every guide.** The HL7 v2 guide is laid out by the same plan as the
+[X12 implementation guide](#x12-implementation-guide-from-any-source) and the
+[UN/EDIFACT message guide](#unedifact-message-guide-from-any-source): the same segments, in the same order,
+holding the same values. Only the spelling differs; in HL7 v2 terms:
+
+- **Segments.** A segment made from a type is a site-defined **Z-segment**, its ID made from its name
+  (`PurchaseOrder` is `ZPU`). Its fields are `ZPU-1`, `ZPU-2` … in order.
+- **The header.** The message starts with the standard `MSH` segment, with `MSH-9` the message type and
+  `MSH-12` the version.
+- **Segment groups.** A loop is a segment group named after its record (`ORDER_LINE`).
+- **Optionality.** A required field or segment is `R`, any other `O`; a position the item leaves empty is
+  not used (`X`).
+- **Repetition.** `N` (once), `Y` (any number: a list with no `maxItems`) or the list's `maxItems`.
+- **Tables.** Each enum is a **user-defined table**, numbered from **first_table_number** (`9001`, `9002` …),
+  listing its codes and the values they stand for; the coded field names its table. An enum value longer
+  than **max_code_length**, or not a valid code, gets a shorter code, with the value as its description.
+
+| In the source | In the guide |
+|---|---|
+| Text | `ST` — `maxLength` (or the **default_field_length**, 199) as its length |
+| An enumeration | `IS` (`CWE` from v2.7) bound to the enum's user-defined table |
+| A boolean | `ID` bound to HL7 table `0136` (Yes/no indicator: `Y`, `N`) |
+| An integer, a decimal, a float | `NM` — HL7 sends the decimal point |
+| A date | `DT` (`YYYYMMDD`) |
+| A time | `TM` (`HHMM[SS]`) |
+| A timestamp | One `TS` field (`DTM` from v2.6), `YYYYMMDDHHMM[SS]` |
+
+An item imported from HL7 v2 keeps its own segments (`MSH`, `PID`, `PV1` …), their order and their field
+sequence (`PID-1`, `PID-2` …), and its own message type and version in `MSH-9` and `MSH-12` unless you pick
+others.
+
+Options:
+
+- **message_type** — `<code>^<event>`, optionally with the message structure (`ADT^A01`, `ORU^R01`,
+  `ORM^O01^ORM_O01`). By default an imported HL7 v2 item's own, else `ZZZ^Z01`, a site-defined message.
+- **version** — the HL7 v2 version (`2.3`, `2.5.1`, `2.8` …). By default an imported HL7 v2 item's own,
+  else `2.5.1`.
+- **default_field_length** — the length of a text field whose source has no `maxLength` (199).
+- **max_code_length** — the longest enum value used as a code as it is (20).
+- **first_table_number** — the number of the first user-defined table (9001).
+
+The fidelity report lists the same entries as the X12 guide's, on the same fields and with the same
+grades, in HL7 v2 terms — a Z-segment ID made from a type's name is synthesized, and so on. One entry is the
+HL7 v2 guide's own:
+
+| In the source | In the report |
+|---|---|
+| An enumeration | Synthesized (note): the user-defined table number the export assigns |
+
+**Checked before you download it.** As for the other guides, every export is checked instead of read back,
+and fails — listing every problem with its file, JSON pointer and rule — when:
+
+1. **The JSON guide is not the guide format** (`hl7v2-guide.schema`).
+2. **A segment or field is wrong**: an ID that is not three letters or digits starting with a letter
+   (`hl7v2-guide.segment-id`), or is defined twice (`hl7v2-guide.duplicate-segment`); fields that are not
+   `<ID>-1` upward with no gap (`hl7v2-guide.field-ref`); an unknown data type (`hl7v2-guide.data-type`); a
+   length that is not positive (`hl7v2-guide.length`); optionality other than `R`, `O` or `X`
+   (`hl7v2-guide.optionality`); a repetition other than `N`, `Y` or a positive count
+   (`hl7v2-guide.repetition`).
+3. **The message is wrong**: a message type that is not `<code>^<event>`, a version that is not an HL7 v2
+   version (`hl7v2-guide.message`), or a structure that does not start with `MSH`, or `MSH-9` and `MSH-12`
+   not naming them (`hl7v2-guide.envelope`).
+4. **A table is wrong** (`hl7v2-guide.table`): a coded field (`ID`, `IS`, `CWE`) with no table or one the
+   guide does not define, a table no field uses, or a code listed twice or longer than its field.
+5. **The structure and the segments disagree**: an undefined or unused segment
+   (`hl7v2-guide.undefined-segment`, `hl7v2-guide.unused-segment`), or an unnamed or empty segment group
+   (`hl7v2-guide.group`).
+6. **The files disagree** (`hl7v2-guide.files`): the `.csv` or `.md` file does not list exactly what the
+   JSON guide says, or one of the three files is missing.
+
+**Where to find it.** In the **Export** dialog, the **HL7 v2 segment guide** card is under **Data
+schema & graph** on the **Target** step, marked multi-file. Its badge is **types-only** for every source,
+an imported HL7 v2 item included. Pick the card and type the **Message Type** (`ADT^A01`, `ORU^R01` …) and
+**Version** (`2.5.1`, `2.8` …); leave them empty for the item's own, else `ZZZ^Z01` and `2.5.1`. From the CLI,
+run `apiome export hl7guide <item> --out <folder>` and add `--option message_type=ORU^R01` or
+`--option version=2.8`. A types-only export exits non-zero unless you add `--force`. A public item's
 **Export** dialog on Browse offers the guide too, as a `.zip`.
 
 ### WSDL and XSD from any source
@@ -2680,6 +2775,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 | Gateway API HTTPRoute | REST | Any source |
 | GraphQL SDL | Graph | Any source |
 | HL7 v2 | Data schema | A source imported as HL7 v2 |
+| HL7 v2 segment guide | Data schema | Any source with a record type |
 | Hoppscotch | REST | Any source |
 | HTTP Request File | REST | Any source |
 | Insomnia | REST | Any source |

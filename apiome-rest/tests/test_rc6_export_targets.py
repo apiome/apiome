@@ -73,6 +73,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "gateway-api",
     "graphql",
     "hl7v2",
+    "hl7v2-guide",
     "hoppscotch",
     "http-file",
     "idoc",

@@ -1,0 +1,27 @@
+---
+slug: hl7v2-segment-guide
+title: Export HL7 v2 segment guides
+description: "A new export target writes the item's types as HL7 v2 message and segment definitions."
+authors: [apiome]
+---
+
+Hospital integration engines are configured from HL7 v2 message and segment definitions. The new **HL7 v2
+segment guide** export writes them for the item's types. See
+[HL7 v2 segment guide from any source](/ship/export-a-spec#hl7-v2-segment-guide-from-any-source).
+
+{/* truncate */}
+
+- **Three files:** a JSON guide, a segment-definition CSV and a Markdown guide with the abstract message
+  syntax, downloaded as one `.zip`.
+- **HL7 v2 terms:** Z-segments with fields `ZPU-1`, `ZPU-2` …; data types `ST`, `NM`, `DT`, `TM`, `TS`
+  (`DTM` from v2.6), `IS` (`CWE` from v2.7) and `ID`; length, optionality, repetition, segment groups and
+  the `MSH` header.
+- **Tables from enums:** each enum is a user-defined table (`9001`, `9002` …) of its values; a boolean is
+  bound to HL7 table `0136`.
+- **The same layout as the X12 and EDIFACT guides:** all three come from one plan, so they list the same
+  segments holding the same values.
+- **Pick the message:** **Message Type** (`ADT^A01`, `ORU^R01` …) and **Version** (`2.5.1`, `2.8` …). An
+  imported HL7 v2 item keeps its own message, segments and field sequence.
+- **Checked before download:** segments, fields, data types, tables, the `MSH` header, the structure and the
+  three files agreeing.
+- **CLI:** `apiome export hl7guide <item> --out <folder>`.
