@@ -582,11 +582,30 @@ Options:
 
 Foreign keys come last, as `ALTER TABLE … ADD CONSTRAINT`, so the tables can be created in any order.
 
-Every decision the projection makes up is listed in the fidelity report as **synthesized**: a
-generated key, a junction or child table, a renamed table or column, a decimal precision Apiome had to
-choose. The same model always gives the same script. What a dialect cannot hold is listed too: a
-pattern in standard SQL (no regular-expression check), a UUID in MySQL (`CHAR(36)`), a time zone on a
-MySQL `DATETIME`. Operations and channels are left out: a schema describes data only.
+#### What the fidelity report lists {#what-the-sql-ddl-fidelity-report-lists}
+
+The same model always gives the same script, and the fidelity report says what each part of it
+became:
+
+- **Dropped — with a critical warning for an API.** A schema describes data only, so every operation,
+  channel and service is dropped. An item that has any starts its report with a **critical** warning
+  that only its data schemas are exported, with how many services, operations and channels are left
+  out; export to OpenAPI or AsyncAPI as well to keep them. A constraint SQL has no column rule for is
+  dropped too: a pattern in standard SQL (no regular-expression check), a `multipleOf` on a
+  non-decimal column, the item counts of a list written as its own table. Any other constraint a
+  column has no rule for is listed as approximated, "not written".
+- **Approximated.** A union has no relational form: its value is stored whole in one JSON column
+  (`JSONB` on PostgreSQL), with no table per variant, so which variant a row holds is not a column. A
+  nested object, map or list written as JSON (**nested** `json`), and a type a dialect approximates (a
+  UUID as `CHAR(36)` in MySQL, a MySQL `DATETIME` with no time zone) are approximated too.
+- **Synthesized.** Every decision the projection makes up is its own item: a generated or inferred
+  key, a junction or child table, a renamed table or column, a decimal precision Apiome had to choose,
+  and each table written under a name the item does not have.
+- **Kept.** SQL keeps validation. Each field whose constraints become column rules is listed as
+  preserved, naming them: a minimum or maximum, a length, an enumeration and (PostgreSQL and MySQL) a
+  pattern as `CHECK` clauses, a `maxLength` as the `VARCHAR` size, a `multipleOf` as the decimal scale.
+  When the table is renamed (`UserProfile` becomes `user_profile`), the field is listed under the
+  name it reads back as (`user_profile.age`).
 
 An item imported from SQL keeps its primary, unique and foreign keys. Written in the dialect it was
 read in, it also keeps its column types, defaults and checks exactly. In another dialect, a default
