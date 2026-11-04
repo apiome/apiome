@@ -309,7 +309,8 @@ def classify_transcode(
         )
     critical_details = _critical_details(api, report)
     for detail in critical_details[:_MAX_DETAIL_REASONS]:
-        reasons.append(f"{detail.construct_key}: {detail.message}")
+        # A root-level construct (the document envelope, a grouping advisory) has the empty key.
+        reasons.append(f"{detail.construct_key}: {detail.message}" if detail.construct_key else detail.message)
     if len(critical_details) > _MAX_DETAIL_REASONS:
         reasons.append(f"… and {_plural(len(critical_details) - _MAX_DETAIL_REASONS, 'more critical construct')}.")
 

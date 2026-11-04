@@ -1,0 +1,27 @@
+---
+slug: agent-interface-fidelity
+title: What MCP and A2A exports lose, item by item
+description: "MCP and A2A exports now report HTTP, auth, streaming and grouping losses."
+authors: [apiome]
+---
+
+Exporting an API as **MCP Tool Definitions** or an **A2A Agent Card** now reports what the agent
+interface cannot carry, each with its reason, instead of leaving it out silently. See
+[What the MCP fidelity report lists](/ship/export-a-spec#what-the-mcp-fidelity-report-lists).
+
+{/* truncate */}
+
+- **HTTP binding in the description:** each MCP tool's description ends with its verb, path, status
+  codes and response headers (`HTTP: GET /pets/{petId} — returns 200; errors 404.`), and the
+  fidelity report lists the binding as approximated.
+- **Auth, scheme by scheme:** bearer and OAuth 2 map onto MCP authorization; an API key, basic or
+  digest auth, OpenID Connect and the OAuth 2 implicit and password flows are approximated; mutual TLS
+  and cookie keys are dropped.
+- **Streams and events:** dropped with the reason — a tool returns one result, and MCP streams only
+  progress (over SSE) while one call runs.
+- **Constraints kept:** `minimum`, `pattern`, `format` and the other constraint keywords stay JSON
+  Schema, and the report says so.
+- **Grouping guard:** a descriptor of more than 128 tools (or a card of more than 128 skills) needs
+  your confirmation before it exports. Split it with **grouping** `per-service` (MCP) or
+  **skills_from** `tags` (A2A). An export that keeps under a quarter of the source is flagged
+  near-empty.

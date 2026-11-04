@@ -22,7 +22,9 @@ format Apiome reads can be exported to any format it writes.
    - **near-empty** — the target is types-only, so only the schemas export and every operation is left
      out (for example an OpenAPI item exported to Avro); the export warns that only schemas export;
    - **severe** — the target cannot represent what the source is about (an event-only API exported to
-     gRPC, or a critical loss such as a union with no form in the target). A severe export needs your
+     gRPC, or a critical loss such as a union with no form in the target, or an MCP descriptor or A2A
+     card with more tools or skills than a model can take — the
+     [grouping guard](./export-a-spec.md#mcp-grouping-guard)). A severe export needs your
      **confirmation**; without it the job fails before anything is written.
 4. **Emit.** The target's emitter writes the files.
 5. **Validate.** Each export is checked before you can download it — re-imported, or checked with the
