@@ -158,6 +158,35 @@ def with_sql_preset(option_values: Sequence[str], verb: str, dialect: str | None
     return tuple(values)
 
 
+#: The Arrow / Parquet export's verbs (MFX-36.5) and the ``output`` mode each presets.
+DATA_LAKE_VERBS: dict[str, str] = {"parquet": "arrow", "bigquery": "bigquery", "spark": "spark"}
+
+
+def with_data_lake_preset(option_values: Sequence[str], verb: str) -> tuple[str, ...]:
+    """Add the ``output`` mode a data-lake verb implies to the ``--option`` values (MFX-36.5).
+
+    ``apiome export parquet|bigquery|spark`` run the ``arrow`` target with ``output=arrow|bigquery|spark``
+    (``apiome export arrow`` keeps whatever ``--option output=…`` says).
+
+    Args:
+        option_values: The repeatable ``--option key=value`` flags as given.
+        verb: The command name (a key of :data:`DATA_LAKE_VERBS`).
+
+    Returns:
+        The option values to send.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` when ``--option output=…`` names another mode.
+    """
+    mode = DATA_LAKE_VERBS[verb]
+    given = parse_export_options(option_values)
+    if "output" in given and given["output"] != mode:
+        typer.echo(f"`apiome export {verb}` writes output={mode}; drop --option output=… or use "
+                   "`apiome export arrow`.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    return tuple(option_values) if "output" in given else (*option_values, f"output={mode}")
+
+
 def with_flavor(option_values: Sequence[str], flavor: str | None) -> tuple[str, ...]:
     """Add ``--flavor`` to the ``--option`` values as ``flavor=…``.
 
@@ -286,6 +315,8 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         option_values = with_flavor(option_values, flavor)
         if target_format in SQL_VERBS:
             option_values = with_sql_preset(option_values, target_format, dialect)
+        if target_format in DATA_LAKE_VERBS:
+            option_values = with_data_lake_preset(option_values, target_format)
         if (artifact is None) == (items_raw is None):
             typer.echo("Name an ARTIFACT or --items (not both).", err=True)
             raise typer.Exit(EXIT_USAGE)

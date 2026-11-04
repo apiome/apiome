@@ -1,0 +1,71 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "iceberg",
+        "format": "iceberg",
+        "label": "Apache Iceberg",
+        "description": "Export the types as Apache Iceberg table schemas: one table per root record, with nested structs, lists and maps, logical types, and field IDs that stay the same on every re-export.",
+        "icon": "database",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": false,
+        "unavailable_reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none."
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`IcebergEmitter`.",
+        "properties": {
+          "table": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Export only this record (its name or key) as the table. Empty means every root record (a record no other record holds), each as its own schema.",
+            "title": "Table"
+          },
+          "indent": {
+            "default": 2,
+            "description": "JSON indentation width (0 for compact output).",
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Indent",
+            "type": "integer"
+          }
+        },
+        "title": "IcebergEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "table": null,
+        "indent": 2,
+        "persisted_field_numbers": {}
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 0,
+        "total": 3,
+        "preserved": 0,
+        "dropped": 3,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

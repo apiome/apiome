@@ -1,0 +1,96 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "arrow",
+        "format": "arrow",
+        "label": "Apache Arrow / Parquet",
+        "description": "Export the types as Apache Arrow schemas (the JSON integration form) and the Parquet message each becomes: one table per root record, with nested structs, lists, maps and unions, and logical types for dates, timestamps, decimals and UUIDs.",
+        "icon": "database",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": true,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`ArrowEmitter`.",
+        "properties": {
+          "table": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Export only this record (its name or key) as the table. Empty means every root record (a record no other record holds), each as its own schema.",
+            "title": "Table"
+          },
+          "output": {
+            "default": "arrow",
+            "description": "What to write for each table: `arrow` (an Arrow schema, plus its Parquet message), `bigquery` (a BigQuery table schema, the JSON `bq mk --schema` reads) or `spark` (a Spark StructType DDL string, what `DataType.fromDDL` parses). All three serialize the same typed projection.",
+            "enum": [
+              "arrow",
+              "bigquery",
+              "spark"
+            ],
+            "title": "Output",
+            "type": "string"
+          },
+          "parquet": {
+            "default": true,
+            "description": "Also write each table's Parquet message (`<table>.parquet.txt`), as pyarrow derives it (output `arrow` only).",
+            "title": "Parquet",
+            "type": "boolean"
+          },
+          "bundle": {
+            "default": false,
+            "description": "Output `bigquery` / `spark`: write every table into one file (`schemas.bigquery.json`, an object of table \u2192 schema; `schemas.spark.ddl`, a `-- <table>` line before each DDL line) instead of one file per table.",
+            "title": "Bundle",
+            "type": "boolean"
+          },
+          "indent": {
+            "default": 2,
+            "description": "JSON indentation width (0 for compact output).",
+            "maximum": 8,
+            "minimum": 0,
+            "title": "Indent",
+            "type": "integer"
+          }
+        },
+        "title": "ArrowEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "table": null,
+        "output": "arrow",
+        "parquet": true,
+        "bundle": false,
+        "indent": 2
+      },
+      "fidelity": {
+        "tier": "lossless",
+        "preserved_percent": 100,
+        "total": 1,
+        "preserved": 1,
+        "dropped": 0,
+        "approximated": 0,
+        "synthesized": 0
+      }
+    }
+  ]
+}

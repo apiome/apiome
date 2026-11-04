@@ -71,6 +71,10 @@
  * 28. The SQL DDL card (MFX-35.5): `types-only` for a REST source, one file, with every output (`ddl`, `dbml`,
  *     `prisma`, `liquibase`, `flyway`) and dialect (`postgres`, `mysql`, `ansi`) on offer; unavailable for a
  *     gateway configuration (no record type) — from the recorded live registry.
+ * 29. The data-lake cards (MFX-36.5): Apache Arrow / Parquet — `types-only` for a REST source, `lossless` for an
+ *     imported Arrow schema, multi-file, every mode (`arrow`, `bigquery`, `spark`) with `parquet` and `bundle` on
+ *     offer — and Apache Iceberg — `types-only`, multi-file, no field-ID option; both unavailable for a gateway
+ *     configuration (no record type) — from the recorded live registry.
  */
 
 import React from 'react';
@@ -111,6 +115,8 @@ import {
   a2aTargets,
   xregistryTargets,
   sqlDdlTargets,
+  arrowTargets,
+  icebergTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1824,6 +1830,67 @@ describe('ExportDialog — SQL DDL target card (MFX-35.5)', () => {
 
     const card = screen.getByTestId('export-target-sql-ddl');
     expect(card).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one record type/);
+  });
+});
+
+describe('ExportDialog — data-lake target cards (MFX-36.5)', () => {
+  it.each([
+    ['rest', 'types-only'],
+    ['arrow', 'lossless'],
+  ] as const)('badges a %s source %s on the Arrow / Parquet card, a multi-file target', async (source, tier) => {
+    const targets = arrowTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-arrow');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Apache Arrow / Parquet')).toBeInTheDocument();
+    expect(card).toHaveTextContent(tier);
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe(tier);
+  });
+
+  it('offers every mode on the Arrow / Parquet card, arrow by default', async () => {
+    await renderAtTargetStep(mockFetch(arrowTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-arrow'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const output = screen.getByRole('radiogroup', { name: 'Output' });
+    expect(within(output).getAllByRole('radio').map((option) => option.textContent)).toEqual([
+      'arrow',
+      'bigquery',
+      'spark',
+    ]);
+    expect(within(output).getByRole('radio', { name: 'arrow' })).toBeChecked();
+    fireEvent.click(within(output).getByRole('radio', { name: 'bigquery' }));
+    expect(within(output).getByRole('radio', { name: 'bigquery' })).toBeChecked();
+    // The Parquet message is on by default; bundling BigQuery / Spark files is off.
+    expect(screen.getByRole('checkbox', { name: /^Parquet/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Bundle/ })).not.toBeChecked();
+  });
+
+  it('badges a REST source types-only on the Iceberg card and offers no field-ID option', async () => {
+    const targets = icebergTargets('rest');
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-iceberg');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('Apache Iceberg')).toBeInTheDocument();
+    expect(card).toHaveTextContent('types-only');
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+    fireEvent.click(card);
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.queryByText(/Persisted Field Numbers/i)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['arrow', () => arrowTargets('gateway')],
+    ['iceberg', () => icebergTargets('gateway')],
+  ] as const)('disables the %s card for a gateway configuration: it has no record type', async (key, build) => {
+    const targets = build();
+    await renderAtTargetStep(mockFetch(targets));
+
+    expect(screen.getByTestId(`export-target-${key}`)).toBeDisabled();
     expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one record type/);
   });
 });

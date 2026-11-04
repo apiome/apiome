@@ -63,6 +63,11 @@ import xregistryTargetsForGateway from '../fixtures/export-targets-xregistry-gat
 import sqlDdlTargetsForRest from '../fixtures/export-targets-sql-ddl-rest.json';
 import sqlDdlTargetsForSql from '../fixtures/export-targets-sql-ddl-sql.json';
 import sqlDdlTargetsForGateway from '../fixtures/export-targets-sql-ddl-gateway.json';
+import arrowTargetsForRest from '../fixtures/export-targets-arrow-rest.json';
+import arrowTargetsForArrow from '../fixtures/export-targets-arrow-arrow.json';
+import arrowTargetsForGateway from '../fixtures/export-targets-arrow-gateway.json';
+import icebergTargetsForRest from '../fixtures/export-targets-iceberg-rest.json';
+import icebergTargetsForGateway from '../fixtures/export-targets-iceberg-gateway.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -772,5 +777,33 @@ export function xregistryTargets(source: 'rest' | 'xregistry' | 'gateway'): Expo
  */
 export function sqlDdlTargets(source: 'rest' | 'sql' | 'gateway'): ExportTargetsResponse {
   const recorded = { rest: sqlDdlTargetsForRest, sql: sqlDdlTargetsForSql, gateway: sqlDdlTargetsForGateway };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The Apache Arrow / Parquet target as the registry lists it (MFX-36.5, #4321), recorded from the live REST
+ * registry by `apiome-rest/tests/test_data_lake_target_cards.py`. One card writes every mode: `arrow` (Arrow
+ * schemas and Parquet messages), `bigquery` and `spark`. A REST API badges `types-only` (its operations are dropped
+ * with a critical warning), an imported Arrow schema `lossless`; a gateway configuration has no record type, so the
+ * card is unavailable with its reason.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `arrow` (an imported Arrow schema) or `gateway` (an imported Kong
+ *   configuration).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function arrowTargets(source: 'rest' | 'arrow' | 'gateway'): ExportTargetsResponse {
+  const recorded = { rest: arrowTargetsForRest, arrow: arrowTargetsForArrow, gateway: arrowTargetsForGateway };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The Apache Iceberg target as the registry lists it (MFX-36.5, #4321), recorded the same way. Every source with a
+ * record type badges `types-only`; the stored field IDs are not an option the card offers.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `gateway` (an imported Kong configuration).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function icebergTargets(source: 'rest' | 'gateway'): ExportTargetsResponse {
+  const recorded = { rest: icebergTargetsForRest, gateway: icebergTargetsForGateway };
   return recordedTargets(recorded[source]);
 }

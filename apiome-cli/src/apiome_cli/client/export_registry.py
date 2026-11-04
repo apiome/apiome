@@ -186,6 +186,12 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "prisma": "sql-ddl",
     "liquibase": "sql-ddl",
     "flyway": "sql-ddl",
+    # ``apiome export parquet|bigquery|spark`` (MFX-36.5): the Arrow / Parquet target's output modes as verbs
+    # (the command presets ``--option output=…``, see apiome_cli.commands.export.with_data_lake_preset).
+    # ``apiome export iceberg`` is a target of its own.
+    "parquet": "arrow",
+    "bigquery": "arrow",
+    "spark": "arrow",
     "jsonschema": "json-schema",
     "json_schema": "json-schema",
     # ``apiome export copybook`` (MFX-23.5): the COBOL copybook target is keyed ``cobolcopybook``.

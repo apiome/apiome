@@ -42,6 +42,7 @@ apiome export mcp payments-api --out payments.mcp.json --force   # MCP tools for
 apiome export a2a payments-api --out agent-card.json --force     # an A2A Agent Card
 apiome export xregistry orders-api --out orders.xregistry.json --force  # an xRegistry document
 apiome export sql orders-api --out orders.sql --dialect mysql --force  # SQL DDL (also dbml, prisma, liquibase, flyway)
+apiome export bigquery orders-api --out lake/ --force             # BigQuery schemas (also parquet, spark, iceberg)
 ```
 
 Any format the server can export is a `<format>`: `apiome export targets --project <project>`

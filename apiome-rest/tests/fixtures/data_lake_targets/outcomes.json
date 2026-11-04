@@ -1,0 +1,192 @@
+{
+  "cards": {
+    "arrow/arrow": {
+      "available": true,
+      "preserved_percent": 100,
+      "tier": "lossless"
+    },
+    "arrow/gateway": {
+      "available": false,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "arrow/json-schema": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "arrow/rest": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "iceberg/arrow": {
+      "available": true,
+      "preserved_percent": 12,
+      "tier": "types-only"
+    },
+    "iceberg/gateway": {
+      "available": false,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "iceberg/json-schema": {
+      "available": true,
+      "preserved_percent": 21,
+      "tier": "types-only"
+    },
+    "iceberg/rest": {
+      "available": true,
+      "preserved_percent": 10,
+      "tier": "types-only"
+    }
+  },
+  "modes": {
+    "arrow": {
+      "arrow": {
+        "failed": false,
+        "files": [
+          "Schema.arrow.json",
+          "Schema.parquet.txt"
+        ],
+        "media_type": "application/zip",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      },
+      "arrow-no-parquet": {
+        "failed": false,
+        "files": [
+          "Schema.arrow.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      },
+      "bigquery": {
+        "failed": false,
+        "files": [
+          "Schema.bigquery.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      },
+      "bigquery-bundle": {
+        "failed": false,
+        "files": [
+          "schemas.bigquery.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      },
+      "iceberg": {
+        "failed": false,
+        "files": [
+          "Schema.iceberg.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 12,
+        "tier": "types-only",
+        "valid": true
+      },
+      "spark": {
+        "failed": false,
+        "files": [
+          "Schema.spark.ddl"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      },
+      "spark-bundle": {
+        "failed": false,
+        "files": [
+          "schemas.spark.ddl"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 100,
+        "tier": "lossless",
+        "valid": true
+      }
+    },
+    "rest": {
+      "arrow": {
+        "failed": false,
+        "files": [
+          "Pet.arrow.json",
+          "Pet.parquet.txt"
+        ],
+        "media_type": "application/zip",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      },
+      "arrow-no-parquet": {
+        "failed": false,
+        "files": [
+          "Pet.arrow.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      },
+      "bigquery": {
+        "failed": false,
+        "files": [
+          "Pet.bigquery.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 18,
+        "tier": "types-only",
+        "valid": true
+      },
+      "bigquery-bundle": {
+        "failed": false,
+        "files": [
+          "schemas.bigquery.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 18,
+        "tier": "types-only",
+        "valid": true
+      },
+      "iceberg": {
+        "failed": false,
+        "files": [
+          "Pet.iceberg.json"
+        ],
+        "media_type": "application/json",
+        "preserved_percent": 10,
+        "tier": "types-only",
+        "valid": true
+      },
+      "spark": {
+        "failed": false,
+        "files": [
+          "Pet.spark.ddl"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 18,
+        "tier": "types-only",
+        "valid": true
+      },
+      "spark-bundle": {
+        "failed": false,
+        "files": [
+          "schemas.spark.ddl"
+        ],
+        "media_type": "text/plain",
+        "preserved_percent": 18,
+        "tier": "types-only",
+        "valid": true
+      }
+    }
+  }
+}
