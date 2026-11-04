@@ -290,6 +290,11 @@ _FORCE_FLAG_HELP = (
     "descriptions, breaking changes) so the version still publishes."
 )
 
+_ALLOW_BREAKING_HELP = (
+    "With --publish, publish even when the version has breaking changes versus the last published "
+    "one (sends allowBreaking=true). Unlike --force, every other publish check still applies."
+)
+
 _IMPORT_TIMEOUT_HELP = (
     "Max seconds to wait for an async import job to finish, and the per-request "
     f"HTTP timeout used while waiting (default {int(DEFAULT_IMPORT_TIMEOUT)}). "
@@ -333,6 +338,7 @@ def _publish_imported_version(
     no_progress: bool,
     short_message: str | None = None,
     force: bool = False,
+    allow_breaking: bool = False,
 ) -> None:
     """Publish the version created by a completed import via the publish endpoint.
 
@@ -348,6 +354,9 @@ def _publish_imported_version(
     Publish also enforces documentation/compatibility gates (e.g. classes missing
     required descriptions -> 422). When ``force`` is set, a blocked publish is
     retried with the gates bypassed and the success message notes the warnings.
+    When ``allow_breaking`` is set, the publish request says ``allowBreaking: true`` from the
+    start, so breaking changes versus the last published version do not block it (409); every
+    other gate still applies.
     """
     project_id = _import_result_id(payload, top_key="project_id", nested_key="project")
     # Publish addresses the version by its record UUID (versions.id). The import result's
@@ -371,6 +380,8 @@ def _publish_imported_version(
         semver = _payload_str(payload, "version_id", "version", "version")
         note = " ".join(part for part in (slug, semver) if part)
     body: dict[str, Any] = {"visibility": visibility}
+    if allow_breaking:
+        body["allowBreaking"] = True
     if note:
         body["shortMessage"] = note[:_MAX_REVISION_NOTE_CHARS]
 
@@ -623,6 +634,7 @@ def _run_openapi_import(
     poll_interval: float,
     progress_label: str,
     attempted: str = "openapi",
+    allow_breaking: bool = False,
     import_timeout_override: float | None = None,
     min_grade: str | None = None,
     fail_on: str | None = None,
@@ -796,6 +808,7 @@ def _run_openapi_import(
                     no_progress=no_progress,
                     short_message=_derive_revision_note(spec),
                     force=force,
+                    allow_breaking=allow_breaking,
                 )
         return
 
@@ -879,6 +892,11 @@ def import_openapi(
         "--force",
         help=_FORCE_FLAG_HELP,
     ),
+    allow_breaking: bool = typer.Option(
+        False,
+        "--allow-breaking",
+        help=_ALLOW_BREAKING_HELP,
+    ),
     import_timeout: float | None = typer.Option(
         None,
         "--import-timeout",
@@ -902,6 +920,7 @@ def import_openapi(
         publish=publish,
         visibility=visibility,
         force=force,
+        allow_breaking=allow_breaking,
         wait=wait,
         poll_interval=poll_interval,
         progress_label="OpenAPI",
@@ -983,6 +1002,11 @@ def import_swagger(
         "--force",
         help=_FORCE_FLAG_HELP,
     ),
+    allow_breaking: bool = typer.Option(
+        False,
+        "--allow-breaking",
+        help=_ALLOW_BREAKING_HELP,
+    ),
     import_timeout: float | None = typer.Option(
         None,
         "--import-timeout",
@@ -1006,6 +1030,7 @@ def import_swagger(
         publish=publish,
         visibility=visibility,
         force=force,
+        allow_breaking=allow_breaking,
         wait=wait,
         poll_interval=poll_interval,
         progress_label="Swagger",
@@ -1398,6 +1423,11 @@ def import_auto(
         "--force",
         help=f"{_FORCE_FLAG_HELP} (OpenAPI/Arazzo).",
     ),
+    allow_breaking: bool = typer.Option(
+        False,
+        "--allow-breaking",
+        help=f"{_ALLOW_BREAKING_HELP} (OpenAPI/Swagger).",
+    ),
     import_timeout: float | None = typer.Option(
         None,
         "--import-timeout",
@@ -1483,6 +1513,7 @@ def import_auto(
             publish=publish,
             visibility=visibility,
             force=force,
+            allow_breaking=allow_breaking,
             wait=wait,
             poll_interval=poll_interval,
             progress_label="Swagger" if command == "swagger" else "OpenAPI",
