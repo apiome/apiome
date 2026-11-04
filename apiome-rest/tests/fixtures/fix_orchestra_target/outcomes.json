@@ -1,0 +1,97 @@
+{
+  "cards": {
+    "gateway": {
+      "available": false,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "graphql": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "json-schema": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    },
+    "orchestra": {
+      "available": true,
+      "preserved_percent": 75,
+      "tier": "types-only"
+    },
+    "rest": {
+      "available": true,
+      "preserved_percent": 0,
+      "tier": "types-only"
+    }
+  },
+  "picks": {
+    "json-schema": {
+      "default": {
+        "failed": false,
+        "files": [
+          "Address-Book.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      },
+      "fix-5": {
+        "failed": false,
+        "files": [
+          "Address-Book.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      }
+    },
+    "orchestra": {
+      "default": {
+        "failed": false,
+        "files": [
+          "ExampleEquities.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 75,
+        "tier": "types-only",
+        "valid": true
+      },
+      "fix-5": {
+        "failed": false,
+        "files": [
+          "ExampleEquities.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 86,
+        "tier": "types-only",
+        "valid": true
+      }
+    },
+    "rest": {
+      "default": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      },
+      "fix-5": {
+        "failed": false,
+        "files": [
+          "Sample-Pet-Store-API-OpenAPI-3.0.orchestra.xml"
+        ],
+        "media_type": "application/xml",
+        "preserved_percent": 0,
+        "tier": "types-only",
+        "valid": true
+      }
+    }
+  }
+}

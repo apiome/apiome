@@ -192,6 +192,10 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "parquet": "arrow",
     "bigquery": "arrow",
     "spark": "arrow",
+    # ``apiome export orchestra`` (MFX-37.4): the FIX Orchestra repository target is keyed ``fix-orchestra``.
+    "orchestra": "fix-orchestra",
+    "fixorchestra": "fix-orchestra",
+    "fix_orchestra": "fix-orchestra",
     "jsonschema": "json-schema",
     "json_schema": "json-schema",
     # ``apiome export copybook`` (MFX-23.5): the COBOL copybook target is keyed ``cobolcopybook``.

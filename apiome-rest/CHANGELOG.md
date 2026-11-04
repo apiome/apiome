@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.649.0] - 2026-11-04
+
+### Added
+- **FIX Orchestra target card + CLI + fixtures (MFX-37.4, #4326).** `tests/test_fix_orchestra_target_card.py` +
+  `tests/fixtures/fix_orchestra_target/outcomes.json` (regenerate with `APIOME_REGEN_FIX_ORCHESTRA_TARGET=1`): the
+  `fix-orchestra` card per source kind (REST / JSON Schema / GraphQL and an imported Orchestra repository
+  `types-only` with their preserved share; a Kong configuration greyed out — no record type), each export passing
+  the gate with and without `version`, Browse delivery; the CLI (`export-targets-fix-orchestra.json`,
+  `export-job-completed-fix-orchestra.json`) and UI (`export-targets-fix-orchestra-{rest,orchestra,gateway}.json`)
+  fixtures recorded from the live registry.
+
 ## [1.648.0] - 2026-11-04
 
 ### Added

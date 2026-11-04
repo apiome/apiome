@@ -1,0 +1,62 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "fix-orchestra",
+        "format": "fix-orchestra",
+        "label": "FIX Orchestra",
+        "description": "Export the types as a FIX Orchestra repository: messages, components, repeating groups, fields with their tags, and code sets, valid against the official Orchestra XSD.",
+        "icon": "landmark",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`FixOrchestraEmitter`.",
+        "properties": {
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The repository's `version` (`FIX.Latest`, `FIX.4.4`, `FIX.5.0SP2_EP254`, `1.0` \u2026). Empty means the source's own FIX version, else the item's version as `major.minor`, else `FIX.Latest`.",
+            "title": "Version"
+          }
+        },
+        "title": "FixOrchestraEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "version": null,
+        "persisted_field_numbers": {}
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 0,
+        "total": 26,
+        "preserved": 0,
+        "dropped": 8,
+        "approximated": 10,
+        "synthesized": 8
+      }
+    }
+  ]
+}

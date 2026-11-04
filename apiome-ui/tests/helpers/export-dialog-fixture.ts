@@ -68,6 +68,9 @@ import arrowTargetsForArrow from '../fixtures/export-targets-arrow-arrow.json';
 import arrowTargetsForGateway from '../fixtures/export-targets-arrow-gateway.json';
 import icebergTargetsForRest from '../fixtures/export-targets-iceberg-rest.json';
 import icebergTargetsForGateway from '../fixtures/export-targets-iceberg-gateway.json';
+import fixOrchestraTargetsForRest from '../fixtures/export-targets-fix-orchestra-rest.json';
+import fixOrchestraTargetsForOrchestra from '../fixtures/export-targets-fix-orchestra-orchestra.json';
+import fixOrchestraTargetsForGateway from '../fixtures/export-targets-fix-orchestra-gateway.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -805,5 +808,25 @@ export function arrowTargets(source: 'rest' | 'arrow' | 'gateway'): ExportTarget
  */
 export function icebergTargets(source: 'rest' | 'gateway'): ExportTargetsResponse {
   const recorded = { rest: icebergTargetsForRest, gateway: icebergTargetsForGateway };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The FIX Orchestra target as the registry lists it (MFX-37.4, #4326), recorded from the live REST registry by
+ * `apiome-rest/tests/test_fix_orchestra_target_card.py`. An Orchestra repository describes messages, so every
+ * source badges `types-only` — an imported Orchestra repository with a high preserved share, a REST API with
+ * none — and a gateway configuration has no record type, so the card is unavailable with its reason. The card
+ * offers the repository `version`; the stored FIX tags are not an option.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `orchestra` (an imported FIX Orchestra repository) or `gateway`
+ *   (an imported Kong configuration).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function fixOrchestraTargets(source: 'rest' | 'orchestra' | 'gateway'): ExportTargetsResponse {
+  const recorded = {
+    rest: fixOrchestraTargetsForRest,
+    orchestra: fixOrchestraTargetsForOrchestra,
+    gateway: fixOrchestraTargetsForGateway,
+  };
   return recordedTargets(recorded[source]);
 }

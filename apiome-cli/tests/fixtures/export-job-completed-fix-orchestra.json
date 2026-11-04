@@ -1,0 +1,312 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "fix-orchestra",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "fix-orchestra",
+        "format": "fix-orchestra",
+        "label": "FIX Orchestra",
+        "description": "Export the types as a FIX Orchestra repository: messages, components, repeating groups, fields with their tags, and code sets, valid against the official Orchestra XSD.",
+        "icon": "landmark",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "types-only",
+        "preserved_percent": 0,
+        "total": 26,
+        "preserved": 0,
+        "dropped": 8,
+        "approximated": 10,
+        "synthesized": 8
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "FIX Orchestra describes messages, not an API: 2 of 5 operation(s) are not exported (3 operation(s) are kept as message scenarios). Export to OpenAPI or AsyncAPI as well to keep them",
+            "target_mapping": "types-only"
+          },
+          {
+            "construct": "",
+            "kind": "drop",
+            "severity": "info",
+            "message": "An Orchestra repository describes messages; the API's operations and channels are not written (an operation whose payloads are messages is written as a message scenario)",
+            "target_mapping": "orchestra-services-dropped"
+          },
+          {
+            "construct": "",
+            "kind": "approx",
+            "severity": "info",
+            "message": "the repository reads back with its name, version and title only",
+            "target_mapping": "identity \u2192 repository"
+          },
+          {
+            "construct": "",
+            "kind": "approx",
+            "severity": "info",
+            "message": "the version '1.0.0' is not an Orchestra version; written as '1.0'",
+            "target_mapping": "orchestra-version-rewritten"
+          },
+          {
+            "construct": "",
+            "kind": "synth",
+            "severity": "info",
+            "message": "Orchestra requires at least one code set and the model has no enumeration; an empty `NoCodeSet` is written",
+            "target_mapping": "orchestra-placeholder-code-set"
+          },
+          {
+            "construct": "Category",
+            "kind": "approx",
+            "severity": "info",
+            "message": "record 'Category' is flattened into an Orchestra component: a list of refs to fields declared once for the whole repository",
+            "target_mapping": "record \u2192 component"
+          },
+          {
+            "construct": "Category",
+            "kind": "approx",
+            "severity": "info",
+            "message": "record 'Category' reads back changed: fields follow Orchestra's refs, presence and datatypes",
+            "target_mapping": "type \u2192 Orchestra"
+          },
+          {
+            "construct": "Category.description",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Category.description' has no FIX tag; tag 5001 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "Category.id",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Category.id' has no FIX tag; tag 5002 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "Category.name",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Category.name' has no FIX tag; tag 5003 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "FIX Orchestra describes messages; the request_response operation has no payload written as a message, so it is dropped",
+            "target_mapping": "operation \u2192 dropped (no message)"
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "FIX Orchestra describes messages; the request_response operation has no payload written as a message, so it is dropped",
+            "target_mapping": "operation \u2192 dropped (no message)"
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "drop",
+            "severity": "info",
+            "message": "the request_response operation itself (its binding, parameters and errors) has no Orchestra form",
+            "target_mapping": "operation \u2192 not kept"
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "written as a message scenario: Pet",
+            "target_mapping": "operation \u2192 message scenario"
+          },
+          {
+            "construct": "NoCodeSet",
+            "kind": "synth",
+            "severity": "info",
+            "message": "a re-import names 'NoCodeSet' after its Orchestra entity",
+            "target_mapping": "type named by its Orchestra entity"
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "drop",
+            "severity": "info",
+            "message": "the request_response operation itself (its binding, parameters and errors) has no Orchestra form",
+            "target_mapping": "operation \u2192 not kept"
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "written as a message scenario: Pet, Pet (the request names its responses)",
+            "target_mapping": "operation \u2192 message scenario"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "drop",
+            "severity": "info",
+            "message": "the request_response operation itself (its binding, parameters and errors) has no Orchestra form",
+            "target_mapping": "operation \u2192 not kept"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "written as a message scenario: Pet, Pet (the request names its responses)",
+            "target_mapping": "operation \u2192 message scenario"
+          },
+          {
+            "construct": "Pet",
+            "kind": "approx",
+            "severity": "info",
+            "message": "record 'Pet' is flattened into an Orchestra message: a list of refs to fields declared once for the whole repository",
+            "target_mapping": "record \u2192 message"
+          },
+          {
+            "construct": "Pet",
+            "kind": "approx",
+            "severity": "info",
+            "message": "record 'Pet' reads back changed: fields follow Orchestra's refs, presence and datatypes",
+            "target_mapping": "type \u2192 Orchestra"
+          },
+          {
+            "construct": "Pet.age",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Pet.age' has no FIX tag; tag 5000 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "Pet.tag",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Pet.tag' has no FIX tag; tag 5004 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "Pet.weight",
+            "kind": "approx",
+            "severity": "info",
+            "message": "'Pet.weight': exclusive_maximum have no Orchestra form; written in the fieldRef's documentation",
+            "target_mapping": "orchestra-constraints-as-documentation"
+          },
+          {
+            "construct": "Pet.weight",
+            "kind": "synth",
+            "severity": "info",
+            "message": "'Pet.weight' has no FIX tag; tag 5005 is assigned (user-defined range) and kept by every re-export",
+            "target_mapping": "orchestra-tag-synthesized"
+          },
+          {
+            "construct": "default",
+            "kind": "drop",
+            "severity": "critical",
+            "message": "FIX Orchestra describes messages; the service 'default' is not written",
+            "target_mapping": "service \u2192 dropped (types-only export)"
+          }
+        ],
+        "kind_counts": {
+          "drop": 8,
+          "approx": 10,
+          "synth": 8,
+          "ok": 0
+        },
+        "severity_counts": {
+          "info": 19,
+          "warn": 3,
+          "critical": 4
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "critical",
+        "requires_ack": true,
+        "target_format": "FIX Orchestra",
+        "dropped": 8,
+        "approximated": 10,
+        "synthesized": 8,
+        "affected": 26,
+        "headline": "Fidelity notice \u2014 exporting to FIX Orchestra may lose detail.",
+        "message": "Exporting to FIX Orchestra may lose some fidelity. The destination format can't represent everything in this API, so 26 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      },
+      "projection": {
+        "manifest_hash": "11257953311ad107692acbf5649841089aea9ead4d0189b56130c4a764530286",
+        "target": {
+          "key": "fix-orchestra",
+          "format": "fix-orchestra",
+          "label": "FIX Orchestra",
+          "paradigm": "data_schema",
+          "emitter_version": "1",
+          "apiome_version": "1.6.5",
+          "capability_profile": {
+            "operations": false,
+            "events": false,
+            "unions": false,
+            "nullability": true,
+            "constraints": false,
+            "field_identity": true
+          },
+          "needs_toolchain": false,
+          "available": true,
+          "availability": "available",
+          "registry_version": "1",
+          "documentation": {
+            "specification": null,
+            "version": null,
+            "url": null,
+            "anchor": null,
+            "documentation_unavailable": true,
+            "note": "No authoritative specification link is registered for this destination yet."
+          }
+        },
+        "status_counts": {
+          "retained": 0,
+          "transformed": 0,
+          "approximated": 10,
+          "synthesized": 8,
+          "dropped": 8,
+          "unavailable": 0,
+          "not-applicable": 0
+        },
+        "reason_counts": {
+          "destination_unsupported": 26,
+          "emitter_unsupported": 0,
+          "source_incomplete": 0,
+          "source_parse_limit": 0,
+          "option_excluded": 0,
+          "security_redacted": 0,
+          "target_tool_unavailable": 0,
+          "not_applicable": 0
+        },
+        "total_constructs": 15,
+        "node_count": 32,
+        "edge_count": 42,
+        "evidence_count": 26,
+        "is_lossless": false,
+        "worst_severity": "critical",
+        "truncated": false
+      }
+    },
+    "files": [
+      {
+        "path": "Sample-Pet-Store-API-OpenAPI-3.0.orchestra.xml",
+        "media_type": "application/xml",
+        "size_bytes": 2535
+      }
+    ],
+    "media_type": "application/xml",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}
