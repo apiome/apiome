@@ -743,6 +743,44 @@ From the CLI, each output has a verb of its own; all take `--dialect`:
 `--dialect mysql` is the same as `--option dialect=mysql`. Each command prints the fidelity report and,
 because SQL keeps types only, exits non-zero unless you add `--force`.
 
+### Data-lake and analytics schemas {#data-lake-and-analytics-schemas}
+
+API payloads usually land in a lake or a warehouse. Apiome writes the table schemas those systems need, from
+one typed projection of the item's types: one table per root record, nested records as structs, lists,
+maps, and logical types for dates, timestamps, decimals and UUIDs. In the **Export** dialog and in **Export
+studio**, the **Apache Arrow / Parquet** and **Apache Iceberg** cards sit under **Data schema & graph** (see
+[Where to find the data-lake cards](#where-to-find-the-data-lake-cards)).
+
+#### When to use which {#when-to-use-a-data-lake-schema}
+
+- **Dataframes, Flight services and Parquet files: Arrow / Parquet.** Export
+  [Apache Arrow](#apache-arrow-and-parquet) schemas, with the Parquet message each table becomes. An item
+  imported from Arrow exports back exactly.
+- **A BigQuery table: BigQuery.** Pick **Output** `bigquery` on the same card for the table-schema JSON
+  `bq mk --schema` takes (see [BigQuery and Spark](#bigquery-and-spark)).
+- **A Spark DataFrame or table: Spark.** Pick **Output** `spark` for the `StructType` DDL
+  `DataType.fromDDL` parses.
+- **A lakehouse table that evolves: Iceberg.** Export [Apache Iceberg](#apache-iceberg) schemas whose field
+  IDs stay the same on every re-export, so the table's schema can evolve.
+
+All four keep types only. A REST, RPC or GraphQL item loses its operations, so its fidelity report starts
+with a critical warning and the export asks you to confirm. Unions and enumerations are approximated in
+every mode and constraints are dropped (see the
+[rules per mode](#what-the-arrow-fidelity-report-lists)).
+
+#### Data-lake schemas at a glance {#data-lake-schemas-at-a-glance}
+
+| | Arrow / Parquet | BigQuery | Spark | Iceberg |
+| --- | --- | --- | --- | --- |
+| **Card** | **Apache Arrow / Parquet**, **Output** `arrow` | The same card, **Output** `bigquery` | The same card, **Output** `spark` | **Apache Iceberg** |
+| **You get** | `<table>.arrow.json` and `<table>.parquet.txt` | `<table>.bigquery.json` (or one bundle) | `<table>.spark.ddl` (or one bundle) | `<table>.iceberg.json` |
+| **Nested types** | `struct`, `list`, `map`, dense `union` | `RECORD`, `REPEATED`, unions flattened | `STRUCT`, `ARRAY`, `MAP`, unions flattened | `struct`, `list`, `map` with their own IDs, unions flattened |
+| **Field IDs** | — | — | — | Assigned once, kept by every re-export |
+| **Checked by** | pyarrow, then re-import | BigQuery's table-schema rules | Spark's DDL grammar | pyiceberg, unique field IDs |
+| **Imports back with** | [Import a spec](../bring-in/import-a-spec.md) (Arrow) | — | — | — |
+| **CLI** | `apiome export parquet` | `apiome export bigquery` | `apiome export spark` | `apiome export iceberg` |
+| **Details** | [Apache Arrow and Parquet](#apache-arrow-and-parquet) | [BigQuery and Spark](#bigquery-and-spark) | [BigQuery and Spark](#bigquery-and-spark) | [Apache Iceberg](#apache-iceberg) |
+
 ### Apache Arrow and Parquet from any source {#apache-arrow-and-parquet}
 
 #### When to export to Arrow / Parquet

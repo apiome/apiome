@@ -1,0 +1,19 @@
+---
+slug: data-lake-export-overview
+title: Data-lake and analytics schemas, at a glance
+description: "One overview of the Arrow, Parquet, BigQuery, Spark and Iceberg exports."
+authors: [apiome]
+---
+
+**Export a spec** now opens its data-lake exports with one overview: which schema to export for a dataframe,
+a BigQuery table, a Spark job or an Iceberg lakehouse, and how the four compare. See
+[Data-lake and analytics schemas](/ship/export-a-spec#data-lake-and-analytics-schemas).
+
+{/* truncate */}
+
+- **When to use which:** Arrow / Parquet for dataframes, Flight and Parquet files, BigQuery for a warehouse
+  table, Spark for a DataFrame schema, and Iceberg for a lakehouse table that evolves.
+- **At a glance:** the card and output to pick, the files you get, how nested types and unions are
+  written, field IDs, how each export is checked, and the CLI verb.
+- **One projection:** all four write the same tables from your types, and all keep types only. An API's
+  operations are dropped, with a critical warning.
