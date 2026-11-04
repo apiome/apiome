@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.628.0] - 2026-11-04
+
+### Added
+- **Multi-format Schema Registry subjects: JSON Schema + Protobuf (MFX-19.6, #4183).**
+  `POST /v1/export/{tenant_slug}/schema-registry/push` exports a version to `avro`, `json-schema` or `protobuf` and
+  registers each schema on a `schema-registry` connector's registry with its `schemaType` (`AVRO`, `JSON`,
+  `PROTOBUF`). JSON Schema is pushed one document per type (`packaging: per-type` by default), its `$ref`s to other
+  files sent as Confluent references; Protobuf one `.proto` per package, its imports of other files sent as
+  references (well-known `google/protobuf/…` imports are left to the registry).
+  - **One subject naming for every format** (`schema_registry_subjects.registry_subject`): `subject_naming`
+    (`record_name`, `topic_name`, `topic_record_name`), `topic` and `subject_role` on the request, from each
+    format's record name (Avro full name, JSON Schema `title`, the `.proto` file's first message). Avro's
+    `resolve_avro_subject` now uses it; its subjects are unchanged.
+  - **Compatibility levels:** `compatibility_level` (`BACKWARD` … `FULL_TRANSITIVE`, `NONE`) sets each subject's
+    level with `PUT /config/{subject}` before its check, on the subjects the push registers; a dry run sets
+    nothing. `/avro/push` takes it too.
+  - Refusals: `REGISTRY_PUSH_NOT_JSON_SCHEMA` (`mode: jtd`), `REGISTRY_PUSH_SUBJECT_OPTIONS` (Avro `options` naming
+    subjects), `REGISTRY_PUSH_NO_RECORD` (a `.proto` with no message or enum), plus the connector, duplicate-subject
+    and cycle refusals under `REGISTRY_PUSH_`. Audit actions `export.json_schema.pushed`, `export.protobuf.pushed`.
+  - The push itself moved to `schema_registry_push` (shared by `/avro/push`); results gain `schema_type` and
+    `compatibility_level`. `tests/test_schema_registry_multiformat_push.py` (fake registry; set
+    `APIOME_TEST_SCHEMA_REGISTRY_URL` to push to a live one).
+- OpenAPI 1.492.0.
+
 ## [1.627.0] - 2026-11-04
 
 ### Added

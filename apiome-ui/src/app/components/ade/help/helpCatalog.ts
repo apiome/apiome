@@ -190,11 +190,11 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   },
   {
     id: 'push-avro-to-a-schema-registry',
-    title: 'Push Avro to a schema registry',
-    summary: 'Register an Avro export\'s subjects on a Confluent-compatible schema registry.',
+    title: 'Push to a schema registry',
+    summary: 'Register Avro, JSON Schema or Protobuf subjects on a Confluent-compatible schema registry.',
     page: 'apiome-docs/docs/ship/push-avro-to-a-schema-registry.md',
     section: 'reference',
-    keywords: ['confluent', 'karapace', 'apicurio', 'kafka', 'subject', 'connector', 'compatibility'],
+    keywords: ['confluent', 'karapace', 'apicurio', 'kafka', 'subject', 'connector', 'compatibility', 'avro', 'json schema', 'protobuf'],
   },
   {
     id: 'cut-a-version',

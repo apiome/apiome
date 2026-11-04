@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.491.0
+  version: 1.492.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -25299,7 +25299,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-03T03:40:25Z'
+                        example: '2026-11-04T04:52:43Z'
                       method:
                         type: string
                         example: GET
@@ -63195,6 +63195,85 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for registeran avroexportonaschemaregistrythrresponse422.
+  /v1/export/{tenant_slug}/schema-registry/push:
+    post:
+      tags:
+      - export
+      summary: Register an Avro, JSON Schema or Protobuf export on a schema registry
+        through a connector
+      description: 'MFX-19.6: export one version to ``avro`` (``.avsc``), ``json-schema``
+        (one document per type by default) or ``protobuf`` (one ``.proto`` per package),
+        validate it, then push each schema to the registry of an existing ``schema-registry``
+        connector with its ``schemaType`` (``AVRO``, ``JSON``, ``PROTOBUF``), using
+        the connector''s base URL and stored credentials. Subjects are named the same
+        way for every format (``subject_naming``, ``topic``, ``subject_role``). Per
+        subject, referenced schemas first: look the schema up (already registered
+        → nothing written), set ``compatibility_level`` when asked, check it against
+        the subject''s latest version (incompatible → not registered), then register
+        it, with Confluent ``references`` to the subjects it names. ``dry_run`` writes
+        nothing. Needs ``imports:edit``.'
+      operationId: push_registry_export_v1_export__tenant_slug__schema_registry_push_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeran Avro Jsonschemaor Protobufexportauthorization
+              schema.
+          - type: 'null'
+            description: Registeran Avro Jsonschemaor Protobufexportauthorization
+              schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Registeran Avro Jsonschemaor Protobufexport Xapikey schema.
+          - type: 'null'
+            description: Registeran Avro Jsonschemaor Protobufexport Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistryPushRequest'
+              description: Request body for registeran avro jsonschemaor protobufexportrequest.
+        description: Request body for register an avro, json schema or protobuf export
+          on a schema registry through a connector.
+      responses:
+        '200':
+          description: Successful response for register an avro, json schema or protobuf
+            export on a schema registry through a connector.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistryPushResponse'
+                description: Response payload for registeran avro jsonschemaor protobufexportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for registeran avro jsonschemaor protobufexportresponse422.
   /v1/export/{tenant_slug}/mock/capability:
     get:
       tags:
@@ -63733,145 +63812,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for set tenant repository polling quotaresponse422.
-  /v1/tenants/{tenant_slug}/repository-refresh-defaults:
-    get:
-      tags:
-      - tenant-repositories
-      summary: Get Repository Refresh Defaults
-      description: "Read the workspace's repository refresh defaults (RAR-6.5, #3542).\n\
-        \nThe defaults are the cadence, conflict policy and auto-refresh switch a new\
-        \ repository\nstarts from. Each repository follows a default per setting until\
-        \ that setting is changed on\nthe repository; the response counts how many follow\
-        \ each one. A workspace that has not set\ndefaults reports the built-in values\
-        \ with ``configured: false``.\n\nArgs:\n    tenant_slug: Tenant slug from the\
-        \ path (scoping comes from the token).\n    auth_data: Authenticated principal;\
-        \ supplies the tenant scope.\n\nReturns:\n    The defaults, whether the caller\
-        \ may change them, and the inheritance counts."
-      operationId: get_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_get
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Get Repository Refresh Defaultsauthorization schema.
-          - type: 'null'
-            description: Get Repository Refresh Defaultsauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Get Repository Refresh Defaults Xapikey schema.
-          - type: 'null'
-            description: Get Repository Refresh Defaults Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      responses:
-        '200':
-          description: Successful response for get repository refresh defaults.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RepositoryRefreshDefaultsResponse'
-                description: Response payload for get repository refresh defaultsresponse200.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for get repository refresh defaultsresponse422.
-    put:
-      tags:
-      - tenant-repositories
-      summary: Set Repository Refresh Defaults
-      description: "Set the workspace's repository refresh defaults (RAR-6.5, #3542).\
-        \ Tenant administrators only.\n\nNew repositories start from the stored defaults.\
-        \ With ``applyToInheriting``, every\nrepository setting that follows the defaults\
-        \ is rewritten to the new value in the same\ntransaction; settings a repository\
-        \ overrides are never touched. Without it, existing\nrepositories keep their\
-        \ current values until a later re-apply.\n\nArgs:\n    tenant_slug: Tenant slug\
-        \ from the path (scoping comes from the token).\n    payload: The defaults and\
-        \ whether to re-apply them.\n    auth_data: Authenticated principal; must resolve\
-        \ to a tenant administrator.\n\nReturns:\n    The defaults after the update,\
-        \ the inheritance counts and, after a re-apply, how many\n    repositories changed\
-        \ per setting.\n\nRaises:\n    HTTPException: 403 for non-administrators or\
-        \ API-key auth; 400 for an unknown conflict\n        policy or a cadence below\
-        \ the deployment minimum."
-      operationId: set_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_put
-      parameters:
-      - name: tenant_slug
-        in: path
-        required: true
-        schema:
-          type: string
-          title: Tenant Slug
-          description: Tenant Slug schema.
-        description: URL-safe tenant slug that scopes the request.
-      - name: authorization
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Set Repository Refresh Defaultsauthorization schema.
-          - type: 'null'
-            description: Set Repository Refresh Defaultsauthorization schema.
-          title: Authorization
-          description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
-      - name: X-API-Key
-        in: header
-        required: false
-        schema:
-          anyOf:
-          - type: string
-            description: Set Repository Refresh Defaults Xapikey schema.
-          - type: 'null'
-            description: Set Repository Refresh Defaults Xapikey schema.
-          title: X-Api-Key
-          description: X-Api-Key schema.
-        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RepositoryRefreshDefaultsUpdate'
-              description: Request body for set repository refresh defaultsrequest.
-        description: Request body for set repository refresh defaults.
-      responses:
-        '200':
-          description: Successful response for set repository refresh defaults.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RepositoryRefreshDefaultsResponse'
-                description: Response payload for set repository refresh defaultsresponse200.
-        '422':
-          description: Validation Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-                description: Response payload for set repository refresh defaultsresponse422.
   /v1/tenants/{tenant_slug}/repository-quota-telemetry:
     get:
       tags:
@@ -64613,8 +64553,8 @@ paths:
             description: Get Tenant Repositoryauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -64663,7 +64603,8 @@ paths:
 
         settings that follow the defaults again (applied last). Returns the updated
 
-        repository record. 400 for a bad policy or a cadence below the deployment minimum;
+        repository record. 400 for a bad policy or a cadence below the deployment
+        minimum;
 
         404 when the repository does not belong to the tenant.'
       operationId: update_tenant_repository_v1_tenants__tenant_slug__repositories__repository_id__patch
@@ -64696,8 +64637,8 @@ paths:
             description: Update Tenant Repositoryauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -64767,8 +64708,8 @@ paths:
             description: Delete Tenant Repositoryauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -64792,8 +64733,8 @@ paths:
                   type: boolean
                 title: Response Delete Tenant Repository V1 Tenants  Tenant Slug  Repositories  Repository
                   Id  Delete
-                description: Response Delete Tenant Repository V1 Tenants  Tenant Slug  Repositories  Repository
-                  Id  Delete schema.
+                description: Response Delete Tenant Repository V1 Tenants  Tenant
+                  Slug  Repositories  Repository Id  Delete schema.
         '422':
           description: Validation Error
           content:
@@ -65527,6 +65468,145 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for read repository import specresponse422.
+  /v1/tenants/{tenant_slug}/repository-refresh-defaults:
+    get:
+      tags:
+      - tenant-repositories
+      summary: Get Repository Refresh Defaults
+      description: "Read the workspace's repository refresh defaults (RAR-6.5, #3542).\n\
+        \nThe defaults are the cadence, conflict policy and auto-refresh switch a\
+        \ new repository\nstarts from. Each repository follows a default per setting\
+        \ until that setting is changed on\nthe repository; the response counts how\
+        \ many follow each one. A workspace that has not set\ndefaults reports the\
+        \ built-in values with ``configured: false``.\n\nArgs:\n    tenant_slug: Tenant\
+        \ slug from the path (scoping comes from the token).\n    auth_data: Authenticated\
+        \ principal; supplies the tenant scope.\n\nReturns:\n    The defaults, whether\
+        \ the caller may change them, and the inheritance counts."
+      operationId: get_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Repository Refresh Defaultsauthorization schema.
+          - type: 'null'
+            description: Get Repository Refresh Defaultsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Repository Refresh Defaults Xapikey schema.
+          - type: 'null'
+            description: Get Repository Refresh Defaults Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get repository refresh defaults.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryRefreshDefaultsResponse'
+                description: Response payload for get repository refresh defaultsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get repository refresh defaultsresponse422.
+    put:
+      tags:
+      - tenant-repositories
+      summary: Set Repository Refresh Defaults
+      description: "Set the workspace's repository refresh defaults (RAR-6.5, #3542).\
+        \ Tenant administrators only.\n\nNew repositories start from the stored defaults.\
+        \ With ``applyToInheriting``, every\nrepository setting that follows the defaults\
+        \ is rewritten to the new value in the same\ntransaction; settings a repository\
+        \ overrides are never touched. Without it, existing\nrepositories keep their\
+        \ current values until a later re-apply.\n\nArgs:\n    tenant_slug: Tenant\
+        \ slug from the path (scoping comes from the token).\n    payload: The defaults\
+        \ and whether to re-apply them.\n    auth_data: Authenticated principal; must\
+        \ resolve to a tenant administrator.\n\nReturns:\n    The defaults after the\
+        \ update, the inheritance counts and, after a re-apply, how many\n    repositories\
+        \ changed per setting.\n\nRaises:\n    HTTPException: 403 for non-administrators\
+        \ or API-key auth; 400 for an unknown conflict\n        policy or a cadence\
+        \ below the deployment minimum."
+      operationId: set_repository_refresh_defaults_v1_tenants__tenant_slug__repository_refresh_defaults_put
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Set Repository Refresh Defaultsauthorization schema.
+          - type: 'null'
+            description: Set Repository Refresh Defaultsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Set Repository Refresh Defaults Xapikey schema.
+          - type: 'null'
+            description: Set Repository Refresh Defaults Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RepositoryRefreshDefaultsUpdate'
+              description: Request body for set repository refresh defaultsrequest.
+        description: Request body for set repository refresh defaults.
+      responses:
+        '200':
+          description: Successful response for set repository refresh defaults.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryRefreshDefaultsResponse'
+                description: Response payload for set repository refresh defaultsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for set repository refresh defaultsresponse422.
   /v1/tenants/{tenant_slug}/repositories/{repository_id}/conflict-policy:
     get:
       tags:
@@ -65691,17 +65771,17 @@ paths:
       - tenant-repositories
       summary: Get Repository Branch Refresh Rules
       description: "Read a repository's per-branch refresh rules (RAR-6.4, #3541).\n\
-        \nA rule names a branch exactly (``main``) or by glob (``release/*``) and sets,\
-        \ for the\nbranches it matches, whether they refresh, how often, and the version\
-        \ line a refresh lands\nin. The most specific matching rule wins; a branch no\
-        \ rule matches follows the\nrepository-wide settings. The response also lists\
-        \ every tracked branch with the settings it\nrefreshes with, so a panel can\
-        \ show the effect of the rules.\n\nArgs:\n    tenant_slug: Tenant slug from\
-        \ the path (scoping comes from the token).\n    repository_id: The repository\
-        \ to read.\n    auth_data: Authenticated principal; supplies the tenant scope.\n\
-        \nReturns:\n    The rules, the repository-wide fallback, and each tracked branch's\
-        \ effective settings.\n\nRaises:\n    HTTPException: 404 when the repository\
-        \ does not belong to the tenant."
+        \nA rule names a branch exactly (``main``) or by glob (``release/*``) and\
+        \ sets, for the\nbranches it matches, whether they refresh, how often, and\
+        \ the version line a refresh lands\nin. The most specific matching rule wins;\
+        \ a branch no rule matches follows the\nrepository-wide settings. The response\
+        \ also lists every tracked branch with the settings it\nrefreshes with, so\
+        \ a panel can show the effect of the rules.\n\nArgs:\n    tenant_slug: Tenant\
+        \ slug from the path (scoping comes from the token).\n    repository_id: The\
+        \ repository to read.\n    auth_data: Authenticated principal; supplies the\
+        \ tenant scope.\n\nReturns:\n    The rules, the repository-wide fallback,\
+        \ and each tracked branch's effective settings.\n\nRaises:\n    HTTPException:\
+        \ 404 when the repository does not belong to the tenant."
       operationId: get_repository_branch_refresh_rules_v1_tenants__tenant_slug__repositories__repository_id__branch_refresh_rules_get
       parameters:
       - name: tenant_slug
@@ -65732,8 +65812,8 @@ paths:
             description: Get Repository Branch Refresh Rulesauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -65772,10 +65852,10 @@ paths:
         \ enqueued keeps the version line it was enqueued\nwith.\n\nArgs:\n    tenant_slug:\
         \ Tenant slug from the path (scoping comes from the token).\n    repository_id:\
         \ The repository to configure.\n    payload: The rules to store.\n    auth_data:\
-        \ Authenticated principal; supplies the tenant scope.\n\nReturns:\n    The rules\
-        \ and each tracked branch's effective settings after the update.\n\nRaises:\n\
-        \    HTTPException: 400 for an invalid rule; 404 when the repository does not\
-        \ belong to the\n        tenant."
+        \ Authenticated principal; supplies the tenant scope.\n\nReturns:\n    The\
+        \ rules and each tracked branch's effective settings after the update.\n\n\
+        Raises:\n    HTTPException: 400 for an invalid rule; 404 when the repository\
+        \ does not belong to the\n        tenant."
       operationId: set_repository_branch_refresh_rules_v1_tenants__tenant_slug__repositories__repository_id__branch_refresh_rules_put
       parameters:
       - name: tenant_slug
@@ -65806,8 +65886,8 @@ paths:
             description: Set Repository Branch Refresh Rulesauthorization schema.
           title: Authorization
           description: Authorization schema.
-        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
-          <token>``).'
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
       - name: X-API-Key
         in: header
         required: false
@@ -81891,34 +81971,6 @@ components:
       - count
       title: AvailableSurfaceResponse
       description: The picker's catalogue for one stored version.
-    AvroPushReference:
-      properties:
-        name:
-          type: string
-          title: Name
-          description: The referenced type's full Avro name.
-          example: Pet
-        subject:
-          type: string
-          title: Subject
-          description: The subject the referenced schema is registered under.
-          example: example
-        version:
-          anyOf:
-          - type: integer
-            description: Avro Push Reference schema.
-          - type: 'null'
-            description: Avro Push Reference schema.
-          title: Version
-          description: The registered version referenced; null in a dry run when that
-            schema would be registered by this push.
-      type: object
-      required:
-      - name
-      - subject
-      title: AvroPushReference
-      description: 'A Confluent schema reference: the referenced type''s full name,
-        subject and version.'
     AvroPushRequest:
       properties:
         artifact:
@@ -81953,6 +82005,24 @@ components:
           description: The ``schema-registry`` connector whose registry receives the
             push.
           example: connector_01h2xcejqtf3fz5y5j0v8k9m2p
+        compatibility_level:
+          anyOf:
+          - type: string
+            enum:
+            - BACKWARD
+            - BACKWARD_TRANSITIVE
+            - FORWARD
+            - FORWARD_TRANSITIVE
+            - FULL
+            - FULL_TRANSITIVE
+            - NONE
+            description: Request body for avro push.
+          - type: 'null'
+            description: Request body for avro push.
+          title: Compatibility Level
+          description: A Confluent compatibility level to set on each subject the
+            push registers, before its check (MFX-19.6). Null keeps each subject's
+            level. A dry run sets nothing.
         dry_run:
           type: boolean
           title: Dry Run
@@ -82019,7 +82089,7 @@ components:
             ``would_register``, ``incompatible``, ``failed``, ``skipped``).
         subjects:
           items:
-            $ref: '#/components/schemas/AvroPushSubjectResult'
+            $ref: '#/components/schemas/RegistryPushSubjectResult'
           type: array
           title: Subjects
           description: One result per subject, in the order they were pushed (referenced
@@ -82037,94 +82107,6 @@ components:
       - subjects
       title: AvroPushResponse
       description: What the push did for each subject.
-    AvroPushSubjectResult:
-      properties:
-        subject:
-          type: string
-          title: Subject
-          description: The registry subject.
-          example: example
-        file:
-          type: string
-          title: File
-          description: The emitted ``.avsc`` file registered under it.
-          example: "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
-        record:
-          anyOf:
-          - type: string
-            description: Avro Push Subject schema.
-          - type: 'null'
-            description: Avro Push Subject schema.
-          title: Record
-          description: The schema's full Avro name, when it has one.
-        status:
-          type: string
-          enum:
-          - registered
-          - already_registered
-          - would_register
-          - incompatible
-          - failed
-          - skipped
-          title: Status
-          description: '``registered`` (written now), ``already_registered`` (the
-            registry holds this exact schema), ``would_register`` (dry run), ``incompatible``
-            (refused by the subject''s compatibility level), ``failed`` (the registry
-            refused or did not answer) or ``skipped`` (a schema it references did
-            not register).'
-          example: registered
-        compatibility:
-          anyOf:
-          - type: string
-            enum:
-            - compatible
-            - new_subject
-            - unchecked
-            description: Avro Push Subject schema.
-          - type: 'null'
-            description: Avro Push Subject schema.
-          title: Compatibility
-          description: 'The compatibility check: ``compatible`` with the latest version,
-            ``new_subject`` (no version to check against) or ``unchecked`` (dry run,
-            a referenced schema is not registered yet).'
-        schema_id:
-          anyOf:
-          - type: integer
-            description: Avro Push Subject schema.
-          - type: 'null'
-            description: Avro Push Subject schema.
-          title: Schema Id
-          description: The registry's global schema id.
-        version:
-          anyOf:
-          - type: integer
-            description: Avro Push Subject schema.
-          - type: 'null'
-            description: Avro Push Subject schema.
-          title: Version
-          description: The subject version holding the schema.
-        references:
-          items:
-            $ref: '#/components/schemas/AvroPushReference'
-          type: array
-          title: References
-          description: The schema references sent with the schema.
-          maxItems: 1000
-        messages:
-          items:
-            type: string
-          type: array
-          title: Messages
-          description: The registry's compatibility messages, error, or why the subject
-            was skipped.
-          maxItems: 1000
-      type: object
-      required:
-      - subject
-      - file
-      - status
-      title: AvroPushSubjectResult
-      description: What the push did for one subject.
     BindingInput:
       properties:
         kind:
@@ -88695,7 +88677,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         completed_at:
           anyOf:
           - type: string
@@ -89913,7 +89895,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
       type: object
       required:
       - api_key
@@ -89956,7 +89938,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -90417,7 +90399,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -90590,7 +90572,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -91195,13 +91177,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -93720,7 +93702,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 553751a2-1043-4716-8606-ca13ceafb311
+          example: 5f5b2dd5-8fec-4ad9-a555-34e2c18fdf4d
         method:
           type: string
           title: Method
@@ -95863,7 +95845,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         envelope:
           additionalProperties: true
           type: object
@@ -97354,7 +97336,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         browse_url:
           anyOf:
           - type: string
@@ -132347,6 +132329,339 @@ components:
         Reports whether the registry''s storage backend — the shared
 
         ``apiome-db`` connection backing ``apiome.primitives`` — is reachable.'
+    RegistryPushReference:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: 'The reference name: the referenced type''s full Avro name,
+            the JSON Schema ``$ref`` pointing at it, or the Protobuf ``import`` path.'
+          example: Pet
+        subject:
+          type: string
+          title: Subject
+          description: The subject the referenced schema is registered under.
+          example: example
+        version:
+          anyOf:
+          - type: integer
+            description: Registry Push Reference schema.
+          - type: 'null'
+            description: Registry Push Reference schema.
+          title: Version
+          description: The registered version referenced; null in a dry run when that
+            schema would be registered by this push.
+      type: object
+      required:
+      - name
+      - subject
+      title: RegistryPushReference
+      description: 'A Confluent schema reference: its name, and the subject and version
+        it points at.'
+    RegistryPushRequest:
+      properties:
+        format:
+          type: string
+          enum:
+          - avro
+          - json-schema
+          - protobuf
+          title: Format
+          description: 'The schema format to push: ``avro``, ``json-schema`` or ``protobuf``.'
+          example: avro
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project) id to export.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Request body for registry push.
+          - type: 'null'
+            description: Request body for registry push.
+          title: Version
+          description: Revision UUID, version label (``1.0.0``), or null for the latest
+            revision.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for registry push.
+          - type: 'null'
+            description: Request body for registry push.
+          title: Options
+          description: 'The format''s emit options. Avro: ``output_syntax`` must stay
+            ``avsc``, and subjects are named by the request fields, not ``options``.
+            JSON Schema: ``packaging`` defaults to ``per-type`` (one subject per type)
+            and ``mode`` must stay ``json-schema``. Null applies the defaults.'
+        connector_id:
+          type: string
+          format: uuid
+          title: Connector Id
+          description: The ``schema-registry`` connector whose registry receives the
+            push.
+          example: connector_01h2xcejqtf3fz5y5j0v8k9m2p
+        subject_naming:
+          type: string
+          enum:
+          - record_name
+          - topic_name
+          - topic_record_name
+          title: Subject Naming
+          description: '``record_name`` (``{record}-value``, one subject per schema),
+            ``topic_name`` (``{topic}-value``) or ``topic_record_name`` (``{topic}-{record}-value``).
+            The record is the Avro full name, the JSON Schema ``title``, or the Protobuf
+            file''s first message.'
+          default: record_name
+          example: record_name
+        topic:
+          anyOf:
+          - type: string
+            description: Request body for registry push.
+          - type: 'null'
+            description: Request body for registry push.
+          title: Topic
+          description: The Kafka topic of ``topic_name`` and ``topic_record_name``.
+        subject_role:
+          type: string
+          enum:
+          - value
+          - key
+          title: Subject Role
+          description: '``value`` ends each subject in ``-value``, ``key`` in ``-key``.'
+          default: value
+          example: value
+        compatibility_level:
+          anyOf:
+          - type: string
+            enum:
+            - BACKWARD
+            - BACKWARD_TRANSITIVE
+            - FORWARD
+            - FORWARD_TRANSITIVE
+            - FULL
+            - FULL_TRANSITIVE
+            - NONE
+            description: Request body for registry push.
+          - type: 'null'
+            description: Request body for registry push.
+          title: Compatibility Level
+          description: A Confluent compatibility level to set on each subject the
+            push registers, before its check (``BACKWARD``, ``FULL_TRANSITIVE``, ``NONE``
+            …). Null keeps each subject's level. A dry run sets nothing.
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: Look up and check every subject against the registry, but write
+            nothing.
+          default: false
+          example: true
+        confirm:
+          type: boolean
+          title: Confirm
+          description: Push a **severe** conversion (MFX-3.3) the export guard would
+            otherwise refuse.
+          default: false
+          example: false
+      additionalProperties: false
+      type: object
+      required:
+      - format
+      - artifact
+      - connector_id
+      title: RegistryPushRequest
+      description: Which version to export, in which format, and the connector whose
+        registry receives it.
+    RegistryPushResponse:
+      properties:
+        format:
+          type: string
+          enum:
+          - avro
+          - json-schema
+          - protobuf
+          title: Format
+          description: The schema format pushed.
+          example: avro
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project) id exported.
+          example: example
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: The resolved revision (``versions.id``).
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for registry push.
+          - type: 'null'
+            description: Response payload for registry push.
+          title: Version Label
+          description: The resolved revision's version label.
+        connector_id:
+          type: string
+          title: Connector Id
+          description: The connector pushed through.
+          example: connector_01h2xcejqtf3fz5y5j0v8k9m2p
+        registry_url:
+          type: string
+          title: Registry Url
+          description: The registry's base URL.
+          example: https://example.com/resource
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: Whether nothing was written.
+          example: true
+        summary:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Summary
+          description: How many subjects ended in each status (``registered``, ``already_registered``,
+            ``would_register``, ``incompatible``, ``failed``, ``skipped``).
+        subjects:
+          items:
+            $ref: '#/components/schemas/RegistryPushSubjectResult'
+          type: array
+          title: Subjects
+          description: One result per subject, in the order they were pushed (referenced
+            schemas first).
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - format
+      - artifact
+      - version_record_id
+      - connector_id
+      - registry_url
+      - dry_run
+      - summary
+      - subjects
+      title: RegistryPushResponse
+      description: What the push did for each subject.
+    RegistryPushSubjectResult:
+      properties:
+        subject:
+          type: string
+          title: Subject
+          description: The registry subject.
+          example: example
+        file:
+          type: string
+          title: File
+          description: The emitted file registered under it (``.avsc``, ``.schema.json``
+            or ``.proto``).
+          example: "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
+        schema_type:
+          type: string
+          enum:
+          - AVRO
+          - JSON
+          - PROTOBUF
+          title: Schema Type
+          description: 'The schema''s registry type: ``AVRO``, ``JSON`` or ``PROTOBUF``.'
+          default: AVRO
+          example: AVRO
+        record:
+          anyOf:
+          - type: string
+            description: Registry Push Subject schema.
+          - type: 'null'
+            description: Registry Push Subject schema.
+          title: Record
+          description: The schema's record name, when it has one.
+        status:
+          type: string
+          enum:
+          - registered
+          - already_registered
+          - would_register
+          - incompatible
+          - failed
+          - skipped
+          title: Status
+          description: '``registered`` (written now), ``already_registered`` (the
+            registry holds this exact schema), ``would_register`` (dry run), ``incompatible``
+            (refused by the subject''s compatibility level), ``failed`` (the registry
+            refused or did not answer) or ``skipped`` (a schema it references did
+            not register).'
+          example: registered
+        compatibility:
+          anyOf:
+          - type: string
+            enum:
+            - compatible
+            - new_subject
+            - unchecked
+            description: Registry Push Subject schema.
+          - type: 'null'
+            description: Registry Push Subject schema.
+          title: Compatibility
+          description: 'The compatibility check: ``compatible`` with the latest version,
+            ``new_subject`` (no version to check against) or ``unchecked`` (dry run,
+            a referenced schema is not registered yet).'
+        compatibility_level:
+          anyOf:
+          - type: string
+            enum:
+            - BACKWARD
+            - BACKWARD_TRANSITIVE
+            - FORWARD
+            - FORWARD_TRANSITIVE
+            - FULL
+            - FULL_TRANSITIVE
+            - NONE
+            description: Registry Push Subject schema.
+          - type: 'null'
+            description: Registry Push Subject schema.
+          title: Compatibility Level
+          description: The compatibility level the push set on the subject before
+            checking it (in a dry run, the level it would set); null when the push
+            asked for none.
+        schema_id:
+          anyOf:
+          - type: integer
+            description: Registry Push Subject schema.
+          - type: 'null'
+            description: Registry Push Subject schema.
+          title: Schema Id
+          description: The registry's global schema id.
+        version:
+          anyOf:
+          - type: integer
+            description: Registry Push Subject schema.
+          - type: 'null'
+            description: Registry Push Subject schema.
+          title: Version
+          description: The subject version holding the schema.
+        references:
+          items:
+            $ref: '#/components/schemas/RegistryPushReference'
+          type: array
+          title: References
+          description: The schema references sent with the schema.
+          maxItems: 1000
+        messages:
+          items:
+            type: string
+          type: array
+          title: Messages
+          description: The registry's compatibility messages, error, or why the subject
+            was skipped.
+          maxItems: 1000
+      type: object
+      required:
+      - subject
+      - file
+      - status
+      title: RegistryPushSubjectResult
+      description: What the push did for one subject.
     ReimportDeltaEntry:
       properties:
         entity:
@@ -132774,13 +133089,14 @@ components:
         autoRefreshEnabled:
           type: boolean
           title: Autorefreshenabled
-          description: The repository-wide switch; when off, no branch refreshes on the
-            schedule.
+          description: The repository-wide switch; when off, no branch refreshes on
+            the schedule.
           example: false
         repositoryIntervalSeconds:
           type: integer
           title: Repositoryintervalseconds
-          description: The repository's cadence, which a rule without an interval inherits.
+          description: The repository's cadence, which a rule without an interval
+            inherits.
           example: 1
         minIntervalSeconds:
           type: integer
@@ -132799,8 +133115,8 @@ components:
             $ref: '#/components/schemas/RepositoryTrackedBranchRefreshOut'
           type: array
           title: Branches
-          description: Every tracked branch (a branch with an imported file) and the settings
-            it refreshes with.
+          description: Every tracked branch (a branch with an imported file) and the
+            settings it refreshes with.
           maxItems: 1000
       type: object
       required:
@@ -132826,7 +133142,8 @@ components:
       required:
       - branchRefresh
       title: RepositoryBranchRefreshResponse
-      description: Envelope returned by the branch-refresh read and by its update (RAR-6.4).
+      description: Envelope returned by the branch-refresh read and by its update
+        (RAR-6.4).
     RepositoryBranchRefreshRuleIn:
       properties:
         branchPattern:
@@ -132849,8 +133166,8 @@ components:
           - type: 'null'
             description: Repository Branch Refresh Rule schema.
           title: Refreshintervalseconds
-          description: Cadence for matching branches, in seconds; null inherits the repository's.
-            Must be at least the deployment's minimum interval.
+          description: Cadence for matching branches, in seconds; null inherits the
+            repository's. Must be at least the deployment's minimum interval.
         targetVersionLine:
           anyOf:
           - type: string
@@ -132860,8 +133177,8 @@ components:
             description: Repository Branch Refresh Rule schema.
           title: Targetversionline
           description: 'Version line a refresh of a matching branch lands in (`latest`,
-            `2.x`): the refreshed version is labelled `<line>-<UTC timestamp>`. Null keeps
-            the default naming.'
+            `2.x`): the refreshed version is labelled `<line>-<UTC timestamp>`. Null
+            keeps the default naming.'
       type: object
       required:
       - branchPattern
@@ -132889,8 +133206,8 @@ components:
           - type: 'null'
             description: Response payload for repository branch refresh rule.
           title: Refreshintervalseconds
-          description: Cadence for matching branches, in seconds; null inherits the repository's.
-            Must be at least the deployment's minimum interval.
+          description: Cadence for matching branches, in seconds; null inherits the
+            repository's. Must be at least the deployment's minimum interval.
         targetVersionLine:
           anyOf:
           - type: string
@@ -132900,8 +133217,8 @@ components:
             description: Response payload for repository branch refresh rule.
           title: Targetversionline
           description: 'Version line a refresh of a matching branch lands in (`latest`,
-            `2.x`): the refreshed version is labelled `<line>-<UTC timestamp>`. Null keeps
-            the default naming.'
+            `2.x`): the refreshed version is labelled `<line>-<UTC timestamp>`. Null
+            keeps the default naming.'
         createdBy:
           anyOf:
           - type: string
@@ -132942,8 +133259,8 @@ components:
           description: The complete set of rules; patterns must be unique.
       type: object
       title: RepositoryBranchRefreshRulesUpdate
-      description: 'Replace a repository''s branch refresh rules (RAR-6.4, #3541). An
-        empty list removes them all.'
+      description: 'Replace a repository''s branch refresh rules (RAR-6.4, #3541).
+        An empty list removes them all.'
     RepositoryConflictPolicyOut:
       properties:
         repositoryId:
@@ -133826,7 +134143,8 @@ components:
       - conflictPolicy
       - autoRefresh
       title: RepositoryRefreshAppliedOut
-      description: 'How many repositories a re-apply changed, per setting (RAR-6.5, #3542).'
+      description: 'How many repositories a re-apply changed, per setting (RAR-6.5,
+        #3542).'
     RepositoryRefreshDefaultsOut:
       properties:
         configured:
@@ -133942,8 +134260,8 @@ components:
         applyToInheriting:
           type: boolean
           title: Applytoinheriting
-          description: Also re-apply the defaults to every repository setting that follows
-            them.
+          description: Also re-apply the defaults to every repository setting that
+            follows them.
           default: false
           example: false
       type: object
@@ -134132,8 +134450,8 @@ components:
           - type: 'null'
             description: Response payload for repository tracked branch refresh.
           title: Rulepattern
-          description: The rule that governs the branch; null when it follows the repository
-            settings.
+          description: The rule that governs the branch; null when it follows the
+            repository settings.
         lastRefreshedAt:
           anyOf:
           - type: string
@@ -135374,7 +135692,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
       additionalProperties: false
       type: object
       required:
@@ -145018,12 +145336,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
       additionalProperties: false
       type: object
       required:
@@ -146152,7 +146470,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         detected_by:
           anyOf:
           - type: string
@@ -148989,7 +149307,8 @@ components:
       - default_branch
       - status
       title: TenantRepositoryRecord
-      description: Single repository row returned to the UI (snake_case keys for the dashboard).
+      description: Single repository row returned to the UI (snake_case keys for the
+        dashboard).
     TenantRepositoryUpdate:
       properties:
         autoRefreshEnabled:
@@ -149017,8 +149336,8 @@ components:
           - type: 'null'
             description: Tenant Repository Update schema.
           title: Refreshintervalseconds
-          description: Refresh cadence in seconds (RAR-6.5); must be at least the deployment
-            minimum. Setting it overrides the workspace default cadence.
+          description: Refresh cadence in seconds (RAR-6.5); must be at least the
+            deployment minimum. Setting it overrides the workspace default cadence.
         useWorkspaceDefaults:
           anyOf:
           - items:
@@ -149033,7 +149352,8 @@ components:
             description: Tenant Repository Update schema.
           title: Useworkspacedefaults
           description: 'Settings to follow the workspace refresh defaults again (RAR-6.5):
-            refresh_interval, conflict_policy, auto_refresh. Applied after the other fields.'
+            refresh_interval, conflict_policy, auto_refresh. Applied after the other
+            fields.'
       type: object
       title: TenantRepositoryUpdate
       description: 'Dashboard: patch mutable settings on a registered repository (RAR-3.3,
@@ -149044,7 +149364,8 @@ components:
 
         toggle (``auto_refresh_enabled``, RAR-3.3) and the repository-wide conflict
 
-        policy (``refresh_conflict_policy``, RAR-4.5). Both accept the snake_case and
+        policy (``refresh_conflict_policy``, RAR-4.5). Both accept the snake_case
+        and
 
         camelCase spellings so the UI can send either.'
     TenantsMeResponse:
@@ -152877,13 +153198,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-03T03:40:25Z'
+          example: '2026-11-04T04:52:43Z'
         outcome:
           anyOf:
           - type: string

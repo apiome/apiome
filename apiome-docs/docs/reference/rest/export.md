@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 12 operations."
+description: "REST endpoints tagged export: 13 operations."
 sidebar_position: 31
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.491.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.492.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 12 operations
+Tag: `export` · 13 operations
 
 ## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
 
@@ -269,6 +269,35 @@ Request body for on-demand round-trip comparison: emit → re-import → diff �
 | 200 | Successful response for on-demand round-trip comparison: emit → re-import → diff → reconcile with fidelity. | `application/json` [`ExportRoundtripResponse`](#schema-exportroundtripresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/export/{tenant_slug}/schema-registry/push` {#push-registry-export-v1-export-tenant-slug-schema-registry-push-post}
+
+**Register an Avro, JSON Schema or Protobuf export on a schema registry through a connector**
+
+MFX-19.6: export one version to ``avro`` (``.avsc``), ``json-schema`` (one document per type by default) or ``protobuf`` (one ``.proto`` per package), validate it, then push each schema to the registry of an existing ``schema-registry`` connector with its ``schemaType`` (``AVRO``, ``JSON``, ``PROTOBUF``), using the connector's base URL and stored credentials. Subjects are named the same way for every format (``subject_naming``, ``topic``, ``subject_role``). Per subject, referenced schemas first: look the schema up (already registered → nothing written), set ``compatibility_level`` when asked, check it against the subject's latest version (incompatible → not registered), then register it, with Confluent ``references`` to the subjects it names. ``dry_run`` writes nothing. Needs ``imports:edit``.
+
+Operation id: `push_registry_export_v1_export__tenant_slug__schema_registry_push_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for register an avro, json schema or protobuf export on a schema registry through a connector.
+
+- `application/json` — [`RegistryPushRequest`](#schema-registrypushrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for register an avro, json schema or protobuf export on a schema registry through a connector. | `application/json` [`RegistryPushResponse`](#schema-registrypushresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/export/{tenant_slug}/targets` {#list-export-targets-v1-export-tenant-slug-targets-get}
 
 **List export targets with per-source fidelity**
@@ -366,6 +395,7 @@ Which version to export to Avro, and the connector whose registry receives it.
 | `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
 | `options` | object or null | no | Avro emit options (``namespace``, ``subject_naming``, ``topic``, ``subject_role``); ``output_syntax`` must stay ``avsc``. Null applies the defaults. |
 | `connector_id` | string (uuid) | yes | The ``schema-registry`` connector whose registry receives the push. |
+| `compatibility_level` | enum `"BACKWARD"`, `"BACKWARD_TRANSITIVE"`, `"FORWARD"`, `"FORWARD_TRANSITIVE"`, `"FULL"`, `"FULL_TRANSITIVE"`, … or null | no | A Confluent compatibility level to set on each subject the push registers, before its check (MFX-19.6). Null keeps each subject's level. A dry run sets nothing. |
 | `dry_run` | boolean | no | Look up and check every subject against the registry, but register nothing. |
 | `confirm` | boolean | no | Push a **severe** conversion (MFX-3.3) the export guard would otherwise refuse. |
 
@@ -382,7 +412,7 @@ What the push did for each subject.
 | `registry_url` | string | yes | The registry's base URL. |
 | `dry_run` | boolean | yes | Whether nothing was registered. |
 | `summary` | map of integer | yes | How many subjects ended in each status (``registered``, ``already_registered``, ``would_register``, ``incompatible``, ``failed``, ``skipped``). |
-| `subjects` | array of `AvroPushSubjectResult` | yes | One result per subject, in the order they were pushed (referenced schemas first). |
+| `subjects` | array of `RegistryPushSubjectResult` | yes | One result per subject, in the order they were pushed (referenced schemas first). |
 
 ### `CapabilityRegistrySnapshot` {#schema-capabilityregistrysnapshot}
 
@@ -707,3 +737,37 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `RegistryPushRequest` {#schema-registrypushrequest}
+
+Which version to export, in which format, and the connector whose registry receives it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `format` | enum `"avro"`, `"json-schema"`, `"protobuf"` | yes | The schema format to push: ``avro``, ``json-schema`` or ``protobuf``. |
+| `artifact` | string | yes | The artifact (project) id to export. |
+| `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
+| `options` | object or null | no | The format's emit options. Avro: ``output_syntax`` must stay ``avsc``, and subjects are named by the request fields, not ``options``. JSON Schema: ``packaging`` defaults to ``per-type`` (one subject per type) and ``mode`` must stay ``json-schema``. Null applies the defaults. |
+| `connector_id` | string (uuid) | yes | The ``schema-registry`` connector whose registry receives the push. |
+| `subject_naming` | enum `"record_name"`, `"topic_name"`, `"topic_record_name"` | no | ``record_name`` (``{record}-value``, one subject per schema), ``topic_name`` (``{topic}-value``) or ``topic_record_name`` (``{topic}-{record}-value``). The record is the Avro full name, the JSON Schema ``title``, or the Protobuf file's first message. |
+| `topic` | string or null | no | The Kafka topic of ``topic_name`` and ``topic_record_name``. |
+| `subject_role` | enum `"value"`, `"key"` | no | ``value`` ends each subject in ``-value``, ``key`` in ``-key``. |
+| `compatibility_level` | enum `"BACKWARD"`, `"BACKWARD_TRANSITIVE"`, `"FORWARD"`, `"FORWARD_TRANSITIVE"`, `"FULL"`, `"FULL_TRANSITIVE"`, … or null | no | A Confluent compatibility level to set on each subject the push registers, before its check (``BACKWARD``, ``FULL_TRANSITIVE``, ``NONE`` …). Null keeps each subject's level. A dry run sets nothing. |
+| `dry_run` | boolean | no | Look up and check every subject against the registry, but write nothing. |
+| `confirm` | boolean | no | Push a **severe** conversion (MFX-3.3) the export guard would otherwise refuse. |
+
+### `RegistryPushResponse` {#schema-registrypushresponse}
+
+What the push did for each subject.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `format` | enum `"avro"`, `"json-schema"`, `"protobuf"` | yes | The schema format pushed. |
+| `artifact` | string | yes | The artifact (project) id exported. |
+| `version_record_id` | string | yes | The resolved revision (``versions.id``). |
+| `version_label` | string or null | no | The resolved revision's version label. |
+| `connector_id` | string | yes | The connector pushed through. |
+| `registry_url` | string | yes | The registry's base URL. |
+| `dry_run` | boolean | yes | Whether nothing was written. |
+| `summary` | map of integer | yes | How many subjects ended in each status (``registered``, ``already_registered``, ``would_register``, ``incompatible``, ``failed``, ``skipped``). |
+| `subjects` | array of `RegistryPushSubjectResult` | yes | One result per subject, in the order they were pushed (referenced schemas first). |

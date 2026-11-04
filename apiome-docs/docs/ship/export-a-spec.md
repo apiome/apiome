@@ -303,7 +303,7 @@ output=prisma`.
   record, enum, union and map schemas, one `.avsc` per type, each with the Schema Registry subject it
   is registered under.
 - **Register them on a schema registry.** Push the export to a Confluent-compatible registry through
-  a connector; see [Push Avro to a schema registry](./push-avro-to-a-schema-registry.md).
+  a connector; see [Push to a schema registry](./push-avro-to-a-schema-registry.md).
 
 Avro describes data, not APIs: operations and channels are not written, so the export is
 **types-only** for every source. Export to OpenAPI or AsyncAPI as well to keep them.
@@ -317,7 +317,7 @@ Avro describes data, not APIs: operations and channels are not written, so the e
 | **Choose** the subject each schema is registered under | The card's subject options | [Subjects](#avro-subjects) |
 | **See** what Avro cannot carry, and the defaults it adds | The fidelity report on the card | [What the fidelity report lists](#what-the-avro-fidelity-report-lists) |
 | **Trust** the files: every schema parses | Automatic before every download | [How an Avro export is checked](#how-an-avro-export-is-checked) |
-| **Push** the schemas to a registry | The REST API, through a schema registry connector | [Push Avro to a schema registry](./push-avro-to-a-schema-registry.md) |
+| **Push** the schemas to a registry | The REST API, through a schema registry connector | [Push to a schema registry](./push-avro-to-a-schema-registry.md) |
 
 #### How the item is written {#how-the-item-is-written-to-avro}
 
