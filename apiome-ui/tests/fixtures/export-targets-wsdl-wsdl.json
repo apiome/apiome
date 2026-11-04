@@ -7,7 +7,7 @@
         "key": "wsdl",
         "format": "wsdl",
         "label": "WSDL",
-        "description": "Export as a SOAP WSDL 1.1 web service description with XSD types.",
+        "description": "Export as a SOAP WSDL 1.1 or 2.0 web service description with XSD types.",
         "icon": "file-code",
         "paradigm": "rest",
         "multi_file": true,
@@ -27,6 +27,16 @@
         "additionalProperties": false,
         "description": "Per-target options for :class:`WsdlEmitter`.",
         "properties": {
+          "wsdl_version": {
+            "default": "1.1",
+            "description": "`1.1` (default) writes `definitions` / `message` / `portType` / `binding` / `service`. `2.0` writes a W3C WSDL 2.0 `description`: `interface` / `binding` / `service` / `endpoint`, each operation naming its payload elements directly with a message-exchange pattern (`in-out`, `in-only` \u2026). What a WSDL 1.1 source has that 2.0 cannot say (multi-part messages, `type` parts, the `rpc` style) is listed in the fidelity report.",
+            "enum": [
+              "1.1",
+              "2.0"
+            ],
+            "title": "Wsdl Version",
+            "type": "string"
+          },
           "include_comments": {
             "default": true,
             "description": "Emit an XML comment header in the generated WSDL.",
@@ -48,6 +58,7 @@
         "type": "object"
       },
       "default_options": {
+        "wsdl_version": "1.1",
         "include_comments": true,
         "layout": "bundle"
       },

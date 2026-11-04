@@ -25,7 +25,8 @@
  * 12. The X12 implementation-guide card (MFX-24.5): `types-only` for every source, multi-file, with the
  *     transaction-set and version picker — from the recorded live registry.
  * 13. The WSDL card (MFX-14.4): `lossy` for a REST source, `lossless` for an imported WSDL, multi-file
- *     (the WSDL and its XSD), with its layout picker — from the recorded live registry.
+ *     (the WSDL and its XSD), with its layout picker and WSDL version picker (MFX-14.5) — from the recorded
+ *     live registry.
  * 14. The TypeSpec card (MFX-15.4): `lossy` for a REST source, `lossless` for an imported TypeSpec
  *     project, one file, with its HTTP-imports and header-comment options — from the recorded live registry.
  * 15. The OData card (MFX-16.4): `lossy` for a REST source, `lossless` for an imported OData service, one
@@ -1194,6 +1195,15 @@ describe('ExportDialog — WSDL target card (MFX-14.4)', () => {
     const layout = screen.getByRole('radiogroup', { name: 'Layout' });
     expect(within(layout).getAllByRole('radio').map((option) => option.textContent)).toEqual(['bundle', 'single']);
     expect(within(layout).getByRole('radio', { name: 'bundle' })).toBeChecked();
+  });
+
+  it('offers the WSDL version picker, 1.1 by default (MFX-14.5)', async () => {
+    await renderAtTargetStep(mockFetch(wsdlTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-wsdl'));
+    const version = screen.getByRole('radiogroup', { name: 'Wsdl Version' });
+    expect(within(version).getAllByRole('radio').map((option) => option.textContent)).toEqual(['1.1', '2.0']);
+    expect(within(version).getByRole('radio', { name: '1.1' })).toBeChecked();
   });
 });
 

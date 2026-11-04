@@ -328,11 +328,12 @@ def test_swagger_1_2_is_declared_as_a_projection_rather_than_a_first_class_read(
     assert odata_v2.support is VersionSupport.PARTIAL
 
 
-def test_wsdl_2_0_is_readable_but_not_writable(coverage) -> None:
-    # The clearest asymmetry in the table, and the one a "we support WSDL 2.0" claim would flatten.
+def test_wsdl_2_0_is_readable_and_writable_by_option(coverage) -> None:
+    # MFX-14.5 (#4182): 2.0 is written by the same `wsdl` emitter (`wsdl_version='2.0'`); 1.1 stays the default.
     declared = coverage["wsdl"]
     assert {version.version for version in declared.reads} == {"1.1", "2.0"}
-    assert {version.version for version in declared.writes} == {"1.1"}
+    assert {version.version for version in declared.writes} == {"1.1", "2.0"}
+    assert {version.format_key for version in declared.writes} == {"wsdl"}
     assert declared.default_write == "1.1"
 
 

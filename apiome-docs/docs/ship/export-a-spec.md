@@ -1806,12 +1806,16 @@ run `apiome export hl7guide <item> --out <folder>` and add `--option message_typ
   report before you download.
 - **Round-trip a WSDL.** An item imported from WSDL exports back **lossless**, with its own messages,
   parts, bindings and SOAP versions.
+- **Hand a WSDL 2.0 description to a toolchain that reads 2.0.** Set **Wsdl Version** to `2.0` to get
+  a W3C WSDL 2.0 `description` instead of a WSDL 1.1 one. An item imported from WSDL 2.0 round-trips
+  unchanged; what a WSDL 1.1 item has that 2.0 cannot say is listed in the fidelity report.
 
 #### WSDL export at a glance
 
 | Step | Where | Details |
 | --- | --- | --- |
 | **Pick** the WSDL card and its layout (bundle or single file) | **Export** dialog → **REST & HTTP** → **WSDL** | [Where to find the WSDL card](#where-to-find-the-wsdl-card) |
+| **Write** WSDL 2.0 instead of 1.1 | **Wsdl Version** `2.0` on the card | [WSDL 2.0](#wsdl-2-0-output) |
 | **See** how types, rules, operations and names are written | The fidelity report on the card | [How the item is written](#how-the-item-is-written-to-wsdl) |
 | **See** what XML Schema cannot say the way JSON does | The fidelity report on the card | [What the fidelity report lists](#what-the-wsdl-fidelity-report-lists) |
 | **Trust** the bundle: packaged, WS-I, valid, re-imports | Automatic before every download | [How a WSDL export is checked](#how-a-wsdl-export-is-checked) |
@@ -1857,7 +1861,38 @@ versions and XSD details round-trip unchanged.
   numbers (from Protobuf or Thrift) are not written; the report lists each one.
 - **One-way operations.** An operation with no reply is written with an `input` and no `output`.
   WSDL 1.1 has no message-exchange pattern, so importing the file again reads it as a request/response
-  operation; the report says so for each one.
+  operation; the report says so for each one. WSDL 2.0 states the pattern, so a 2.0 export does not
+  have this problem.
+
+#### WSDL 2.0 {#wsdl-2-0-output}
+
+Set **Wsdl Version** to `2.0` (the default is `1.1`) to write the same types and operations as a
+[W3C WSDL 2.0](https://www.w3.org/TR/wsdl20/) description. The files, the layouts and the XML Schema
+are the same as for 1.1; only the description changes:
+
+| WSDL 1.1 | WSDL 2.0 |
+| --- | --- |
+| `definitions` with a `name` | `description`, which has no name |
+| `xsd:import` inside an `xsd:schema` in `types` | `xsd:import` directly in `types` (bundle), or the schema inline (single) |
+| `message` and `part` | No messages: each operation's `input` and `output` name their element |
+| `portType` | `interface`, with each fault declared once as an interface `fault` |
+| No message-exchange pattern | `pattern` on each operation: `in-out`, `in-only` for an operation with no reply, `robust-in-only` when it also has faults, `out-only` for an imported WSDL notification |
+| `soap:binding` / `soap12:binding` with a `transport` | `binding` of type `soap` with `wsoap:version` (`1.1` or `1.2`) and `wsoap:protocol`; a `soapAction` is `wsoap:action` |
+| `http:binding` | `binding` of type `http` with `whttp:methodDefault="POST"` |
+| `service` and `port` | `service` (one interface each) and `endpoint` |
+
+The fidelity report lists what WSDL 2.0 cannot say the way WSDL 1.1 did:
+
+| What the item has | How 2.0 writes it | In the report |
+| --- | --- | --- |
+| A message with several parts (imported from WSDL 1.1) | One element named after the message, with the parts as its children | Approximated |
+| The `rpc` binding style | Document/literal: 2.0 has no SOAP `rpc` style | Approximated |
+| A payload that is a built-in type (`xsd:string`) | An element of that type, named after the message (`pingInput`) or the fault | Approximated (info) |
+| A WSDL 1.1 service whose ports bind different port types | One service per interface: the later ones are named `<service><interface>` | Approximated (info) |
+| The item's name | Not written: a 2.0 `description` has no name, so importing the file again names the item after its first service | Approximated (info) |
+| No operations at all (types only) | One empty `interface` named after the item, so the file imports again | Synthesized (info) |
+
+An item imported from WSDL 2.0 has none of these to lose: it exports back unchanged.
 
 #### What the fidelity report lists {#what-the-wsdl-fidelity-report-lists}
 
@@ -1881,10 +1916,11 @@ In the **Export** dialog, the **WSDL** card is under **REST & HTTP** on the
 **Target** step, marked multi-file. Its badge is **lossy** for a REST, RPC, GraphQL or JSON Schema
 source (the HTTP method and path, field numbers and JSON-only rules are not carried) and **lossless**
 for an item imported from WSDL. Pick the card and choose the **Layout**: **bundle** (the default, the
-WSDL and its XSD) or **single** (the types inline). From the CLI, run
+WSDL and its XSD) or **single** (the types inline), and the **Wsdl Version**: **1.1** (the default) or
+**2.0**. The fidelity report on the card follows the version you pick. From the CLI, run
 `apiome export wsdl <item> --out <folder>` (the files are unpacked into the folder) and add
-`--option layout=single` for one file. A lossy export exits non-zero unless you add `--force`, and
-`--json` prints the tier. A public item's **Export** dialog on Browse offers WSDL too, as a `.zip`.
+`--option layout=single` for one file or `--option wsdl_version=2.0` for WSDL 2.0. A lossy export
+exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on Browse offers WSDL too, as a `.zip`.
 
 #### How a WSDL export is checked {#how-a-wsdl-export-is-checked}
 
@@ -1895,7 +1931,9 @@ Every WSDL export is checked before you can download it, the way it arrives once
 - **WS-I.** The description passes the WS-I Basic Profile checks: literal use, one binding style,
   document/literal parts, unique operation signatures and `soapAction`s.
 - **Valid.** The WSDL validates against the WSDL 1.1 schema, every XSD type and facet is legal, and
-  every message, part, port type, binding and port it names exists.
+  every message, part, port type, binding and port it names exists. A WSDL 2.0 export validates
+  against the W3C WSDL 2.0 schema instead, and every element, fault, interface, binding and operation
+  it names exists.
 - **Re-imports.** The bundle imports into Apiome as a WSDL.
 
 If a check fails, the export fails and lists each problem with its file and rule (`wsi.literal-use`,
