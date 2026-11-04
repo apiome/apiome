@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.640.0] - 2026-11-04
+
+### Added
+- **SQL DDL validate + target card + CLI + fixtures (MFX-35.5, #4315).**
+  - Export gate: a `.sql` script is now parsed with sqlglot in the dialect its header names (`sql.parse`, the
+    MFX-5.1 alternate-validator seam) before the read-back through Apiome's SQL reader; `_changelog_dialect` reads
+    both the DDL (`SQL DDL (mysql)`) and changelog headers.
+  - `tests/test_sql_ddl_target_card.py` + `tests/fixtures/sql_ddl_target/outcomes.json` (regenerate with
+    `APIOME_REGEN_SQL_DDL_TARGET=1`): the card per source kind (REST / GraphQL / JSON Schema / imported SQL badge
+    `types-only`; a Kong configuration greyed out — no record type), every output (`ddl` in each dialect,
+    `nested=tables`, `dbml`, `prisma`, `liquibase`, `flyway`) passing the gate, per-dialect sqlglot parses,
+    file names and Browse delivery; CLI (`export-targets-sql-ddl.json`,
+    `export-job-completed-sql-ddl-types-only.json` with the live report) and UI
+    (`export-targets-sql-ddl-{rest,sql,gateway}.json`) fixtures kept equal to the live registry.
+- OpenAPI 1.504.0.
+
 ## [1.639.0] - 2026-11-04
 
 ### Added

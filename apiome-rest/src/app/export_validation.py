@@ -824,8 +824,9 @@ async def _check_changelog(
 
 
 def _changelog_dialect(text: str) -> str:
-    """The dialect a changelog's header names (``… (postgres, full schema) …``); PostgreSQL otherwise."""
-    match = re.search(r"\((postgres|mysql|ansi), ", text[:400])
+    """The dialect a script's header names (``SQL DDL (mysql)``, ``… (postgres, full schema) …``); PostgreSQL
+    otherwise."""
+    match = re.search(r"\((postgres|mysql|ansi)[,)]", text[:400])
     return match.group(1) if match else "postgres"
 
 
@@ -834,8 +835,9 @@ async def _validate_sql_ddl(
 ) -> EmittedArtifactValidation:
     """Re-validate an emitted SQL DDL script, DBML document or Prisma schema (MFX-35.1, #4311; MFX-35.2, #4312).
 
-    * A ``.sql`` script — already parsed with sqlglot by the emitter — is read back through Apiome's own
-      SQL DDL reader (FMT-5.6), which must find at least one table (``sql.reimport``).
+    * A ``.sql`` script is parsed with sqlglot in the dialect its header names (``sql.parse``, MFX-35.5) and
+      read back through Apiome's own SQL DDL reader (FMT-5.6), which must find at least one table
+      (``sql.reimport``). A Liquibase changelog or Flyway migration is checked by :func:`_check_changelog`.
     * A ``.dbml`` document is parsed by ``@dbml/core`` (``dbml.parse``) and a ``schema.prisma`` is run
       through ``prisma validate`` (``prisma.validate``), both through the bundled toolchain
       (:mod:`app.db_schema_validation`); each error the tool reports is one finding, with its line.
@@ -850,6 +852,7 @@ async def _validate_sql_ddl(
         validate_dbml,
         validate_prisma,
     )
+    from .sql_ddl_emitter import parse_sql_script
     from .sql_ddl_import_source import SqlDdlImportSource
     from .toolchain_runner import ToolchainError
 
@@ -891,6 +894,13 @@ async def _validate_sql_ddl(
                 ValidationFinding(message=str(d), file=emitted.path, keyword=keyword) for d in diagnostics
             )
             continue
+        # MFX-35.5: the script parses in its own dialect (sqlglot — the MFX-5.1 alternate-validator seam) …
+        try:
+            parse_sql_script(text, _changelog_dialect(text))
+        except ValueError as exc:
+            findings.append(ValidationFinding(message=str(exc), file=emitted.path, keyword="sql.parse"))
+            continue
+        # … and reads back through Apiome's SQL DDL reader.
         try:
             await asyncio.to_thread(_reimport, text)
         except Exception as exc:  # noqa: BLE001 — any reader failure means "not valid", never a crash

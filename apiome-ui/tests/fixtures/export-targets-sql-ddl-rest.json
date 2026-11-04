@@ -1,0 +1,112 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "sql-ddl",
+        "format": "sql-ddl",
+        "label": "SQL DDL",
+        "description": "Export the types as SQL CREATE TABLE statements for PostgreSQL, MySQL or standard SQL: typed columns, NOT NULL and CHECK constraints, enums, and nested objects as JSON columns or tables. The same tables can be written as DBML or as a Prisma schema.",
+        "icon": "database",
+        "paradigm": "data_schema",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`SqlDdlEmitter`.",
+        "properties": {
+          "dialect": {
+            "default": "postgres",
+            "description": "SQL dialect: `postgres` (default), `mysql`, or `ansi` (standard SQL).",
+            "enum": [
+              "postgres",
+              "mysql",
+              "ansi"
+            ],
+            "title": "Dialect",
+            "type": "string"
+          },
+          "nested": {
+            "default": "json",
+            "description": "`json` (default) writes a nested object, union or map as one JSON column; `tables` writes a nested object as a foreign key to its table (with synthesized keys) and a list of records or values as a junction or child table.",
+            "enum": [
+              "json",
+              "tables"
+            ],
+            "title": "Nested",
+            "type": "string"
+          },
+          "schema_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "Qualify every table with this schema and create it first (`CREATE SCHEMA`).",
+            "title": "Schema Name"
+          },
+          "output": {
+            "default": "ddl",
+            "description": "`ddl` (default) writes a SQL script; `dbml` writes the same tables as DBML; `prisma` writes them as a Prisma schema (`schema.prisma`, PostgreSQL or MySQL only); `liquibase` writes a Liquibase formatted-SQL changelog and `flyway` a Flyway migration \u2014 after the first export of an item, only the changes since the last one.",
+            "enum": [
+              "ddl",
+              "dbml",
+              "prisma",
+              "liquibase",
+              "flyway"
+            ],
+            "title": "Output",
+            "type": "string"
+          },
+          "from_scratch": {
+            "default": false,
+            "description": "`liquibase` / `flyway` only: write every table again instead of the changes since the last export (and start a new baseline).",
+            "title": "From Scratch",
+            "type": "boolean"
+          },
+          "changeset_author": {
+            "default": "apiome",
+            "description": "`liquibase` only: the author of every changeset (`--changeset <author>:<id>`).",
+            "title": "Changeset Author",
+            "type": "string"
+          }
+        },
+        "title": "SqlDdlEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "dialect": "postgres",
+        "nested": "json",
+        "schema_name": null,
+        "output": "ddl",
+        "from_scratch": false,
+        "changeset_author": "apiome"
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 13,
+        "total": 15,
+        "preserved": 2,
+        "dropped": 9,
+        "approximated": 2,
+        "synthesized": 2
+      }
+    }
+  ]
+}

@@ -178,6 +178,14 @@ def fetch_projection_evidence(
 # ``hl7v2-guide`` segment guide (MFX-26.3): ``apiome export hl7guide``.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",
+    # ``apiome export sql`` (MFX-35.5): the SQL DDL target, and its outputs as verbs of their own (the
+    # command presets ``--option output=<verb>``, see apiome_cli.commands.export.with_sql_preset).
+    "sql": "sql-ddl",
+    "ddl": "sql-ddl",
+    "dbml": "sql-ddl",
+    "prisma": "sql-ddl",
+    "liquibase": "sql-ddl",
+    "flyway": "sql-ddl",
     "jsonschema": "json-schema",
     "json_schema": "json-schema",
     # ``apiome export copybook`` (MFX-23.5): the COBOL copybook target is keyed ``cobolcopybook``.

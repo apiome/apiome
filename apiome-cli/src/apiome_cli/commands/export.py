@@ -113,6 +113,51 @@ _FLAVOR_HELP = (
 )
 
 
+#: The SQL DDL export's verbs (MFX-35.5): each runs the ``sql-ddl`` target; one named after an output presets it.
+SQL_VERBS = ("sql", "sql-ddl", "ddl", "dbml", "prisma", "liquibase", "flyway")
+#: The verbs that name an ``output`` of the ``sql-ddl`` target.
+SQL_OUTPUT_VERBS = ("dbml", "prisma", "liquibase", "flyway")
+SQL_DIALECTS = ("postgres", "mysql", "ansi")
+
+_DIALECT_HELP = (
+    "SQL dialect: postgres (default), mysql or ansi (standard SQL). Same as --option dialect=…."
+)
+
+
+def with_sql_preset(option_values: Sequence[str], verb: str, dialect: str | None) -> tuple[str, ...]:
+    """Add what a SQL verb implies to the ``--option`` values (MFX-35.5).
+
+    ``apiome export dbml|prisma|liquibase|flyway`` preset ``output=<verb>``; every SQL verb takes ``--dialect``
+    as a shorthand for ``dialect=…``.
+
+    Args:
+        option_values: The repeatable ``--option key=value`` flags as given.
+        verb: The command name (one of :data:`SQL_VERBS`).
+        dialect: The ``--dialect`` value, or ``None`` when the flag was not given.
+
+    Returns:
+        The option values to send.
+
+    Raises:
+        typer.Exit: ``EXIT_USAGE`` when a preset is also given with ``--option`` (with another value).
+    """
+    given = parse_export_options(option_values)
+    values = list(option_values)
+    if verb in SQL_OUTPUT_VERBS:
+        if "output" in given and given["output"] != verb:
+            typer.echo(f"`apiome export {verb}` writes output={verb}; drop --option output=… or use "
+                       "`apiome export sql`.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        if "output" not in given:
+            values.append(f"output={verb}")
+    if dialect is not None:
+        if "dialect" in given:
+            typer.echo("Give the dialect once: --dialect or --option dialect=…, not both.", err=True)
+            raise typer.Exit(EXIT_USAGE)
+        values.append(f"dialect={dialect}")
+    return tuple(values)
+
+
 def with_flavor(option_values: Sequence[str], flavor: str | None) -> tuple[str, ...]:
     """Add ``--flavor`` to the ``--option`` values as ``flavor=…``.
 
@@ -235,9 +280,12 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         items_raw: str | None,
         overlay_paths: tuple[str, ...],
         flavor: str | None = None,
+        dialect: str | None = None,
     ) -> None:
         ctx = click.get_current_context()
         option_values = with_flavor(option_values, flavor)
+        if target_format in SQL_VERBS:
+            option_values = with_sql_preset(option_values, target_format, dialect)
         if (artifact is None) == (items_raw is None):
             typer.echo("Name an ARTIFACT or --items (not both).", err=True)
             raise typer.Exit(EXIT_USAGE)
@@ -278,6 +326,14 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             overlay_paths=overlay_paths,
         )
 
+    if target_format in SQL_VERBS:
+        _generic = click.option(
+            "--dialect",
+            "dialect",
+            type=click.Choice(SQL_DIALECTS),
+            default=None,
+            help=_DIALECT_HELP,
+        )(_generic)
     if target_format == "postman":
         _generic = click.option(
             "--flavor",

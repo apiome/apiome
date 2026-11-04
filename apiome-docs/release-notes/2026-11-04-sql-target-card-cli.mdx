@@ -1,0 +1,18 @@
+---
+slug: sql-target-card-cli
+title: SQL exports from the CLI, one verb per output
+description: "apiome export sql, dbml, prisma, liquibase and flyway, with --dialect."
+authors: [apiome]
+---
+
+The **SQL DDL** export is now on every surface. See
+[Where to find the SQL DDL card](/ship/export-a-spec#where-to-find-the-sql-ddl-card).
+
+{/* truncate */}
+
+- **One verb per output:** `apiome export sql` writes a SQL script (also `sql-ddl` and `ddl`), and
+  `apiome export dbml`, `prisma`, `liquibase` and `flyway` write the other outputs. Every one takes
+  `--dialect postgres|mysql|ansi` and prints the fidelity report.
+- **The card:** under **Data schema & graph** in the **Export** dialog, with a **types-only** badge and
+  every output and dialect in its options; greyed out, with the reason, for an item with no record type.
+- **Checked per dialect:** every SQL script is parsed in its own dialect before you download it.

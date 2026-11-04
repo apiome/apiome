@@ -60,6 +60,9 @@ import a2aTargetsForData from '../fixtures/export-targets-a2a-data.json';
 import xregistryTargetsForRest from '../fixtures/export-targets-xregistry-rest.json';
 import xregistryTargetsForXregistry from '../fixtures/export-targets-xregistry-xregistry.json';
 import xregistryTargetsForGateway from '../fixtures/export-targets-xregistry-gateway.json';
+import sqlDdlTargetsForRest from '../fixtures/export-targets-sql-ddl-rest.json';
+import sqlDdlTargetsForSql from '../fixtures/export-targets-sql-ddl-sql.json';
+import sqlDdlTargetsForGateway from '../fixtures/export-targets-sql-ddl-gateway.json';
 
 /** A three-target registry: lossless OpenAPI, lossy Protobuf (with options), unavailable Avro. */
 export const EXPORT_DIALOG_TARGETS: ExportTargetsResponse = {
@@ -753,5 +756,21 @@ export function xregistryTargets(source: 'rest' | 'xregistry' | 'gateway'): Expo
     xregistry: xregistryTargetsForXregistry,
     gateway: xregistryTargetsForGateway,
   };
+  return recordedTargets(recorded[source]);
+}
+
+/**
+ * The SQL DDL target as the registry lists it (MFX-35.5, #4315), recorded from the live REST registry by
+ * `apiome-rest/tests/test_sql_ddl_target_card.py`. The target holds data schemas only, so a REST API badges
+ * `types-only` (its operations are dropped with a critical warning); a gateway configuration has no record type,
+ * so the card is unavailable with its reason. One card writes every output: `ddl`, `dbml`, `prisma`, `liquibase`
+ * and `flyway`, in the `postgres`, `mysql` or `ansi` dialect.
+ *
+ * @param source `rest` (the Petstore OpenAPI), `sql` (an imported PostgreSQL script) or `gateway` (an imported
+ *   Kong configuration).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function sqlDdlTargets(source: 'rest' | 'sql' | 'gateway'): ExportTargetsResponse {
+  const recorded = { rest: sqlDdlTargetsForRest, sql: sqlDdlTargetsForSql, gateway: sqlDdlTargetsForGateway };
   return recordedTargets(recorded[source]);
 }
