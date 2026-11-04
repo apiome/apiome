@@ -52,7 +52,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict, rest_only_advisory
 from .lossiness import LossinessKind, LossinessSeverity
 from .wadl_normalizer import explicit_method_id
 from .xsd_schema import (
@@ -95,7 +95,11 @@ _STATUS = re.compile(r"^[1-5][0-9]{2}$")
 
 
 class WadlFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for WADL export.
+    """Fidelity rules for WADL export — MFX-29.1 (#4173), MFX-29.3 (#4175).
+
+    A source that is not a REST API (GraphQL, RPC, event, data schema, agent) gets the root advisory
+    **WADL captures REST only** (:func:`app.fidelity_rulepack.rest_only_advisory`, the RAML wording): a ``DROP``
+    with the operations and channels that are not written, critical when only the types are.
 
     On top of the capability rules: the target namespace (synthesized when the source has none) and
     the resources base URI (synthesized when the source has no server; only the first is kept);
@@ -106,8 +110,13 @@ class WadlFidelityRulePack(CapabilityRulePack):
     target_label = "WADL"
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
+        # A source that is not a REST API: "WADL captures REST only", with what is not written (MFX-29.3).
+        written = sum(1 for op in api.operations() if _writable(op))
+        advisory = rest_only_advisory(api, target_label=self.target_label,
+                                      dropped_operations=len(api.operations()) - written, written_operations=written)
         # The grammar's namespace qualifies the types; with no types and no bodies there is none.
-        verdicts = (
+        verdicts = [advisory] if advisory is not None else []
+        verdicts += (
             target_namespace_verdicts(
                 api,
                 target_label=self.target_label,
@@ -561,6 +570,11 @@ class _WadlWriter:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+
+def _writable(operation: Operation) -> bool:
+    """Whether WADL writes ``operation``: an HTTP operation that is not an event."""
+    return operation.kind not in _EVENT_OPERATION_KINDS and bool(operation.http_method)
 
 
 def _has_explicit_id(operation: Operation) -> bool:

@@ -1,0 +1,21 @@
+---
+slug: wadl-discovery-checks
+title: WADL and Google API Discovery exports are checked before download
+description: "Both legacy REST exports warn about non-REST sources and fail on invalid output."
+authors: [apiome]
+---
+
+The WADL and Google API Discovery exports now say when a source is not a REST API, and every export is checked
+before you download it. See [WADL from any source](/ship/export-a-spec#wadl-from-any-source) and
+[Google API Discovery from any source](/ship/export-a-spec#google-api-discovery-from-any-source).
+
+{/* truncate */}
+
+- **REST only:** a GraphQL, gRPC, event or data-schema item gets **WADL captures REST only** or **Google API
+  Discovery captures REST only** at the top of its fidelity report, with the operations and channels that are
+  not written, as RAML does.
+- **WADL is checked:** against the W3C WADL schema, with its grammar built by an XML Schema processor, every
+  representation element declared, and a re-import.
+- **Discovery is checked:** against the Discovery metaschema and its document rules (URLs, schema ids and
+  references, types and formats, method ids, path parameters), and a re-import.
+- **Invalid output fails the job:** the export stops before delivery, listing every problem with its rule.

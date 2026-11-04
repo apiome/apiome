@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.626.0] - 2026-11-04
+
+### Added
+- **WADL & Google API Discovery fidelity packs + validation (MFX-29.3, #4175).**
+  - **REST only:** a GraphQL, RPC, event, data-schema or agent source exported to WADL or Google API Discovery gets
+    the root advisory `WADL captures REST only` / `Google API Discovery captures REST only`, in the RAML wording
+    (`fidelity_rulepack.rest_only_advisory`, now shared with the RAML pack): a `DROP` with the operations and
+    channels that are not written (critical when only the types are), or an `APPROX` when every operation has an
+    HTTP binding.
+  - **WADL gate** (`app.wadl_validation`, export target `wadl`): safe XML (`wadl.xml`), the W3C WADL submission
+    schema (`wadl.schema`), every included or inline grammar built by `xmlschema` (`wadl.bundle-reference`,
+    `wadl.grammar`), representation elements declared by the grammar (`wadl.representation`), and a re-import
+    (`wadl.reimport`).
+  - **Discovery gate** (export target `discovery`): the Discovery metaschema and document rules of
+    `app.discovery_validation` (`discovery.schema`, `urls`, `schema-id`, `ref`, `type-format`, `method-id`,
+    `path-parameter`, `parameter-order`), then a re-import (`discovery.reimport`).
+  - An export that breaks a rule fails its job with `EMITTED_ARTIFACT_INVALID` before delivery.
+  - The round-trip and export-conformance goldens carry the new root advisory in the `wadl` / `discovery` loss
+    counts.
+
 ## [1.625.0] - 2026-11-04
 
 ### Added

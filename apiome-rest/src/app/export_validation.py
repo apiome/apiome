@@ -44,6 +44,10 @@ check. This module is the thin dispatcher that picks the matching validator per 
 * ``apiblueprint`` — drafter's errors (:func:`app.apiblueprint_drafter.run_drafter`) when the
   ``drafter`` toolchain is present, else a re-parse through
   :func:`app.apiblueprint_parser.parse_apiblueprint`;
+* ``wadl`` — :func:`app.wadl_validation.check_emitted_wadl` (the W3C WADL submission schema, every grammar
+  built by ``xmlschema``, every representation element declared, then a re-import; MFX-29.3);
+* ``discovery`` — :func:`app.discovery_validation.check_discovery_files` (the Discovery metaschema and document
+  rules, then a re-import through the Discovery importer; MFX-29.3);
 * ``raml`` — AMF's RAML 1.0 validation (:func:`app.raml_amf.validate_raml_set_with_amf`) when the
   ``amf`` toolchain is present, else a re-parse through :func:`app.raml_parser.parse_raml`;
 * ``thrift`` — the Apache Thrift compiler (``thrift --gen json``,
@@ -643,6 +647,68 @@ async def _validate_x12_guide(
     if not check.dictionary_checked and check.skipped_reason:
         verdict.detail = f"The X12 segment-dictionary spot-check did not run: {check.skipped_reason}."
     return verdict
+
+
+async def _validate_wadl(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted WADL description and its XSD grammar (MFX-29.3, #4175).
+
+    :func:`app.wadl_validation.check_emitted_wadl` checks the export as it will be unpacked: safe XML, the W3C
+    WADL submission schema (``wadl.schema``), every included or inline grammar built by an XML Schema processor
+    (``wadl.grammar``), every representation element declared by the grammar (``wadl.representation``), and a
+    re-import through Apiome's WADL importer (``wadl.reimport``).
+    """
+    from .wadl_validation import check_emitted_wadl
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The WADL export wrote no file.")])
+    problems = await asyncio.to_thread(check_emitted_wadl, emit_result)
+    if problems:
+        return _rejected(target, [
+            ValidationFinding(message=problem.message, path=problem.path or None, file=problem.file or None,
+                              keyword=problem.rule)
+            for problem in problems
+        ])
+    return _passed(target)
+
+
+async def _validate_discovery(
+    target: str, emit_result: EmitResult, api: CanonicalApi
+) -> EmittedArtifactValidation:
+    """Re-validate an emitted Google API Discovery document (MFX-29.3, #4175).
+
+    :func:`app.discovery_validation.check_discovery_files` checks the document against the Discovery metaschema
+    (``discovery.schema``) and the document rules (URLs, schema ids and references, type/format pairs, method
+    ids, path parameters, ``parameterOrder``); the document must then import again through Apiome's Discovery
+    importer (``discovery.reimport``).
+    """
+    from .discovery_import_source import DiscoveryImportSource
+    from .discovery_validation import check_discovery_files
+    from .import_source import ImportSourceError
+    from .roundtrip_matrix import reimport_emitted
+
+    if not emit_result.files:
+        return _rejected(target, [_finding_from_message("The Google API Discovery export wrote no file.")])
+
+    def _run() -> List[ValidationFinding]:
+        files = {emitted.path: str(emitted.content) for emitted in emit_result.files}
+        findings = [
+            ValidationFinding(message=problem.message, path=problem.path or None, file=problem.file or None,
+                              keyword=problem.rule)
+            for problem in check_discovery_files(files)
+        ]
+        if not findings:
+            try:
+                reimport_emitted(DiscoveryImportSource(), emit_result, multi_file=False)
+            except ImportSourceError as exc:
+                findings.append(ValidationFinding(
+                    message=f"Apiome's Discovery importer cannot read the document back: {exc}",
+                    file=emit_result.files[0].path, keyword="discovery.reimport"))
+        return findings
+
+    findings = await asyncio.to_thread(_run)
+    return _passed(target) if not findings else _rejected(target, findings)
 
 
 async def _validate_edifact_guide(
@@ -1685,6 +1751,9 @@ _VALIDATORS: Dict[str, _Validator] = {
     "edifact-guide": _validate_edifact_guide,
     # MFX-26.3 (#4159)
     "hl7v2-guide": _validate_hl7v2_guide,
+    # MFX-29.3 (#4175): the legacy REST descriptors.
+    "wadl": _validate_wadl,
+    "discovery": _validate_discovery,
     "idoc": _validate_idoc,
     "oncrpc": _validate_oncrpc,
     "corbaidl": _validate_corbaidl,
