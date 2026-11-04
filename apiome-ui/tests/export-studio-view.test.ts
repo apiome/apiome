@@ -95,9 +95,10 @@ describe('familyForTarget', () => {
     expect(familyForTarget('rest', 'postman').label).toBe('API clients & collections');
   });
 
-  it('files the FHIR and HL7 v2 targets under Healthcare (MFX-26.5)', () => {
+  it('files the FHIR, HL7 v2 and HL7 v2 segment guide targets under Healthcare (MFX-26.5, MFX-26.3)', () => {
     expect(familyForTarget('rest', 'fhir').label).toBe('Healthcare');
     expect(familyForTarget('data_schema', 'hl7v2').label).toBe('Healthcare');
+    expect(familyForTarget('data_schema', 'hl7v2-guide').label).toBe('Healthcare');
     expect(familyForTarget('data_schema', 'hl7v3').key).toBe('data');
   });
 
