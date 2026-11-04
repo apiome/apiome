@@ -2478,6 +2478,45 @@ CLI, run `apiome export asn1 <item> --out <file>.asn1`, and add `--option module
 `--json` prints the tier. A public item's **Export** dialog on Browse offers ASN.1 too, as the `.asn1`
 file.
 
+### Legacy REST descriptors
+
+Before OpenAPI, two formats described REST APIs, and older toolchains still read them: **WADL**, the
+XML description Java (JAX-RS) stacks and some API gateways import, and **Google API Discovery**, the JSON
+document Google's API client libraries build a client from. Apiome writes both from any item, and an item
+imported from either exports back **lossless**. In **Export studio**, both cards sit under **REST &
+HTTP** on the **Target** step.
+
+#### When to use which
+
+- **A JAX-RS stack, a gateway or a tool that imports WADL: WADL.** Export [WADL](#wadl-from-any-source)
+  for the resource tree, methods, parameters and status codes, with the types in an XSD grammar — the
+  same XSD a WSDL export writes. It downloads as a `.wadl` and its `.xsd` in a `.zip`, or as one file.
+- **A client built by Google's API client libraries: Google API Discovery.** Export
+  [Google API Discovery](#google-api-discovery-from-any-source) for one JSON document of resources,
+  methods, path and query parameters and schemas, with method ids such as `petstore.pets.listPets`.
+- **Anything new: OpenAPI.** Neither format is developed any more; prefer
+  [OpenAPI](#openapi-32-31-30-and-swagger-20) unless the consumer reads only WADL or Discovery.
+
+Both describe HTTP resources and nothing else. A GraphQL, gRPC, event or data-schema item exports at most
+its types, and its fidelity report starts with **WADL captures REST only** or **Google API Discovery
+captures REST only**.
+
+#### Legacy REST descriptors at a glance
+
+| | WADL | Google API Discovery |
+| --- | --- | --- |
+| **From** | Any source | Any source with an HTTP operation or a type |
+| **You get** | `<Name>.wadl` and `<Name>.xsd` in a `.zip`, or one `.wadl` | `<name>.discovery.json` |
+| **Options** | `layout` (`bundle`, `single`) | `name`, `version` |
+| **Types become** | An XSD grammar, with facets for constraints | Discovery's JSON Schema subset (64-bit integers as strings) |
+| **Parameters** | Path, query and header | Path and query |
+| **Responses** | Every response, by status code | The success body only |
+| **Checked by** | The W3C WADL schema, an XML Schema processor, and re-import | The Discovery metaschema, Discovery's rules, and re-import |
+| **CLI** | `apiome export wadl` | `apiome export discovery` |
+
+Every parameter, response, server and keyword an export cannot carry is listed in its fidelity report
+before you download.
+
 ### WADL from any source
 
 Exporting to **WADL** writes a description that validates against the W3C WADL schema, with its
@@ -2511,6 +2550,10 @@ WADL describes HTTP resources and nothing else, so the fidelity report lists wha
 - gateway details such as routes, backends and hosts.
 
 When the source has no server, the base URI `https://api.example.com/` is used, and the report says so.
+
+An item imported from WADL is written back as it was read. Import now also reads a WADL root written
+as `<wadl:application>`, the query and header params a method's request declares, and — when you
+upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
 
 **WADL captures REST only.** A GraphQL, gRPC, event or data-schema item gets a warning at the top of its
 fidelity report: **WADL captures REST only**. The warning counts the operations and channels that are not
@@ -2718,10 +2761,6 @@ run `apiome export raml <item> --out <file>.raml`, and add `--option include_com
 `--option media_type=application/xml`. The CLI prints the report's warnings, the REST-only one
 included. A lossy export exits non-zero unless you add `--force`, and `--json` prints the tier. A
 public item's **Export** dialog on Browse offers RAML too, as the `.raml` file.
-
-An item imported from WADL is written back as it was read. Import now also reads a WADL root written
-as `<wadl:application>`, the query and header params a method's request declares, and — when you
-upload the WADL together with its `.xsd` in a `.zip` — the grammar it includes.
 
 ### Arazzo from any source
 
