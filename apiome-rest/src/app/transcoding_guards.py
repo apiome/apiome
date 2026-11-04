@@ -45,10 +45,13 @@ from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .canonical_model import ApiParadigm, CanonicalApi
+from .canonical_model import ApiParadigm, CanonicalApi, OperationKind
 from .emitter import CapabilityProfile, Emitter
 from .fidelity_engine import compute_lossiness_for_emitter
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
+
+#: Operation kinds an events-capable target keeps (the fidelity engine's event axis).
+_EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
 
 __all__ = [
     "GuardConstruct",
@@ -281,8 +284,15 @@ def classify_transcode(
     source_types = len(api.types)
 
     # What the target structurally cannot carry (independent of any rule-pack reframing —
-    # a types-only target genuinely has nowhere to put an operation or a channel).
-    dropped_operations = source_operations if not _target_hosts_operations(profile) else 0
+    # a types-only target genuinely has nowhere to put an operation or a channel). A target that
+    # hosts events but not request/response operations (CloudEvents, xRegistry) keeps an event
+    # operation, so only the other operations count as dropped (MFX-34.3, #4308).
+    if _target_hosts_operations(profile):
+        dropped_operations = 0
+    elif _target_hosts_events(profile):
+        dropped_operations = sum(1 for op in api.operations() if op.kind not in _EVENT_OPERATION_KINDS)
+    else:
+        dropped_operations = source_operations
     dropped_events = source_events if not _target_hosts_events(profile) else 0
     essence_lost = dropped_operations > 0 or dropped_events > 0
     schema_only = _is_schema_only(profile)

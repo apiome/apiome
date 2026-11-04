@@ -36,9 +36,11 @@ import copy
 import json
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Set, Tuple, Union
 
-from jsonschema import Draft202012Validator
+from jsonschema import Draft7Validator, Draft202012Validator
 from jsonschema.exceptions import SchemaError
 from pydantic import Field, ValidationError
 
@@ -76,8 +78,11 @@ __all__ = [
     "XRegistryEmitOptions",
     "XRegistryEmitter",
     "XRegistryFidelityRulePack",
+    "EVENT_REGISTRY_MAPPING",
     "build_xregistry_document",
+    "event_registry_advisory",
     "xregistry_document_problems",
+    "xregistry_schema_violations",
 ]
 
 #: Registry key and format — the same key as the xRegistry importer, so ``xregistry -> xregistry``
@@ -97,6 +102,11 @@ OUTPUT_MEDIA_TYPE = "application/json"
 DOCUMENT_SUFFIX = ".xregistry.json"
 #: The one version every projected schema has.
 VERSION_ID = "1"
+
+#: The official xRegistry CloudEvents registry document schema, vendored at a pinned commit (MFX-34.3).
+_DOCUMENT_SCHEMA_PATH = Path(__file__).parent / "data" / "xregistry_cloudevents_document_schema.json"
+#: ``target_mapping`` of the critical advisory a source with request/response operations gets (MFX-34.3).
+EVENT_REGISTRY_MAPPING = "event-registry-only"
 
 #: Loss subjects this emitter records.
 LOSS_NOT_AN_EVENT = "xregistry-operation-not-an-event"
@@ -187,6 +197,7 @@ class _Plan:
         message_of: Operation key → ``(message group id, message id)``.
         synthesized: ``(pointer, reason)`` per value invented because the source lacked it.
         not_written: Operation key → why the operation has no message.
+        dropped_types: Type key → why the type has no schema (MFX-34.3).
     """
 
     document: Dict[str, Any]
@@ -194,6 +205,7 @@ class _Plan:
     message_of: Dict[str, Tuple[str, str]] = field(default_factory=dict)
     synthesized: List[Tuple[str, str]] = field(default_factory=list)
     not_written: Dict[str, str] = field(default_factory=dict)
+    dropped_types: Dict[str, str] = field(default_factory=dict)
 
 
 def _rewrite_refs(node: Any, keys: Mapping[str, str]) -> Any:
@@ -262,15 +274,20 @@ def _opaque_schema(type_: Type) -> Optional[Dict[str, Any]]:
     if not extras.get("xregistry_opaque"):
         return None
     entry: Dict[str, Any] = {}
-    if isinstance(extras.get("xregistry_format"), str):
-        entry["format"] = extras["xregistry_format"]
+    fmt = extras.get("xregistry_format") if isinstance(extras.get("xregistry_format"), str) else None
+    if fmt:
+        entry["format"] = fmt
     if type_.description:
         entry["description"] = type_.description
     version: Dict[str, Any] = {"versionid": str(extras.get("xregistry_version") or VERSION_ID)}
+    if fmt:
+        version["format"] = fmt  # an xRegistry schema version carries its own format (MFX-34.3)
     if isinstance(extras.get("xregistry_document"), str):
         version["schema"] = extras["xregistry_document"]
     elif isinstance(extras.get("xregistry_schema_uri"), str):
-        version["schemauri"] = extras["xregistry_schema_uri"]
+        version["schemaurl"] = extras["xregistry_schema_uri"]
+    else:
+        return {}  # neither a document nor a URL: no valid schema version can be written
     entry["defaultversionid"] = version["versionid"]
     entry["versions"] = {version["versionid"]: version}
     return entry
@@ -298,6 +315,12 @@ def _schemas(api: CanonicalApi, group_id: str, plan: _Plan) -> Dict[str, Any]:
         if schema_id is None:
             continue
         opaque = _opaque_schema(type_)
+        if opaque == {}:
+            plan.dropped_types[type_.key] = (
+                "the source schema has neither a document nor a URL, and an xRegistry schema version needs one"
+            )
+            del plan.schema_of[type_.key]
+            continue
         if opaque is not None:
             schemas[schema_id] = {"schemaid": schema_id, **opaque}
             continue
@@ -312,7 +335,7 @@ def _schemas(api: CanonicalApi, group_id: str, plan: _Plan) -> Dict[str, Any]:
         if type_.deprecated:
             entry["deprecated"] = {}
         entry["defaultversionid"] = VERSION_ID
-        entry["versions"] = {VERSION_ID: {"versionid": VERSION_ID, "schema": document}}
+        entry["versions"] = {VERSION_ID: {"versionid": VERSION_ID, "format": SCHEMA_FORMAT, "schema": document}}
         schemas[schema_id] = entry
     return schemas
 
@@ -595,7 +618,7 @@ def xregistry_document_problems(document: Any) -> List[Dict[str, str]]:
                                  "message": f"default version {default!r} is not among the versions"})
                 continue
             body = versions[default].get("schema")
-            if body is None and isinstance(versions[default].get("schemauri"), str):
+            if body is None and isinstance(versions[default].get("schemaurl"), str):
                 continue  # the schema lives elsewhere (an opaque source schema written back as read)
             if str(schema.get("format", "")).lower().startswith("jsonschema"):
                 _check_json_schema(problems, f"{pointer}/versions/{default}/schema", body)
@@ -625,8 +648,54 @@ def xregistry_document_problems(document: Any) -> List[Dict[str, str]]:
     return problems
 
 
+@lru_cache(maxsize=1)
+def _document_validator() -> Draft7Validator:
+    """The vendored official xRegistry document schema (draft-07)."""
+    return Draft7Validator(json.loads(_DOCUMENT_SCHEMA_PATH.read_text(encoding="utf-8")))
+
+
+def xregistry_schema_violations(document: Any) -> List[Dict[str, str]]:
+    """Check a document against the official xRegistry CloudEvents registry schema — MFX-34.3 (#4308).
+
+    Args:
+        document: The parsed document.
+
+    Returns:
+        ``{"rule": "xregistry-spec", "path", "message"}`` per violation (the innermost reason of a
+        ``oneOf`` / ``anyOf`` when there is one); empty when the document is valid.
+    """
+    problems: List[Dict[str, str]] = []
+    for error in sorted(_document_validator().iter_errors(document), key=lambda e: list(e.absolute_path)):
+        reason = min(error.context, key=lambda c: len(list(c.relative_schema_path))) if error.context else error
+        pointer = "".join(f"/{part}" for part in error.absolute_path) or "/"
+        problems.append({"rule": "xregistry-spec", "path": pointer, "message": reason.message[:300]})
+    return problems
+
+
+def _round_trip_problems(document: Mapping[str, Any], api: CanonicalApi) -> List[Dict[str, str]]:
+    """Every schema and message the document writes must read back through the MFI-19.2 importer."""
+    problems: List[Dict[str, str]] = []
+    type_names = {t.name for t in api.types} | {t.key for t in api.types}
+    for gid, group in (document.get("schemagroups") or {}).items():
+        for sid in group.get("schemas") or {}:
+            if sid not in type_names and f"{gid}.{sid}" not in type_names:
+                problems.append({"rule": "reimport-lost", "path": f"/schemagroups/{gid}/schemas/{sid}",
+                                 "message": f"schema {sid!r} does not read back as a type"})
+    operation_keys = {op.key for op in api.operations()}
+    for gid, group in (document.get("messagegroups") or {}).items():
+        for mid in group.get("messages") or {}:
+            if f"{gid}.{mid}" not in operation_keys:
+                problems.append({"rule": "reimport-lost", "path": f"/messagegroups/{gid}/messages/{mid}",
+                                 "message": f"message {mid!r} does not read back as an operation"})
+    return problems
+
+
 def check_emitted_xregistry(emit_result: EmitResult) -> List[Dict[str, str]]:
-    """The export gate's check: structure (:func:`xregistry_document_problems`), then re-import.
+    """The export gate's check (MFX-34.1; official schema and round trip MFX-34.3).
+
+    In order: the document's structure (:func:`xregistry_document_problems`), the official xRegistry
+    CloudEvents registry schema (:func:`xregistry_schema_violations`), and a re-import through the
+    MFI-19.2 importer in which every schema and message reads back.
 
     Args:
         emit_result: The emitter's output.
@@ -645,20 +714,53 @@ def check_emitted_xregistry(emit_result: EmitResult) -> List[Dict[str, str]]:
             problems.append({"rule": "json", "path": "/", "message": str(exc), "file": emitted.path})
             continue
         problems += [{**p, "file": emitted.path} for p in xregistry_document_problems(document)]
+        problems += [{**p, "file": emitted.path} for p in xregistry_schema_violations(document)]
         source = get_import_source(XREGISTRY_FORMAT_KEY)
         if source is None:
             continue
         try:
-            source.normalize(source.parse(text, source_label=emitted.path), include_raw=False)
+            back = source.normalize(source.parse(text, source_label=emitted.path), include_raw=False)
         except (ImportSourceError, ValueError) as exc:
             problems.append({"rule": "reimport", "path": "/", "message": f"the document does not import: {exc}",
                              "file": emitted.path})
+            continue
+        if isinstance(document, Mapping):
+            problems += [{**p, "file": emitted.path} for p in _round_trip_problems(document, back)]
     return problems
 
 
 # ===========================================================================
 # Fidelity
 # ===========================================================================
+
+
+def event_registry_advisory(api: CanonicalApi, *, target_label: str = "xRegistry") -> Optional[FidelityVerdict]:
+    """The critical root advisory of a source with request/response operations — MFX-34.3 (#4308).
+
+    An xRegistry document is an event registry: it keeps types (as schemas) and events (as message
+    definitions), so every REST, RPC or GraphQL operation is dropped. Said once and loudly, with counts,
+    in the same tier as the types-only advisory (MFX-19.2,
+    :func:`app.fidelity_rulepack.types_only_advisory`); the per-operation verdicts drop each one.
+
+    Args:
+        api: The source model.
+        target_label: The target's label.
+
+    Returns:
+        A critical ``DROP`` (``target_mapping`` :data:`EVENT_REGISTRY_MAPPING`), or ``None`` when every
+        operation is an event.
+    """
+    calls = [op for op in api.operations() if op.kind not in _EVENT_KINDS]
+    if not calls:
+        return None
+    services = len({service.key for service in api.services for op in service.operations if op in calls})
+    return FidelityVerdict.drop(
+        message=f"{target_label} is an event registry — only types (as schemas) and events (as CloudEvents "
+        f"message definitions) are exported: {len(calls)} request/response operation(s) in {services} "
+        "service(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+        severity=LossinessSeverity.CRITICAL,
+        target_mapping=EVENT_REGISTRY_MAPPING,
+    )
 
 
 class XRegistryFidelityRulePack(CapabilityRulePack):
@@ -717,8 +819,11 @@ class XRegistryFidelityRulePack(CapabilityRulePack):
         return [reason for pointer, reason in plan.synthesized if pointer.startswith(prefix)]
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
-        """Servers (no endpoints are written) and the synthesized document-level ids."""
+        """The event-registry advisory, servers (no endpoints are written) and synthesized ids."""
         verdicts: List[FidelityVerdict] = []
+        advisory = event_registry_advisory(api, target_label=self.target_label)
+        if advisory is not None:
+            verdicts.append(advisory)
         if api.servers:
             verdicts.append(FidelityVerdict.drop(
                 message=f"{self.target_label}: the document holds schema and message registries, not "
@@ -760,6 +865,13 @@ class XRegistryFidelityRulePack(CapabilityRulePack):
 
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
         """The type's verdict, plus a re-key ``DROP`` when its schema id is not its key."""
+        dropped = self._plan.dropped_types.get(type_.key) if self._plan is not None else None
+        if dropped is not None:
+            return [FidelityVerdict.drop(
+                message=f"{self.target_label}: {dropped}; schema {type_.key!r} is not written",
+                severity=LossinessSeverity.WARN,
+                target_mapping="schema → dropped (no content)",
+            )]
         verdicts = [self.type_verdict(type_)]
         new_key = self._type_read_back_key(type_.key)
         if new_key is not None:

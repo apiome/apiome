@@ -315,7 +315,7 @@ class XRegistryView:
         vid, version = self._default_version(resource)
         path = f"/{collection}/{gid}/{resources}/{rid}"
         entity = {key: value for key, value in resource.items() if key not in ("versions",)}
-        entity.update({key: value for key, value in version.items() if key not in ("schema", "schemauri")})
+        entity.update({key: value for key, value in version.items() if key != "schema"})
         entity[f"{singular}id"] = rid
         entity["versionid"] = vid
         entity.update(self._common(path, f"{path}{DETAILS_SUFFIX}",
@@ -323,8 +323,6 @@ class XRegistryView:
         entity["isdefault"] = True
         if GROUP_KINDS[collection][3]:
             entity[f"{singular}url"] = f"{self._base}{path}"
-            if isinstance(version.get("schemauri"), str):
-                entity[f"{singular}uri"] = version["schemauri"]
         entity["defaultversionid"] = vid
         entity["defaultversionurl"] = f"{self._base}{path}/versions/{vid}"
         entity["versionsurl"] = f"{self._base}{path}/versions"
@@ -337,7 +335,7 @@ class XRegistryView:
         Returns:
             ``(document, headers)``. The document is the JSON Schema object, or a text (an opaque
             Avro / Protobuf schema written back as read); ``None`` when the schema has only a
-            ``schemauri`` (the ``Location`` header then names it).
+            ``schemaurl`` (the ``Location`` header then names it).
 
         Raises:
             XRegistryNotFoundError: For an unknown path, or a resource without documents (a message).
@@ -362,8 +360,8 @@ class XRegistryView:
             "xRegistry-epoch": str(_EPOCH),
             "xRegistry-isdefault": "true",
         }
-        if isinstance(version.get("schemauri"), str):
-            headers["Location"] = version["schemauri"]
+        if isinstance(version.get("schemaurl"), str):
+            headers["Location"] = version["schemaurl"]
         return headers
 
     # --- versions ----------------------------------------------------------

@@ -5,6 +5,30 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.636.0] - 2026-11-04
+
+### Added
+- **xRegistry fidelity pack + validation (MFX-34.3, #4308).**
+  - `event_registry_advisory`: a source with request/response operations gets a root **critical** `DROP`
+    (`target_mapping` `event-registry-only`) naming how many operations and services are not exported — the
+    types-only tier of MFX-19.2 — so the transcoding guard asks for confirmation; event sources get none.
+  - Bindings beyond the CloudEvents attributes stay `APPROX` (channel bindings, protocol, parameters).
+  - The export gate now also validates against the **official xRegistry CloudEvents registry schema**, vendored at
+    xregistry/spec@c60d0bb (`app/data/xregistry_cloudevents_document_schema.json`, Apache-2.0;
+    `xregistry_schema_violations`, rule `xregistry-spec`), and requires every written schema and message to read
+    back through the MFI-19.2 importer (rule `reimport-lost`). A failing document is not delivered.
+- **Emitter output now valid against the official schema:** every schema version carries its `format`; an external
+  schema is written as `schemaurl` (was `schemauri`); an imported schema with neither a document nor a URL is not
+  written and is reported `DROP`. The read-only xRegistry API (MFX-34.2) follows the same rename.
+
+### Fixed
+- `transcoding_guards.classify_transcode`: for a target that hosts events but not request/response operations
+  (CloudEvents, xRegistry), only non-event operations count as dropped — an AsyncAPI, CloudEvents or xRegistry
+  source exported to either is `lossy`/`clean`, no longer `severe` with a confirmation.
+- Goldens: conformance matrix and ledger, round-trip matrix regenerated. Tests: `tests/test_xregistry_emitter.py`
+  (58).
+- OpenAPI 1.500.0.
+
 ## [1.635.0] - 2026-11-04
 
 ### Added

@@ -237,9 +237,15 @@ written (an imported endpoint's messages are written in a message group of the s
 - **Approximated:** for a source in another format, each type (projected to JSON Schema), each
   channel (its bindings, protocol and parameters are not written), and each service written as a
   message group. An imported xRegistry endpoint, written as a message group.
-- **Dropped:** request/response operations and services with no event, and the servers. An
-  operation or type that reads back under another key (a message is keyed `<group>.<message>`, a
-  schema by its schema id) is listed as dropped under its old key, with the new one.
+- **Dropped:** request/response operations and services with no event, and the servers. A source
+  with REST, RPC or GraphQL operations also gets a **critical** warning at the top of the report:
+  xRegistry is an event registry, so only its types and events are exported. That makes the export a
+  *severe* conversion you confirm before it runs; export to OpenAPI or AsyncAPI as well to keep the
+  operations. An event source (AsyncAPI, CloudEvents, xRegistry) needs no confirmation. An imported
+  schema with neither a document nor a URL is dropped too, because an xRegistry schema version needs
+  one. An operation or type that reads back under another key (a message is keyed
+  `<group>.<message>`, a schema by its schema id) is listed as dropped under its old key, with the new
+  one.
 - **Synthesized:** the registry id, a group, schema or message id made legal or unique, and every
   CloudEvents `type`, `source` or `datacontenttype` the source did not state.
 
@@ -247,11 +253,19 @@ An imported schema-only registry exports **lossless**.
 
 #### How an xRegistry export is checked {#how-an-xregistry-export-is-checked}
 
-Every document is checked before you download it: legal ids that match their keys; a `format` and a
-default version on every schema; every JSON Schema valid (draft 2020-12) with its references resolving
-inside it; and on every message the `CloudEvents/1.0` envelope, a `type` and a `source` value, a
-`datacontenttype`, and a `dataschemaxid` that names a schema of the document. The document must then
-import again through the xRegistry importer. A document that fails is never offered for download.
+Every document is checked before you download it:
+
+1. **Structure:** legal ids that match their keys; a `format` and a default version on every schema;
+   every JSON Schema valid (draft 2020-12) with its references resolving inside it; and on every
+   message the `CloudEvents/1.0` envelope, a `type` and a `source` value, a `datacontenttype`, and a
+   `dataschemaxid` that names a schema of the document.
+2. **The xRegistry specification:** the document validates against the official xRegistry CloudEvents
+   registry schema, so each schema version carries its `format` and its content (`schema` or
+   `schemaurl`).
+3. **Round trip:** the document imports again through the xRegistry importer, and every schema and
+   message it writes reads back.
+
+A document that fails any check is never offered for download, and the reason is shown.
 
 #### Where to find the xRegistry card {#where-to-find-the-xregistry-card}
 
