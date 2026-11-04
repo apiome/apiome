@@ -207,6 +207,29 @@ export default function CatalogCard({
           <Badge status={lifecycle} dot data-testid="catalog-card-status">
             {CATALOG_LIFECYCLE_LABEL[lifecycle]}
           </Badge>
+          {/* The ⋯ menu is the last item of the header row, after the status pill, and is always
+              shown: as an overlay pinned to the card's corner it sat on top of the "Active" pill.
+              In flow, the two share the row and cannot overlap (the same fix as ProjectCard). */}
+          {isDeleted ? null : (
+            <div className="cat-card__actions cat-card__above">
+              <CatalogRowMenu
+                item={item}
+                busy={busy}
+                testId={`catalog-card-menu-${item.id}`}
+                onOpenDetail={onOpenDetail}
+                onOpenVersions={onOpenVersions}
+                onOpenLint={onOpenLint}
+                onExport={onExport}
+                onExportStudio={onExportStudio}
+                onConvert={onConvert}
+                onDelete={onDelete}
+                onRestore={onRestore}
+                onPermanentDelete={onPermanentDelete}
+                onCategorize={onCategorize}
+                can={can}
+              />
+            </div>
+          )}
         </div>
 
         <p className="cat-card__summary">{catalogSummaryText(item)}</p>
@@ -323,26 +346,6 @@ export default function CatalogCard({
         </footer>
       )}
 
-      {isDeleted ? null : (
-        <div className="cat-card__actions cat-card__above">
-          <CatalogRowMenu
-            item={item}
-            busy={busy}
-            testId={`catalog-card-menu-${item.id}`}
-            onOpenDetail={onOpenDetail}
-            onOpenVersions={onOpenVersions}
-            onOpenLint={onOpenLint}
-            onExport={onExport}
-            onExportStudio={onExportStudio}
-            onConvert={onConvert}
-            onDelete={onDelete}
-            onRestore={onRestore}
-            onPermanentDelete={onPermanentDelete}
-            onCategorize={onCategorize}
-            can={can}
-          />
-        </div>
-      )}
     </article>
   );
 }
