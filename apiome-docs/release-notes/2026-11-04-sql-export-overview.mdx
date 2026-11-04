@@ -1,0 +1,18 @@
+---
+slug: sql-export-overview
+title: SQL DDL and database schemas, end to end
+description: "One overview of the SQL DDL, DBML, Prisma, Liquibase and Flyway exports."
+authors: [apiome]
+---
+
+The SQL and database-schema exports are complete: the SQL DDL script in three dialects, DBML and
+Prisma, Liquibase and Flyway changelogs with incremental changesets, the SQL fidelity pack, and the
+target card, CLI and fixtures. [SQL DDL from any source](/ship/export-a-spec#sql-ddl-from-any-source)
+brings them together.
+
+{/* truncate */}
+
+- **When to export:** a SQL script to create the database an API describes, DBML or Prisma to model it
+  in a schema tool, and Liquibase or Flyway to change a live database step by step.
+- **At a glance:** where to pick each output, how the item is written, what the fidelity report lists,
+  how each file is checked, and the CLI verbs.

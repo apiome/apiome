@@ -550,6 +550,33 @@ with the same skills.
 
 ### SQL DDL from any source
 
+#### When to export to SQL DDL
+
+- **Create the database an API describes.** Export a SQL script of `CREATE TABLE` statements for
+  PostgreSQL, MySQL or standard SQL: one table per object type, typed columns, `NOT NULL`, `CHECK`
+  constraints and enumerations, with nested objects as JSON columns or as tables of their own.
+- **Model it in a schema tool.** Export the same tables as **DBML** for dbdiagram.io and dbdocs, or as a
+  **Prisma** schema for an application that uses Prisma.
+- **Change a live database step by step.** Export **Liquibase** changesets or a **Flyway** migration:
+  the first export creates every table, and each later export writes only what changed since.
+
+SQL holds data schemas only, so an API's operations are left out, with a critical warning at the top
+of the fidelity report. Unlike most targets, SQL keeps validation rules as `CHECK` constraints.
+
+#### SQL DDL export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the SQL DDL card, its **Output** (`ddl`, `dbml`, `prisma`, `liquibase`, `flyway`) and **Dialect** | **Export** dialog → **Data schema & graph** → **SQL DDL** | [Where to find the SQL DDL card](#where-to-find-the-sql-ddl-card) |
+| **See** how types, fields, names, keys and nested objects become tables | The options on the card | [How the item is written](#how-the-item-is-written-to-sql-ddl) |
+| **Check** what is kept, approximated, dropped or made up | The fidelity report on the card | [What the fidelity report lists](#what-the-sql-ddl-fidelity-report-lists) |
+| **Write** DBML or a Prisma schema instead | **Output** `dbml` / `prisma` | [DBML and Prisma](#dbml-and-prisma) |
+| **Migrate** a database: full changesets, then only the changes | **Output** `liquibase` / `flyway` | [Liquibase and Flyway changelogs](#liquibase-and-flyway-changelogs) |
+| **Trust** the file | Parsed in its dialect and read back (DBML, Prisma and Liquibase by their own tools) before every download | [What the fidelity report lists](#what-the-sql-ddl-fidelity-report-lists) |
+| **Export** from the CLI | `apiome export sql`, `dbml`, `prisma`, `liquibase` or `flyway`, with `--dialect` | [Where to find the SQL DDL card](#where-to-find-the-sql-ddl-card) |
+
+#### How the item is written {#how-the-item-is-written-to-sql-ddl}
+
 Exporting to **SQL DDL** writes the item's types as `CREATE TABLE` statements, `<Name>.sql`, for a
 database that stores what the API describes. Each object type becomes a table.
 
@@ -615,7 +642,7 @@ or check expression written for the original dialect is dropped and listed.
 by Apiome's SQL reader. From the CLI, run `apiome export sql <item> --out schema.sql --dialect mysql
 --option nested=tables`.
 
-#### DBML and Prisma
+#### DBML and Prisma {#dbml-and-prisma}
 
 Set **output** to write the same tables, columns, keys, enums and foreign keys in another language
 (or, for migrations, as [Liquibase or Flyway changesets](#liquibase-and-flyway-changelogs)).
