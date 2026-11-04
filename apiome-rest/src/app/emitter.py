@@ -826,6 +826,7 @@ def load_builtin_emitters() -> None:
     from . import hl7v2_guide_emitter as _hl7v2_guide  # noqa: F401
     from . import hoppscotch_emitter as _hoppscotch_emitter  # noqa: F401
     from . import http_file_emitter as _http_file_emitter  # noqa: F401
+    from . import iceberg_emitter as _iceberg_emitter  # noqa: F401
     from . import idoc_emitter as _idoc  # noqa: F401
     from . import insomnia_emitter as _insomnia_emitter  # noqa: F401
     from . import iso8583_emitter as _iso8583  # noqa: F401

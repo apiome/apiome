@@ -38,12 +38,14 @@ from .emitter import (
 from .field_identity_store import (
     CAPNP_TARGET,
     FLATBUFFERS_TARGET,
+    ICEBERG_TARGET,
     PROTO3_TARGET,
     THRIFT_TARGET,
     load_persisted_field_numbers,
     persist_field_number_assignments,
 )
 from .flatbuffers_emitter import FlatBuffersEmitter
+from .iceberg_emitter import IcebergEmitter
 from .proto_emitter import ProtoEmitter
 from .sql_changelog import CHANGELOG_MODES, baseline_variant
 from .sql_ddl_emitter import SqlDdlEmitter
@@ -71,8 +73,8 @@ class ExportError(Exception):
 class ExportPersistenceContext(BaseModel):
     """Optional tenant/artifact coordinates for persisting synthesized field identities.
 
-    Used by the targets that number fields positionally: Protobuf (MFX-12.2), Thrift (MFX-25.2) and
-    Cap'n Proto (MFX-30.2, which also keeps its file id there).
+    Used by the targets that number fields positionally: Protobuf (MFX-12.2), Thrift (MFX-25.2),
+    Cap'n Proto (MFX-30.2, which also keeps its file id there), FlatBuffers and Iceberg (MFX-36.3).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -91,7 +93,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
         :data:`~app.field_identity_store.PROTO3_TARGET` for Protobuf,
         :data:`~app.field_identity_store.THRIFT_TARGET` for Thrift,
         :data:`~app.field_identity_store.CAPNP_TARGET` for Cap'n Proto,
-        :data:`~app.field_identity_store.FLATBUFFERS_TARGET` for FlatBuffers, ``None`` for every other
+        :data:`~app.field_identity_store.FLATBUFFERS_TARGET` for FlatBuffers,
+        :data:`~app.field_identity_store.ICEBERG_TARGET` for Iceberg (MFX-36.3), ``None`` for every other
         target.
     """
     if issubclass(emitter_cls, ProtoEmitter):
@@ -102,6 +105,8 @@ def _field_identity_target(emitter_cls: type[Emitter]) -> Optional[str]:
         return CAPNP_TARGET
     if issubclass(emitter_cls, FlatBuffersEmitter):
         return FLATBUFFERS_TARGET
+    if issubclass(emitter_cls, IcebergEmitter):
+        return ICEBERG_TARGET
     return None
 
 

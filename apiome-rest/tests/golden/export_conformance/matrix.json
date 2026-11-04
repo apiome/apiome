@@ -250,6 +250,12 @@
     },
     {
       "family": "a2a",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "a2a",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -805,6 +811,12 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "acp",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "acp",
@@ -1381,6 +1393,12 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "agents-manifest",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "agents-manifest",
@@ -2040,6 +2058,18 @@
     },
     {
       "family": "api-blueprint",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "api-blueprint",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -2732,6 +2762,12 @@
     },
     {
       "family": "apigee",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "apigee",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -3330,6 +3366,12 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "arazzo",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "arazzo",
@@ -3934,6 +3976,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "arrow",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "arrow",
@@ -4549,6 +4603,18 @@
     },
     {
       "family": "asn1",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "asn1",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -5117,6 +5183,12 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "asyncapi",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "asyncapi",
@@ -5693,6 +5765,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "avro",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "avro",
@@ -6323,6 +6407,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "avro-idl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 5,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "avro-idl",
@@ -7015,6 +7111,18 @@
     },
     {
       "family": "aws-apigateway",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "aws-apigateway",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -7704,6 +7812,12 @@
     },
     {
       "family": "azure-apim",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "azure-apim",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -8394,6 +8508,18 @@
     },
     {
       "family": "bruno",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 3,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "bruno",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -9061,6 +9187,18 @@
     },
     {
       "family": "capnproto",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 4,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "capnproto",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -9695,6 +9833,18 @@
     },
     {
       "family": "cddl",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 1,
+        "synth": 19
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "cddl",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -10313,6 +10463,18 @@
     },
     {
       "family": "cics-bms",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "cics-bms",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -10916,6 +11078,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "cloudevents",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "cloudevents",
@@ -11528,6 +11702,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "cobolcopybook",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 10,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "cobolcopybook",
@@ -12158,6 +12344,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "connectrpc",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "connectrpc",
@@ -12817,6 +13015,12 @@
     },
     {
       "family": "consul",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "consul",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -13444,6 +13648,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "corbaidl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 6,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "corbaidl",
@@ -14080,6 +14296,18 @@
     },
     {
       "family": "cue",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "cue",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -14694,6 +14922,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "dbt",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 2,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "dbt",
@@ -15316,6 +15556,18 @@
     },
     {
       "family": "dhall",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 2,
+        "synth": 13
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "dhall",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -15932,6 +16184,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "dicom",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 36
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "dicom",
@@ -16613,6 +16877,18 @@
     },
     {
       "family": "discovery",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 8,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "discovery",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -17275,6 +17551,18 @@
     },
     {
       "family": "dtd",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "dtd",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -17892,6 +18180,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "edifact",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 49
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "edifact",
@@ -18519,6 +18819,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "edix12",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 23
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "edix12",
@@ -19165,6 +19477,12 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "envoy-xds",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "envoy-xds",
@@ -19854,6 +20172,18 @@
     },
     {
       "family": "fhir",
+      "loss_counts": {
+        "approx": 8,
+        "drop": 5,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "fhir",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -20519,6 +20849,18 @@
     },
     {
       "family": "fix",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -21137,6 +21479,18 @@
     },
     {
       "family": "fix-orchestra",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 0,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "fix-orchestra",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -21748,6 +22102,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "flatbuffers",
+      "loss_counts": {
+        "approx": 7,
+        "drop": 0,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "flatbuffers",
@@ -22397,6 +22763,12 @@
     },
     {
       "family": "gateway-api",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "gateway-api",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -23037,6 +23409,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "graphql",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 4,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "graphql",
@@ -23697,6 +24081,12 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "haproxy",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "haproxy",
@@ -24386,6 +24776,18 @@
     },
     {
       "family": "har",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 7,
+        "synth": 20
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "har",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -25055,6 +25457,18 @@
     },
     {
       "family": "hl7v2",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 49
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "hl7v2",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -25672,6 +26086,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "hl7v3",
+      "loss_counts": {
+        "approx": 14,
+        "drop": 2,
+        "synth": 132
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "hl7v3",
@@ -26350,6 +26776,18 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "hoppscotch",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "hoppscotch",
@@ -27075,6 +27513,18 @@
     },
     {
       "family": "http-file",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "http-file",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -27740,6 +28190,18 @@
     {
       "family": "idoc",
       "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 34
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "idoc",
+      "loss_counts": {
         "approx": 8,
         "drop": 34,
         "synth": 0
@@ -28362,6 +28824,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "ims",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 15,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "ims",
@@ -29043,6 +29517,18 @@
     },
     {
       "family": "insomnia",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 7,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "insomnia",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -29707,6 +30193,18 @@
     },
     {
       "family": "iso20022",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 36
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "iso20022",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -30332,6 +30830,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "iso8583",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 22
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "iso8583",
@@ -30993,6 +31503,12 @@
     },
     {
       "family": "istio",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "istio",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -31458,7 +31974,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation 4fc1dbf3-ff37-4a2a-b10e-4bdbfef3c542",
+        "added operation d37fefc6-54b1-4ba5-8336-a0ad5e4fd446",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -31617,6 +32133,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "json-schema",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "json-schema",
@@ -32221,6 +32749,18 @@
     },
     {
       "family": "jsonld",
+      "loss_counts": {
+        "approx": 14,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "jsonld",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -32672,7 +33212,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 521d28c8-3aaa-4369-b6e8-dcdc3ca73d3c",
+        "added operation f0a6d8ca-924c-4697-9972-bb99fa56f013",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -32834,6 +33374,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "jtd",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 0,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "jtd",
@@ -33294,7 +33846,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation ff6e5c18-9bf5-4e6d-be84-3b36c52dd030",
+        "added operation 951bd44b-2599-4673-95d8-ee8e16fb9b73",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -33455,6 +34007,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "k8s-crd",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 2,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "k8s-crd",
@@ -34065,6 +34629,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "kafka-connect",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "kafka-connect",
@@ -34717,6 +35293,12 @@
     },
     {
       "family": "kong",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "kong",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -35360,6 +35942,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "llm-tools",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 6,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "llm-tools",
@@ -36007,6 +36601,18 @@
     },
     {
       "family": "lwm2m",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "lwm2m",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -36648,6 +37254,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "matter",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 7,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "matter",
@@ -37295,6 +37913,18 @@
     },
     {
       "family": "mcp",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 15,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "mcp",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -37929,6 +38559,18 @@
     },
     {
       "family": "nacha",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 62
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "nacha",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -38549,6 +39191,18 @@
     },
     {
       "family": "natural-ddm",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 8,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "natural-ddm",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -39166,6 +39820,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "ncpdp",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 92
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "ncpdp",
@@ -39812,6 +40478,12 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "nginx",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
     },
     {
       "family": "nginx",
@@ -40498,6 +41170,18 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "odata",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "odata",
@@ -41215,6 +41899,18 @@
     },
     {
       "family": "odata-v2",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 15,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "odata-v2",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -41707,7 +42403,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation 61827ce5-dde1-4861-b994-7920a108016c",
+        "added operation b123431c-04e6-49a5-8fb8-cdccf7bddc21",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -41866,6 +42562,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "odcs",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "odcs",
@@ -42492,6 +43200,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "oncrpc",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "oncrpc",
@@ -43134,6 +43854,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "opcua-nodeset",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 3,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "opcua-nodeset",
@@ -43767,6 +44499,18 @@
     },
     {
       "family": "openapi",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 2,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "openapi",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -44391,6 +45135,18 @@
     },
     {
       "family": "openrpc",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 6
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "openrpc",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -44850,7 +45606,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation eb09c634-c3fe-4a72-b40c-5753393ce912",
+        "added operation affd82d9-54f2-4e6b-83cf-acb56cc94dcd",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -45012,6 +45768,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "owl",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "owl",
@@ -45624,6 +46392,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "pkl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 8,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "pkl",
@@ -46243,6 +47023,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "pli",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 13,
+        "synth": 21
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "pli",
@@ -46921,6 +47713,18 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "postman",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "postman",
@@ -47640,6 +48444,18 @@
     },
     {
       "family": "postman-v2",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 6,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "postman-v2",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -48314,6 +49130,18 @@
     },
     {
       "family": "protobuf",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -48958,6 +49786,18 @@
     },
     {
       "family": "protobuf-editions",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "protobuf-editions",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -49588,6 +50428,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "pydantic",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 9,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "pydantic",
@@ -50270,6 +51122,18 @@
     },
     {
       "family": "raml",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "raml",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -50924,6 +51788,18 @@
     },
     {
       "family": "relaxng",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 2,
+        "synth": 10
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "relaxng",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -51374,7 +52250,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation 71ff4ecd-ff8c-4df0-9f80-ce6990793c99",
+        "added operation 62492276-d2c3-4d56-b8b9-1305b5c11c5b",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -51535,6 +52411,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "ros2",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "ros2",
@@ -52158,6 +53046,18 @@
     },
     {
       "family": "sepa",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 59
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "sepa",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -52775,6 +53675,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "shacl",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "shacl",
@@ -53406,6 +54318,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "smithy",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 4,
+        "synth": 11
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "smithy",
@@ -54097,6 +55021,18 @@
     },
     {
       "family": "soapui",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "soapui",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -54592,7 +55528,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation ab9e166b-d90d-4986-a086-151998d9be82",
+        "added operation af772972-9676-4b15-87df-10840470296f",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -54752,6 +55688,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "sparkplug",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 4,
+        "synth": 7
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "sparkplug",
@@ -55364,6 +56312,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "sql-ddl",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 2,
+        "synth": 25
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "sql-ddl",
@@ -56044,6 +57004,18 @@
       "status": "lossy",
       "target": "http-file",
       "tier": "lossy"
+    },
+    {
+      "family": "swagger",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 18,
+        "synth": 36
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "swagger",
@@ -56765,6 +57737,18 @@
     },
     {
       "family": "swagger-1.2",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 8,
+        "synth": 12
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "swagger-1.2",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -57424,6 +58408,18 @@
     },
     {
       "family": "swift-mt",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 36
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "swift-mt",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -58053,6 +59049,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "thrift",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 5,
+        "synth": 9
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "thrift",
@@ -58742,6 +59750,18 @@
     },
     {
       "family": "thunder-client",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 6,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "thunder-client",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -59405,6 +60425,18 @@
     },
     {
       "family": "tradacoms",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "tradacoms",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -60051,6 +61083,12 @@
     },
     {
       "family": "traefik",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "traefik",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -60686,6 +61724,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "trpc",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 17,
+        "synth": 28
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "trpc",
@@ -61353,6 +62403,12 @@
     },
     {
       "family": "tyk",
+      "reason": "Apache Iceberg export needs at least one record type (an object, struct or message); this source has none.",
+      "status": "refused",
+      "target": "iceberg"
+    },
+    {
+      "family": "tyk",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -61828,7 +62884,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 12f64bf0-8d43-4630-a0cf-9658fc55c323",
+        "added operation 6bbe4dde-5a7f-4914-8844-cf2586587f81",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -61990,6 +63046,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "typescript-types",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 0,
+        "synth": 25
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "typescript-types",
@@ -62675,6 +63743,18 @@
     },
     {
       "family": "typespec",
+      "loss_counts": {
+        "approx": 5,
+        "drop": 5,
+        "synth": 8
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "typespec",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -63326,6 +64406,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "vsam-idcams",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 0,
+        "synth": 1
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "vsam-idcams",
@@ -64007,6 +65099,18 @@
     },
     {
       "family": "wadl",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 5,
+        "synth": 4
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "wadl",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -64673,6 +65777,18 @@
     },
     {
       "family": "wit",
+      "loss_counts": {
+        "approx": 2,
+        "drop": 5,
+        "synth": 3
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "wit",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -65308,6 +66424,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "wsdl",
+      "loss_counts": {
+        "approx": 6,
+        "drop": 5,
+        "synth": 18
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "wsdl",
@@ -65948,6 +67076,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "wsdl2",
+      "loss_counts": {
+        "approx": 4,
+        "drop": 5,
+        "synth": 15
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "wsdl2",
@@ -66597,6 +67737,18 @@
     },
     {
       "family": "xmlrpc",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 3,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "xmlrpc",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -67212,6 +68364,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "xregistry",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 8,
+        "synth": 5
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "xregistry",
@@ -67833,6 +68997,18 @@
     },
     {
       "family": "xsd",
+      "loss_counts": {
+        "approx": 3,
+        "drop": 0,
+        "synth": 14
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "xsd",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -68443,6 +69619,18 @@
       "reason": "HTTP Request File export needs at least one HTTP operation (a method and a path); this source has none.",
       "status": "refused",
       "target": "http-file"
+    },
+    {
+      "family": "zod",
+      "loss_counts": {
+        "approx": 1,
+        "drop": 12,
+        "synth": 16
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
     },
     {
       "family": "zod",
@@ -69125,6 +70313,18 @@
     },
     {
       "family": "zosconnect",
+      "loss_counts": {
+        "approx": 0,
+        "drop": 4,
+        "synth": 2
+      },
+      "reason": null,
+      "status": "lossy",
+      "target": "iceberg",
+      "tier": "types-only"
+    },
+    {
+      "family": "zosconnect",
       "reason": "Only a source imported as SAP IDoc can be exported to SAP IDoc.",
       "status": "refused",
       "target": "idoc"
@@ -69504,9 +70704,9 @@
   ],
   "counts": {
     "crash": 0,
-    "lossy": 4466,
+    "lossy": 4558,
     "ok": 42,
-    "refused": 2234,
+    "refused": 2250,
     "silent-loss": 170,
     "skipped": 0
   },
@@ -69652,6 +70852,7 @@
     "hl7v2-guide",
     "hoppscotch",
     "http-file",
+    "iceberg",
     "idoc",
     "insomnia",
     "iso20022",

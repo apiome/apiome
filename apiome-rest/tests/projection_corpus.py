@@ -152,6 +152,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "hl7v2": GENERIC,
     "hl7v2-guide": GENERIC,
     "hoppscotch": GENERIC,
+    "iceberg": GENERIC,
     "http-file": GENERIC,
     "idoc": GENERIC,
     "insomnia": GENERIC,

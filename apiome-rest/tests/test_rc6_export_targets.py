@@ -78,6 +78,7 @@ RC6_EXPORT_TARGETS: tuple[str, ...] = (
     "hl7v2",
     "hl7v2-guide",
     "hoppscotch",
+    "iceberg",
     "http-file",
     "idoc",
     "insomnia",

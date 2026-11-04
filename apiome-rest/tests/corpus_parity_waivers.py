@@ -31,6 +31,9 @@ KNOWN_PARITY_WAIVERS: Dict[Tuple[str, str], str] = {}
 #: ``emitter import-source key -> reason`` for a shipped emitter with no import adapter behind it.
 #:
 #: Such a destination can never be covered by the *import* corpus, so it is exempt from parity —
-#: but only once somebody has said so. Empty today: every shipped emitter resolves to a registered
-#: adapter.
-KNOWN_EXPORT_ONLY_DESTINATIONS: Dict[str, str] = {}
+#: but only once somebody has said so.
+KNOWN_EXPORT_ONLY_DESTINATIONS: Dict[str, str] = {
+    "iceberg": "MFX-36.3 (#4319): an Iceberg schema lives in a table's metadata in a catalog, not in a document "
+    "anyone uploads; Apiome writes it for a lake table and reads it back with nothing. pyiceberg parses every "
+    "export in the gate instead.",
+}
