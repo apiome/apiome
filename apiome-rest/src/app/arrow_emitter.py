@@ -43,7 +43,7 @@ import io
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple, Union
+from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Set, Tuple, Union
 
 from pydantic import Field, ValidationError
 
@@ -100,6 +100,12 @@ JSON_MEDIA_TYPE = "application/json"
 PARQUET_MEDIA_TYPE = "text/plain"
 SCHEMA_SUFFIX = ".arrow.json"
 PARQUET_SUFFIX = ".parquet.txt"
+#: MFX-36.2 (#4318): the BigQuery and Spark schema modes.
+BIGQUERY_SUFFIX = ".bigquery.json"
+SPARK_SUFFIX = ".spark.ddl"
+BIGQUERY_BUNDLE = f"schemas{BIGQUERY_SUFFIX}"
+SPARK_BUNDLE = f"schemas{SPARK_SUFFIX}"
+OUTPUT_MODES = ("arrow", "bigquery", "spark")
 #: The root name the Arrow importer uses when a schema names nothing (its ``DEFAULT_ROOT_NAME``).
 _DEFAULT_ROOT_NAME = "Schema"
 
@@ -165,9 +171,22 @@ class ArrowEmitOptions(EmitOptions):
         description="Export only this record (its name or key) as the table. Empty means every root record "
         "(a record no other record holds), each as its own schema.",
     )
+    output: Literal["arrow", "bigquery", "spark"] = Field(
+        default="arrow",
+        description="What to write for each table: `arrow` (an Arrow schema, plus its Parquet message), "
+        "`bigquery` (a BigQuery table schema, the JSON `bq mk --schema` reads) or `spark` (a Spark StructType "
+        "DDL string, what `DataType.fromDDL` parses). All three serialize the same typed projection.",
+    )
     parquet: bool = Field(
         default=True,
-        description="Also write each table's Parquet message (`<table>.parquet.txt`), as pyarrow derives it.",
+        description="Also write each table's Parquet message (`<table>.parquet.txt`), as pyarrow derives it "
+        "(output `arrow` only).",
+    )
+    bundle: bool = Field(
+        default=False,
+        description="Output `bigquery` / `spark`: write every table into one file (`schemas.bigquery.json`, an "
+        "object of table → schema; `schemas.spark.ddl`, a `-- <table>` line before each DDL line) instead of "
+        "one file per table.",
     )
     indent: int = Field(default=2, ge=0, le=8, description="JSON indentation width (0 for compact output).")
 
@@ -560,10 +579,13 @@ def check_emitted_arrow(emit_result: EmitResult) -> List[Dict[str, str]]:
     from .arrow_schema import ArrowParseError  # noqa: PLC0415
     from .import_source import ImportSourceError, get_import_source  # noqa: PLC0415
 
-    problems: List[Dict[str, str]] = []
+    problems: List[Dict[str, str]] = _warehouse_problems(emit_result)
     schemas = [f for f in emit_result.files if f.path.endswith(SCHEMA_SUFFIX)]
     if not schemas:
-        return [{"rule": "schema", "message": "The Arrow export wrote no `.arrow.json` schema.", "file": ""}]
+        if any(f.path.endswith((BIGQUERY_SUFFIX, SPARK_SUFFIX)) for f in emit_result.files):
+            return problems
+        return [{"rule": "schema", "message": "The Arrow export wrote no `.arrow.json`, `.bigquery.json` or "
+                 "`.spark.ddl` schema.", "file": ""}]
     for emitted in schemas:
         text = str(emitted.content)
         try:
@@ -585,6 +607,30 @@ def check_emitted_arrow(emit_result: EmitResult) -> List[Dict[str, str]]:
         except (ImportSourceError, ValueError) as exc:
             problems.append({"rule": "reimport", "message": f"the schema does not import: {exc}",
                              "file": emitted.path})
+    return problems
+
+
+def _warehouse_problems(emit_result: EmitResult) -> List[Dict[str, str]]:
+    """The BigQuery and Spark checks (MFX-36.2): BigQuery's documented schema rules, Spark's DDL grammar."""
+    from .warehouse_schemas import bigquery_schema_problems, spark_ddl_problems  # noqa: PLC0415
+
+    problems: List[Dict[str, str]] = []
+    for emitted in emit_result.files:
+        text = str(emitted.content)
+        if emitted.path.endswith(BIGQUERY_SUFFIX):
+            try:
+                document = json.loads(text)
+            except ValueError as exc:
+                problems.append({"rule": "json", "message": str(exc), "file": emitted.path})
+                continue
+            # A bundle is an object of table name → schema; a per-table file is the schema itself.
+            schemas = document.items() if isinstance(document, dict) else [("", document)]
+            for table, fields in schemas:
+                problems += [{"rule": p["rule"], "message": f"{table + ': ' if table else ''}{p['path']}: "
+                              f"{p['message']}", "file": emitted.path} for p in bigquery_schema_problems(fields)]
+        elif emitted.path.endswith(SPARK_SUFFIX):
+            problems += [{"rule": p["rule"], "message": f"{p['path']}: {p['message']}", "file": emitted.path}
+                         for p in spark_ddl_problems(text)]
     return problems
 
 
@@ -630,10 +676,14 @@ class ArrowFidelityRulePack(CapabilityRulePack):
             self._tables = project_arrow_tables(api, options, losses)
         except (EmitPreconditionError, EmitOptionsError, ValueError):
             pass
+        if options.output != "arrow":
+            # BigQuery and Spark are read by no importer, so there is no round trip to measure; what the
+            # serializer approximates is filed under each table instead.
+            _warehouse_files(self._tables, options, losses)
         self._filed: Dict[str, List[Loss]] = {}
         for loss in losses.records():
             self._filed.setdefault(loss.pointer or "", []).append(loss)
-        self._changes, self._added = _measure_round_trip(api, options)
+        self._changes, self._added = (_measure_round_trip(api, options) if options.output == "arrow" else ({}, {}))
         self._reached = _reached_types(api, self._tables)
         return super().evaluate(api)
 
@@ -661,6 +711,10 @@ class ArrowFidelityRulePack(CapabilityRulePack):
         return verdicts
 
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        # A BigQuery / Spark approximation is filed under its table, and replaces the table's OK.
+        filed = self._filed_verdicts(type_.key)
+        if filed:
+            return filed
         change = self._changes.get(type_.key)
         if change is DiffChangeKind.REMOVED:
             return [FidelityVerdict.drop(message=self._removed_reason(type_), severity=LossinessSeverity.INFO,
@@ -846,6 +900,12 @@ class ArrowEmitter(Emitter, register=True):
         if (api.services or api.channels) and any(op for s in api.services for op in s.operations):
             losses.record(LossKind.NA, LOSS_SERVICES, "Arrow schemas describe tables; operations and channels are "
                           "not written", "")
+        if options.output != "arrow":
+            for table in tables:
+                schema_to_pyarrow(table.schema)  # the same projection pyarrow builds
+            files = _warehouse_files(tables, options, losses)
+            return EmitResult(files=files, media_type=files[0].media_type if len(files) == 1 else "application/zip",
+                              provenance=[], losses=losses.records())
         files: List[EmittedFile] = []
         stems: Set[str] = set()
         for table in tables:
@@ -871,6 +931,41 @@ class ArrowEmitter(Emitter, register=True):
         files.sort(key=lambda f: f.path)
         return EmitResult(files=files, media_type=JSON_MEDIA_TYPE if len(files) == 1 else "application/zip",
                           provenance=tracker.records(), losses=losses.records())
+
+
+def _warehouse_files(tables: Sequence[ArrowTable], options: ArrowEmitOptions,
+                     losses: LossTracker) -> List[EmittedFile]:
+    """The BigQuery or Spark files for the tables: one per table, or one bundle (MFX-36.2)."""
+    from .warehouse_schemas import bigquery_fields, spark_ddl  # noqa: PLC0415
+
+    indent = options.indent or None
+    bigquery = options.output == "bigquery"
+    serialized: List[Tuple[str, Any]] = []
+    for table in tables:
+        if bigquery:
+            serialized.append((table.name, bigquery_fields(table.schema, losses=losses, pointer=table.key)))
+        else:
+            serialized.append((table.name, spark_ddl(table.schema, losses=losses, pointer=table.key)))
+    media = JSON_MEDIA_TYPE if bigquery else PARQUET_MEDIA_TYPE
+    if options.bundle:
+        if bigquery:
+            content = json.dumps(dict(serialized), indent=indent, ensure_ascii=False) + "\n"
+            return [EmittedFile(path=BIGQUERY_BUNDLE, content=content, media_type=media)]
+        body = "".join(f"-- {name}\n{ddl}\n" for name, ddl in serialized)
+        return [EmittedFile(path=SPARK_BUNDLE, content=body, media_type=media)]
+    files: List[EmittedFile] = []
+    stems: Set[str] = set()
+    for name, value in serialized:
+        stem = _file_stem(name)
+        while stem in stems:
+            stem += "_"
+        stems.add(stem)
+        if bigquery:
+            files.append(EmittedFile(path=f"{stem}{BIGQUERY_SUFFIX}", media_type=media,
+                                     content=json.dumps(value, indent=indent, ensure_ascii=False) + "\n"))
+        else:
+            files.append(EmittedFile(path=f"{stem}{SPARK_SUFFIX}", content=value + "\n", media_type=media))
+    return sorted(files, key=lambda f: f.path)
 
 
 def _coerce_options(opts: Optional[Union[ArrowEmitOptions, EmitOptions]]) -> ArrowEmitOptions:
