@@ -31,6 +31,14 @@ element. An enum value that is not a valid code (upper-case letters and digits, 
 are named like element references (``BEG01``, ``N103``) is split into one segment per prefix, its
 segments ordered as the interchange had them (``x12_transactions``), and a reference the sample left
 empty is a *not used* (``X``) position.
+
+**UN/EDIFACT** (MFX-24.2, :mod:`app.edifact_guide_emitter`) uses the same plan with two options. A
+``segment_id_rule`` every segment ID must match (EDIFACT: three letters, never a ``U…`` service tag), so an
+allocated ID is a valid tag and an imported one that is not gets a new ID. With ``edifact_refs``, an
+imported EDIFACT message keeps its tags and element positions: ``NAD01`` is a simple element and
+``NAD02-1`` / ``NAD02-3`` the components of the composite ``NAD02`` (component 2, which the sample left
+empty, is *not used*), in the order the message had its segments (``edifact_messages``). Both default off,
+so an X12 guide is planned exactly as before.
 """
 
 from __future__ import annotations
@@ -45,6 +53,7 @@ from .cobolcopybook_plan import record_types
 from .emitter import LossKind, LossTracker
 
 __all__ = [
+    "EDIFACT_REF_RE",
     "ELEMENT_REF_RE",
     "GuideElement",
     "GuideLoop",
@@ -57,6 +66,9 @@ __all__ = [
 
 #: An element reference: a segment ID (a letter, then 1-2 letters or digits) and a 2-digit position.
 ELEMENT_REF_RE = re.compile(r"^([A-Z][A-Z0-9]{1,2})(\d{2})$")
+#: An imported EDIFACT element reference: a 3-letter tag, a 2-digit position and, for a component of a composite,
+#: ``-<component>`` (``NAD02-3``).
+EDIFACT_REF_RE = re.compile(r"^([A-Z]{3})(\d{2})(?:-(\d{1,2}))?$")
 
 #: Canonical integer scalar names → maximum digits.
 _INTEGER_DIGITS: Dict[str, int] = {
@@ -79,7 +91,7 @@ _NONE = frozenset({"null", "void", "none"})
 #: Digits of a decimal (and of a float) element.
 _DECIMAL_DIGITS = 15
 
-ElementKind = str  # "text" | "code" | "integer" | "decimal" | "date" | "time"
+ElementKind = str  # "text" | "code" | "integer" | "decimal" | "date" | "time" | "composite"
 
 
 @dataclass
@@ -89,7 +101,8 @@ class GuideElement:
     Attributes:
         ref: Its reference (``ORD01``): the segment ID and its 2-digit position.
         name: A readable name (the source field's).
-        kind: ``text``, ``code``, ``integer``, ``decimal``, ``date``, ``time``.
+        kind: ``text``, ``code``, ``integer``, ``decimal``, ``date``, ``time``, or ``composite`` (an imported
+            EDIFACT composite: its values are its ``components``).
         min_length: Minimum characters (digits for numbers).
         max_length: Maximum characters (digits for numbers).
         usage: ``M`` (mandatory), ``O`` (optional) or ``X`` (not used).
@@ -98,6 +111,7 @@ class GuideElement:
         source: The canonical key it comes from (``""`` for a not-used position).
         notes: Rules the element type cannot enforce, as guide notes (``pattern: ^[A-Z]+$``).
         code_values: Synthesized code → the source value it stands for (renamed codes only).
+        components: The components of a ``composite``, refs ``<ref>-1`` upward.
     """
 
     ref: str
@@ -111,6 +125,7 @@ class GuideElement:
     source: str = ""
     notes: List[str] = field(default_factory=list)
     code_values: Dict[str, str] = field(default_factory=dict)
+    components: List["GuideElement"] = field(default_factory=list)
 
 
 @dataclass
@@ -189,22 +204,28 @@ class GuideOptions:
         default_length: Maximum length of text with no ``maxLength``.
         reserved_ids: Segment IDs the standard reserves (its envelope: ``ST``, ``SE`` …).
         max_code_length: The longest code an enum value may be used as directly.
+        segment_id_rule: A pattern every segment ID must match (``None``: any 2-3 letters or digits starting
+            with a letter). An imported ID that does not match gets a new one.
+        edifact_refs: Read an imported EDIFACT message's element references (``NAD02-3``) and segment order.
     """
 
     default_length: int = 80
     reserved_ids: frozenset = frozenset()
     max_code_length: int = 3
+    segment_id_rule: Optional[str] = None
+    edifact_refs: bool = False
 
 
 class _SegmentIds:
     """Unique, deterministic segment IDs spelled from names (``Order`` → ``ORD``, ``OrderLine`` → ``ORL``)."""
 
-    def __init__(self, reserved: frozenset) -> None:
+    def __init__(self, reserved: frozenset, rule: Optional[str] = None) -> None:
         self._used: Set[str] = set(reserved)
+        self._rule = re.compile(rule) if rule else None
 
     def claim(self, segment_id: str) -> bool:
-        """Take ``segment_id`` as is (an imported one); ``False`` when it is taken."""
-        if segment_id in self._used:
+        """Take ``segment_id`` as is (an imported one); ``False`` when it is taken or breaks the ID rule."""
+        if segment_id in self._used or (self._rule is not None and not self._rule.match(segment_id)):
             return False
         self._used.add(segment_id)
         return True
@@ -221,6 +242,12 @@ class _SegmentIds:
         candidates += [letters[0] + a + b for a in letters[1:] for b in letters[2:]]
         candidates += [letters[:2] + str(d) for d in range(1, 10)]
         candidates += [letters[0] + str(d) + str(e) for d in range(10) for e in range(10)]
+        if self._rule is not None:
+            # An ID rule may forbid digits (EDIFACT tags are letters): fall back to every letter pair.
+            alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            first = letters[0] if letters[0].isalpha() else "S"
+            candidates += [first + a + b for a in alphabet for b in alphabet]
+            candidates += [a + b + c for a in alphabet for b in alphabet for c in alphabet]
         for candidate in candidates:
             if len(candidate) >= 2 and self.claim(candidate):
                 return candidate
@@ -234,7 +261,7 @@ class _Planner:
         self._api = api
         self._options = options
         self._losses = losses
-        self._ids = _SegmentIds(options.reserved_ids)
+        self._ids = _SegmentIds(options.reserved_ids, options.segment_id_rule)
         self._by_key = {t.key: t for t in api.types if t.key}
         names = [t.name for t in api.types]
         self._by_name = {t.name: t for t in api.types if t.name and names.count(t.name) == 1}
@@ -242,6 +269,8 @@ class _Planner:
         self._segment_of: Dict[str, List[str]] = {}
         self._noted: Set[Tuple[str, str]] = set()
         self._order = self._source_segment_order()
+        #: A new ID → the imported ID it stands in for (one the ID rule does not allow), so it keeps its order.
+        self._stands_for: Dict[str, str] = {}
 
     # --- structure -------------------------------------------------------------
 
@@ -270,7 +299,12 @@ class _Planner:
         if self._order:
             rank = {seg: i for i, seg in enumerate(self._order)}
             head, rest = members[0], members[1:]
-            rest.sort(key=lambda node: rank.get(node.segment if isinstance(node, SegmentUse) else node.id, len(rank)))
+
+            def place(node: Union[SegmentUse, GuideLoop]) -> int:
+                seg_id = node.segment if isinstance(node, SegmentUse) else node.id
+                return rank.get(self._stands_for.get(seg_id, seg_id), len(rank))
+
+            rest.sort(key=place)
             members = [head, *rest]
         if top:
             return members
@@ -323,7 +357,9 @@ class _Planner:
         if record.key in self._segment_of:
             return self._segment_of[record.key]
         scalars = [f for f in self._fields(record) if not self._is_child(f)]
-        groups = self._x12_groups(scalars)
+        # An EDIFACT guide reads EDIFACT refs first, and an imported X12 transaction's refs too, so its segments
+        # stay split as the X12 guide splits them (a segment whose X12 ID is not a valid tag gets a new one).
+        groups = (self._edifact_groups(scalars) if self._options.edifact_refs else []) or self._x12_groups(scalars)
         if groups:
             ids = [self._imported_segment(seg_id, members, record) for seg_id, members in groups]
         else:
@@ -341,12 +377,26 @@ class _Planner:
         order = {seg: i for i, seg in enumerate(self._order)}
         return sorted(groups.items(), key=lambda item: order.get(item[0], len(order)))
 
+    def _edifact_groups(self, scalars: List[CanonicalField]) -> List[Tuple[str, List[CanonicalField]]]:
+        """Scalar fields named like EDIFACT element refs (``NAD02-3``), grouped by tag; ``[]`` when they are not."""
+        if not scalars or not all(EDIFACT_REF_RE.match(f.name or "") for f in scalars):
+            return []
+        groups: Dict[str, List[CanonicalField]] = {}
+        for f in scalars:
+            groups.setdefault(EDIFACT_REF_RE.match(f.name).group(1), []).append(f)
+        order = {seg: i for i, seg in enumerate(self._order)}
+        return sorted(groups.items(), key=lambda item: order.get(item[0], len(order)))
+
     def _imported_segment(self, seg_id: str, members: List[CanonicalField], record: Type) -> str:
         """A segment keeping its imported ID and refs; positions the sample left empty are *not used*."""
         if seg_id in self.segments:
             return seg_id
         if not self._ids.claim(seg_id):
-            return self._new_segment(seg_id, record.key, members)
+            new_id = self._new_segment(seg_id, record.key, members)
+            self._stands_for[new_id] = seg_id
+            return new_id
+        if self._options.edifact_refs and all(EDIFACT_REF_RE.match(f.name or "") for f in members):
+            return self._imported_edifact_segment(seg_id, members, record)
         by_position = {int(ELEMENT_REF_RE.match(f.name).group(2)): f for f in members}
         elements: List[GuideElement] = []
         for position in range(1, max(by_position) + 1):
@@ -358,6 +408,43 @@ class _Planner:
             elements += built or [GuideElement(f"{seg_id}{position:02d}", f.name, "text", 1, 1, "X", source=f.key)]
         self.segments[seg_id] = GuideSegment(seg_id, seg_id, elements, record.key)
         return seg_id
+
+    def _imported_edifact_segment(self, tag: str, members: List[CanonicalField], record: Type) -> str:
+        """An imported EDIFACT segment: its positions, each a simple element or a composite of its components.
+
+        A position or component the sample left empty is *not used* (``X``).
+        """
+        by_position: Dict[int, Dict[Optional[int], CanonicalField]] = {}
+        for f in members:
+            match = EDIFACT_REF_RE.match(f.name)
+            component = int(match.group(3)) if match.group(3) else None
+            by_position.setdefault(int(match.group(2)), {})[component] = f
+        elements: List[GuideElement] = []
+        for position in range(1, max(by_position) + 1):
+            ref = f"{tag}{position:02d}"
+            fields = by_position.get(position)
+            if not fields:
+                elements.append(GuideElement(ref, "Not used", "text", 1, 1, "X"))
+                continue
+            if None in fields and len(fields) == 1:
+                built = self._element(fields[None], fields[None].type, position=position, segment_id=tag)
+                elements.append(built[0] if built else GuideElement(ref, fields[None].name, "text", 1, 1, "X",
+                                                                    source=fields[None].key))
+                continue
+            components: List[GuideElement] = []
+            for k in range(1, max(c for c in fields if c is not None) + 1):
+                f = fields.get(k)
+                if f is None:
+                    components.append(GuideElement(f"{ref}-{k}", "Not used", "text", 1, 1, "X"))
+                    continue
+                built = self._element(f, f.type, position=position, segment_id=tag)
+                component = built[0] if built else GuideElement(ref, f.name, "text", 1, 1, "X", source=f.key)
+                component.ref = f"{ref}-{k}"
+                components.append(component)
+            usage = "M" if any(c.usage == "M" for c in components) else "O"
+            elements.append(GuideElement(ref, ref, "composite", 1, 1, usage, components=components))
+        self.segments[tag] = GuideSegment(tag, tag, elements, record.key)
+        return tag
 
     def _new_segment(
         self, name: str, source: str, fields: List[CanonicalField], *, list_item: Optional[TypeRef] = None
@@ -501,7 +588,19 @@ class _Planner:
         return self._by_key.get(name) or self._by_name.get(name)
 
     def _source_segment_order(self) -> List[str]:
-        """An imported X12 transaction's segment IDs in interchange order (``[]`` for any other source)."""
+        """An imported X12 transaction's segment IDs in interchange order (``[]`` for any other source).
+
+        With ``edifact_refs``, an imported EDIFACT message's tags in message order, when the item is one (an X12
+        item keeps its interchange order either way).
+        """
+        messages = self._api.extras.get("edifact_messages") if self._options.edifact_refs else None
+        if isinstance(messages, list) and messages and isinstance(messages[0], dict):
+            tags: List[str] = []
+            for segment in messages[0].get("segments") or []:
+                tag = segment.get("tag") if isinstance(segment, dict) else None
+                if isinstance(tag, str) and tag not in tags:
+                    tags.append(tag)
+            return tags
         transactions = self._api.extras.get("x12_transactions")
         if not isinstance(transactions, list) or not transactions or not isinstance(transactions[0], dict):
             return []

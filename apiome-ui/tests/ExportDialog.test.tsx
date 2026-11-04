@@ -107,6 +107,7 @@ import {
   thriftTargets,
   xsdTargets,
   x12GuideTargets,
+  edifactGuideTargets,
   typespecTargets,
   wsdlTargets,
 } from './helpers/export-dialog-fixture';
@@ -1109,6 +1110,33 @@ describe('ExportDialog — X12 implementation guide target card (MFX-24.5)', () 
     expect(version).toHaveValue('');
     fireEvent.change(transactionSet, { target: { value: '810' } });
     expect(transactionSet).toHaveValue('810');
+  });
+});
+
+describe('ExportDialog — UN/EDIFACT message guide target card (MFX-24.2)', () => {
+  it.each(['rest', 'edifact'] as const)('badges a %s source types-only and marks the guide multi-file', async (source) => {
+    await renderAtTargetStep(mockFetch(edifactGuideTargets(source)));
+
+    const card = screen.getByTestId('export-target-edifact-guide');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('UN/EDIFACT message guide')).toBeInTheDocument();
+    expect(within(card).getByText('types-only')).toBeInTheDocument();
+    // The JSON guide, the segment CSV and the Markdown guide come as one download.
+    expect(within(card).getByText(/multi-file/)).toBeInTheDocument();
+  });
+
+  it('offers the message type and release as the picker', async () => {
+    await renderAtTargetStep(mockFetch(edifactGuideTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-edifact-guide'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    const messageType = screen.getByLabelText('Message Type');
+    const release = screen.getByLabelText('Release');
+    // Empty means the server default: an imported EDIFACT item's own message and release, else ORDERS / 01B.
+    expect(messageType).toHaveValue('');
+    expect(release).toHaveValue('');
+    fireEvent.change(messageType, { target: { value: 'INVOIC' } });
+    expect(messageType).toHaveValue('INVOIC');
   });
 });
 

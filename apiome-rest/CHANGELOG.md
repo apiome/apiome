@@ -5,6 +5,36 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.622.0] - 2026-11-04
+
+### Added
+- **UN/EDIFACT message-guide export (MFX-24.2, #4146).** A new `edifact-guide` target writes the item's types as a
+  UN/EDIFACT message implementation guide — `<Name>.edifact-guide.json`, `<Name>.edifact-segments.csv` and
+  `<Name>.edifact-guide.md` (`app.edifact_guide_emitter`) — laid out by the **same plan** as the X12 guide
+  (`app.edi_guide.plan_guide`), so an item's two guides have the same segments, values, loops / segment groups,
+  usage and repetitions:
+  - **EDIFACT terms:** 3-letter tags (never a `U…` service tag); simple and composite data elements (refs
+    `PUR01`, components `PUR02-1`); representations `an..35` / `an3` / `n..15` / `n8` (a decimal's places as a
+    `decimals` count — EDIFACT sends the decimal mark); coded values (qualifiers) from enums; status `M` / `C` /
+    `N`; segment groups `SG1` … triggered by their first segment; `UNH` (S009: type, `D`, release, `UN`) and `UNT`;
+    positions `0010`, `0020` …; a timestamp as one composite of its date and time.
+  - **Options:** `message_type` (6 letters; an imported EDIFACT item's own, else `ORDERS`), `release` (`96A`,
+    `01B`, `D.01B` …; the item's own, else `01B`), `default_element_length` (35), `max_code_length` (3),
+    `default_max_use` (9999).
+  - **An imported EDIFACT message** keeps its tags, segment order and composites (`NAD02-1`, `NAD02-3`; an empty
+    component is *not used*). An imported X12 transaction keeps its segments and order; an X12 ID that is not a
+    valid tag gets a new one.
+  - **Fidelity:** the X12 guide's rules on the same plan (`EdifactGuideFidelityRulePack`), restated in EDIFACT
+    terms, plus `max-use-synthesized` (SYNTH) for a list with no `maxItems`.
+  - **Checks:** `app.edifact_guide_validation` — schema, tags, element / component refs, representations and
+    lengths, status, message and `UNH02`, structure and segment groups, positions, repetitions, code lists, and
+    the CSV / Markdown agreeing with the JSON (`edifact-guide.*` rules), in the export gate.
+- `app.edi_guide.GuideOptions`: `segment_id_rule` and `edifact_refs` (opt-in; the X12 guide's plan is unchanged);
+  `GuideElement.components`.
+- `X12GuideFidelityRulePack._writer_losses` and `_layout_note`, so the EDIFACT pack shares the X12 rules.
+- Generated surfaces regenerated for the new target: format counts, export target tiers, corpus parity, supported
+  formats; RC6 export target list and projection coverage include `edifact-guide`.
+
 ## [1.621.0] - 2026-11-04
 
 ### Added

@@ -778,6 +778,7 @@ def load_builtin_emitters() -> None:
     from . import cobolcopybook_emitter as _cobolcopybook  # noqa: F401
     from . import connectrpc_emitter as _connectrpc  # noqa: F401
     from . import corbaidl_emitter as _corbaidl  # noqa: F401
+    from . import edifact_guide_emitter as _edifact_guide  # noqa: F401
     from . import edix12_emitter as _edix12  # noqa: F401
 
     # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.

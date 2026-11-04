@@ -15,7 +15,7 @@ What the ``x12-guide`` export target shows and writes, pinned in ``fixtures/x12_
   ``apiome-ui/tests/fixtures/export-targets-x12-guide-{rest,x12}.json`` carry the live descriptor, options
   schema, defaults and card badge.
 
-The UN/EDIFACT message guide (MFX-24.2, #4146) has no emitter yet, so it has no card here.
+The UN/EDIFACT message guide (MFX-24.2, #4146) has its own card: ``test_edifact_guide_target_card.py``.
 """
 
 from __future__ import annotations

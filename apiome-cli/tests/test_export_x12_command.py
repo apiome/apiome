@@ -11,7 +11,7 @@ The fixtures are recorded from the REST emitter registry (``apiome-rest/tests/te
 keeps ``export-targets-x12-guide.json`` equal to the live descriptor, options schema and badge); the job
 envelope carries the real fidelity of the Petstore OpenAPI.
 
-The UN/EDIFACT message guide (``apiome export edifact``) waits on its emitter, MFX-24.2 (#4146).
+The UN/EDIFACT message guide (``apiome export edifact``, MFX-24.2) is ``test_export_edifact_command.py``.
 """
 
 from __future__ import annotations

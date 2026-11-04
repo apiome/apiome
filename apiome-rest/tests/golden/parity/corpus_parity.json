@@ -4813,6 +4813,7 @@
     }
   ],
   "export_only_destinations": [
+    "edifact-guide",
     "x12-guide"
   ],
   "pending_corpus_directories": [

@@ -42,6 +42,7 @@ from .emitter import (
     EmitResult,
     EmittedFile,
     Emitter,
+    Loss,
     LossKind,
     LossTracker,
     Provenance,
@@ -82,9 +83,15 @@ class X12GuideFidelityRulePack(CapabilityRulePack):
       unknown scale written as a real, a decimal with implied places, a float as a real, a timestamp split
       into date and time, a scalar with no element type;
     * a field whose type holds no value is an info ``DROP``.
+
+    The UN/EDIFACT guide's pack (:class:`app.edifact_guide_emitter.EdifactGuideFidelityRulePack`, MFX-24.2)
+    shares these rules: it lays its own guide out (:meth:`_writer_losses`) and names its own layout.
     """
 
     target_label = "X12 implementation guide"
+    #: The root note: what every source's types are laid out as (with its article), and how.
+    _layout_note = ("an", "X12 transaction set",
+                    "segments of flat elements in loops, with X12 element types and lengths")
 
     #: Writer loss subject → (verdict kind, severity).
     _WRITER_LOSSES = {
@@ -115,17 +122,21 @@ class X12GuideFidelityRulePack(CapabilityRulePack):
         except ValidationError:
             self._options = X12GuideEmitOptions()
 
-    def evaluate(self, api: CanonicalApi) -> LossinessReport:
-        """Lay the guide out once (as it will be emitted), file its losses by construct, then walk the model."""
+    def _writer_losses(self, api: CanonicalApi) -> List[Loss]:
+        """The losses of the guide as it will be emitted for the report's options."""
         writer = _X12GuideWriter(api, getattr(self, "_options", None) or X12GuideEmitOptions())
         try:
             writer.guide()
         except EmitPreconditionError:
             pass  # a model with no record is refused at export; there is no layout to report
+        return writer.losses.records()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Lay the guide out once (as it will be emitted), file its losses by construct, then walk the model."""
         constructs = {""} | {t.key for t in api.types} | {f.key for t in api.types for f in t.fields}
         self._filed = {}
         seen = set()
-        for loss in writer.losses.records():
+        for loss in self._writer_losses(api):
             rule = self._WRITER_LOSSES.get(loss.subject)
             if rule is None or (loss.subject, loss.detail) in seen:
                 continue
@@ -141,11 +152,11 @@ class X12GuideFidelityRulePack(CapabilityRulePack):
         advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
         if advisory is not None:
             verdicts.append(advisory)
+        article, what, layout = self._layout_note
         verdicts.append(FidelityVerdict.approx(
-            message=f"The {api.format or 'source'} types are laid out as an X12 transaction set: segments of flat "
-            "elements in loops, with X12 element types and lengths",
+            message=f"The {api.format or 'source'} types are laid out as {article} {what}: {layout}",
             severity=LossinessSeverity.INFO,
-            target_mapping="types → X12 transaction set",
+            target_mapping=f"types → {what}",
         ))
         return verdicts + self._filed.get("", [])
 

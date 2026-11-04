@@ -12,6 +12,8 @@ import copybookTargetsForRest from '../fixtures/export-targets-copybook-rest.jso
 import copybookTargetsForCopybook from '../fixtures/export-targets-copybook-copybook.json';
 import x12GuideTargetsForRest from '../fixtures/export-targets-x12-guide-rest.json';
 import x12GuideTargetsForX12 from '../fixtures/export-targets-x12-guide-x12.json';
+import edifactGuideTargetsForRest from '../fixtures/export-targets-edifact-guide-rest.json';
+import edifactGuideTargetsForEdifact from '../fixtures/export-targets-edifact-guide-edifact.json';
 import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
 import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
 import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.json';
@@ -281,6 +283,18 @@ export function copybookTargets(source: 'rest' | 'copybook'): ExportTargetsRespo
  */
 export function x12GuideTargets(source: 'rest' | 'x12'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? x12GuideTargetsForRest : x12GuideTargetsForX12);
+}
+
+/**
+ * The UN/EDIFACT message-guide target as the registry lists it (MFX-24.2, #4146), for a REST source and for an
+ * imported EDIFACT ORDERS message — recorded from the live REST registry by
+ * `apiome-rest/tests/test_edifact_guide_target_card.py`. Like the X12 guide, both are `types-only`.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `edifact` (an imported EDIFACT ORDERS message).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function edifactGuideTargets(source: 'rest' | 'edifact'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? edifactGuideTargetsForRest : edifactGuideTargetsForEdifact);
 }
 
 /**
