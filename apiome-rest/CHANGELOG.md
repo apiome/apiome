@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.639.0] - 2026-11-04
+
+### Added
+- **SQL fidelity pack (MFX-35.4, #4314).** `SqlDdlFidelityRulePack` completes the MFX-35.1 rules:
+  - Operations, channels and services `DROP` with the critical types-only advisory (MFX-19.2 tier) — unchanged,
+    now pinned with counts and the `near-empty` guard band.
+  - **Unions:** besides the `DROP` (no SQL object of their own), an `APPROX` "union → JSON column" — the value is
+    stored whole in one JSON / JSONB column, with no table per variant.
+  - **Constraints:** the writer records each constraint facet it keeps (bounds, `minLength`, `enum`, PostgreSQL /
+    MySQL `pattern` as `CHECK`; `maxLength` as the `VARCHAR` size; `multipleOf` as the decimal scale) and each it
+    drops. A field whose constraints are all kept gets an `OK` "constraints → SQL column rules" naming them — under
+    the field when its table keeps the type's name, else under the key it reads back as (`user_profile.age`, never
+    a key a source construct holds). A facet neither kept nor reported is `APPROX` "constraints → not written".
+  - SYNTH items (keys, junction / child tables, renamed identifiers, precision, new table keys) — unchanged, now
+    enumerated by `tests/test_sql_fidelity_pack.py` (14).
+- Goldens: conformance matrix + ledger and round-trip matrix regenerated (every `-> sql-ddl` cell still reconciles).
+- OpenAPI 1.503.0.
+
 ## [1.638.0] - 2026-11-04
 
 ### Added

@@ -1,0 +1,21 @@
+---
+slug: sql-fidelity-pack
+title: What a SQL export keeps, approximates and makes up
+description: "The SQL DDL fidelity report now lists unions, kept constraints and every projection decision."
+authors: [apiome]
+---
+
+The **SQL DDL** export's fidelity report now accounts for the whole relational projection. See
+[What the fidelity report lists](/ship/export-a-spec#what-the-sql-ddl-fidelity-report-lists).
+
+{/* truncate */}
+
+- **APIs warn critically:** an item with operations, channels or services starts its report with a
+  critical warning that only its data schemas are exported.
+- **Unions:** listed as approximated — stored whole in a JSON column (`JSONB` on PostgreSQL), with no
+  table per variant.
+- **Constraints kept:** each field whose bounds, lengths, enumerations or patterns become `CHECK`
+  clauses (or a `VARCHAR` size, or a decimal scale) is listed as preserved, naming them. A constraint
+  SQL cannot hold is listed as dropped or not written — never left out silently.
+- **Every projection decision:** generated keys, junction and child tables and renamed identifiers
+  each have their own synthesized item.

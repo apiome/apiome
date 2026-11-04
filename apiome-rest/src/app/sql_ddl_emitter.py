@@ -365,9 +365,13 @@ class _SqlDdlWriter:
         self._enum_types: Dict[str, str] = {}  # enum type key → PostgreSQL type name
         self._tables: List[_Table] = []
         self._keys: Dict[str, Tuple[str, str]] = {}  # record key → (key column, its SQL type)
+        #: Field key → constraint facet → how the script keeps it (MFX-35.4), and the facets it drops.
+        self.kept_constraints: Dict[str, Dict[str, str]] = {}
+        self.dropped_constraints: Dict[str, Set[str]] = {}
         source = (api.extras or {}).get("sql_ddl") or {}
         self._same_dialect = api.format == SQL_DDL_FORMAT_KEY and source.get("dialect") == self._dialect
         self._projected = False
+        self._current_member: Optional[CanonicalField] = None
 
     # -- what the serializers read -------------------------------------------
 
@@ -468,6 +472,10 @@ class _SqlDdlWriter:
 
     def _loss(self, kind: LossKind, subject: str, detail: str, pointer: str) -> None:
         self.losses.record(kind, subject, detail, pointer=pointer)
+
+    def _keep(self, member: CanonicalField, facet: str, how: str) -> None:
+        """Note that the script keeps ``facet`` of ``member``'s constraints, and how (MFX-35.4)."""
+        self.kept_constraints.setdefault(member.key, {}).setdefault(facet, how)
 
     def _resolve(self, ref: TypeRef, depth: int = 0) -> TypeRef:
         """Follow aliases to the reference a column is typed by."""
@@ -785,6 +793,8 @@ class _SqlDdlWriter:
     def _drop_item_constraints(self, member: CanonicalField) -> None:
         c = member.constraints
         if c is not None and (c.min_items is not None or c.max_items is not None or c.unique_items):
+            self.dropped_constraints.setdefault(member.key, set()).update(
+                {"min_items", "max_items", "unique_items"})
             self._loss(LossKind.NA, LOSS_CONSTRAINT_DROPPED,
                        f"the item counts / uniqueness of the list {member.key!r} have no SQL column rule", member.key)
 
@@ -839,10 +849,13 @@ class _SqlDdlWriter:
             self._loss(LossKind.INFERRED, LOSS_TYPE_APPROX, f"{pointer!r}: {reason}", pointer)
         if family == "text" and c is not None and c.max_length:
             sql_type = f"VARCHAR({int(c.max_length)})"
+            self._keep(member, "max_length", f"the column type {sql_type}")
         elif family == "text" and self._dialect == "mysql" and member.key and self._is_keyish(member):
             sql_type = "VARCHAR(255)"
         elif family == "decimal":
+            self._current_member = member
             sql_type = self._decimal_type(c, pointer)
+            self._current_member = None
         else:
             sql_type = _FAMILY_TYPES[self._dialect][family]
         return sql_type, self._checks(member, c, family) if c is not None else []
@@ -855,6 +868,8 @@ class _SqlDdlWriter:
 
     def _decimal_type(self, c: Optional[Constraints], pointer: str) -> str:
         scale = _scale_of(c.multiple_of) if c is not None and c.multiple_of else None
+        if scale is not None and c is not None and c.multiple_of and self._current_member is not None:
+            self._keep(self._current_member, "multiple_of", f"the decimal scale {scale}")
         if self._dialect == "postgres" and scale is None:
             return "NUMERIC"
         if scale is None:
@@ -866,26 +881,34 @@ class _SqlDdlWriter:
     def _checks(self, member: CanonicalField, c: Constraints, family: str) -> List[str]:
         name = self._q(snake_case(member.name))
         checks: List[str] = []
-        for value, op in ((c.minimum, ">="), (c.maximum, "<="), (c.exclusive_minimum, ">"),
-                          (c.exclusive_maximum, "<")):
+        for facet, value, op in (("minimum", c.minimum, ">="), ("maximum", c.maximum, "<="),
+                                 ("exclusive_minimum", c.exclusive_minimum, ">"),
+                                 ("exclusive_maximum", c.exclusive_maximum, "<")):
             if value is not None and family in ("int8", "int16", "int32", "int64", "float", "double", "decimal"):
                 checks.append(f"{name} {op} {_number(value)}")
+                self._keep(member, facet, f"CHECK ({checks[-1]})")
         length = "CHAR_LENGTH" if self._dialect != "ansi" else "CHARACTER_LENGTH"
         if c.min_length is not None and family == "text":
+            self._keep(member, "min_length", "a CHECK on its length")
             checks.append(f"{length}({name}) >= {int(c.min_length)}")
         if c.enum:
             literal = ", ".join(_literal(v) for v in c.enum)
             checks.append(f"{name} IN ({literal})")
+            self._keep(member, "enum", "a CHECK (… IN …)")
         if c.pattern:
             if self._dialect == "postgres":
                 checks.append(f"{name} ~ {_literal(c.pattern)}")
+                self._keep(member, "pattern", "a CHECK (~ regular expression)")
             elif self._dialect == "mysql":
                 checks.append(f"REGEXP_LIKE({name}, {_literal(c.pattern)})")
+                self._keep(member, "pattern", "a CHECK (REGEXP_LIKE)")
             else:
+                self.dropped_constraints.setdefault(member.key, set()).add("pattern")
                 self._loss(LossKind.NA, LOSS_CONSTRAINT_DROPPED,
                            f"standard SQL has no regular-expression check; the pattern of {member.key!r} is dropped",
                            member.key)
         if c.multiple_of and family != "decimal":
+            self.dropped_constraints.setdefault(member.key, set()).add("multiple_of")
             self._loss(LossKind.NA, LOSS_CONSTRAINT_DROPPED,
                        f"the multipleOf of {member.key!r} has no SQL column rule", member.key)
         return checks
@@ -1010,6 +1033,8 @@ class SqlDdlFidelityRulePack(CapabilityRulePack):
         self._writer = writer
         self._schema = options.schema_name
         self._filed: Dict[str, List[Loss]] = {}
+        #: Field key → the record it belongs to (to tell whether its table reads back under the same key).
+        self._owner: Dict[str, str] = {m.key: t.key for t in api.types if t.kind is TypeKind.RECORD for m in t.fields}
         for loss in writer.losses.records():
             self._filed.setdefault(loss.pointer or "", []).append(loss)
         return super().evaluate(api)
@@ -1075,9 +1100,19 @@ class SqlDdlFidelityRulePack(CapabilityRulePack):
         what = {TypeKind.ENUM: "its values are written into each column that uses it",
                 TypeKind.UNION: "a column of it is JSON", TypeKind.MAP: "a column of it is JSON"}.get(
                     type_.kind, "a column of it takes the type it names")
-        return [FidelityVerdict.drop(
+        verdicts = [FidelityVerdict.drop(
             message=f"{type_.kind.value} {type_.key!r} has no table or type of its own in SQL; {what}",
             severity=LossinessSeverity.INFO, target_mapping=f"{type_.kind.value} → no SQL object"), *filed]
+        if type_.kind is TypeKind.UNION:
+            # MFX-35.4: a union has no relational form. Its value is stored whole in a JSON column (JSONB on
+            # PostgreSQL); there is no table per variant, so which variant a row holds is not a column.
+            verdicts.append(FidelityVerdict.approx(
+                message=f"{self.target_label} has no union: a value of {type_.key!r} is stored whole in a JSON "
+                f"column ({'JSONB' if writer.dialect == 'postgres' else 'JSON'}); there is no table per variant, "
+                "so the variant a row holds is not a column",
+                target_mapping="union → JSON column",
+            ))
+        return verdicts
 
     def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
         """Every table and enum type the script declares under a key the source does not have."""
@@ -1093,6 +1128,10 @@ class SqlDdlFidelityRulePack(CapabilityRulePack):
             origin = "a junction or child table" if table.key.endswith("#table") else f"the table for {table.key!r}"
             created.append((key, FidelityVerdict.synth(message=f"{key!r} is {origin}", severity=LossinessSeverity.INFO,
                                                        target_mapping="sql table")))
+        # Any construct of the source the new key could nest under (a service named like a table, say).
+        taken = source_keys | {s.key for s in api.services} | {op.key for op in api.operations()} \
+            | {c.key for c in api.channels}
+        created += self._kept_under_new_keys(api, taken)
         for type_key, name in writer._enum_types.items():
             key = self._reimport_key(name)
             if key not in source_keys:
@@ -1101,8 +1140,87 @@ class SqlDdlFidelityRulePack(CapabilityRulePack):
                                                            target_mapping="sql enum type")))
         return created
 
+    def _kept_under_new_keys(self, api: CanonicalApi, source_keys: Set[str]) -> List[Tuple[str, FidelityVerdict]]:
+        """``OK`` for the kept constraints of a field whose table is renamed, under the key it reads back as.
+
+        A renamed table (``UserProfile`` → ``user_profile``) reads back under a new key, so its fields do too;
+        what the script keeps of a field's constraints is filed at that new key (``user_profile.age``), where a
+        re-import finds the ``CHECK`` clauses (MFX-35.4).
+        """
+        writer = self._writer
+        out: List[Tuple[str, FidelityVerdict]] = []
+        for type_ in api.types:
+            table_name = writer._table_names.get(type_.key)
+            if type_.kind is not TypeKind.RECORD or table_name is None:
+                continue
+            table_key = self._reimport_key(table_name)
+            if table_key == type_.key or table_key in source_keys:
+                continue
+            table = next((t for t in writer._tables if t.key == type_.key), None)
+            if table is None:
+                continue
+            columns = {column.pointer: column.name for column in table.columns}
+            for member in type_.fields:
+                kept = writer.kept_constraints.get(member.key)
+                column = columns.get(member.key)
+                if not kept or column is None or self._verdicts(member.key) or self._constraint_gaps(member):
+                    continue
+                facets = "; ".join(f"{facet} as {how}" for facet, how in sorted(kept.items()))
+                out.append((f"{table_key}.{column}", FidelityVerdict.ok(
+                    message=f"{self.target_label} keeps the constraints of {member.key!r} on {table_key}.{column}: "
+                    f"{facets}",
+                    target_mapping="constraints → SQL column rules",
+                )))
+        return out
+
+    def _constraint_gaps(self, member: CanonicalField) -> List[str]:
+        """The constraint facets of ``member`` the script neither keeps nor reports as dropped."""
+        writer = getattr(self, "_writer", None)
+        if writer is None or member.constraints is None:
+            return []
+        present = set(member.constraints.model_dump(exclude={"extras", "format"}, exclude_none=True))
+        if member.constraints.unique_items is False:
+            present.discard("unique_items")  # an explicit "not unique" asks for nothing
+        kept = writer.kept_constraints.get(member.key, {})
+        return sorted(present - set(kept) - writer.dropped_constraints.get(member.key, set()))
+
     def field_verdicts(self, member: CanonicalField) -> List[FidelityVerdict]:
-        return [*super().field_verdicts(member), *self._verdicts(member.key)]
+        """The profile's verdicts, the losses filed under the field, and what became of its constraints."""
+        verdicts = [*super().field_verdicts(member), *self._verdicts(member.key)]
+        return verdicts + self._constraint_verdicts(member, has_other_loss=bool(verdicts))
+
+    def _constraint_verdicts(self, member: CanonicalField, *, has_other_loss: bool) -> List[FidelityVerdict]:
+        """``OK`` for the constraints the script keeps; ``APPROX`` for any it neither keeps nor reports — MFX-35.4.
+
+        SQL is one of the few targets that keeps validation: a bound, a length, an enumeration or (in
+        PostgreSQL and MySQL) a pattern becomes a ``CHECK`` clause, a ``maxLength`` the ``VARCHAR`` size and a
+        ``multipleOf`` the decimal scale. The ``OK`` item names each one, and is given only to a field with no
+        other loss whose table keeps its type's name, so it never claims a column is carried as is when
+        something else about it (or its table) changed.
+        """
+        writer = getattr(self, "_writer", None)
+        if writer is None or member.constraints is None:
+            return []
+        kept = writer.kept_constraints.get(member.key, {})
+        verdicts: List[FidelityVerdict] = []
+        silent = self._constraint_gaps(member)
+        if silent:
+            verdicts.append(FidelityVerdict.approx(
+                message=f"{self.target_label}: the {', '.join(silent)} of {member.key!r} have no SQL rule for "
+                "this column and are not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping="constraints → not written",
+            ))
+        owner = getattr(self, "_owner", {}).get(member.key)
+        table = writer._table_names.get(owner) if owner else None
+        same_table = table is not None and self._reimport_key(table) == owner
+        if kept and not has_other_loss and not silent and same_table:
+            facets = "; ".join(f"{facet} as {how}" for facet, how in sorted(kept.items()))
+            verdicts.append(FidelityVerdict.ok(
+                message=f"{self.target_label} keeps the constraints of {member.key!r}: {facets}",
+                target_mapping="constraints → SQL column rules",
+            ))
+        return verdicts
 
     def service_verdicts(self, service) -> List[FidelityVerdict]:
         """A service has no table: SQL DDL is types-only."""

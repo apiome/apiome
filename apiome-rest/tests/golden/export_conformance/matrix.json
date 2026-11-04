@@ -4094,7 +4094,7 @@
     {
       "family": "arrow",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 8,
         "synth": 1
       },
@@ -9756,7 +9756,7 @@
     {
       "family": "cddl",
       "loss_counts": {
-        "approx": 12,
+        "approx": 13,
         "drop": 21,
         "synth": 6
       },
@@ -11556,7 +11556,7 @@
     {
       "family": "cobolcopybook",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 14,
         "synth": 14
       },
@@ -14063,7 +14063,7 @@
     {
       "family": "cue",
       "loss_counts": {
-        "approx": 4,
+        "approx": 5,
         "drop": 4,
         "synth": 8
       },
@@ -30936,7 +30936,7 @@
     {
       "drift": [
         "added channel com.example.product",
-        "added operation a744d636-bc17-4490-b367-2104cb77f7c4",
+        "added operation e14e2ad4-f408-4a61-a5e7-79681546054c",
         "changed root",
         "added service com.example.product",
         "removed type Product"
@@ -32126,7 +32126,7 @@
     {
       "drift": [
         "added channel com.example.user",
-        "added operation 6bd11758-5c6d-4759-af70-26f97ae50964",
+        "added operation f72036e0-88cc-4062-ad0b-4e03f8eb1715",
         "changed root",
         "added service com.example.user",
         "removed type User",
@@ -32736,7 +32736,7 @@
     {
       "drift": [
         "added channel com.example.cronwidget",
-        "added operation 57dd0ca2-5a0b-4699-b5f5-3b56294db29f",
+        "added operation 0bdee9b5-7e78-44d0-b8dd-4623ee2ebc3d",
         "changed root",
         "added service com.example.cronwidget",
         "removed service cronwidgets.apps.example.io",
@@ -41005,7 +41005,7 @@
     {
       "drift": [
         "added channel com.example.orders",
-        "added operation c790404c-1d6b-4a2b-a4dc-f1e83571b185",
+        "added operation 8a2295ae-cae6-4cfe-b66f-1ce3f81dc335",
         "changed root",
         "added service com.example.orders",
         "removed type orders"
@@ -41992,7 +41992,7 @@
     {
       "family": "oncrpc",
       "loss_counts": {
-        "approx": 1,
+        "approx": 4,
         "drop": 13,
         "synth": 2
       },
@@ -44088,7 +44088,7 @@
     {
       "drift": [
         "added channel com.example.commerce.ontology",
-        "added operation 2e222280-7834-4d71-896b-087dbdac4126",
+        "added operation d18fd397-bee4-4ebc-b459-a98e1d6b7403",
         "changed root",
         "added service com.example.commerce.ontology",
         "removed type Agent",
@@ -45059,7 +45059,7 @@
     {
       "family": "pkl",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 6,
         "synth": 9
       },
@@ -45665,7 +45665,7 @@
     {
       "family": "pli",
       "loss_counts": {
-        "approx": 5,
+        "approx": 6,
         "drop": 22,
         "synth": 24
       },
@@ -48951,7 +48951,7 @@
     {
       "family": "pydantic",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 4,
         "synth": 4
       },
@@ -50492,7 +50492,7 @@
     {
       "drift": [
         "added channel com.example.typicalsensormessage",
-        "added operation eaa557ac-4354-4d25-a39a-38f8fef02cda",
+        "added operation 217b5fa3-3a2e-483b-b51c-5c61a9f080bb",
         "changed root",
         "added service com.example.typicalsensormessage",
         "removed type TypicalSensorMessage",
@@ -52076,7 +52076,7 @@
     {
       "family": "shacl",
       "loss_counts": {
-        "approx": 2,
+        "approx": 3,
         "drop": 3,
         "synth": 8
       },
@@ -53650,7 +53650,7 @@
     {
       "drift": [
         "changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
-        "added operation e5c44838-8285-46d8-af95-b83298638123",
+        "added operation 1c96684d-b631-4bf4-838e-9bce989451d3",
         "removed operation publish spBv1.0/{group_id}/NBIRTH/{edge_node_id}",
         "changed root",
         "removed service Sparkplug",
@@ -59858,7 +59858,7 @@
     {
       "family": "trpc",
       "loss_counts": {
-        "approx": 3,
+        "approx": 4,
         "drop": 16,
         "synth": 23
       },
@@ -60766,7 +60766,7 @@
     {
       "drift": [
         "added channel com.example.orderline",
-        "added operation 062fe8ba-4b15-47fb-8dd0-fe9afe5b7c67",
+        "added operation 6339f454-091a-492f-b9c8-a34dafebd3dd",
         "changed root",
         "added service com.example.orderline",
         "removed type NewOrder",
@@ -62448,7 +62448,7 @@
     {
       "family": "vsam-idcams",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 2,
         "synth": 2
       },
@@ -63776,7 +63776,7 @@
     {
       "family": "wit",
       "loss_counts": {
-        "approx": 1,
+        "approx": 2,
         "drop": 8,
         "synth": 2
       },
@@ -67470,7 +67470,7 @@
     {
       "family": "zod",
       "loss_counts": {
-        "approx": 3,
+        "approx": 5,
         "drop": 4,
         "synth": 10
       },
