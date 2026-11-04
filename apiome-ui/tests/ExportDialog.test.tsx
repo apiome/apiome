@@ -75,6 +75,9 @@
  *     imported Arrow schema, multi-file, every mode (`arrow`, `bigquery`, `spark`) with `parquet` and `bundle` on
  *     offer — and Apache Iceberg — `types-only`, multi-file, no field-ID option; both unavailable for a gateway
  *     configuration (no record type) — from the recorded live registry.
+ * 30. The FIX Orchestra card (MFX-37.4): `types-only` with its preserved share (high for an imported Orchestra
+ *     repository, none for a REST API), one file, with its `version` option and no stored-tag option;
+ *     unavailable for a gateway configuration (no record type) — from the recorded live registry.
  */
 
 import React from 'react';
@@ -117,6 +120,7 @@ import {
   sqlDdlTargets,
   arrowTargets,
   icebergTargets,
+  fixOrchestraTargets,
   asn1Targets,
   corbaidlTargets,
   mockExportDialogFetch as mockFetch,
@@ -1891,6 +1895,43 @@ describe('ExportDialog — data-lake target cards (MFX-36.5)', () => {
     await renderAtTargetStep(mockFetch(targets));
 
     expect(screen.getByTestId(`export-target-${key}`)).toBeDisabled();
+    expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one record type/);
+  });
+});
+
+describe('ExportDialog — FIX Orchestra target card (MFX-37.4)', () => {
+  it.each(['rest', 'orchestra'] as const)('badges a %s source types-only as a one-file target', async (source) => {
+    const targets = fixOrchestraTargets(source);
+    await renderAtTargetStep(mockFetch(targets));
+
+    const card = screen.getByTestId('export-target-fix-orchestra');
+    expect(card).toBeEnabled();
+    expect(within(card).getByText('FIX Orchestra')).toBeInTheDocument();
+    expect(card).toHaveTextContent('types-only');
+    expect(within(card).queryByText(/multi-file/)).not.toBeInTheDocument();
+    expect(targets.targets[0].fidelity.tier).toBe('types-only');
+  });
+
+  it('shows more preserved for an imported Orchestra repository than for a REST API', () => {
+    const orchestra = fixOrchestraTargets('orchestra').targets[0].fidelity.preserved_percent ?? 0;
+    const rest = fixOrchestraTargets('rest').targets[0].fidelity.preserved_percent ?? 0;
+    expect(orchestra).toBeGreaterThan(rest);
+  });
+
+  it('offers the repository version, and no stored-tag option', async () => {
+    await renderAtTargetStep(mockFetch(fixOrchestraTargets('rest')));
+
+    fireEvent.click(screen.getByTestId('export-target-fix-orchestra'));
+    expect(screen.getByText('Target options')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^Version/)).toBeInTheDocument();
+    expect(screen.queryByText(/Persisted Field Numbers/i)).not.toBeInTheDocument();
+  });
+
+  it('disables the card for a gateway configuration: it has no record type', async () => {
+    const targets = fixOrchestraTargets('gateway');
+    await renderAtTargetStep(mockFetch(targets));
+
+    expect(screen.getByTestId('export-target-fix-orchestra')).toBeDisabled();
     expect(targets.targets[0].descriptor.unavailable_reason).toMatch(/at least one record type/);
   });
 });

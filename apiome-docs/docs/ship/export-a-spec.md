@@ -2572,10 +2572,11 @@ critical warning at the top of the fidelity report.
 
 | Step | Where | Details |
 | --- | --- | --- |
-| **Pick** the target (option: `version`) | Export-target registry key `fix-orchestra` | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
+| **Pick** the card (option: **Version**) | **Export** dialog → **Data schema & graph** → **FIX Orchestra** | [Where to find the FIX Orchestra card](#where-to-find-the-fix-orchestra-card) |
 | **See** which types become messages, components, groups and code sets | This section | [How the item is written](#how-the-item-is-written-to-fix-orchestra) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-fix-orchestra-fidelity-report-lists) |
 | **Trust** the file | Checked against the official Orchestra XSD and re-imported before every download | [How a FIX Orchestra export is checked](#how-a-fix-orchestra-export-is-checked) |
+| **Export** from the CLI | `apiome export fix-orchestra` (also `orchestra`) | [Where to find the FIX Orchestra card](#where-to-find-the-fix-orchestra-card) |
 
 #### How the item is written {#how-the-item-is-written-to-fix-orchestra}
 
@@ -2642,6 +2643,32 @@ Before an export is delivered, the repository must pass two checks:
 
 An export that fails either check is never delivered. The export job fails, and its validation report lists
 every problem with its rule (`orchestra.xsd`, `xml` or `reimport`), its path in the repository and the file.
+
+#### Where to find the FIX Orchestra card {#where-to-find-the-fix-orchestra-card}
+
+The **Export** dialog and **Export studio** offer **FIX Orchestra** under **Data schema & graph**. It writes one
+file, `<name>.orchestra.xml`, and its one option is **Version**, the repository's FIX version (`FIX.Latest`,
+`FIX.4.4`, `FIX.5.0SP2_EP254`, `1.0` …; empty uses the item's own). The tags Apiome keeps for the item are not an
+option: they are applied for you.
+
+| Source | Badge |
+| --- | --- |
+| An imported FIX Orchestra repository | **types-only**, with a high preserved share: its messages, fields, tags and code sets come back |
+| A REST, GraphQL or RPC API, a JSON Schema item | **types-only**, with its preserved share: its records are flattened and its tags made up |
+| A gateway configuration, an agent card, or anything else with no record type | Greyed out, with the reason |
+
+An API with operations also starts its fidelity report with the critical "types only" warning. A public item's
+**Export** dialog on Browse offers the card too.
+
+From the CLI:
+
+| Command | Writes |
+| --- | --- |
+| `apiome export fix-orchestra <item> --out <name>.orchestra.xml` (also `orchestra`) | The repository |
+| `apiome export fix-orchestra <item> --out … --option version=FIX.5.0SP2` | The repository, for that FIX version |
+
+The command prints the fidelity report and, because Orchestra keeps types only, exits non-zero unless you add
+`--force`.
 
 ### WSDL and XSD from any source
 

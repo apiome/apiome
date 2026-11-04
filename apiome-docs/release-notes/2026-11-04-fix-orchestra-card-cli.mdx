@@ -1,0 +1,20 @@
+---
+slug: fix-orchestra-card-cli
+title: FIX Orchestra in the Export dialog and the CLI
+description: "Export a FIX Orchestra repository from the Export dialog or apiome export."
+authors: [apiome]
+---
+
+The **Export** dialog has a **FIX Orchestra** card under **Data schema & graph**, and the CLI has
+`apiome export fix-orchestra`. See
+[Where to find the FIX Orchestra card](/ship/export-a-spec#where-to-find-the-fix-orchestra-card).
+
+{/* truncate */}
+
+- **A card with its fidelity tier:** every source badges **types-only** with its preserved share. An imported
+  Orchestra repository keeps most of itself; a REST API's records are flattened and its tags made up. A source
+  with no record type is greyed out with the reason.
+- **One option:** **Version**, the repository's FIX version. The tags Apiome keeps for the item are applied for
+  you.
+- **From the CLI:** `apiome export fix-orchestra <item> --out <name>.orchestra.xml` (also `orchestra`) prints
+  the fidelity report and exits non-zero for a types-only export unless you add `--force`.
