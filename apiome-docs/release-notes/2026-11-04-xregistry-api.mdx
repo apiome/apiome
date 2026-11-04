@@ -1,0 +1,21 @@
+---
+slug: xregistry-api
+title: Point xRegistry tools at Apiome
+description: "A read-only xRegistry API over your published schemas and events."
+authors: [apiome]
+---
+
+xRegistry and CloudEvents tools can now read your catalog live instead of downloading an export.
+Apiome serves each organization's published APIs as a read-only xRegistry. See
+[Serve your catalog as an xRegistry](/ship/serve-an-xregistry).
+
+{/* truncate */}
+
+- **Public registry:** `/v1/browse/tenants/{tenant}/xregistry` lists each project's latest
+  published, public version — no account, never a private or draft version. The organization's
+  Browse page links it as **xRegistry**.
+- **Private registry for members:** `/v1/xregistry/{tenant}`, with an API key, adds the published
+  private versions.
+- **What a client gets:** schema groups with each type's JSON Schema, and message groups with each
+  event's CloudEvents `type`, `source`, `datacontenttype` and payload schema reference — plus
+  `$details`, versions, `/capabilities`, `/model` and `?inline=*`.

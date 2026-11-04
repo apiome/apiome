@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.498.0
+  version: 1.499.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -78930,6 +78930,1179 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for get class jsonschema specresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry registry entity (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_root_public_v1_browse_tenants__tenant_slug__xregistry_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryregistryentitynoauthinline schema.
+          - type: 'null'
+            description: Thex Registryregistryentitynoauthinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      responses:
+        '200':
+          description: Successful response for the xregistry registry entity (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registryregistryentitynoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/capabilities:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry server capabilities (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_capabilities_public_v1_browse_tenants__tenant_slug__xregistry_capabilities_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      responses:
+        '200':
+          description: Successful response for the xregistry server capabilities (no
+            auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registryservercapabilitiesnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/model:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry model (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_model_public_v1_browse_tenants__tenant_slug__xregistry_model_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      responses:
+        '200':
+          description: Successful response for the xregistry model (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registrymodelnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry group collection (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_groups_public_v1_browse_tenants__tenant_slug__xregistry__groups__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupcollectionnoauthinline schema.
+          - type: 'null'
+            description: Anx Registrygroupcollectionnoauthinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      responses:
+        '200':
+          description: Successful response for an xregistry group collection (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registrygroupcollectionnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}/{gid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry group (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_group_public_v1_browse_tenants__tenant_slug__xregistry__groups___gid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupnoauthinline schema.
+          - type: 'null'
+            description: Anx Registrygroupnoauthinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      responses:
+        '200':
+          description: Successful response for an xregistry group (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registrygroupnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}/{gid}/{resources}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource collection (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_resources_public_v1_browse_tenants__tenant_slug__xregistry__groups___gid___resources__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource collection (no
+            auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourcecollectionnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}/{gid}/{resources}/{rid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource (append $details for its attributes) (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_resource_public_v1_browse_tenants__tenant_slug__xregistry__groups___gid___resources___rid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource (append $details
+            for its attributes) (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourceappenddetailsforitsatresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}/{gid}/{resources}/{rid}/versions:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource's versions (no auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_versions_public_v1_browse_tenants__tenant_slug__xregistry__groups___gid___resources___rid__versions_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource's versions (no
+            auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourcesversionsnoauthresponse422.
+  /v1/browse/tenants/{tenant_slug}/xregistry/{groups}/{gid}/{resources}/{rid}/versions/{vid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource version (append $details for its attributes) (no
+        auth)
+      description: xRegistry core API, read-only, over the tenant's published public
+        artifacts (MFX-34.2).
+      operationId: xregistry_version_public_v1_browse_tenants__tenant_slug__xregistry__groups___gid___resources___rid__versions__vid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      - name: vid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Vid
+          description: Vid schema.
+        description: Path parameter identifying the vid segment.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource version (append
+            $details for its attributes) (no auth).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourceversionappenddetailsfresponse422.
+  /v1/xregistry/{tenant_slug}:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry registry entity (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_root_member_v1_xregistry__tenant_slug__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryregistryentitymembersinline schema.
+          - type: 'null'
+            description: Thex Registryregistryentitymembersinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryregistryentitymembersauthorization schema.
+          - type: 'null'
+            description: Thex Registryregistryentitymembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryregistryentitymembers Xapikey schema.
+          - type: 'null'
+            description: Thex Registryregistryentitymembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for the xregistry registry entity (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registryregistryentitymembersresponse422.
+  /v1/xregistry/{tenant_slug}/capabilities:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry server capabilities (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_capabilities_member_v1_xregistry__tenant_slug__capabilities_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryservercapabilitiesmembersauthorization schema.
+          - type: 'null'
+            description: Thex Registryservercapabilitiesmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registryservercapabilitiesmembers Xapikey schema.
+          - type: 'null'
+            description: Thex Registryservercapabilitiesmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for the xregistry server capabilities (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registryservercapabilitiesmembersresponse422.
+  /v1/xregistry/{tenant_slug}/model:
+    get:
+      tags:
+      - xregistry
+      summary: The xRegistry model (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_model_member_v1_xregistry__tenant_slug__model_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registrymodelmembersauthorization schema.
+          - type: 'null'
+            description: Thex Registrymodelmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Thex Registrymodelmembers Xapikey schema.
+          - type: 'null'
+            description: Thex Registrymodelmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for the xregistry model (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for thex registrymodelmembersresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry group collection (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_groups_member_v1_xregistry__tenant_slug___groups__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupcollectionmembersinline schema.
+          - type: 'null'
+            description: Anx Registrygroupcollectionmembersinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupcollectionmembersauthorization schema.
+          - type: 'null'
+            description: Anx Registrygroupcollectionmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupcollectionmembers Xapikey schema.
+          - type: 'null'
+            description: Anx Registrygroupcollectionmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry group collection (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registrygroupcollectionmembersresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}/{gid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry group (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_group_member_v1_xregistry__tenant_slug___groups___gid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: inline
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupmembersinline schema.
+          - type: 'null'
+            description: Anx Registrygroupmembersinline schema.
+          description: '`*` (any value) embeds every collection below the requested
+            entity.'
+          title: Inline
+        description: '`*` (any value) embeds every collection below the requested entity.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupmembersauthorization schema.
+          - type: 'null'
+            description: Anx Registrygroupmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registrygroupmembers Xapikey schema.
+          - type: 'null'
+            description: Anx Registrygroupmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry group (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registrygroupmembersresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}/{gid}/{resources}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource collection (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_resources_member_v1_xregistry__tenant_slug___groups___gid___resources__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourcecollectionmembersauthorization schema.
+          - type: 'null'
+            description: Anx Registryresourcecollectionmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourcecollectionmembers Xapikey schema.
+          - type: 'null'
+            description: Anx Registryresourcecollectionmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource collection (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourcecollectionmembersresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}/{gid}/{resources}/{rid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource (append $details for its attributes) (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_resource_member_v1_xregistry__tenant_slug___groups___gid___resources___rid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourceappenddetailsforitsatauthorization schema.
+          - type: 'null'
+            description: Anx Registryresourceappenddetailsforitsatauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourceappenddetailsforitsat Xapikey schema.
+          - type: 'null'
+            description: Anx Registryresourceappenddetailsforitsat Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource (append $details
+            for its attributes) (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourceappenddetailsforitsatresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}/{gid}/{resources}/{rid}/versions:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource's versions (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_versions_member_v1_xregistry__tenant_slug___groups___gid___resources___rid__versions_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourcesversionsmembersauthorization schema.
+          - type: 'null'
+            description: Anx Registryresourcesversionsmembersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourcesversionsmembers Xapikey schema.
+          - type: 'null'
+            description: Anx Registryresourcesversionsmembers Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource's versions (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourcesversionsmembersresponse422.
+  /v1/xregistry/{tenant_slug}/{groups}/{gid}/{resources}/{rid}/versions/{vid}:
+    get:
+      tags:
+      - xregistry
+      summary: An xRegistry resource version (append $details for its attributes) (members)
+      description: xRegistry core API, read-only, over the tenant's published artifacts
+        (members) (MFX-34.2).
+      operationId: xregistry_version_member_v1_xregistry__tenant_slug___groups___gid___resources___rid__versions__vid__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: groups
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Groups
+          description: Groups schema.
+        description: Path parameter identifying the groups segment.
+      - name: gid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Gid
+          description: Gid schema.
+        description: Path parameter identifying the gid segment.
+      - name: resources
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Resources
+          description: Resources schema.
+        description: Path parameter identifying the resources segment.
+      - name: rid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rid
+          description: Rid schema.
+        description: Path parameter identifying the rid segment.
+      - name: vid
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Vid
+          description: Vid schema.
+        description: Path parameter identifying the vid segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourceversionappenddetailsfauthorization schema.
+          - type: 'null'
+            description: Anx Registryresourceversionappenddetailsfauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Anx Registryresourceversionappenddetailsf Xapikey schema.
+          - type: 'null'
+            description: Anx Registryresourceversionappenddetailsf Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for an xregistry resource version (append
+            $details for its attributes) (members).
+        '404':
+          description: Unknown tenant, or the path names no entity of the registry.
+        '429':
+          description: Public export rate limit exceeded.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for anx registryresourceversionappenddetailsfresponse422.
 components:
   schemas:
     AbsenceCategory:

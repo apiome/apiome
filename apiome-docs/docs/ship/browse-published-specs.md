@@ -121,6 +121,10 @@ API's public address is not reachable from that server (inside a container netwo
 `APIOME_REST_INTERNAL_BASE_URL` on the browse app to the address that is, such as
 `http://rest:8000/v1`.
 
+Next to them, **xRegistry** links the organization's read-only
+[xRegistry](./serve-an-xregistry.md): the same public projects as schemas and CloudEvents message
+definitions, for xRegistry tools.
+
 ## Interactive Swagger UI for a published spec
 
 Every published version has its own hosted Swagger UI:

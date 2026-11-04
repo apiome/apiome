@@ -5,6 +5,24 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.635.0] - 2026-11-04
+
+### Added
+- **Read-only xRegistry API (MFX-34.2, #4307).** The xRegistry core API (`GET` only) over a tenant's published
+  artifacts, backed by the MFX-34.1 projection (`app/xregistry_routes.py`, `app/xregistry_registry.py`).
+  - **Mounts:** `/v1/browse/tenants/{tenant_slug}/xregistry` — anonymous, the published **public** slice only,
+    whatever the credentials, sources loaded through `load_public_export_source`; `/v1/xregistry/{tenant_slug}` —
+    `validate_authentication` for that tenant, published versions of any visibility (member directory), never drafts.
+  - **Composition:** each project's latest published version → schema group `<project>` (schemas versioned by the
+    version label) and message groups `<project>.<group>`; projects with nothing to project are skipped.
+  - **Paths:** `/`, `/capabilities`, `/model`, `/{groups}`, `/{groups}/{gid}`, `/{groups}/{gid}/{resources}`,
+    `/{…}/{rid}` (a schema's document with `xRegistry-*` headers; a message's attributes), `…$details`,
+    `…/versions`, `…/versions/{vid}`; `?inline=*`; entities carry `xid`, `self`, `epoch`, `createdat`, `modifiedat`.
+  - Both mounts use the MFX-7.3 public-export per-IP rate limit; responses are cacheable (public 300 s, private
+    60 s); the composed registry is cached per slice and exact version set (LRU 32, 300 s).
+  - Tests: `tests/test_xregistry_api.py` (31), including a link-following generic-client walk.
+- OpenAPI 1.499.0 (18 new paths).
+
 ## [1.634.0] - 2026-11-04
 
 ### Added
