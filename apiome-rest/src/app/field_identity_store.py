@@ -26,6 +26,7 @@ from .database import db
 __all__ = [
     "CAPNP_TARGET",
     "FLATBUFFERS_TARGET",
+    "FIX_ORCHESTRA_TARGET",
     "ICEBERG_TARGET",
     "PROTO3_TARGET",
     "THRIFT_TARGET",
@@ -47,6 +48,9 @@ FLATBUFFERS_TARGET = "flatbuffers"
 #: The store key for Iceberg field IDs (MFX-36.3), keyed by column path (``Order/lines/element/sku``). IDs
 #: are 1..536870911, the default range; a dropped column's ID stays stored, so it is never reused.
 ICEBERG_TARGET = "iceberg"
+#: The store key for FIX Orchestra tags (MFX-37.2), keyed by field (``field/<name>``, ``field/<name>@<scenario>``).
+#: Tags are 1..536870911, the default range; a dropped field's tag stays stored, so it is never reused.
+FIX_ORCHESTRA_TARGET = "fix-orchestra"
 _PROTO_MAX_FIELD_NUMBER = 536_870_911
 
 

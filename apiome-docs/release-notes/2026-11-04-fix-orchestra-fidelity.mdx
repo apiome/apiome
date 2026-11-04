@@ -1,0 +1,23 @@
+---
+slug: fix-orchestra-fidelity
+title: Stable FIX tags and an honest Orchestra fidelity report
+description: "FIX Orchestra exports keep their tags and report every approximation."
+authors: [apiome]
+---
+
+The **FIX Orchestra** export now keeps the FIX tags it assigns, and its fidelity report lists every
+approximation. See
+[What the fidelity report lists](/ship/export-a-spec#what-the-fix-orchestra-fidelity-report-lists).
+
+{/* truncate */}
+
+- **Stable tags:** the first export of an item assigns tags from 5000. Every later export reuses them, and a
+  new field gets a tag no field of the item has had, so a counterparty's FIX dictionary stays valid.
+- **Operations as scenarios:** an operation whose request or response body is a message is written as a message
+  scenario: the request message names its responses. Other operations are dropped, with a critical warning
+  that counts them.
+- **Constraints kept where Orchestra can hold them:** an inline enumeration becomes a code set, bounds and
+  lengths become field attributes, and a list's item counts become group occurrences. Anything else is
+  written into the field's documentation.
+- **Flattening reported:** a record from another format is listed as flattened into a message, component or
+  group.

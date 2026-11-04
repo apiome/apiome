@@ -41,8 +41,18 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Set, Tuple, Union
 
 from pydantic import Field, ValidationError
+from pydantic.json_schema import SkipJsonSchema
 
-from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, Constraints, Type, TypeKind, TypeRef
+from .canonical_model import (
+    ApiParadigm,
+    CanonicalApi,
+    CanonicalField,
+    Operation,
+    OperationKind,
+    Type,
+    TypeKind,
+    TypeRef,
+)
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -102,7 +112,18 @@ LOSS_VERSION = "orchestra-version-rewritten"
 LOSS_UNTYPED = "orchestra-untyped-as-string"
 LOSS_SERVICES = "orchestra-services-dropped"
 LOSS_STATE_MACHINE = "orchestra-state-machine-dropped"
+LOSS_ENUM_AS_CODESET = "orchestra-enum-as-code-set"
+LOSS_BOUNDS = "orchestra-bounds-as-field-attributes"
+LOSS_CONSTRAINT_DOC = "orchestra-constraints-as-documentation"
+LOSS_OCCURS = "orchestra-items-as-group-occurrences"
+LOSS_FLATTENED = "orchestra-record-flattened"
 SYNTH_SUBJECTS = frozenset({LOSS_TAG_SYNTHESIZED, LOSS_PLACEHOLDER_CODESET})
+
+#: The longest value ``implMinLength`` / ``implMaxLength`` hold (``xs:short``).
+_SHORT_MAX = 32767
+#: Constraint facets Orchestra keeps elsewhere (presence, code sets, datatypes, group occurrences).
+_HELD_FACETS = frozenset({"extras", "format", "enum", "minimum", "maximum", "min_length", "max_length",
+                          "min_items", "max_items"})
 
 #: Canonical scalar (lower-case) → FIX datatype.
 _DATATYPES: Dict[str, str] = {
@@ -133,6 +154,11 @@ class FixOrchestraEmitOptions(EmitOptions):
         description="The repository's `version` (`FIX.Latest`, `FIX.4.4`, `FIX.5.0SP2_EP254`, `1.0` …). Empty "
         "means the source's own FIX version, else the item's version as `major.minor`, else `FIX.Latest`.",
     )
+    # Not in the options schema: the export service fills it from the MFX-12.2 field-identity store (MFX-37.2).
+    persisted_field_numbers: SkipJsonSchema[Dict[str, int]] = Field(
+        default_factory=dict,
+        description="FIX tags earlier exports assigned, keyed by field (`field/<name>` or `field/<name>@<scenario>`).",
+    )
 
 
 # ===========================================================================
@@ -154,6 +180,11 @@ def _scenario(value: Any) -> Optional[str]:
         return None
     safe = _SCENARIO_SAFE.sub("_", str(value))
     return safe if safe[:1].isalpha() else f"S{safe}"
+
+
+def _number(value: Any) -> str:
+    """A bound as Orchestra writes it (``10``, not ``10.0``)."""
+    return str(int(value)) if isinstance(value, float) and value.is_integer() else str(value)
 
 
 def _int(value: Any) -> Optional[int]:
@@ -190,6 +221,7 @@ class _Ref:
     value: Optional[str] = None
     rules: List[Dict[str, Any]] = field(default_factory=list)
     description: Optional[str] = None
+    attributes: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -222,9 +254,15 @@ class _CodeSet:
 class _Builder:
     """Lays a canonical model out as an Orchestra repository, recording every loss."""
 
-    def __init__(self, api: CanonicalApi, losses: LossTracker) -> None:
+    def __init__(self, api: CanonicalApi, losses: LossTracker,
+                 persisted: Optional[Mapping[str, int]] = None) -> None:
         self.api = api
         self.losses = losses
+        #: Tags earlier exports assigned (MFX-12.2 store), and those this build assigns for the first time.
+        self.persisted: Dict[str, int] = {k: v for k, v in (persisted or {}).items() if _int(v) is not None}
+        self.assigned: Dict[str, int] = {}
+        #: Operation key → the message names its payloads became (a scenario), MFX-37.2.
+        self.scenarios: Dict[str, List[str]] = {}
         self.types: Dict[str, Type] = {t.key: t for t in api.types}
         self._by_name: Dict[str, Type] = {t.name: t for t in api.types}
         self.fields: Dict[Tuple[str, Optional[str]], _FieldDef] = {}
@@ -243,6 +281,8 @@ class _Builder:
             if name:
                 self.datatypes[_fix_name(str(name))] = _fix_name(str(base)) if base else None
         self._reserve_source_tags()
+        # A stored tag stays taken even when its field is gone, so a new field never inherits it.
+        self._tags_used.update(self.persisted.values())
 
     # --- lookups ----------------------------------------------------------
 
@@ -322,13 +362,21 @@ class _Builder:
             fix_name = self._take_name("field", fix_name, scenario, member.key)
         else:
             self._names_used["field"].add((fix_name, scenario))
+        store_key = f"field/{fix_name}" + (f"@{scenario}" if scenario else "")
+        stored = self.persisted.get(store_key)
         if source_tag is not None and not any(f.tag == source_tag for f in self.fields.values()):
             tag = source_tag
+        elif stored is not None and not any(f.tag == stored for f in self.fields.values()):
+            tag = stored
+            self.losses.record(LossKind.INFERRED, LOSS_TAG_SYNTHESIZED,
+                               f"{member.key!r} has no FIX tag; it keeps tag {tag}, assigned by an earlier export",
+                               member.key)
         else:
             tag = self._fresh_tag()
+            self.assigned[store_key] = tag
             self.losses.record(LossKind.INFERRED, LOSS_TAG_SYNTHESIZED,
-                               f"{member.key!r} has no FIX tag; tag {tag} is assigned (user-defined range)",
-                               member.key)
+                               f"{member.key!r} has no FIX tag; tag {tag} is assigned (user-defined range) and kept "
+                               "by every re-export", member.key)
         definition = _FieldDef(tag=tag, name=fix_name, datatype=datatype,
                                description=member.description, scenario=scenario)
         self.fields[(fix_name, scenario)] = definition
@@ -437,10 +485,83 @@ class _Builder:
             else:
                 ref.value = str(value)
         ref.scenario = _scenario(extras.get("fix_ref_scenario"))
+        self._constraint_attributes(member, ref)
         ref.rules = [r for r in constraint_extras.get("fix_rules") or [] if isinstance(r, Mapping) and r.get("when")]
         if ref.kind != "field":
             ref.description = member.description
         return ref
+
+    def _constraint_attributes(self, member: CanonicalField, ref: _Ref) -> None:
+        """Write what a ref can hold of the member's constraints; document the rest (MFX-37.2)."""
+        constraints = member.constraints
+        if constraints is None or ref.presence == "constant":
+            return
+        from_fix = bool((member.extras or {}).get("fix_group_id") or (member.extras or {}).get("fix_tag"))
+        if ref.kind == "field":
+            bounds = {"minInclusive": constraints.minimum, "maxInclusive": constraints.maximum}
+            lengths = {"implMinLength": constraints.min_length, "implMaxLength": constraints.max_length}
+            for name, value in bounds.items():
+                if value is not None:
+                    ref.attributes[name] = _number(value)
+            for name, value in lengths.items():
+                if value is not None and 0 <= int(value) <= _SHORT_MAX:
+                    ref.attributes[name] = str(int(value))
+            if ref.attributes:
+                self.losses.record(LossKind.INFERRED, LOSS_BOUNDS,
+                                   f"{member.key!r}: {', '.join(f'{k}={v}' for k, v in ref.attributes.items())} on "
+                                   "the fieldRef (Orchestra's implementation bounds, not enforced validation)",
+                                   member.key)
+        elif ref.kind == "group" and not from_fix:
+            if constraints.min_items:
+                ref.attributes["implMinOccurs"] = str(int(constraints.min_items))
+            if constraints.max_items:
+                ref.attributes["implMaxOccurs"] = str(int(constraints.max_items))
+            if ref.attributes:
+                self.losses.record(LossKind.INFERRED, LOSS_OCCURS,
+                                   f"{member.key!r}: the list's item counts are the group's implMinOccurs / "
+                                   "implMaxOccurs", member.key)
+        rest = constraints.model_dump(exclude=set(_HELD_FACETS), exclude_none=True)
+        rest = {k: v for k, v in rest.items() if v not in (False, None)}
+        if rest:
+            text = "; ".join(f"{k} {v}" for k, v in sorted(rest.items()))
+            ref.description = "\n".join(filter(None, [ref.description, f"Constraints: {text}"]))
+            self.losses.record(LossKind.INFERRED, LOSS_CONSTRAINT_DOC,
+                               f"{member.key!r}: {', '.join(sorted(rest))} have no Orchestra form; written in the "
+                               "fieldRef's documentation", member.key)
+
+    def _inline_code_set(self, member: CanonicalField, scalar: str) -> Optional[_CodeSet]:
+        """A code set for an inline ``enum`` constraint on a plain field (MFX-37.2: constraints → code set)."""
+        constraints = member.constraints
+        presence = ((constraints.extras or {}).get("fix_presence") if constraints else None) or \
+            (member.extras or {}).get("fix_presence")
+        if constraints is None or not constraints.enum or presence == "constant":
+            return None
+        key = f"inline:{member.key}"
+        if key in self.code_sets:
+            return self.code_sets[key]
+        values = [str(v) for v in constraints.enum if v is not None]
+        if not values:
+            return None
+        datatype = self._datatype(member, scalar)
+        code_type = "char" if all(len(v) == 1 for v in values) else (
+            "int" if datatype == "int" else "String")
+        self.datatypes.setdefault(code_type, _STANDARD_BASES.get(code_type))
+        number, _ = self._take_id("codeSet", None, None)
+        codes, taken = [], set()
+        for index, value in enumerate(values, start=1):
+            code_name, n = _fix_name(value), 2
+            base = code_name
+            while code_name in taken:
+                code_name, n = f"{base}_{n}", n + 1
+            taken.add(code_name)
+            codes.append((code_name, number * 1000 + index, value, None))
+        built = _CodeSet(name=self._take_name("codeSet", f"{_fix_name(member.name)}CodeSet", None, member.key),
+                         id=number, type=code_type, codes=codes)
+        self.code_sets[key] = built
+        self.losses.record(LossKind.INFERRED, LOSS_ENUM_AS_CODESET,
+                           f"{member.key!r} allows only {', '.join(values)}; written as the code set {built.name!r}",
+                           member.key)
+        return built
 
     def _ref_for(self, member: CanonicalField, type_ref: TypeRef, name: str) -> Optional[_Ref]:
         resolved, target = self._resolve(type_ref)
@@ -462,6 +583,9 @@ class _Builder:
             definition = self.field_def(member, name, code_set.name)
             return _Ref(kind="field", id=definition.tag)
         scalar = resolved.name or "any"
+        inline = self._inline_code_set(member, scalar)
+        if inline is not None:
+            return _Ref(kind="field", id=self.field_def(member, name, inline.name).tag)
         definition = self.field_def(member, name, self._datatype(member, scalar))
         return _Ref(kind="field", id=definition.tag)
 
@@ -631,7 +755,7 @@ def _annotate(parent: ET.Element, text: Optional[str]) -> None:
 def _write_ref(parent: ET.Element, ref: _Ref, tag: Optional[str] = None) -> None:
     element = _el(parent, tag or f"{ref.kind}Ref", id=ref.id, scenario=ref.scenario,
                   presence=None if ref.presence == "optional" else ref.presence,
-                  value=ref.value if ref.kind == "field" else None)
+                  value=ref.value if ref.kind == "field" else None, **ref.attributes)
     for rule in ref.rules:
         rule_el = _el(element, "rule", name=_fix_name(str(rule["name"])) if rule.get("name") else None,
                       presence=rule.get("presence") if rule.get("presence") in _PRESENCES else None)
@@ -683,9 +807,67 @@ def _write_actors(root: ET.Element, api: CanonicalApi, builder: _Builder, losses
                 reliability=reliability)
 
 
+def _payload_record(builder: _Builder, ref: Optional[TypeRef]) -> Optional[Type]:
+    """The record an operation message carries (a list's element is not a message)."""
+    if ref is None or ref.item is not None:
+        return None
+    _resolved, target = builder._resolve(ref)
+    return target if target is not None and target.kind is TypeKind.RECORD else None
+
+
+def _scenarios(api: CanonicalApi, builder: _Builder, messages: List[_Structure]) -> None:
+    """Write each operation whose payloads are messages as a scenario (MFX-37.2).
+
+    The request message gets a ``response`` naming the response messages; the operation itself — its binding,
+    parameters and errors — has no Orchestra form. Each operation that yields a message is recorded in
+    ``builder.scenarios``.
+    """
+    from .canonical_model import MessageRole  # noqa: PLC0415
+
+    written = {key: s for (kind, key), s in builder.structures.items() if kind == "message" and s in messages}
+    for operation in api.operations():
+        requests, responses = [], []
+        for message in operation.messages:
+            record = _payload_record(builder, message.payload)
+            if record is None or record.key not in written:
+                continue
+            if message.role is MessageRole.RESPONSE:
+                responses.append(written[record.key])
+            elif message.role in (MessageRole.REQUEST, MessageRole.EVENT):
+                requests.append(written[record.key])
+        if not requests and not responses:
+            continue
+        builder.scenarios[operation.key] = [m.name for m in [*requests, *responses]]
+        for request in requests:
+            names = {r.get("name") for r in request.responses}
+            name = _fix_name(operation.name)
+            if responses and name not in names:
+                request.responses.append({"name": name, "messages": [
+                    {"name": r.name, "msgType": r.msg_type} for r in responses]})
+
+
 def build_orchestra_repository(api: CanonicalApi, options: Optional[FixOrchestraEmitOptions] = None,
                                losses: Optional[LossTracker] = None) -> ET.Element:
     """Lay a canonical model out as an Orchestra repository element.
+
+    Args:
+        api: The canonical model.
+        options: The emit options.
+        losses: Where every made-up or approximated decision is recorded.
+
+    Returns:
+        The ``fixr:repository`` root element.
+
+    Raises:
+        EmitPreconditionError: When the model has no record type, or none yields a message with a member.
+        EmitOptionsError: When ``version`` is not an Orchestra version.
+    """
+    return _build(api, options, losses)[0]
+
+
+def _build(api: CanonicalApi, options: Optional[FixOrchestraEmitOptions] = None,
+           losses: Optional[LossTracker] = None) -> Tuple[ET.Element, _Builder]:
+    """Lay a canonical model out as an Orchestra repository element, returning the builder too.
 
     Args:
         api: The canonical model.
@@ -703,7 +885,7 @@ def build_orchestra_repository(api: CanonicalApi, options: Optional[FixOrchestra
     losses = losses if losses is not None else LossTracker()
     if not any(t.kind is TypeKind.RECORD for t in api.types):
         raise EmitPreconditionError("An Orchestra repository describes messages, and this model has no record type.")
-    builder = _Builder(api, losses)
+    builder = _Builder(api, losses, options.persisted_field_numbers)
     messages: List[_Structure] = []
     for type_ in _message_types(api):
         message = builder.structure("message", type_)
@@ -714,6 +896,7 @@ def build_orchestra_repository(api: CanonicalApi, options: Optional[FixOrchestra
                           "needs at least one member", type_.key)
     if not messages:
         raise EmitPreconditionError("No record has a field an Orchestra message can hold.")
+    _scenarios(api, builder, messages)
     for type_ in api.types:  # every enumeration is a code set, used or not
         if type_.kind is TypeKind.ENUM:
             builder.code_set(type_)
@@ -801,8 +984,9 @@ def build_orchestra_repository(api: CanonicalApi, options: Optional[FixOrchestra
         _annotate(element, message.description)
     if any(s.operations for s in api.services) or api.channels:
         losses.record(LossKind.NA, LOSS_SERVICES, "An Orchestra repository describes messages; the API's operations "
-                      "and channels are not written", "")
-    return root
+                      "and channels are not written (an operation whose payloads are messages is written as a "
+                      "message scenario)", "")
+    return root, builder
 
 
 def render_orchestra(root: ET.Element) -> str:
@@ -851,13 +1035,23 @@ def orchestra_schema_problems(text: str) -> List[Dict[str, str]]:
 
 
 class FixOrchestraFidelityRulePack(CapabilityRulePack):
-    """Fidelity rules for FIX Orchestra export (the full rule set is MFX-37.2).
+    """Fidelity rules for FIX Orchestra export — MFX-37.1 / MFX-37.2 (#4323, #4324).
 
-    Operations, channels and services are ``DROP``ped with the critical types-only advisory; each decision the
-    emitter makes up (a tag, a group for a list or map, a component for a union, a renamed entity) is filed under
-    its construct; constraints Orchestra cannot hold are dropped. What a re-import reads back is **measured**: the
-    pack emits the repository and imports it with the Orchestra importer, and files each difference under the type
-    it concerns.
+    * **Operations** — one whose request or response payload is written as a message is a **scenario**
+      (``APPROX``: the request message names its response messages; the binding and parameters are gone, so the
+      operation itself is also ``DROP``ped, at info severity); every other operation is ``DROP``ped, and a
+      critical advisory counts them. Channels and services are ``DROP``ped.
+    * **FIX tags** — every tag the source does not carry is ``SYNTH``: assigned once and kept by every
+      re-export (the MFX-12.2 field-identity store, target ``fix-orchestra``).
+    * **Constraints** — an inline enumeration becomes a code set; bounds and lengths become the fieldRef's
+      ``minInclusive`` / ``maxInclusive`` / ``implMinLength`` / ``implMaxLength``; a list's item counts the
+      group's ``implMinOccurs`` / ``implMaxOccurs``; anything else is written in the fieldRef's documentation.
+      Each is ``APPROX``: Orchestra records them, it does not validate with them.
+    * **Non-FIX types** — a record from another format is flattened into a message, component or group
+      (``APPROX``); a list of values or a map becomes a group, a union a component.
+
+    What a re-import reads back is **measured**: the pack emits the repository and imports it with the
+    Orchestra importer, and files each difference under the type it concerns.
     """
 
     target_label = "FIX Orchestra"
@@ -875,8 +1069,14 @@ class FixOrchestraFidelityRulePack(CapabilityRulePack):
         losses = LossTracker()
         self._changes: Dict[str, DiffChangeKind] = {}
         self._added: List[str] = []
+        self._scenarios: Dict[str, List[str]] = {}
+        self._written: Dict[str, List[str]] = {}
         try:
-            root = build_orchestra_repository(api, options, losses)
+            root, builder = _build(api, options, losses)
+            self._scenarios = dict(builder.scenarios)
+            for (kind, key), structure in builder.structures.items():
+                if structure.members:
+                    self._written.setdefault(key, []).append(kind)
             self._changes, self._added = _measure_round_trip(api, render_orchestra(root))
         except (EmitPreconditionError, EmitOptionsError, ValueError):
             pass
@@ -901,7 +1101,7 @@ class FixOrchestraFidelityRulePack(CapabilityRulePack):
 
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         verdicts = self._filed_verdicts("")
-        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        advisory = self._advisory(api)
         if advisory is not None:
             verdicts.insert(0, advisory)
         if self._changes.get("") is not None and not verdicts:
@@ -914,8 +1114,49 @@ class FixOrchestraFidelityRulePack(CapabilityRulePack):
                 severity=LossinessSeverity.INFO, target_mapping="identity → repository"))
         return verdicts
 
+    def _advisory(self, api: CanonicalApi) -> Optional[FidelityVerdict]:
+        """The critical types-only advisory, counting what is dropped and what is kept as a scenario."""
+        operations = api.operations()
+        scenarios = [o for o in operations if o.key in getattr(self, "_scenarios", {})]
+        if not scenarios:
+            return types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        dropped = len(operations) - len(scenarios)
+        if not dropped and not api.channels:
+            return None
+        parts = [f"{dropped} of {len(operations)} operation(s)"]
+        if api.channels:
+            parts.append(f"{len(api.channels)} channel(s)")
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} describes messages, not an API: {' and '.join(parts)} are not exported "
+            f"({len(scenarios)} operation(s) are kept as message scenarios). Export to OpenAPI or AsyncAPI as well "
+            "to keep them",
+            severity=LossinessSeverity.CRITICAL, target_mapping="types-only")
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """A scenario (``APPROX`` + the operation itself ``DROP``ped at info) or a ``DROP``."""
+        messages = getattr(self, "_scenarios", {}).get(operation.key)
+        if not messages:
+            return [self.operation_verdict(operation)]
+        return [
+            FidelityVerdict.approx(
+                message=f"written as a message scenario: {', '.join(messages)}"
+                + (" (the request names its responses)" if len(messages) > 1 else ""),
+                severity=LossinessSeverity.WARN, target_mapping="operation → message scenario"),
+            FidelityVerdict.drop(
+                message=f"the {operation.kind.value} operation itself (its binding, parameters and errors) has no "
+                f"Orchestra form", severity=LossinessSeverity.INFO, target_mapping="operation → not kept"),
+        ]
+
+    def operation_verdict(self, operation: Operation) -> FidelityVerdict:
+        """An operation with no payload written as a message is dropped."""
+        events = operation.kind in (OperationKind.PUBLISH, OperationKind.SUBSCRIBE)
+        return FidelityVerdict.drop(
+            message=f"{self.target_label} describes messages; the {operation.kind.value} operation has no payload "
+            f"written as a message, so it is dropped{' (event operation)' if events else ''}",
+            target_mapping="operation → dropped (no message)")
+
     def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
-        filed = self._filed_verdicts(type_.key)
+        filed = [*self._filed_verdicts(type_.key), *self._flattened(type_)]
         change = self._changes.get(type_.key)
         if change is DiffChangeKind.REMOVED:
             return [*filed, FidelityVerdict.drop(
@@ -928,6 +1169,18 @@ class FixOrchestraFidelityRulePack(CapabilityRulePack):
                 "presence and datatypes", severity=LossinessSeverity.INFO, target_mapping="type → Orchestra")]
         return filed or [self.type_verdict(type_)]
 
+    def _flattened(self, type_: Type) -> List[FidelityVerdict]:
+        """A record from another format is flattened into Orchestra's message / component / group (``APPROX``)."""
+        if type_.kind is not TypeKind.RECORD or (type_.extras or {}).get("fix_kind"):
+            return []
+        kinds = getattr(self, "_written", {}).get(type_.key)
+        if not kinds:
+            return []
+        return [FidelityVerdict.approx(
+            message=f"record {type_.key!r} is flattened into an Orchestra {' and a '.join(sorted(kinds))}: a list of "
+            "refs to fields declared once for the whole repository", severity=LossinessSeverity.INFO,
+            target_mapping="record → " + " / ".join(sorted(kinds)))]
+
     def field_verdicts(self, member: CanonicalField) -> List[FidelityVerdict]:
         return [*super().field_verdicts(member), *self._filed_verdicts(member.key)]
 
@@ -936,17 +1189,8 @@ class FixOrchestraFidelityRulePack(CapabilityRulePack):
         return None
 
     def _constraints_verdict(self, member: CanonicalField) -> Optional[FidelityVerdict]:
-        """Orchestra holds presence, constant values and rules; other validation constraints are dropped."""
-        constraints: Optional[Constraints] = member.constraints
-        if constraints is None:
-            return None
-        facets = set(constraints.model_dump(exclude={"extras", "format", "enum", "min_items"}, exclude_none=True))
-        if not facets:
-            return None
-        return FidelityVerdict.drop(
-            message=f"{self.target_label} has no validation constraints beyond presence and code sets; "
-            f"{', '.join(sorted(facets))} of {member.key!r} are dropped",
-            severity=LossinessSeverity.INFO, target_mapping="constraints → dropped")
+        """Constraints are filed from the emitter's record: a code set, fieldRef bounds or documentation (APPROX)."""
+        return None
 
     def synthesized_verdicts(self, api: CanonicalApi) -> List[Tuple[str, FidelityVerdict]]:
         return [(key, FidelityVerdict.synth(
@@ -1023,11 +1267,12 @@ class FixOrchestraEmitter(Emitter, register=True):
         """
         options = _coerce_options(opts)
         losses = LossTracker()
-        root = build_orchestra_repository(api, options, losses)
+        root, builder = _build(api, options, losses)
         stem = re.sub(r"[^A-Za-z0-9_.-]+", "-", root.get("name") or "repository").strip("-") or "repository"
         return EmitResult(files=[EmittedFile(path=f"{stem}{ORCHESTRA_SUFFIX}", content=render_orchestra(root),
                                              media_type=XML_MEDIA_TYPE)],
-                          media_type=XML_MEDIA_TYPE, losses=losses.records())
+                          media_type=XML_MEDIA_TYPE, losses=losses.records(),
+                          field_identity_assignments=dict(builder.assigned))
 
 
 def _coerce_options(opts: Optional[Union[FixOrchestraEmitOptions, EmitOptions]]) -> FixOrchestraEmitOptions:
