@@ -126,6 +126,11 @@ class XsdSchemaWriter:
         standalone: Write and record the standalone XSD export's conventions (see the module docstring).
         record_json_mapping: Record how JSON-shaped constructs are mapped (unions, null, examples) without
             changing the output (see the module docstring). Implied by ``standalone``.
+        reserved_type_names: Type names the caller writes itself (the ISO 20022 profile's ``Document``,
+            MFX-22.4), so no source type is given one of them.
+
+    Subclasses change how names are made by overriding :meth:`legal_name`, :meth:`structural_name` and
+    :meth:`rename` (the ISO 20022 profile, :mod:`app.iso20022_xsd_profile`).
     """
 
     def __init__(
@@ -142,6 +147,7 @@ class XsdSchemaWriter:
         xsd_version: str = "1.0",
         standalone: bool = False,
         record_json_mapping: bool = False,
+        reserved_type_names: FrozenSet[str] = frozenset(),
     ) -> None:
         self._api = api
         self.target_namespace = target_namespace
@@ -185,8 +191,12 @@ class XsdSchemaWriter:
         for type_ in api.types:
             if type_.key in skip_types:
                 continue
-            scope = type_scopes.setdefault(self.type_namespaces[type_.key], NameScope())
-            name = scope.claim(ncname(type_.name, pascal=True, fallback="Type"))
+            namespace = self.type_namespaces[type_.key]
+            if namespace not in type_scopes:
+                type_scopes[namespace] = NameScope()
+                for reserved in sorted(reserved_type_names):
+                    type_scopes[namespace].claim(reserved)
+            name = type_scopes[namespace].claim(self.legal_name(type_.name, pascal=True, fallback="Type"))
             self.type_names[type_.key] = self.rename(type_.name, name, type_.key, "type")
 
     def _element_scope(self, namespace: Optional[str]) -> NameScope:
@@ -204,6 +214,30 @@ class XsdSchemaWriter:
     # ------------------------------------------------------------------
     # Names
     # ------------------------------------------------------------------
+
+    def legal_name(self, raw: str, *, pascal: bool = False, fallback: str = "item") -> str:
+        """The legal name a source name is written under, before de-duplication.
+
+        Args:
+            raw: The source name.
+            pascal: Start with a capital letter (type names).
+            fallback: Used when ``raw`` has no letters or digits.
+
+        Returns:
+            An XML ``NCName`` (:func:`app.xsd_types.ncname`).
+        """
+        return ncname(raw, pascal=pascal, fallback=fallback)
+
+    def structural_name(self, name: str) -> str:
+        """The name of an element the writer adds itself (``item``, ``entry``, ``key``, ``value``).
+
+        Args:
+            name: The default name.
+
+        Returns:
+            ``name`` unchanged.
+        """
+        return name
 
     def rename(self, source: Optional[str], emitted: str, pointer: str, noun: str) -> str:
         """Report ``source`` → ``emitted`` when they differ, and return ``emitted``."""
@@ -352,7 +386,7 @@ class XsdSchemaWriter:
 
     def _append_source_attribute(self, complex_el: ET.Element, field: CanonicalField, scope: NameScope) -> None:
         """A field imported from an XSD ``xs:attribute``: written back as one."""
-        name = scope.claim(ncname(field.name, fallback="attribute"))
+        name = scope.claim(self.legal_name(field.name, fallback="attribute"))
         self.rename(field.name, name, field.key, "attribute")
         self.tracker.record(field.key, Provenance.SOURCE)
         type_ref = self.source_type_qname(field.type, hint=field.extras.get("xsd_type"))
@@ -402,7 +436,7 @@ class XsdSchemaWriter:
             ET.SubElement(content, ET.QName(XSD_NS, "extension"), {"base": self.type_ref(target.key)})
         else:
             sequence_el = ET.SubElement(complex_el, ET.QName(XSD_NS, "sequence"))
-            self.append_value(sequence_el, "item", aliased, pointer=type_.key, optional=False)
+            self.append_value(sequence_el, self.structural_name("item"), aliased, pointer=type_.key, optional=False)
         return True
 
     def _append_union_members(self, choice: ET.Element, type_: Type) -> None:
@@ -415,7 +449,7 @@ class XsdSchemaWriter:
         for member in type_.union_members:
             target = self._types_by_key.get(member)
             local = target.name if target is not None else member.split(".")[-1]
-            element = scope.claim(ncname(local[:1].lower() + local[1:], fallback="variant"))
+            element = scope.claim(self.legal_name(local[:1].lower() + local[1:], fallback="variant"))
             self.append_value(choice, element, TypeRef(name=member), pointer=type_.key, optional=False)
 
     def _append_any_body(self, complex_el: ET.Element, type_: Type) -> None:
@@ -443,14 +477,18 @@ class XsdSchemaWriter:
         )
         sequence_el = ET.SubElement(complex_el, ET.QName(XSD_NS, "sequence"))
         entry = ET.SubElement(
-            sequence_el, ET.QName(XSD_NS, "element"), {"name": "entry", "minOccurs": "0", "maxOccurs": "unbounded"}
+            sequence_el,
+            ET.QName(XSD_NS, "element"),
+            {"name": self.structural_name("entry"), "minOccurs": "0", "maxOccurs": "unbounded"},
         )
         entry_sequence = anonymous_sequence(entry)
         self.append_value(
-            entry_sequence, "key", type_.key_type or TypeRef(name="string"), pointer=type_.key, optional=False
+            entry_sequence, self.structural_name("key"), type_.key_type or TypeRef(name="string"),
+            pointer=type_.key, optional=False,
         )
         self.append_value(
-            entry_sequence, "value", type_.value_type or TypeRef(name="string"), pointer=type_.key, optional=False
+            entry_sequence, self.structural_name("value"), type_.value_type or TypeRef(name="string"),
+            pointer=type_.key, optional=False,
         )
 
     # ------------------------------------------------------------------
@@ -462,7 +500,7 @@ class XsdSchemaWriter:
     ) -> None:
         """Write one record (or union) field as an element."""
         extras = field.extras or {}
-        name = scope.claim(ncname(field.name, fallback="field"))
+        name = scope.claim(self.legal_name(field.name, fallback="field"))
         self.rename(field.name, name, field.key, "element")
         if field.deprecated:
             self.losses.record(
@@ -612,7 +650,9 @@ class XsdSchemaWriter:
                 element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)
                 annotate(element, description, examples)
                 inner = anonymous_sequence(element)
-                self.append_value(inner, "item", ref.item, pointer=pointer, optional=False, fmt=fmt, hint=hint)
+                self.append_value(
+                    inner, self.structural_name("item"), ref.item, pointer=pointer, optional=False, fmt=fmt, hint=hint
+                )
                 return element
             attributes["type"] = self.type_qname(ref.item, fmt, pointer, hint=hint)
             element = ET.SubElement(parent, ET.QName(XSD_NS, "element"), attributes)

@@ -1744,7 +1744,8 @@ To check the file yourself before you apply it, run `kubeconform -strict -summar
 ### XSD (XML Schema) on its own
 
 Exporting to **XSD** writes just the data types as an XML Schema, without the WSDL around them — for
-XML payloads, JAXB / JAXP code generation and standards that publish schemas (ISO 20022, UBL). The
+XML payloads, JAXB / JAXP code generation and standards that publish schemas (ISO 20022 — see the
+[ISO 20022 message profile](#iso-20022-message-profile) — and UBL). The
 types are written exactly as in a WSDL export (the section above; both exports share one mapping):
 objects as `complexType`, a `oneOf` as `xs:choice`, a nullable field as `nillable="true"
 minOccurs="0"`, a list as `maxOccurs="unbounded"`, enums as `xs:enumeration`, and `pattern`,
@@ -1852,16 +1853,73 @@ Each RELAX NG or DTD export is checked before you download it:
 3. The export imports again as RELAX NG or as a DTD (`relaxng.reimport`, `dtd.reimport`). Its round trip
    is measured through that import.
 
+#### ISO 20022 message profile {#iso-20022-message-profile}
+
+Banks and payment schemes exchange ISO 20022 messages (`pain.001` credit transfers, `pacs.008`
+interbank payments, `camt.053` statements), and each message is published as an XML Schema with strict
+conventions. Set **profile** to `iso20022` to write the item's types as such a **message definition**
+instead of a plain XSD:
+
+| Convention | What the export writes |
+| --- | --- |
+| **Message identifier** | `<business area>.<message number>.<variant>.<version>`, for example `pain.001.001.09`, from **message_identifier**. An item imported from ISO 20022 keeps its own. |
+| **Namespace and file** | One namespace, `urn:iso:std:iso:20022:tech:xsd:pain.001.001.09`, in `pain.001.001.09.xsd`. Types from other namespaces are written in it. |
+| **Root element** | One global element, `Document`. Its type wraps the **business element**: the message type (**message_type**, otherwise the one object no other object uses) as an element named after it, for example `CustomerCreditTransferInitiation` for `CustomerCreditTransferInitiationV09`. |
+| **Names** | Every type and element name is UpperCamelCase, ASCII letters and digits only: `customer_id` becomes `CustomerId`, `debtor-name` becomes `DebtorName`. An item imported from ISO 20022 keeps the standard's names (`GrpHdr`, `MsgId`). |
+| **Documentation** | Each type's and property's description is its `xs:documentation`. `Document` is documented with the message it carries. |
+| **Message catalog** | `message-catalog.json`, beside the schema, lists the message: its identifier, business area, message number, variant and version, namespace, schema file, root and business elements, and its message components and data types. |
+
+The schema and the catalog download together as a `.zip`. An upload of the schema is recognized as an
+ISO 20022 message definition, with its message id.
+
+The profile has three options of its own, all optional:
+
+- **message_identifier** — the message, for example `pain.001.001.09`. It must have the
+  `xxxx.nnn.nnn.nn` shape.
+- **business_area** — four letters, such as `pain`, `pacs` or `camt`. Used when there is no
+  **message_identifier**; when both are set they must agree.
+- **message_type** — the object `Document` wraps, by name. An unknown name is refused.
+
+The profile writes XML Schema only: with **mode** set to `relaxng`, `relaxng-compact` or `dtd`, the export
+is refused. **xsd_version** `1.1` is allowed.
+
+The fidelity report lists what the item could not meet of the conventions, at the top of the report or on
+the property concerned:
+
+| When | The report says |
+| --- | --- |
+| The item names no message identifier | Synthesized: the export uses a placeholder, `xxxx.001.001.01` (or `pacs.001.001.01` with **business_area** `pacs`). Set **message_identifier** to name the message. |
+| The item has no `Document` of its own | Synthesized (note): the export adds the `Document` root around the business element |
+| A name has nothing an ISO 20022 name can keep (`名前`) | Synthesized: the export invents one (`Field`) |
+| A name has characters ISO 20022 names cannot hold (`größe`, `2xx`) | Approximated: the closest name (`Groe`, `X2xx`) |
+| A name only needs a different case or no separators (`customer_id`) | Approximated (note): `CustomerId` |
+| Several objects could be the message | Approximated: the first is used. Set **message_type** to choose another. |
+| Types come from another namespace | Approximated: they are written in the message's namespace |
+| The item has no object at all | Dropped: `Document` wraps nothing |
+
+Each ISO 20022 export is checked like any XSD export (above), and also:
+
+1. `message-catalog.json` is JSON with one message, naming the export's schema file and its
+   `targetNamespace` (`xsd.iso20022-catalog`).
+2. The schema imports again as an ISO 20022 message definition, and its round trip is measured through
+   that import.
+
+To try it, export an item to **XSD** with **profile** `iso20022` and **message_identifier**
+`pain.001.001.09`, or export the sample `apiome-ui/examples/iso20022/07-pain.001.001.09-message-definition.xsd`
+after importing it, with no options.
+
 **Where to find it.** In the **Export** dialog, the **XSD** card is under **Data schema & graph** on the
 **Target** step. Its badge is **lossless** for an item imported from XSD and **types-only** for any
-other source (XSD keeps the types and leaves out the operations). Pick the card to see its four
-options: **Xsd Version** (`1.0` by default, or `1.1`), **Include Xml Declaration** and **Include
-Comments** (both on by default), and **Mode** (`xsd` by default; `relaxng`, `relaxng-compact` or `dtd`).
-From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add `--option xsd_version=1.1`,
-`--option include_xml_declaration=false` or `--option mode=dtd --out <file>.dtd`. A types-only export
-exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export** dialog on
-Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces. The ISO 20022
-profile is not offered yet.
+other source (XSD keeps the types and leaves out the operations). Pick the card to see its options:
+**Xsd Version** (`1.0` by default, or `1.1`), **Include Xml Declaration** and **Include Comments** (both
+on by default), **Mode** (`xsd` by default; `relaxng`, `relaxng-compact` or `dtd`), **Profile**
+(`generic` by default, or `iso20022`), and the profile's **Message Identifier**, **Business Area** and
+**Message Type**. From the CLI, run `apiome export xsd <item> --out <file>.xsd`, and add
+`--option xsd_version=1.1`, `--option include_xml_declaration=false`, `--option mode=dtd --out <file>.dtd`
+or `--option profile=iso20022 --option message_identifier=pain.001.001.09 --out <file>.zip`. A types-only
+export exits non-zero unless you add `--force`, and `--json` prints the tier. A public item's **Export**
+dialog on Browse offers XSD too: the `.xsd` file, or a `.zip` when the item spans several namespaces or
+uses the ISO 20022 profile.
 
 ### ASN.1 from any source
 

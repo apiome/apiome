@@ -26,6 +26,12 @@ Operations and channels are dropped: XSD describes data only.
 syntax, ``<Name>.rng``) or ``relaxng-compact`` (``<Name>.rnc``) — or as a DTD (``dtd``, ``<Name>.dtd``),
 one file each, built from the XSD documents by :mod:`app.xml_schema_modes`; the fidelity pack follows
 the mode (:meth:`XsdFidelityRulePack.apply_options`).
+
+**ISO 20022 profile** (MFX-22.4, #4135): ``profile="iso20022"`` writes the types as an ISO 20022 message
+definition — one ``urn:iso:std:iso:20022:tech:xsd:<identifier>`` namespace, a ``Document`` root wrapping the
+business element, UpperCamelCase names — plus a message-catalog manifest
+(:mod:`app.iso20022_xsd_profile`). ``message_identifier``, ``business_area`` and ``message_type`` name the
+message; what the source cannot meet is reported ``SYNTH`` or ``APPROX``.
 """
 
 from __future__ import annotations
@@ -40,6 +46,7 @@ from .canonical_model import ApiParadigm, CanonicalApi, Channel, Operation, Type
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
+    EmitOptionsError,
     EmitResult,
     EmittedFile,
     Emitter,
@@ -48,6 +55,19 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
+from .iso20022_xsd_profile import (
+    BUSINESS_AREA_RE,
+    DOCUMENT,
+    MESSAGE_CATALOG_PATH,
+    MESSAGE_IDENTIFIER_RE,
+    SYNTHESIZED_SUBJECTS,
+    Iso20022Message,
+    Iso20022SchemaWriter,
+    append_document,
+    message_catalog,
+    record_message_losses,
+    resolve_message,
+)
 from .lossiness import LossinessSeverity
 from .writer_loss_rulepack import WriterLossRulePack
 from .xml_schema_modes import (
@@ -64,9 +84,13 @@ from .xml_schema_modes import (
 from .xsd_schema import TNS_PREFIX, XSD_NS, XSD_PREFIX, XsdSchemaWriter, comment_safe
 from .xsd_types import xsd_builtin
 
-__all__ = ["XSD_OUTPUT_MODES", "XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces"]
+__all__ = [
+    "ISO20022_PROFILE", "XSD_OUTPUT_MODES", "XsdEmitOptions", "XsdEmitter", "XsdFidelityRulePack", "xsd_namespaces",
+]
 
 _XSD_FORMAT = "xsd"
+#: The ``profile`` option's value for an ISO 20022 message definition (MFX-22.4).
+ISO20022_PROFILE = "iso20022"
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 #: A namespace that is a URI (``http://…``, ``urn:…``) rather than a package name (``com.example``).
 _URI = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
@@ -98,11 +122,15 @@ class XsdFidelityRulePack(WriterLossRulePack):
     * **examples** — kept as ``xs:documentation``, an info ``APPROX``;
     * **attribute vs element** — every property of a non-XSD source is written as a child element, a
       ``SYNTH`` note at the root;
-    * renamed names (info), untyped values, constraints with no facet and dropped ``deprecated`` flags.
+    * renamed names (info), untyped values, constraints with no facet and dropped ``deprecated`` flags;
+    * with the **ISO 20022 profile** (MFX-22.4): a synthesized message identifier, the added ``Document``
+      root and invented names are ``SYNTH``; names that lose characters, a guessed message type and merged
+      namespaces are ``APPROX``.
     """
 
     target_label = "XSD"
     info_drops = frozenset({"deprecated-dropped", "example-dropped"})
+    synthesized = SYNTHESIZED_SUBJECTS
     cosmetic = frozenset({
         "renamed-identifier", "null-as-nillable", "example-as-annotation", "null-as-optional",
         "namespace-as-fixed-xmlns",
@@ -125,8 +153,16 @@ class XsdFidelityRulePack(WriterLossRulePack):
         return (self._options or XsdEmitOptions()).mode
 
     def build_writer(self, api: CanonicalApi) -> "_XsdWriter":
-        """Build the export with the options the report is for (default: XSD 1.0)."""
-        writer = _XsdWriter(api, self._options or XsdEmitOptions())
+        """Build the export with the options the report is for (default: XSD 1.0).
+
+        A ``message_type`` the model does not have is ignored here (the export itself refuses it).
+        """
+        options = self._options or XsdEmitOptions()
+        try:
+            writer = _XsdWriter(api, options)
+        except EmitOptionsError:
+            options = options.model_copy(update={"message_type": None})
+            writer = _XsdWriter(api, options)
         writer.render()
         self.target_label = writer.label
         return writer
@@ -135,7 +171,18 @@ class XsdFidelityRulePack(WriterLossRulePack):
         """The rewrite of another format, the element-only choice, and the types-only advisory."""
         verdicts: List[FidelityVerdict] = []
         _extension, _media, written = XSD_OUTPUT_MODES[self._mode]
-        if self._mode != "xsd":
+        iso = (self._options or XsdEmitOptions()).profile == ISO20022_PROFILE
+        if iso:
+            if api.format != ISO20022_PROFILE:
+                verdicts.append(
+                    FidelityVerdict.approx(
+                        message=f"The {api.format or 'source'} document is written as an ISO 20022 message "
+                        "definition and reads back as an ISO 20022 item; details specific to its format are not kept",
+                        severity=LossinessSeverity.INFO,
+                        target_mapping="document → ISO 20022 message definition",
+                    )
+                )
+        elif self._mode != "xsd":
             reads_back = "a RELAX NG item" if self._mode in (RELAXNG_MODE, RELAXNG_COMPACT_MODE) else "a DTD item"
             verdicts.append(
                 FidelityVerdict.approx(
@@ -154,7 +201,7 @@ class XsdFidelityRulePack(WriterLossRulePack):
                     target_mapping="document → XML Schema",
                 )
             )
-        if api.format != _XSD_FORMAT:
+        if api.format != _XSD_FORMAT and not (iso and api.format == ISO20022_PROFILE):
             if any(t.kind is TypeKind.RECORD and t.fields for t in api.types):
                 verdicts.append(
                     FidelityVerdict.synth(
@@ -206,11 +253,64 @@ class XsdEmitOptions(EmitOptions):
         "only.",
     )
 
+    profile: Literal["generic", "iso20022"] = Field(
+        default="generic",
+        description="`generic` (default) writes the types as they are. `iso20022` writes an ISO 20022 message "
+        "definition: one `urn:iso:std:iso:20022:tech:xsd:<message_identifier>` namespace, a `Document` root "
+        "element wrapping the business element, UpperCamelCase names, descriptions as `xs:documentation`, "
+        "and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `xsd` mode only.",
+    )
+    message_identifier: Optional[str] = Field(
+        default=None,
+        description="ISO 20022 profile: the message identifier, `<business area>.<message number>.<variant>."
+        "<version>` (`pain.001.001.09`). Defaults to an ISO 20022 source's own; without one, a placeholder "
+        "(`<business_area>.001.001.01`) is used and reported as synthesized.",
+    )
+    business_area: Optional[str] = Field(
+        default=None,
+        description="ISO 20022 profile: the four-letter business area (`pain`, `pacs`, `camt` …) a placeholder "
+        "identifier uses. Must match `message_identifier` when both are set.",
+    )
+    message_type: Optional[str] = Field(
+        default=None,
+        description="ISO 20022 profile: the record type (name or key) `Document` wraps as the message. Defaults "
+        "to an ISO 20022 source's business element, else the one record no other record uses.",
+    )
+
     @model_validator(mode="after")
     def _version_is_for_xsd(self) -> "XsdEmitOptions":
         """``xsd_version`` 1.1 has no meaning for a RELAX NG or DTD export (MFX-22.3)."""
         if self.mode != "xsd" and self.xsd_version != "1.0":
             raise ValueError(f"mode {self.mode!r} writes no XML Schema; leave xsd_version unset")
+        return self
+
+    @model_validator(mode="after")
+    def _iso20022_options(self) -> "XsdEmitOptions":
+        """The ISO 20022 options (MFX-22.4) need the profile, the profile needs ``xsd`` mode, and the
+        identifier and business area must be well formed and agree. Both are lower-cased."""
+        named = [n for n in ("message_identifier", "business_area", "message_type") if getattr(self, n)]
+        if self.profile != ISO20022_PROFILE:
+            if named:
+                raise ValueError(f"{', '.join(named)} apply to profile 'iso20022' only")
+            return self
+        if self.mode != "xsd":
+            raise ValueError(f"profile 'iso20022' writes an XML Schema; mode {self.mode!r} is not available with it")
+        if self.message_identifier is not None:
+            self.message_identifier = self.message_identifier.strip().lower()
+            if not MESSAGE_IDENTIFIER_RE.match(self.message_identifier):
+                raise ValueError(
+                    "message_identifier must be '<business area>.<message number>.<variant>.<version>', "
+                    "for example 'pain.001.001.09'"
+                )
+        if self.business_area is not None:
+            self.business_area = self.business_area.strip().lower()
+            if not BUSINESS_AREA_RE.match(self.business_area):
+                raise ValueError("business_area must be four letters, for example 'pain'")
+            if self.message_identifier and not self.message_identifier.startswith(f"{self.business_area}."):
+                raise ValueError(
+                    f"business_area {self.business_area!r} does not match message_identifier "
+                    f"{self.message_identifier!r}"
+                )
         return self
 
 
@@ -257,7 +357,11 @@ class XsdEmitter(Emitter, register=True):
         writer = _XsdWriter(api, options)
         media_type = XSD_OUTPUT_MODES[options.mode][1]
         files = [
-            EmittedFile(path=path, content=content, media_type=media_type)
+            EmittedFile(
+                path=path,
+                content=content,
+                media_type="application/json" if path == MESSAGE_CATALOG_PATH else media_type,
+            )
             for path, content in writer.render()
         ]
         return EmitResult(
@@ -300,6 +404,11 @@ class _XsdWriter:
         self._options = options
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
+        #: The ISO 20022 message (MFX-22.4), or ``None`` for the generic profile.
+        self.message: Optional[Iso20022Message] = None
+        if options.profile == ISO20022_PROFILE:
+            self._init_iso20022()
+            return
         self.main_namespace, type_namespaces = xsd_namespaces(api)
         #: Every namespace written, the main one first.
         self.namespaces: List[Optional[str]] = [self.main_namespace]
@@ -326,12 +435,65 @@ class _XsdWriter:
         #: What each type became in a RELAX NG or DTD export (set by :meth:`render`).
         self._mode_written: Optional[Dict[str, str]] = None
 
+    def _init_iso20022(self) -> None:
+        """Set up an ISO 20022 message definition: one message namespace and ISO 20022 names (MFX-22.4).
+
+        Raises:
+            EmitOptionsError: When ``message_type`` names no record type of the model.
+        """
+        api, options = self._api, self._options
+        try:
+            message = resolve_message(
+                api,
+                message_identifier=options.message_identifier,
+                business_area=options.business_area,
+                message_type=options.message_type,
+            )
+        except ValueError as exc:
+            raise EmitOptionsError(str(exc)) from exc
+        self.message = message
+        record_message_losses(api, message, self.losses)
+        self.main_namespace = message.namespace
+        self.namespaces = [message.namespace]
+        self._schema = Iso20022SchemaWriter(
+            api,
+            target_namespace=message.namespace,
+            target_label="ISO 20022 XSD",
+            losses=self.losses,
+            tracker=self.tracker,
+            type_namespaces={t.key: message.namespace for t in api.types},
+            prefixes={message.namespace: TNS_PREFIX},
+            xsd_version=options.xsd_version,
+            standalone=True,
+            reserved_type_names=frozenset() if message.source_document else frozenset({DOCUMENT}),
+        )
+        self.paths = {message.namespace: message.schema_path}
+        self.label = "ISO 20022 XSD"
+        self._mode_written = None
+
+    def _render_iso20022(self) -> List[Tuple[str, str]]:
+        """The message definition, then the message-catalog manifest (MFX-22.4)."""
+        message = self.message
+        assert message is not None
+        if self._api.services or self._api.channels:
+            self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
+        schema_el = self._schema.new_schema(message.namespace)
+        schema_el.set("elementFormDefault", "qualified")
+        self._schema.append_types(schema_el, message.namespace, declare_elements=False)
+        append_document(schema_el, self._schema, message, self._api.title or self._api.identity.name)
+        return [
+            (message.schema_path, self._serialize(schema_el)),
+            (MESSAGE_CATALOG_PATH, message_catalog(self._api, self._schema, message)),
+        ]
+
     def render(self) -> List[Tuple[str, str]]:
         """Every output document as ``(path, text)``, the main document first.
 
         The XSD documents are always built; a RELAX NG or DTD export is then written from them as one file.
         """
         ET.register_namespace(XSD_PREFIX, XSD_NS)
+        if self.message is not None:
+            return self._render_iso20022()
         if self._api.services or self._api.channels:
             self.losses.record(LossKind.NA, "types-only", _types_only_advisory(self._api), pointer="services")
         from_xsd = self._api.format == _XSD_FORMAT
@@ -430,7 +592,13 @@ class _XsdWriter:
             parts.append('<?xml version="1.0" encoding="UTF-8"?>')
         if self._options.include_comments:
             title = self._api.title or self._api.identity.name or "schema"
-            parts.append(f"<!-- Generated XSD {self._options.xsd_version} for {comment_safe(title)} -->")
+            if self.message is not None:
+                parts.append(
+                    f"<!-- Generated ISO 20022 message definition {self.message.identifier} "
+                    f"(XSD {self._options.xsd_version}) for {comment_safe(title)} -->"
+                )
+            else:
+                parts.append(f"<!-- Generated XSD {self._options.xsd_version} for {comment_safe(title)} -->")
         ET.indent(schema_el, space="  ")
         parts.append(ET.tostring(schema_el, encoding="unicode"))
         return "\n".join(parts) + "\n"

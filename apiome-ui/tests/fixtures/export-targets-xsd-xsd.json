@@ -60,6 +60,55 @@
             ],
             "title": "Mode",
             "type": "string"
+          },
+          "profile": {
+            "default": "generic",
+            "description": "`generic` (default) writes the types as they are. `iso20022` writes an ISO 20022 message definition: one `urn:iso:std:iso:20022:tech:xsd:<message_identifier>` namespace, a `Document` root element wrapping the business element, UpperCamelCase names, descriptions as `xs:documentation`, and a `message-catalog.json` manifest beside `<message_identifier>.xsd`. `xsd` mode only.",
+            "enum": [
+              "generic",
+              "iso20022"
+            ],
+            "title": "Profile",
+            "type": "string"
+          },
+          "message_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ISO 20022 profile: the message identifier, `<business area>.<message number>.<variant>.<version>` (`pain.001.001.09`). Defaults to an ISO 20022 source's own; without one, a placeholder (`<business_area>.001.001.01`) is used and reported as synthesized.",
+            "title": "Message Identifier"
+          },
+          "business_area": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ISO 20022 profile: the four-letter business area (`pain`, `pacs`, `camt` \u2026) a placeholder identifier uses. Must match `message_identifier` when both are set.",
+            "title": "Business Area"
+          },
+          "message_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "ISO 20022 profile: the record type (name or key) `Document` wraps as the message. Defaults to an ISO 20022 source's business element, else the one record no other record uses.",
+            "title": "Message Type"
           }
         },
         "title": "XsdEmitOptions",
@@ -69,7 +118,11 @@
         "xsd_version": "1.0",
         "include_xml_declaration": true,
         "include_comments": true,
-        "mode": "xsd"
+        "mode": "xsd",
+        "profile": "generic",
+        "message_identifier": null,
+        "business_area": null,
+        "message_type": null
       },
       "fidelity": {
         "tier": "lossless",

@@ -5,6 +5,39 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.620.0] - 2026-11-03
+
+### Added
+- **ISO 20022 message profile for the XSD export (MFX-22.4, #4135).** The `xsd` target takes `profile`: `generic`
+  (default, unchanged) or `iso20022`, which writes the item's types as an ISO 20022 message definition
+  (`app.iso20022_xsd_profile`):
+  - **Identifier and namespace:** `message_identifier` (`pain.001.001.09`, `xxxx.nnn.nnn.nn`), else the one an
+    ISO 20022 source declares, else a placeholder `<business_area>.001.001.01` (`business_area` four letters,
+    default `xxxx`). One `urn:iso:std:iso:20022:tech:xsd:<identifier>` namespace in `<identifier>.xsd`; types
+    from other namespaces are written in it.
+  - **Document root:** the one global element is `Document`, whose type wraps the business element — the
+    `message_type` record (name or key), else the one record no other record uses, named after it without a
+    `Type` / `V09` suffix. An ISO 20022 source keeps its own `Document` and business element; a source type
+    named `Document` is renamed.
+  - **Names:** UpperCamelCase ASCII for every type and element (`customer_id` → `CustomerId`); an ISO 20022
+    source keeps the standard's names. Descriptions are `xs:documentation`; `Document` is documented with the
+    message it carries.
+  - **Message catalog:** `message-catalog.json` (`application/json`) beside the schema: identifier, business area,
+    message number, variant, version, namespace, schema, root and business elements, message components and data
+    types. The two files are delivered as a zip.
+  - **Fidelity:** convention deviations are reported — `SYNTH`: `iso20022-message-id-synthesized`,
+    `iso20022-document-root` (note), `iso20022-name-synthesized`; `APPROX`: `iso20022-name-unmappable`,
+    `iso20022-message-type-inferred`, `iso20022-namespace-merged`, recased names as `renamed-identifier` (note);
+    `DROP`: `iso20022-no-message`. The report also names the rewrite of a non-ISO 20022 source.
+  - **Options:** the three profile options need `profile: iso20022`; the profile needs `mode: xsd` (`xsd_version`
+    1.1 is allowed); `business_area` must match `message_identifier`; an unknown `message_type` is a 422.
+  - **Checks:** the export gate checks the catalog (`xsd.iso20022-catalog`: JSON, one message, naming the schema
+    file and its `targetNamespace`), sets it aside for the XSD checks, and re-imports the schema through the
+    ISO 20022 import source; the round trip measures through it (`import_path: iso20022`).
+- `XsdSchemaWriter` naming hooks (`legal_name`, `structural_name`, `reserved_type_names`); the generic output is
+  unchanged.
+- ISO 20022 version coverage: the write note names the XSD export's `iso20022` profile for message definitions.
+
 ## [1.619.0] - 2026-11-03
 
 ### Added

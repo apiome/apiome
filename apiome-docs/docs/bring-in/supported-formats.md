@@ -447,7 +447,7 @@ A version marked * is qualified — reached through a projection or a downgrade,
 
 - Reads **message XML (any message definition)** (ungated) — The message-definition identifier the document declares (`pain.001.001.09`) is recorded, but the reader does not branch on it and no message-definition schema is applied — except for the SEPA payment families in the next row.
 - Reads **message definition XSD (any message definition)** (ungated) — MFI-20.3: the XML Schema the standard publishes for a message (`pain.001.001.09.xsd`) is read through the XSD reader and labelled with the message id its target namespace declares; choice members, amounts and their `Ccy` are read. The SEPA version ceiling applies to messages, not definitions.
-- Writes **message XML (any message definition)** (ungated) — The written message carries whatever message-definition identifier the model records.
+- Writes **message XML (any message definition)** (ungated) — The written message carries whatever message-definition identifier the model records. A message *definition* (`pain.001.001.09.xsd`) is written by the XSD export's `iso20022` profile (MFX-22.4).
 
 **ISO 8583**
 
