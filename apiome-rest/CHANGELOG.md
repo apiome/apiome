@@ -5,6 +5,31 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.621.0] - 2026-11-04
+
+### Added
+- **PL/I include structure output mode for the COBOL copybook export (MFX-23.3, #4141).** The `cobolcopybook`
+  target takes `mode`: `copybook` (default, unchanged) or `pli`, which writes the same record layout — the
+  copybook plan, or a copybook item's own imported layout — as a PL/I include member, `<NAME>.pli`
+  (`text/plain`, `app.cobolcopybook_pli`):
+  - **Declarations:** `DCL 1 <record> UNALIGNED` (so offsets are the copybook's), levels by depth, COBOL names
+    with underscores (`FILLER` → `*`, a leading digit → `X_`); `PIC X(n)` / `A(n)` → `CHAR(n)`, `N(n)` →
+    `WIDECHAR(n)`, packed → `FIXED DEC(p,s)`, binary → `FIXED BIN(15|31|63)`, zoned → numeric picture with an
+    overpunched `T`, `COMP-1` / `COMP-2` → `FLOAT DEC(6)` / `FLOAT DEC(16)`, `POINTER`, `INDEX` →
+    `FIXED BIN(31)`; `OCCURS n` → `(n)`, `OCCURS … DEPENDING ON C` → `(n REFER(C))` in a `BASED` structure;
+    `REDEFINES` → `UNION` (the group itself when the overlay is all of it, else a synthesized `<A>_UNION`);
+    88 values as a comment; `fixed_format` keeps columns 2-72.
+  - **Fidelity:** the plan's losses keep their subject, construct and verdict, restated in PL/I terms
+    (`CHAR(255)`, `REFER`, `UNION` …); a `name-mangled` respelling PL/I does not need is dropped. PL/I-only:
+    `conditions-as-comment`, `names-respelled`, `picture-as-char`, `binary-scale-as-comment`,
+    `redefines-unresolved` (APPROX), `overlay-union-synthesized` (SYNTH), `renames-dropped` (DROP); the root
+    note names the PL/I include structure, as does the types-only advisory.
+  - **Checks:** a `.pli` export is re-parsed by the PL/I reader and compared with the emit plan item by item
+    (`pli.layout`: a structure or item missing, an attribute the reader does not know, an item taking other
+    bytes than the copybook item); cb2xml does not run on it.
+- The copybook plan records each record's and field's canonical `key` on its node.
+- PL/I format capability note: PL/I output is the copybook export's `pli` mode.
+
 ## [1.620.0] - 2026-11-03
 
 ### Added

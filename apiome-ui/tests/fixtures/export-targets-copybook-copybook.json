@@ -72,6 +72,16 @@
             "minimum": 0,
             "title": "Decimal Scale",
             "type": "integer"
+          },
+          "mode": {
+            "default": "copybook",
+            "description": "`copybook` (default) writes a COBOL copybook (`<NAME>.cpy`). `pli` writes the same record layout as a PL/I include structure (`<NAME>.pli`): `DCL 1 \u2026 UNALIGNED` with `CHAR`, `FIXED DEC`, `FIXED BIN` and numeric pictures, dimensions, `REFER` and `UNION`. `fixed_format` keeps PL/I within columns 2-72.",
+            "enum": [
+              "copybook",
+              "pli"
+            ],
+            "title": "Mode",
+            "type": "string"
           }
         },
         "title": "CobolCopybookEmitOptions",
@@ -83,7 +93,8 @@
         "numeric_usage": "comp",
         "default_string_length": 255,
         "default_occurs": 10,
-        "decimal_scale": 2
+        "decimal_scale": 2,
+        "mode": "copybook"
       },
       "fidelity": {
         "tier": "lossless",

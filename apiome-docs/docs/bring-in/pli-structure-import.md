@@ -120,6 +120,8 @@ These are listed in the import's coverage ledger instead of being guessed:
 ## Related
 
 - [Supported formats](./supported-formats.md#format-pli): what the PL/I importer reads.
+- [PL/I include structure output](../ship/export-a-spec.md#pli-include-structure-output): write any item's
+  record layout as PL/I `DECLARE` structures.
 - [Supported formats](./supported-formats.md#format-cobolcopybook): COBOL copybooks, the same records
   in COBOL syntax.
 - [Import a specification](./import-a-spec.md): the import job and its options.

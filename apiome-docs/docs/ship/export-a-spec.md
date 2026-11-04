@@ -1334,14 +1334,64 @@ cb2xml reads fixed format only, so a free-format export is laid out in columns 8
 an error in it then has no line number. Without cb2xml, the export is read back by Apiome's copybook
 reader.
 
+#### PL/I include structure output {#pli-include-structure-output}
+
+PL/I programs read record layouts as `DECLARE` structures rather than copybooks. Set **mode** to `pli` to
+write the same record layout as a PL/I include member, `<Name>.pli`: the same records and items, in the
+same order, each taking the same bytes. Everything above about how an item is laid out (names, lengths,
+tables, unions, the options) applies; only the declaration syntax changes:
+
+| Copybook | PL/I |
+| --- | --- |
+| `01` / `05` / `10` … | Levels `1` / `2` / `3` … by depth |
+| `CUST-ID`, `FILLER` | `CUST_ID`, `*` (an unnamed member) |
+| `PIC X(n)`, `PIC A(n)` | `CHAR(n)` |
+| `PIC N(n)` | `WIDECHAR(n)` |
+| `PIC S9(p)V9(s) COMP-3` | `FIXED DEC(p+s,s)` |
+| `PIC S9(4)`, `S9(9)`, `S9(18)` `COMP` | `FIXED BIN(15)`, `FIXED BIN(31)`, `FIXED BIN(63)` |
+| `PIC S9(5)` (zoned) | `PIC'(4)9T'` — `T` is the sign overpunched on the last digit |
+| `COMP-1`, `COMP-2` | `FLOAT DEC(6)`, `FLOAT DEC(16)` |
+| `OCCURS 10 TIMES` | The dimension `(10)` |
+| `OCCURS 0 TO 50 TIMES DEPENDING ON LINES-COUNT` | `(50 REFER(LINES_COUNT))`, in a `BASED` structure, as `REFER` requires |
+| `B REDEFINES A` | `A` and `B` as members of a `UNION` |
+| `88` condition names | A comment above the item: `/* values: GIFT_TRUE = 'Y', GIFT_FALSE = 'N' */` |
+
+Every structure is declared `UNALIGNED`, so binary and float items are not moved to a word boundary and
+the offsets are the copybook's. With **fixed_format** on (the default), the source stays within PL/I's
+default margins, columns 2–72; off, each declaration is one line.
+
+The fidelity report lists the same entries as for a copybook — on the same fields, with the same grades —
+in PL/I terms (`CHAR(255)` for the default length, `REFER` for a counter, `UNION` for a union). A name that
+only needed an underscore is not listed: PL/I keeps `CUSTOMER_NAME` where COBOL wrote `CUSTOMER-NAME`.
+PL/I also lists what only it changes:
+
+| In the copybook | In the report |
+|---|---|
+| `88` condition names | Approximated (note): a comment, which nothing checks |
+| A data name with a hyphen (an item imported from a copybook) | Approximated (note), once: each hyphen is an underscore |
+| `REDEFINES` beside other items | Synthesized (note): the overlay is wrapped in a `UNION` group, such as `PAYMENT_DETAIL_UNION`, a level the copybook does not have |
+| A `REDEFINES` of an item that is not before it | Approximated (warning): written as an item of its own |
+| An edited or mixed picture (`Z(5)9.99`) | Approximated (warning): `CHAR(n)` of the bytes it takes, with the picture in a comment |
+| A binary number with decimal places (`S9(5)V99 COMP`) | Approximated (warning): `FIXED BIN`, with the decimal places in a comment |
+| A `66` `RENAMES` item | Dropped (warning): it takes no storage of its own |
+
+An item imported from a copybook is exported through its own layout in this mode too.
+
+Each PL/I export is checked before you download it. Apiome's PL/I reader must parse it with no attribute
+it does not know, and every record and item, in order, must take the bytes the copybook item does. Each
+difference is a `pli.layout` finding, such as `PURCHASE.CUSTOMER_NAME takes 39 byte(s); the copybook item
+PURCHASE.CUSTOMER-NAME takes 40.`
+
 **Where to find it.** In the **Export** dialog, the **COBOL Copybook** card is under **Data schema &
 graph** on the **Target** step. Its badge is computed for the item. Copybook is one of the lossiest
 targets: anything that is not a copybook (a REST API, a gRPC service, a JSON Schema) is **types-only**,
 with most of its layout synthesized, while an item imported from a copybook is **lossless**. Pick the
-card to set **Numeric Usage**, **Fixed Format** and **Include Comments**; the three defaults
+card to set **Numeric Usage**, **Fixed Format**, **Include Comments** and **Mode** (`copybook` by
+default, or `pli`); the three defaults
 (**default_string_length**, **default_occurs**, **decimal_scale**) are set from the CLI. Run
 `apiome export copybook <item> --out <Name>.cpy` (`cobol` and `cobolcopybook` work too) and add
-`--option numeric_usage=display`, `--option fixed_format=false` or `--option default_occurs=25`.
+`--option numeric_usage=display`, `--option fixed_format=false`, `--option default_occurs=25` or
+`--option mode=pli --out <Name>.pli`.
 A types-only export exits non-zero unless you add `--force`; `--out -` writes the copybook to
 standard output, and `--json` prints the file written and its tier as JSON. A public item's **Export**
 dialog on Browse offers the same target.

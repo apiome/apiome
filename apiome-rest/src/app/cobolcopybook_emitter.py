@@ -11,6 +11,11 @@ options ``numeric_usage``, ``default_string_length``, ``default_occurs`` and ``d
 
 The copybook is written in fixed format (columns 8-72, ``*`` comments in column 7) by default, or in
 free format (``fixed_format=False``: no column limits, ``*>`` comments).
+
+**PL/I output mode** (MFX-23.3, #4141): ``mode="pli"`` writes the same record layout as a PL/I include
+structure (``<NAME>.pli``: ``DCL 1 … UNALIGNED``, ``CHAR`` / ``FIXED DEC`` / ``FIXED BIN`` / numeric pictures,
+dimensions, ``REFER``, ``UNION``), in PL/I's margins (columns 2-72) or free format
+(:mod:`app.cobolcopybook_pli`). The plan's losses are reported with the same subjects, in PL/I terms.
 """
 
 from __future__ import annotations
@@ -23,6 +28,7 @@ from pydantic import Field, ValidationError
 from .canonical_model import ApiParadigm, CanonicalApi, CanonicalField, OperationKind, Type
 from .cobolcopybook_parser import parse_cobolcopybook
 from .cobolcopybook_plan import CopybookPlanOptions, plan_copybook
+from .cobolcopybook_pli import PLI_EXTENSION, PliRenderOptions, render_pli, restate_losses
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -45,9 +51,12 @@ __all__ = [
     "copybook_emit_options",
     "copybook_emit_plan",
     "validate_cobolcopybook_document",
+    "validate_pli_document",
 ]
 
 _EVENT_OPERATION_KINDS = frozenset({OperationKind.PUBLISH, OperationKind.SUBSCRIBE})
+#: What the PL/I output mode is called in messages (MFX-23.3).
+PLI_LABEL = "PL/I include structure"
 _TYPES_ONLY_DROP_MESSAGE = "only data schemas are exported"
 
 #: Last column of a fixed-format copybook's code area (columns 8-72; 1-6 are the sequence area and
@@ -120,6 +129,12 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
 
     A copybook item re-exported from its own layout synthesizes nothing, so it reports only what its
     source says.
+
+    In the **PL/I output mode** (MFX-23.3) the same entries are reported in PL/I terms, and what only PL/I
+    changes besides: ``conditions-as-comment``, ``names-respelled``, ``picture-as-char``,
+    ``binary-scale-as-comment``, ``redefines-unresolved`` (APPROX), ``overlay-union-synthesized`` (SYNTH) and
+    ``renames-dropped`` (DROP).
+    Every document — a copybook item too — is noted as laid out as PL/I structures.
     """
 
     target_label = "COBOL copybook"
@@ -140,6 +155,14 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
         "union-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
         "recursion-cut": (LossinessKind.DROP, LossinessSeverity.WARN),
         "field-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        # PL/I output mode only (MFX-23.3).
+        "conditions-as-comment": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "names-respelled": (LossinessKind.APPROX, LossinessSeverity.INFO),
+        "picture-as-char": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "binary-scale-as-comment": (LossinessKind.APPROX, LossinessSeverity.WARN),
+        "overlay-union-synthesized": (LossinessKind.SYNTH, LossinessSeverity.INFO),
+        "renames-dropped": (LossinessKind.DROP, LossinessSeverity.WARN),
+        "redefines-unresolved": (LossinessKind.APPROX, LossinessSeverity.WARN),
     }
     #: Set by :meth:`evaluate`.
     _filed: Dict[str, List[FidelityVerdict]] = {}
@@ -178,10 +201,21 @@ class CobolCopybookFidelityRulePack(CapabilityRulePack):
     def root_verdicts(self, api: CanonicalApi) -> List[FidelityVerdict]:
         """The types-only advisory, and a note when a document of another format is rewritten as a copybook."""
         verdicts: List[FidelityVerdict] = []
-        advisory = types_only_advisory(api, target_label=self.target_label, keep_in="OpenAPI or AsyncAPI")
+        pli = (getattr(self, "_options", None) or CobolCopybookEmitOptions()).mode == "pli"
+        label = PLI_LABEL if pli else self.target_label
+        advisory = types_only_advisory(api, target_label=label, keep_in="OpenAPI or AsyncAPI")
         if advisory is not None:
             verdicts.append(advisory)
-        if api.format != "cobolcopybook":
+        if pli:
+            verdicts.append(
+                FidelityVerdict.approx(
+                    message=f"The {api.format or 'source'} document is laid out as PL/I DECLARE structures (the "
+                    "copybook record layout, item for item) and reads back as a PL/I item",
+                    severity=LossinessSeverity.INFO,
+                    target_mapping="document → PL/I include structure",
+                )
+            )
+        elif api.format != "cobolcopybook":
             verdicts.append(
                 FidelityVerdict.approx(
                     message=f"The {api.format or 'source'} document is laid out as COBOL copybook records and "
@@ -295,6 +329,13 @@ class CobolCopybookEmitOptions(EmitOptions):
         default=2, ge=0, le=17,
         description="Digits after the decimal point of a decimal with no multipleOf (`S9(p)V9(s)`).",
     )
+    mode: Literal["copybook", "pli"] = Field(
+        default="copybook",
+        description="`copybook` (default) writes a COBOL copybook (`<NAME>.cpy`). `pli` writes the same record "
+        "layout as a PL/I include structure (`<NAME>.pli`): `DCL 1 … UNALIGNED` with `CHAR`, `FIXED DEC`, "
+        "`FIXED BIN` and numeric pictures, dimensions, `REFER` and `UNION`. `fixed_format` keeps PL/I within "
+        "columns 2-72.",
+    )
 
 
 class CobolCopybookEmitter(Emitter, register=True):
@@ -361,7 +402,7 @@ class _CobolCopybookWriter:
         self.tracker = ProvenanceTracker()
         self.losses = LossTracker()
         self._tree = api.extras.get("cobolcopybook_tree")
-        self.output_path = _output_path(api)
+        self.output_path = _output_path(api, PLI_EXTENSION if options.mode == "pli" else ".cpy")
 
     def trees(self) -> List[Dict[str, Any]]:
         """The emit plan: the import-time tree of a copybook item, else one planned tree per ``01`` record."""
@@ -386,6 +427,8 @@ class _CobolCopybookWriter:
                 "COBOL copybook export lays out record types, and this model has none (only enums, scalars or "
                 "operations)."
             )
+        if self._options.mode == "pli":
+            return self._render_pli(trees)
         lines: List[str] = []
         if self._options.include_comments:
             title = self._api.identity.name or "Exported record"
@@ -402,6 +445,37 @@ class _CobolCopybookWriter:
             self.losses.record(LossKind.NA, "services-dropped", advisory.message)
         self.tracker.record(self._api.identity.name or "cobolcopybook", Provenance.SOURCE)
         return "\n".join(lines).rstrip() + "\n"
+
+    def _render_pli(self, trees: List[Dict[str, Any]]) -> str:
+        """The same trees as a PL/I include member (MFX-23.3); the plan's losses restated in PL/I terms."""
+        own = LossTracker()
+        text, names = render_pli(
+            trees,
+            title=self._api.identity.name or "Exported record",
+            options=PliRenderOptions(
+                fixed_format=self._options.fixed_format, include_comments=self._options.include_comments
+            ),
+            losses=own,
+        )
+        renamed = sorted((c, p) for c, p in names.items() if p not in {c, "*"} and c != p)
+        if renamed and isinstance(self._tree, dict):
+            # A copybook item's names are its own: respelling them for PL/I is the one change to report.
+            example = renamed[0]
+            own.record(
+                LossKind.INFERRED,
+                "names-respelled",
+                f"PL/I names cannot hold a hyphen, so every COBOL data name with one is written with an "
+                f"underscore ({len(renamed)} name(s), such as {example[0]} → {example[1]}).",
+            )
+        losses = LossTracker()
+        for loss in [*restate_losses(self.losses.records(), names), *own.records()]:
+            losses.record(loss.kind, loss.subject, loss.detail, pointer=loss.pointer)
+        advisory = types_only_advisory(self._api, target_label=PLI_LABEL, keep_in="OpenAPI or AsyncAPI")
+        if advisory is not None:
+            losses.record(LossKind.NA, "services-dropped", advisory.message)
+        self.losses = losses
+        self.tracker.record(self._api.identity.name or "cobolcopybook", Provenance.SOURCE)
+        return text
 
     def _header(self, title: str) -> List[str]:
         """The generated-file banner: ``*`` in column 7 (fixed format) or ``*>`` (free format)."""
@@ -501,11 +575,11 @@ def _condition_value(condition: Dict[str, Any]) -> str:
     return "'" + value.replace("'", "''") + "'"
 
 
-def _output_path(api: CanonicalApi) -> str:
+def _output_path(api: CanonicalApi, extension: str = ".cpy") -> str:
     root = api.extras.get("cobolcopybook_root")
     base = str(root) if isinstance(root, str) and root else api.identity.name or "record"
     safe = re.sub(r"[^A-Za-z0-9_.-]+", "-", base).strip("-") or "record"
-    return f"{safe}.cpy"
+    return f"{safe}{extension}"
 
 
 def copybook_emit_options(options: Optional[Mapping[str, Any]] = None) -> CobolCopybookEmitOptions:
@@ -542,3 +616,10 @@ def copybook_emit_plan(api: CanonicalApi, options: CobolCopybookEmitOptions) -> 
 def validate_cobolcopybook_document(content: str) -> None:
     """Validate COBOL copybook text by re-parsing it."""
     parse_cobolcopybook(content)
+
+
+def validate_pli_document(content: str) -> None:
+    """Validate a PL/I include member by re-parsing it with Apiome's PL/I reader (MFX-23.3)."""
+    from .pli_parser import parse_pli_text
+
+    parse_pli_text(content, label="export.pli")

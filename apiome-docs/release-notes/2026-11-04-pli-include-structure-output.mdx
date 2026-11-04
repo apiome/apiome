@@ -1,0 +1,21 @@
+---
+slug: pli-include-structure-output
+title: Export record layouts as PL/I include structures
+description: "The COBOL copybook export can now write PL/I DECLARE structures."
+authors: [apiome]
+---
+
+The **COBOL Copybook** export has a **Mode** option for PL/I shops: `pli` writes the same record layout
+as a PL/I include member. See
+[PL/I include structure output](/ship/export-a-spec#pli-include-structure-output).
+
+{/* truncate */}
+
+- **The same layout, item for item:** `DCL 1 … UNALIGNED` structures with `CHAR`, `FIXED DEC`,
+  `FIXED BIN` and numeric pictures, dimensions, `REFER` for tables that vary in size and `UNION` for
+  overlays. Every item takes the same bytes as in the copybook.
+- **The same fidelity report:** every entry the copybook export reports, on the same fields and with the
+  same grades, in PL/I terms; plus what only PL/I changes, such as 88-level values written as a comment.
+- **Checked before download:** read back by Apiome's PL/I reader and compared with the copybook layout,
+  item by item.
+- **CLI:** `apiome export copybook <item> --option mode=pli --out <Name>.pli`.

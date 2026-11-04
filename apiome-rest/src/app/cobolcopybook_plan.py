@@ -5,7 +5,8 @@ The COBOL copybook emitter writes record layouts; this module decides them. It t
 (:func:`app.cobolcopybook_parser.field_template`: ``level``, ``name``, ``picture``, ``usage``,
 ``occurs_min`` / ``occurs_max`` / ``depending_on``, ``redefines``, ``conditions``, ``children``), so
 the emitter renders a converted model and a re-exported copybook the same way — and the PL/I output
-mode (MFX-23.3) can reuse the plan.
+mode (MFX-23.3, :mod:`app.cobolcopybook_pli`) renders the same plan. Each record's and field's item
+carries the canonical ``key`` it was laid out from, so a writer can file what it changes on that construct.
 
 **Records.** COBOL has no type references: a record's nested objects are written inline as group
 items. Each record no other record contains becomes its own ``01`` level; levels below it step by 5
@@ -208,6 +209,7 @@ class _Planner:
         for record in record_types(self._api):
             name = self._name(record.name or record.key, record.key, "record")
             tree = _node(name)
+            tree["key"] = record.key
             tree["children"] = self._children(record, path={record.key}, in_table=False)
             if not tree["children"]:
                 tree["children"] = [self._filler()]
@@ -231,7 +233,11 @@ class _Planner:
     def _field(self, f: CanonicalField, *, path: Set[str], in_table: bool) -> List[Dict[str, Any]]:
         """The item(s) for one field: the item, preceded by its counter when it is a variable table."""
         name = self._name(f.name or f.key, f.key, "field")
-        return self._item(name, f.type, f.constraints, f.key, path=path, in_table=in_table)
+        items = self._item(name, f.type, f.constraints, f.key, path=path, in_table=in_table)
+        if items:
+            # The field's own item is the last one (a variable table's counter comes before it).
+            items[-1]["key"] = f.key
+        return items
 
     def _item(
         self, name: str, ref: TypeRef, constraints: Optional[Constraints], owner: str, *, path: Set[str],

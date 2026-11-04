@@ -854,7 +854,7 @@ What these formats knowingly do **not** model, from the source-format capability
 
 - Byte offsets and lengths are computed under assumptions the declaration does not state — a single-byte character set, the VARYING prefix width, the packed / binary / float width tables, 4-byte locators, default ALIGNED for arithmetic and UNALIGNED for strings, natural-boundary padding counted from a doubleword-aligned structure start, and the RULES(IBM) defaults. Every import names them in `extras['pli']['layoutAssumptions']` and every analysis record states them.
 - An %INCLUDE resolves against the fileset by member name. One a LIKE or DEFINED needs is refused with `INPUT_REFERENCE_UNRESOLVED`; one inside a structure makes that record `partial` with the member named, and nothing after it has an offset — never a silently short layout.
-- PL/I *output* is MFX-23.3 (#4141); until it ships an import is exported through another target's emitter.
+- PL/I *output* is a mode of the COBOL copybook export (`mode=pli`, MFX-23.3): it writes the copybook record layout as `DCL 1 … UNALIGNED` structures — CHAR, FIXED DEC, FIXED BIN and numeric pictures, dimensions, REFER and UNION — rather than this item's own declarations, so a PL/I item imported here is exported through the copybook layout, not written back as it was read.
 
 ### Pydantic models {#format-pydantic}
 

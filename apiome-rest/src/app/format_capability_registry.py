@@ -3952,8 +3952,11 @@ _CAPABILITY_SEED: Dict[str, _Seed] = {
             "is refused with `INPUT_REFERENCE_UNRESOLVED`; one inside a structure makes that record "
             "`partial` with the member named, and nothing after it has an offset — never a "
             "silently short layout.",
-            "PL/I *output* is MFX-23.3 (#4141); until it ships an import is exported through "
-            "another target's emitter.",
+            "PL/I *output* is a mode of the COBOL copybook export (`mode=pli`, MFX-23.3): it writes the "
+            "copybook record layout as `DCL 1 … UNALIGNED` structures — CHAR, FIXED DEC, FIXED BIN and "
+            "numeric pictures, dimensions, REFER and UNION — rather than this item's own declarations, so "
+            "a PL/I item imported here is exported through the copybook layout, not written back as it "
+            "was read.",
         ],
     ),
     "nginx": _proxy_route_seed(
