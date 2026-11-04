@@ -39,10 +39,16 @@ imported EDIFACT message keeps its tags and element positions: ``NAD01`` is a si
 ``NAD02-1`` / ``NAD02-3`` the components of the composite ``NAD02`` (component 2, which the sample left
 empty, is *not used*), in the order the message had its segments (``edifact_messages``). Both default off,
 so an X12 guide is planned exactly as before.
+
+**HL7 v2** (MFX-26.3, :mod:`app.hl7v2_guide_emitter`) uses it with two more options, also off by default:
+``hl7v2_refs`` reads an imported HL7 v2 message's field references (``PID-05``) and segment order
+(``hl7v2_segments``), and ``allocated_id_prefix`` (``Z``) prefixes every segment ID the plan makes up, as HL7 requires
+of site-defined segments, while an imported segment keeps its standard ID (``PID``).
 """
 
 from __future__ import annotations
 
+import itertools
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -54,6 +60,7 @@ from .emitter import LossKind, LossTracker
 
 __all__ = [
     "EDIFACT_REF_RE",
+    "HL7V2_REF_RE",
     "ELEMENT_REF_RE",
     "GuideElement",
     "GuideLoop",
@@ -69,6 +76,8 @@ ELEMENT_REF_RE = re.compile(r"^([A-Z][A-Z0-9]{1,2})(\d{2})$")
 #: An imported EDIFACT element reference: a 3-letter tag, a 2-digit position and, for a component of a composite,
 #: ``-<component>`` (``NAD02-3``).
 EDIFACT_REF_RE = re.compile(r"^([A-Z]{3})(\d{2})(?:-(\d{1,2}))?$")
+#: An imported HL7 v2 field reference: a segment ID and its field sequence number (``PID-05``).
+HL7V2_REF_RE = re.compile(r"^([A-Z][A-Z0-9]{2})-(\d{2,3})$")
 
 #: Canonical integer scalar names → maximum digits.
 _INTEGER_DIGITS: Dict[str, int] = {
@@ -207,6 +216,9 @@ class GuideOptions:
         segment_id_rule: A pattern every segment ID must match (``None``: any 2-3 letters or digits starting
             with a letter). An imported ID that does not match gets a new one.
         edifact_refs: Read an imported EDIFACT message's element references (``NAD02-3``) and segment order.
+        hl7v2_refs: Read an imported HL7 v2 message's field references (``PID-05``) and segment order.
+        allocated_id_prefix: Prefix every segment ID the plan makes up (``Z``: an HL7 site-defined segment). An
+            imported ID is claimed as it is, by ``segment_id_rule``.
     """
 
     default_length: int = 80
@@ -214,14 +226,18 @@ class GuideOptions:
     max_code_length: int = 3
     segment_id_rule: Optional[str] = None
     edifact_refs: bool = False
+    hl7v2_refs: bool = False
+    allocated_id_prefix: str = ""
 
 
 class _SegmentIds:
     """Unique, deterministic segment IDs spelled from names (``Order`` → ``ORD``, ``OrderLine`` → ``ORL``)."""
 
-    def __init__(self, reserved: frozenset, rule: Optional[str] = None) -> None:
+    def __init__(self, reserved: frozenset, rule: Optional[str] = None, prefix: str = "") -> None:
         self._used: Set[str] = set(reserved)
         self._rule = re.compile(rule) if rule else None
+        #: Prefix of every allocated ID (``Z`` for HL7 site-defined segments); imported IDs are claimed as they are.
+        self._prefix = prefix
 
     def claim(self, segment_id: str) -> bool:
         """Take ``segment_id`` as is (an imported one); ``False`` when it is taken or breaks the ID rule."""
@@ -248,6 +264,13 @@ class _SegmentIds:
             first = letters[0] if letters[0].isalpha() else "S"
             candidates += [first + a + b for a in alphabet for b in alphabet]
             candidates += [a + b + c for a in alphabet for b in alphabet for c in alphabet]
+        if self._prefix:
+            # Keep the name's letters after the prefix (OrderLine → ZOR), then every letter or digit pair.
+            width = 3 - len(self._prefix)
+            alnum = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+            stems = [letters[: width], initials[:width], consonants[:width], *(c[:width] for c in candidates)]
+            pairs = ["".join(p) for p in itertools.product(alnum, repeat=width)]
+            candidates = [self._prefix + stem for stem in [*stems, *pairs] if len(stem) == width]
         for candidate in candidates:
             if len(candidate) >= 2 and self.claim(candidate):
                 return candidate
@@ -261,7 +284,7 @@ class _Planner:
         self._api = api
         self._options = options
         self._losses = losses
-        self._ids = _SegmentIds(options.reserved_ids, options.segment_id_rule)
+        self._ids = _SegmentIds(options.reserved_ids, options.segment_id_rule, options.allocated_id_prefix)
         self._by_key = {t.key: t for t in api.types if t.key}
         names = [t.name for t in api.types]
         self._by_name = {t.name: t for t in api.types if t.name and names.count(t.name) == 1}
@@ -359,7 +382,9 @@ class _Planner:
         scalars = [f for f in self._fields(record) if not self._is_child(f)]
         # An EDIFACT guide reads EDIFACT refs first, and an imported X12 transaction's refs too, so its segments
         # stay split as the X12 guide splits them (a segment whose X12 ID is not a valid tag gets a new one).
-        groups = (self._edifact_groups(scalars) if self._options.edifact_refs else []) or self._x12_groups(scalars)
+        groups = ((self._edifact_groups(scalars) if self._options.edifact_refs else [])
+                  or (self._ref_groups(scalars, HL7V2_REF_RE) if self._options.hl7v2_refs else [])
+                  or self._x12_groups(scalars))
         if groups:
             ids = [self._imported_segment(seg_id, members, record) for seg_id, members in groups]
         else:
@@ -374,6 +399,17 @@ class _Planner:
         groups: Dict[str, List[CanonicalField]] = {}
         for f in scalars:
             groups.setdefault(ELEMENT_REF_RE.match(f.name).group(1), []).append(f)
+        order = {seg: i for i, seg in enumerate(self._order)}
+        return sorted(groups.items(), key=lambda item: order.get(item[0], len(order)))
+
+    def _ref_groups(self, scalars: List[CanonicalField], pattern: "re.Pattern[str]") -> List[Tuple[str,
+                                                                                                    List[CanonicalField]]]:
+        """Scalar fields named by ``pattern`` (segment ID, position), grouped by ID; ``[]`` when they are not."""
+        if not scalars or not all(pattern.match(f.name or "") for f in scalars):
+            return []
+        groups: Dict[str, List[CanonicalField]] = {}
+        for f in scalars:
+            groups.setdefault(pattern.match(f.name).group(1), []).append(f)
         order = {seg: i for i, seg in enumerate(self._order)}
         return sorted(groups.items(), key=lambda item: order.get(item[0], len(order)))
 
@@ -397,7 +433,9 @@ class _Planner:
             return new_id
         if self._options.edifact_refs and all(EDIFACT_REF_RE.match(f.name or "") for f in members):
             return self._imported_edifact_segment(seg_id, members, record)
-        by_position = {int(ELEMENT_REF_RE.match(f.name).group(2)): f for f in members}
+        hl7 = self._options.hl7v2_refs and all(HL7V2_REF_RE.match(f.name or "") for f in members)
+        pattern = HL7V2_REF_RE if hl7 else ELEMENT_REF_RE
+        by_position = {int(pattern.match(f.name).group(2)): f for f in members}
         elements: List[GuideElement] = []
         for position in range(1, max(by_position) + 1):
             f = by_position.get(position)
@@ -593,6 +631,14 @@ class _Planner:
         With ``edifact_refs``, an imported EDIFACT message's tags in message order, when the item is one (an X12
         item keeps its interchange order either way).
         """
+        hl7_segments = self._api.extras.get("hl7v2_segments") if self._options.hl7v2_refs else None
+        if isinstance(hl7_segments, list) and hl7_segments:
+            ids: List[str] = []
+            for segment in hl7_segments:
+                seg_id = segment.get("id") if isinstance(segment, dict) else None
+                if isinstance(seg_id, str) and seg_id not in ids:
+                    ids.append(seg_id)
+            return ids
         messages = self._api.extras.get("edifact_messages") if self._options.edifact_refs else None
         if isinstance(messages, list) and messages and isinstance(messages[0], dict):
             tags: List[str] = []

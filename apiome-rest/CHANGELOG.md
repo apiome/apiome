@@ -5,6 +5,28 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.624.0] - 2026-11-04
+
+### Added
+- **HL7 v2 segment-definition guide export (MFX-26.3, #4159).** A new `hl7v2-guide` target writes the item's types as
+  HL7 v2 message and segment definitions for an integration engine (`app.hl7v2_guide_emitter`), laid out by the same
+  plan as the X12 and UN/EDIFACT guides (`app.edi_guide.plan_guide`, which now reads `SEG-NN` field references and
+  allocates Z-segment IDs):
+  - **HL7 terms:** site-defined Z-segments (an imported HL7 v2 message keeps its own segments, order and field
+    sequence); fields `SEG-n` with data types `ST`, `NM`, `DT`, `TM`, `TS` (`DTM` from v2.6), `IS` (`CWE` from v2.7)
+    and `ID`; length, optionality `R` / `O` / `X` and repetition `N` / `Y` / a count; segment groups; the standard
+    `MSH` header with `MSH-9` the message type and `MSH-12` the version.
+  - **Tables from enums:** each enum is a user-defined table numbered from `first_table_number` (9001) with the enum's
+    values as its codes; a boolean is bound to HL7 table 0136.
+  - **Options:** `message_type` (`ADT^A01`; an imported item's own, else `ZZZ^Z01`), `version` (an imported item's
+    own, else `2.5.1`), `default_field_length` (199), `max_code_length` (20), `first_table_number` (9001).
+  - **Files:** `<Name>.hl7v2-guide.json`, `<Name>.hl7v2-segments.csv`, `<Name>.hl7v2-guide.md` (with the abstract
+    message syntax), delivered as a zip.
+  - **Checked before delivery** (`app.hl7v2_guide_validation`, through the export gate): `hl7v2-guide.schema`,
+    `segment-id`, `duplicate-segment`, `field-ref`, `data-type`, `length`, `optionality`, `repetition`, `message`,
+    `envelope`, `table`, `undefined-segment`, `unused-segment`, `group`, `files`.
+  - **Fidelity:** the X12 guide's rules restated in HL7 v2 terms, plus `table-synthesized` (SYNTH).
+
 ## [1.623.0] - 2026-11-04
 
 ### Added

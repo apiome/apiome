@@ -174,7 +174,8 @@ def fetch_projection_evidence(
 # hyphen-free spelling of the ``json-schema`` target (MFX-21.5): ``apiome export jsonschema``;
 # ``copybook`` names the ``cobolcopybook`` target (MFX-23.5): ``apiome export copybook``; ``x12`` names
 # the ``x12-guide`` implementation guide (MFX-24.5): ``apiome export x12``; ``edifact`` names the
-# ``edifact-guide`` message guide (MFX-24.2): ``apiome export edifact``.
+# ``edifact-guide`` message guide (MFX-24.2): ``apiome export edifact``; ``hl7guide`` names the
+# ``hl7v2-guide`` segment guide (MFX-26.3): ``apiome export hl7guide``.
 _EXPORT_TARGET_ALIASES: dict[str, str] = {
     "grpc": "protobuf",
     "jsonschema": "json-schema",
@@ -189,6 +190,9 @@ _EXPORT_TARGET_ALIASES: dict[str, str] = {
     # ``apiome export edifact`` (MFX-24.2): the UN/EDIFACT message implementation guide.
     "edifact": "edifact-guide",
     "edifactguide": "edifact-guide",
+    # ``apiome export hl7guide`` (MFX-26.3): the HL7 v2 segment guide. The message itself is ``hl7v2``.
+    "hl7guide": "hl7v2-guide",
+    "hl7v2guide": "hl7v2-guide",
     # ``apiome export idl`` (MFX-28.4): the OMG IDL target (CORBA and DDS profiles) is keyed ``corbaidl``.
     "idl": "corbaidl",
     "omg-idl": "corbaidl",

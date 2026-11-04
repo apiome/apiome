@@ -245,4 +245,4 @@ Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`).
 
 An emitter with no adapter behind it cannot be covered by the import corpus. Record it in `KNOWN_EXPORT_ONLY_DESTINATIONS` with a reason, or register an adapter.
 
-`edifact-guide`, `x12-guide`
+`edifact-guide`, `hl7v2-guide`, `x12-guide`

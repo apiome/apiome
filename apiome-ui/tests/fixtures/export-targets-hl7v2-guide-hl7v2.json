@@ -1,0 +1,102 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "hl7v2-guide",
+        "format": "hl7v2-guide",
+        "label": "HL7 v2 segment guide",
+        "description": "Export the types as an HL7 v2 message and segment definition guide (JSON, CSV and Markdown).",
+        "icon": "table",
+        "paradigm": "data_schema",
+        "multi_file": true,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`Hl7v2GuideEmitter`.",
+        "properties": {
+          "message_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The message type, `<code>^<event>` or `<code>^<event>^<structure>` (`ADT^A01`, `ORU^R01`). Default: an imported HL7 v2 item's own, else `ZZZ^Z01` (a site-defined message).",
+            "title": "Message Type"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The HL7 v2 version (`2.3`, `2.5.1`, `2.8` \u2026). Default: an imported HL7 v2 item's own, else `2.5.1`. From 2.6 a timestamp is `DTM`, from 2.7 a coded value is `CWE`.",
+            "title": "Version"
+          },
+          "default_field_length": {
+            "default": 199,
+            "description": "Maximum length of a text field with no maxLength.",
+            "maximum": 99999,
+            "minimum": 1,
+            "title": "Default Field Length",
+            "type": "integer"
+          },
+          "max_code_length": {
+            "default": 20,
+            "description": "The longest code an enum value may be used as directly; a longer value (or one that is not upper-case letters and digits) gets a synthesized code.",
+            "maximum": 99,
+            "minimum": 1,
+            "title": "Max Code Length",
+            "type": "integer"
+          },
+          "first_table_number": {
+            "default": 9001,
+            "description": "The number of the first user-defined table (one per enum, numbered in order).",
+            "maximum": 9999,
+            "minimum": 1,
+            "title": "First Table Number",
+            "type": "integer"
+          }
+        },
+        "title": "Hl7v2GuideEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "message_type": null,
+        "version": null,
+        "default_field_length": 199,
+        "max_code_length": 20,
+        "first_table_number": 9001
+      },
+      "fidelity": {
+        "tier": "types-only",
+        "preserved_percent": 4,
+        "total": 52,
+        "preserved": 2,
+        "dropped": 0,
+        "approximated": 1,
+        "synthesized": 49
+      }
+    }
+  ]
+}

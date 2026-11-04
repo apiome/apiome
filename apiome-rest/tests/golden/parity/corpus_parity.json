@@ -4814,6 +4814,7 @@
   ],
   "export_only_destinations": [
     "edifact-guide",
+    "hl7v2-guide",
     "x12-guide"
   ],
   "pending_corpus_directories": [

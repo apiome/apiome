@@ -35,7 +35,7 @@ wheels = [
 
 [[package]]
 name = "apiome-cli"
-version = "0.129.1"
+version = "0.130.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

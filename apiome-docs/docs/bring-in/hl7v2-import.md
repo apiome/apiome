@@ -94,6 +94,10 @@ RAML → OpenAPI, converting the item *is* the migration; there is no separate m
 - **Write the schema as FHIR.** [Export](../ship/export-a-spec.md#fhir-structuredefinition-from-any-source)
   the item as **FHIR** to get a `StructureDefinition` logical model per segment type, the shape a
   FHIR profile author starts from.
+- **Hand partners its segment definitions.** Export the item as **HL7 v2 segment guide**
+  ([HL7 v2 segment guide](../ship/export-a-spec.md#hl7-v2-segment-guide-from-any-source)) for the message and
+  segment definitions an integration engine is configured from: its segments in order, and each field's data
+  type, length, optionality, repetition and table.
 - **Keep both sides in the catalog.** Import the FHIR server's CapabilityStatement
   ([FHIR import](./fhir-import.md)) next to the HL7 v2 item, so the interface's two generations are
   searched, versioned and governed together.

@@ -14,6 +14,8 @@ import x12GuideTargetsForRest from '../fixtures/export-targets-x12-guide-rest.js
 import x12GuideTargetsForX12 from '../fixtures/export-targets-x12-guide-x12.json';
 import edifactGuideTargetsForRest from '../fixtures/export-targets-edifact-guide-rest.json';
 import edifactGuideTargetsForEdifact from '../fixtures/export-targets-edifact-guide-edifact.json';
+import hl7v2GuideTargetsForRest from '../fixtures/export-targets-hl7v2-guide-rest.json';
+import hl7v2GuideTargetsForHl7v2 from '../fixtures/export-targets-hl7v2-guide-hl7v2.json';
 import wsdlTargetsForRest from '../fixtures/export-targets-wsdl-rest.json';
 import wsdlTargetsForWsdl from '../fixtures/export-targets-wsdl-wsdl.json';
 import typespecTargetsForRest from '../fixtures/export-targets-typespec-rest.json';
@@ -295,6 +297,18 @@ export function x12GuideTargets(source: 'rest' | 'x12'): ExportTargetsResponse {
  */
 export function edifactGuideTargets(source: 'rest' | 'edifact'): ExportTargetsResponse {
   return recordedTargets(source === 'rest' ? edifactGuideTargetsForRest : edifactGuideTargetsForEdifact);
+}
+
+/**
+ * The HL7 v2 segment-guide target as the registry lists it (MFX-26.3, #4159), for a REST source and for an
+ * imported HL7 v2 ADT^A01 message — recorded from the live REST registry by
+ * `apiome-rest/tests/test_hl7v2_guide_target_card.py`. Like the X12 and EDIFACT guides, both are `types-only`.
+ *
+ * @param source `rest` (the Petstore OpenAPI) or `hl7v2` (an imported HL7 v2 ADT^A01 message).
+ * @returns The targets response the dialog's targets route serves.
+ */
+export function hl7v2GuideTargets(source: 'rest' | 'hl7v2'): ExportTargetsResponse {
+  return recordedTargets(source === 'rest' ? hl7v2GuideTargetsForRest : hl7v2GuideTargetsForHl7v2);
 }
 
 /**

@@ -791,6 +791,7 @@ def load_builtin_emitters() -> None:
     from . import hl7v2_emitter as _hl7v2  # noqa: F401
 
     # FMT-10.4 (#5479): the client-workspace emit modes, on the shared client-collection plan.
+    from . import hl7v2_guide_emitter as _hl7v2_guide  # noqa: F401
     from . import hoppscotch_emitter as _hoppscotch_emitter  # noqa: F401
     from . import http_file_emitter as _http_file_emitter  # noqa: F401
     from . import idoc_emitter as _idoc  # noqa: F401
