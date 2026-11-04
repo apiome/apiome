@@ -1752,6 +1752,32 @@ minOccurs="0"`, a list as `maxOccurs="unbounded"`, enums as `xs:enumeration`, an
 `minLength`/`maxLength` and `minimum`/`maximum` as facets. Each object also gets a global element of
 the same name, so a document can start with it.
 
+#### When to export to XSD
+
+- **Give an XML pipeline its schema.** Any REST, RPC, GraphQL, JSON Schema or WSDL item becomes a
+  standalone XML Schema for validating XML payloads or generating JAXB / JAXP code. Operations and channels
+  are left out (XSD describes data only), and the card says **types-only**.
+- **Round-trip an XSD.** An item imported from XSD exports back **lossless**, with its own global
+  elements, attributes, occurrences and enumerations.
+- **Serve an older XML toolchain.** The same types as a RELAX NG grammar or a DTD, with **mode**.
+- **Publish a payments message.** The types as an ISO 20022 message definition, with **profile**
+  `iso20022`.
+
+Need the operations too? Export to [WSDL](#wsdl-and-xsd-from-any-source): its schema is written by the
+same mapping, so the types come out the same in both.
+
+#### XSD export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the XSD card and its options (version, mode, profile) | **Export** dialog → **Data schema & graph** → **XSD** | Below, *Where to find it* |
+| **See** how types, rules and names are written, and what XML Schema cannot say | The fidelity report on the card | The table below |
+| **Write** RELAX NG (`.rng`, `.rnc`) or a DTD (`.dtd`) instead | **mode** | [RELAX NG and DTD output](#relax-ng-and-dtd-output) |
+| **Write** an ISO 20022 message definition and its message catalog | **profile** `iso20022` | [ISO 20022 message profile](#iso-20022-message-profile) |
+| **Trust** the export: XML, packaging, both XSD processors, re-import | Automatic before every download | The numbered checks below |
+| **Export** from the CLI | `apiome export xsd <item> --out <file>.xsd` | Below, *Where to find it* |
+| **Download** from a public item | Browse → **Export** | Below, *Where to find it* |
+
 - **Version.** Set **xsd_version** to `1.0` (the default) or `1.1`. An XSD 1.1 schema is marked
   `vc:minVersion="1.1"` and writes `multipleOf: 5` as an assertion facet,
   `<xsd:assertion test="$value mod 5 = 0"/>`. XSD 1.0 has no facet for `multipleOf`, so the fidelity
