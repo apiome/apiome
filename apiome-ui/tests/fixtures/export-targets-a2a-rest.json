@@ -1,0 +1,79 @@
+{
+  "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "version": "1.0.0",
+  "targets": [
+    {
+      "descriptor": {
+        "key": "a2a",
+        "format": "a2a",
+        "label": "A2A Agent Card",
+        "description": "Export as an A2A agent-card.json: an agent source keeps its own skills, capabilities, endpoints and auth; a REST or RPC API is reframed as an agent whose skills are its operations.",
+        "icon": "bot",
+        "paradigm": "agent",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": false,
+        "nullability": false,
+        "constraints": false,
+        "field_identity": false
+      },
+      "options_schema": {
+        "additionalProperties": false,
+        "description": "Per-target options for :class:`A2aEmitter`.",
+        "properties": {
+          "skills_from": {
+            "default": "operations",
+            "description": "How a REST or RPC source's operations become skills: `operations` (default) writes one skill per operation; `tags` writes one skill per tag, grouping its operations. An agent source keeps its own skills either way.",
+            "enum": [
+              "operations",
+              "tags"
+            ],
+            "title": "Skills From",
+            "type": "string"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The agent endpoint to write as `url` when the source names none (otherwise `https://agent.example.com/a2a` is written and reported). The source's own endpoint wins.",
+            "title": "Url"
+          },
+          "include_deprecated": {
+            "default": false,
+            "description": "Also write a skill for each deprecated operation of a REST or RPC source.",
+            "title": "Include Deprecated",
+            "type": "boolean"
+          }
+        },
+        "title": "A2aEmitOptions",
+        "type": "object"
+      },
+      "default_options": {
+        "skills_from": "operations",
+        "url": null,
+        "include_deprecated": false
+      },
+      "fidelity": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 8,
+        "preserved": 0,
+        "dropped": 2,
+        "approximated": 6,
+        "synthesized": 0
+      }
+    }
+  ]
+}

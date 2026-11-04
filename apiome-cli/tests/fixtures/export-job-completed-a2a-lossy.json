@@ -1,0 +1,186 @@
+{
+  "job_id": "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  "state": "completed",
+  "percent": 100,
+  "events": [],
+  "result": {
+    "artifact": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    "version_record_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    "version_label": "1.0.0",
+    "target": "a2a",
+    "dry_run": false,
+    "fidelity": {
+      "target": {
+        "key": "a2a",
+        "format": "a2a",
+        "label": "A2A Agent Card",
+        "description": "Export as an A2A agent-card.json: an agent source keeps its own skills, capabilities, endpoints and auth; a REST or RPC API is reframed as an agent whose skills are its operations.",
+        "icon": "bot",
+        "paradigm": "agent",
+        "multi_file": false,
+        "needs_toolchain": false,
+        "available": true,
+        "unavailable_reason": null
+      },
+      "summary": {
+        "tier": "lossy",
+        "preserved_percent": 0,
+        "total": 8,
+        "preserved": 0,
+        "dropped": 2,
+        "approximated": 6,
+        "synthesized": 0
+      },
+      "report": {
+        "items": [
+          {
+            "construct": "",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "an A2A Agent Card describes an agent; the API is reframed as one agent whose skills are its operations \u2014 an agent must front the API at the card's url to serve them",
+            "target_mapping": "API \u2192 agent; servers \u2192 url + additionalInterfaces (HTTP+JSON)"
+          },
+          {
+            "construct": "Category",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "A2A Agent Card has no schema vocabulary (a skill declares media types only); type 'Category' is dropped",
+            "target_mapping": "named type \u2192 dropped"
+          },
+          {
+            "construct": "DELETE /pets/{petId}",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "operation reframed as skill 'deletePet'; a skill has no parameters or schemas, so its request and response are reduced to media types",
+            "target_mapping": "operation \u2192 skill deletePet"
+          },
+          {
+            "construct": "GET /pets",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "operation reframed as skill 'listPets'; a skill has no parameters or schemas, so its request and response are reduced to media types",
+            "target_mapping": "operation \u2192 skill listPets"
+          },
+          {
+            "construct": "GET /pets/{petId}",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "operation reframed as skill 'getPetById'; a skill has no parameters or schemas, so its request and response are reduced to media types",
+            "target_mapping": "operation \u2192 skill getPetById"
+          },
+          {
+            "construct": "POST /pets",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "operation reframed as skill 'createPet'; a skill has no parameters or schemas, so its request and response are reduced to media types",
+            "target_mapping": "operation \u2192 skill createPet"
+          },
+          {
+            "construct": "PUT /pets/{petId}",
+            "kind": "approx",
+            "severity": "warn",
+            "message": "operation reframed as skill 'updatePet'; a skill has no parameters or schemas, so its request and response are reduced to media types",
+            "target_mapping": "operation \u2192 skill updatePet"
+          },
+          {
+            "construct": "Pet",
+            "kind": "drop",
+            "severity": "warn",
+            "message": "A2A Agent Card has no schema vocabulary (a skill declares media types only); type 'Pet' is dropped",
+            "target_mapping": "named type \u2192 dropped"
+          }
+        ],
+        "kind_counts": {
+          "drop": 2,
+          "approx": 6,
+          "synth": 0,
+          "ok": 0
+        },
+        "severity_counts": {
+          "info": 0,
+          "warn": 8,
+          "critical": 0
+        }
+      },
+      "advisory": {
+        "show": true,
+        "severity": "warn",
+        "requires_ack": false,
+        "target_format": "A2A Agent Card",
+        "dropped": 2,
+        "approximated": 6,
+        "synthesized": 0,
+        "affected": 8,
+        "headline": "Fidelity notice \u2014 exporting to A2A Agent Card may lose detail.",
+        "message": "Exporting to A2A Agent Card may lose some fidelity. The destination format can't represent everything in this API, so 8 constructs will be dropped or approximated \u2014 review the fidelity report before downloading."
+      },
+      "projection": {
+        "manifest_hash": "223c56e7b9365cf742bb8ba1f08bc60e6f89a2336fc4f20c8a923cda4b2f73fe",
+        "target": {
+          "key": "a2a",
+          "format": "a2a",
+          "label": "A2A Agent Card",
+          "paradigm": "agent",
+          "emitter_version": "1",
+          "apiome_version": "1.6.5",
+          "capability_profile": {
+            "operations": true,
+            "events": false,
+            "unions": false,
+            "nullability": false,
+            "constraints": false,
+            "field_identity": false
+          },
+          "needs_toolchain": false,
+          "available": true,
+          "availability": "available",
+          "registry_version": "1",
+          "documentation": {
+            "specification": null,
+            "version": null,
+            "url": null,
+            "anchor": null,
+            "documentation_unavailable": true,
+            "note": "No authoritative specification link is registered for this destination yet."
+          }
+        },
+        "status_counts": {
+          "retained": 0,
+          "transformed": 0,
+          "approximated": 6,
+          "synthesized": 0,
+          "dropped": 2,
+          "unavailable": 0,
+          "not-applicable": 0
+        },
+        "reason_counts": {
+          "destination_unsupported": 8,
+          "emitter_unsupported": 0,
+          "source_incomplete": 0,
+          "source_parse_limit": 0,
+          "option_excluded": 0,
+          "security_redacted": 0,
+          "target_tool_unavailable": 0,
+          "not_applicable": 0
+        },
+        "total_constructs": 7,
+        "node_count": 16,
+        "edge_count": 16,
+        "evidence_count": 8,
+        "is_lossless": false,
+        "worst_severity": "warn",
+        "truncated": false
+      }
+    },
+    "files": [
+      {
+        "path": "agent-card.json",
+        "media_type": "application/json",
+        "size_bytes": 1302
+      }
+    ],
+    "media_type": "application/json",
+    "download_path": "/v1/export/acme-corp/jobs/cccccccc-cccc-4ccc-8ccc-cccccccccccc/download"
+  },
+  "error": null
+}

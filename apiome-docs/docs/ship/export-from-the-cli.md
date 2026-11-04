@@ -38,6 +38,8 @@ Name the format, then the project (id or slug):
 apiome export thrift payments-api --version 1.0.0 --out payments.thrift
 apiome export typespec payments-api --out main.tsp
 apiome export postman payments-api --flavor bruno --out collection.zip
+apiome export mcp payments-api --out payments.mcp.json --force   # MCP tools for an agent
+apiome export a2a payments-api --out agent-card.json --force     # an A2A Agent Card
 ```
 
 Any format the server can export is a `<format>`: `apiome export targets --project <project>`

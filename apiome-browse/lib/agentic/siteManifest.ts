@@ -10,6 +10,38 @@
 /** The two manifests Browse serves for a tenant. */
 export type SiteManifestKind = 'agents.json' | 'llms.txt';
 
+/** One "For agents" link on the tenant page — the Browse entry point to a manifest (MFX-32.5, #4299). */
+export interface SiteManifestLink {
+  /** The manifest it opens. */
+  kind: SiteManifestKind;
+  /** The site-relative address of the route handler that serves it (base path included). */
+  href: string;
+  /** What the manifest is, shown on hover. */
+  title: string;
+}
+
+/** The manifests the tenant page links to, in the order they are shown. */
+const MANIFEST_TITLES: Record<SiteManifestKind, string> = {
+  'agents.json': 'Site manifest listing every published API and agent endpoint',
+  'llms.txt': 'Markdown index of every published API, for language models',
+};
+
+/**
+ * The "For agents" links the tenant page shows: one per manifest Browse serves for the tenant.
+ *
+ * @param tenantSlug - The tenant's slug (encoded into the path).
+ * @param basePath - The Browse base path (`NEXT_PUBLIC_BASE_PATH`), `''` when served at the root.
+ * @returns `agents.json` then `llms.txt`, each with its route-handler address and hover title.
+ */
+export function siteManifestLinks(tenantSlug: string, basePath: string): SiteManifestLink[] {
+  const root = `${basePath.replace(/\/+$/, '')}/tenant/${encodeURIComponent(tenantSlug)}`;
+  return (Object.keys(MANIFEST_TITLES) as SiteManifestKind[]).map((kind) => ({
+    kind,
+    href: `${root}/${kind}`,
+    title: MANIFEST_TITLES[kind],
+  }));
+}
+
 /** What the route handlers need to reach the REST API (injectable for tests). */
 export interface SiteManifestDeps {
   /** The REST API root, ending in `/v1` (`NEXT_PUBLIC_REST_API_BASE_URL`). */

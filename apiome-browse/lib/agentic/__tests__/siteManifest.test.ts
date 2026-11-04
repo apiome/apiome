@@ -11,6 +11,7 @@ import {
   SITE_MANIFEST_CACHE_CONTROL,
   serveSiteManifest,
   serverRestApiBaseUrl,
+  siteManifestLinks,
   siteManifestRestUrl,
   siteRoot,
 } from '../siteManifest';
@@ -109,5 +110,23 @@ describe('serveSiteManifest', () => {
     });
     expect(response.status).toBe(502);
     expect(response.headers.get('cache-control')).toBeNull();
+  });
+});
+
+describe('siteManifestLinks (the tenant page entry point, MFX-32.5)', () => {
+  it('links agents.json then llms.txt under the tenant, each with a hover title', () => {
+    const links = siteManifestLinks('acme', '');
+    expect(links.map((link) => [link.kind, link.href])).toEqual([
+      ['agents.json', '/tenant/acme/agents.json'],
+      ['llms.txt', '/tenant/acme/llms.txt'],
+    ]);
+    expect(links.every((link) => link.title.length > 0)).toBe(true);
+  });
+
+  it('prefixes the base path (without doubling a trailing slash) and encodes the slug', () => {
+    expect(siteManifestLinks('a b/c', '/browse/').map((link) => link.href)).toEqual([
+      '/browse/tenant/a%20b%2Fc/agents.json',
+      '/browse/tenant/a%20b%2Fc/llms.txt',
+    ]);
   });
 });

@@ -1,0 +1,278 @@
+{
+  "cards": {
+    "a2a": {
+      "a2a": {
+        "available": true,
+        "preserved_percent": 100,
+        "tier": "lossless"
+      },
+      "graphql": {
+        "available": true,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      },
+      "json-schema": {
+        "available": false,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      },
+      "mcp": {
+        "available": true,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      },
+      "rest": {
+        "available": true,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      },
+      "rpc": {
+        "available": true,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      }
+    },
+    "mcp": {
+      "a2a": {
+        "available": false,
+        "preserved_percent": 17,
+        "tier": "lossy"
+      },
+      "graphql": {
+        "available": true,
+        "preserved_percent": 16,
+        "tier": "lossy"
+      },
+      "json-schema": {
+        "available": false,
+        "preserved_percent": 0,
+        "tier": "lossy"
+      },
+      "mcp": {
+        "available": true,
+        "preserved_percent": 56,
+        "tier": "lossy"
+      },
+      "rest": {
+        "available": true,
+        "preserved_percent": 50,
+        "tier": "lossy"
+      },
+      "rpc": {
+        "available": true,
+        "preserved_percent": 18,
+        "tier": "lossy"
+      }
+    }
+  },
+  "picks": {
+    "a2a": {
+      "a2a": {
+        "default": {
+          "files": [
+            "agent-card.json"
+          ],
+          "preserved_percent": 100,
+          "reimported": [
+            "build-itinerary",
+            "search-flights",
+            "search-hotels",
+            "visa-requirements"
+          ],
+          "tier": "lossless",
+          "valid": true,
+          "written": [
+            "build-itinerary",
+            "search-flights",
+            "search-hotels",
+            "visa-requirements"
+          ]
+        },
+        "tags": {
+          "files": [
+            "agent-card.json"
+          ],
+          "preserved_percent": 100,
+          "reimported": [
+            "build-itinerary",
+            "search-flights",
+            "search-hotels",
+            "visa-requirements"
+          ],
+          "tier": "lossless",
+          "valid": true,
+          "written": [
+            "build-itinerary",
+            "search-flights",
+            "search-hotels",
+            "visa-requirements"
+          ]
+        }
+      },
+      "rest": {
+        "default": {
+          "files": [
+            "agent-card.json"
+          ],
+          "preserved_percent": 0,
+          "reimported": [
+            "createPet",
+            "deletePet",
+            "getPetById",
+            "listPets",
+            "updatePet"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "deletePet",
+            "listPets",
+            "getPetById",
+            "createPet",
+            "updatePet"
+          ]
+        },
+        "tags": {
+          "files": [
+            "agent-card.json"
+          ],
+          "preserved_percent": 0,
+          "reimported": [
+            "default"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "default"
+          ]
+        }
+      }
+    },
+    "mcp": {
+      "mcp": {
+        "2025-03-26": {
+          "files": [
+            "acme-tickets.mcp.json"
+          ],
+          "preserved_percent": 56,
+          "reimported": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ]
+        },
+        "default": {
+          "files": [
+            "acme-tickets.mcp.json"
+          ],
+          "preserved_percent": 56,
+          "reimported": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ]
+        },
+        "per-service": {
+          "files": [
+            "acme-tickets-tools.mcp.json"
+          ],
+          "preserved_percent": 53,
+          "reimported": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "close_ticket",
+            "create_ticket",
+            "search_tickets"
+          ]
+        }
+      },
+      "rest": {
+        "2025-03-26": {
+          "files": [
+            "sample-pet-store-api-openapi-3-0.mcp.json"
+          ],
+          "preserved_percent": 50,
+          "reimported": [
+            "createPet",
+            "deletePet",
+            "getPetById",
+            "listPets",
+            "updatePet"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "deletePet",
+            "listPets",
+            "getPetById",
+            "createPet",
+            "updatePet"
+          ]
+        },
+        "default": {
+          "files": [
+            "sample-pet-store-api-openapi-3-0.mcp.json"
+          ],
+          "preserved_percent": 50,
+          "reimported": [
+            "createPet",
+            "deletePet",
+            "getPetById",
+            "listPets",
+            "updatePet"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "deletePet",
+            "listPets",
+            "getPetById",
+            "createPet",
+            "updatePet"
+          ]
+        },
+        "per-service": {
+          "files": [
+            "sample-pet-store-api-openapi-3-0-default.mcp.json"
+          ],
+          "preserved_percent": 47,
+          "reimported": [
+            "createPet",
+            "deletePet",
+            "getPetById",
+            "listPets",
+            "updatePet"
+          ],
+          "tier": "lossy",
+          "valid": true,
+          "written": [
+            "deletePet",
+            "listPets",
+            "getPetById",
+            "createPet",
+            "updatePet"
+          ]
+        }
+      }
+    }
+  }
+}
