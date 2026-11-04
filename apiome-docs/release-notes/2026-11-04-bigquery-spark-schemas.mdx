@@ -1,0 +1,22 @@
+---
+slug: bigquery-spark-schemas
+title: Export BigQuery and Spark schemas
+description: "Write an item's tables as BigQuery schema JSON or Spark DDL."
+authors: [apiome]
+---
+
+The **Apache Arrow / Parquet** export has a new **output** option. `bigquery` writes each table as a
+BigQuery table schema, and `spark` as a Spark `StructType` DDL string, from the same typed projection as
+the Arrow schemas. See [BigQuery and Spark](/ship/export-a-spec#bigquery-and-spark).
+
+{/* truncate */}
+
+- **BigQuery:** `<table>.bigquery.json` is the JSON `bq mk --schema` reads. Objects are `RECORD`s, lists
+  `REPEATED`, required fields `REQUIRED`, and decimals `NUMERIC` or `BIGNUMERIC` by precision.
+- **Spark:** `<table>.spark.ddl` is the line `DataType.fromDDL` parses, with `STRUCT`, `ARRAY`, `MAP`,
+  `NOT NULL` and `COMMENT`.
+- **Per table or bundled:** one file per table by default; **bundle** writes `schemas.bigquery.json` or
+  `schemas.spark.ddl`.
+- **Checked before you download:** each BigQuery schema against BigQuery's table-schema rules, and each
+  DDL line against Spark's type grammar. The fidelity report lists what each engine cannot hold, such as a
+  map in BigQuery or a time of day in Spark.

@@ -755,6 +755,9 @@ because SQL keeps types only, exits non-zero unless you add `--force`.
   schema becomes, the `message schema { … }` a Parquet writer declares.
 - **Round-trip an Arrow item.** An item imported from Arrow exports back to the schema it was read
   from: each column's unit, time zone, width, precision, dictionary encoding, extension and metadata.
+- **Create a BigQuery table or a Spark DataFrame schema.** The same tables are written as BigQuery
+  table-schema JSON (**output** `bigquery`) or Spark `StructType` DDL (**output** `spark`). See
+  [BigQuery and Spark](#bigquery-and-spark).
 
 Arrow describes tables only, so an API's operations are left out, with a critical warning at the top of
 the fidelity report.
@@ -763,10 +766,11 @@ the fidelity report.
 
 | Step | Where | Details |
 | --- | --- | --- |
-| **Pick** the target (options: `table`, `parquet`, `indent`) | Export-target registry key `arrow` | [How the item is written](#how-the-item-is-written-to-arrow) |
+| **Pick** the target (options: `output`, `table`, `parquet`, `bundle`, `indent`) | Export-target registry key `arrow` | [How the item is written](#how-the-item-is-written-to-arrow) |
+| **Write** BigQuery or Spark schemas instead | **output** `bigquery` / `spark` | [BigQuery and Spark](#bigquery-and-spark) |
 | **See** how records, lists, maps, unions and logical types become columns | This section | [Types](#arrow-types) |
 | **Check** what is kept, approximated, dropped or made up | The fidelity report | [What the fidelity report lists](#what-the-arrow-fidelity-report-lists) |
-| **Trust** the file | Constructed by pyarrow, then re-imported, before every download | [How an Arrow export is checked](#how-an-arrow-export-is-checked) |
+| **Trust** the file | Constructed by pyarrow, then re-imported (BigQuery and Spark: checked against their rules), before every download | [How an Arrow export is checked](#how-an-arrow-export-is-checked) |
 
 #### How the item is written {#how-the-item-is-written-to-arrow}
 
@@ -781,9 +785,12 @@ holds. Every record a table reaches is nested inside it. For each table you get:
 
 Options:
 
+- **output**: `arrow` (the default), `bigquery` or `spark`. See [BigQuery and Spark](#bigquery-and-spark).
 - **table**: export only this record (its name or key) as the table. Empty (the default) exports every
   root record.
-- **parquet**: also write the Parquet messages (on by default).
+- **parquet**: also write the Parquet messages (on by default; output `arrow` only).
+- **bundle**: output `bigquery` or `spark` only. Write every table into one file instead of one file per
+  table (off by default).
 - **indent**: JSON indentation (`2` by default, `0` for compact output).
 
 #### Types {#arrow-types}
@@ -806,6 +813,44 @@ Options:
 A required field is a non-nullable column. A record that contains itself cannot be a `struct` of
 itself, so its inner occurrence is a JSON string column (`arrow.json`). A record with no fields is
 the same, because Arrow defines a struct by its children.
+
+#### BigQuery and Spark {#bigquery-and-spark}
+
+**Output** `bigquery` and `spark` write the same tables, with the same types, for the two warehouse
+engines that do not read Arrow schemas.
+
+- **`<table>.bigquery.json`**: the table schema `bq mk --schema` and the BigQuery API take, a JSON list
+  of `{"name", "type", "mode", "fields", "description"}`. Create a table with
+  `bq mk --table mydataset.orders Order.bigquery.json`.
+- **`<table>.spark.ddl`**: one line of Spark `StructType` DDL, what `DataType.fromDDL` and
+  `StructType.fromDDL` parse, for example ``spark.read.schema(open("Order.spark.ddl").read())``.
+
+With **bundle** on, you get one file instead: `schemas.bigquery.json`, an object of table name → schema,
+or `schemas.spark.ddl`, with a `-- <table>` line before each table's DDL line.
+
+| In the Arrow schema | BigQuery | Spark |
+| --- | --- | --- |
+| `struct` | `RECORD` with its `fields` | `STRUCT<name: type, …>` |
+| `list` | Its element with `mode: REPEATED` (a list of lists: a repeated `RECORD` holding `item`) | `ARRAY<…>` |
+| `map` | A repeated `RECORD` of `key` and `value` (reported) | `MAP<…, …>` |
+| `union` | A `RECORD` with one optional field per member (reported) | A `STRUCT` with one optional field per member (reported) |
+| A non-null column | `mode: REQUIRED` | `NOT NULL` |
+| `utf8`, dictionary columns / `binary` | `STRING` / `BYTES` | `STRING` / `BINARY` |
+| `int` | `INTEGER` (unsigned 64-bit: `NUMERIC`, reported) | `TINYINT` … `BIGINT`, the next signed width for an unsigned one |
+| `decimal128(p, s)` | `NUMERIC(p, s)`, or `BIGNUMERIC(p, s)` past NUMERIC's 29 integer digits | `DECIMAL(p, s)` (at most 38 digits) |
+| `date32` / `timestamp` with a time zone / without | `DATE` / `TIMESTAMP` / `DATETIME` | `DATE` / `TIMESTAMP` / `TIMESTAMP_NTZ` |
+| `time64` | `TIME` | `STRING` (reported) |
+| `duration` | `INTERVAL` | `INTERVAL DAY TO SECOND` |
+| A UUID (`arrow.uuid`) | `STRING` (reported) | `STRING` (reported) |
+| JSON (`arrow.json`) | `JSON` | `STRING` |
+
+Descriptions become each column's `description` (BigQuery) or `COMMENT` (Spark). BigQuery column names
+are letters, digits and underscores, so another name is rewritten (`ship-to` → `ship_to`) and reported.
+A record nested deeper than BigQuery's 15 levels is a `JSON` column. Spark names are back-quoted, so
+every name is kept.
+
+The fidelity report lists each of these approximations under its table. No importer reads BigQuery or
+Spark schemas, so nothing about a re-import is reported for these outputs.
 
 #### What the fidelity report lists {#what-the-arrow-fidelity-report-lists}
 
@@ -831,6 +876,15 @@ Before an export is delivered, every `.arrow.json` file must:
 3. import again through the Arrow importer.
 
 The Parquet messages are pyarrow's own output and are not checked again.
+
+The BigQuery and Spark outputs are checked without the engines (`bq` needs Google credentials, and Spark
+a Java runtime):
+
+- **BigQuery:** every schema must pass BigQuery's documented table-schema rules: legal and unique column
+  names, known types and modes, sub-fields only on a `RECORD` (and at least one), at most 15 nesting
+  levels, `NUMERIC` / `BIGNUMERIC` precision and scale in range, descriptions of at most 1,024 characters.
+- **Spark:** every DDL line must parse under Spark's column-type grammar, the one `DataType.fromDDL`
+  reads, with only type names Spark defines.
 
 ### Apache Avro from any source
 

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.642.0] - 2026-11-04
+
+### Added
+- **BigQuery + Spark schema modes (MFX-36.2, #4318).**
+  - `ArrowEmitOptions.output` (`arrow` default, `bigquery`, `spark`) and `bundle`: the Arrow export's typed projection
+    serialized as BigQuery table-schema JSON (`<table>.bigquery.json`; `RECORD` / `REPEATED` nesting, `REQUIRED`
+    for non-null, NUMERIC/BIGNUMERIC by precision, TIMESTAMP/DATETIME by time zone, maps as repeated key/value
+    records, unions as records of optional members, names sanitized) or Spark StructType DDL (`<table>.spark.ddl`;
+    `STRUCT` / `ARRAY` / `MAP`, `NOT NULL`, `COMMENT`, back-quoted names, `TIMESTAMP_NTZ`,
+    `INTERVAL DAY TO SECOND`). `bundle=true` writes `schemas.bigquery.json` (table → schema) or `schemas.spark.ddl`.
+  - `app/warehouse_schemas.py`: the serializers, `bigquery_schema_problems` (BigQuery's documented TableFieldSchema
+    rules) and `parse_spark_ddl` (a strict parser of Spark's `colTypeList` grammar). The export gate runs them on
+    `.bigquery.json` / `.spark.ddl` files.
+  - Fidelity: BigQuery / Spark approximations are filed under their table; no round trip is measured for these
+    outputs.
+  - `tests/test_warehouse_schemas.py`; a pyspark `DataType.fromDDL` test runs when pyspark and Java are installed.
+
 ## [1.641.0] - 2026-11-04
 
 ### Added

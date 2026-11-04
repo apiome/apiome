@@ -1678,7 +1678,9 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 support=VersionSupport.FULL,
                 note="Written as `<table>.arrow.json` (MFX-36.1): one Arrow schema per root record, "
                 "constructed by pyarrow before it is written, plus `<table>.parquet.txt`, the Parquet "
-                "message pyarrow's Parquet writer derives from it (none for a schema with a union).",
+                "message pyarrow's Parquet writer derives from it (none for a schema with a union). "
+                "Output `bigquery` / `spark` (MFX-36.2) writes the same tables as BigQuery table-schema JSON "
+                "or Spark StructType DDL instead.",
             )
         ],
         default_write="Arrow columnar format 1.x (JSON integration form) + Parquet message",
