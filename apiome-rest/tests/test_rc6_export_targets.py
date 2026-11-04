@@ -49,6 +49,7 @@ _EXPORT_GUIDE = _REPO_ROOT / "apiome-docs" / "docs" / "ship" / "export-a-spec.md
 #: only the internal no-op ``sample`` is held out. Adding or removing a target changes the release
 #: promise — update this list, the guide page's table and the dialog together.
 RC6_EXPORT_TARGETS: tuple[str, ...] = (
+    "a2a",
     "apiblueprint",
     "apigee",
     "arazzo",

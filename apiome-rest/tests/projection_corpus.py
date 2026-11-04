@@ -126,6 +126,7 @@ CORPUS_COVERAGE: Dict[str, Union[str, Waiver]] = {
     "proto3": DEEP,
     "avro": DEEP,
     # --- generic sweep coverage ---
+    "a2a": GENERIC,
     "apiblueprint": GENERIC,
     "apigee": GENERIC,
     "arazzo": GENERIC,

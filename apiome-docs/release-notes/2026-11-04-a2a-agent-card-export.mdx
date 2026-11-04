@@ -1,0 +1,24 @@
+---
+slug: a2a-agent-card-export
+title: Export an A2A Agent Card
+description: "Write an agent, or any API, as an A2A agent-card.json."
+authors: [apiome]
+---
+
+The **Export** dialog has a new **A2A Agent Card** target under **Agents & tools**. It writes
+`agent-card.json`, the file an A2A agent serves at `/.well-known/agent-card.json`, and the same file
+Apiome imports, so it reads back. See
+[A2A Agent Card](/ship/export-a-spec#a2a-agent-card).
+
+{/* truncate */}
+
+- **An imported A2A agent exports back lossless:** its name, version, provider, capabilities, auth,
+  endpoints and every skill, with its tags, examples and modes.
+- **A REST or RPC API becomes an agent:** one skill per operation, or one per tag with
+  **skills_from** `tags`. The first server becomes the agent's `url`, and the auth schemes Apiome
+  recorded become `securitySchemes`. A skill has no parameters or schemas, so the fidelity report
+  lists each operation as approximated.
+- **Checked before you download:** every card is checked against the A2A AgentCard schema. A field
+  A2A requires that the source left out is filled in and listed as synthesized.
+- **From the CLI:** `apiome export a2a <item> --out agent-card.json` (add `--force` for a lossy
+  REST or RPC source).

@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$comment": "The A2A AgentCard object (protocol 0.3.0), transcribed from https://a2a-protocol.org/latest/specification/ (section 5.5, AgentCard and the objects it nests) for MFX-32.2 (#4296). Required members and member types only; additional members are allowed, as the specification allows extensions.",
+  "title": "AgentCard",
+  "type": "object",
+  "required": [
+    "protocolVersion",
+    "name",
+    "description",
+    "url",
+    "version",
+    "capabilities",
+    "defaultInputModes",
+    "defaultOutputModes",
+    "skills"
+  ],
+  "properties": {
+    "protocolVersion": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "url": { "type": "string", "minLength": 1 },
+    "preferredTransport": { "type": "string", "minLength": 1 },
+    "additionalInterfaces": { "type": "array", "items": { "$ref": "#/definitions/AgentInterface" } },
+    "iconUrl": { "type": "string" },
+    "provider": { "$ref": "#/definitions/AgentProvider" },
+    "version": { "type": "string", "minLength": 1 },
+    "documentationUrl": { "type": "string" },
+    "capabilities": { "$ref": "#/definitions/AgentCapabilities" },
+    "securitySchemes": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/SecurityScheme" }
+    },
+    "security": { "$ref": "#/definitions/SecurityRequirements" },
+    "defaultInputModes": { "type": "array", "items": { "type": "string" } },
+    "defaultOutputModes": { "type": "array", "items": { "type": "string" } },
+    "skills": { "type": "array", "items": { "$ref": "#/definitions/AgentSkill" } },
+    "supportsAuthenticatedExtendedCard": { "type": "boolean" },
+    "signatures": { "type": "array" }
+  },
+  "definitions": {
+    "AgentInterface": {
+      "type": "object",
+      "required": ["url", "transport"],
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "transport": { "type": "string", "minLength": 1 }
+      }
+    },
+    "AgentProvider": {
+      "type": "object",
+      "required": ["organization", "url"],
+      "properties": {
+        "organization": { "type": "string", "minLength": 1 },
+        "url": { "type": "string", "minLength": 1 }
+      }
+    },
+    "AgentCapabilities": {
+      "type": "object",
+      "properties": {
+        "streaming": { "type": "boolean" },
+        "pushNotifications": { "type": "boolean" },
+        "stateTransitionHistory": { "type": "boolean" },
+        "extensions": { "type": "array" }
+      }
+    },
+    "SecurityScheme": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["apiKey", "http", "oauth2", "openIdConnect", "mutualTLS"] },
+        "description": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "apiKey" } } },
+          "then": {
+            "required": ["in", "name"],
+            "properties": { "in": { "enum": ["header", "query", "cookie"] }, "name": { "type": "string" } }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "http" } } },
+          "then": { "required": ["scheme"], "properties": { "scheme": { "type": "string" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "oauth2" } } },
+          "then": { "required": ["flows"], "properties": { "flows": { "type": "object" } } }
+        },
+        {
+          "if": { "properties": { "type": { "const": "openIdConnect" } } },
+          "then": { "required": ["openIdConnectUrl"], "properties": { "openIdConnectUrl": { "type": "string" } } }
+        }
+      ]
+    },
+    "SecurityRequirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "AgentSkill": {
+      "type": "object",
+      "required": ["id", "name", "description", "tags"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "examples": { "type": "array", "items": { "type": "string" } },
+        "inputModes": { "type": "array", "items": { "type": "string" } },
+        "outputModes": { "type": "array", "items": { "type": "string" } },
+        "security": { "$ref": "#/definitions/SecurityRequirements" }
+      }
+    }
+  }
+}

@@ -10,7 +10,7 @@ for a **published** version on demand. You can download it from the CLI or fetch
 REST in JSON or YAML.
 
 Those three have dedicated endpoints, but they are not the whole export surface: Apiome emits
-**61<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
+**62<!--format-count:exportable--> formats** — AsyncAPI, GraphQL, Proto3, Avro, Thrift, Smithy,
 TypeSpec, WSDL, XSD, OData, EDI X12, SAP IDoc, HL7 v2, FHIR, COBOL copybooks and more —
 through the export-target registry. The full list, and which formats round-trip (import *and*
 export) versus export only, is generated at [Supported formats](../bring-in/supported-formats.md).
@@ -56,7 +56,7 @@ For catalog items, including several at once, see [Export catalog items](./expor
 
 ## Formats the Export dialog offers
 
-The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **61<!--format-count:exportable--> formats**.
+The dialog, `apiome export targets` and `GET …/export/targets` all offer the same **62<!--format-count:exportable--> formats**.
 Most export from any source. A few write one format's own structure back out, so they export only
 a source imported in that format: an EDI X12 interchange in the catalog exports back to EDI X12,
 but an OpenAPI version does not. For any other source their card is greyed out with that reason,
@@ -223,6 +223,88 @@ Every tool is checked against the MCP Tool schema of the chosen revision before 
 descriptor describes the tools; it is not a running server. From the CLI, run
 `apiome export mcp <item> --out petstore.mcp.json`, or
 `apiome export mcp <item> --out <folder> --option grouping=per-service` for one file per service.
+
+### A2A Agent Card {#a2a-agent-card}
+
+#### When to export to an A2A Agent Card
+
+- **Republish an agent.** An agent imported from an A2A Agent Card exports back **lossless**: its
+  name, description, version, provider, capabilities, default modes, auth and every skill (id, tags,
+  examples, modes and auth) are kept, so the card imports back to the same agent.
+- **Describe an API as an agent.** A REST or RPC item exports **lossy**. The API becomes one agent
+  and its operations become its skills. A skill has no parameters or schemas, so the fidelity report
+  lists each operation as approximated.
+
+#### A2A export at a glance
+
+| Step | Where | Details |
+| --- | --- | --- |
+| **Pick** the A2A Agent Card card | **Export** dialog → **Agents & tools** → **A2A Agent Card** | [How the card is written](#how-the-a2a-agent-card-is-written) |
+| **See** what is kept, reframed or dropped | The fidelity report on the card | [What the fidelity report lists](#what-the-a2a-fidelity-report-lists) |
+| **Trust** the file | Checked against the A2A AgentCard schema before every download | [How the card is checked](#how-the-a2a-agent-card-is-checked) |
+| **Export** from the CLI | `apiome export a2a <item> --out agent-card.json` | [Export from the CLI](./export-from-the-cli.md) |
+
+A REST or RPC source is lossy, so from the CLI it exits non-zero unless you add `--force`.
+
+#### How the card is written {#how-the-a2a-agent-card-is-written}
+
+You get `agent-card.json`, the file an A2A agent serves at `/.well-known/agent-card.json`. It is the
+same file [Import A2A Agent Cards](../bring-in/a2a-agent-card-import.md) reads, so it imports back.
+A source with several agents (an ACP agent listing) writes one card per agent,
+`<agent>.agent-card.json`, downloaded together as a `.zip`.
+
+**From an agent source**, each agent is written as its own card: `protocolVersion`, `name`,
+`description`, `url`, `preferredTransport`, `additionalInterfaces`, `iconUrl`, `provider`, `version`,
+`documentationUrl`, `capabilities`, `securitySchemes`, `security`, the default modes, and one skill per
+skill the agent declares. An ACP agent is written as an A2A card with `protocolVersion` `0.3.0`.
+
+**From a REST or RPC source**, the API is reframed as one agent:
+
+| In the source | In the card |
+| --- | --- |
+| The API's title, description and version | The agent's `name`, `description` and `version` |
+| The first server | `url`, with `preferredTransport` `HTTP+JSON` |
+| Every other server | `additionalInterfaces` |
+| Each operation | One skill: its `id` is the operation's name (`listPets`), its `name` is that name in words (`List pets`), its tags are the operation's tags (else the service's name) |
+| Request and response media types | The skill's `inputModes` and `outputModes`, when they differ from `application/json` |
+| The auth schemes Apiome recorded at import | `securitySchemes`, and each operation's own requirement as its skill's `security` |
+| A streaming operation | `capabilities.streaming: true` |
+
+Event operations have no skill and are dropped. Deprecated operations are left out unless you turn on
+**include_deprecated**. Two operations with the same name get `listPets` and `listPets_2`. An agent
+must still serve the card's skills at its `url`: the card describes the agent, it is not one.
+
+Options:
+
+- **skills_from** — `operations` (default): one skill per operation. `tags`: one skill per tag, whose
+  description lists the operations it groups; an operation with no tag joins its service's skill.
+- **url** — the endpoint to write when the source has none. Without it, the card gets
+  `https://agent.example.com/a2a` and the fidelity report says to replace it.
+- **include_deprecated** — also write a skill for each deprecated operation.
+
+#### What the fidelity report lists {#what-the-a2a-fidelity-report-lists}
+
+- **Approximated:** for a REST or RPC source, the API itself (reframed as an agent) and each operation
+  written as a skill. For an ACP agent, each skill.
+- **Dropped:** event operations, deprecated operations (unless **include_deprecated**), channels and
+  named types (a skill declares media types, not schemas). From an agent source, the card's JWS
+  `signatures` (they sign the original bytes; sign the exported card again), a security scheme whose
+  `type` A2A does not define, and a `provider` with no `url`.
+- **Synthesized:** a field A2A requires that the source left out — `description`, `url`,
+  `version`, `protocolVersion` or a skill's `description`.
+
+An A2A agent's skills are **kept** as they are.
+
+#### How the card is checked {#how-the-a2a-agent-card-is-checked}
+
+Every card is checked against the A2A AgentCard schema (protocol 0.3.0) before you download it: the
+required fields, each skill's `id`, `name`, `description` and `tags`, each provider and interface,
+and each security scheme's required members. A card that fails is never offered for download.
+
+#### Where to find the A2A Agent Card card {#where-to-find-the-a2a-agent-card-card}
+
+The **Export** dialog offers **A2A Agent Card** under **Agents & tools**. It is greyed out for a source
+with no agent and no operation that is not an event (a schema-only item), with that reason.
 
 ### SQL DDL from any source
 
@@ -2978,6 +3060,7 @@ tier. A public item's **Export** dialog on Browse offers API Blueprint too, as t
 
 | Format | Kind | Exports from |
 | --- | --- | --- |
+| A2A Agent Card | Agent tools | An agent, or a source with an operation that is not an event |
 | Apache Avro | Data schema | Any source |
 | Apache Thrift | RPC | Any source |
 | API Blueprint | REST | Any source |

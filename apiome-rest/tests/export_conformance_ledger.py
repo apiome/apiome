@@ -74,21 +74,21 @@ KNOWN_SILENT_LOSS: Dict[Tuple[str, str], str] = {
         'changed root; added type MessageORDERS; added type OLD; removed type TRADACOMS-ORDERS.MessageORDERS;',
     # --- cloudevents (8) ---
     ('json-schema', 'cloudevents'):
-        'added channel com.example.product; added operation ba7025c6-b9b0-497c-bf76-d292d7de8f08; changed roo',
+        'added channel com.example.product; added operation b89a5261-e133-40e0-9b26-0bb7c4bd9ed0; changed roo',
     ('jtd', 'cloudevents'):
-        'added channel com.example.user; added operation b29f846b-7954-41a2-94d4-ec2fe6d3f6e8; changed root; ',
+        'added channel com.example.user; added operation 023ad2d1-0cfa-4aea-bdb7-b3a8e6aa79a8; changed root; ',
     ('k8s-crd', 'cloudevents'):
-        'added channel com.example.cronwidget; added operation fd582fb3-5a2e-4476-8eae-47f70137ffb4; changed ',
+        'added channel com.example.cronwidget; added operation b78e5803-94a7-4dd4-9b5d-31bc05568863; changed ',
     ('odcs', 'cloudevents'):
-        'added channel com.example.orders; added operation 6b11e662-7926-4ce1-97c1-3dcb473713b0; changed root',
+        'added channel com.example.orders; added operation 2da84842-5c2e-4fdc-917b-eeb1e64ece5a; changed root',
     ('owl', 'cloudevents'):
-        'added channel com.example.commerce.ontology; added operation 6bab800c-2842-457a-b552-2b46d7e60d95; c',
+        'added channel com.example.commerce.ontology; added operation 171aa66a-69f7-47f5-8105-e7374413ed98; c',
     ('ros2', 'cloudevents'):
-        'added channel com.example.typicalsensormessage; added operation ecae0ac0-d192-44fd-94f2-abee676c6158',
+        'added channel com.example.typicalsensormessage; added operation 31f1d0c1-812b-4b53-85f1-2809fcda42f2',
     ('sparkplug', 'cloudevents'):
-        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 3fe8356f-aa86-4154-808d-21',
+        'changed channel spBv1.0/{group_id}/NBIRTH/{edge_node_id}; added operation 1a65b919-ab47-4975-8581-a0',
     ('typescript-types', 'cloudevents'):
-        'added channel com.example.orderline; added operation 6ec5480a-6865-4d32-9100-ce996cfc20f9; changed r',
+        'added channel com.example.orderline; added operation 8522cc25-fabc-4f15-83be-afcd851874c6; changed r',
     # --- connectrpc (15) ---
     ('a2a', 'connectrpc'):
         'removed agent Travel Concierge; removed operation Travel Concierge.build-itinerary; removed operatio',

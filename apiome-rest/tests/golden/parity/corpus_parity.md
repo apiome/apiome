@@ -13,7 +13,7 @@ Every shipped, non-preview import adapter must carry four artifacts: corpus exam
 
 | Format | Label | Paradigm | Valid | Negative | Adversarial | Scale | Total | Rungs | Goldens | Emitter |
 |---|---|---|---:|---:|---:|---:|---:|---|---:|---|
-| `a2a` | A2A Agent Card | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
+| `a2a` | A2A Agent Card | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `a2a` |
 | `acp` | ACP Agent Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `agents-manifest` | Agentic-web Site Manifest | agent | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | — |
 | `apiblueprint` | API Blueprint | rest | 6 | 5 | 0 | 0 | 11 | 5/6 (+1 waived) | 6 | `apiblueprint` |

@@ -32,9 +32,16 @@
       "golden_directories": [
         "a2a"
       ],
-      "emit_key": null,
+      "emit_key": "a2a",
       "roundtrip_row": true,
-      "roundtrip_cells": [],
+      "roundtrip_cells": [
+        {
+          "source_format": "a2a",
+          "emit_key": "a2a",
+          "status": "pass",
+          "has_reason": false
+        }
+      ],
       "capability_provenance": "derived",
       "requirements": {
         "valid-examples": "satisfied",

@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.630.0] - 2026-11-04
+
+### Added
+- **A2A Agent Card emitter (MFX-32.2, #4296).** New export target `a2a` (`app/a2a_emitter.py`, `A2aEmitter`) writes
+  an A2A 0.3 `agent-card.json` in the shape the MFI-18.1 importer reads, so a card imports straight back.
+  - **Agent source (lossless):** each `AgentDescriptor` becomes one card — identity, provider, version, capabilities,
+    default modes, `securitySchemes` (inverse of `agent_descriptor_schemes`), `security`, and one skill per
+    `AgentSkill` (id, tags, examples, modes, security) — plus the card facts on `api.extras` (`preferredTransport`,
+    `documentationUrl`, `iconUrl`, extended-card flag) and the servers after the first as `additionalInterfaces`.
+    Several agents (an ACP listing) write `<agent>.agent-card.json` each. Every A2A corpus card round-trips to the
+    same descriptor, servers and operations.
+  - **REST / RPC source (reframed, APPROX):** the API becomes one agent; `skills_from=operations` (default) writes a
+    skill per operation (id from its name, deduplicated `_2`…; tags from its tags, else the service), `tags` a skill
+    per tag. Media types become `inputModes` / `outputModes`; the first server is `url` (`HTTP+JSON`); recorded
+    security-scheme stubs become `securitySchemes` and an operation's own requirement its skill's `security`.
+    Event operations are dropped; deprecated ones need `include_deprecated`. Option `url` fills a missing endpoint
+    (else a placeholder, reported).
+  - **Validation:** every card is checked against the vendored AgentCard schema (`app/data/a2a_agent_card_schema.json`).
+    A required field the source lacks is synthesized (`a2a-required-field-synthesized`, INFERRED provenance); JWS
+    signatures, a scheme of a type A2A does not define and a provider without a url are dropped and reported.
+  - `A2aFidelityRulePack`: OK for an A2A agent's skills, APPROX for reframed operations and ACP skills, DROP for
+    events, channels and named types. New source requirement `skill-operation` (greyed-out card for a schema-only
+    source). `format_version_coverage` declares A2A 0.3.0 written.
+  - Registry fallout: CORPUS_COVERAGE, RC6 target list, format counts (62 exportable), supported formats, target-tier
+    table, round-trip matrix (107 `-> a2a` xfails; `a2a -> a2a` passes), conformance matrix, corpus parity report.
+    Tests: `tests/test_a2a_emitter.py`.
+- OpenAPI 1.494.0.
+
 ## [1.629.0] - 2026-11-04
 
 ### Added

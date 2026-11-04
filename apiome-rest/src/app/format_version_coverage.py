@@ -1465,6 +1465,16 @@ _VERSION_COVERAGE: Dict[str, VersionCoverage] = {
                 "same way as current ones.",
             )
         ],
+        writes=[
+            FormatVersion(
+                version="0.3.0",
+                format_key="a2a",
+                support=VersionSupport.FULL,
+                note="Written as `agent-card.json` (MFX-32.2). A card exported from an agent source "
+                "keeps that agent's own `protocolVersion`; any other source declares 0.3.0.",
+            )
+        ],
+        default_write="0.3.0",
     ),
     "odata": VersionCoverage(
         reads=[

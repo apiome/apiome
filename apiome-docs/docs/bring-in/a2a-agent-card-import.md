@@ -121,6 +121,7 @@ Live discovery also stops when the agent's address is private or internal: Apiom
 
 ## Related
 
+- [A2A Agent Card export](../ship/export-a-spec.md#a2a-agent-card): write an agent, or any API, back out as `agent-card.json`.
 - [Supported formats](./supported-formats.md): the versions this importer reads.
 - [Import a specification](./import-a-spec.md): every way to bring a document in.
 - [Import ACP agent manifests](./acp-agent-manifest-import.md): the REST-native agent protocol.
