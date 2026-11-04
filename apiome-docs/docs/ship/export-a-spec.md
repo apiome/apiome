@@ -185,6 +185,44 @@ is listed with where it was (`/servers/robot/bindings/ros2`), as dropped or appr
 version is checked with the AsyncAPI parser before you download it. From the CLI, run
 `apiome export asyncapi-3 <item> --out asyncapi.json --option asyncapi_version=3.0`.
 
+### CloudEvents and xRegistry {#cloudevents-and-xregistry}
+
+[CloudEvents](https://cloudevents.io) is the CNCF's common envelope for events, and
+[xRegistry](https://xregistry.io) is its catalog: a registry of schemas and CloudEvents message
+definitions with its own read API. Apiome writes both, and serves its own catalog as an xRegistry. In
+the **Export** dialog and in **Export studio**, the **CloudEvents** and **xRegistry** cards sit under
+**Events**.
+
+#### When to use which {#when-to-use-cloudevents-or-xregistry}
+
+- **A sample event to send or test with: CloudEvents.** Export **CloudEvents** for one structured-mode
+  CloudEvents 1.0 JSON event per publish or subscribe operation (`<name>.cloudevents.json`), with its
+  `type`, `source`, `id` and a sample `data` payload. Options: `specversion`, `indent`.
+- **An event catalog to hand over as a file: xRegistry.** Export
+  [xRegistry](#xregistry-from-any-source) for one document with your types as a JSON Schema registry and
+  your events as CloudEvents message definitions — checked against the official xRegistry schema.
+- **A catalog tools read live: the xRegistry API.** Nothing to export — point an xRegistry client at
+  [your organization's read-only xRegistry](./serve-an-xregistry.md), public or for members, over
+  every published version.
+
+Both exports keep events and types only. A REST, RPC or GraphQL item loses its operations, so its
+fidelity report starts with a critical warning and the export asks you to confirm; an event item
+(AsyncAPI, CloudEvents, xRegistry) does not.
+
+#### CloudEvents and xRegistry at a glance {#cloudevents-and-xregistry-at-a-glance}
+
+| | CloudEvents | xRegistry document | xRegistry API |
+| --- | --- | --- | --- |
+| **From** | Any item; one event per publish or subscribe operation | Any item with a type or an event | Every published version of an organization |
+| **You get** | `<name>.cloudevents.json`: one event, or an array of them | `<registry id>.xregistry.json` | `GET /v1/browse/tenants/{tenant}/xregistry` (public) and `/v1/xregistry/{tenant}` (members) |
+| **Options** | `specversion`, `indent` | `registry_id`, `source`, `indent` | `?inline=*` |
+| **An event becomes** | A CloudEvent with a sample `data` payload | A message definition: `type`, `source`, `datacontenttype`, `dataschemaxid` | The same message definitions, one message group per project service |
+| **Types become** | Only an event's payload, written as sample `data` | JSON Schemas (draft 2020-12) | JSON Schemas, versioned by the published version |
+| **Checked by** | Not re-validated | Structure, the official xRegistry schema, and re-import | — |
+| **Imports back with** | **Import to catalog** ([RPC and event formats](../bring-in/rpc-and-event-formats.mdx)) | [Import a CNCF xRegistry](../bring-in/xregistry-import.md) | The same importer, from the API's documents |
+| **CLI** | `apiome export cloudevents` | `apiome export xregistry` | `curl` (see [the API](./serve-an-xregistry.md#read-it)) |
+| **Details** | — | [xRegistry from any source](#xregistry-from-any-source) | [Serve your catalog as an xRegistry](./serve-an-xregistry.md) |
+
 ### xRegistry from any source {#xregistry-from-any-source}
 
 #### When to export to xRegistry
