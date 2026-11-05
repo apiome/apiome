@@ -104,6 +104,26 @@ def export_preset(tenant_slug: str, preset: str) -> str:
     return f"{export_presets(tenant_slug)}/{quote(preset, safe='')}"
 
 
+def export_auto_subscriptions(tenant_slug: str) -> str:
+    """Auto-export subscriptions — presets run on publish (MFX-39.4): ``GET`` lists, ``POST`` adds."""
+    return f"{V1}/export/{tenant_slug}/auto-exports"
+
+
+def export_auto_subscription(tenant_slug: str, subscription_id: str) -> str:
+    """One auto-export subscription (MFX-39.4): ``PATCH`` / ``DELETE``."""
+    return f"{export_auto_subscriptions(tenant_slug)}/{quote(subscription_id, safe='')}"
+
+
+def export_auto_runs(tenant_slug: str) -> str:
+    """Auto-export runs, newest first (MFX-39.4)."""
+    return f"{V1}/export/{tenant_slug}/auto-export-runs"
+
+
+def export_auto_run_release(tenant_slug: str, run_id: str) -> str:
+    """Deliver a halted auto-export anyway (MFX-39.4)."""
+    return f"{export_auto_runs(tenant_slug)}/{quote(run_id, safe='')}/release"
+
+
 def export_delivery_profiles(tenant_slug: str) -> str:
     """The workspace's export delivery profiles (MFX-38.4): ``GET`` lists, ``POST`` creates."""
     return f"{V1}/export/{tenant_slug}/delivery-profiles"

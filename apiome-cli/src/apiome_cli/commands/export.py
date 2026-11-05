@@ -52,7 +52,7 @@ from apiome_cli.export_output import (
     format_projection_snapshot_lines,
     target_rows,
 )
-from apiome_cli.commands import export_presets, export_profiles
+from apiome_cli.commands import export_auto, export_presets, export_profiles
 from apiome_cli.commands.export_presets import PRESET_RUN_COMMAND
 from apiome_cli.export_overlays import OVERLAY_HELP
 from apiome_cli.client.preflight import fetch_export_preflight
@@ -457,6 +457,8 @@ def export_group(
 
 # MFX-39.3: export presets, and the hidden command `export --preset NAME …` runs.
 app.add_typer(export_presets.app, name="presets")
+# MFX-39.4: presets run on every publish.
+app.add_typer(export_auto.app, name="auto")
 app.command(PRESET_RUN_COMMAND, hidden=True, context_settings={"ignore_unknown_options": False})(
     export_presets.run_preset
 )

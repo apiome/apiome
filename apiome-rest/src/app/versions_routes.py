@@ -150,6 +150,7 @@ from .version_unpublish import (
     previous_published,
 )
 from .sdk_regen_subscriptions import enqueue_regen_on_publish
+from .export_auto_worker import enqueue_auto_export_on_publish
 from .permissions import enforce_permission, Resource, Action
 from .published_immutability import IMMUTABLE_DETAIL, revision_is_published_immutable
 from .revision_deprecation import (
@@ -2291,6 +2292,16 @@ async def publish_version(
         project_id=project_id,
         published_revision_id=version_record_id,
         version_line=version.get("version_id") or existing.get("version_id"),
+        actor_id=user_id,
+    )
+    # MFX-39.4 (#4336): queue one auto-export per active export-preset subscription; the export-auto
+    # sweep exports, checks the loss and delivers (or halts). Never fails the publish.
+    background_tasks.add_task(
+        enqueue_auto_export_on_publish,
+        db=db,
+        tenant_id=auth_data["tenant_id"],
+        project_id=project_id,
+        version_record_id=version_record_id,
         actor_id=user_id,
     )
 

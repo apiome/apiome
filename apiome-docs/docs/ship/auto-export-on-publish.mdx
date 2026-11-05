@@ -1,0 +1,96 @@
+---
+title: Export automatically on every publish
+description: Run a preset on each publish; halt delivery when the export loses too much.
+sidebar_position: 5.296
+---
+
+Repositories, registries and buckets that hold your exported specs fall behind the moment a new version
+is published. **Auto-export** keeps them current: subscribe an [export preset](./export-presets.mdx) to a
+project, and every publish of that project runs the preset's export on the new version and delivers it
+through the preset's [delivery profile](./export-delivery-profiles.mdx).
+
+Delivery is guarded. Before anything leaves Apiome, the export's loss is measured. When it is too high, the
+export is **halted**: nothing is delivered, and the person who published and the person who set up the
+auto-export are notified. Someone can then **release** it, or fix the source and publish again.
+
+## How much loss halts delivery
+
+Each export's loss is one of three levels, the same ones its fidelity report uses:
+
+| Loss | When |
+| --- | --- |
+| **Critical** | A severe or near-empty conversion, a types-only result, or any construct lost at critical severity. |
+| **Warn** | Any other loss — a lossy target. |
+| **Info** | Nothing lost. |
+
+A subscription halts delivery at **critical** loss (the default) or at **any loss** (warn). With a
+multi-target preset, the worst target decides. To deliver whatever the loss, pre-approve it with **Deliver
+even past it**; every run records that it was pre-approved.
+
+## Before you start
+
+- **An export preset**, with a delivery profile if the export should be delivered. A preset without one
+  still exports on publish, but has nothing to deliver.
+- **The `projects:edit` and `versions:publish` permissions** to subscribe, switch a subscription on or
+  pre-approve loss — every publish then delivers outside Apiome. Switching one off or removing it needs
+  `projects:edit`; releasing a halted export needs `versions:publish`.
+
+## Set it up in Export studio
+
+1. Open **Export studio** and select the **Presets** tab.
+2. On the preset, click **Auto-export**.
+3. Choose the **Project**, and under **Halt delivery at** choose **Critical loss** or **Any loss**.
+   Optionally tick **Deliver even past it**.
+4. Click **Run on every publish**.
+
+<Screenshot id="export-studio-auto-export" alt="The Auto-export panel for nightly-sync: Orders API halts at critical loss, with one halted run (avro, a severe conversion at 12% preserved) and its Release button, one delivered run, and the form to add another project" />
+
+The panel lists each project the preset runs for, with its recent runs: **Delivered**, **Exported**
+(no delivery profile), **Halted** with the reason, **Delivery failed** or **Failed**. **Turn off** pauses
+a subscription, and **Remove** stops it; past runs keep their record.
+
+## When an export is halted
+
+A halted export is not delivered. The publisher and the person who set up the auto-export get a
+notification that names the preset, the version and the reason, and links to the **Presets** tab.
+
+- **Release** on the halted run delivers it anyway, through the preset's delivery profile, as you. It
+  works while the export's download is still kept (24 hours by default).
+- Or fix the source and publish a new version; that publish runs the preset again.
+
+An export that fails outright (the source can't be loaded, the preset's options no longer validate, or the
+server restarted mid-export) is **Failed**, and the same people are notified.
+
+## Use it from the CLI
+
+```bash
+# Run nightly-sync on every publish of orders, halting at any loss
+apiome export auto add orders --preset nightly-sync --halt-at warn
+
+# What each publish did, and release a halted export
+apiome export auto runs --project orders
+apiome export auto release <run id>
+```
+
+`apiome export auto` also has `list`, `update` (`--halt-at`, `--approve-loss/--no-approve-loss`,
+`--on/--off`) and `remove`. Every option is in the [CLI reference](/reference/cli/export#export-auto).
+
+## Use it from the API
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/auto-exports" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"projectId": "<project id>", "preset": "nightly-sync", "haltAt": "critical"}'
+```
+
+| Route | What it does |
+| --- | --- |
+| `POST /v1/export/{tenant}/auto-exports` | Run a preset on every publish of a project. |
+| `GET /v1/export/{tenant}/auto-exports` | List subscriptions (`?projectId=`, `?preset=`). |
+| `PATCH` / `DELETE /v1/export/{tenant}/auto-exports/{id}` | Change `haltAt`, `approveLoss` or `active`, or remove one. |
+| `GET /v1/export/{tenant}/auto-export-runs` | What each publish did: status, loss and reasons, deliveries. |
+| `POST /v1/export/{tenant}/auto-export-runs/{id}/release` | Deliver a halted export anyway. |
+
+A publish never fails because of an auto-export: the exports are queued after the publish answers and run
+in the background. Every subscription change, halt, delivery and release is recorded in the audit log as
+`export.auto_export.*`. Every field is in the [auto-export reference](/reference/rest/export-auto).

@@ -206,6 +206,7 @@ describe('applying the preference', () => {
       'review_decision',
       'thread_resolved',
       'version_published',
+      'export_auto_halted',
       'owner_finding',
       'owner_breaking_change',
       'owner_verification_drift',
