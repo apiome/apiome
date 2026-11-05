@@ -86,6 +86,29 @@ def export_job(tenant_slug: str, job_id: str) -> str:
     return f"{export_jobs(tenant_slug)}/{job_id}"
 
 
+def export_job_deliveries(tenant_slug: str, job_id: str) -> str:
+    """One export job's deliveries across every channel (MFX-38.4).
+
+    ``POST`` ``{profileId}`` delivers the completed job with a delivery profile; ``GET`` lists them.
+    """
+    return f"{export_job(tenant_slug, job_id)}/deliveries"
+
+
+def export_delivery_profiles(tenant_slug: str) -> str:
+    """The workspace's export delivery profiles (MFX-38.4): ``GET`` lists, ``POST`` creates."""
+    return f"{V1}/export/{tenant_slug}/delivery-profiles"
+
+
+def export_delivery_profile(tenant_slug: str, profile_id: str) -> str:
+    """One export delivery profile (MFX-38.4): ``GET`` / ``PATCH`` / ``DELETE``."""
+    return f"{export_delivery_profiles(tenant_slug)}/{quote(profile_id, safe='')}"
+
+
+def export_delivery_profile_deliveries(tenant_slug: str, profile_id: str) -> str:
+    """Every delivery made with one export delivery profile, across jobs (MFX-38.4)."""
+    return f"{export_delivery_profile(tenant_slug, profile_id)}/deliveries"
+
+
 def export_job_download(tenant_slug: str, job_id: str) -> str:
     """Download a completed export job's artifact bytes (MFX-4.1/4.2 / MFX-8.1)."""
     return f"{export_job(tenant_slug, job_id)}/download"

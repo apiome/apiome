@@ -93,7 +93,10 @@ Content-Type: application/json
    as a signed webhook with `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/webhook` (see
    [Deliver an export to a webhook](./deliver-an-export-to-a-webhook.md)), or upload it to an
    S3-compatible bucket with `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/object-storage` (see
-   [Deliver an export to object storage](./deliver-an-export-to-object-storage.md)).
+   [Deliver an export to object storage](./deliver-an-export-to-object-storage.md)). To reuse a
+   destination, save it as a profile and deliver with
+   `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` (see
+   [Reuse a delivery destination with a profile](./export-delivery-profiles.mdx)).
 
 Set `"dry_run": true` to stop after the fidelity report, and `"confirm": true` to run a severe
 conversion. Pass the preview's snapshot hash as `acknowledged_snapshot` to make sure the export is the

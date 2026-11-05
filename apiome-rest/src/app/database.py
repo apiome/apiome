@@ -36395,6 +36395,316 @@ class Database:
         return [dict(row) for row in rows or []]
 
     # -------------------------------------------------------------------------------------------
+    # MFX-38.4 (#4331) — export delivery profiles, and every delivery attempt across channels
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of an export delivery profile except the sealed secret.
+    _EXPORT_DELIVERY_PROFILE_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        name,
+        description,
+        channel,
+        destination,
+        (sealed_secret IS NOT NULL) AS has_secret,
+        created_at,
+        updated_at,
+        created_by::text AS created_by,
+        updated_by::text AS updated_by
+    """
+
+    #: The run table behind each delivery channel.
+    _EXPORT_DELIVERY_RUN_TABLES = {
+        "git": "export_git_delivery_runs",
+        "webhook": "export_webhook_delivery_runs",
+        "object_storage": "export_object_storage_delivery_runs",
+    }
+
+    def insert_export_delivery_profile(
+        self,
+        *,
+        tenant_id: str,
+        name: str,
+        description: Optional[str],
+        channel: str,
+        destination: Dict[str, Any],
+        sealed_secret: Optional[bytes] = None,
+        secret_key_version: Optional[int] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store one export delivery profile (MFX-38.4).
+
+        Args:
+            tenant_id: Owning tenant.
+            name: Unique within the tenant.
+            description: Free text, or ``None``.
+            channel: ``git``, ``webhook`` or ``object_storage``.
+            destination: The channel's non-secret request fields.
+            sealed_secret: The sealed webhook secret (webhook channel only).
+            secret_key_version: The master-key version that sealed it.
+            actor_id: Who stored it.
+
+        Returns:
+            The stored row (no secret), or ``None`` when the tenant id is not a UUID.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When the tenant already has a profile of that name.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        query = f"""
+            INSERT INTO apiome.export_delivery_profiles (
+                tenant_id, name, description, channel, destination, sealed_secret, secret_key_version,
+                created_by, updated_by
+            ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s::uuid, %s::uuid)
+            RETURNING {self._EXPORT_DELIVERY_PROFILE_COLUMNS}
+        """
+        params = (
+            tenant_id, name, description, channel, Json(destination or {}),
+            psycopg2.Binary(sealed_secret) if sealed_secret is not None else None,
+            int(secret_key_version) if secret_key_version is not None else None, actor, actor,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_delivery_profiles(self, tenant_id: str, channel: Optional[str] = None) -> List[Dict[str, Any]]:
+        """A tenant's delivery profiles by name, optionally of one channel, without secrets (MFX-38.4)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_DELIVERY_PROFILE_COLUMNS}
+            FROM apiome.export_delivery_profiles
+            WHERE tenant_id = %s::uuid AND (%s::text IS NULL OR channel = %s::text)
+            ORDER BY name ASC
+            """,
+            (tenant_id, channel, channel),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_export_delivery_profile(
+        self, tenant_id: str, profile_id: str, *, with_secret: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """One delivery profile of the tenant (MFX-38.4).
+
+        Args:
+            tenant_id: The caller's tenant — a profile of another tenant is never returned.
+            profile_id: The profile.
+            with_secret: Also return ``sealed_secret`` (bytes) and ``secret_key_version`` — for
+                delivering with the profile only, never for a response.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(profile_id or ""))):
+            return None
+        extra = ", sealed_secret, secret_key_version" if with_secret else ""
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_DELIVERY_PROFILE_COLUMNS}{extra}
+            FROM apiome.export_delivery_profiles
+            WHERE tenant_id = %s::uuid AND id = %s::uuid
+            """,
+            (tenant_id, profile_id),
+        )
+        if not rows:
+            return None
+        row = dict(rows[0])
+        if with_secret:
+            row["sealed_secret"] = bytes(row["sealed_secret"]) if row.get("sealed_secret") else None
+        return row
+
+    def update_export_delivery_profile(
+        self,
+        tenant_id: str,
+        profile_id: str,
+        *,
+        name: str,
+        description: Optional[str],
+        destination: Dict[str, Any],
+        sealed_secret: Optional[bytes] = None,
+        secret_key_version: Optional[int] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a profile's name, description and destination (MFX-38.4). Its channel never changes.
+
+        Args:
+            tenant_id: The caller's tenant.
+            profile_id: The profile.
+            name: The new name (unique within the tenant).
+            description: The new description, or ``None``.
+            destination: The new non-secret destination.
+            sealed_secret: A newly sealed webhook secret, or ``None`` to keep the stored one.
+            secret_key_version: Its master-key version (with ``sealed_secret``).
+            actor_id: Who changed it.
+
+        Returns:
+            The updated row (no secret), or ``None`` when the tenant has no such profile.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When another profile of the tenant has that name.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(profile_id or ""))):
+            return None
+        query = f"""
+            UPDATE apiome.export_delivery_profiles SET
+                name = %s,
+                description = %s,
+                destination = %s,
+                sealed_secret = COALESCE(%s, sealed_secret),
+                secret_key_version = COALESCE(%s, secret_key_version),
+                updated_at = CURRENT_TIMESTAMP,
+                updated_by = %s::uuid
+            WHERE tenant_id = %s::uuid AND id = %s::uuid
+            RETURNING {self._EXPORT_DELIVERY_PROFILE_COLUMNS}
+        """
+        params = (
+            name, description, Json(destination or {}),
+            psycopg2.Binary(sealed_secret) if sealed_secret is not None else None,
+            int(secret_key_version) if secret_key_version is not None else None,
+            actor_id if is_uuid_string(str(actor_id or "")) else None, tenant_id, profile_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def delete_export_delivery_profile(self, tenant_id: str, profile_id: str) -> bool:
+        """Delete one delivery profile; its delivery runs keep their history (MFX-38.4).
+
+        Returns:
+            Whether a row was deleted.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(profile_id or ""))):
+            return False
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM apiome.export_delivery_profiles WHERE tenant_id = %s::uuid AND id = %s::uuid",
+                    (tenant_id, profile_id),
+                )
+                deleted = cursor.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def set_export_delivery_run_profile(self, channel: str, tenant_id: str, run_id: str, profile_id: str) -> bool:
+        """Record that a delivery run was made from a profile (MFX-38.4).
+
+        Args:
+            channel: ``git``, ``webhook`` or ``object_storage`` — picks the run table.
+            tenant_id: The run's tenant.
+            run_id: The run.
+            profile_id: The profile (of the same tenant).
+
+        Returns:
+            Whether a run was updated.
+
+        Raises:
+            ValueError: For an unknown channel.
+        """
+        table = self._EXPORT_DELIVERY_RUN_TABLES.get(channel)
+        if table is None:
+            raise ValueError(f"unknown export delivery channel {channel!r}")
+        if not all(is_uuid_string(str(value or "")) for value in (tenant_id, run_id, profile_id)):
+            return False
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    UPDATE apiome.{table} SET delivery_profile_id = p.id
+                    FROM apiome.export_delivery_profiles p
+                    WHERE apiome.{table}.tenant_id = %s::uuid AND apiome.{table}.id = %s::uuid
+                      AND p.tenant_id = %s::uuid AND p.id = %s::uuid
+                    """,
+                    (tenant_id, run_id, tenant_id, profile_id),
+                )
+                updated = cursor.rowcount > 0
+            conn.commit()
+            return updated
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_delivery_attempts(
+        self,
+        tenant_id: str,
+        *,
+        job_id: Optional[str] = None,
+        profile_id: Optional[str] = None,
+        limit: int = 100,
+    ) -> List[Dict[str, Any]]:
+        """Every delivery attempt across the three channels, newest first (MFX-38.4).
+
+        Args:
+            tenant_id: The caller's tenant.
+            job_id: Only one export job's deliveries.
+            profile_id: Only one profile's deliveries.
+            limit: The most rows to return.
+
+        Returns:
+            Rows of ``channel``, ``id``, ``job_id``, ``artifact_id``, ``export_target``, ``status``,
+            ``delivery_profile_id``, ``profile_name``, ``destination`` (repository, receiver URL or
+            ``bucket/prefix``), ``attempt_count``, ``error_code``, ``error_message``, ``started_at``,
+            ``finished_at`` and ``created_by``. The webhook ``destination`` is the stored URL: show it
+            through :func:`app.export_webhook_delivery.display_url`.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        if profile_id is not None and not is_uuid_string(str(profile_id)):
+            return []
+        common = """
+            r.id::text AS id, r.job_id, r.artifact_id, r.export_target, r.status,
+            r.delivery_profile_id::text AS delivery_profile_id, p.name AS profile_name,
+            r.error_code, r.error_message, r.started_at, r.finished_at, r.created_by::text AS created_by
+        """
+        where = """
+            WHERE r.tenant_id = %s::uuid
+              AND (%s::text IS NULL OR r.job_id = %s::text)
+              AND (%s::uuid IS NULL OR r.delivery_profile_id = %s::uuid)
+        """
+        join = "LEFT JOIN apiome.export_delivery_profiles p ON p.id = r.delivery_profile_id"
+        query = f"""
+            SELECT * FROM (
+                SELECT 'git' AS channel, {common}, r.repository_full_name AS destination, 1 AS attempt_count
+                FROM apiome.export_git_delivery_runs r {join} {where}
+                UNION ALL
+                SELECT 'webhook' AS channel, {common}, r.target_url AS destination, r.attempt_count
+                FROM apiome.export_webhook_delivery_runs r {join} {where}
+                UNION ALL
+                SELECT 'object_storage' AS channel, {common},
+                       r.bucket || CASE WHEN r.key_prefix = '' THEN '' ELSE '/' || r.key_prefix END AS destination,
+                       1 AS attempt_count
+                FROM apiome.export_object_storage_delivery_runs r {join} {where}
+            ) attempts
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s
+        """
+        job = str(job_id) if job_id is not None else None
+        params = (tenant_id, job, job, profile_id, profile_id) * 3 + (max(1, int(limit)),)
+        rows = self.execute_query(query, params)
+        return [dict(row) for row in rows or []]
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 

@@ -24,6 +24,7 @@ from apiome_cli.cli_context import (
     timeout_from_context,
 )
 from apiome_cli.client.browse_scope import resolve_tenant_slug
+from apiome_cli.client.export_delivery_profiles import report_job_deliveries, resolve_profile_ids
 from apiome_cli.client.export_jobs import (
     download_export_job_artifact,
     filename_from_disposition,
@@ -260,6 +261,7 @@ def run_generic_export(
     fail_on: str | None = None,
     overlay_paths: Sequence[str] = (),
     tenant_override: str | None = None,
+    deliver_refs: Sequence[str] = (),
 ) -> None:
     """Resolve ``target_format``, run the async export job, and write the artifact.
 
@@ -271,6 +273,9 @@ def run_generic_export(
     OpenAPI document before it is exported. The pre-submit preview cannot see them, so an
     overlaid job is not pinned to that preview's snapshot; the job's own snapshot is reported.
     ``tenant_override`` is ``--tenant`` where the calling command has one (``export openapi``).
+    ``deliver_refs`` (``--deliver``, MFX-38.4) are delivery profile names or ids the job is
+    delivered with on completion; their outcomes are printed after the download, and a failed
+    delivery exits 1.
     """
     settings = settings_from_context(ctx)
     require_api_key(settings)
@@ -287,6 +292,7 @@ def run_generic_export(
     )
     tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant_override)
 
+    profile_ids = resolve_profile_ids(client, tenant_slug, deliver_refs)
     project_id = resolve_project_uuid(client, tenant_slug, artifact)
     targets_response = fetch_export_targets(
         client,
@@ -355,6 +361,7 @@ def run_generic_export(
         confirm=confirm,
         acknowledged_snapshot=acknowledged_snapshot,
         overlays=overlays,
+        delivery_profiles=profile_ids,
     )
     job_id = accepted.get("job_id")
     if not isinstance(job_id, str) or not job_id:
@@ -417,6 +424,8 @@ def run_generic_export(
             typer.echo(line, err=True)
         for line in format_overlay_summary(result.get("overlay")):
             typer.echo(line, err=True)
+    report_job_deliveries(client, tenant_slug, job_id, expected=len(profile_ids), poll_interval=poll_interval,
+                          timeout=export_timeout)
 
     enforce_export_fidelity_gate(
         fidelity if isinstance(fidelity, dict) else None,

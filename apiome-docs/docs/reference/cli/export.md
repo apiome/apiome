@@ -18,7 +18,7 @@ Export a version to a target format via the emitter registry. Registered targets
 apiome export [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`asyncapi`](#export-asyncapi), [`avro`](#export-avro), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`targets`](#export-targets).
+Subcommands: [`asyncapi`](#export-asyncapi), [`avro`](#export-avro), [`deliver`](#export-deliver), [`deliveries`](#export-deliveries), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`profiles`](#export-profiles), [`targets`](#export-targets).
 
 ## apiome export asyncapi {#export-asyncapi}
 
@@ -61,6 +61,40 @@ apiome export avro [OPTIONS]
 | `--force` | flag |  |  | Write and exit 0 even when the export loses fidelity (lossy/types-only). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome export deliver {#export-deliver}
+
+Deliver a completed export job with one or more delivery profiles (name or id); exits 1 when a delivery failed.
+
+```text
+apiome export deliver [OPTIONS] JOB_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `JOB_ID` | text | yes | A completed export job's id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--profile` | text (repeatable) |  | yes | Profile name or id (repeatable). |
+
+## apiome export deliveries {#export-deliveries}
+
+List every delivery of an export job across git, webhook and object storage.
+
+```text
+apiome export deliveries [OPTIONS] JOB_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `JOB_ID` | text | yes | An export job's id. |
 
 ## apiome export evidence {#export-evidence}
 
@@ -164,6 +198,142 @@ apiome export preflight [OPTIONS]
 | `--tenant` | text |  |  | Tenant UUID or slug (overrides APIOME_TENANT_ID). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome export profiles {#export-profiles}
+
+List, create, change and delete the workspace's export delivery profiles (git, webhook, object storage).
+
+```text
+apiome export profiles [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`create`](#export-profiles-create), [`delete`](#export-profiles-delete), [`deliveries`](#export-profiles-deliveries), [`list`](#export-profiles-list), [`show`](#export-profiles-show), [`update`](#export-profiles-update).
+
+## apiome export profiles create {#export-profiles-create}
+
+Create a delivery profile. git: --repository [--path --base-branch --mode]. webhook: --url --secret-env VAR [--artifact]. object_storage: --credential --bucket [--prefix --partitioning].
+
+```text
+apiome export profiles create [OPTIONS] NAME
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `NAME` | text | yes | A name unique in the workspace. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--channel` | text |  | yes | git, webhook or object_storage. |
+| `--description` | text |  |  | What the profile is for. |
+| `--repository` | text |  |  | git: the registered repository id. |
+| `--path` | text |  |  | git: the directory the bundle is written under. |
+| `--base-branch` | text |  |  | git: the base branch (default: the repository's default). |
+| `--mode` | text |  |  | git: pr (default) or commit. |
+| `--url` | text |  |  | webhook: the receiver URL. |
+| `--secret-env` | text |  |  | webhook: the environment variable holding the signing secret. |
+| `--artifact` | text |  |  | webhook: auto (default) or fetch. |
+| `--credential` | text |  |  | object_storage: the storage credential id. |
+| `--bucket` | text |  |  | object_storage: the bucket. |
+| `--prefix` | text |  |  | object_storage: the key prefix. |
+| `--partitioning` | text |  |  | object_storage: artifact,version,target in order ('' for none). |
+
+## apiome export profiles delete {#export-profiles-delete}
+
+Delete a delivery profile. Its past deliveries keep their record.
+
+```text
+apiome export profiles delete [OPTIONS] PROFILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROFILE` | text | yes | Profile name or id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation prompt. |
+
+## apiome export profiles deliveries {#export-profiles-deliveries}
+
+List every delivery made with a profile, across export jobs.
+
+```text
+apiome export profiles deliveries [OPTIONS] PROFILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROFILE` | text | yes | Profile name or id. |
+
+## apiome export profiles list {#export-profiles-list}
+
+List the workspace's delivery profiles.
+
+```text
+apiome export profiles list [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--channel` | text |  |  | Only one channel: git, webhook or object_storage. |
+
+## apiome export profiles show {#export-profiles-show}
+
+Show one delivery profile (by name or id). Never shows a secret.
+
+```text
+apiome export profiles show [OPTIONS] PROFILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROFILE` | text | yes | Profile name or id. |
+
+## apiome export profiles update {#export-profiles-update}
+
+Change a profile's name, description or destination. Destination flags replace the whole destination; the channel never changes. A webhook keeps its secret unless --secret-env is given.
+
+```text
+apiome export profiles update [OPTIONS] PROFILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROFILE` | text | yes | Profile name or id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | A new name. |
+| `--description` | text |  |  | A new description ('' clears it). |
+| `--repository` | text |  |  |  |
+| `--path` | text |  |  |  |
+| `--base-branch` | text |  |  |  |
+| `--mode` | text |  |  |  |
+| `--url` | text |  |  |  |
+| `--secret-env` | text |  |  |  |
+| `--artifact` | text |  |  |  |
+| `--credential` | text |  |  |  |
+| `--bucket` | text |  |  |  |
+| `--prefix` | text |  |  |  |
+| `--partitioning` | text |  |  |  |
 
 ## apiome export targets {#export-targets}
 

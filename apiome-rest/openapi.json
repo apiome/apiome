@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.516.0",
+    "version": "1.517.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -85441,7 +85441,7 @@
           "export-jobs"
         ],
         "summary": "Start an asynchronous export job",
-        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.\n\n**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.\n\n**Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version \u00d7 target items; ``acknowledged_snapshot`` is not accepted on a batch.\n\n**Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing ``version`` exports the item's latest) instead of ``artifact`` to export several artifacts \u2014 say catalog items picked together \u2014 to the target(s) in one batch job. Each item's files land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at most 100 item \u00d7 target pairs.\n\n**Overlays (GVM-4.2):** send ``overlays`` (a list of ``{name, document}``, 1\u201310 Overlay 1.0 / 1.1 / 1.2 documents, each at most 1 MiB) to apply them, in order, to the source's OpenAPI document before the export runs: fidelity, the emitter, validation and the export quality policy all judge the post-overlay document. ``result.overlay`` lists every changed leaf with the overlay that changed it (500 rows, then a truncation row) and every action that could not be applied \u2014 an action whose target matches nothing is an ``overlay.unmatched-target`` finding and changes nothing. A version not imported from OpenAPI fails with ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with ``OVERLAY_INVALID``. Overlays apply to one source, so they cannot be combined with a batch. Send the same ``overlays`` to ``POST \u2026/verify`` so its snapshot matches the job's.\n\n**Limits (X5):** each refusal names the limit it hit. A tenant runs at most ``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; a submit past it is refused with **429**. A job running longer than ``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``; an artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails with ``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for ``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`` (default 24) and is **410** after that. ``0`` turns a limit off.",
+        "description": "Submit an export of one artifact/version to one target through the async job pipeline: load source \u2192 fidelity report \u2192 emit \u2192 validate \u2192 package. ``dry_run: true`` stops after the fidelity report (no artifact), the async twin of ``POST \u2026/preview``. Poll the returned ``status_path`` for progress; the status contract matches the spec-import job surface.\n\n**Multi-target (MFX-39.1):** send a ``targets`` list (each entry ``{target, options?, acknowledged_snapshot?}``) instead of ``target`` to emit the version to every listed target in one job. The download is one zip with a subdirectory per target plus a root ``manifest.json``; ``result.targets`` carries each target's fidelity report, guard, validation and delivery decision, and ``result.fidelity_rollup`` the merged summary. The job is all-or-nothing: the first target that fails fails the job, naming it in ``error.context.target``.\n\n**Batch (MFX-39.2):** send ``versions`` (a list of revision ids or version labels) or ``all_versions: true`` instead of ``version`` to export several versions of the artifact to the target(s) in one job. The download is one zip (``export-batch.zip``) with a ``<version>/<target>/`` folder per completed item plus a root ``manifest.json`` listing every item. Failures are per item: ``result.batch.items[]`` carries each item's state and, for a failed one, its structured ``error``; the job only fails (``EXPORT_BATCH_FAILED``) when every item failed. At most 100 version \u00d7 target items; ``acknowledged_snapshot`` is not accepted on a batch.\n\n**Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing ``version`` exports the item's latest) instead of ``artifact`` to export several artifacts \u2014 say catalog items picked together \u2014 to the target(s) in one batch job. Each item's files land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at most 100 item \u00d7 target pairs.\n\n**Overlays (GVM-4.2):** send ``overlays`` (a list of ``{name, document}``, 1\u201310 Overlay 1.0 / 1.1 / 1.2 documents, each at most 1 MiB) to apply them, in order, to the source's OpenAPI document before the export runs: fidelity, the emitter, validation and the export quality policy all judge the post-overlay document. ``result.overlay`` lists every changed leaf with the overlay that changed it (500 rows, then a truncation row) and every action that could not be applied \u2014 an action whose target matches nothing is an ``overlay.unmatched-target`` finding and changes nothing. A version not imported from OpenAPI fails with ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with ``OVERLAY_INVALID``. Overlays apply to one source, so they cannot be combined with a batch. Send the same ``overlays`` to ``POST \u2026/verify`` so its snapshot matches the job's.\n\n**Delivery (MFX-38.4):** ``delivery_profiles`` lists delivery profiles the export is delivered with as soon as it completes \u2014 each through its channel, recorded on the job (``GET \u2026/jobs/{job_id}/deliveries``) and as an ``EXPORT_DELIVERED`` / ``EXPORT_DELIVERY_FAILED`` event. It needs ``versions:publish`` (403) and existing profiles (400).\n\n**Limits (X5):** each refusal names the limit it hit. A tenant runs at most ``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; a submit past it is refused with **429**. A job running longer than ``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``; an artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails with ``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for ``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`` (default 24) and is **410** after that. ``0`` turns a limit off.",
         "operationId": "start_export_job_v1_export__tenant_slug__jobs_post",
         "parameters": [
           {
@@ -86998,6 +86998,886 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for listajobsobjectstoragedeliveriesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/delivery-profiles": {
+      "post": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Store an export delivery profile",
+        "description": "Stores a reusable delivery destination: a `name`, a `channel` (`git`, `webhook` or `object_storage`) and that channel's delivery body in the matching block \u2014 `git`, `webhook` or `objectStorage` \u2014 validated by the channel's own rules. The credential is a reference: the git repository's linked account, or a storage credential in the vault. A webhook's `secret` is sealed on the profile and never returned. Requires `projects:edit`; audited as `export.delivery_profile.created`.\n\n`400` for an invalid field, an unknown repository or storage credential, or a refused receiver; `409` for a name already in use; `503` when a webhook secret cannot be sealed (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`).",
+        "operationId": "create_delivery_profile_v1_export__tenant_slug__delivery_profiles_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Storeanexportdeliveryprofileauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Storeanexportdeliveryprofileauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Storeanexportdeliveryprofile Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Storeanexportdeliveryprofile Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryProfileCreate",
+                "description": "Request body for storeanexportdeliveryprofilerequest."
+              }
+            }
+          },
+          "description": "Request body for store an export delivery profile."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for store an export delivery profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryProfileModel",
+                  "description": "Response payload for storeanexportdeliveryprofileresponse201."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid field, unknown reference or refused receiver."
+          },
+          "409": {
+            "description": "A profile of that name exists."
+          },
+          "503": {
+            "description": "Credential encryption is not configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for storeanexportdeliveryprofileresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "List the workspace's export delivery profiles",
+        "description": "Every delivery profile, by name \u2014 never a secret. `channel` narrows to one channel. Requires `projects:view`.",
+        "operationId": "list_delivery_profiles_v1_export__tenant_slug__delivery_profiles_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "git",
+                    "webhook",
+                    "object_storage"
+                  ],
+                  "type": "string",
+                  "description": "Listtheworkspacesexportdeliveryprofileschannel schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacesexportdeliveryprofileschannel schema."
+                }
+              ],
+              "title": "Channel",
+              "description": "Channel schema."
+            },
+            "description": "Query parameter: channel."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacesexportdeliveryprofilesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacesexportdeliveryprofilesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacesexportdeliveryprofiles Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacesexportdeliveryprofiles Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the workspace's export delivery profiles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryProfileListResponse",
+                  "description": "Response payload for listtheworkspacesexportdeliveryprofilesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listtheworkspacesexportdeliveryprofilesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/delivery-profiles/{profile_id}": {
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Read an export delivery profile",
+        "description": "One delivery profile \u2014 never its secret. Requires `projects:view`. `404` when the workspace has no such profile.",
+        "operationId": "get_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Profile Id",
+              "description": "Profile Id schema."
+            },
+            "description": "Path parameter identifying the profile id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readanexportdeliveryprofileauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readanexportdeliveryprofileauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Readanexportdeliveryprofile Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Readanexportdeliveryprofile Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for read an export delivery profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryProfileModel",
+                  "description": "Response payload for readanexportdeliveryprofileresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown profile for this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for readanexportdeliveryprofileresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Change an export delivery profile",
+        "description": "Changes a profile's `name`, `description` or destination. A destination block replaces the stored destination whole and must be the profile's own channel \u2014 the channel never changes. On a webhook profile, leave `webhook.secret` out to keep the stored secret. Past deliveries keep their record. Requires `projects:edit`; audited as `export.delivery_profile.updated`.",
+        "operationId": "update_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Profile Id",
+              "description": "Profile Id schema."
+            },
+            "description": "Path parameter identifying the profile id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanexportdeliveryprofileauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanexportdeliveryprofileauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanexportdeliveryprofile Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanexportdeliveryprofile Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryProfileUpdate",
+                "description": "Request body for changeanexportdeliveryprofilerequest."
+              }
+            }
+          },
+          "description": "Request body for change an export delivery profile."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change an export delivery profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryProfileModel",
+                  "description": "Response payload for changeanexportdeliveryprofileresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid field, another channel's block, unknown reference or refused receiver."
+          },
+          "404": {
+            "description": "Unknown profile for this tenant."
+          },
+          "409": {
+            "description": "Another profile has that name."
+          },
+          "503": {
+            "description": "Credential encryption is not configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for changeanexportdeliveryprofileresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Delete an export delivery profile",
+        "description": "Removes the profile (and a webhook profile's sealed secret); its deliveries keep their record, no longer naming it. Requires `projects:edit`; audited as `export.delivery_profile.deleted`. `404` when the workspace has no such profile.",
+        "operationId": "delete_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Profile Id",
+              "description": "Profile Id schema."
+            },
+            "description": "Path parameter identifying the profile id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteanexportdeliveryprofileauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteanexportdeliveryprofileauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteanexportdeliveryprofile Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteanexportdeliveryprofile Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete an export delivery profile."
+          },
+          "404": {
+            "description": "Unknown profile for this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteanexportdeliveryprofileresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/delivery-profiles/{profile_id}/deliveries": {
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "List a delivery profile's deliveries",
+        "description": "Every delivery made with the profile, across export jobs, newest first (at most `limit`). Requires `projects:view`.",
+        "operationId": "list_delivery_profile_deliveries_v1_export__tenant_slug__delivery_profiles__profile_id__deliveries_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "profile_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Profile Id",
+              "description": "Profile Id schema."
+            },
+            "description": "Path parameter identifying the profile id segment."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listadeliveryprofilesdeliveriesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listadeliveryprofilesdeliveriesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listadeliveryprofilesdeliveries Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listadeliveryprofilesdeliveries Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a delivery profile's deliveries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryAttemptListResponse",
+                  "description": "Response payload for listadeliveryprofilesdeliveriesresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown profile for this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listadeliveryprofilesdeliveriesresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/jobs/{job_id}/deliveries": {
+      "post": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Deliver a completed export with a delivery profile",
+        "description": "Delivers a **completed** export job to the profile's destination through the channel's own delivery \u2014 exactly as `POST \u2026/deliveries/git`, `\u2026/webhook` or `\u2026/object-storage` with the profile's body \u2014 and records the profile on the run. The answer summarises the attempt (`outcome`: `in_progress`, `delivered` or `failed`) and carries the channel's full run in `run`.\n\nAs with each channel, a delivery that reaches the destination and fails answers `200` with `outcome: failed` and the channel's `errorCode`. Requires `versions:publish`; audited by the channel (`export.git_delivery`, `export.webhook_delivery`, `export.object_storage_delivery`) with `profileId`.",
+        "operationId": "deliver_export_job_with_profile_v1_export__tenant_slug__jobs__job_id__deliveries_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id",
+              "description": "Job Id schema."
+            },
+            "description": "Asynchronous job identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveracompletedexportwithadeliveryprofauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveracompletedexportwithadeliveryprofauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveracompletedexportwithadeliveryprof Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveracompletedexportwithadeliveryprof Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileDeliveryRequest",
+                "description": "Request body for deliveracompletedexportwithadeliveryprofrequest."
+              }
+            }
+          },
+          "description": "Request body for deliver a completed export with a delivery profile."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for deliver a completed export with a delivery profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryAttemptModel",
+                  "description": "Response payload for deliveracompletedexportwithadeliveryprofresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The stored destination is no longer valid for its channel."
+          },
+          "404": {
+            "description": "Unknown export job or profile for this tenant."
+          },
+          "409": {
+            "description": "The job is not completed, is a dry run, or its bundle cannot be read."
+          },
+          "410": {
+            "description": "The export's artifact has expired; export again, then deliver."
+          },
+          "503": {
+            "description": "A webhook profile's secret cannot be opened on this deployment."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deliveracompletedexportwithadeliveryprofresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "List every delivery of an export job",
+        "description": "Every delivery of one export job across the git, webhook and object-storage channels, newest first, each with its profile (when it was made from one), outcome and attempt count. Requires `projects:view`.",
+        "operationId": "list_export_job_deliveries_v1_export__tenant_slug__jobs__job_id__deliveries_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id",
+              "description": "Job Id schema."
+            },
+            "description": "Asynchronous job identifier."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listeverydeliveryofanexportjobauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listeverydeliveryofanexportjobauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listeverydeliveryofanexportjob Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listeverydeliveryofanexportjob Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list every delivery of an export job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDeliveryAttemptListResponse",
+                  "description": "Response payload for listeverydeliveryofanexportjobresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listeverydeliveryofanexportjobresponse422."
                 }
               }
             }
@@ -131249,6 +132129,42 @@
         "title": "CreateReleaseRequest",
         "description": "Record a built release and its artifact."
       },
+      "CredentialRefModel": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "repository",
+              "storage_credential",
+              "webhook_secret"
+            ],
+            "title": "Kind",
+            "description": "`repository` (the registered repository's linked account), `storage_credential` (a credential in the storage vault) or `webhook_secret` (sealed on the profile, never returned).",
+            "example": "repository"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Credential Ref Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Credential Ref Model schema."
+              }
+            ],
+            "title": "Id",
+            "description": "The repository or storage credential id; null for a webhook secret."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "CredentialRefModel",
+        "description": "What a profile delivers with, by reference."
+      },
       "CustomRuleOut": {
         "properties": {
           "ruleId": {
@@ -131930,6 +132846,157 @@
         ],
         "title": "DeliveryOverride",
         "description": "The path a blocked delivery may be unblocked through, if any."
+      },
+      "DeliveryProfileCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "A name unique in the workspace (`orders-to-data-lake`), up to 120 characters.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Delivery Profile Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Create schema."
+              }
+            ],
+            "title": "Description",
+            "description": "What the profile is for."
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "git",
+              "webhook",
+              "object_storage"
+            ],
+            "title": "Channel",
+            "description": "The delivery channel.",
+            "example": "git"
+          },
+          "git": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GitDeliveryRequest"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Create schema."
+              }
+            ],
+            "description": "For `channel: git` \u2014 the git delivery body."
+          },
+          "webhook": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebhookProfileDestination"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Create schema."
+              }
+            ],
+            "description": "For `channel: webhook` \u2014 the webhook delivery body."
+          },
+          "objectStorage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObjectStorageDeliveryRequest"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Create schema."
+              }
+            ],
+            "description": "For `channel: object_storage` \u2014 the object-storage delivery body."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "channel"
+        ],
+        "title": "DeliveryProfileCreate",
+        "description": "A new delivery profile: ``POST /v1/export/{tenant}/delivery-profiles``."
+      },
+      "DeliveryProfileUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Delivery Profile Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Update schema."
+              }
+            ],
+            "title": "Name",
+            "description": "A new name."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Delivery Profile Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Update schema."
+              }
+            ],
+            "title": "Description",
+            "description": "A new description; `\"\"` clears it."
+          },
+          "git": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GitDeliveryRequest"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Update schema."
+              }
+            ],
+            "description": "A new git destination (replaces it)."
+          },
+          "webhook": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WebhookProfileDestination"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Update schema."
+              }
+            ],
+            "description": "A new webhook destination (replaces it; leave `secret` out to keep it)."
+          },
+          "objectStorage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ObjectStorageDeliveryRequest"
+              },
+              {
+                "type": "null",
+                "description": "Delivery Profile Update schema."
+              }
+            ],
+            "description": "A new object-storage destination (replaces it)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DeliveryProfileUpdate",
+        "description": "A change to a profile: ``PATCH /v1/export/{tenant}/delivery-profiles/{id}``. The channel is fixed."
       },
       "DeliveryReason": {
         "properties": {
@@ -135832,6 +136899,375 @@
         "title": "ExportBody",
         "description": "One OTLP export destination. A secret reference, never a header value."
       },
+      "ExportDeliveryAttemptListResponse": {
+        "properties": {
+          "deliveries": {
+            "items": {
+              "$ref": "#/components/schemas/ExportDeliveryAttemptModel"
+            },
+            "type": "array",
+            "title": "Deliveries",
+            "description": "Deliveries.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExportDeliveryAttemptListResponse",
+        "description": "Delivery attempts across every channel, newest first."
+      },
+      "ExportDeliveryAttemptModel": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "Channel.",
+            "example": "example"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Runid",
+            "description": "Run ID."
+          },
+          "jobId": {
+            "type": "string",
+            "title": "Jobid",
+            "description": "Job ID.",
+            "example": "example"
+          },
+          "artifactId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Artifactid",
+            "description": "Artifact ID."
+          },
+          "exportTarget": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Exporttarget",
+            "description": "Export Target."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "in_progress",
+              "delivered",
+              "failed"
+            ],
+            "title": "Outcome",
+            "description": "Outcome.",
+            "example": "in_progress"
+          },
+          "profileId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Profileid",
+            "description": "Profile ID."
+          },
+          "profileName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Profilename",
+            "description": "Profile Name."
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Destination",
+            "description": "Destination."
+          },
+          "attemptCount": {
+            "type": "integer",
+            "title": "Attemptcount",
+            "default": 1,
+            "description": "Number of attempt.",
+            "example": 1
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Errorcode",
+            "description": "Error Code."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Startedat",
+            "description": "Started At."
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Finishedat",
+            "description": "Finished At."
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Createdby",
+            "description": "Created By."
+          },
+          "run": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object",
+                "description": "Export Delivery Attempt Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Attempt Model schema."
+              }
+            ],
+            "title": "Run",
+            "description": "Run."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "channel",
+          "jobId",
+          "status",
+          "outcome"
+        ],
+        "title": "ExportDeliveryAttemptModel",
+        "description": "One delivery attempt, whatever its channel.\n\nAttributes:\n    channel: ``git``, ``webhook`` or ``object_storage``.\n    run_id: The channel's run.\n    status: The channel's own status (``opened``, ``retrying``, ``delivered``, \u2026).\n    outcome: ``in_progress``, ``delivered`` or ``failed``.\n    profile_id: The profile it was made from (null for a direct delivery or a deleted profile).\n    profile_name: That profile's name.\n    destination: Where it went: ``owner/repo``, the receiver URL without its query, or ``bucket/prefix``.\n    attempt_count: Send attempts so far (a webhook retries; the other channels make one).\n    run: In the answer to a delivery only \u2014 the channel's full run, as its own endpoint returns it."
+      },
+      "ExportDeliveryProfileListResponse": {
+        "properties": {
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ExportDeliveryProfileModel"
+            },
+            "type": "array",
+            "title": "Profiles",
+            "description": "Profiles.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExportDeliveryProfileListResponse",
+        "description": "A workspace's delivery profiles, by name."
+      },
+      "ExportDeliveryProfileModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Profile Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Profile Model schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "Channel.",
+            "example": "example"
+          },
+          "destination": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Destination",
+            "description": "Destination."
+          },
+          "credentialRef": {
+            "$ref": "#/components/schemas/CredentialRefModel",
+            "description": "Credential Ref."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Delivery Profile Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Profile Model schema."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Delivery Profile Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Profile Model schema."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Profile Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Profile Model schema."
+              }
+            ],
+            "title": "Createdby",
+            "description": "Created By."
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Delivery Profile Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Delivery Profile Model schema."
+              }
+            ],
+            "title": "Updatedby",
+            "description": "Updated By."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "channel",
+          "credentialRef"
+        ],
+        "title": "ExportDeliveryProfileModel",
+        "description": "A stored delivery profile, described without its secret.\n\nAttributes:\n    id: The profile.\n    name: Its unique name in the workspace.\n    description: What it is for.\n    channel: ``git``, ``webhook`` or ``object_storage``.\n    destination: The channel's delivery body, minus any secret (a webhook URL without its query).\n    credential_ref: What it delivers with."
+      },
       "ExportDispatchFile": {
         "properties": {
           "path": {
@@ -137135,6 +138571,25 @@
             "description": "When true, a batch export over every version of the artifact (MFX-39.2), newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions \u00d7 targets exceeds 100. Mutually exclusive with ``version`` and ``versions``.",
             "default": false,
             "example": false
+          },
+          "delivery_profiles": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 5,
+                "minItems": 1,
+                "description": "Request body for export job start."
+              },
+              {
+                "type": "null",
+                "description": "Request body for export job start."
+              }
+            ],
+            "title": "Delivery Profiles",
+            "description": "Delivery profiles (MFX-38.4, `GET /v1/export/{tenant}/delivery-profiles`) the export is delivered with as soon as it completes, in this order \u2014 each through its channel's own delivery, recorded on the job (`GET \u2026/jobs/{job_id}/deliveries`) and audited. 1\u20135 distinct ids; needs `versions:publish`. Not combinable with ``dry_run``. A delivery's outcome never changes the job's state: each adds an `EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event."
           }
         },
         "additionalProperties": false,
@@ -170855,6 +172310,23 @@
         "type": "object",
         "title": "PrimitiveUpdateRequest",
         "description": "Partial update payload for an existing primitive type definition."
+      },
+      "ProfileDeliveryRequest": {
+        "properties": {
+          "profileId": {
+            "type": "string",
+            "title": "Profileid",
+            "description": "A delivery profile of this workspace (`GET /v1/export/{tenant}/delivery-profiles`).",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "profileId"
+        ],
+        "title": "ProfileDeliveryRequest",
+        "description": "Deliver a job with a profile: ``POST \u2026/jobs/{job_id}/deliveries``."
       },
       "ProjectConversionHistoryResponse": {
         "properties": {
@@ -217984,6 +219456,50 @@
         ],
         "title": "WebhookDeliveryRequest",
         "description": "Where to deliver an export: ``POST \u2026/jobs/{job_id}/deliveries/webhook``."
+      },
+      "WebhookProfileDestination": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "The receiver: a public `https` (or `http`) URL. Shown without its query string, which often carries a token.",
+            "example": "https://example.com/resource"
+          },
+          "secret": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "password",
+                "writeOnly": true,
+                "description": "Webhook Profile Destination schema."
+              },
+              {
+                "type": "null",
+                "description": "Webhook Profile Destination schema."
+              }
+            ],
+            "title": "Secret",
+            "description": "The shared signing secret (16\u2013512 characters). Required when the profile is created; on an update, leave it out to keep the stored one. Sealed on arrival and never returned."
+          },
+          "artifact": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "fetch"
+            ],
+            "title": "Artifact",
+            "description": "How the bundle travels: `auto` (inline when small enough) or `fetch` (always a signed link).",
+            "default": "auto",
+            "example": "auto"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "WebhookProfileDestination",
+        "description": "A webhook profile's destination: the webhook delivery body, the secret kept sealed."
       },
       "ExportObjectStorageDeliveryRunListResponse": {
         "properties": {

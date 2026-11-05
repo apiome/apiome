@@ -52,6 +52,7 @@ from apiome_cli.export_output import (
     format_projection_snapshot_lines,
     target_rows,
 )
+from apiome_cli.commands import export_profiles
 from apiome_cli.export_overlays import OVERLAY_HELP
 from apiome_cli.client.preflight import fetch_export_preflight
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
@@ -294,6 +295,13 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         metavar="FILE",
         help=OVERLAY_HELP,
     )
+    @click.option(
+        "--deliver",
+        "deliver_refs",
+        multiple=True,
+        metavar="PROFILE",
+        help=DELIVER_HELP,
+    )
     def _generic(
         artifact: str | None,
         version: str | None,
@@ -308,6 +316,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
         targets_raw: str | None,
         items_raw: str | None,
         overlay_paths: tuple[str, ...],
+        deliver_refs: tuple[str, ...],
         flavor: str | None = None,
         dialect: str | None = None,
     ) -> None:
@@ -339,6 +348,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
                 poll_interval=poll_interval,
                 export_timeout_override=export_timeout,
                 overlay_paths=overlay_paths,
+                deliver_refs=deliver_refs,
             )
             return
         run_generic_export(
@@ -355,6 +365,7 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             min_grade=min_grade,
             fail_on=fail_on,
             overlay_paths=overlay_paths,
+            deliver_refs=deliver_refs,
         )
 
     if target_format in SQL_VERBS:
@@ -374,6 +385,13 @@ def _build_generic_export_command(target_format: str) -> click.Command:
             help=_FLAVOR_HELP,
         )(_generic)
     return _generic
+
+
+DELIVER_HELP = (
+    "Deliver the export with this delivery profile (name or id) as soon as it completes — git, "
+    "webhook or object storage (repeatable, at most 5). Outcomes print after the download; a failed "
+    "delivery exits 1. Manage profiles with 'apiome export profiles'."
+)
 
 
 class DispatchExportGroup(TyperGroup):
@@ -406,6 +424,14 @@ app = typer.Typer(
 def export_group(ctx: typer.Context) -> None:
     """Emitter-registry export commands."""
     group_callback_without_subcommand(ctx)
+
+
+# MFX-38.4: registered explicitly — DispatchExportGroup would otherwise read these names as formats.
+app.add_typer(export_profiles.app, name="profiles")
+app.command("deliver", help="Deliver a completed export job with one or more delivery profiles "
+            "(name or id); exits 1 when a delivery failed.")(export_profiles.deliver)
+app.command("deliveries", help="List every delivery of an export job across git, webhook and object "
+            "storage.")(export_profiles.deliveries)
 
 
 def _export_client(ctx: typer.Context) -> RestClient:

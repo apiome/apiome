@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.516.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.517.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-jobs` · 6 operations
 
@@ -54,6 +54,8 @@ Submit an export of one artifact/version to one target through the async job pip
 **Several items (E1-3):** send ``items`` (a list of ``{artifact, version?}``; a missing ``version`` exports the item's latest) instead of ``artifact`` to export several artifacts — say catalog items picked together — to the target(s) in one batch job. Each item's files land under ``<item>/<target>/`` (``<item>`` is its slug, plus the version label when one was named) and ``manifest.json`` names each item's ``artifact``. ``items`` cannot be combined with ``version``, ``versions`` or ``all_versions``; entries must be distinct; at most 100 item × target pairs.
 
 **Overlays (GVM-4.2):** send ``overlays`` (a list of ``{name, document}``, 1–10 Overlay 1.0 / 1.1 / 1.2 documents, each at most 1 MiB) to apply them, in order, to the source's OpenAPI document before the export runs: fidelity, the emitter, validation and the export quality policy all judge the post-overlay document. ``result.overlay`` lists every changed leaf with the overlay that changed it (500 rows, then a truncation row) and every action that could not be applied — an action whose target matches nothing is an ``overlay.unmatched-target`` finding and changes nothing. A version not imported from OpenAPI fails with ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with ``OVERLAY_INVALID``. Overlays apply to one source, so they cannot be combined with a batch. Send the same ``overlays`` to ``POST …/verify`` so its snapshot matches the job's.
+
+**Delivery (MFX-38.4):** ``delivery_profiles`` lists delivery profiles the export is delivered with as soon as it completes — each through its channel, recorded on the job (``GET …/jobs/{job_id}/deliveries``) and as an ``EXPORT_DELIVERED`` / ``EXPORT_DELIVERY_FAILED`` event. It needs ``versions:publish`` (403) and existing profiles (400).
 
 **Limits (X5):** each refusal names the limit it hit. A tenant runs at most ``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; a submit past it is refused with **429**. A job running longer than ``APIOME_EXPORT_JOB_TIMEOUT_SECONDS`` (default 1800) fails with ``EXPORT_JOB_TIMED_OUT``; an artifact over ``APIOME_EXPORT_ARTIFACT_MAX_BYTES`` (default 32 MiB) fails with ``EXPORT_ARTIFACT_TOO_LARGE``; the download is kept for ``APIOME_EXPORT_ARTIFACT_RETENTION_HOURS`` (default 24) and is **410** after that. ``0`` turns a limit off.
 
@@ -246,6 +248,7 @@ per-target fidelity reports plus a merged rollup.
 | `items` | array of `ExportJobItemRef` or null | no | A batch export over several artifacts (E1-3): each entry an artifact and an optional version (latest when omitted). Every item is exported to every target into one archive with a folder per item, and an item that fails is reported on its own without failing the batch. At most 100 item × target pairs. Replaces ``artifact``; mutually exclusive with ``version``, ``versions`` and ``all_versions``. |
 | `overlays` | array of `ExportOverlay` or null | no | Overlay 1.0 / 1.1 / 1.2 documents applied, in this order, to the source's OpenAPI document before anything else runs (GVM-4.2): fidelity, the emitter, validation and the export quality policy all judge the post-overlay document. 1–10 entries; the result's ``overlay`` lists every changed leaf and every action that could not be applied. A source not built from OpenAPI fails with `OVERLAY_SOURCE_UNSUPPORTED`. Not combinable with a batch export. |
 | `all_versions` | boolean | no | When true, a batch export over every version of the artifact (MFX-39.2), newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions × targets exceeds 100. Mutually exclusive with ``version`` and ``versions``. |
+| `delivery_profiles` | array of string or null | no | Delivery profiles (MFX-38.4, `GET /v1/export/{tenant}/delivery-profiles`) the export is delivered with as soon as it completes, in this order — each through its channel's own delivery, recorded on the job (`GET …/jobs/{job_id}/deliveries`) and audited. 1–5 distinct ids; needs `versions:publish`. Not combinable with ``dry_run``. A delivery's outcome never changes the job's state: each adds an `EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event. |
 
 ### `ExportJobStatus` {#schema-exportjobstatus}
 

@@ -5,6 +5,43 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.653.0] - 2026-11-04
+
+### Added
+- **Export delivery profiles + audit (MFX-38.4, #4331).**
+  - **Profiles:** `POST` / `GET /v1/export/{tenant_slug}/delivery-profiles` and `GET` / `PATCH` / `DELETE
+    …/delivery-profiles/{profile_id}` store, list (`?channel=`), read, change and remove a workspace's reusable
+    delivery destinations — a unique `name`, a `channel` (`git`, `webhook` or `object_storage`) and that channel's
+    delivery body in the matching `git` / `webhook` / `objectStorage` block, validated by the channel's own rules.
+    The credential is a reference (`credentialRef`): the git repository's linked account, or a storage credential in
+    the vault — both must exist when the profile is stored. A webhook's `secret` is sealed on the profile
+    (`app.mcp_credential_crypto`) and never returned; a `PATCH` without it keeps the stored one. The channel never
+    changes. `projects:edit` (reading: `projects:view`); `400` for an invalid field, unknown reference or refused
+    receiver, `409` for a taken name, `503` without `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`. Audited as
+    `export.delivery_profile.created` / `.updated` / `.deleted`, never with a secret.
+  - **Delivering with a profile:** `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` (`profileId`) runs the
+    channel's own delivery with the profile's body, records the profile on the run (`delivery_profile_id`) and adds
+    `profileId` to the channel's audit (`export.git_delivery`, `export.webhook_delivery`,
+    `export.object_storage_delivery`). The answer summarises the attempt (`outcome`: `in_progress`, `delivered`,
+    `failed`) and carries the channel's full run in `run`. `versions:publish`; `503` for a webhook secret the
+    deployment cannot open.
+  - **Delivery on completion:** `POST /v1/export/{tenant_slug}/jobs` takes `delivery_profiles` (1–5 distinct profile
+    ids; not with `dry_run`). As soon as the job completes it is delivered with each, in order, through the same path
+    as `POST …/deliveries`, and each adds an `EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event to the job (with the
+    channel, run, destination and error code). A delivery never changes the job's state, and one failing never stops
+    the next. Submitting profiles needs `versions:publish` (`403`) and existing profiles (`400`
+    `export-delivery-profile-unknown`). The submitter's context is kept in memory with the job, never mirrored.
+  - **The trail:** `GET /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` lists every delivery of a job across the
+    three channels, and `GET …/delivery-profiles/{profile_id}/deliveries` every delivery made with a profile — each
+    with its channel, status, outcome, profile, destination (a webhook URL without its query), attempt count and
+    error. `projects:view`.
+  - The git, webhook and object-storage delivery routes now share `perform_git_delivery`,
+    `perform_webhook_delivery` and `perform_object_storage_delivery` with profile delivery; their behaviour is
+    unchanged.
+  - `app/export_delivery_profiles.py` (rules), `app/export_delivery_profile_routes.py`; table
+    `export_delivery_profiles` and `delivery_profile_id` on the three run tables (V357).
+  - OpenAPI: the four new paths and their nine schemas merged into the committed documents.
+
 ## [1.652.0] - 2026-11-04
 
 ### Added

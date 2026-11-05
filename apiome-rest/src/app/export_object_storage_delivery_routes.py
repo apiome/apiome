@@ -330,6 +330,74 @@ def _bundle(tenant_slug: str, job_id: str, result: ExportJobResult) -> List[Bund
         }) from exc
 
 
+async def perform_object_storage_delivery(
+    tenant_slug: str,
+    tenant_id: str,
+    job_id: str,
+    body: ObjectStorageDeliveryRequest,
+    auth_data: Dict[str, Any],
+    *,
+    profile_id: Optional[str] = None,
+) -> ExportObjectStorageDeliveryRunModel:
+    """Upload one completed export job's bundle to a bucket, record it and audit it.
+
+    Shared by the direct route and a delivery profile (MFX-38.4); the caller has already enforced
+    ``versions:publish`` and checked the tenant.
+
+    Args:
+        tenant_slug: The tenant the job was submitted under.
+        tenant_id: That tenant's id.
+        job_id: The export job.
+        body: Which credential, bucket, prefix and partitioning.
+        auth_data: Authenticated principal.
+        profile_id: The delivery profile the request came from, recorded on the run and in the audit.
+
+    Returns:
+        The run — whatever its outcome.
+
+    Raises:
+        HTTPException: 400 for an invalid request; 404 for an unknown job; 409 for a job that cannot be
+            delivered; 410 for an expired artifact.
+    """
+    try:
+        request = normalize_request(body)
+    except ExportObjectStorageRequestError as exc:
+        raise _invalid(exc) from exc
+
+    status = await get_export_job_status(tenant_slug, job_id)
+    result = _completed_result(status)
+    files = await asyncio.to_thread(_bundle, tenant_slug, job_id, result)
+    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
+    media_types = {f.path: f.media_type for f in result.files if f.media_type}
+    row = await asyncio.to_thread(
+        deliver_to_object_storage, tenant_id=tenant_id, actor_id=get_authenticated_user_id(auth_data),
+        subject=subject, request=request, files=files, media_types=media_types,
+    )
+    if profile_id and row.get("id"):
+        await asyncio.to_thread(db.set_export_delivery_run_profile, "object_storage", tenant_id, row["id"],
+                                profile_id)
+    write_audit(
+        tenant_id=tenant_id,
+        action=AUDIT_DELIVERY,
+        auth_data=auth_data,
+        target=result.artifact,
+        detail={
+            "runId": row.get("id"),
+            "status": row.get("status"),
+            "jobId": job_id,
+            "exportTarget": subject.target,
+            "credentialId": request.credential_id,
+            "bucket": request.bucket,
+            "keyPrefix": row.get("key_prefix"),
+            "objectCount": len(row.get("objects") or []),
+            "manifestSha256": row.get("manifest_sha256"),
+            "errorCode": row.get("error_code"),
+            **({"profileId": profile_id} if profile_id else {}),
+        },
+    )
+    return run_model(row)
+
+
 @router.post(
     "/{tenant_slug}/jobs/{job_id}/deliveries/object-storage",
     response_model=ExportObjectStorageDeliveryRunModel,
@@ -377,39 +445,7 @@ async def deliver_export_job_to_object_storage(
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    try:
-        request = normalize_request(body)
-    except ExportObjectStorageRequestError as exc:
-        raise _invalid(exc) from exc
-
-    status = await get_export_job_status(tenant_slug, job_id)
-    result = _completed_result(status)
-    files = await asyncio.to_thread(_bundle, tenant_slug, job_id, result)
-    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
-    media_types = {f.path: f.media_type for f in result.files if f.media_type}
-    row = await asyncio.to_thread(
-        deliver_to_object_storage, tenant_id=tenant_id, actor_id=get_authenticated_user_id(auth_data),
-        subject=subject, request=request, files=files, media_types=media_types,
-    )
-    write_audit(
-        tenant_id=tenant_id,
-        action=AUDIT_DELIVERY,
-        auth_data=auth_data,
-        target=result.artifact,
-        detail={
-            "runId": row.get("id"),
-            "status": row.get("status"),
-            "jobId": job_id,
-            "exportTarget": subject.target,
-            "credentialId": request.credential_id,
-            "bucket": request.bucket,
-            "keyPrefix": row.get("key_prefix"),
-            "objectCount": len(row.get("objects") or []),
-            "manifestSha256": row.get("manifest_sha256"),
-            "errorCode": row.get("error_code"),
-        },
-    )
-    return run_model(row)
+    return await perform_object_storage_delivery(tenant_slug, tenant_id, job_id, body, auth_data)
 
 
 @router.get(

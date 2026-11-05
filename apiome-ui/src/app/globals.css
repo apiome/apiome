@@ -34851,6 +34851,236 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   EXPORT DELIVERY PROFILES  (MFX-38.4, #4331)
+   --------------------------------------------------------------------------
+   Export studio's Delivery tab (`?tab=delivery`): the workspace's saved
+   destinations as a list beside a create / edit form or a profile's delivery
+   trail, plus the Review step's delivery panel ("Deliver when it completes",
+   then the job's deliveries and "Deliver now").
+   ========================================================================== */
+
+.xdlv-notice {
+  margin-block-end: var(--space-4);
+}
+
+.xdlv-quiet {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.xdlv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .xdlv-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 28rem);
+  }
+}
+
+.xdlv-profiles,
+.xdlv-attempts,
+.xdlv-job__choices {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xdlv-profile,
+.xdlv-attempt,
+.xdlv-panel,
+.xdlv-job {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.xdlv-profile[data-selected='true'] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.xdlv-profile__head,
+.xdlv-attempt__head,
+.xdlv-job__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xdlv-profile__name,
+.xdlv-panel__title,
+.xdlv-job__title {
+  font-weight: 600;
+}
+
+.xdlv-panel__title,
+.xdlv-job__title {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.xdlv-profile__channel,
+.xdlv-attempt__channel,
+.xdlv-attempt__profile,
+.xdlv-attempt__status,
+.xdlv-choice__meta {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.xdlv-profile__dest,
+.xdlv-attempt__meta {
+  margin: var(--space-1) 0 0;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.xdlv-attempt__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--fg-muted);
+}
+
+.xdlv-attempt__error,
+.xdlv-job__error {
+  margin: var(--space-1) 0 0;
+  color: var(--danger-fg);
+  font-size: var(--fs-sm);
+}
+
+.xdlv-profile__actions,
+.xdlv-form__actions,
+.xdlv-job__now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+.xdlv-form__actions {
+  justify-content: flex-end;
+  margin-block-start: var(--space-4);
+}
+
+.xdlv-select {
+  inline-size: 100%;
+  block-size: var(--control-h);
+  padding-inline: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-sm);
+}
+
+.xdlv-job__now .xdlv-select {
+  inline-size: auto;
+  min-inline-size: 14rem;
+}
+
+.xdlv-skeleton {
+  block-size: 4.5rem;
+  margin-block-end: var(--space-2);
+}
+
+.xdlv-form,
+.xdlv-group {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.xdlv-panel .xdlv-form {
+  margin-block-start: var(--space-3);
+}
+
+.xdlv-field {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.xdlv-legend {
+  margin-block-end: var(--space-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+}
+
+.xdlv-hint {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.xdlv-problems {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-4);
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+}
+
+.xdlv-channels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.xdlv-channel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.xdlv-channel[data-selected='true'] {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.xdlv-job {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.xdlv-job__head > svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--fg-muted);
+}
+
+.xdlv-job__manage {
+  margin-inline-start: auto;
+  font-size: var(--fs-sm);
+}
+
+.xdlv-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.xdlv-choice__name {
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+
+/* ==========================================================================
    PROJECT DISCUSSION  (COL-1.3, #4515)
    --------------------------------------------------------------------------
    The Discussion tab on `/ade/dashboard/versions?projectId=…` — every comment

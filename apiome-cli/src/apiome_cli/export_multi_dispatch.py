@@ -29,6 +29,7 @@ from apiome_cli.cli_context import (
     settings_from_context,
     timeout_from_context,
 )
+from apiome_cli.client.export_delivery_profiles import report_job_deliveries, resolve_profile_ids
 from apiome_cli.client import api_paths
 from apiome_cli.client.browse_scope import resolve_tenant_slug
 from apiome_cli.client.export_jobs import (
@@ -189,6 +190,7 @@ def run_multi_export(
     poll_interval: float,
     export_timeout_override: float | None,
     overlay_paths: Sequence[str] = (),
+    deliver_refs: Sequence[str] = (),
 ) -> None:
     """Run a multi-target (``ARTIFACT`` + ``--targets``) or batch (``--items``) export job.
 
@@ -208,6 +210,8 @@ def run_multi_export(
         export_timeout_override: ``--export-timeout``.
         overlay_paths: ``--overlay`` files (GVM-4.2), applied to the artifact's OpenAPI document
             for every target. Refused with ``--items``: an overlay is written against one source.
+        deliver_refs: ``--deliver`` delivery profile names or ids (MFX-38.4): the job is delivered
+            with each on completion, and their outcomes are printed after the download.
 
     Raises:
         typer.Exit: :data:`EXIT_USAGE` for an inconsistent request, :data:`EXIT_EXPORT_PARTIAL`
@@ -256,6 +260,9 @@ def run_multi_export(
     ]
     if overlays:
         body["overlays"] = overlays
+    profile_ids = resolve_profile_ids(client, tenant_slug, deliver_refs)
+    if profile_ids:
+        body["delivery_profiles"] = profile_ids
 
     accepted = client.post(api_paths.export_jobs(tenant_slug), json=body).json()
     job_id = accepted.get("job_id") if isinstance(accepted, dict) else None
@@ -294,6 +301,8 @@ def run_multi_export(
         for line in format_overlay_summary(result.get("overlay")):
             typer.echo(line, err=True)
         typer.echo(f"Wrote {effective_out}", err=True)
+    report_job_deliveries(client, tenant_slug, job_id, expected=len(profile_ids), poll_interval=poll_interval,
+                          timeout=timeout)
 
     batch = result.get("batch")
     if isinstance(batch, Mapping) and int(batch.get("failed_count") or 0) > 0:

@@ -1,0 +1,183 @@
+---
+title: Reuse a delivery destination with a profile
+description: Save a git, webhook or bucket destination once and audit every delivery.
+sidebar_position: 5.29
+---
+
+A [git](./deliver-an-export-to-git.md), [webhook](./deliver-an-export-to-a-webhook.md) or
+[object-storage](./deliver-an-export-to-object-storage.md) delivery normally carries its destination in
+every request. A **delivery profile** saves that destination once for the workspace, by name. You can
+then deliver an export by choosing the profile in **Export studio**, naming it in the CLI or sending its
+id to the API, or have a new export delivered as soon as it finishes. Every delivery made with a profile
+is recorded on the export job and in the audit log.
+
+A profile holds three things:
+
+- **A channel:** **Git repository**, **Webhook** or **Object storage**.
+- **A destination:** the same fields that channel's delivery takes.
+- **A credential reference:** the git repository (its linked account delivers), or a storage
+  credential from the workspace's vault. A webhook's signing secret has nowhere else to live, so it is
+  sealed on the profile and never shown again.
+
+## Before you start
+
+- **The `projects:edit` permission** to create, change or delete a profile. Reading profiles needs
+  `projects:view`.
+- **The `versions:publish` permission** to deliver with a profile, the same as any delivery.
+- **What the destination needs.** A git profile needs a
+  [registered repository](../bring-in/repositories.mdx). An object-storage profile needs a
+  [stored bucket credential](./deliver-an-export-to-object-storage.md#store-the-bucket-credential).
+
+## Manage profiles in Export studio
+
+Open **Export studio** and select the **Delivery** tab. It lists the workspace's profiles, each with its
+channel and destination.
+
+<Screenshot id="export-studio-delivery" alt="The Delivery tab of Export studio: three profiles — lake (object storage), ci-pipeline (webhook) and specs-repo (git) — with the lake profile's deliveries open, one delivered and one failed with its error code" />
+
+1. Click **New profile**.
+2. Enter a **Name**, and optionally a **Description**.
+3. Choose the **Channel**, then fill in its fields:
+   - **Git repository:** the **Repository**, the **Path** to write under, the **Base branch** and the
+     **Mode** (**Pull request** or **Direct commit**).
+   - **Webhook:** the **Receiver URL**, the **Signing secret** (16–512 characters) and how the **Bundle**
+     travels.
+   - **Object storage:** the **Storage credential**, the **Bucket**, the **Prefix** and the **Partitions**.
+4. Click **Create profile**.
+
+<Screenshot id="export-studio-delivery-form" alt="The New profile form beside the profile list, with the name release-hook, the Webhook channel and a receiver URL entered" />
+
+Every problem with the form is listed at once, before and after it is sent. On a profile:
+
+- **Deliveries** shows every delivery made with it, across exports, newest first.
+- **Edit** changes the name, description or destination. The channel can't change. On a webhook
+  profile, leave **Signing secret** blank to keep the stored one, and enter the **Receiver URL** again
+  to change the destination.
+- **Delete** asks you to confirm with **Delete _name_**. Past deliveries keep their record.
+
+Members without `projects:edit` see the profiles and their deliveries, read-only.
+
+## Deliver from Export studio
+
+On the **Review** step, before you click **Generate**, tick the profiles under **Deliver when it
+completes** (up to five). The export is delivered with each one as soon as it finishes.
+
+Once the export has finished, the **Deliveries** panel lists every delivery of it, across all channels,
+and updates while deliveries are still running. To deliver it again, or to another destination, choose a
+profile and click **Deliver now**.
+
+<Screenshot id="export-studio-job-delivery" alt="The Deliveries panel on the Review step: the export delivered to data-lake/exports, a webhook delivery in progress after two attempts, and the Deliver now picker" />
+
+## Use profiles from the CLI
+
+```bash
+# Create profiles (a webhook's secret is read from an environment variable, never the command line)
+apiome export profiles create data-lake --channel object_storage \
+  --credential "$CREDENTIAL_ID" --bucket data-lake --prefix exports/apis
+export HOOK_SECRET='a-long-random-signing-secret'
+apiome export profiles create ci-pipeline --channel webhook \
+  --url https://ci.example.com/hooks/apiome --secret-env HOOK_SECRET
+
+# Export and deliver as soon as the job finishes
+apiome export openapi-3.1 orders --version 1.4.0 --out orders.yaml --deliver data-lake
+
+# Deliver a finished job, then list its deliveries
+apiome export deliver "$JOB_ID" --profile ci-pipeline
+apiome export deliveries "$JOB_ID"
+```
+
+`apiome export profiles` also has `list`, `show`, `update`, `delete` and `deliveries`. Profiles can be
+named by name or id. `--deliver` repeats, prints each delivery's outcome after the download, and exits
+`1` when a delivery failed. Every option is in the [CLI reference](/reference/cli/export#export-profiles).
+
+## Use profiles from the API
+
+Create a profile with a `name`, the `channel` and the channel's delivery body in the matching block
+(`git`, `webhook` or `objectStorage`):
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/delivery-profiles" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"name": "orders-to-data-lake", "description": "Nightly copy for analytics",
+       "channel": "object_storage",
+       "objectStorage": {"credentialId": "<credential id>", "bucket": "data-lake", "prefix": "exports/apis"}}'
+```
+
+| Channel | Block | Fields |
+| --- | --- | --- |
+| `git` | `git` | `repositoryId`, `targetPath`, `baseBranch`, `mode` |
+| `webhook` | `webhook` | `url`, `secret`, `artifact` |
+| `object_storage` | `objectStorage` | `credentialId`, `bucket`, `prefix`, `partitioning` |
+
+Each block follows the rules of its channel's page. Apiome also checks, when you store the profile,
+that the repository or storage credential exists in the workspace and that a webhook URL resolves to a
+public address. The answer is the profile with its `id`, its `destination` and its `credentialRef`. A
+webhook URL is shown without its query string, which often carries a token, and the secret is never
+returned.
+
+| Answer | Why |
+| --- | --- |
+| `400` | A field is invalid, the repository or storage credential is unknown, or the webhook URL is refused. Every problem is listed in `errors`. |
+| `409` | Another profile in the workspace already has that name. |
+| `503` | A webhook secret can't be sealed, because the deployment has no credential encryption key. |
+
+`PATCH /v1/export/acme/delivery-profiles/{id}` changes a profile. A destination block replaces the whole
+destination and must be for the profile's own channel; on a webhook profile, leave `secret` out to keep
+the stored one. `DELETE …/delivery-profiles/{id}` removes it, and `GET /v1/export/acme/delivery-profiles`
+lists them (add `?channel=webhook` to see one channel).
+
+### Deliver a finished export
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/jobs/$JOB_ID/deliveries" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"profileId": "<profile id>"}'
+```
+
+Apiome runs the channel's own delivery with the profile's destination, exactly as if you had sent it to
+that channel yourself. The answer summarises the attempt:
+
+| Field | What it means |
+| --- | --- |
+| `channel` | `git`, `webhook` or `object_storage`. |
+| `status` | The channel's own status, such as `opened`, `retrying` or `delivered`. |
+| `outcome` | `in_progress`, `delivered` or `failed`, the same for every channel. |
+| `profileId`, `profileName` | The profile it was made with. |
+| `destination` | Where it went: `owner/repo`, the webhook URL without its query, or `bucket/prefix`. |
+| `errorCode`, `errorMessage` | Set when the delivery failed, with the channel's own codes. |
+| `run` | The channel's full delivery run. |
+
+A failure at the destination, such as a revoked token or a missing bucket, still answers `200` with
+`outcome: failed`. A job that hasn't finished answers `409`, and an expired download `410`. A webhook
+profile whose secret can't be opened on this deployment answers `503`; set the secret again, then
+deliver.
+
+### Deliver a new export when it finishes
+
+Add `delivery_profiles` (one to five profile ids) when you [start an export job](./export-jobs.mdx):
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/jobs" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"artifact": "<artifact id>", "target": "openapi-3.1", "delivery_profiles": ["<profile id>"]}'
+```
+
+The job is refused with `403` without `versions:publish`, and with `400`
+(`export-delivery-profile-unknown`) when a profile doesn't exist. A dry run can't name profiles. As soon
+as the job completes, it is delivered with each profile in turn, and each delivery adds an event to the
+job: `EXPORT_DELIVERED`, or `EXPORT_DELIVERY_FAILED` with the error code. A failed delivery never changes
+the job's state, and never stops the next one.
+
+## Audit every delivery
+
+- **A job's deliveries:** `GET /v1/export/acme/jobs/{job_id}/deliveries` lists every delivery of the
+  job across all three channels, newest first, made with a profile or not.
+- **A profile's deliveries:** `GET /v1/export/acme/delivery-profiles/{id}/deliveries` lists every
+  delivery made with the profile, across jobs.
+- **The audit log:** creating, changing and deleting a profile is recorded as
+  `export.delivery_profile.created`, `.updated` and `.deleted`. Each delivery is recorded by its
+  channel (`export.git_delivery`, `export.webhook_delivery`, `export.object_storage_delivery`) with
+  the `profileId`. No secret is ever written to the log.
+
+Each entry shows its `attemptCount`. A webhook delivery retries in the background, and every attempt is
+listed on its run. Every field is in the [export delivery reference](/reference/rest/export-delivery).

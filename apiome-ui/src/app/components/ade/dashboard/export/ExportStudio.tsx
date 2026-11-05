@@ -95,6 +95,8 @@ import {
   type ExportStudioStep,
 } from './exportStudioUrlState';
 import type { ExportedArtifactSummary } from './ExportDialog';
+import { ExportJobDeliveryPanel } from '../../export-studio/delivery/ExportJobDeliveryPanel';
+import { exportStudioTabHref } from '../../export-studio';
 import {
   changedOptions,
   exportTargetCards,
@@ -216,6 +218,8 @@ export function ExportStudio({
   const [optionValues, setOptionValues] = useState<Record<string, unknown>>({});
   /** Whether the user acknowledged a lossy conversion ("Export anyway"). */
   const [acknowledged, setAcknowledged] = useState(false);
+  // MFX-38.4: the delivery profiles a new export is delivered with as soon as it completes.
+  const [deliveryProfileIds, setDeliveryProfileIds] = useState<string[]>([]);
   /** The emitted document being reviewed on the Review step, once generated + downloaded. */
   const [emitted, setEmitted] = useState<EmittedArtifact | null>(null);
   /** The emitted bundle when the target produced multiple files (MFX-43.2); null for single-file. */
@@ -642,8 +646,9 @@ export function ExportStudio({
       confirm: acknowledged,
       acknowledgedSnapshot: acceptedSnapshot,
       overlays: overlayField,
+      deliveryProfiles: deliveryProfileIds,
     });
-  }, [selected, optionValues, acknowledged, displayVerifyResult, start, overlayField]);
+  }, [selected, optionValues, acknowledged, displayVerifyResult, start, overlayField, deliveryProfileIds]);
 
   /**
    * Run verification, dropping any validation-gate override so the fresh result shows.
@@ -1358,6 +1363,16 @@ export function ExportStudio({
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
               {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
+              {/* MFX-38.4: deliver with saved profiles — chosen before Generate, listed after. */}
+              {(!job || (jobCompleted && job.jobId)) && (
+                <ExportJobDeliveryPanel
+                  jobId={jobCompleted ? (job?.jobId ?? null) : null}
+                  selected={deliveryProfileIds}
+                  onSelectedChange={setDeliveryProfileIds}
+                  expected={job?.params.deliveryProfiles?.length ?? 0}
+                  manageHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'delivery')}
+                />
+              )}
               {/* GVM-4.2: the generated artifact's overlay ledger, from the job itself. */}
               {jobCompleted && jobStatus?.result?.overlay && (
                 <OverlayReportPanel report={jobStatus.result.overlay} />

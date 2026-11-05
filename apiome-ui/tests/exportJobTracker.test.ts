@@ -116,6 +116,21 @@ describe('exportJobTracker — submit + poll', () => {
     expect(body.acknowledged_snapshot).toBe('abc123snapshot');
   });
 
+  it('sends delivery_profiles only when profiles were chosen (MFX-38.4)', async () => {
+    const fetchMock = installFetch();
+    await startExportJob({ ...PARAMS, deliveryProfiles: ['p1', 'p2'] });
+    await waitForJob(exportJobScopeKey('proj-1', 'rev-1'), (s) => s === 'completed');
+    const [, withProfiles] = fetchMock.mock.calls[0] as [string, { body: string }];
+    expect(JSON.parse(withProfiles.body).delivery_profiles).toEqual(['p1', 'p2']);
+
+    __resetExportJobTrackerForTests();
+    const plain = installFetch();
+    await startExportJob({ ...PARAMS, deliveryProfiles: [] });
+    await waitForJob(exportJobScopeKey('proj-1', 'rev-1'), (s) => s === 'completed');
+    const [, withoutProfiles] = plain.mock.calls[0] as [string, { body: string }];
+    expect(JSON.parse(withoutProfiles.body)).not.toHaveProperty('delivery_profiles');
+  });
+
   it('toasts on background completion when no subscriber is attached', async () => {
     installFetch();
     const scopeKey = exportJobScopeKey('proj-1', 'rev-1');

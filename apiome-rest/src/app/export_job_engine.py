@@ -126,6 +126,9 @@ from .zip_bundle import ZIP_EPOCH, write_zip_entry
 
 logger = logging.getLogger(__name__)
 
+#: The most delivery profiles one export job may deliver with on completion (MFX-38.4).
+MAX_EXPORT_DELIVERY_PROFILES = 5
+
 __all__ = [
     "ExportJobState",
     "ExportJobEvent",
@@ -375,6 +378,40 @@ class ExportJobStartRequest(BaseModel):
         f"newest first; the job fails with `EXPORT_BATCH_TOO_LARGE` when versions × targets "
         f"exceeds {MAX_BATCH_ITEMS}. Mutually exclusive with ``version`` and ``versions``.",
     )
+
+    delivery_profiles: Optional[List[str]] = Field(
+        default=None,
+        min_length=1,
+        max_length=MAX_EXPORT_DELIVERY_PROFILES,
+        description="Delivery profiles (MFX-38.4, `GET /v1/export/{tenant}/delivery-profiles`) the export "
+        "is delivered with as soon as it completes, in this order — each through its channel's own "
+        "delivery, recorded on the job (`GET …/jobs/{job_id}/deliveries`) and audited. 1–"
+        f"{MAX_EXPORT_DELIVERY_PROFILES} distinct ids; needs `versions:publish`. Not combinable with "
+        "``dry_run``. A delivery's outcome never changes the job's state: each adds an "
+        "`EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event.",
+    )
+
+    @model_validator(mode="after")
+    def _delivery_shape(self) -> "ExportJobStartRequest":
+        """Keep ``delivery_profiles`` distinct and off dry runs (which have nothing to deliver).
+
+        Returns:
+            The validated request.
+
+        Raises:
+            ValueError: For a repeated or blank profile id, or profiles on a dry run (a 422).
+        """
+        if self.delivery_profiles is None:
+            return self
+        ids = [str(value).strip() for value in self.delivery_profiles]
+        if any(not value for value in ids):
+            raise ValueError("'delivery_profiles' cannot contain a blank id.")
+        if len(set(ids)) != len(ids):
+            raise ValueError("'delivery_profiles' cannot name a profile twice.")
+        if self.dry_run:
+            raise ValueError("A dry run has no files to deliver; drop 'delivery_profiles' or 'dry_run'.")
+        self.delivery_profiles = ids
+        return self
 
     @model_validator(mode="after")
     def _one_target_shape(self) -> "ExportJobStartRequest":
@@ -996,6 +1033,9 @@ class _ExportJobRecord:
     started_monotonic: float = 0.0
     current_stage: Optional[str] = None
     stage_started_monotonic: Optional[float] = None
+    # MFX-38.4: the submitter's authenticated context, kept (in memory only, never mirrored) so the
+    # deliveries named by ``request.delivery_profiles`` run — and are audited — as them on completion.
+    auth_data: Optional[Dict[str, Any]] = None
 
 
 _jobs: Dict[str, _ExportJobRecord] = {}
@@ -2144,6 +2184,62 @@ async def _drive_export_job(job_id: str) -> None:
         await _fail_timed_out(job_id, timeout)
     finally:
         _record_terminal_export_metrics(job_id)
+    await _deliver_completed_job(job_id)
+
+
+async def _deliver_completed_job(job_id: str) -> None:
+    """Deliver a completed job with the delivery profiles it was submitted with (MFX-38.4).
+
+    Runs after the job is terminal, outside the job's wall-clock cap. Each profile is delivered in
+    turn through :func:`app.export_delivery_profile_routes.deliver_with_profile` — the same path as
+    ``POST …/jobs/{job_id}/deliveries`` — and adds one event to the job: ``EXPORT_DELIVERED``, or
+    ``EXPORT_DELIVERY_FAILED`` with the channel's ``errorCode`` (or the refusal's code when the delivery
+    could not start). A delivery never changes the job's state, and one failing never stops the next.
+
+    Args:
+        job_id: The job, just finished.
+    """
+    with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is None or rec.state != "completed" or not rec.request.delivery_profiles:
+            return
+        if rec.request.dry_run or rec.auth_data is None:
+            return
+        tenant_slug, tenant_id = rec.tenant_slug, rec.tenant_id
+        profile_ids = list(rec.request.delivery_profiles)
+        auth_data = dict(rec.auth_data)
+    # Imported here: the delivery routes build on this module.
+    from .export_delivery_profile_routes import deliver_with_profile
+
+    for profile_id in profile_ids:
+        context: Dict[str, Any] = {"profile_id": profile_id}
+        try:
+            attempt = await deliver_with_profile(tenant_slug, tenant_id, job_id, profile_id, auth_data)
+        except HTTPException as exc:
+            detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
+            context.update(status_code=exc.status_code, error_code=detail.get("code"))
+            message = str(detail.get("message") or "; ".join(detail.get("errors") or []) or "refused")
+            await _publish(job_id, event=("error", "EXPORT_DELIVERY_FAILED",
+                                          f"Delivery with profile {profile_id} could not start: {message}",
+                                          context))
+            continue
+        except Exception:  # noqa: BLE001 - one broken delivery must not stop the next
+            logger.warning("Export delivery with profile %s failed for job %s", profile_id, job_id, exc_info=True)
+            context["error_code"] = "export-delivery-profile-internal-error"
+            await _publish(job_id, event=("error", "EXPORT_DELIVERY_FAILED",
+                                          f"Delivery with profile {profile_id} failed unexpectedly.", context))
+            continue
+        context.update(channel=attempt.channel, run_id=attempt.run_id, status=attempt.status,
+                       outcome=attempt.outcome, profile_name=attempt.profile_name,
+                       destination=attempt.destination, error_code=attempt.error_code)
+        if attempt.outcome == "failed":
+            await _publish(job_id, event=("error", "EXPORT_DELIVERY_FAILED",
+                                          f"Delivery with profile {attempt.profile_name!r} failed: "
+                                          f"{attempt.error_message or attempt.error_code}", context))
+        else:
+            await _publish(job_id, event=("info", "EXPORT_DELIVERED",
+                                          f"Delivered with profile {attempt.profile_name!r} to "
+                                          f"{attempt.destination} ({attempt.status}).", context))
 
 
 async def _fail_timed_out(job_id: str, timeout: Optional[float]) -> None:
@@ -3123,6 +3219,8 @@ async def schedule_export_job(
     tenant_slug: str,
     tenant_id: str,
     request: ExportJobStartRequest,
+    *,
+    auth_data: Optional[Dict[str, Any]] = None,
 ) -> ExportJobAccepted:
     """Accept an export job and start it in the background.
 
@@ -3135,6 +3233,8 @@ async def schedule_export_job(
         tenant_slug: The tenant slug (job scoping + status path).
         tenant_id: The authenticated tenant id (scopes the source lookup).
         request: The submitted job request.
+        auth_data: The submitter's authenticated context — required for the job's
+            ``delivery_profiles`` to be delivered on completion (MFX-38.4); kept in memory only.
 
     Returns:
         The 202 acceptance payload (job id + poll path).
@@ -3173,6 +3273,7 @@ async def schedule_export_job(
             status=initial,
             request=request,
             correlation_id=correlation_id,
+            auth_data=dict(auth_data) if auth_data else None,
         )
     # Mirror the initial 'queued' row before returning 202 so the first poll — which
     # round-robin may route to any instance — already finds the job in the shared store.
