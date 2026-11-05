@@ -43,16 +43,21 @@ PROJECT = str(uuid.uuid4())
 OTHER = str(uuid.uuid4())
 TOKEN = "internal-token-0123456789"
 
-REPORT = {"summary": {"tier": "lossy", "preserved_percent": 72},
-          "report": {"items": [{"construct": "Op.subscribe", "kind": "drop", "severity": "critical"}]},
-          "advisory": {"headline": "This export loses fidelity"}}
+REPORT = {
+    "summary": {"tier": "lossy", "preserved_percent": 72},
+    "report": {"items": [{"construct": "Op.subscribe", "kind": "drop", "severity": "critical"}]},
+    "advisory": {"headline": "This export loses fidelity"},
+}
 
 
 def _settings(**overrides: Any) -> Settings:
-    values: dict[str, Any] = dict(database_url="postgresql://u:p@localhost:5432/apiome",
-                                  internal_secret="internal-secret-0123456789",
-                                  rest_internal_url="http://rest:8000/", rest_internal_service_token=SecretStr(TOKEN),
-                                  export_wait_seconds=5)
+    values: dict[str, Any] = dict(
+        database_url="postgresql://u:p@localhost:5432/apiome",
+        internal_secret="internal-secret-0123456789",
+        rest_internal_url="http://rest:8000/",
+        rest_internal_service_token=SecretStr(TOKEN),
+        export_wait_seconds=5,
+    )
     values.update(overrides)
     return Settings(**values)
 
@@ -74,14 +79,29 @@ class _Rest:
         if self.payload is not None:
             return httpx.Response(self.status, json=self.payload)
         if request.url.path.endswith("/targets"):
-            return httpx.Response(200, json={"artifact": PROJECT, "targets": [
-                {"descriptor": {"key": "openapi"}, "fidelity": {"tier": "lossless"}},
-                {"descriptor": {"key": "brand-new-format"}, "fidelity": {"tier": "lossy"}}]})
+            return httpx.Response(
+                200,
+                json={
+                    "artifact": PROJECT,
+                    "targets": [
+                        {"descriptor": {"key": "openapi"}, "fidelity": {"tier": "lossless"}},
+                        {"descriptor": {"key": "brand-new-format"}, "fidelity": {"tier": "lossy"}},
+                    ],
+                },
+            )
         body = json.loads(request.content)
-        return httpx.Response(200, json={"jobId": body.get("jobId") or "job-1", "state": "completed",
-                                         "artifact": PROJECT, "target": body.get("target"), "fidelity": REPORT,
-                                         "files": [{"path": "a.txt", "sizeBytes": 2, "content": "hi"}],
-                                         "contentInline": True})
+        return httpx.Response(
+            200,
+            json={
+                "jobId": body.get("jobId") or "job-1",
+                "state": "completed",
+                "artifact": PROJECT,
+                "target": body.get("target"),
+                "fidelity": REPORT,
+                "files": [{"path": "a.txt", "sizeBytes": 2, "content": "hi"}],
+                "contentInline": True,
+            },
+        )
 
     def body(self, index: int = -1) -> dict[str, Any]:
         return json.loads(self.requests[index].content)
@@ -90,8 +110,13 @@ class _Rest:
 @_sync
 async def test_export_targets_calls_rest_with_the_key_s_tenant_and_token() -> None:
     rest = _Rest()
-    result = await build_export_targets_response(auth_ctx=_auth(), artifact=f" {PROJECT} ", version="1.0.0",
-                                                 settings=_settings(), transport=httpx.MockTransport(rest))
+    result = await build_export_targets_response(
+        auth_ctx=_auth(),
+        artifact=f" {PROJECT} ",
+        version="1.0.0",
+        settings=_settings(),
+        transport=httpx.MockTransport(rest),
+    )
     assert [t["descriptor"]["key"] for t in result["targets"]] == ["openapi", "brand-new-format"]
     request = rest.requests[0]
     assert str(request.url) == "http://rest:8000/v1/internal/mcp/export/targets"
@@ -103,36 +128,65 @@ async def test_export_targets_calls_rest_with_the_key_s_tenant_and_token() -> No
 async def test_version_export_passes_any_target_through_and_returns_the_fidelity_report() -> None:
     rest = _Rest()
     result = await build_version_export_response(
-        auth_ctx=_auth(), artifact=PROJECT, target="brand-new-format", options={"flavor": "x"}, confirm=True,
-        settings=_settings(), transport=httpx.MockTransport(rest))
-    assert rest.body() == {"tenantId": TENANT, "artifact": PROJECT, "version": None, "target": "brand-new-format",
-                           "options": {"flavor": "x"}, "confirm": True, "allowLossy": False, "waitSeconds": 5}
+        auth_ctx=_auth(),
+        artifact=PROJECT,
+        target="brand-new-format",
+        options={"flavor": "x"},
+        confirm=True,
+        settings=_settings(),
+        transport=httpx.MockTransport(rest),
+    )
+    assert rest.body() == {
+        "tenantId": TENANT,
+        "artifact": PROJECT,
+        "version": None,
+        "target": "brand-new-format",
+        "options": {"flavor": "x"},
+        "confirm": True,
+        "allowLossy": False,
+        "waitSeconds": 5,
+    }
     assert result["fidelity"]["report"]["items"][0]["severity"] == "critical"
     assert result["files"][0]["content"] == "hi"
 
 
 @_sync
 async def test_allow_lossy_passes_through_and_a_blocked_answer_is_a_result() -> None:
-    blocked = {"jobId": None, "state": "blocked", "artifact": PROJECT, "target": "avro", "fidelity": REPORT,
-               "advisory": "Exporting to Avro loses 3 constructs.", "files": [],
-               "error": {"code": "mcp-export-lossy-not-allowed"}}
+    blocked = {
+        "jobId": None,
+        "state": "blocked",
+        "artifact": PROJECT,
+        "target": "avro",
+        "fidelity": REPORT,
+        "advisory": "Exporting to Avro loses 3 constructs.",
+        "files": [],
+        "error": {"code": "mcp-export-lossy-not-allowed"},
+    }
     rest = _Rest(payload=blocked)
-    result = await build_version_export_response(auth_ctx=_auth(), artifact=PROJECT, target="avro",
-                                                 settings=_settings(), transport=httpx.MockTransport(rest))
+    result = await build_version_export_response(
+        auth_ctx=_auth(), artifact=PROJECT, target="avro", settings=_settings(), transport=httpx.MockTransport(rest)
+    )
     assert rest.body()["allowLossy"] is False
     assert result["state"] == "blocked" and result["files"] == []
     assert result["advisory"] == "Exporting to Avro loses 3 constructs."
     rest = _Rest()
-    await build_version_export_response(auth_ctx=_auth(), artifact=PROJECT, target="avro", allow_lossy=True,
-                                        settings=_settings(), transport=httpx.MockTransport(rest))
+    await build_version_export_response(
+        auth_ctx=_auth(),
+        artifact=PROJECT,
+        target="avro",
+        allow_lossy=True,
+        settings=_settings(),
+        transport=httpx.MockTransport(rest),
+    )
     assert rest.body()["allowLossy"] is True
 
 
 @_sync
 async def test_a_running_job_is_collected_by_job_id() -> None:
     rest = _Rest()
-    result = await build_version_export_response(auth_ctx=_auth(), job_id="job-7", settings=_settings(),
-                                                 transport=httpx.MockTransport(rest))
+    result = await build_version_export_response(
+        auth_ctx=_auth(), job_id="job-7", settings=_settings(), transport=httpx.MockTransport(rest)
+    )
     assert rest.body() == {"tenantId": TENANT, "jobId": "job-7", "waitSeconds": 5}
     assert result["jobId"] == "job-7"
 
@@ -142,47 +196,62 @@ async def test_the_key_s_scope_limits_what_it_exports_and_collects() -> None:
     scoped = _auth(projects=(OTHER,))
     rest = _Rest()
     with pytest.raises(ToolError, match="scope does not include that artifact"):
-        await build_export_targets_response(auth_ctx=scoped, artifact=PROJECT, settings=_settings(),
-                                            transport=httpx.MockTransport(rest))
+        await build_export_targets_response(
+            auth_ctx=scoped, artifact=PROJECT, settings=_settings(), transport=httpx.MockTransport(rest)
+        )
     with pytest.raises(ToolError, match="scope does not include that artifact"):
-        await build_version_export_response(auth_ctx=scoped, artifact=PROJECT, target="openapi",
-                                            settings=_settings(), transport=httpx.MockTransport(rest))
+        await build_version_export_response(
+            auth_ctx=scoped,
+            artifact=PROJECT,
+            target="openapi",
+            settings=_settings(),
+            transport=httpx.MockTransport(rest),
+        )
     assert rest.requests == []
     with pytest.raises(ToolError, match="scope does not include that export's artifact"):
-        await build_version_export_response(auth_ctx=scoped, job_id="job-1", settings=_settings(),
-                                            transport=httpx.MockTransport(rest))
+        await build_version_export_response(
+            auth_ctx=scoped, job_id="job-1", settings=_settings(), transport=httpx.MockTransport(rest)
+        )
 
 
-@pytest.mark.parametrize("kwargs, message", [
-    ({"artifact": "", "target": "openapi"}, "artifact is required"),
-    ({"artifact": PROJECT, "target": " "}, "target is required"),
-])
+@pytest.mark.parametrize(
+    "kwargs, message",
+    [
+        ({"artifact": "", "target": "openapi"}, "artifact is required"),
+        ({"artifact": PROJECT, "target": " "}, "target is required"),
+    ],
+)
 @_sync
 async def test_missing_arguments_are_named(kwargs: dict[str, Any], message: str) -> None:
     with pytest.raises(ToolError, match=message):
-        await build_version_export_response(auth_ctx=_auth(), settings=_settings(),
-                                            transport=httpx.MockTransport(_Rest()), **kwargs)
+        await build_version_export_response(
+            auth_ctx=_auth(), settings=_settings(), transport=httpx.MockTransport(_Rest()), **kwargs
+        )
 
 
 @_sync
 async def test_export_without_configuration_is_refused() -> None:
     for settings in (_settings(rest_internal_url=None), _settings(rest_internal_service_token=None)):
         with pytest.raises(ToolError, match="not configured"):
-            await build_export_targets_response(auth_ctx=_auth(), artifact=PROJECT, settings=settings,
-                                                transport=httpx.MockTransport(_Rest()))
+            await build_export_targets_response(
+                auth_ctx=_auth(), artifact=PROJECT, settings=settings, transport=httpx.MockTransport(_Rest())
+            )
 
 
 @_sync
 async def test_a_rest_refusal_names_its_reason() -> None:
-    rest = _Rest(status=400, payload={"detail": {"code": "mcp-export-refused",
-                                                 "message": "Unsupported export target 'nope'"}})
+    rest = _Rest(
+        status=400, payload={"detail": {"code": "mcp-export-refused", "message": "Unsupported export target 'nope'"}}
+    )
     with pytest.raises(ToolError, match=r"Export refused \(400\): Unsupported export target 'nope'"):
-        await build_version_export_response(auth_ctx=_auth(), artifact=PROJECT, target="nope", settings=_settings(),
-                                            transport=httpx.MockTransport(rest))
+        await build_version_export_response(
+            auth_ctx=_auth(), artifact=PROJECT, target="nope", settings=_settings(), transport=httpx.MockTransport(rest)
+        )
     validation = _Rest(status=422, payload={"detail": [{"msg": "bad option"}]})
     with pytest.raises(ToolError, match="bad option"):
-        await build_export_targets_response(auth_ctx=_auth(), artifact=PROJECT, settings=_settings(),
-                                            transport=httpx.MockTransport(validation))
+        await build_export_targets_response(
+            auth_ctx=_auth(), artifact=PROJECT, settings=_settings(), transport=httpx.MockTransport(validation)
+        )
 
 
 @_sync
@@ -191,8 +260,9 @@ async def test_an_unreachable_rest_is_a_tool_error() -> None:
         raise httpx.ConnectError("refused")
 
     with pytest.raises(ToolError, match="could not be reached"):
-        await build_export_targets_response(auth_ctx=_auth(), artifact=PROJECT, settings=_settings(),
-                                            transport=httpx.MockTransport(boom))
+        await build_export_targets_response(
+            auth_ctx=_auth(), artifact=PROJECT, settings=_settings(), transport=httpx.MockTransport(boom)
+        )
 
 
 @_sync

@@ -198,8 +198,14 @@ async def version_export(
     auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     return await build_version_export_response(
-        auth_ctx=auth, artifact=artifact, target=target, version=version, options=options, confirm=confirm,
-        allow_lossy=allow_lossy, job_id=job_id,
+        auth_ctx=auth,
+        artifact=artifact,
+        target=target,
+        version=version,
+        options=options,
+        confirm=confirm,
+        allow_lossy=allow_lossy,
+        job_id=job_id,
     )
 
 
