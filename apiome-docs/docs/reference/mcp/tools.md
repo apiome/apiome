@@ -228,7 +228,7 @@ Semantic search over published **public** specs that have **mcp_public_embedding
 
 ## `version.export` {#version-export}
 
-Export an artifact version to any registered target (MFX-40.1) — the same pipeline as the Export dialog and `apiome export`. Returns the job's state, the structured fidelity report (fidelity.summary tier/preserved share, fidelity.report: the per-construct LossinessReport, fidelity.advisory), the transcoding guard, and the files: inline `content` when small (contentInline), otherwise a REST downloadPath. A severe conversion fails unless confirm=true. When the job outlives the wait it answers state=running with jobId: call again with job_id to collect it. Requires an API key.
+Export an artifact version to any registered target (MFX-40.1) — the same pipeline as the Export dialog and `apiome export`. Returns the job's state, the structured fidelity report (fidelity.summary tier/preserved share, fidelity.report: the per-construct LossinessReport, fidelity.advisory), the transcoding guard, and the files: inline `content` when small (contentInline), otherwise a REST downloadPath. `advisory` is the canonical fidelity advisory — the same words the UI and CLI show. A conversion that loses fidelity (tier other than lossless) emits nothing unless allow_lossy=true: it answers state=blocked with the report and the advisory, so read them first (MFX-40.2). A severe conversion also fails unless confirm=true. When the job outlives the wait it answers state=running with jobId: call again with job_id to collect it. Requires an API key.
 
 **Arguments:**
 
@@ -239,6 +239,7 @@ Export an artifact version to any registered target (MFX-40.1) — the same pipe
 | `version` | string or null | no | `null` |  |
 | `options` | object or null | no | `null` |  |
 | `confirm` | boolean | no | `false` |  |
+| `allow_lossy` | boolean | no | `false` |  |
 | `job_id` | string or null | no | `null` |  |
 
 **Returns:** object.

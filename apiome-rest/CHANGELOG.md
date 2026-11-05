@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.657.0] - 2026-11-05
+
+### Added
+- **Fidelity advisory and lossy confirm over MCP (MFX-40.2, #4340).** `POST /v1/internal/mcp/export/run` takes
+  `allowLossy` (apiome-mcp 0.12.0: `version.export(allow_lossy=…)`, mirroring the CLI `--force` of MFX-8.2).
+  - Before scheduling, the route predicts the export's fidelity with the dispatch dry run; a tier other than
+    `lossless` without `allowLossy` answers `state: blocked` — the fidelity envelope (report + advisory), the guard,
+    `error.code: mcp-export-lossy-not-allowed` — and emits nothing (no job, no files; `jobId` is null).
+  - Every answer carrying a fidelity envelope also carries a top-level `advisory`: the canonical MFX-2.4
+    `ExportAdvisory.message`, the string the UI, browse and the CLI render.
+
 ## [1.656.0] - 2026-11-05
 
 ### Added

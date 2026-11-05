@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.520.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.521.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `internal-mcp-export` · 2 operations
 
@@ -17,7 +17,7 @@ Tag: `internal-mcp-export` · 2 operations
 
 **Run an export for the MCP `version.export` tool**
 
-Internal (`X-Internal-Service-Token`). Starts an export job for any registered `target` (the pipeline of `POST /v1/export/{tenant}/jobs`) and waits up to `waitSeconds`; or, with `jobId`, collects a job a previous call left running. A completed job answers with the fidelity envelope (including the structured `LossinessReport`), the guard and the files — inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`, otherwise with `downloadPath`. `400` / `422` for an unknown target or invalid options; `429` when the tenant's export slots are full; `404` for an unknown job.
+Internal (`X-Internal-Service-Token`). Starts an export job for any registered `target` (the pipeline of `POST /v1/export/{tenant}/jobs`) and waits up to `waitSeconds`; or, with `jobId`, collects a job a previous call left running. A conversion that loses fidelity (tier other than `lossless`) without `allowLossy` answers `state: blocked` with the report and the canonical `advisory` and emits nothing. A completed job answers with the fidelity envelope (including the structured `LossinessReport`), the guard and the files — inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`, otherwise with `downloadPath`. `400` / `422` for an unknown target or invalid options; `429` when the tenant's export slots are full; `404` for an unknown job.
 
 Operation id: `mcp_export_run_v1_internal_mcp_export_run_post`
 
@@ -101,6 +101,7 @@ Validation error response emitted when request data fails schema checks.
 | `target` | string or null | no | Any registered target key (`export.targets`). |
 | `options` | object or null | no | The target's emit options (MFX-1.4). |
 | `confirm` | boolean | no | Proceed with a severe conversion (MFX-3.3). |
+| `allowLossy` | boolean | no | Emit even when the conversion loses fidelity (MFX-40.2; the CLI `--force`). Without it a lossy conversion answers `blocked` and emits nothing. |
 | `jobId` | string or null | no | Collect a job a previous call left running, instead of starting one. |
 | `waitSeconds` | integer | no | How long to wait for the job before answering `running`. |
 
@@ -109,9 +110,11 @@ Validation error response emitted when request data fails schema checks.
 What ``version.export`` answers.
 
 Attributes:
-    job_id: The export job.
-    state: ``queued`` / ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or
-        ``canceled``.
+    job_id: The export job; ``None`` when ``blocked`` (no job was started).
+    state: ``blocked`` (a lossy conversion without ``allowLossy``: nothing emitted), ``queued`` /
+        ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or ``canceled``.
+    advisory: The canonical fidelity advisory (MFX-2.4 ``ExportAdvisory.message``) — word for word
+        what the UI, browse and the CLI show; ``None`` until the fidelity is known.
     fidelity: The full fidelity envelope of a one-target export: tier, the structured
         ``LossinessReport`` (``report``), the advisory.
     guard: The transcoding guard (MFX-3.3): verdict, whether it needs ``confirm``.
@@ -121,8 +124,9 @@ Attributes:
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `jobId` | string | yes | Job ID. |
-| `state` | enum `"queued"`, `"running"`, `"completed"`, `"failed"`, `"canceled"` | yes | State. |
+| `jobId` | string or null | no | Job ID. |
+| `state` | enum `"blocked"`, `"queued"`, `"running"`, `"completed"`, `"failed"`, `"canceled"` | yes | State. |
+| `advisory` | string or null | no | Advisory. |
 | `artifact` | string or null | no | Artifact. |
 | `target` | string or null | no | Target. |
 | `versionRecordId` | string or null | no | Version Record ID. |
