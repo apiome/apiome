@@ -1,0 +1,80 @@
+---
+title: Run exports at scale
+description: Follow every export, see who exported what, deliver it, automate it, recover from failures.
+sidebar_position: 4.68
+tags: [export]
+---
+
+<Route path="/ade/dashboard/export/studio" />
+
+One export is a few clicks in the [Export studio](./export-studio.mdx). A team that exports every day
+needs more: to see each job as it runs and get it back on track when it fails, to know **who exported
+what, where, and with how much loss**, to send the result where it is used, to run the same export on
+every publish, and to understand every screen when something is missing. This page shows where each of
+those lives.
+
+<Screenshot id="export-studio-history" alt="The History tab: two runs, a Petstore export to Protocol Buffers that completed with 64% preserved, valid, lint warnings and delivered to git, and an Orders export to GraphQL that failed" />
+
+## When you need it
+
+- **A long export, or one that failed.** Follow its stages, cancel it, retry it, or come back to it
+  after leaving the page.
+- **An audit question.** Who exported this version, to which format, with how much loss, and where it
+  was delivered — for 90 days, filtered by person, source, format or outcome.
+- **The result belongs somewhere else.** A git pull request, a webhook, a bucket or a schema registry,
+  with what each delivery left behind.
+- **The same export again and again.** Save it as a preset, and run it on every publish of a project.
+
+## At a glance
+
+| You want to… | Where | Details |
+| --- | --- | --- |
+| Follow a job's stages, cancel or restart it | **6. Review & Generate** | [Export studio › Review & Generate](./export-studio.mdx#6-review--generate) |
+| Recover from a failed job: retry it, fix it in Verify or choose another target | The failure card on **6. Review & Generate** | [When generation fails](./export-studio.mdx#when-generation-fails) |
+| See the jobs you ran recently | **Recent export jobs**, under every step | [Recent export jobs](./export-studio.mdx#recent-export-jobs) |
+| See every export in the workspace, who ran it and how much it lost, and re-run one | **History** tab | [Export history](./export-studio.mdx#export-history) |
+| Send the result to git, a webhook, a bucket or a schema registry, and see what each delivery left | **Deliver** section on **6. Review & Generate** | [Deliver from Export studio](./deliver-an-export.mdx#deliver-from-export-studio) |
+| Keep targets, options and delivery profiles, and apply them by name | **Save as preset**, **Apply a preset**, **Presets** tab | [Save an export as a preset](./export-presets.mdx) |
+| Run a preset on every publish of a project | **Auto-export on publish** on Review, or the **Presets** tab | [Run it on every publish from Review](./export-presets.mdx#run-it-on-every-publish-from-review) |
+| Know what a screen means when there is nothing to show, or something failed to load | Every step | [When something is missing or fails](./export-studio.mdx#when-something-is-missing-or-fails) |
+| Know what the studio records about its use | — | [What Export studio records](./export-studio.mdx#what-export-studio-records) |
+
+<Screenshot id="export-studio-deliver" alt="The Deliver section of a finished job: a git pull request, a webhook receipt, objects in a bucket, and an Avro push to a schema registry" />
+
+## How the pieces fit
+
+- **One job, everywhere.** Generate, a preset, the CLI and an auto-export all run the same export job.
+  Each one appears in **Recent export jobs** while it is recent, and in **History** for 90 days.
+- **History is the record.** It keeps each run's outcome, its share preserved, its validation, lint and
+  delivery verdicts, and every delivery's result. It never stores the exported file. **Re-run in Studio**
+  opens the studio with that run's source, version, target and options.
+- **Delivery uses profiles.** A profile saves a destination and its credentials once. The studio, presets
+  and auto-exports all deliver through profiles, and the credentials never reach the browser.
+- **A preset is what the studio had.** It keeps the targets, the options you changed and every ticked
+  delivery profile, in order, so applying it gives back the same export. **Auto-export on publish**
+  subscribes a project to the preset you just saved or applied.
+- **Nothing is ever blank.** Each step says when it is loading, has nothing to show, or failed, and
+  offers **Retry** or the next step. If the export targets can't be reached, the last list stays on
+  screen, marked as possibly out of date.
+
+<Screenshot id="export-studio-review-auto-export" alt="Review in Export studio: Save as preset with nightly-sync named and its two ticked delivery profiles, and Auto-export on publish ticked for this project" />
+
+## With the API
+
+| What | Endpoint |
+| --- | --- |
+| Start a job, follow it, cancel it, download it | [`POST /v1/export/{tenant}/jobs`](../reference/rest/export-jobs.md#start-export-job-v1-export-tenant-slug-jobs-post), [`GET …/jobs/{job_id}`](../reference/rest/export-jobs.md#get-export-job-status-v1-export-tenant-slug-jobs-job-id-get), [`DELETE …/jobs/{job_id}`](../reference/rest/export-jobs.md#cancel-export-job-v1-export-tenant-slug-jobs-job-id-delete) |
+| The export history, and one run | [`GET /v1/export/{tenant}/runs`](../reference/rest/export.md#list-export-runs-v1-export-tenant-slug-runs-get), [`GET …/runs/{job_id}`](../reference/rest/export.md#get-export-run-v1-export-tenant-slug-runs-job-id-get) |
+| A job's deliveries and their results, or deliver it now | [`GET` / `POST /v1/export/{tenant}/jobs/{job_id}/deliveries`](../reference/rest/export-delivery.md#list-export-job-deliveries-v1-export-tenant-slug-jobs-job-id-deliveries-get) |
+| Presets | [`POST /v1/export/{tenant}/presets`](../reference/rest/export-presets.md#create-export-preset-v1-export-tenant-slug-presets-post) |
+| Auto-export on publish | [`POST /v1/export/{tenant}/auto-exports`](../reference/rest/export-auto.md#create-auto-export-v1-export-tenant-slug-auto-exports-post) |
+| The studio's usage events | [`POST /v1/export/{tenant}/studio-metrics`](../reference/rest/export.md#record-studio-metric-v1-export-tenant-slug-studio-metrics-post) |
+
+## Where next
+
+- [How an export runs](./export-jobs.mdx): the job pipeline and its states
+- [Deliver an export](./deliver-an-export.mdx): every channel, and delivery profiles
+- [Export automatically on every publish](./auto-export-on-publish.mdx): halting delivery when an export
+  loses too much
+- [Export several at once, and on every publish](./export-several-at-once.mdx): several formats, items or
+  versions in one job
