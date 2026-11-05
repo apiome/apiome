@@ -1,6 +1,6 @@
 {
   "name": "apiome-ui",
-  "version": "0.590.0",
+  "version": "0.591.0",
   "private": true,
   "scripts": {
     "dev": "./scripts/run.sh dev",
@@ -134,6 +134,8 @@
     "jest": "^30.3.0",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^30.3.0",
+    "redoc": "2.5.4",
+    "swagger-ui-dist": "5.34.0",
     "tailwindcss": "^4.2.2",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",

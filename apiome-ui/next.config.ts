@@ -26,6 +26,14 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
+  // MFX-44.2: the OpenAPI test-drive viewer serves these bundles from node_modules at runtime.
+  outputFileTracingIncludes: {
+    '/test-drive/vendor/[asset]': [
+      '../node_modules/swagger-ui-dist/swagger-ui-bundle.js',
+      '../node_modules/swagger-ui-dist/swagger-ui.css',
+      '../node_modules/redoc/bundles/redoc.standalone.js',
+    ],
+  },
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
   turbopack: {
     root: monorepoRoot,

@@ -218,6 +218,8 @@ appear comes from the format itself, so each target shows its own:
 
 | Tab | What it does | Targets |
 | --- | --- | --- |
+| **Swagger UI** | Interactive docs for the file: every operation, its parameters and responses; **Try it out** while the mock server runs | OpenAPI |
+| **ReDoc** | A read-only reference of the file, in three panes | OpenAPI |
 | **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
 | **Toolchain checks** (or the check's name, when there is one) | Lists the format's own checks, such as `buf lint`, and whether each tool is installed on this server | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec, Smithy, Cap'n Proto, Thrift, API Blueprint |
 
@@ -227,6 +229,22 @@ A tool that needs something this server does not have is still shown, greyed out
 under the tabs, for example *Mock server is unavailable on this server: Export test-drive mocks are
 disabled on this server.* Ask your administrator to install the tool or turn the feature on. A
 format with no tools shows no **Test drive**.
+
+#### Swagger UI and ReDoc
+
+**Swagger UI** opens first for an OpenAPI file, with ReDoc beside it. Both show the file you just
+generated, read straight from the Studio: nothing is uploaded again.
+
+<Screenshot id="export-studio-openapi-test-drive" alt="Test drive with the Swagger UI tab open on Pet Store API 1.2.0: four pets operations, and the note that the sandbox makes no network requests" />
+
+- **They make no network requests.** Each viewer runs in a sandbox with no access to your session or
+  the rest of Apiome, and cannot reach the network.
+- **Try it out needs the mock server.** On the **Mock server** tab, **click "Start mock"**. Swagger UI
+  then points the file's servers at the mock, and **Try it out** → **Execute** sends the request to it
+  through Apiome. It sends the method and path; a request body is not passed on. Without a running
+  mock, **Try it out** is hidden. ReDoc never sends requests.
+- **Large files open collapsed.** A file with more than 300 operations (or over 1 MB) opens with every
+  section closed, so the page stays quick; open the tag you need.
 
 The list also comes back from the API, as `test_tools` on each target of
 [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get). Each entry gives the tool's `kind`,

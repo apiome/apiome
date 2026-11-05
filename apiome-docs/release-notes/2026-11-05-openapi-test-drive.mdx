@@ -1,0 +1,19 @@
+---
+slug: openapi-test-drive
+title: Read your exported OpenAPI in Swagger UI and ReDoc
+description: "Export studio shows a generated OpenAPI file as interactive docs."
+authors: [apiome]
+---
+
+After you generate an OpenAPI file in the Export studio, **Test drive** now opens it in **Swagger UI**
+and **ReDoc**, so you can read it as interactive docs before you ship it. See
+[Swagger UI and ReDoc](/ship/export-studio#swagger-ui-and-redoc).
+
+{/* truncate */}
+
+- **Straight from the Studio:** the viewers show the file you just generated. Nothing is uploaded
+  again.
+- **Sandboxed:** each viewer runs with no access to your session and cannot reach the network.
+- **Try it out against the mock:** start the mock server and Swagger UI sends **Try it out**
+  requests to it, through Apiome.
+- **Large files stay quick:** a file with more than 300 operations opens collapsed.
