@@ -1,0 +1,70 @@
+---
+title: Visualize an export
+description: See where an export loses fidelity, and its structure as a diagram.
+sidebar_position: 4.65
+tags: [export]
+---
+
+<Route path="/ade/dashboard/export/studio" />
+
+A generated file is easiest to check as text when it is small. For anything larger, or a format judged
+by its structure, the **6. Review & Generate** step of the [Export studio](./export-studio.mdx) also
+draws it: what became of each part of your API, **where** the export loses fidelity, and the shape of
+the file itself, as tables, files, services or channels.
+
+<Screenshot id="export-fidelity-overlay" alt="The fidelity overlay on a Protocol Buffers export of the Petstore: every field marked with its findings, and the findings for Pet.id below the graph" />
+
+## When to visualize
+
+- **Before you ship a lossy export.** The fidelity report lists every finding; the graph and the
+  treemap show which types, fields and operations they fall on, worst first.
+- **When a reviewer reads diagrams, not text.** A database team reads tables and keys, an RPC team reads
+  services and messages, an event team reads channels.
+- **To see what the export made up.** Generated keys, junction tables, field numbers and other invented
+  parts are marked in every picture.
+
+## At a glance
+
+| You want to see… | Where | Formats | Details |
+| --- | --- | --- | --- |
+| Which part of your API became which part of the file, and which did not survive | **What became of each entity in *target*** (the mapping graph) | All | [Export studio › Review & Generate](./export-studio.mdx#6-review--generate) |
+| Where the export loses fidelity: DROP, APPROX, SYNTH and OK on each entity, filtered by kind | **Fidelity overlay** on the mapping graph | All | [See where the export loses fidelity](./export-studio.mdx#see-where-the-export-loses-fidelity) |
+| The same findings, compact, for a large API | **Treemap** | All | [See where the export loses fidelity](./export-studio.mdx#see-where-the-export-loses-fidelity) |
+| The worst losses first | **What … loses, worst first** | All | [Understand export fidelity](./export-fidelity.md) |
+| Tables, columns, keys and foreign keys | **ERD**, above the file | SQL DDL, DBML, Prisma, Liquibase, Flyway | [Read a database export as an ERD](./export-studio.mdx#read-a-database-export-as-an-erd) |
+| A bundle's files and their imports | **Import graph**, above the files | Protocol Buffers, Connect RPC | [See an export as a picture](./export-studio.mdx#see-an-export-as-a-picture) |
+| Services, their methods and the messages they take and return | **Service map** | Protocol Buffers, Connect RPC | [See an export as a picture](./export-studio.mdx#see-an-export-as-a-picture) |
+| Operations, channels and messages, or message groups and event types | **Channel topology** | AsyncAPI, xRegistry | [See an export as a picture](./export-studio.mdx#see-an-export-as-a-picture) |
+
+<Screenshot id="export-viz-service-map" alt="The service map of the Petstore exported to Protocol Buffers: the default service, its methods, and the messages they take and return" />
+
+## How the pieces fit
+
+- **One selection everywhere.** Selecting a node in any picture, a cell of the treemap or a row of the
+  entity tree selects the same part of your API: the tree, the graph and the file follow, and going back
+  to the text scrolls to its line.
+- **The fidelity counts are the report's.** The overlay's chips print the fidelity report's own counts,
+  and the line under them says when a finding sits on something the graph does not draw.
+- **Pictures are drawn from the file.** The ERD, the import graph, the service map and the channel
+  topology come from the file Apiome wrote, so they show what the export holds, not what the source had.
+- **The format decides the pictures.** Each export format declares which pictures it has; a format with
+  none shows no switch. The picture you pick is kept for that format until you close the browser tab.
+- **Made-up parts are marked, not hidden.** What the export invented carries **✚** (and **✚ SYNTH** on a
+  table), the same mark the fidelity report uses.
+
+<Screenshot id="export-erd" alt="An order model exported to PostgreSQL as an ERD, with its made-up junction and child tables marked SYNTH and dashed foreign keys" />
+
+## With the API
+
+| What | Endpoint |
+| --- | --- |
+| Which pictures each format has | [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get) (`viz_modes`) |
+| The entities, their fidelity, the tables (`relational`) and each picture's graph (`views`) | [`POST /v1/export/{tenant}/preview-manifest`](../reference/rest/export.md#preview-export-manifest-v1-export-tenant-slug-preview-manifest-post) |
+| The fidelity report the overlay paints | [`POST /v1/export/{tenant}/preview`](../reference/rest/export.md#preview-export-fidelity-v1-export-tenant-slug-preview-post) |
+
+## Where next
+
+- [Export studio › Review & Generate](./export-studio.mdx#6-review--generate): every view, step by step
+- [Understand export fidelity](./export-fidelity.md): what DROP, APPROX, SYNTH and OK mean
+- [Read an exported file](./read-an-exported-file.mdx): the viewer the pictures sit beside
+- [Test drive an export](./test-drive-an-export.mdx): try the file with the tools its format uses
