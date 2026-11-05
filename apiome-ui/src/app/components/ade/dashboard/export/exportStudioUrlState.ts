@@ -103,6 +103,11 @@ export interface ExportStudioUrlState {
   options: Record<string, unknown> | null;
   /** The step to resume on, before reachability clamping; null when the link carried none. */
   step: ExportStudioStep | null;
+  /**
+   * An export preset (id or name) to apply once the targets load (MFX-46.4) — the Presets tab's
+   * **Open in Studio**; null when the link carried none.
+   */
+  preset: string | null;
 }
 
 /** A parsed link: the state to open with, plus everything that had to be degraded to get there. */
@@ -333,6 +338,7 @@ export function parseExportStudioUrlState(
       sourceFormat: readScalarParam(params, 'sourceFormat', issues),
       options,
       step: isExportStudioStep(rawStep) ? rawStep : null,
+      preset: readScalarParam(params, 'preset', issues),
     },
     issues,
   };

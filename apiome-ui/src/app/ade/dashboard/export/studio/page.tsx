@@ -62,7 +62,7 @@ function ExportStudioRouteContent() {
     () => parseExportStudioUrlState(searchParams),
     [searchParams],
   );
-  const { artifact, version, label, target, origin, sourceFormat, options, step } = state;
+  const { artifact, version, label, target, origin, sourceFormat, options, step, preset } = state;
 
   if (status === 'loading') {
     return (
@@ -124,7 +124,7 @@ function ExportStudioRouteContent() {
               resumable deep link and the studio continues at Target. */}
           <ExportStudioSteps stepIndex={0} />
           <div className="xstd-panel" role="group" aria-label="Step 1 of 5: Source" data-testid="export-studio-body">
-            <ExportSourcePicker />
+            <ExportSourcePicker preset={preset} />
           </div>
         </PageBody>
       </Page>
@@ -139,6 +139,7 @@ function ExportStudioRouteContent() {
       initialTarget={target}
       initialOptions={options}
       initialStep={step}
+      initialPreset={preset}
       linkIssues={issues}
       origin={origin}
       sourceFormat={sourceFormat}

@@ -105,7 +105,15 @@ import type { ExportedArtifactSummary } from './ExportDialog';
 import { ExportJobDeliveryPanel } from '../../export-studio/delivery/ExportJobDeliveryPanel';
 import { registryFormatFor, type RegistryPushSource } from '../../export-studio/delivery/registryPushModel';
 import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
-import { applyPresetToStudio, type ExportPreset, type PresetTarget } from '../../export-studio/presets/exportPresetsModel';
+import {
+  applyPresetToStudio,
+  selectionSignature,
+  type ExportPreset,
+  type PresetInPlay,
+  type PresetTarget,
+} from '../../export-studio/presets/exportPresetsModel';
+import { fetchExportPresets } from '../../export-studio/presets/exportPresetsApi';
+import { StudioAutoExportToggle } from '../../export-studio/presets/StudioAutoExportToggle';
 import { exportStudioTabHref } from '../../export-studio';
 import {
   changedOptions,
@@ -139,6 +147,12 @@ interface ExportStudioProps {
    * actually establish — a link cannot carry a verify verdict, so `review` resumes at Verify.
    */
   initialStep?: string | null;
+  /**
+   * An export preset (id or name) to apply once the targets load (MFX-46.4) — the Presets tab's
+   * **Open in Studio**, carried through the Source picker. Applied once; a preset that no longer
+   * exists is explained in the preset notice.
+   */
+  initialPreset?: string | null;
   /**
    * Notices the route's URL parser already produced (unreadable options, redacted credentials),
    * rendered with the ones the Studio derives once the target registry has loaded (MFX-41.4).
@@ -216,6 +230,7 @@ export function ExportStudio({
   initialTarget = null,
   initialOptions = null,
   initialStep = null,
+  initialPreset = null,
   linkIssues = EMPTY_LINK_ISSUES,
   origin = null,
   sourceFormat = null,
@@ -284,6 +299,9 @@ export function ExportStudio({
   const [multiOptions, setMultiOptions] = useState<Record<string, Record<string, unknown>>>({});
   /** What the last preset apply did, or could not do, shown under the picker. */
   const [presetNotice, setPresetNotice] = useState<string | null>(null);
+  // MFX-46.4: the preset just applied or saved, and the selection it stood for — while the selection
+  // still matches, it is the preset "Auto-export on publish" subscribes this project to.
+  const [presetInPlay, setPresetInPlay] = useState<PresetInPlay | null>(null);
   /**
    * The Overlays step's chain (GVM-4.2), in application order. Sent on Verify and on Generate so
    * both describe the overlaid document; an empty chain sends nothing.
@@ -634,17 +652,30 @@ export function ExportStudio({
     (preset: ExportPreset) => {
       const applied = applyPresetToStudio(preset, cards);
       clearActiveJob();
+      let appliedTargets: PresetTarget[] = [];
       if (applied.single) {
+        const { card, options } = applied.single;
         setMultiMode(false);
         setMultiOptions({});
-        selectCard(applied.single.card, applied.single.options);
+        selectCard(card, options);
+        appliedTargets = [
+          { target: card.key, options: changedOptions(seedOptionValues(card, options).values, card.entry.default_options) },
+        ];
       } else if (applied.multi) {
+        const { keys, options } = applied.multi;
         setMultiMode(true);
         setMultiVerified(false);
-        setMultiKeys(applied.multi.keys);
-        setMultiOptions(applied.multi.options);
+        setMultiKeys(keys);
+        setMultiOptions(options);
+        appliedTargets = keys.map((key) => ({ target: key, options: options[key] ?? null }));
       }
       setDeliveryProfileIds(applied.deliveryProfiles);
+      // Partly applied (a target this source lacks) is not the preset: auto-export would run all of it.
+      setPresetInPlay(
+        applied.missing.length === 0
+          ? { preset, signature: selectionSignature(appliedTargets, applied.deliveryProfiles) }
+          : null,
+      );
       setPresetNotice(
         applied.missing.length > 0
           ? `Applied ${preset.name}, except ${applied.missing.join(', ')}, which this source cannot export to.`
@@ -661,6 +692,37 @@ export function ExportStudio({
       ? [{ target: selected.key, options: changedOptions(optionValues, selected.entry.default_options) }]
       : [];
   }, [multiMode, multiKeys, multiOptions, selected, optionValues]);
+  /** The preset in play, while the selection is still the one it was applied or saved as (MFX-46.4). */
+  const activePreset =
+    presetInPlay && presetInPlay.signature === selectionSignature(presetTargets, deliveryProfileIds)
+      ? presetInPlay.preset
+      : null;
+  const onPresetSaved = useCallback(
+    (preset: ExportPreset) =>
+      setPresetInPlay({ preset, signature: selectionSignature(presetTargets, deliveryProfileIds) }),
+    [presetTargets, deliveryProfileIds],
+  );
+
+  // MFX-46.4: a link naming a preset (the Presets tab's "Open in Studio") applies it once, after the
+  // deep link is restored and the targets have loaded.
+  const presetLink = useRef(initialPreset);
+  useEffect(() => {
+    const wanted = presetLink.current;
+    if (!wanted || !restored || cards.length === 0) return;
+    presetLink.current = null;
+    let live = true;
+    fetchExportPresets()
+      .then((presets) => {
+        if (!live) return;
+        const found = presets.find((p) => p.id === wanted) ?? presets.find((p) => p.name === wanted);
+        if (found) applyPreset(found);
+        else setPresetNotice(`The preset “${wanted}” in this link no longer exists. Choose one below.`);
+      })
+      .catch(() => live && setPresetNotice('The presets could not be loaded. Choose a target below.'));
+    return () => {
+      live = false;
+    };
+  }, [restored, cards, applyPreset]);
   const targetLabels = useMemo(
     () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
     [cards],
@@ -1426,7 +1488,14 @@ export function ExportStudio({
                 labels={targetLabels}
                 archiveName={`${artifact}-export.zip`}
               />
-              <SavePresetForm targets={presetTargets} deliveryProfileId={deliveryProfileIds[0] ?? null} />
+              <SavePresetForm targets={presetTargets} deliveryProfileIds={deliveryProfileIds} onSaved={onPresetSaved} />
+              {!isCatalogSource && (
+                <StudioAutoExportToggle
+                  projectId={artifact}
+                  preset={activePreset}
+                  presetsHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'presets')}
+                />
+              )}
             </div>
           )}
 
@@ -1511,7 +1580,17 @@ export function ExportStudio({
                 />
               )}
               {/* MFX-39.3: keep this target, its options and the ticked delivery as a preset. */}
-              {!job && <SavePresetForm targets={presetTargets} deliveryProfileId={deliveryProfileIds[0] ?? null} />}
+              {!job && (
+                <SavePresetForm targets={presetTargets} deliveryProfileIds={deliveryProfileIds} onSaved={onPresetSaved} />
+              )}
+              {/* MFX-46.4: run the preset in play on every publish of this project (MFX-39.4). */}
+              {!isCatalogSource && (
+                <StudioAutoExportToggle
+                  projectId={artifact}
+                  preset={activePreset}
+                  presetsHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'presets')}
+                />
+              )}
               {/* GVM-4.2: the generated artifact's overlay ledger, from the job itself. */}
               {jobCompleted && jobStatus?.result?.overlay && (
                 <OverlayReportPanel report={jobStatus.result.overlay} />

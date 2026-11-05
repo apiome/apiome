@@ -83,12 +83,19 @@ function useLazyList<T>(enabled: boolean, load: () => Promise<T[]>, key: string)
   return [state, () => setAttempt((n) => n + 1)];
 }
 
+/** Props for {@link ExportSourcePicker}. */
+export interface ExportSourcePickerProps {
+  /** An export preset the link carried (MFX-46.4); kept on the scoped link so the studio applies it. */
+  preset?: string | null;
+}
+
 /**
  * Render the picker.
  *
+ * @param props See {@link ExportSourcePickerProps}.
  * @returns The Source step's tabs and lists.
  */
-export function ExportSourcePicker() {
+export function ExportSourcePicker({ preset = null }: ExportSourcePickerProps = {}) {
   const router = useRouter();
   const [kind, setKind] = React.useState<SourcePickerKind>('catalog');
   const [query, setQuery] = React.useState('');
@@ -168,7 +175,7 @@ export function ExportSourcePicker() {
                     type="button"
                     className="xstd-pick__row"
                     aria-label={`Export catalog item ${item.name}`}
-                    onClick={() => go(catalogSourceHref(item))}
+                    onClick={() => go(catalogSourceHref(item, preset))}
                     data-testid={`export-source-item-${item.id}`}
                   >
                     <span className="xstd-pick__name">{item.name}</span>
@@ -211,7 +218,7 @@ export function ExportSourcePicker() {
                       type="button"
                       className="xstd-pick__row"
                       aria-label={`Export the latest version of ${project.name}`}
-                      onClick={() => go(projectSourceHref(project, null))}
+                      onClick={() => go(projectSourceHref(project, null, preset))}
                       data-testid="export-source-version-latest"
                     >
                       <span className="xstd-pick__name">Latest version</span>
@@ -223,7 +230,7 @@ export function ExportSourcePicker() {
                         type="button"
                         className="xstd-pick__row"
                         aria-label={`Export ${project.name} version ${version.version_id}`}
-                        onClick={() => go(projectSourceHref(project, version))}
+                        onClick={() => go(projectSourceHref(project, version, preset))}
                         data-testid={`export-source-version-${version.id}`}
                       >
                         <span className="xstd-pick__name mono">{version.version_id}</span>

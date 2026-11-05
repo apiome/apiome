@@ -30,7 +30,7 @@ from .auth import get_authenticated_user_id
 from .config import settings
 from .export_auto import build_auto_request, halt_notice, measure_loss, should_halt
 from .export_job_engine import export_job_timeout_seconds, get_export_job_status, schedule_export_job
-from .export_presets import ExportPresetRequestError
+from .export_presets import ExportPresetRequestError, preset_profile_ids
 from .export_service import ExportError
 from .notification_fanout import NotificationDraft
 from .notifications import TYPE_EXPORT_AUTO_HALTED
@@ -187,7 +187,8 @@ async def run_auto_export(db: Any, run: Dict[str, Any]) -> Dict[str, Any]:
     if run.get("preset_targets") is None:
         return await fail("export-auto-preset-missing", "The export preset was deleted before the export ran.", owner)
     preset = {"id": run.get("preset_id"), "name": run.get("preset_name"), "targets": run.get("preset_targets"),
-              "delivery_profile_id": run.get("preset_delivery_profile_id")}
+              "delivery_profile_id": run.get("preset_delivery_profile_id"),
+              "delivery_profile_ids": run.get("preset_delivery_profile_ids") or []}
     try:
         request, profiles = build_auto_request(str(run["project_id"]), str(run["version_record_id"]), preset)
     except ExportPresetRequestError as exc:
@@ -281,7 +282,7 @@ async def release_halted_run(db: Any, run: Mapping[str, Any], auth_data: Dict[st
     preset = None
     if run.get("preset_id"):
         preset = await asyncio.to_thread(db.get_export_preset, str(run["tenant_id"]), str(run["preset_id"]))
-    profiles = [p for p in [(preset or {}).get("delivery_profile_id")] if p]
+    profiles = preset_profile_ids(preset or {})
     if not profiles:
         raise HTTPException(status_code=409, detail={
             "code": "export-auto-nothing-to-deliver",

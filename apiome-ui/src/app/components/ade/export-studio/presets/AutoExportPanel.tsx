@@ -23,7 +23,7 @@ import {
   type HaltAt,
 } from './autoExportApi';
 import { fetchExportPresets } from './exportPresetsApi';
-import type { ExportPreset } from './exportPresetsModel';
+import { presetProfileNames, type ExportPreset } from './exportPresetsModel';
 
 /** What the panel is about: one preset's projects, or one project's presets. */
 export type AutoExportScope =
@@ -121,8 +121,8 @@ export function AutoExportPanel({ scope, canEdit, embedded = false }: AutoExport
         {byPreset ? (
           <>
             Every publish of these projects runs <strong>{scope.preset.name}</strong> and delivers it
-            {scope.preset.deliveryProfileName
-              ? ` with ${scope.preset.deliveryProfileName}`
+            {presetProfileNames(scope.preset).length
+              ? ` with ${presetProfileNames(scope.preset).join(', ')}`
               : ' (no delivery profile: export only)'}{' '}
             — unless the export loses too much.
           </>

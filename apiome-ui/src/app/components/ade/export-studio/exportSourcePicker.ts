@@ -100,10 +100,12 @@ export function selectableVersions(versions: readonly PickerVersion[]): PickerVe
  * The deep link that opens the studio on a chosen catalog item, resuming at **Target**.
  *
  * @param item The chosen item.
+ * @param preset An export preset to apply once the studio opens (carried from the Presets tab), or null.
  * @returns The studio URL (`origin=catalog`, so its back link returns to Catalog).
  */
-export function catalogSourceHref(item: PickerCatalogItem): string {
+export function catalogSourceHref(item: PickerCatalogItem, preset: string | null = null): string {
   return exportStudioHref({
+    preset,
     artifact: item.id,
     label: item.name,
     origin: 'catalog',
@@ -117,10 +119,16 @@ export function catalogSourceHref(item: PickerCatalogItem): string {
  *
  * @param project The chosen project.
  * @param version The chosen version, or `null` for the project's latest.
+ * @param preset An export preset to apply once the studio opens (carried from the Presets tab), or null.
  * @returns The studio URL (`origin=versions`).
  */
-export function projectSourceHref(project: PickerProject, version: PickerVersion | null): string {
+export function projectSourceHref(
+  project: PickerProject,
+  version: PickerVersion | null,
+  preset: string | null = null,
+): string {
   return exportStudioHref({
+    preset,
     artifact: project.id,
     version: version?.id ?? null,
     label: version ? `${project.name} ${version.version_id}` : project.name,

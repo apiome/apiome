@@ -6,13 +6,14 @@ export is applied rather than re-entered — from Export studio, the CLI (``apio
 nightly-sync``) or the job submit (``"preset": "nightly-sync"``). This module is the pure half:
 
 * **The request** (:class:`ExportPresetCreate`, :class:`ExportPresetUpdate`, :func:`normalize_create`,
-  :func:`normalize_update`) — a name, a description, 1–16 targets and an optional delivery profile.
+  :func:`normalize_update`) — a name, a description, 1–16 targets and up to five delivery profiles, in
+  order (MFX-46.4; ``deliveryProfileId`` is the first, kept for older clients).
 * **The targets** (:func:`validate_targets`) — every target resolves, its options validate against its
   emitter's schema (:func:`app.export_service.resolve_emit_options`), and no two land in the same bundle
   directory — the rules a multi-target job applies, checked when the preset is stored *and* when applied.
 * **Applying** (:func:`apply_preset`) — a job request naming a preset becomes the request it stands for:
-  ``target`` + ``options`` for one target, ``targets`` for several, the preset's delivery profile first
-  among ``delivery_profiles``.
+  ``target`` + ``options`` for one target, ``targets`` for several, the preset's delivery profiles first
+  among ``delivery_profiles`` (:func:`preset_profile_ids`).
 """
 
 from __future__ import annotations
@@ -80,7 +81,12 @@ class ExportPresetCreate(BaseModel):
         "multi-target export with one directory per target.")
     delivery_profile_id: Optional[str] = Field(
         default=None, alias="deliveryProfileId",
-        description="A delivery profile (MFX-38.4) the export is delivered with as soon as it completes.")
+        description="A delivery profile (MFX-38.4) the export is delivered with as soon as it completes. "
+        "Ignored when `deliveryProfileIds` is sent.")
+    delivery_profile_ids: Optional[List[str]] = Field(
+        default=None, alias="deliveryProfileIds", max_length=MAX_EXPORT_DELIVERY_PROFILES,
+        description=f"Up to {MAX_EXPORT_DELIVERY_PROFILES} delivery profiles (MFX-46.4), in the order the "
+        "export is delivered with them; takes precedence over `deliveryProfileId`.")
 
 
 class ExportPresetUpdate(BaseModel):
@@ -94,7 +100,12 @@ class ExportPresetUpdate(BaseModel):
         default=None, min_length=1, max_length=MAX_EXPORT_TARGETS, description="A new target list (replaces it).")
     delivery_profile_id: Optional[str] = Field(
         default=None, alias="deliveryProfileId",
-        description="A new delivery profile; `null` removes delivery from the preset.")
+        description="A new (single) delivery profile; `null` removes delivery from the preset. Ignored when "
+        "`deliveryProfileIds` is sent.")
+    delivery_profile_ids: Optional[List[str]] = Field(
+        default=None, alias="deliveryProfileIds", max_length=MAX_EXPORT_DELIVERY_PROFILES,
+        description="A new ordered list of delivery profiles (MFX-46.4), replacing the preset's; `[]` "
+        "removes delivery.")
 
 
 @dataclass(frozen=True)
@@ -105,13 +116,42 @@ class NormalizedPreset:
         name: The trimmed name.
         description: The trimmed description, or ``None``.
         targets: ``[{target, options}]`` — each target trimmed, options as given (``{}`` when none).
-        delivery_profile_id: The delivery profile, or ``None``.
+        delivery_profile_ids: The delivery profiles, in order — each once (MFX-46.4).
     """
 
     name: str
     description: Optional[str]
     targets: List[Dict[str, Any]]
-    delivery_profile_id: Optional[str]
+    delivery_profile_ids: List[str]
+
+    @property
+    def delivery_profile_id(self) -> Optional[str]:
+        """The first delivery profile (what ``deliveryProfileId`` reports), or ``None``."""
+        return self.delivery_profile_ids[0] if self.delivery_profile_ids else None
+
+
+def _profile_list(values: List[Optional[str]]) -> List[str]:
+    """Trimmed, non-empty profile ids, each once, in order."""
+    out: List[str] = []
+    for value in values:
+        text = str(value or "").strip()
+        if text and text not in out:
+            out.append(text)
+    return out
+
+
+def preset_profile_ids(preset: Mapping[str, Any]) -> List[str]:
+    """A stored preset's delivery profiles, in order (MFX-46.4).
+
+    Args:
+        preset: A preset row — ``delivery_profile_ids`` (the ordered list) and ``delivery_profile_id``
+            (the first, which is all a row stored before MFX-46.4 has).
+
+    Returns:
+        The ordered list when the row has one, else the single profile, else ``[]``.
+    """
+    listed = _profile_list(list(preset.get("delivery_profile_ids") or []))
+    return listed or _profile_list([preset.get("delivery_profile_id")])
 
 
 def validate_targets(targets: List[Mapping[str, Any]]) -> List[str]:
@@ -167,14 +207,18 @@ def normalize_create(request: ExportPresetCreate) -> NormalizedPreset:
     problems.extend(validate_targets(targets))
     if problems:
         raise ExportPresetRequestError(*problems)
-    profile = (request.delivery_profile_id or "").strip() or None
-    return NormalizedPreset(name=name, description=description, targets=targets, delivery_profile_id=profile)
+    if request.delivery_profile_ids is not None:
+        profiles = _profile_list(list(request.delivery_profile_ids))
+    else:
+        profiles = _profile_list([request.delivery_profile_id])
+    return NormalizedPreset(name=name, description=description, targets=targets, delivery_profile_ids=profiles)
 
 
 def normalize_update(request: ExportPresetUpdate, existing: Mapping[str, Any]) -> NormalizedPreset:
     """Validate a change to a stored preset, filling what it leaves out from the preset.
 
-    ``deliveryProfileId`` sent as ``null`` removes delivery; left out, it is kept.
+    ``deliveryProfileIds`` replaces the preset's delivery profiles (``[]`` removes them); without it,
+    ``deliveryProfileId`` replaces them with that one (``null`` removes delivery); with neither, they are kept.
 
     Raises:
         ExportPresetRequestError: For a bad name or description, or a target the export would refuse.
@@ -189,27 +233,29 @@ def normalize_update(request: ExportPresetUpdate, existing: Mapping[str, Any]) -
         problems.extend(validate_targets(targets))
     else:
         targets = [dict(entry) for entry in existing.get("targets") or []]
-    if "delivery_profile_id" in request.model_fields_set:
-        profile = (request.delivery_profile_id or "").strip() or None
+    if request.delivery_profile_ids is not None:
+        profiles = _profile_list(list(request.delivery_profile_ids))
+    elif "delivery_profile_id" in request.model_fields_set:
+        profiles = _profile_list([request.delivery_profile_id])
     else:
-        profile = existing.get("delivery_profile_id")
+        profiles = preset_profile_ids(existing)
     if problems:
         raise ExportPresetRequestError(*problems)
-    return NormalizedPreset(name=name, description=description, targets=targets, delivery_profile_id=profile)
+    return NormalizedPreset(name=name, description=description, targets=targets, delivery_profile_ids=profiles)
 
 
 def apply_preset(request: ExportJobStartRequest, preset: Mapping[str, Any]) -> ExportJobStartRequest:
     """The job request a preset stands for.
 
     The preset's targets replace the request's (which may not name any): one target becomes ``target``
-    with its ``options``, several become ``targets``. The preset's delivery profile goes first among
-    ``delivery_profiles``, ahead of any the request names. Everything else — the source, ``version``,
+    with its ``options``, several become ``targets``. The preset's delivery profiles go first among
+    ``delivery_profiles``, in order, ahead of any the request names. Everything else — the source, ``version``,
     ``items``, ``overlays``, ``confirm``, ``dry_run`` — is the request's own. The preset's targets are
     validated again, so a preset an emitter's schema has since outgrown is refused rather than guessed at.
 
     Args:
         request: The submitted request, naming ``preset``.
-        preset: The stored preset row (``targets``, ``delivery_profile_id``).
+        preset: The stored preset row (``targets``, ``delivery_profile_ids`` / ``delivery_profile_id``).
 
     Returns:
         The expanded request, without ``preset``.
@@ -232,14 +278,11 @@ def apply_preset(request: ExportJobStartRequest, preset: Mapping[str, Any]) -> E
     else:
         body["targets"] = [{"target": t["target"], **({"options": t["options"]} if t.get("options") else {})}
                            for t in targets]
-    profiles: List[str] = []
-    for profile in [preset.get("delivery_profile_id"), *(request.delivery_profiles or [])]:
-        if profile and str(profile) not in profiles:
-            profiles.append(str(profile))
+    profiles = _profile_list([*preset_profile_ids(preset), *(request.delivery_profiles or [])])
     if profiles and not request.dry_run:
         if len(profiles) > MAX_EXPORT_DELIVERY_PROFILES:
             raise ExportPresetRequestError(
-                f"the preset's delivery profile and 'delivery_profiles' together name more than "
+                f"the preset's delivery profiles and 'delivery_profiles' together name more than "
                 f"{MAX_EXPORT_DELIVERY_PROFILES} profiles")
         body["delivery_profiles"] = profiles
     else:

@@ -46,6 +46,8 @@ import { MultiExportRun } from './MultiExportRun';
 import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
 import {
   applyPresetToStudio,
+  presetProfileIds,
+  presetProfileNames,
   type ExportPreset,
   type PresetTarget,
 } from '../../export-studio/presets/exportPresetsModel';
@@ -199,7 +201,7 @@ export function ExportDialog({
   const [multiKeys, setMultiKeys] = useState<string[]>([]);
   const [multiOptions, setMultiOptions] = useState<Record<string, Record<string, unknown>>>({});
   /** MFX-39.5: the delivery profile an applied preset carries, sent with the multi-target job. */
-  const [presetDelivery, setPresetDelivery] = useState<{ id: string; name: string | null } | null>(null);
+  const [presetDelivery, setPresetDelivery] = useState<{ ids: string[]; names: string[] } | null>(null);
   const [presetNotice, setPresetNotice] = useState<string | null>(null);
 
   const {
@@ -355,7 +357,8 @@ export function ExportDialog({
         setMultiKeys(applied.multi.keys);
         setMultiOptions(applied.multi.options);
       }
-      setPresetDelivery(preset.deliveryProfileId ? { id: preset.deliveryProfileId, name: preset.deliveryProfileName } : null);
+      const presetProfiles = presetProfileIds(preset);
+      setPresetDelivery(presetProfiles.length ? { ids: presetProfiles, names: presetProfileNames(preset) } : null);
       setPresetNotice(
         applied.missing.length > 0
           ? `Applied ${preset.name}, except ${applied.missing.join(', ')}, which this source cannot export to.`
@@ -368,7 +371,7 @@ export function ExportDialog({
   /** The multi-target job (MFX-39.1): the ticked targets with their preset options, and its delivery. */
   const multiBody = useMemo(() => {
     const body = withTargetOptions(multiTargetJobBody(artifact, version ?? null, multiKeys), multiOptions);
-    return presetDelivery ? { ...body, delivery_profiles: [presetDelivery.id] } : body;
+    return presetDelivery ? { ...body, delivery_profiles: presetDelivery.ids } : body;
   }, [artifact, version, multiKeys, multiOptions, presetDelivery]);
   const targetLabels = useMemo(
     () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
@@ -655,7 +658,7 @@ export function ExportDialog({
             )}
             </>
             )}
-            <SavePresetForm targets={presetTargets} deliveryProfileId={presetDelivery?.id ?? null} />
+            <SavePresetForm targets={presetTargets} deliveryProfileIds={presetDelivery?.ids ?? []} />
           </div>
         )}
 
@@ -663,7 +666,9 @@ export function ExportDialog({
           <div className="space-y-4" data-testid="export-dialog-multi-run">
             {presetDelivery ? (
               <p className="xstd-quiet">
-                Delivered with <strong>{presetDelivery.name ?? 'the preset’s delivery profile'}</strong> as soon as
+                Delivered with{' '}
+                <strong>{presetDelivery.names.length ? presetDelivery.names.join(', ') : 'the preset’s delivery profiles'}</strong>{' '}
+                as soon as
                 the archive is built.
               </p>
             ) : null}

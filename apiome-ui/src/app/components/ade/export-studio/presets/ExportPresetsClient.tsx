@@ -23,9 +23,12 @@ import {
   fetchExportPresets,
   updateExportPreset,
 } from './exportPresetsApi';
+import { EXPORT_STUDIO_PATH } from '../../dashboard/export/exportStudioLink';
 import {
+  MAX_PRESET_DELIVERY_PROFILES,
   MAX_PRESET_TARGETS,
   draftFromPreset,
+  presetProfileNames,
   targetsSummary,
   updateFromDraft,
   type ExportPreset,
@@ -41,10 +44,12 @@ export interface ExportPresetsClientProps {
 /**
  * Export studio's **Presets** tab — the workspace's export presets (MFX-39.3, #4335).
  *
- * A preset saves an export's targets, each target's options and a delivery profile once, by name. A
- * preset is made on the export's **Review** step (**Save as preset**) and applied on its **Target** step
- * (**Apply a preset**), or from the CLI (`apiome export --preset NAME`); this tab lists them, edits a
- * preset's name, description, targets and delivery, and deletes it. The REST layer validates every
+ * A preset saves an export's targets, each target's options and up to five delivery profiles once, by
+ * name. A preset is made on the export's **Review** step (**Save as preset**) and applied on its
+ * **Target** step (**Apply a preset**), from **Open in Studio** here (MFX-46.4: the studio opens on the
+ * Source picker and applies the preset once a source is chosen), or from the CLI (`apiome export
+ * --preset NAME`); this tab lists them, edits a preset's name, description, targets and delivery
+ * profiles, and deletes it. The REST layer validates every
  * target's options against its emitter's schema and lists every problem; members without
  * `projects:edit` see the presets read-only.
  *
@@ -198,13 +203,19 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                     </div>
                     <p className="xdlv-profile__dest mono">{targetsSummary(preset.targets)}</p>
                     <p className="xdlv-quiet">
-                      {preset.deliveryProfileName ? `Delivered with ${preset.deliveryProfileName}` : 'No delivery'}
+                      {presetProfileNames(preset).length
+                        ? `Delivered with ${presetProfileNames(preset).join(', ')}`
+                        : 'No delivery'}
                       {preset.description ? ` · ${preset.description}` : ''}
                     </p>
                     <p className="xdlv-quiet">
                       CLI: <code className="mono">apiome export --preset {preset.name} ARTIFACT --out PATH</code>
                     </p>
                     <div className="xdlv-profile__actions">
+                      <a className="xdlv-job__manage" data-testid="xprs-open-studio"
+                        href={`${EXPORT_STUDIO_PATH}?preset=${encodeURIComponent(preset.id)}`}>
+                        Open in Studio
+                      </a>
                       <Button size="sm" variant="ghost" onClick={() => { setEditing(null); setDraft(null); setAutoPreset(preset); }}>
                         Auto-export
                       </Button>
@@ -296,18 +307,34 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                     </Button>
                   </div>
                 </fieldset>
-                <div className="xdlv-field">
-                  <Label htmlFor="xprs-delivery">Delivery profile</Label>
-                  <select id="xprs-delivery" className="hive-control xdlv-select" value={draft.deliveryProfileId}
-                    onChange={(event) => setDraft({ ...draft, deliveryProfileId: event.target.value })}>
-                    <option value="">No delivery</option>
-                    {profiles.map((profile) => (
-                      <option key={profile.id} value={profile.id}>
-                        {profile.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <fieldset className="xdlv-field" data-testid="xprs-delivery">
+                  <legend className="xdlv-legend">Delivery profiles</legend>
+                  <p className="xdlv-hint">
+                    Up to {MAX_PRESET_DELIVERY_PROFILES}, delivered in the order ticked. None ticked: export only.
+                  </p>
+                  {profiles.length === 0 ? (
+                    <p className="xdlv-quiet">No delivery profiles in this workspace.</p>
+                  ) : (
+                    profiles.map((profile) => {
+                      const position = draft.deliveryProfileIds.indexOf(profile.id);
+                      const ticked = position >= 0;
+                      return (
+                        <label key={profile.id} className="xdlv-choice">
+                          <input type="checkbox" checked={ticked}
+                            disabled={!ticked && draft.deliveryProfileIds.length >= MAX_PRESET_DELIVERY_PROFILES}
+                            onChange={(event) => setDraft({
+                              ...draft,
+                              deliveryProfileIds: event.target.checked
+                                ? [...draft.deliveryProfileIds, profile.id]
+                                : draft.deliveryProfileIds.filter((id) => id !== profile.id),
+                            })} />
+                          <span className="xdlv-choice__name">{profile.name}</span>
+                          {ticked ? <span className="xdlv-choice__meta">#{position + 1}</span> : null}
+                        </label>
+                      );
+                    })
+                  )}
+                </fieldset>
                 <div className="xdlv-form__actions">
                   <Button type="button" variant="outline" disabled={saving}
                     onClick={() => { setEditing(null); setDraft(null); }}>

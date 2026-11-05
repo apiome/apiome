@@ -36,6 +36,7 @@ from .export_presets import (
     apply_preset,
     normalize_create,
     normalize_update,
+    preset_profile_ids,
 )
 from .permissions import Action, Resource, enforce_permission
 from .sdk_publish_routes import tenant_id_of, write_audit
@@ -57,8 +58,10 @@ class ExportPresetModel(BaseModel):
         name: Its unique name in the workspace.
         description: What it is for.
         targets: The targets, in order, each with its emit options.
-        delivery_profile_id: The delivery profile the export is delivered with, or null.
+        delivery_profile_id: The first delivery profile the export is delivered with, or null.
         delivery_profile_name: That profile's name (null when none, or the profile was deleted).
+        delivery_profile_ids: Every delivery profile, in the order the export is delivered with them (MFX-46.4).
+        delivery_profile_names: Their names, in the same order.
     """
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
@@ -69,6 +72,8 @@ class ExportPresetModel(BaseModel):
     targets: List[PresetTarget] = Field(default_factory=list)
     delivery_profile_id: Optional[str] = Field(default=None, serialization_alias="deliveryProfileId")
     delivery_profile_name: Optional[str] = Field(default=None, serialization_alias="deliveryProfileName")
+    delivery_profile_ids: List[str] = Field(default_factory=list, serialization_alias="deliveryProfileIds")
+    delivery_profile_names: List[str] = Field(default_factory=list, serialization_alias="deliveryProfileNames")
     created_at: Optional[datetime] = Field(default=None, serialization_alias="createdAt")
     updated_at: Optional[datetime] = Field(default=None, serialization_alias="updatedAt")
     created_by: Optional[str] = Field(default=None, serialization_alias="createdBy")
@@ -90,6 +95,8 @@ def preset_model(row: Dict[str, Any]) -> ExportPresetModel:
         targets=[PresetTarget(target=str(t.get("target")), options=t.get("options") or None)
                  for t in row.get("targets") or []],
         delivery_profile_id=row.get("delivery_profile_id"), delivery_profile_name=row.get("delivery_profile_name"),
+        delivery_profile_ids=preset_profile_ids(row),
+        delivery_profile_names=[str(name) for name in row.get("delivery_profile_names") or []],
         created_at=row.get("created_at"), updated_at=row.get("updated_at"), created_by=row.get("created_by"),
         updated_by=row.get("updated_by"),
     )
@@ -105,18 +112,18 @@ def _name_taken(name: str) -> HTTPException:
 
 
 async def _check_profile(tenant_id: str, preset: NormalizedPreset) -> None:
-    """Refuse (400) a delivery profile the workspace does not have."""
-    profile_id = preset.delivery_profile_id
-    if profile_id and not await asyncio.to_thread(db.get_export_delivery_profile, tenant_id, profile_id):
-        raise HTTPException(status_code=400, detail={
-            "code": "export-preset-invalid",
-            "errors": [f"deliveryProfileId: no delivery profile {profile_id!r} exists in this workspace"],
-        })
+    """Refuse (400) any delivery profile the workspace does not have."""
+    errors: List[str] = []
+    for index, profile_id in enumerate(preset.delivery_profile_ids):
+        if not await asyncio.to_thread(db.get_export_delivery_profile, tenant_id, profile_id):
+            errors.append(f"deliveryProfileIds[{index}]: no delivery profile {profile_id!r} exists in this workspace")
+    if errors:
+        raise HTTPException(status_code=400, detail={"code": "export-preset-invalid", "errors": errors})
 
 
 def _audit_detail(row: Dict[str, Any]) -> Dict[str, Any]:
     return {"name": row.get("name"), "targets": [t.get("target") for t in row.get("targets") or []],
-            "deliveryProfileId": row.get("delivery_profile_id")}
+            "deliveryProfileId": row.get("delivery_profile_id"), "deliveryProfileIds": preset_profile_ids(row)}
 
 
 async def _preset_or_404(tenant_id: str, ref: str) -> Dict[str, Any]:
@@ -204,7 +211,7 @@ async def create_export_preset(
         row = await asyncio.to_thread(
             db.insert_export_preset, tenant_id=tenant_id, name=preset.name, description=preset.description,
             targets=preset.targets, delivery_profile_id=preset.delivery_profile_id,
-            actor_id=get_authenticated_user_id(auth_data),
+            actor_id=get_authenticated_user_id(auth_data), delivery_profile_ids=preset.delivery_profile_ids,
         )
     except pg_errors.UniqueViolation as exc:
         raise _name_taken(preset.name) from exc
@@ -294,13 +301,14 @@ async def update_export_preset(
         preset = await asyncio.to_thread(normalize_update, body, existing)
     except ExportPresetRequestError as exc:
         raise _invalid(exc) from exc
-    if preset.delivery_profile_id != existing.get("delivery_profile_id"):
+    if preset.delivery_profile_ids != preset_profile_ids(existing):
         await _check_profile(tenant_id, preset)
     try:
         row = await asyncio.to_thread(
             db.update_export_preset, tenant_id, str(existing["id"]), name=preset.name,
             description=preset.description, targets=preset.targets,
             delivery_profile_id=preset.delivery_profile_id, actor_id=get_authenticated_user_id(auth_data),
+            delivery_profile_ids=preset.delivery_profile_ids,
         )
     except pg_errors.UniqueViolation as exc:
         raise _name_taken(preset.name) from exc

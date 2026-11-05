@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.527.0",
+    "version": "1.528.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -143399,7 +143399,25 @@
               }
             ],
             "title": "Deliveryprofileid",
-            "description": "A delivery profile (MFX-38.4) the export is delivered with as soon as it completes."
+            "description": "A delivery profile (MFX-38.4) the export is delivered with as soon as it completes. Ignored when `deliveryProfileIds` is sent."
+          },
+          "deliveryProfileIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 5,
+                "description": "Export Preset Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Preset Create schema."
+              }
+            ],
+            "title": "Deliveryprofileids",
+            "description": "Up to 5 delivery profiles (MFX-46.4), in the order the export is delivered with them; takes precedence over `deliveryProfileId`."
           }
         },
         "additionalProperties": false,
@@ -143493,6 +143511,24 @@
             "title": "Deliveryprofilename",
             "description": "Delivery Profile Name."
           },
+          "deliveryProfileIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Deliveryprofileids",
+            "description": "Delivery Profile IDs.",
+            "maxItems": 1000
+          },
+          "deliveryProfileNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Deliveryprofilenames",
+            "description": "Delivery Profile Names.",
+            "maxItems": 1000
+          },
           "createdAt": {
             "anyOf": [
               {
@@ -143559,7 +143595,7 @@
           "name"
         ],
         "title": "ExportPresetModel",
-        "description": "A stored export preset.\n\nAttributes:\n    id: The preset.\n    name: Its unique name in the workspace.\n    description: What it is for.\n    targets: The targets, in order, each with its emit options.\n    delivery_profile_id: The delivery profile the export is delivered with, or null.\n    delivery_profile_name: That profile's name (null when none, or the profile was deleted)."
+        "description": "A stored export preset.\n\nAttributes:\n    id: The preset.\n    name: Its unique name in the workspace.\n    description: What it is for.\n    targets: The targets, in order, each with its emit options.\n    delivery_profile_id: The first delivery profile the export is delivered with, or null.\n    delivery_profile_name: That profile's name (null when none, or the profile was deleted).\n    delivery_profile_ids: Every delivery profile, in the order the export is delivered with them (MFX-46.4).\n    delivery_profile_names: Their names, in the same order."
       },
       "ExportPresetUpdate": {
         "properties": {
@@ -143622,7 +143658,25 @@
               }
             ],
             "title": "Deliveryprofileid",
-            "description": "A new delivery profile; `null` removes delivery from the preset."
+            "description": "A new (single) delivery profile; `null` removes delivery from the preset. Ignored when `deliveryProfileIds` is sent."
+          },
+          "deliveryProfileIds": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 5,
+                "description": "Export Preset Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Preset Update schema."
+              }
+            ],
+            "title": "Deliveryprofileids",
+            "description": "A new ordered list of delivery profiles (MFX-46.4), replacing the preset's; `[]` removes delivery."
           }
         },
         "additionalProperties": false,

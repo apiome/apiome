@@ -18,6 +18,8 @@
  *    still decodes, so links minted before MFX-41.4 keep working.
  *  - `step` — the stepper stop to resume on (MFX-41.4), so a copied link reproduces the session
  *    where its author left it. Omitted for the first (`source`) step.
+ *  - `preset` — an export preset (id or name) the Studio applies once its targets load (MFX-46.4):
+ *    the Presets tab's **Open in Studio**. Without `artifact` the Source picker keeps it.
  *
  * Reading a Studio URL back — validation, graceful degradation, and step clamping — lives in
  * `exportStudioUrlState.ts`, which this module builds on.
@@ -111,6 +113,8 @@ export interface ExportStudioScope {
    * step opens anyway. The Studio clamps this to what the link can actually establish.
    */
   step?: ExportStudioStep | null;
+  /** An export preset (id or name) to apply once the targets load (MFX-46.4). */
+  preset?: string | null;
 }
 
 /**
@@ -130,6 +134,7 @@ export function exportStudioHref(scope: ExportStudioScope): string {
   const encodedOptions = encodeStudioOptions(scope.options);
   if (encodedOptions) params.set(STUDIO_OPTIONS_PARAM, encodedOptions);
   if (scope.step && scope.step !== 'source') params.set(STUDIO_STEP_PARAM, scope.step);
+  if (scope.preset) params.set('preset', scope.preset);
   return `${EXPORT_STUDIO_PATH}?${params.toString()}`;
 }
 
