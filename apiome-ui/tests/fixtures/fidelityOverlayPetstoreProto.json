@@ -1,0 +1,711 @@
+{
+  "_comment": "Petstore (OpenAPI 3.0) exported to Protocol Buffers (proto3): the real fidelity report and preview manifest, captured from apiome-rest for the MFX-45.2 overlay tests and docs screenshots.",
+  "report": {
+    "items": [
+      {
+        "construct": "Category",
+        "kind": "ok",
+        "severity": "info",
+        "message": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "Category.description",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Category.description",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Category.id",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment"
+      },
+      {
+        "construct": "Category.id",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Category.id",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Category.name",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Category.name",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "DELETE /pets/{petId}",
+        "kind": "ok",
+        "severity": "info",
+        "message": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "GET /pets",
+        "kind": "ok",
+        "severity": "info",
+        "message": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "GET /pets/{petId}",
+        "kind": "ok",
+        "severity": "info",
+        "message": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "POST /pets",
+        "kind": "ok",
+        "severity": "info",
+        "message": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "PUT /pets/{petId}",
+        "kind": "ok",
+        "severity": "info",
+        "message": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "Pet",
+        "kind": "ok",
+        "severity": "info",
+        "message": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null
+      },
+      {
+        "construct": "Pet.age",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment"
+      },
+      {
+        "construct": "Pet.age",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Pet.age",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Pet.category",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Pet.category",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Pet.id",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)"
+      },
+      {
+        "construct": "Pet.id",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment"
+      },
+      {
+        "construct": "Pet.id",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Pet.name",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)"
+      },
+      {
+        "construct": "Pet.name",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Pet.tag",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Pet.tag",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      },
+      {
+        "construct": "Pet.weight",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment"
+      },
+      {
+        "construct": "Pet.weight",
+        "kind": "approx",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional"
+      },
+      {
+        "construct": "Pet.weight",
+        "kind": "synth",
+        "severity": "warn",
+        "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+        "target_mapping": "synthesized field number"
+      }
+    ],
+    "kind_counts": {
+      "drop": 0,
+      "approx": 13,
+      "synth": 9,
+      "ok": 7
+    },
+    "severity_counts": {
+      "info": 7,
+      "warn": 22,
+      "critical": 0
+    }
+  },
+  "manifest": {
+    "manifest_hash": "530981964bdc845fb5c7324e99f7db93f51b8218679696f84f8045e130c23195",
+    "target": {
+      "key": "protobuf",
+      "format": "proto3",
+      "label": "Protocol Buffers (proto3)",
+      "paradigm": "rpc",
+      "emitter_version": "1",
+      "apiome_version": "1.6.5",
+      "capability_profile": {
+        "operations": true,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": false,
+        "field_identity": true
+      },
+      "needs_toolchain": false,
+      "available": true,
+      "availability": "available",
+      "registry_version": "1",
+      "documentation": {
+        "specification": "Protocol Buffers Language Guide (proto3)",
+        "version": null,
+        "url": "https://protobuf.dev/programming-guides/proto3/",
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null
+      }
+    },
+    "status_counts": {
+      "retained": 8,
+      "transformed": 0,
+      "approximated": 9,
+      "synthesized": 0,
+      "dropped": 0,
+      "unavailable": 0,
+      "not-applicable": 0
+    },
+    "reason_counts": {
+      "destination_unsupported": 9,
+      "emitter_unsupported": 0,
+      "source_incomplete": 0,
+      "source_parse_limit": 0,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "target_tool_unavailable": 0,
+      "not_applicable": 0
+    },
+    "entities": [
+      {
+        "key": "default",
+        "name": "default",
+        "entity_kind": "service",
+        "parent_key": null,
+        "order": 0,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "aggregated from 5 operation(s): operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 25,
+          "pointer": null
+        },
+        "aggregated": true,
+        "reported": true,
+        "native_name": "default",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "DELETE /pets/{petId}",
+        "name": "deletePet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 1,
+        "description": "Delete a pet",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 27,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "deletePet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "GET /pets",
+        "name": "listPets",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 2,
+        "description": "List all pets",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 29,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "listPets",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "GET /pets/{petId}",
+        "name": "getPetById",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 3,
+        "description": "Get a pet by ID",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 31,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "getPetById",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "POST /pets",
+        "name": "createPet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 4,
+        "description": "Create a new pet",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 33,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "createPet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "PUT /pets/{petId}",
+        "name": "updatePet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 5,
+        "description": "Update a pet by ID",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 35,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "updatePet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category",
+        "name": "Category",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 6,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 5,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Category",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.description",
+        "name": "description",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 7,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 6,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "description",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.id",
+        "name": "id",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 8,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 7,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "id",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.name",
+        "name": "name",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 9,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 8,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "name",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet",
+        "name": "Pet",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 10,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 11,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Pet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.age",
+        "name": "age",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 11,
+        "description": "Age of the pet (must be positive)",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 13,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "age",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.category",
+        "name": "category",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 12,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 14,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "category",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.id",
+        "name": "id",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 13,
+        "description": "Unique identifier for the pet",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 7,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "id",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.name",
+        "name": "name",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 14,
+        "description": "Name of the pet",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 8,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "name",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.tag",
+        "name": "tag",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 15,
+        "description": "Optional tag for categorization",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 20,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "tag",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.weight",
+        "name": "weight",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 16,
+        "description": "Weight in kilograms (must be less than 500)",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 22,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "weight",
+        "native_id": null,
+        "source_location": null
+      }
+    ],
+    "total_entities": 17,
+    "dropped_entities": 0,
+    "files": [
+      {
+        "path": "api.proto",
+        "media_type": "text/x-protobuf",
+        "line_count": 36,
+        "entity_count": 17
+      }
+    ],
+    "page_size": 200,
+    "next_cursor": null,
+    "truncated": false
+  }
+}

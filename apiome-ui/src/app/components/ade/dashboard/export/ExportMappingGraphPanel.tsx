@@ -31,6 +31,13 @@
  * the entity's bundle file at its declaration line and highlights its explorer row (the
  * IXH-4.1 two-way selection), and a code-side click highlights the node here.
  *
+ * **Fidelity overlay (MFX-45.2, #4375).** Handed the export's `LossinessReport`, the panel
+ * paints the report's loss kinds onto the graph (`./fidelityOverlay.ts`): each node wears the
+ * worst kind among its report items — DROP / APPROX / SYNTH / OK, the chips' glyph and
+ * palette — the legend prints the report's own counts and filters by kind, hovering or
+ * focusing a node shows its LossItem detail, and a compact treemap by construct path stands
+ * in for the graph on large APIs. Without a report the panel draws exactly as before.
+ *
  * Motion is `motion-safe:` only; a manifest failure degrades to a quiet notice and never
  * gates the export.
  */
@@ -47,7 +54,26 @@ import {
 import { Button } from '../../../ui/Button';
 import { EvidenceDrawer } from './EvidenceDrawer';
 import { useCapabilityReasons } from './useCapabilityReasons';
-import type { ProjectionStatus } from './exportFidelityPreview';
+import type { LossinessKind, LossinessReport, ProjectionStatus } from './exportFidelityPreview';
+import {
+  buildConstructTreemap,
+  buildFidelityOverlay,
+  entryOverlay,
+  LOSS_KINDS,
+  overlayAriaLabel,
+  overlayMatchesFilter,
+  reconcileOverlayCounts,
+  toggleKind,
+  type NodeOverlay,
+} from './fidelityOverlay';
+import {
+  FidelityKindMarker,
+  FidelityOverlayControls,
+  FidelityOverlayDetail,
+  FidelityTreemap,
+  type FidelityOverlayView,
+  type OverlayDetailSubject,
+} from './FidelityOverlay';
 import type {
   ExportManifestEntity,
   ExportPreviewManifestPage,
@@ -78,6 +104,7 @@ import {
   ProjectionFocusRing,
   ProjectionNodeBox,
   ProjectionOutcomeBox,
+  fitProjectionLabel,
 } from './projectionGraphSvg';
 
 /** Uniform evidence-table row height (px) the windowing assumes; matches the `h-9` row class. */
@@ -118,6 +145,11 @@ export interface ExportMappingGraphPanelProps {
    * always shows its evidence.
    */
   showEvidence?: boolean;
+  /**
+   * The export's lossiness report (MFX-45.2). When present the panel draws the fidelity
+   * overlay — loss kinds on the nodes, a kind filter, hover detail, and the treemap view.
+   */
+  report?: LossinessReport | null;
   /** Navigate back to the target choice — the drawer's safe remediation for a format limit. */
   onChangeTarget?: () => void;
   /** Navigate back to the export options — the drawer's safe remediation for an exclusion. */
@@ -145,6 +177,7 @@ export function ExportMappingGraphPanel({
   onSelectEntity,
   onClearSelection,
   showEvidence = true,
+  report = null,
   onChangeTarget,
   onChangeOptions,
   aggregationThreshold,
@@ -164,6 +197,10 @@ export function ExportMappingGraphPanel({
   const [focusedTableIndex, setFocusedTableIndex] = useState<number | null>(null);
   const nodeRefs = useRef<Map<string, SVGGElement>>(new Map());
   const captionId = useId();
+  // MFX-45.2: the fidelity overlay's own state — the kind filter, the view, the hovered node.
+  const [activeKinds, setActiveKinds] = useState<Set<LossinessKind>>(() => new Set(LOSS_KINDS));
+  const [overlayView, setOverlayView] = useState<FidelityOverlayView>('graph');
+  const [hovered, setHovered] = useState<OverlayDetailSubject | null>(null);
 
   const rows = useMemo(() => buildExportMappingRows(entities), [entities]);
   const view = useMemo(
@@ -184,6 +221,50 @@ export function ExportMappingGraphPanel({
   // falling back to the view's own counts when no manifest identity is available.
   const viewCounts = useMemo(() => viewStatusCounts(view.entries), [view.entries]);
   const legendCounts = page?.status_counts ?? viewCounts;
+
+  // The report joined onto the loaded entities; null keeps the panel's pre-overlay drawing.
+  const overlay = useMemo(
+    () => (report ? buildFidelityOverlay(report, entities) : null),
+    [report, entities],
+  );
+  const overlayReconciliation = useMemo(
+    () => (overlay ? reconcileOverlayCounts(overlay) : null),
+    [overlay],
+  );
+  const treemapGroups = useMemo(
+    () => (report && overlayView === 'treemap' ? buildConstructTreemap(report, entities, activeKinds) : []),
+    [report, entities, activeKinds, overlayView],
+  );
+  /** The overlay of one entry, or null with the overlay off or no item on the entry. */
+  const overlayFor = useCallback(
+    (entry: MappingEntry): NodeOverlay | null => (overlay ? entryOverlay(entry, overlay) : null),
+    [overlay],
+  );
+  /** Whether an entry is dimmed by the kind filter. */
+  const dimmedFor = useCallback(
+    (entry: MappingEntry): boolean => overlay != null && !overlayMatchesFilter(overlayFor(entry), activeKinds),
+    [overlay, overlayFor, activeKinds],
+  );
+  /** The accessible name of an entry — the overlay's facts appended when it is on. */
+  const labelFor = useCallback(
+    (entry: MappingEntry): string =>
+      overlay ? overlayAriaLabel(entry, overlayFor(entry)) : entryAriaLabel(entry),
+    [overlay, overlayFor],
+  );
+  /** Show one entry's report items in the overlay detail. */
+  const hoverEntry = useCallback(
+    (entry: MappingEntry | null) => {
+      if (!overlay) return;
+      if (!entry) {
+        setHovered(null);
+        return;
+      }
+      // A row is named by its construct key (what the report's items name); an aggregate by its label.
+      const key = (entry.row as ExportMappingRow | undefined)?.entity?.key;
+      setHovered({ label: key ?? entry.label, items: overlayFor(entry)?.items ?? [] });
+    },
+    [overlay, overlayFor],
+  );
 
   /** The selected view entry: an entity selection from the step, or a local aggregate. */
   const selectedKey =
@@ -348,6 +429,8 @@ export function ExportMappingGraphPanel({
         <AggregateToggleRow
           key={row.key}
           entry={row.entry}
+          label={labelFor(row.entry)}
+          dimmed={dimmedFor(row.entry)}
           expanded={expandedAggregates.has(row.entry.key)}
           onToggle={() => toggleAggregate(row.entry.key)}
           onSelect={() => selectEntry(row.entry)}
@@ -360,6 +443,8 @@ export function ExportMappingGraphPanel({
       <MappingTableRow
         key={row.key}
         entry={row.entry}
+        label={labelFor(row.entry)}
+        dimmed={dimmedFor(row.entry)}
         selected={row.entry.key === selectedKey}
         onSelect={() => selectEntry(row.entry)}
         ariaRowIndex={ariaRowIndex}
@@ -437,6 +522,21 @@ export function ExportMappingGraphPanel({
         onLoadMore={onLoadMore}
       />
 
+      {overlay && overlayReconciliation && (
+        <FidelityOverlayControls
+          counts={overlay.reportCounts}
+          active={activeKinds}
+          onToggleKind={(kind) => setActiveKinds((current) => toggleKind(current, kind))}
+          onShowAll={() => setActiveKinds(new Set(LOSS_KINDS))}
+          reconciliation={overlayReconciliation}
+          view={overlayView}
+          onChangeView={(next) => {
+            setOverlayView(next);
+            setHovered(null);
+          }}
+        />
+      )}
+
       {view.aggregated && (
         <p
           className="xstd-note"
@@ -461,92 +561,119 @@ export function ExportMappingGraphPanel({
       )}
 
       {/* The graph. Its accessible name is the table caption — the text alternative. */}
-      <div className="xstd-map__frame">
-        <svg
-          data-testid="export-mapping-svg"
-          role="group"
-          aria-labelledby={captionId}
-          width={layout.width}
-          height={layout.height}
-          viewBox={`0 0 ${layout.width} ${layout.height}`}
-          className="block"
-        >
-          <ProjectionColumnHeading x={layout.columns.source} label="Source construct" />
-          <ProjectionColumnHeading x={layout.columns.canonical} label="Canonical entity" />
-          <ProjectionColumnHeading x={layout.columns.outcome} label={`In ${targetLabel}`} />
+      {overlay && overlayView === 'treemap' ? (
+        <FidelityTreemap
+          groups={treemapGroups}
+          selectedEntityKey={selectedEntityKey}
+          onSelectEntity={(entity) => {
+            setSelectedAggregateKey(null);
+            onSelectEntity(entity);
+          }}
+          onHover={setHovered}
+          label={`Fidelity findings for ${targetLabel} by construct path — one tile per construct, sized by its findings`}
+        />
+      ) : (
+        <div className="xstd-map__frame">
+          <svg
+            data-testid="export-mapping-svg"
+            role="group"
+            aria-labelledby={captionId}
+            width={layout.width}
+            height={layout.height}
+            viewBox={`0 0 ${layout.width} ${layout.height}`}
+            className="block"
+          >
+            <ProjectionColumnHeading x={layout.columns.source} label="Source construct" />
+            <ProjectionColumnHeading x={layout.columns.canonical} label="Canonical entity" />
+            <ProjectionColumnHeading x={layout.columns.outcome} label={`In ${targetLabel}`} />
 
-          {layout.lanes.map((lane) => (
-            <g key={lane.key} aria-hidden>
-              <text
-                x={layout.columns.outcome}
-                y={lane.headerY}
-                fontSize={SVG_TEXT_SIZE.label}
-                className="xstd-axis-label"
-              >
-                {lane.label} ({lane.count})
-              </text>
-            </g>
-          ))}
-
-          {layout.entries.map((placed) => (
-            <ProjectionEntryConnectors key={placed.entry.key} placed={placed} />
-          ))}
-
-          {layout.entries.map((placed, index) => {
-            const { entry } = placed;
-            const isSelected = entry.key === selectedKey;
-            const p = statusPresentation(entry.status);
-            return (
-              <g
-                key={entry.key}
-                data-testid={`export-mapping-node-${entry.key}`}
-                data-status={entry.status}
-                role="button"
-                tabIndex={index === graphFocusIndex ? 0 : -1}
-                aria-label={entryAriaLabel(entry)}
-                aria-pressed={isSelected}
-                ref={(el) => {
-                  if (el) nodeRefs.current.set(entry.key, el);
-                  else nodeRefs.current.delete(entry.key);
-                }}
-                onClick={() => selectEntry(entry)}
-                onFocus={() => {
-                  setFocusIndex(index);
-                  setFocusedNodeKey(entry.key);
-                }}
-                onBlur={() => setFocusedNodeKey((prev) => (prev === entry.key ? null : prev))}
-                onKeyDown={(event) => handleNodeKeyDown(event, index)}
-                className="cursor-pointer outline-none"
-              >
-                {/* Visible keyboard-focus outline (WCAG 2.4.7) — outline-none removes the UA's. */}
-                {focusedNodeKey === entry.key && (
-                  <ProjectionFocusRing placed={placed} testId="export-mapping-focus-ring" />
-                )}
-                {placed.sourceBox && (
-                  <ProjectionNodeBox
-                    box={placed.sourceBox}
-                    label={entry.row?.sourceLabel ?? ''}
-                    mono
-                    muted
-                  />
-                )}
-                <ProjectionNodeBox
-                  box={placed.canonicalBox}
-                  label={entry.label}
-                  mono
-                  selected={isSelected}
-                />
-                <ProjectionOutcomeBox
-                  box={placed.outcomeBox}
-                  presentation={p}
-                  selected={isSelected}
-                  location={entry.kind === 'row' ? (entry.row?.targetLocation ?? null) : null}
-                />
+            {layout.lanes.map((lane) => (
+              <g key={lane.key} aria-hidden>
+                <text
+                  x={layout.columns.outcome}
+                  y={lane.headerY}
+                  fontSize={SVG_TEXT_SIZE.label}
+                  className="xstd-axis-label"
+                >
+                  {lane.label} ({lane.count})
+                </text>
               </g>
-            );
-          })}
-        </svg>
-      </div>
+            ))}
+
+            {layout.entries.map((placed) => (
+              <ProjectionEntryConnectors key={placed.entry.key} placed={placed} />
+            ))}
+
+            {layout.entries.map((placed, index) => {
+              const { entry } = placed;
+              const isSelected = entry.key === selectedKey;
+              const p = statusPresentation(entry.status);
+              const node = overlayFor(entry);
+              const dimmed = dimmedFor(entry);
+              return (
+                <g
+                  key={entry.key}
+                  data-testid={`export-mapping-node-${entry.key}`}
+                  data-status={entry.status}
+                  data-loss-kind={overlay ? (node?.kind ?? 'none') : undefined}
+                  data-dimmed={overlay ? dimmed : undefined}
+                  role="button"
+                  tabIndex={index === graphFocusIndex ? 0 : -1}
+                  aria-label={labelFor(entry)}
+                  aria-pressed={isSelected}
+                  ref={(el) => {
+                    if (el) nodeRefs.current.set(entry.key, el);
+                    else nodeRefs.current.delete(entry.key);
+                  }}
+                  onClick={() => selectEntry(entry)}
+                  onFocus={() => {
+                    setFocusIndex(index);
+                    setFocusedNodeKey(entry.key);
+                    hoverEntry(entry);
+                  }}
+                  onBlur={() => {
+                    setFocusedNodeKey((prev) => (prev === entry.key ? null : prev));
+                    hoverEntry(null);
+                  }}
+                  onMouseEnter={() => hoverEntry(entry)}
+                  onMouseLeave={() => hoverEntry(null)}
+                  onKeyDown={(event) => handleNodeKeyDown(event, index)}
+                  className={cn('cursor-pointer outline-none', dimmed && 'xstd-fov-dimmed')}
+                >
+                  {/* Visible keyboard-focus outline (WCAG 2.4.7) — outline-none removes the UA's. */}
+                  {focusedNodeKey === entry.key && (
+                    <ProjectionFocusRing placed={placed} testId="export-mapping-focus-ring" />
+                  )}
+                  {placed.sourceBox && (
+                    <ProjectionNodeBox
+                      box={placed.sourceBox}
+                      label={entry.row?.sourceLabel ?? ''}
+                      mono
+                      muted
+                    />
+                  )}
+                  <ProjectionNodeBox
+                    box={placed.canonicalBox}
+                    // The overlay's marker takes the box's right end; the label yields to it.
+                    label={node ? fitProjectionLabel(entry.label, 21) : entry.label}
+                    mono
+                    selected={isSelected}
+                  />
+                  {node && <FidelityKindMarker box={placed.canonicalBox} node={node} />}
+                  <ProjectionOutcomeBox
+                    box={placed.outcomeBox}
+                    presentation={p}
+                    selected={isSelected}
+                    location={entry.kind === 'row' ? (entry.row?.targetLocation ?? null) : null}
+                  />
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      )}
+
+      {overlay && <FidelityOverlayDetail subject={hovered} />}
 
       {/* Selection → the existing export evidence drawer, announced politely. */}
       <div aria-live="polite">
@@ -727,12 +854,18 @@ function StatusText({ status }: { status: ProjectionStatus }) {
 /** One individual mapping row of the text-alternative table. */
 function MappingTableRow({
   entry,
+  label,
+  dimmed,
   selected,
   onSelect,
   ariaRowIndex,
   onFocusRow,
 }: {
   entry: MappingEntry;
+  /** The accessible name — the graph node's own. */
+  label: string;
+  /** Dimmed by the fidelity overlay's kind filter. */
+  dimmed: boolean;
   selected: boolean;
   onSelect: () => void;
   ariaRowIndex: number;
@@ -744,6 +877,7 @@ function MappingTableRow({
       aria-rowindex={ariaRowIndex}
       className={cn(
         'xstd-map__row h-9 whitespace-nowrap last:border-0',
+        dimmed && 'xstd-fov-dimmed',
       )}
       data-testid={`export-mapping-table-row-${entry.key}`}
     >
@@ -756,7 +890,7 @@ function MappingTableRow({
           onClick={onSelect}
           onFocus={onFocusRow}
           aria-pressed={selected}
-          aria-label={entryAriaLabel(entry)}
+          aria-label={label}
           data-testid={`export-mapping-row-select-${entry.key}`}
           className="xstd-map__cell xstd-map__cell--mono underline-offset-2 hover:underline"
         >
@@ -781,6 +915,8 @@ function MappingTableRow({
 /** An aggregate's row: expand lists its members in place; selecting opens the drawer. */
 function AggregateToggleRow({
   entry,
+  label,
+  dimmed,
   expanded,
   onToggle,
   onSelect,
@@ -788,6 +924,10 @@ function AggregateToggleRow({
   onFocusRow,
 }: {
   entry: MappingEntry;
+  /** The accessible name — the graph node's own. */
+  label: string;
+  /** Dimmed by the fidelity overlay's kind filter. */
+  dimmed: boolean;
   expanded: boolean;
   onToggle: () => void;
   onSelect: () => void;
@@ -796,7 +936,10 @@ function AggregateToggleRow({
 }) {
   const members = entry.members ?? [];
   return (
-    <tr aria-rowindex={ariaRowIndex} className="xstd-map__row h-9 whitespace-nowrap">
+    <tr
+      aria-rowindex={ariaRowIndex}
+      className={cn('xstd-map__row h-9 whitespace-nowrap', dimmed && 'xstd-fov-dimmed')}
+    >
       <td className="px-2 py-1.5">
         <StatusText status={entry.status} />
       </td>
@@ -806,7 +949,7 @@ function AggregateToggleRow({
           aria-expanded={expanded}
           onClick={onToggle}
           onFocus={onFocusRow}
-          aria-label={entryAriaLabel(entry)}
+          aria-label={label}
           data-testid={`export-mapping-aggregate-toggle-${entry.lane}-${entry.status}`}
           className="underline-offset-2 hover:underline"
         >

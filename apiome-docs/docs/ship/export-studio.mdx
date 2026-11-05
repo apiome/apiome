@@ -204,12 +204,47 @@ When it completes:
   **“Generate”**, or choose one under **Deliveries** and **click “Deliver now”**. The **Delivery** tab
   manages the profiles; see [Deliver an export](./deliver-an-export.mdx).
 - **Artifact entities**, **Problems**, the mapping graph and **What … loses, worst first** explain
-  the result; **“Run round-trip check”** reads the file back and compares it with the source (see
+  the result. The **Fidelity overlay** paints the fidelity report onto the mapping graph (see
+  [See where the export loses fidelity](#see-where-the-export-loses-fidelity)), and **“Run
+  round-trip check”** reads the file back and compares it with the source (see
   [Check a round trip](#check-a-round-trip)).
 - **Test drive** tries the file with the tools that fit its format (see [Test drive](#test-drive)).
 
 The viewer, the file tree, the problem markers and the large-file limits are described on
 [Read an exported file](./read-an-exported-file.mdx).
+
+### See where the export loses fidelity
+
+The mapping graph, **What became of each entity in *target***, wears the fidelity report as an
+overlay. The **Fidelity overlay** row above the graph has one chip per loss kind, with the report's
+own count:
+
+| Chip | Means |
+| --- | --- |
+| **✕ DROP** | The construct is not in the exported file. |
+| **≈ APPROX** | The construct is there, but represented imperfectly. |
+| **✚ SYNTH** | Something was invented to satisfy the target, such as a protobuf field number. |
+| **✓ OK** | The construct was carried over unchanged. |
+
+Each entity in the graph carries a small pill with the glyph of its worst finding and how many
+findings it has: a Pet.id field exported to Protocol Buffers shows **≈ 3** (two approximations and a
+synthesized field number).
+
+- **Hover or focus an entity** to read its findings below the graph: each one's kind, severity,
+  message and how it lands in the target.
+- **Click a kind chip** to switch that kind off; the entities without any finding of the kinds left
+  on fade out, in the graph and in the table. **“Show all kinds”** turns them all back on. The chips
+  always show the report's counts, whatever is filtered.
+- **Click “Treemap”** for a compact view of a large API: one tile per construct, grouped by type,
+  service or channel, sized by its number of findings and marked with the glyph of its worst one.
+  **Click a tile** to select its entity; **“Graph”** goes back.
+
+The line under the chips says how many findings there are. When a finding names a construct the
+graph does not draw (yet, or at all), it says how many, and the treemap still shows them.
+
+<Screenshot id="export-fidelity-overlay" alt="The fidelity overlay on a Protocol Buffers export of the Petstore: 13 APPROX, 9 SYNTH and 7 OK findings, every field marked with its findings, and the three findings for Pet.id below the graph" />
+
+<Screenshot id="export-fidelity-treemap" alt="The same findings as a treemap: a Pet group, a Category group and the default service, one tile per construct" />
 
 ### Test drive
 

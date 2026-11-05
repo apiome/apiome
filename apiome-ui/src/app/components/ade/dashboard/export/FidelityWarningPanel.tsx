@@ -355,7 +355,7 @@ function TypedAcknowledgement({
  * The badge's screen-reader text expands the three-letter jargon ("dropped — not representable in
  * the target") so the meaning does not depend on having read a legend.
  */
-function FidelityReportRow({ item }: { item: LossItem }) {
+export function FidelityReportRow({ item }: { item: LossItem }) {
   return (
     <li className="vdlg-export__report-row">
       <span

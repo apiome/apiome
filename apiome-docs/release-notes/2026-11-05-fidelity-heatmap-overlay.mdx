@@ -1,0 +1,23 @@
+---
+slug: fidelity-heatmap-overlay
+title: See where an export loses fidelity
+description: "The export mapping graph now shows each construct's fidelity findings."
+authors: [apiome]
+---
+
+On **6. Review & Generate** in the Export studio, the mapping graph now carries the export's fidelity
+report as an overlay, so you can see **where** the API loses fidelity, not only how much. See
+[See where the export loses fidelity](/ship/export-studio#see-where-the-export-loses-fidelity).
+
+{/* truncate */}
+
+- **On every entity:** a pill with the glyph of its worst finding (**✕ DROP**, **≈ APPROX**, **✚ SYNTH**
+  or **✓ OK**) and how many findings it has, in the same colours and glyphs as the report's chips.
+- **Counts you can trust:** the chips above the graph give the fidelity report's own counts, and the
+  line under them says how many findings sit on constructs the graph does not draw.
+- **Filter by kind:** switch a kind off and every entity without a finding of the kinds left on fades
+  out, in the graph and in its table.
+- **Details on hover:** hover or focus an entity to read each of its findings, with how it lands in
+  the target.
+- **Treemap:** for a large API, one tile per construct grouped by type, service or channel, sized by
+  its findings. Click a tile to select its entity.
