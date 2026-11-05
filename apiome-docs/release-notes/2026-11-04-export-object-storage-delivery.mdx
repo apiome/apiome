@@ -1,0 +1,21 @@
+---
+slug: export-object-storage-delivery
+title: Deliver exports to object storage
+description: "Upload a finished export to an S3-compatible bucket with a predictable layout."
+authors: [apiome]
+---
+
+A finished export can now go straight into an S3-compatible bucket (AWS S3, MinIO, Cloudflare R2 or
+Ceph), under a prefix partitioned by artifact, version and target. See
+[Deliver an export to object storage](/ship/deliver-an-export-to-object-storage).
+
+{/* truncate */}
+
+- **A predictable layout:** files land at `<prefix>/<artifact>/<version>/<target>/`, and you pick which
+  partitions to use and in what order.
+- **A content-addressed manifest:** written last, it lists every object with its SHA-256 and is named
+  after its own hash, so the same export always writes the same manifest.
+- **Keys in the vault:** bucket credentials are stored once per workspace, sealed on arrival, and never shown or
+  logged again. Only the last four characters of the key id are shown.
+- **Guarded endpoints:** a custom endpoint that resolves to a private network is refused.
+- **Recorded on the job:** every delivery, including failed ones, lists the objects it wrote.
