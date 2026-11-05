@@ -17,6 +17,24 @@ every format, so a new export format is available to agents as soon as Apiome su
 Both need an MCP API key. They export within the key's own workspace, and only artifacts the key's
 scope includes.
 
+## When to use it
+
+| You want to… | Use |
+| --- | --- |
+| Let an agent convert an API to another format inside a conversation or a coding task | `version.export` |
+| Let an agent choose the best format for a source before exporting | `export.targets`, then `version.export` |
+| Export by hand, or many formats, items or versions at once | The [Export dialog](./export-dialog.mdx), [`apiome export`](./export-from-the-cli.md) or [several at once](./export-several-at-once.mdx) |
+
+## How the pieces fit
+
+- **One pipeline.** The tools run the same export job as the app and the CLI. The MCP server checks the
+  key and its scope, then asks apiome-rest to run the export over its internal routes
+  (`POST /v1/internal/mcp/export/targets` and `…/run`, guarded by the internal service token).
+- **The same warnings.** The fidelity report and its `advisory` are the ones a person sees. An export
+  that loses anything waits for `allow_lossy: true`, as the CLI waits for `--force`.
+- **No drift.** A parity check keeps the targets, options, report and advisory identical across the
+  app, Browse, the CLI and MCP.
+
 ## Pick a target
 
 Call `export.targets` with the artifact's id, and a `version` (a revision id or label) unless you want
@@ -101,3 +119,10 @@ The MCP server runs exports through apiome-rest. On a self-hosted install, set o
 Without them, both tools answer that export over MCP is not configured. `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`
 on apiome-rest sets the inline limit (default 262144). Every argument and field is in the
 [MCP tool reference](/reference/mcp/tools#export-targets).
+
+## Where next
+
+- [Connect an MCP host](../getting-started/connect-an-mcp-host.mdx) — give an agent an MCP API key
+- [Understand export fidelity](./export-fidelity.md) — read the report and the advisory
+- [How an export runs](./export-jobs.mdx) — the job behind `version.export`
+- [MCP tool reference](/reference/mcp/tools#version-export) — every argument and field
