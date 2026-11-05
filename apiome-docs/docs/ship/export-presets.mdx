@@ -1,0 +1,120 @@
+---
+title: Save an export as a preset
+description: Save targets, their options and delivery once, then apply them by name.
+sidebar_position: 5.295
+---
+
+An export is a choice of targets, each target's options and, often, where the result is delivered.
+When you run the same combination again — a nightly sync, a release export — save it as a **preset** and
+apply it by name instead of choosing everything again. A preset belongs to the workspace and works in
+**Export studio**, the CLI and the API.
+
+A preset holds:
+
+- **Targets:** one target, or up to 16 for an export with one folder per target.
+- **Options:** each target's options. They are checked against that target's options when the preset is
+  saved, and again every time it is applied, so a preset an emitter has since outgrown is refused rather
+  than guessed at.
+- **Delivery:** optionally, a [delivery profile](./export-delivery-profiles.mdx) the export is delivered
+  with as soon as it finishes.
+
+The source — which item, which version — is never part of a preset. You choose it each time.
+
+## Before you start
+
+- **The `projects:edit` permission** to save, change or delete a preset. Reading presets needs
+  `projects:view`.
+- **Applying a preset** needs whatever the export needs. A preset with a delivery profile also needs
+  `versions:publish`, as any delivery does.
+
+## Save a preset in Export studio
+
+1. Open an export in **Export studio** and choose its target and options (or tick **Several targets**).
+2. On **Review**, optionally tick a profile under **Deliver when it completes**.
+3. Click **Save as preset**, enter a **Preset name** and a **Description**, and click **Save preset**.
+
+The preset keeps the targets, the options you changed and the first ticked delivery profile.
+
+## Apply a preset in Export studio
+
+On the **Target** step, choose a preset under **Apply a preset** and click **Apply**:
+
+- **A one-target preset** selects that target with its options.
+- **A multi-target preset** ticks its targets under **Several targets**, each with its options.
+- **Its delivery profile** is ticked under **Deliver when it completes** on **Review**.
+
+A target this source can't export to is named under the picker and left out. Continue to **Verify** and
+**Generate** as usual; you can still change anything before you generate.
+
+## Manage presets
+
+The **Presets** tab of **Export studio** lists the workspace's presets, each with its targets, its delivery
+and the CLI command that runs it.
+
+<Screenshot id="export-studio-presets" alt="The Presets tab of Export studio: nightly-sync with two targets, OpenAPI with its version option and Protocol Buffers, delivered with the lake profile, and release-graphql with one target and no delivery" />
+
+- **Edit** changes the **Name**, the **Description**, the **Targets** — each a format and its **Options
+  (JSON)**, added with **Add target** — and the **Delivery profile**. Click **Save changes**; every problem
+  is listed at once.
+- **Delete** asks you to confirm with **Delete _name_**. Exports already started with the preset are not
+  affected.
+
+<Screenshot id="export-studio-preset-edit" alt="Editing nightly-sync: its name and description, two targets with their JSON options, Add target, and the lake delivery profile" />
+
+Members without `projects:edit` see the presets read-only.
+
+## Use presets from the CLI
+
+```bash
+# Save a preset: targets in order, TARGET:KEY=VALUE options (values parsed as JSON), a delivery profile
+apiome export presets create nightly-sync \
+  --target openapi --option 'openapi:openapi_version="3.0"' \
+  --target protobuf --deliver data-lake --description "Every night, for the data lake"
+
+# Run it on an item (or --items for several)
+apiome export --preset nightly-sync orders --version 1.4.0 --out ./orders-export
+```
+
+A one-target preset writes its file like `apiome export <format>`; a multi-target preset or `--items`
+writes an archive with a folder per target and prints each outcome. `--deliver PROFILE` adds a delivery
+after the preset's own, and every delivery's outcome prints after the download.
+
+`apiome export presets` also has `list`, `show`, `update` (`--target` replaces the targets; `--no-deliver`
+removes delivery) and `delete`. Every option is in the
+[CLI reference](/reference/cli/export#export-presets).
+
+## Use presets from the API
+
+Save a preset with its targets and options:
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/presets" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"name": "nightly-sync",
+       "targets": [{"target": "openapi", "options": {"openapi_version": "3.0"}}, {"target": "protobuf"}],
+       "deliveryProfileId": "<profile id>"}'
+```
+
+| Answer | Why |
+| --- | --- |
+| `400` | A target is unknown, an option isn't valid for its target, two targets are the same format, or the delivery profile doesn't exist. Every problem is listed in `errors`. |
+| `409` | Another preset in the workspace already has that name. |
+
+Apply it by naming it, by name or id, when you start a job — instead of `target`, `targets` and `options`:
+
+```bash
+curl -X POST "$APIOME/v1/export/acme/jobs" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"artifact": "<artifact id>", "version": "1.4.0", "preset": "nightly-sync"}'
+```
+
+The preset's targets and options stand in for the job's, and its delivery profile goes first among
+`delivery_profiles`. Everything else — the source, `version`, `items`, `overlays`, `confirm`, `dry_run` —
+is the request's own; a dry run isn't delivered. An unknown preset, or one whose options no longer validate,
+is refused with `400`.
+
+`GET /v1/export/acme/presets` lists presets, `GET …/presets/{preset}` reads one by id or name,
+`PATCH …/presets/{id}` changes one (`targets` is replaced whole; `"deliveryProfileId": null` removes
+delivery) and `DELETE …/presets/{id}` removes one. Saving, changing and deleting are recorded in the audit
+log as `export.preset.created`, `.updated` and `.deleted`. Every field is in the
+[export presets reference](/reference/rest/export-presets).

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.517.0
+  version: 1.518.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -62715,6 +62715,12 @@ paths:
         the same ``overlays`` to ``POST …/verify`` so its snapshot matches the job''s.
 
 
+        **Presets (MFX-39.3):** ``preset`` names a saved export preset (by id or name):
+        its targets and their options stand in for ``target`` / ``targets`` / ``options``,
+        and its delivery profile is added to ``delivery_profiles``. ``400`` for an unknown
+        preset or one whose targets no longer validate.
+
+
         **Delivery (MFX-38.4):** ``delivery_profiles`` lists delivery profiles the export
         is delivered with as soon as it completes — each through its channel, recorded
         on the job (``GET …/jobs/{job_id}/deliveries``) and as an ``EXPORT_DELIVERED``
@@ -64474,6 +64480,344 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listeverydeliveryofanexportjobresponse422.
+  /v1/export/{tenant_slug}/presets:
+    post:
+      tags:
+      - export-presets
+      summary: Store an export preset
+      description: 'Saves a named export combination for the workspace: 1–16 `targets`,
+        each with its emit `options` (validated against that emitter''s options schema,
+        MFX-1.4; no two targets may resolve to the same format), and an optional `deliveryProfileId`
+        (MFX-38.4) the export is delivered with on completion. Apply it with `POST /v1/export/{tenant}/jobs`
+        and `"preset": "<name or id>"`. Requires `projects:edit`; audited as `export.preset.created`.
+        `400` for an invalid field, target, option or unknown delivery profile (every
+        problem in `errors`); `409` for a name already in use.'
+      operationId: create_export_preset_v1_export__tenant_slug__presets_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storeanexportpresetauthorization schema.
+          - type: 'null'
+            description: Storeanexportpresetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Storeanexportpreset Xapikey schema.
+          - type: 'null'
+            description: Storeanexportpreset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportPresetCreate'
+              description: Request body for storeanexportpresetrequest.
+        description: Request body for store an export preset.
+      responses:
+        '201':
+          description: Successful response for store an export preset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPresetModel'
+                description: Response payload for storeanexportpresetresponse201.
+        '400':
+          description: Invalid name, target, option or delivery profile.
+        '409':
+          description: A preset of that name exists.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for storeanexportpresetresponse422.
+    get:
+      tags:
+      - export-presets
+      summary: List the workspace's export presets
+      description: Every export preset, by name. Requires `projects:view`.
+      operationId: list_export_presets_v1_export__tenant_slug__presets_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacesexportpresetsauthorization schema.
+          - type: 'null'
+            description: Listtheworkspacesexportpresetsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheworkspacesexportpresets Xapikey schema.
+          - type: 'null'
+            description: Listtheworkspacesexportpresets Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the workspace's export presets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPresetListResponse'
+                description: Response payload for listtheworkspacesexportpresetsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheworkspacesexportpresetsresponse422.
+  /v1/export/{tenant_slug}/presets/{preset}:
+    get:
+      tags:
+      - export-presets
+      summary: Read an export preset
+      description: One export preset, by id or name. Requires `projects:view`. `404`
+        when the workspace has no such preset.
+      operationId: get_export_preset_v1_export__tenant_slug__presets__preset__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: preset
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Preset
+          description: Preset schema.
+        description: Path parameter identifying the preset segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanexportpresetauthorization schema.
+          - type: 'null'
+            description: Readanexportpresetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Readanexportpreset Xapikey schema.
+          - type: 'null'
+            description: Readanexportpreset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for read an export preset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPresetModel'
+                description: Response payload for readanexportpresetresponse200.
+        '404':
+          description: Unknown preset for this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for readanexportpresetresponse422.
+  /v1/export/{tenant_slug}/presets/{preset_id}:
+    patch:
+      tags:
+      - export-presets
+      summary: Change an export preset
+      description: Changes a preset's `name`, `description`, `targets` (replaced whole,
+        validated again) or `deliveryProfileId` (`null` removes delivery). Omitted fields
+        keep their value. Requires `projects:edit`; audited as `export.preset.updated`.
+      operationId: update_export_preset_v1_export__tenant_slug__presets__preset_id__patch
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: preset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Preset Id
+          description: Preset Id schema.
+        description: Path parameter identifying the preset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changeanexportpresetauthorization schema.
+          - type: 'null'
+            description: Changeanexportpresetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Changeanexportpreset Xapikey schema.
+          - type: 'null'
+            description: Changeanexportpreset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportPresetUpdate'
+              description: Request body for changeanexportpresetrequest.
+        description: Request body for change an export preset.
+      responses:
+        '200':
+          description: Successful response for change an export preset.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportPresetModel'
+                description: Response payload for changeanexportpresetresponse200.
+        '400':
+          description: Invalid name, target, option or delivery profile.
+        '404':
+          description: Unknown preset for this tenant.
+        '409':
+          description: Another preset has that name.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for changeanexportpresetresponse422.
+    delete:
+      tags:
+      - export-presets
+      summary: Delete an export preset
+      description: Removes the preset (by id or name). Exports already started with
+        it are unaffected. Requires `projects:edit`; audited as `export.preset.deleted`.
+        `404` when the workspace has no such preset.
+      operationId: delete_export_preset_v1_export__tenant_slug__presets__preset_id__delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: preset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Preset Id
+          description: Preset Id schema.
+        description: Path parameter identifying the preset id segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanexportpresetauthorization schema.
+          - type: 'null'
+            description: Deleteanexportpresetauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deleteanexportpreset Xapikey schema.
+          - type: 'null'
+            description: Deleteanexportpreset Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '204':
+          description: Successful response for delete an export preset.
+        '404':
+          description: Unknown preset for this tenant.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deleteanexportpresetresponse422.
   /v1/export/{tenant_slug}/jobs/{job_id}/attestation:
     get:
       tags:
@@ -103263,6 +103607,20 @@ components:
             and audited. 1–5 distinct ids; needs `versions:publish`. Not combinable with
             ``dry_run``. A delivery''s outcome never changes the job''s state: each adds
             an `EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event.'
+        preset:
+          anyOf:
+          - type: string
+            maxLength: 120
+            description: Request body for export job start.
+          - type: 'null'
+            description: Request body for export job start.
+          title: Preset
+          description: An export preset (MFX-39.3, `GET /v1/export/{tenant}/presets`),
+            by id or name. Its targets and their options stand in for ``target`` / ``targets``
+            / ``options`` — which must then be left out — and its delivery profile is
+            added ahead of ``delivery_profiles``. Everything else (the source, ``version``,
+            ``items``, ``overlays``, ``confirm``, ``dry_run``) is this request's own.
+            `400` for an unknown preset or one whose targets no longer validate.
       additionalProperties: false
       type: object
       title: ExportJobStartRequest
@@ -104401,6 +104759,190 @@ components:
       title: ExportPreflightTarget
       description: 'One ranked export target: its inputs, its readiness, and why it
         ranks where it does.'
+    ExportPresetCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+          description: A name unique in the workspace (`nightly-sync`), up to 120 characters.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Export Preset Create schema.
+          - type: 'null'
+            description: Export Preset Create schema.
+          title: Description
+          description: What the preset is for.
+        targets:
+          items:
+            $ref: '#/components/schemas/PresetTarget'
+          type: array
+          maxItems: 16
+          minItems: 1
+          title: Targets
+          description: 'The targets, in order: one is a single-target export, 2–16 a multi-target
+            export with one directory per target.'
+        deliveryProfileId:
+          anyOf:
+          - type: string
+            description: Export Preset Create schema.
+          - type: 'null'
+            description: Export Preset Create schema.
+          title: Deliveryprofileid
+          description: A delivery profile (MFX-38.4) the export is delivered with as soon
+            as it completes.
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - targets
+      title: ExportPresetCreate
+      description: 'A new preset: ``POST /v1/export/{tenant}/presets``.'
+    ExportPresetListResponse:
+      properties:
+        presets:
+          items:
+            $ref: '#/components/schemas/ExportPresetModel'
+          type: array
+          title: Presets
+          description: Presets.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      title: ExportPresetListResponse
+      description: A workspace's export presets, by name.
+    ExportPresetModel:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        description:
+          anyOf:
+          - type: string
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Description
+          description: Free-text description.
+        targets:
+          items:
+            $ref: '#/components/schemas/PresetTarget'
+          type: array
+          title: Targets
+          description: Targets.
+          maxItems: 1000
+        deliveryProfileId:
+          anyOf:
+          - type: string
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Deliveryprofileid
+          description: Delivery Profile ID.
+        deliveryProfileName:
+          anyOf:
+          - type: string
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Deliveryprofilename
+          description: Delivery Profile Name.
+        createdAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Createdat
+          description: Created At.
+        updatedAt:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Updatedat
+          description: Updated At.
+        createdBy:
+          anyOf:
+          - type: string
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Createdby
+          description: Created By.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Export Preset Model schema.
+          - type: 'null'
+            description: Export Preset Model schema.
+          title: Updatedby
+          description: Updated By.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - name
+      title: ExportPresetModel
+      description: "A stored export preset.\n\nAttributes:\n    id: The preset.\n    name:\
+        \ Its unique name in the workspace.\n    description: What it is for.\n    targets:\
+        \ The targets, in order, each with its emit options.\n    delivery_profile_id:\
+        \ The delivery profile the export is delivered with, or null.\n    delivery_profile_name:\
+        \ That profile's name (null when none, or the profile was deleted)."
+    ExportPresetUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+            description: Export Preset Update schema.
+          - type: 'null'
+            description: Export Preset Update schema.
+          title: Name
+          description: A new name.
+        description:
+          anyOf:
+          - type: string
+            description: Export Preset Update schema.
+          - type: 'null'
+            description: Export Preset Update schema.
+          title: Description
+          description: A new description; `""` clears it.
+        targets:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/PresetTarget'
+            type: array
+            maxItems: 16
+            minItems: 1
+            description: Export Preset Update schema.
+          - type: 'null'
+            description: Export Preset Update schema.
+          title: Targets
+          description: A new target list (replaces it).
+        deliveryProfileId:
+          anyOf:
+          - type: string
+            description: Export Preset Update schema.
+          - type: 'null'
+            description: Export Preset Update schema.
+          title: Deliveryprofileid
+          description: A new delivery profile; `null` removes delivery from the preset.
+      additionalProperties: false
+      type: object
+      title: ExportPresetUpdate
+      description: 'A change to a preset: ``PATCH /v1/export/{tenant}/presets/{id}``.
+        Omitted fields keep their value.'
     ExportPreviewEntity:
       properties:
         key:
@@ -128564,6 +129106,29 @@ components:
       - staleIfErrorSeconds
       title: PresetRuleBody
       description: One rule a preset contributes, with every field stated.
+    PresetTarget:
+      properties:
+        target:
+          type: string
+          title: Target
+          description: Target emitter key (`openapi`) or format key (`openapi-3.1`).
+          example: example
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Preset Target schema.
+          - type: 'null'
+            description: Preset Target schema.
+          title: Options
+          description: Emit options for this target (MFX-1.4), validated against its schema;
+            null or empty applies its defaults.
+      additionalProperties: false
+      type: object
+      required:
+      - target
+      title: PresetTarget
+      description: One target of a preset, with its emit options.
     PresetsResponse:
       properties:
         presets:

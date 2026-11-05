@@ -18,7 +18,13 @@ Export a version to a target format via the emitter registry. Registered targets
 apiome export [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`asyncapi`](#export-asyncapi), [`avro`](#export-avro), [`deliver`](#export-deliver), [`deliveries`](#export-deliveries), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`profiles`](#export-profiles), [`targets`](#export-targets).
+Subcommands: [`asyncapi`](#export-asyncapi), [`avro`](#export-avro), [`deliver`](#export-deliver), [`deliveries`](#export-deliveries), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`presets`](#export-presets), [`profiles`](#export-profiles), [`targets`](#export-targets).
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--preset` | text |  |  | Run a saved export preset (name or id): apiome export --preset NAME ARTIFACT --out PATH [--version V \| --items …] [--deliver PROFILE]. Manage presets with 'apiome export presets'. |
 
 ## apiome export asyncapi {#export-asyncapi}
 
@@ -198,6 +204,106 @@ apiome export preflight [OPTIONS]
 | `--tenant` | text |  |  | Tenant UUID or slug (overrides APIOME_TENANT_ID). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome export presets {#export-presets}
+
+List, create, change and delete the workspace's export presets (targets, options, delivery). Run one with: apiome export --preset NAME ARTIFACT --out PATH.
+
+```text
+apiome export presets [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`create`](#export-presets-create), [`delete`](#export-presets-delete), [`list`](#export-presets-list), [`show`](#export-presets-show), [`update`](#export-presets-update).
+
+## apiome export presets create {#export-presets-create}
+
+Create an export preset: apiome export presets create nightly-sync --target openapi --option openapi:openapi_version=3.0 --target protobuf --deliver data-lake.
+
+```text
+apiome export presets create [OPTIONS] NAME
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `NAME` | text | yes | A name unique in the workspace. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--target` | text (repeatable) |  | yes | A target format (repeatable, in order): one is a single-target export, several a multi-target one. |
+| `--option` | text (repeatable) |  |  | TARGET:KEY=VALUE — an emit option for one of the targets (repeatable; VALUE parsed as JSON when valid). |
+| `--deliver` | text |  |  | A delivery profile (name or id) the export is delivered with on completion. |
+| `--description` | text |  |  | What the preset is for. |
+
+## apiome export presets delete {#export-presets-delete}
+
+Delete an export preset.
+
+```text
+apiome export presets delete [OPTIONS] PRESET
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PRESET` | text | yes | Preset name or id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation prompt. |
+
+## apiome export presets list {#export-presets-list}
+
+List the workspace's export presets.
+
+```text
+apiome export presets list [OPTIONS]
+```
+
+## apiome export presets show {#export-presets-show}
+
+Show one export preset (by name or id).
+
+```text
+apiome export presets show [OPTIONS] PRESET
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PRESET` | text | yes | Preset name or id. |
+
+## apiome export presets update {#export-presets-update}
+
+Change a preset's name, description, targets (replaced whole by --target / --option) or delivery (--deliver PROFILE, or --no-deliver to remove it).
+
+```text
+apiome export presets update [OPTIONS] PRESET
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PRESET` | text | yes | Preset name or id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--name` | text |  |  | A new name. |
+| `--description` | text |  |  | A new description ('' clears it). |
+| `--target` | text (repeatable) |  |  | Replace the targets (repeatable, in order). |
+| `--option` | text (repeatable) |  |  | TARGET:KEY=VALUE — an emit option for one of the targets (repeatable; VALUE parsed as JSON when valid). |
+| `--deliver` | text |  |  | A delivery profile (name or id) the export is delivered with on completion. |
+| `--no-deliver` | flag |  |  | Remove the preset's delivery profile. |
 
 ## apiome export profiles {#export-profiles}
 

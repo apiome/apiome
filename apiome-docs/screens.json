@@ -1567,6 +1567,24 @@
       ]
     },
     {
+      "id": "export-studio-presets",
+      "route": "/ade/dashboard/export/studio?tab=presets",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/presets.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/presets"
+      ]
+    },
+    {
+      "id": "export-studio-preset-edit",
+      "route": "/ade/dashboard/export/studio?tab=presets",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/preset-edit.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/presets"
+      ]
+    },
+    {
       "id": "export-studio-failure",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

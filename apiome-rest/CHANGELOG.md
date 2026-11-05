@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.654.0] - 2026-11-05
+
+### Added
+- **Export presets (MFX-39.3, #4335).**
+  - `POST` / `GET /v1/export/{tenant_slug}/presets`, `GET …/presets/{preset}` (id or name), `PATCH` / `DELETE
+    …/presets/{preset_id}` store, list, read, change and remove a workspace's named export combinations: 1–16
+    `targets`, each with its emit `options` validated against that emitter's options schema (MFX-1.4) — no two of
+    one format — and an optional `deliveryProfileId` (MFX-38.4). `projects:edit` (reading: `projects:view`);
+    `400` lists every invalid target, option or unknown profile, `409` a taken name. Audited as
+    `export.preset.created` / `.updated` / `.deleted`. A `PATCH` replaces `targets` whole; `"deliveryProfileId":
+    null` removes delivery.
+  - **Apply:** `POST /v1/export/{tenant_slug}/jobs` takes `preset` (id or name) in place of `target` / `targets` /
+    `options`: one target becomes `target` + `options`, several `targets`, and the preset's delivery profile goes
+    first among `delivery_profiles` (dropped for a dry run). The source, `version`, `items`, `overlays`, `confirm`
+    and `dry_run` stay the request's own. The preset's targets are validated again when applied — `400`
+    `export-preset-unknown` / `export-preset-invalid`; `422` when the expanded job is not valid (e.g.
+    `acknowledged_snapshot` with a multi-target preset).
+  - `app/export_presets.py` (rules), `app/export_preset_routes.py`; table `export_presets` (V358).
+  - OpenAPI: the preset paths and schemas merged; `POST …/jobs` and `ExportJobStartRequest` updated.
+
 ## [1.653.0] - 2026-11-04
 
 ### Added

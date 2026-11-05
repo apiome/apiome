@@ -96,6 +96,8 @@ import {
 } from './exportStudioUrlState';
 import type { ExportedArtifactSummary } from './ExportDialog';
 import { ExportJobDeliveryPanel } from '../../export-studio/delivery/ExportJobDeliveryPanel';
+import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
+import { applyPresetToStudio, type ExportPreset, type PresetTarget } from '../../export-studio/presets/exportPresetsModel';
 import { exportStudioTabHref } from '../../export-studio';
 import {
   changedOptions,
@@ -269,6 +271,11 @@ export function ExportStudio({
   const [multiMode, setMultiMode] = useState(false);
   const [multiKeys, setMultiKeys] = useState<string[]>([]);
   const [multiVerified, setMultiVerified] = useState(false);
+  // MFX-39.3: options for "Several targets", by target key — set by applying a multi-target preset
+  // (the checklist itself exports each target with its defaults).
+  const [multiOptions, setMultiOptions] = useState<Record<string, Record<string, unknown>>>({});
+  /** What the last preset apply did, or could not do, shown under the picker. */
+  const [presetNotice, setPresetNotice] = useState<string | null>(null);
   /**
    * The Overlays step's chain (GVM-4.2), in application order. Sent on Verify and on Generate so
    * both describe the overlaid document; an empty chain sends nothing.
@@ -586,12 +593,57 @@ export function ExportStudio({
   const toggleMultiKey = useCallback((key: string) => {
     setMultiVerified(false);
     setMultiKeys((keys) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]));
+    // An unticked target forgets the options a preset gave it.
+    setMultiOptions((current) => Object.fromEntries(Object.entries(current).filter(([k]) => k !== key)));
   }, []);
 
-  const multiBody = useMemo(
-    () => multiTargetJobBody(artifact, version, multiKeys, false, overlayField),
-    [artifact, version, multiKeys, overlayField],
+  const multiBody = useMemo(() => {
+    const body = multiTargetJobBody(artifact, version, multiKeys, false, overlayField);
+    // MFX-39.3 / 38.4: a preset's per-target options, and the delivery profiles ticked on Review.
+    body.targets = body.targets.map((spec) =>
+      multiOptions[spec.target] && Object.keys(multiOptions[spec.target]).length > 0
+        ? { ...spec, options: multiOptions[spec.target] }
+        : spec,
+    );
+    return deliveryProfileIds.length > 0 ? { ...body, delivery_profiles: deliveryProfileIds } : body;
+  }, [artifact, version, multiKeys, overlayField, multiOptions, deliveryProfileIds]);
+
+  /**
+   * Apply an export preset (MFX-39.3): a one-target preset selects its card with its options; a
+   * multi-target one ticks its targets under "Several targets" with theirs; its delivery profile is
+   * ticked for Review. A target this source cannot export to is named in the notice instead.
+   */
+  const applyPreset = useCallback(
+    (preset: ExportPreset) => {
+      const applied = applyPresetToStudio(preset, cards);
+      clearActiveJob();
+      if (applied.single) {
+        setMultiMode(false);
+        setMultiOptions({});
+        selectCard(applied.single.card, applied.single.options);
+      } else if (applied.multi) {
+        setMultiMode(true);
+        setMultiVerified(false);
+        setMultiKeys(applied.multi.keys);
+        setMultiOptions(applied.multi.options);
+      }
+      setDeliveryProfileIds(applied.deliveryProfiles);
+      setPresetNotice(
+        applied.missing.length > 0
+          ? `Applied ${preset.name}, except ${applied.missing.join(', ')}, which this source cannot export to.`
+          : `Applied ${preset.name}.`,
+      );
+    },
+    [cards, clearActiveJob, selectCard],
   );
+
+  /** What "Save as preset" saves: the targets Generate would export, with their changed options. */
+  const presetTargets = useMemo<PresetTarget[]>(() => {
+    if (multiMode) return multiKeys.map((key) => ({ target: key, options: multiOptions[key] ?? null }));
+    return selected
+      ? [{ target: selected.key, options: changedOptions(optionValues, selected.entry.default_options) }]
+      : [];
+  }, [multiMode, multiKeys, multiOptions, selected, optionValues]);
   const targetLabels = useMemo(
     () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
     [cards],
@@ -1197,6 +1249,11 @@ export function ExportStudio({
 
           {step === 'target' && (
             <div className="xstd-stack">
+              <ExportPresetPicker
+                onApply={applyPreset}
+                notice={presetNotice}
+                manageHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'presets')}
+              />
               <label className="xstd-check" data-testid="export-studio-multi-toggle">
                 <input
                   type="checkbox"
@@ -1292,12 +1349,23 @@ export function ExportStudio({
           )}
 
           {step === 'review' && multiMode && (
-            <MultiExportRun
-              mode="generate"
-              body={multiBody}
-              labels={targetLabels}
-              archiveName={`${artifact}-export.zip`}
-            />
+            <div className="xstd-stack">
+              {/* MFX-38.4: delivered with the ticked profiles as soon as the archive is built. */}
+              <ExportJobDeliveryPanel
+                jobId={null}
+                selected={deliveryProfileIds}
+                onSelectedChange={setDeliveryProfileIds}
+                expected={0}
+                manageHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'delivery')}
+              />
+              <MultiExportRun
+                mode="generate"
+                body={multiBody}
+                labels={targetLabels}
+                archiveName={`${artifact}-export.zip`}
+              />
+              <SavePresetForm targets={presetTargets} deliveryProfileId={deliveryProfileIds[0] ?? null} />
+            </div>
           )}
 
           {step === 'verify' && !multiMode && selected && fidelity && (
@@ -1373,6 +1441,8 @@ export function ExportStudio({
                   manageHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'delivery')}
                 />
               )}
+              {/* MFX-39.3: keep this target, its options and the ticked delivery as a preset. */}
+              {!job && <SavePresetForm targets={presetTargets} deliveryProfileId={deliveryProfileIds[0] ?? null} />}
               {/* GVM-4.2: the generated artifact's overlay ledger, from the job itself. */}
               {jobCompleted && jobStatus?.result?.overlay && (
                 <OverlayReportPanel report={jobStatus.result.overlay} />

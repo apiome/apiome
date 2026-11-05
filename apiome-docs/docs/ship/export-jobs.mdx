@@ -99,6 +99,9 @@ Content-Type: application/json
    `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` (see
    [Reuse a delivery destination with a profile](./export-delivery-profiles.mdx)).
 
+To reuse targets, options and delivery, name a saved [preset](./export-presets.mdx) with `"preset"`
+instead of `target`, `targets` and `options`.
+
 Set `"dry_run": true` to stop after the fidelity report, and `"confirm": true` to run a severe
 conversion. Pass the preview's snapshot hash as `acknowledged_snapshot` to make sure the export is the
 one you previewed. `DELETE /v1/export/{tenant_slug}/jobs/{job_id}` cancels a job, and

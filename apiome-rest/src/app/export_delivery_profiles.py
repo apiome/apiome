@@ -52,6 +52,8 @@ __all__ = [
     "credential_ref",
     "delivery_outcome",
     "normalize_create",
+    "name_problems",
+    "normalize_description",
     "normalize_update",
     "public_destination",
 ]
@@ -157,8 +159,8 @@ class NormalizedProfile:
     secret: Optional[str]
 
 
-def _name_problems(name: str) -> List[str]:
-    """Why a (trimmed) name cannot be used, if it cannot."""
+def name_problems(name: str) -> List[str]:
+    """Why a (trimmed) profile or preset name cannot be used, if it cannot."""
     if not name:
         return ["name is required"]
     if len(name) > NAME_MAX_CHARS:
@@ -168,7 +170,7 @@ def _name_problems(name: str) -> List[str]:
     return []
 
 
-def _description(value: Optional[str], problems: List[str]) -> Optional[str]:
+def normalize_description(value: Optional[str], problems: List[str]) -> Optional[str]:
     """A trimmed description (``None`` when blank), noting one that is too long."""
     text = (value or "").strip()
     if len(text) > DESCRIPTION_MAX_CHARS:
@@ -248,8 +250,8 @@ def normalize_create(request: DeliveryProfileCreate) -> NormalizedProfile:
     """
     problems: List[str] = []
     name = (request.name or "").strip()
-    problems.extend(_name_problems(name))
-    description = _description(request.description, problems)
+    problems.extend(name_problems(name))
+    description = normalize_description(request.description, problems)
     blocks = _blocks(request)
     channel = request.channel
     others = sorted(_BLOCK_FIELDS[other] for other in blocks if other != channel)
@@ -285,8 +287,8 @@ def normalize_update(request: DeliveryProfileUpdate, existing: Mapping[str, Any]
     problems: List[str] = []
     channel = str(existing.get("channel") or "")
     name = (request.name if request.name is not None else str(existing.get("name") or "")).strip()
-    problems.extend(_name_problems(name))
-    description = (_description(request.description, problems) if request.description is not None
+    problems.extend(name_problems(name))
+    description = (normalize_description(request.description, problems) if request.description is not None
                    else existing.get("description"))
     blocks = _blocks(request)
     others = sorted(_BLOCK_FIELDS[other] for other in blocks if other != channel)

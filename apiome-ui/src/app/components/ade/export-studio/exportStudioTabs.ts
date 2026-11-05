@@ -15,7 +15,7 @@
 export const EXPORT_STUDIO_TAB_PARAM = 'tab';
 
 /** One of Export studio's tabs. */
-export type ExportStudioTabId = 'export' | 'sdk' | 'delivery';
+export type ExportStudioTabId = 'export' | 'sdk' | 'delivery' | 'presets';
 
 /** A tab of the strip. */
 export interface ExportStudioTab {
@@ -33,17 +33,19 @@ export const EXPORT_STUDIO_TABS: readonly ExportStudioTab[] = [
   { id: 'sdk', label: 'SDK & branding', feature: 'sdk-settings' },
   // MFX-38.4 (#4331): the workspace's delivery profiles — where finished exports are delivered.
   { id: 'delivery', label: 'Delivery', feature: 'export-studio' },
+  // MFX-39.3 (#4335): the workspace's export presets — targets, options and delivery saved by name.
+  { id: 'presets', label: 'Presets', feature: 'export-studio' },
 ];
 
 /** The `?tab=` values that select a tab other than the export itself. */
-const TAB_PARAM_VALUES: ReadonlySet<string> = new Set(['sdk', 'delivery']);
+const TAB_PARAM_VALUES: ReadonlySet<string> = new Set(['sdk', 'delivery', 'presets']);
 
 /**
  * Which tab a query string selects.
  *
  * @param params The route's search parameters (anything with a `get`).
- * @returns `sdk` for `?tab=sdk`, `delivery` for `?tab=delivery`; `export` for no `tab`, or one this
- *   build does not know.
+ * @returns `sdk`, `delivery` or `presets` for that `?tab=`; `export` for no `tab`, or one this build
+ *   does not know.
  */
 export function exportStudioTabFromParams(
   params: Pick<URLSearchParams, 'get'> | null | undefined
@@ -58,7 +60,7 @@ export function exportStudioTabFromParams(
  * @param pathname The Export studio route.
  * @param params The current search parameters; not modified.
  * @param tab The tab to link to.
- * @returns `pathname` with `?tab=<id>` set for SDK & branding or Delivery, or removed for Export.
+ * @returns `pathname` with `?tab=<id>` set for SDK & branding, Delivery or Presets, or removed for Export.
  */
 export function exportStudioTabHref(
   pathname: string,

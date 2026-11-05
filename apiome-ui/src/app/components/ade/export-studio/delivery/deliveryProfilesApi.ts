@@ -23,14 +23,14 @@ export class DeliveryProfilesError extends Error {
 }
 
 /**
- * Call one of the delivery proxies.
+ * Call one of the export delivery / preset proxies.
  *
  * @param path The proxy path (starting `/api/`).
  * @param init Fetch options.
  * @returns The envelope's `data`.
  * @throws DeliveryProfilesError When the request failed.
  */
-async function deliveryApi<T>(path: string, init?: RequestInit): Promise<T> {
+export async function deliveryApi<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: 'include', ...init });
   const json = (await res.json().catch(() => ({}))) as {
     success?: boolean;

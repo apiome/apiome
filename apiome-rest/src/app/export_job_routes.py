@@ -52,6 +52,7 @@ from .export_job_engine import (
 from .export_job_engine import (
     resolve_export_download as engine_resolve_export_download,
 )
+from .export_preset_routes import expand_job_preset
 from .export_service import ExportError
 from .permissions import Action, Resource, enforce_permission
 
@@ -124,6 +125,10 @@ def _check_delivery_profiles(auth_data: Dict[str, Any], tenant_id: str, profile_
         "OpenAPI fails with ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with "
         "``OVERLAY_INVALID``. Overlays apply to one source, so they cannot be combined with a batch. "
         "Send the same ``overlays`` to ``POST …/verify`` so its snapshot matches the job's.\n\n"
+        "**Presets (MFX-39.3):** ``preset`` names a saved export preset (by id or name): its targets and "
+        "their options stand in for ``target`` / ``targets`` / ``options``, and its delivery profile is "
+        "added to ``delivery_profiles``. ``400`` for an unknown preset or one whose targets no longer "
+        "validate.\n\n"
         "**Delivery (MFX-38.4):** ``delivery_profiles`` lists delivery profiles the export is "
         "delivered with as soon as it completes — each through its channel, recorded on the job "
         "(``GET …/jobs/{job_id}/deliveries``) and as an ``EXPORT_DELIVERED`` / "
@@ -163,6 +168,8 @@ async def start_export_job(
             job status.
     """
     tenant_id = str(auth_data["tenant_id"])
+    if request.preset is not None:
+        request = await asyncio.to_thread(expand_job_preset, request, tenant_id)
     if request.delivery_profiles:
         await asyncio.to_thread(_check_delivery_profiles, auth_data, tenant_id, request.delivery_profiles)
     try:

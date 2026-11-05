@@ -1,8 +1,8 @@
 /**
  * Shared plumbing for the export delivery proxy routes (MFX-38.4, #4331).
  *
- * `/api/export/delivery-profiles/**`, `/api/export/jobs/{jobId}/deliveries` and
- * `/api/export/storage-credentials` forward to the REST layer's `/v1/export/{tenant}/…` routes with
+ * `/api/export/delivery-profiles/**`, `/api/export/jobs/{jobId}/deliveries`,
+ * `/api/export/storage-credentials` and `/api/export/presets/**` (MFX-39.3) forward to the REST layer's `/v1/export/{tenant}/…` routes with
  * the session's tenant. Every one answers the same envelope: `{ success: true, data }`, or
  * `{ success: false, error, code?, errors? }` — a REST refusal's `code` and its per-field `errors`
  * ride along, so a form can mark every bad field at once.
