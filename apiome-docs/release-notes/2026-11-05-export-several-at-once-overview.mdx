@@ -1,0 +1,21 @@
+---
+slug: export-several-at-once-overview
+title: Batch, multi-target, presets and auto-export, end to end
+description: "Stop exporting one version to one format at a time."
+authors: [apiome]
+---
+
+Exporting no longer means one version, one format, one manual download. Apiome now exports several
+formats, items or versions in one job, saves the combination as a preset, and runs it on every publish.
+See [Export several at once, and on every publish](/ship/export-several-at-once).
+
+{/* truncate */}
+
+- **Several formats in one job:** one archive with a folder per format, from the Export dialog, Export
+  studio or `apiome export <format> --targets`.
+- **Several items or every version:** bulk export from the Catalog, **Export all versions…** on a version,
+  or `--items` / `"all_versions"` — each item succeeds or fails on its own.
+- **Presets:** formats, their options and a delivery profile saved by name, applied in the dialog, the
+  studio, the CLI (`--preset`) and the API.
+- **Auto-export on publish:** a preset run on every publish of a project and delivered — unless the export
+  loses too much, when delivery stops and people are notified.
