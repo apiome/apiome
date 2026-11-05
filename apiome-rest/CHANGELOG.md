@@ -5,6 +5,34 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.651.0] - 2026-11-04
+
+### Added
+- **Webhook delivery for exports (MFX-38.2, #4329).**
+  - `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/webhook` sends a **completed** export job's result to
+    `url` as one JSON body (`schemaVersion: export.webhook-delivery.v1`, `event: export.delivered`): the export's
+    coordinates, the file manifest, the fidelity summary and full report (every target's for a multi-target job), and
+    the bundle — inline (UTF-8, or base64 for a zip) up to `APIOME_EXPORT_WEBHOOK_INLINE_MAX_BYTES` (1 MiB), otherwise
+    as a signed, expiring fetch link (`artifact: fetch` always sends the link). `GET` on the same path lists the job's
+    deliveries with every attempt. Requires `versions:publish` (listing: `projects:view`); audited as
+    `export.webhook_delivery` with the receiver's host only.
+  - **Signed:** `X-Apiome-Signature: sha256=<hex>`, an HMAC-SHA256 of the exact body under the caller's `secret` (the
+    push-webhook scheme). The secret is never stored: the signed bytes and signature are, so retries re-send them
+    unchanged, with `X-Apiome-Delivery` (the run id) and `X-Apiome-Delivery-Attempt`.
+  - **Retried:** the first attempt is made before the request answers; no answer, `408`, `425`, `429` or `5xx` is
+    retried by the webhook delivery sweep after 10 s, 60 s and 5 min (longer when `Retry-After` asks), four attempts
+    in all. A `3xx` (redirects are not followed) or another `4xx` fails the run at once.
+  - **Guarded:** the SSRF guard checks `url` when it is submitted (`400 export-webhook-delivery-destination-refused`)
+    and on every attempt and redirect hop.
+  - `GET /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/webhook/{delivery_id}/bundle?expires=…&signature=…` — the
+    fetch link: no sign-in, the signature is the credential; `403` when tampered, `410` once it or the artifact
+    expires. New settings: `APIOME_API_PUBLIC_URL` (the link's base; falls back to
+    `APIOME_REPOSITORY_WEBHOOK_BASE_URL`), `APIOME_EXPORT_WEBHOOK_FETCH_URL_TTL_SECONDS` (24 h),
+    `APIOME_EXPORT_FETCH_URL_SIGNING_KEY` (optional; otherwise derived from the JWT secret).
+  - `app/export_webhook_delivery.py` (rules), `app/export_webhook_delivery_pipeline.py` (attempts, backoff, sweep),
+    `app/export_webhook_delivery_routes.py`; table `export_webhook_delivery_runs` (V355).
+  - OpenAPI: the two new paths and their four schemas merged into the committed documents.
+
 ## [1.650.0] - 2026-11-04
 
 ### Added

@@ -1,0 +1,22 @@
+---
+slug: export-webhook-delivery
+title: Deliver exports to a webhook
+description: "Push a finished export to a pipeline as a signed, retried webhook."
+authors: [apiome]
+---
+
+A finished export can now go to your pipeline as a webhook, so it no longer has to poll for the
+download. Apiome sends one signed `POST` with the file manifest, the fidelity report and the bundle. See
+[Deliver an export to a webhook](/ship/deliver-an-export-to-a-webhook).
+
+{/* truncate */}
+
+- **Signed:** `X-Apiome-Signature` is an HMAC-SHA256 of the body under your shared secret, the same scheme as
+  Apiome's other webhooks. The secret is never stored.
+- **Retried:** no answer, a `429` or a `5xx` is retried after 10 seconds, 1 minute and 5 minutes, and later
+  when `Retry-After` asks. Every retry sends the same body and delivery id, so duplicates are easy to drop.
+- **Recorded on the job:** every delivery and attempt, with your endpoint's answer, is listed on the export job.
+- **Large bundles as links:** a bundle over 1 MiB travels as a signed, expiring fetch link that needs no
+  Apiome sign-in.
+- **Guarded:** URLs that point into private networks are refused, when you send the request and on every
+  attempt.
