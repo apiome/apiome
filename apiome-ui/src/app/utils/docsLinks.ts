@@ -21,9 +21,10 @@ export const DOCS_SITE_BASE = 'https://apiome.github.io/apiome/';
 
 /**
  * The site's release notes: one post per RC plus a rolling "Unreleased", generated from the
- * REST changelog and this app's What's new (DOCS-1.12, #5629). Linked from the What's new dialog.
+ * REST changelog and this app's What's new (DOCS-1.12, #5629). Linked from the What's new dialog,
+ * on the site's own domain, docs.apiome.dev.
  */
-export const RELEASE_NOTES_URL = `${DOCS_SITE_BASE}release-notes`;
+export const RELEASE_NOTES_URL = 'https://docs.apiome.dev/release-notes';
 
 /** Repository directory holding the site's pages; a path under it is a page on the site. */
 export const DOCS_SITE_PAGES_ROOT = 'apiome-docs/docs/';
