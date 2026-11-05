@@ -1,0 +1,22 @@
+---
+slug: deliver-section
+title: Deliver an export and see what it left behind
+description: "Review's Deliver section: Download, profiles with their results, and a schema registry."
+authors: [apiome]
+---
+
+The **Deliver** section on Export studio's **6. Review & Generate** step brings every destination
+together, and shows what each delivery left at its destination. See
+[Deliver from Export studio](/ship/deliver-an-export#deliver-from-export-studio).
+
+{/* truncate */}
+
+- **Download, by default:** the file and its `.zip` are always yours, whatever else you deliver.
+- **Results for every channel:** a git delivery shows the **pull request** it opened (a link) or its
+  commit; a webhook, the HTTP status its receiver answered with; object storage, the objects and the
+  manifest it wrote.
+- **Schema registry:** an Avro, JSON Schema or Protobuf export can be pushed to a registry through a
+  **Schema registry** connector, with a dry run, and each subject is listed with its version and schema id.
+- **Helpful when empty:** with no delivery profile or registry connector, the section says where to add
+  one. No credential is ever shown.
+- **API:** each delivery of `GET /v1/export/{tenant}/jobs/{job_id}/deliveries` now carries its `result`.

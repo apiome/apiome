@@ -44,6 +44,7 @@ from .export_delivery_profiles import (
     normalize_update,
     public_destination,
 )
+from .export_delivery_results import ExportDeliveryResult, delivery_result
 from .export_git_delivery_routes import _check_tenant, perform_git_delivery
 from .export_object_storage_delivery_routes import perform_object_storage_delivery
 from .export_webhook_delivery import display_url
@@ -129,6 +130,7 @@ class ExportDeliveryAttemptModel(BaseModel):
         profile_name: That profile's name.
         destination: Where it went: ``owner/repo``, the receiver URL without its query, or ``bucket/prefix``.
         attempt_count: Send attempts so far (a webhook retries; the other channels make one).
+        result: What it left at the destination — PR link, receiver status, object URLs (MFX-46.3).
         run: In the answer to a delivery only — the channel's full run, as its own endpoint returns it.
     """
 
@@ -150,6 +152,11 @@ class ExportDeliveryAttemptModel(BaseModel):
     started_at: Optional[datetime] = Field(default=None, serialization_alias="startedAt")
     finished_at: Optional[datetime] = Field(default=None, serialization_alias="finishedAt")
     created_by: Optional[str] = Field(default=None, serialization_alias="createdBy")
+    result: Optional[ExportDeliveryResult] = Field(
+        default=None,
+        description="What the delivery left at its destination (MFX-46.3): the pull request or commit, the "
+        "webhook receiver's HTTP status, the objects written. Null until it has produced something.",
+    )
     run: Optional[Dict[str, Any]] = None
 
 
@@ -188,6 +195,7 @@ def attempt_model(row: Dict[str, Any]) -> ExportDeliveryAttemptModel:
         attempt_count=int(row.get("attempt_count") or 0), error_code=row.get("error_code"),
         error_message=row.get("error_message"), started_at=row.get("started_at"),
         finished_at=row.get("finished_at"), created_by=row.get("created_by"),
+        result=delivery_result(channel, row),
     )
 
 
@@ -592,16 +600,23 @@ async def deliver_with_profile(
                                              profile_id=profile_id)
         run = git_run.model_dump(mode="json", by_alias=True)
         shown = git_run.repository_full_name
+        result_row = {"result_mode": git_run.mode, "result_pull_request_url": git_run.pull_request_url,
+                      "result_pull_request_number": git_run.pull_request_number,
+                      "result_branch": git_run.branch_name, "result_commit_sha": git_run.commit_sha}
     elif channel == "webhook":
         webhook_run = await perform_webhook_delivery(tenant_slug, tenant_id, job_id, request, auth_data,
                                                      profile_id=profile_id)
         run = webhook_run.model_dump(mode="json", by_alias=True)
         shown = webhook_run.target_url
+        result_row = {"result_http_status": webhook_run.last_http_status,
+                      "result_payload_sha256": getattr(webhook_run, "payload_sha256", None)}
     else:
         storage_run = await perform_object_storage_delivery(tenant_slug, tenant_id, job_id, request, auth_data,
                                                             profile_id=profile_id)
         run = storage_run.model_dump(mode="json", by_alias=True)
         shown = storage_run.bucket + (f"/{storage_run.key_prefix}" if storage_run.key_prefix else "")
+        result_row = {"result_endpoint_url": storage_run.endpoint_url, "result_bucket": storage_run.bucket,
+                      "result_objects": run.get("objects") or [], "result_manifest_key": storage_run.manifest_key}
     status = str(run.get("status") or "")
     return ExportDeliveryAttemptModel(
         channel=channel, run_id=run.get("runId"), job_id=job_id, artifact_id=None,
@@ -610,6 +625,7 @@ async def deliver_with_profile(
         attempt_count=int(run.get("attemptCount") or 1), error_code=run.get("errorCode"),
         error_message=run.get("errorMessage"), started_at=run.get("startedAt"), finished_at=run.get("finishedAt"),
         created_by=get_authenticated_user_id(auth_data), run=run,
+        result=delivery_result(channel, result_row),
     )
 
 

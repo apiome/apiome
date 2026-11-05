@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.526.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.527.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-delivery` · 18 operations
 
@@ -591,6 +591,7 @@ Attributes:
     profile_name: That profile's name.
     destination: Where it went: ``owner/repo``, the receiver URL without its query, or ``bucket/prefix``.
     attempt_count: Send attempts so far (a webhook retries; the other channels make one).
+    result: What it left at the destination — PR link, receiver status, object URLs (MFX-46.3).
     run: In the answer to a delivery only — the channel's full run, as its own endpoint returns it.
 
 | Property | Type | Required | Description |
@@ -611,6 +612,7 @@ Attributes:
 | `startedAt` | string (date-time) or null | no | Started At. |
 | `finishedAt` | string (date-time) or null | no | Finished At. |
 | `createdBy` | string or null | no | Created By. |
+| `result` | `ExportDeliveryResult` or null | no | What the delivery left at its destination (MFX-46.3): the pull request or commit, the webhook receiver's HTTP status, the objects written. Null until it has produced something. |
 | `run` | object or null | no | Run. |
 
 ### `ExportDeliveryProfileListResponse` {#schema-exportdeliveryprofilelistresponse}

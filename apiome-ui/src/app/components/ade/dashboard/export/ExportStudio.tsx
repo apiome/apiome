@@ -103,6 +103,7 @@ import {
 } from './exportStudioUrlState';
 import type { ExportedArtifactSummary } from './ExportDialog';
 import { ExportJobDeliveryPanel } from '../../export-studio/delivery/ExportJobDeliveryPanel';
+import { registryFormatFor, type RegistryPushSource } from '../../export-studio/delivery/registryPushModel';
 import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
 import { applyPresetToStudio, type ExportPreset, type PresetTarget } from '../../export-studio/presets/exportPresetsModel';
 import { exportStudioTabHref } from '../../export-studio';
@@ -838,6 +839,16 @@ export function ExportStudio({
     // `jobStatus` is derived from `job`; depending on `job` alone keeps this to one run per job id.
   }, [job, jobStatus, artifact, selected, cards, onGenerated]);
 
+  // MFX-46.3: an Avro, JSON Schema or Protobuf export can also be registered on a schema registry.
+  const registryFormat = selected ? registryFormatFor(selected.key, selected.entry.descriptor.format) : null;
+  const registrySource = useMemo<RegistryPushSource | null>(
+    () =>
+      registryFormat
+        ? { format: registryFormat, artifact, version: version ?? null, options: changedOpts ?? null }
+        : null,
+    [registryFormat, artifact, version, changedOpts],
+  );
+
   /** Download the generated document as its single file. */
   const handleDownloadFile = useCallback(() => {
     if (!emitted) return;
@@ -1492,6 +1503,11 @@ export function ExportStudio({
                   onSelectedChange={setDeliveryProfileIds}
                   expected={job?.params.deliveryProfiles?.length ?? 0}
                   manageHref={exportStudioTabHref(EXPORT_STUDIO_PATH, null, 'delivery')}
+                  // MFX-46.3: Download is the default destination; a registry-format export can also be pushed.
+                  downloadHint={
+                    bundle ? '“Download .zip”' : emitted ? `“Download ${emitted.filename}” or “Download .zip”` : null
+                  }
+                  registry={registrySource}
                 />
               )}
               {/* MFX-39.3: keep this target, its options and the ticked delivery as a preset. */}

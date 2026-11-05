@@ -36676,8 +36676,10 @@ class Database:
             Rows of ``channel``, ``id``, ``job_id``, ``artifact_id``, ``export_target``, ``status``,
             ``delivery_profile_id``, ``profile_name``, ``destination`` (repository, receiver URL or
             ``bucket/prefix``), ``attempt_count``, ``error_code``, ``error_message``, ``started_at``,
-            ``finished_at`` and ``created_by``. The webhook ``destination`` is the stored URL: show it
-            through :func:`app.export_webhook_delivery.display_url`.
+            ``finished_at`` and ``created_by``, plus each channel's ``result_*`` columns (the others'
+            are null) for :func:`app.export_delivery_results.delivery_result` (MFX-46.3). The webhook
+            ``destination`` is the stored URL: show it through
+            :func:`app.export_webhook_delivery.display_url`.
         """
         if not is_uuid_string(str(tenant_id or "")):
             return []
@@ -36696,15 +36698,22 @@ class Database:
         join = "LEFT JOIN apiome.export_delivery_profiles p ON p.id = r.delivery_profile_id"
         query = f"""
             SELECT * FROM (
-                SELECT 'git' AS channel, {common}, r.repository_full_name AS destination, 1 AS attempt_count
+                SELECT 'git' AS channel, {common}, r.repository_full_name AS destination, 1 AS attempt_count,
+                       r.mode AS result_mode, r.pull_request_url AS result_pull_request_url,
+                       r.pull_request_number AS result_pull_request_number, r.branch_name AS result_branch,
+                       r.commit_sha AS result_commit_sha, NULL::integer AS result_http_status,
+                       NULL::text AS result_payload_sha256, NULL::text AS result_endpoint_url,
+                       NULL::text AS result_bucket, NULL::jsonb AS result_objects, NULL::text AS result_manifest_key
                 FROM apiome.export_git_delivery_runs r {join} {where}
                 UNION ALL
-                SELECT 'webhook' AS channel, {common}, r.target_url AS destination, r.attempt_count
+                SELECT 'webhook' AS channel, {common}, r.target_url AS destination, r.attempt_count,
+                       NULL, NULL, NULL, NULL, NULL, r.last_http_status, r.payload_sha256, NULL, NULL, NULL, NULL
                 FROM apiome.export_webhook_delivery_runs r {join} {where}
                 UNION ALL
                 SELECT 'object_storage' AS channel, {common},
                        r.bucket || CASE WHEN r.key_prefix = '' THEN '' ELSE '/' || r.key_prefix END AS destination,
-                       1 AS attempt_count
+                       1 AS attempt_count,
+                       NULL, NULL, NULL, NULL, NULL, NULL, NULL, r.endpoint_url, r.bucket, r.objects, r.manifest_key
                 FROM apiome.export_object_storage_delivery_runs r {join} {where}
             ) attempts
             ORDER BY started_at DESC, id DESC

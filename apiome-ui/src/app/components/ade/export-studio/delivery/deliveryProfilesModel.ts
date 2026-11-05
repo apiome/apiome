@@ -70,6 +70,85 @@ export interface DeliveryAttempt {
   errorMessage: string | null;
   startedAt: string | null;
   finishedAt?: string | null;
+  /** What the delivery left at its destination (MFX-46.3); absent until it produced something. */
+  result?: DeliveryResult | null;
+}
+
+/**
+ * What a delivery left at its destination (mirror of REST `ExportDeliveryResult`, MFX-46.3). Only its
+ * own channel's fields are set; nothing in it is secret (URLs arrive without user-info or query).
+ */
+export interface DeliveryResult {
+  /** git: `pr` or `commit`. */
+  mode?: string | null;
+  pullRequestUrl?: string | null;
+  pullRequestNumber?: number | null;
+  branch?: string | null;
+  commitSha?: string | null;
+  /** webhook: the receiver's last HTTP status. */
+  httpStatus?: number | null;
+  /** webhook: the digest of the body sent. */
+  payloadSha256?: string | null;
+  /** object storage: the objects written (capped; `objectCount` counts them all). */
+  objectUrls?: string[];
+  objectCount?: number | null;
+  manifestUrl?: string | null;
+}
+
+/** One line of a delivery's result: what to call it, and where it lives when that is a web page. */
+export interface ResultLine {
+  label: string;
+  /** The text to show (a URL, a commit, a status). */
+  value: string;
+  /** A web link to open, only for an `http(s)` URL (an `s3://` URL is shown, not linked). */
+  href: string | null;
+}
+
+/** Whether `url` can be opened in a browser. */
+function webLink(url: string | null | undefined): string | null {
+  return url && /^https?:\/\//i.test(url) ? url : null;
+}
+
+/**
+ * A delivery's result as lines to show (MFX-46.3): the pull request (or commit) a git delivery made, the
+ * receipt a webhook got, the objects and manifest an object-storage delivery wrote.
+ *
+ * @param channel The delivery's channel.
+ * @param result Its result, or nothing yet.
+ * @returns The lines, in reading order; empty when there is nothing to show.
+ */
+export function resultLines(channel: DeliveryChannel, result: DeliveryResult | null | undefined): ResultLine[] {
+  if (!result) return [];
+  const lines: ResultLine[] = [];
+  if (channel === 'git') {
+    if (result.pullRequestUrl) {
+      lines.push({
+        label: result.pullRequestNumber ? `Pull request #${result.pullRequestNumber}` : 'Pull request',
+        value: result.pullRequestUrl,
+        href: webLink(result.pullRequestUrl),
+      });
+    }
+    if (result.commitSha) {
+      const where = result.branch ? ` on ${result.branch}` : '';
+      lines.push({ label: 'Commit', value: `${result.commitSha.slice(0, 12)}${where}`, href: null });
+    }
+  } else if (channel === 'webhook') {
+    if (result.httpStatus != null) {
+      lines.push({ label: 'Receiver answered', value: `HTTP ${result.httpStatus}`, href: null });
+    }
+    if (result.payloadSha256) {
+      lines.push({ label: 'Body sent', value: `sha256:${result.payloadSha256.slice(0, 16)}…`, href: null });
+    }
+  } else if (channel === 'object_storage') {
+    const urls = result.objectUrls ?? [];
+    urls.forEach((url) => lines.push({ label: 'Object', value: url, href: webLink(url) }));
+    const more = (result.objectCount ?? urls.length) - urls.length;
+    if (more > 0) lines.push({ label: 'Object', value: `and ${more} more`, href: null });
+    if (result.manifestUrl) {
+      lines.push({ label: 'Manifest', value: result.manifestUrl, href: webLink(result.manifestUrl) });
+    }
+  }
+  return lines;
 }
 
 /** The form's state for one profile. Every channel's fields are kept, so switching back loses nothing. */
