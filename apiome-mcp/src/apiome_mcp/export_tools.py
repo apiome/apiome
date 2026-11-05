@@ -11,6 +11,10 @@ per-format tool code (the per-format tools of #2866/#2867 are not needed).
   running after ``APIOME_MCP_EXPORT_WAIT_SECONDS`` answers ``state: running`` with its ``jobId``; calling
   ``version.export`` again with that ``job_id`` collects it.
 
+  A conversion that loses fidelity needs ``allow_lossy=true`` (MFX-40.2, #4340; the CLI ``--force``):
+  without it the tool answers ``state: blocked`` with the report and the advisory and emits nothing.
+  ``advisory`` is the canonical MFX-2.4 advisory string — the words the UI, browse and the CLI show.
+
 Both require an MCP API key. They export within the key's own tenant, and only an artifact the key's
 scope allows. The emitter registry and the export job engine live in apiome-rest; these tools call its
 internal ``/v1/internal/mcp/export`` routes with the shared internal service token
@@ -118,6 +122,7 @@ async def build_version_export_response(
     version: str | None = None,
     options: dict[str, Any] | None = None,
     confirm: bool = False,
+    allow_lossy: bool = False,
     job_id: str | None = None,
     settings: Settings | None = None,
     transport: httpx.AsyncBaseTransport | None = None,
@@ -131,12 +136,15 @@ async def build_version_export_response(
         version: A revision id or label; the latest revision when omitted.
         options: The target's emit options (validated against its schema).
         confirm: Proceed with a severe conversion the transcoding guard would otherwise refuse.
+        allow_lossy: Emit even when the conversion loses fidelity; otherwise a lossy conversion answers
+            ``state: blocked`` with the report and the advisory, and nothing is emitted.
         job_id: Collect an export a previous call left ``running``, instead of starting one.
         settings: Overrides the process settings (tests).
         transport: An ``httpx`` transport (tests).
 
     Returns:
-        ``{jobId, state, fidelity: {summary, report, advisory, …}, guard, files: [{path, mediaType,
+        ``{jobId, state (blocked / queued / running / completed / failed / canceled), advisory,
+        fidelity: {summary, report, advisory, …}, guard, files: [{path, mediaType,
         sizeBytes, content?}], contentInline, downloadPath, error}``.
 
     Raises:
@@ -151,7 +159,8 @@ async def build_version_export_response(
         if not target or not target.strip():
             raise ToolError("target is required: any target key export.targets lists (e.g. openapi-3.1).")
         body = {"tenantId": str(auth_ctx.tenant_id), "artifact": (artifact or "").strip(), "version": version,
-                "target": target.strip(), "options": options, "confirm": bool(confirm)}
+                "target": target.strip(), "options": options, "confirm": bool(confirm),
+                "allowLossy": bool(allow_lossy)}
     body["waitSeconds"] = resolved.export_wait_seconds
     result = await _post("/v1/internal/mcp/export/run", body, settings=resolved,
                          wait_seconds=float(resolved.export_wait_seconds), transport=transport)

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.520.0",
+    "version": "1.521.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -89143,7 +89143,7 @@
           "internal-mcp-export"
         ],
         "summary": "Run an export for the MCP `version.export` tool",
-        "description": "Internal (`X-Internal-Service-Token`). Starts an export job for any registered `target` (the pipeline of `POST /v1/export/{tenant}/jobs`) and waits up to `waitSeconds`; or, with `jobId`, collects a job a previous call left running. A completed job answers with the fidelity envelope (including the structured `LossinessReport`), the guard and the files \u2014 inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`, otherwise with `downloadPath`. `400` / `422` for an unknown target or invalid options; `429` when the tenant's export slots are full; `404` for an unknown job.",
+        "description": "Internal (`X-Internal-Service-Token`). Starts an export job for any registered `target` (the pipeline of `POST /v1/export/{tenant}/jobs`) and waits up to `waitSeconds`; or, with `jobId`, collects a job a previous call left running. A conversion that loses fidelity (tier other than `lossless`) without `allowLossy` answers `state: blocked` with the report and the canonical `advisory` and emits nothing. A completed job answers with the fidelity envelope (including the structured `LossinessReport`), the guard and the files \u2014 inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`, otherwise with `downloadPath`. `400` / `422` for an unknown target or invalid options; `429` when the tenant's export slots are full; `404` for an unknown job.",
         "operationId": "mcp_export_run_v1_internal_mcp_export_run_post",
         "parameters": [
           {
@@ -160588,6 +160588,13 @@
             "default": false,
             "example": false
           },
+          "allowLossy": {
+            "type": "boolean",
+            "title": "Allowlossy",
+            "description": "Emit even when the conversion loses fidelity (MFX-40.2; the CLI `--force`). Without it a lossy conversion answers `blocked` and emits nothing.",
+            "default": false,
+            "example": false
+          },
           "jobId": {
             "anyOf": [
               {
@@ -160623,14 +160630,23 @@
       "McpExportRunResponse": {
         "properties": {
           "jobId": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp export run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp export run."
+              }
+            ],
             "title": "Jobid",
-            "description": "Job ID.",
-            "example": "example"
+            "description": "Job ID."
           },
           "state": {
             "type": "string",
             "enum": [
+              "blocked",
               "queued",
               "running",
               "completed",
@@ -160639,7 +160655,21 @@
             ],
             "title": "State",
             "description": "State.",
-            "example": "queued"
+            "example": "blocked"
+          },
+          "advisory": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp export run."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp export run."
+              }
+            ],
+            "title": "Advisory",
+            "description": "Advisory."
           },
           "artifact": {
             "anyOf": [
@@ -160820,11 +160850,10 @@
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "jobId",
           "state"
         ],
         "title": "McpExportRunResponse",
-        "description": "What ``version.export`` answers.\n\nAttributes:\n    job_id: The export job.\n    state: ``queued`` / ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or\n        ``canceled``.\n    fidelity: The full fidelity envelope of a one-target export: tier, the structured\n        ``LossinessReport`` (``report``), the advisory.\n    guard: The transcoding guard (MFX-3.3): verdict, whether it needs ``confirm``.\n    files: The emitted files; each carries ``content`` when ``content_inline``.\n    download_path: The REST download of the whole artifact, for files too large to inline.\n    error: The structured failure of a failed job."
+        "description": "What ``version.export`` answers.\n\nAttributes:\n    job_id: The export job; ``None`` when ``blocked`` (no job was started).\n    state: ``blocked`` (a lossy conversion without ``allowLossy``: nothing emitted), ``queued`` /\n        ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or ``canceled``.\n    advisory: The canonical fidelity advisory (MFX-2.4 ``ExportAdvisory.message``) \u2014 word for word\n        what the UI, browse and the CLI show; ``None`` until the fidelity is known.\n    fidelity: The full fidelity envelope of a one-target export: tier, the structured\n        ``LossinessReport`` (``report``), the advisory.\n    guard: The transcoding guard (MFX-3.3): verdict, whether it needs ``confirm``.\n    files: The emitted files; each carries ``content`` when ``content_inline``.\n    download_path: The REST download of the whole artifact, for files too large to inline.\n    error: The structured failure of a failed job."
       },
       "McpExportTargetsRequest": {
         "properties": {

@@ -9,7 +9,9 @@ engine (the source loader faked as in ``test_export_job_engine.py``):
   fidelity report (tier, ``LossinessReport`` items, advisory), the guard and the files inline — or a
   download reference past the inline cap; a running job is collected with ``jobId``; unknown targets,
   invalid options, severe conversions without ``confirm`` and unknown tenants are refused or failed with
-  their reasons.
+  their reasons;
+* MFX-40.2 (#4340): a lossy conversion without ``allowLossy`` answers ``blocked`` with the report and the
+  canonical advisory and emits nothing; every answer's ``advisory`` is ``ExportAdvisory.message`` verbatim.
 """
 
 from __future__ import annotations
@@ -33,8 +35,11 @@ from app.canonical_model import (
     TypeRef,
 )
 from app.config import settings
+from app.emitter import get_emitter
+from app.export_fidelity import build_export_fidelity
 from app.export_job_engine import _jobs
 from app.export_routes import build_target_fidelity_entries
+from app.export_service import resolve_emit_format
 from app.export_source import ExportSource, ExportSourceError
 from app.main import app
 
@@ -106,7 +111,7 @@ def test_targets_refuses_an_unknown_source_or_tenant() -> None:
 
 @pytest.mark.parametrize("target", ["openapi", "graphql", "json-schema", "asyncapi"])
 def test_any_registered_target_exports_with_its_fidelity_report(target: str) -> None:
-    response = _run({"artifact": "artifact-1", "target": target, "confirm": True})
+    response = _run({"artifact": "artifact-1", "target": target, "confirm": True, "allowLossy": True})
     assert response.status_code == 200, response.text
     body = response.json()
     assert body["state"] == "completed", body
@@ -148,3 +153,46 @@ def test_a_failed_source_answers_with_the_structured_error() -> None:
         body = _run({"artifact": "artifact-1", "target": "openapi"}).json()
     assert body["state"] == "failed"
     assert body["error"]["code"]
+
+
+def _tier(target: str) -> str:
+    return build_export_fidelity(_source().api, get_emitter(resolve_emit_format(target))).summary.tier.value
+
+
+def _canonical_message(target: str) -> str:
+    """The MFX-2.4 advisory string the UI, browse and the CLI render for this export."""
+    return build_export_fidelity(_source().api, get_emitter(resolve_emit_format(target))).advisory.message
+
+
+def test_a_lossy_conversion_without_allow_lossy_is_blocked_with_the_report_and_advisory() -> None:
+    assert _tier("asyncapi") != "lossless"
+    response = _run({"artifact": "artifact-1", "target": "asyncapi", "confirm": True})
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["state"] == "blocked"
+    assert body["jobId"] is None and body["files"] == [] and body["downloadPath"] is None
+    assert body["fidelity"]["summary"]["tier"] == _tier("asyncapi")
+    assert body["fidelity"]["report"]["items"]
+    assert body["advisory"] == body["fidelity"]["advisory"]["message"] == _canonical_message("asyncapi")
+    assert body["error"]["code"] == "mcp-export-lossy-not-allowed"
+    assert body["guard"]["verdict"]
+    assert _jobs == {}  # nothing was scheduled, nothing emitted
+
+
+def test_allow_lossy_exports_with_the_same_advisory() -> None:
+    body = _run({"artifact": "artifact-1", "target": "asyncapi", "confirm": True, "allowLossy": True}).json()
+    assert body["state"] == "completed" and body["files"]
+    assert body["advisory"] == _canonical_message("asyncapi")
+
+
+def test_a_lossless_conversion_needs_no_allow_lossy() -> None:
+    assert _tier("openapi") == "lossless"
+    body = _run({"artifact": "artifact-1", "target": "openapi"}).json()
+    assert body["state"] == "completed" and body["files"]
+    assert body["advisory"] == _canonical_message("openapi")
+
+
+def test_the_preflight_refuses_an_unknown_source() -> None:
+    with patch("app.mcp_export_routes.load_export_source", side_effect=ExportSourceError("gone", status_code=404)):
+        response = _run({"artifact": "artifact-1", "target": "asyncapi"})
+    assert response.status_code == 404

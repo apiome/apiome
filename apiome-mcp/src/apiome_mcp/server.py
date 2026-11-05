@@ -179,8 +179,11 @@ async def export_targets(
         "dialog and `apiome export`. Returns the job's state, the structured fidelity report (fidelity.summary "
         "tier/preserved share, fidelity.report: the per-construct LossinessReport, fidelity.advisory), the "
         "transcoding guard, and the files: inline `content` when small (contentInline), otherwise a REST "
-        "downloadPath. A severe conversion fails unless confirm=true. When the job outlives the wait it answers "
-        "state=running with jobId: call again with job_id to collect it. Requires an API key."
+        "downloadPath. `advisory` is the canonical fidelity advisory — the same words the UI and CLI show. A "
+        "conversion that loses fidelity (tier other than lossless) emits nothing unless allow_lossy=true: it answers "
+        "state=blocked with the report and the advisory, so read them first (MFX-40.2). A severe conversion also "
+        "fails unless confirm=true. When the job outlives the wait it answers state=running with jobId: call again "
+        "with job_id to collect it. Requires an API key."
     ),
 )
 async def version_export(
@@ -190,12 +193,13 @@ async def version_export(
     version: str | None = None,
     options: dict[str, Any] | None = None,
     confirm: bool = False,
+    allow_lossy: bool = False,
     job_id: str | None = None,
     auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     return await build_version_export_response(
         auth_ctx=auth, artifact=artifact, target=target, version=version, options=options, confirm=confirm,
-        job_id=job_id,
+        allow_lossy=allow_lossy, job_id=job_id,
     )
 
 

@@ -32,8 +32,8 @@ Each entry in `targets` has the target's `descriptor` (its `key`, format and lab
 
 ## Export
 
-Call `version.export` with the artifact, the target key and, optionally, `version`, `options` and
-`confirm`:
+Call `version.export` with the artifact, the target key and, optionally, `version`, `options`,
+`allow_lossy` and `confirm`:
 
 ```json
 { "artifact": "0b7c2a4e-5d1f-4e8a-9c3b-2f6d8e1a7b90", "target": "graphql", "options": {} }
@@ -43,14 +43,32 @@ The answer carries:
 
 | Field | What it holds |
 | --- | --- |
-| `state` | `completed`, `failed`, or `running` / `queued` when the export outlived the wait (below). |
+| `state` | `completed`, `failed`, `blocked` when a lossy export was not allowed (below), or `running` / `queued` when the export outlived the wait. |
+| `advisory` | The fidelity advisory, word for word what the Export dialog, the browse page and `apiome export` show. |
 | `fidelity` | The structured fidelity report: `summary` (tier and preserved share), `report` (every construct the conversion drops, approximates or invents, with its severity) and `advisory` (the warning a person would see). |
 | `guard` | The transcoding guard: how severe the conversion is, and whether it needs `confirm`. |
 | `files` | Each emitted file's `path`, `mediaType` and `sizeBytes` — and its `content` when `contentInline` is true. |
 | `downloadPath` | The REST download of the whole export, for output too large to return inline (over 256 KiB). |
 | `error` | Why a `failed` export failed, with a stable `code`. |
 
-A severe conversion (most of the source lost) fails unless you pass `"confirm": true` — the same
+## Lossy exports need allow_lossy
+
+When the target cannot carry everything the source has (its tier is lossy or types-only), `version.export`
+emits nothing unless you pass `"allow_lossy": true` — like `--force` on `apiome export`. Without it the
+answer is `"state": "blocked"`, with no `jobId` and no `files`, carrying:
+
+- `advisory`: what the export would lose, in the same words a person sees;
+- `fidelity.report`: every construct it drops, approximates or invents, with its severity;
+- `error.code`: `mcp-export-lossy-not-allowed`.
+
+Read the advisory and the report, then call again with `"allow_lossy": true` to export anyway. A lossless
+target exports without it.
+
+```json
+{ "artifact": "0b7c2a4e-5d1f-4e8a-9c3b-2f6d8e1a7b90", "target": "asyncapi", "allow_lossy": true }
+```
+
+A severe conversion (most of the source lost) also fails unless you pass `"confirm": true` — the same
 acknowledgement the Export dialog asks a person for. Options are checked against the target's
 `options_schema`; an unknown target or an invalid option is refused with the reason.
 

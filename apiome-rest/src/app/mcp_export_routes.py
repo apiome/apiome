@@ -15,6 +15,13 @@ its scope:
   (``APIOME_MCP_EXPORT_INLINE_MAX_BYTES``), otherwise as a download reference. A job still running when
   the wait ends answers ``state: running`` with its ``jobId``; sending that ``jobId`` back collects it.
 
+**Lossy conversions need ``allowLossy``** (MFX-40.2, #4340) — the CLI ``--force`` of MFX-8.2 for agents.
+Before scheduling, ``run`` predicts the fidelity of (source, target, options) with the dispatch's dry run;
+a tier other than ``lossless`` without ``allowLossy: true`` answers ``state: blocked`` with the report and
+the advisory and emits **nothing** (no job, no files). Every answer that carries a fidelity envelope also
+carries ``advisory`` — the canonical MFX-2.4 ``ExportAdvisory.message``, the very string the UI, the browse
+page and the CLI render, so an agent reads the same words a person does.
+
 Both routes are **internal**: they trust the ``tenantId`` the MCP server sends, so they require the
 shared ``X-Internal-Service-Token`` (``INTERNAL_SERVICE_TOKEN``) and are fail-closed without it.
 """
@@ -31,6 +38,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from .auth_provider_resolved_routes import require_internal_service
 from .config import settings
 from .database import db
+from .export_dispatch import dispatch_from_source
+from .export_fidelity import ExportFidelityTier
 from .export_job_engine import (
     ExportJobStartRequest,
     get_export_job_emit_result,
@@ -73,6 +82,9 @@ class McpExportRunRequest(BaseModel):
     target: Optional[str] = Field(default=None, description="Any registered target key (`export.targets`).")
     options: Optional[Dict[str, Any]] = Field(default=None, description="The target's emit options (MFX-1.4).")
     confirm: bool = Field(default=False, description="Proceed with a severe conversion (MFX-3.3).")
+    allow_lossy: bool = Field(default=False, alias="allowLossy",
+                              description="Emit even when the conversion loses fidelity (MFX-40.2; the CLI "
+                              "`--force`). Without it a lossy conversion answers `blocked` and emits nothing.")
     job_id: Optional[str] = Field(default=None, alias="jobId",
                                   description="Collect a job a previous call left running, instead of starting one.")
     wait_seconds: int = Field(default=DEFAULT_WAIT_SECONDS, alias="waitSeconds", ge=0, le=MAX_WAIT_SECONDS,
@@ -94,9 +106,11 @@ class McpExportRunResponse(BaseModel):
     """What ``version.export`` answers.
 
     Attributes:
-        job_id: The export job.
-        state: ``queued`` / ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or
-            ``canceled``.
+        job_id: The export job; ``None`` when ``blocked`` (no job was started).
+        state: ``blocked`` (a lossy conversion without ``allowLossy``: nothing emitted), ``queued`` /
+            ``running`` (collect it again with ``jobId``), ``completed``, ``failed`` or ``canceled``.
+        advisory: The canonical fidelity advisory (MFX-2.4 ``ExportAdvisory.message``) — word for word
+            what the UI, browse and the CLI show; ``None`` until the fidelity is known.
         fidelity: The full fidelity envelope of a one-target export: tier, the structured
             ``LossinessReport`` (``report``), the advisory.
         guard: The transcoding guard (MFX-3.3): verdict, whether it needs ``confirm``.
@@ -107,8 +121,9 @@ class McpExportRunResponse(BaseModel):
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    job_id: str = Field(serialization_alias="jobId")
-    state: Literal["queued", "running", "completed", "failed", "canceled"]
+    job_id: Optional[str] = Field(default=None, serialization_alias="jobId")
+    state: Literal["blocked", "queued", "running", "completed", "failed", "canceled"]
+    advisory: Optional[str] = None
     artifact: Optional[str] = None
     target: Optional[str] = None
     version_record_id: Optional[str] = Field(default=None, serialization_alias="versionRecordId")
@@ -150,6 +165,48 @@ def _files(tenant_slug: str, job_id: str, result: Any) -> tuple[List[McpExportFi
                           content=contents.get(f.path) if inline else None) for f in listed], inline
 
 
+def _advisory_message(fidelity: Optional[Dict[str, Any]]) -> Optional[str]:
+    """The canonical advisory string of a dumped fidelity envelope (MFX-2.4), or ``None``."""
+    advisory = (fidelity or {}).get("advisory")
+    return advisory.get("message") if isinstance(advisory, dict) else None
+
+
+def lossy_preflight(tenant_id: str, body: McpExportRunRequest) -> Optional[McpExportRunResponse]:
+    """Refuse to emit a lossy conversion the caller did not allow (MFX-40.2).
+
+    Predicts the fidelity of (source, target, options) with the dispatch's dry run — the builder the
+    preview and the export job share, so the prediction is the export's own report — and, when the tier
+    is not ``lossless`` and ``allow_lossy`` is unset, answers ``blocked`` with the report and the
+    canonical advisory. Nothing is emitted and no job is started.
+
+    Args:
+        tenant_id: The tenant (scopes the source lookup).
+        body: The export to start.
+
+    Returns:
+        The ``blocked`` answer, or ``None`` when the export may proceed (lossless, or ``allow_lossy``).
+
+    Raises:
+        ExportSourceError: For an unknown artifact / version or a source that cannot be rebuilt.
+        ExportError: For an unknown target or invalid options.
+    """
+    if body.allow_lossy:
+        return None
+    source = load_export_source(tenant_id, body.artifact, body.version)
+    dry = dispatch_from_source(source, body.target or "", options=body.options, dry_run=True)
+    if dry.fidelity.summary.tier == ExportFidelityTier.LOSSLESS:
+        return None
+    fidelity = _dump(dry.fidelity)
+    return McpExportRunResponse(
+        state="blocked", artifact=dry.artifact, target=dry.target, version_record_id=dry.version_record_id,
+        version_label=dry.version_label, advisory=_advisory_message(fidelity), fidelity=fidelity,
+        guard=_dump(dry.guard),
+        error={"code": "mcp-export-lossy-not-allowed",
+               "message": "This conversion loses fidelity; nothing was emitted. Read the advisory and the "
+                          "report, then call again with allow_lossy: true to export anyway."},
+    )
+
+
 def run_response(tenant_slug: str, job_id: str, status: Any) -> McpExportRunResponse:
     """Project a job's status onto the ``version.export`` answer.
 
@@ -166,9 +223,11 @@ def run_response(tenant_slug: str, job_id: str, status: Any) -> McpExportRunResp
     if result is None:
         return response
     files, inline = _files(tenant_slug, job_id, result) if status.state == "completed" else ([], False)
+    fidelity = _dump(result.fidelity)
     return response.model_copy(update={
+        "advisory": _advisory_message(fidelity), "fidelity": fidelity,
         "artifact": result.artifact, "target": result.target, "version_record_id": result.version_record_id,
-        "version_label": result.version_label, "fidelity": _dump(result.fidelity), "guard": _dump(result.guard),
+        "version_label": result.version_label, "guard": _dump(result.guard),
         "validation": _dump(getattr(result, "validation", None)), "delivery": _dump(getattr(result, "delivery", None)),
         "media_type": result.media_type, "files": files, "content_inline": inline,
         "download_path": result.download_path,
@@ -213,7 +272,9 @@ async def mcp_export_targets(body: McpExportTargetsRequest) -> ExportTargetsResp
     description=(
         "Internal (`X-Internal-Service-Token`). Starts an export job for any registered `target` (the pipeline of "
         "`POST /v1/export/{tenant}/jobs`) and waits up to `waitSeconds`; or, with `jobId`, collects a job a previous "
-        "call left running. A completed job answers with the fidelity envelope (including the structured "
+        "call left running. A conversion that loses fidelity (tier other than `lossless`) "
+        "without `allowLossy` answers `state: blocked` with the report and the canonical `advisory` and emits "
+        "nothing. A completed job answers with the fidelity envelope (including the structured "
         "`LossinessReport`), the guard and the files — inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`, otherwise "
         "with `downloadPath`. `400` / `422` for an unknown target or invalid options; `429` when the tenant's export "
         "slots are full; `404` for an unknown job."
@@ -240,9 +301,14 @@ async def mcp_export_run(body: McpExportRunRequest) -> McpExportRunResponse:
             raise HTTPException(status_code=400, detail={"code": "mcp-export-invalid",
                                                          "message": "Name an `artifact` and a `target`, or a `jobId`."})
         try:
+            blocked = await asyncio.to_thread(lossy_preflight, body.tenant_id, body)
+            if blocked is not None:
+                return blocked
             request = ExportJobStartRequest(artifact=body.artifact, version=body.version, target=body.target,
                                             options=body.options, confirm=body.confirm)
             accepted = await schedule_export_job(tenant_slug, body.tenant_id, request)
+        except ExportSourceError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.http_detail()) from exc
         except ExportError as exc:
             raise HTTPException(status_code=exc.status_code, detail={"code": "mcp-export-refused",
                                                                      "message": str(exc)}) from exc

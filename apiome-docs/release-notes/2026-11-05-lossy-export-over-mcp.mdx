@@ -1,0 +1,18 @@
+---
+slug: lossy-export-over-mcp
+title: Lossy exports over MCP need allow_lossy
+description: "Agents see the fidelity advisory and must allow a lossy export."
+authors: [apiome]
+---
+
+An agent's `version.export` call now meets the same fidelity warning a person does. A conversion that
+loses anything emits nothing until the agent passes `allow_lossy: true`. See
+[Export over MCP](/ship/export-over-mcp#lossy-exports-need-allow_lossy).
+
+{/* truncate */}
+
+- **Blocked, not exported:** without `allow_lossy`, a lossy export answers `state: blocked` with the
+  fidelity report and the advisory, and no files.
+- **One wording everywhere:** every answer's `advisory` is the same text the Export dialog, the browse
+  page and `apiome export` show.
+- **Lossless exports are unchanged:** they export without the flag.

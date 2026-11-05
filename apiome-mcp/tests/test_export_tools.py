@@ -2,9 +2,11 @@
 
 The tools against a mocked apiome-rest (``httpx.MockTransport``): they call the internal export routes with
 the key's tenant and the internal service token; any target key passes straight through (no per-format
-code); the fidelity report comes back as REST sent it; a running job is collected with ``job_id``; an
-artifact outside the key's scope, a missing argument, export not configured and a REST refusal are
-``ToolError``s that name the problem. Last, the tools are live on the server and in the shared registry.
+code); ``allow_lossy`` passes through as ``allowLossy`` and a ``blocked`` lossy answer comes back as a
+result, not an error (MFX-40.2); the fidelity report comes back as REST sent it; a running job is
+collected with ``job_id``; an artifact outside the key's scope, a missing argument, export not configured
+and a REST refusal are ``ToolError``s that name the problem. Last, the tools are live on the server and in the
+shared registry.
 """
 
 from __future__ import annotations
@@ -104,9 +106,26 @@ async def test_version_export_passes_any_target_through_and_returns_the_fidelity
         auth_ctx=_auth(), artifact=PROJECT, target="brand-new-format", options={"flavor": "x"}, confirm=True,
         settings=_settings(), transport=httpx.MockTransport(rest))
     assert rest.body() == {"tenantId": TENANT, "artifact": PROJECT, "version": None, "target": "brand-new-format",
-                           "options": {"flavor": "x"}, "confirm": True, "waitSeconds": 5}
+                           "options": {"flavor": "x"}, "confirm": True, "allowLossy": False, "waitSeconds": 5}
     assert result["fidelity"]["report"]["items"][0]["severity"] == "critical"
     assert result["files"][0]["content"] == "hi"
+
+
+@_sync
+async def test_allow_lossy_passes_through_and_a_blocked_answer_is_a_result() -> None:
+    blocked = {"jobId": None, "state": "blocked", "artifact": PROJECT, "target": "avro", "fidelity": REPORT,
+               "advisory": "Exporting to Avro loses 3 constructs.", "files": [],
+               "error": {"code": "mcp-export-lossy-not-allowed"}}
+    rest = _Rest(payload=blocked)
+    result = await build_version_export_response(auth_ctx=_auth(), artifact=PROJECT, target="avro",
+                                                 settings=_settings(), transport=httpx.MockTransport(rest))
+    assert rest.body()["allowLossy"] is False
+    assert result["state"] == "blocked" and result["files"] == []
+    assert result["advisory"] == "Exporting to Avro loses 3 constructs."
+    rest = _Rest()
+    await build_version_export_response(auth_ctx=_auth(), artifact=PROJECT, target="avro", allow_lossy=True,
+                                        settings=_settings(), transport=httpx.MockTransport(rest))
+    assert rest.body()["allowLossy"] is True
 
 
 @_sync
