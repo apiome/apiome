@@ -110,7 +110,7 @@ AREA_PAGES: tuple[tuple[str, str], ...] = (
     (r"FEATURE_FLAG", "admin/feature-flags"),
     (r"PROPERTY_TEMPLATE", "admin/property-templates"),
     (r"ADMIN", "admin/admin-console"),
-    (r"DATABASE|SQL_EDITOR|DATA_BROWSER|UTF8|MIGRATION_2025", "admin/data-browser"),
+    (r"DATABASE|SQL_EDITOR|DATA_BROWSER|UTF8|MIGRATION_2025", "admin/operating-apiome"),
     (r"DOCKER|DEPLOY|BUILD_SCRIPT|UV_SETUP|ENVIRONMENT|BACKUP", "getting-started/run-locally"),
     (r"MOCK", "reference/mock-runtime/one-mock-engine"),
     (r"MCP", "getting-started/connect-an-mcp-host"),
