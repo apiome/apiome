@@ -14,6 +14,7 @@ When user invokes **implement** with issue number, treat number as **GitHub issu
 - Never commit credentials or tokens.
 - If blocked, stop, explain.
 - Pull Request can be submitted before end-to-end or integration tests run.
+- Any tests run locally must be limited to use less than half of the free available resources, to avoid bringing the system to a halt.
 
 ## Phase 1: Fetch issue
 
