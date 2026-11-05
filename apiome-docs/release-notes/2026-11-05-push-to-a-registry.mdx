@@ -1,0 +1,19 @@
+---
+slug: push-to-a-registry
+title: Push an export to a schema registry
+description: "Exports land in Confluent-compatible schema registries, alongside git, webhooks and buckets."
+authors: [apiome]
+---
+
+Delivering an export now covers schema registries in one place. An Avro, JSON Schema or Protobuf export
+can be registered on a Confluent-compatible schema registry, next to the git, webhook and object
+storage channels. See [Push to a schema registry](/ship/deliver-an-export#push-to-a-schema-registry).
+
+{/* truncate */}
+
+- **Every subject, in order:** each schema is pushed after the schemas it references, checked for
+  compatibility first, and skipped when the registry already holds it.
+- **Dry run:** check every subject against the registry without writing anything.
+- **From the studio or the API:** the **Schema registry** destination in Export studio's **Deliver**
+  section, or `POST /v1/export/{tenant}/schema-registry/push`.
+- **Buf Schema Registry:** not supported; download a Protobuf export and run `buf push` on it.
