@@ -1,0 +1,21 @@
+---
+slug: test-drive-overview
+title: Test drive every export with the tools its format uses
+description: "Export studio's Test drive is complete: viewers, a live mock and toolchain checks."
+authors: [apiome]
+---
+
+The Export studio can now try a generated file with the tools its consumers use before you ship it.
+**Test drive**, under the generated file, has a tab for each tool that fits the format. See
+[Test drive an export](/ship/test-drive-an-export).
+
+{/* truncate */}
+
+- **Read it:** Swagger UI and ReDoc for OpenAPI, GraphiQL (with mock data) for GraphQL, and the AsyncAPI
+  viewer for AsyncAPI, all in a sandbox that makes no network requests.
+- **Call it:** the mock server serves an OpenAPI file as a live API for 30 minutes, and Swagger UI's
+  **Try it out** sends requests to it.
+- **Check it:** the format's own toolchain (`buf lint`, `tsp compile`, `smithy build`, `redocly lint`
+  and more) runs on the server and streams its output, with the result listed beside the verify report.
+- **Driven by the format:** each format declares its tools, so a new format brings its own tabs, and a
+  tool this server lacks is shown with the reason instead of hidden.
