@@ -1,0 +1,592 @@
+{
+  "_comment": "An order / order line / address model exported to SQL DDL (PostgreSQL, nested=tables), captured from apiome-rest for the MFX-45.3 ERD tests: the preview manifest (with its relational projection) and the emitted script.",
+  "manifest": {
+    "manifest_hash": "313108f051b1deabfdc3acae05c78348ae0b1a231b0367f8d20d3cce8ba881f6",
+    "target": {
+      "key": "sql-ddl",
+      "format": "sql-ddl",
+      "label": "SQL DDL",
+      "paradigm": "data_schema",
+      "emitter_version": "1",
+      "apiome_version": "1.6.5",
+      "capability_profile": {
+        "operations": false,
+        "events": false,
+        "unions": false,
+        "nullability": true,
+        "constraints": true,
+        "field_identity": false
+      },
+      "needs_toolchain": false,
+      "available": true,
+      "availability": "available",
+      "registry_version": "1",
+      "documentation": {
+        "specification": null,
+        "version": null,
+        "url": null,
+        "anchor": null,
+        "documentation_unavailable": true,
+        "note": "No authoritative specification link is registered for this destination yet."
+      }
+    },
+    "status_counts": {
+      "retained": 4,
+      "transformed": 0,
+      "approximated": 0,
+      "synthesized": 3,
+      "dropped": 3,
+      "unavailable": 0,
+      "not-applicable": 0
+    },
+    "reason_counts": {
+      "destination_unsupported": 6,
+      "emitter_unsupported": 0,
+      "source_incomplete": 0,
+      "source_parse_limit": 0,
+      "option_excluded": 0,
+      "security_redacted": 0,
+      "target_tool_unavailable": 0,
+      "not_applicable": 0
+    },
+    "entities": [
+      {
+        "key": "Order",
+        "name": "Order",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 0,
+        "description": null,
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "type 'Order' is written as the table 'order' and reads back under that name",
+        "target_mapping": "Order \u2192 table order",
+        "emitted": false,
+        "location": {
+          "file": "Shop.sql",
+          "line": 16,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Order",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Order.user",
+        "name": "user",
+        "entity_kind": "field",
+        "parent_key": "Order",
+        "order": 1,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "no loss recorded for 'Order.user' (not an explicit report outcome)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 18,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": false,
+        "native_name": "user",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Order.shipTo",
+        "name": "shipTo",
+        "entity_kind": "field",
+        "parent_key": "Order",
+        "order": 2,
+        "description": null,
+        "deprecated": false,
+        "status": "synthesized",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "'Order.shipTo' is written as the foreign key 'ship_to_id' to 'address'",
+        "target_mapping": "sql-key-synthesized",
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 19,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "shipTo",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Order.lines",
+        "name": "lines",
+        "entity_kind": "field",
+        "parent_key": "Order",
+        "order": 3,
+        "description": null,
+        "deprecated": false,
+        "status": "synthesized",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "the list 'Order.lines' of 'OrderLine' is written as the junction table 'order_lines'",
+        "target_mapping": "sql-junction-table",
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 2,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "lines",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Order.tags",
+        "name": "tags",
+        "entity_kind": "field",
+        "parent_key": "Order",
+        "order": 4,
+        "description": null,
+        "deprecated": false,
+        "status": "synthesized",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "the list 'Order.tags' is written as the child table 'order_tags'",
+        "target_mapping": "sql-child-table",
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 9,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "tags",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "OrderLine",
+        "name": "OrderLine",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 5,
+        "description": null,
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "type 'OrderLine' is written as the table 'order_line' and reads back under that name",
+        "target_mapping": "OrderLine \u2192 table order_line",
+        "emitted": false,
+        "location": {
+          "file": "Shop.sql",
+          "line": 23,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "OrderLine",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "OrderLine.sku",
+        "name": "sku",
+        "entity_kind": "field",
+        "parent_key": "OrderLine",
+        "order": 6,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "no loss recorded for 'OrderLine.sku' (not an explicit report outcome)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 25,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": false,
+        "native_name": "sku",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Address",
+        "name": "Address",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 7,
+        "description": null,
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "type 'Address' is written as the table 'address' and reads back under that name",
+        "target_mapping": "Address \u2192 table address",
+        "emitted": false,
+        "location": {
+          "file": "Shop.sql",
+          "line": 29,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Address",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Address.id",
+        "name": "id",
+        "entity_kind": "field",
+        "parent_key": "Address",
+        "order": 8,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "no loss recorded for 'Address.id' (not an explicit report outcome)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 30,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": false,
+        "native_name": "id",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Address.city",
+        "name": "city",
+        "entity_kind": "field",
+        "parent_key": "Address",
+        "order": 9,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "no loss recorded for 'Address.city' (not an explicit report outcome)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "Shop.sql",
+          "line": 31,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": false,
+        "native_name": "city",
+        "native_id": null,
+        "source_location": null
+      }
+    ],
+    "total_entities": 10,
+    "dropped_entities": 3,
+    "files": [
+      {
+        "path": "Shop.sql",
+        "media_type": "application/sql",
+        "line_count": 41,
+        "entity_count": 10
+      }
+    ],
+    "page_size": 200,
+    "next_cursor": null,
+    "truncated": false,
+    "relational": {
+      "dialect": "postgres",
+      "output": "ddl",
+      "schema_name": null,
+      "tables": [
+        {
+          "name": "order_lines",
+          "kind": "junction",
+          "entity_key": "Order.lines",
+          "synthesized": true,
+          "columns": [
+            {
+              "name": "order_id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.lines",
+              "references": {
+                "table": "order",
+                "column": "id"
+              }
+            },
+            {
+              "name": "order_line_id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.lines",
+              "references": {
+                "table": "order_line",
+                "column": "id"
+              }
+            },
+            {
+              "name": "position",
+              "type": "INTEGER",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.lines",
+              "references": null
+            }
+          ],
+          "primary_key": [
+            "order_id",
+            "position"
+          ],
+          "unique": [],
+          "foreign_keys": [
+            {
+              "columns": [
+                "order_id"
+              ],
+              "table": "order",
+              "ref_columns": [
+                "id"
+              ],
+              "synthesized": true
+            },
+            {
+              "columns": [
+                "order_line_id"
+              ],
+              "table": "order_line",
+              "ref_columns": [
+                "id"
+              ],
+              "synthesized": true
+            }
+          ]
+        },
+        {
+          "name": "order_tags",
+          "kind": "child",
+          "entity_key": "Order.tags",
+          "synthesized": true,
+          "columns": [
+            {
+              "name": "order_id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.tags",
+              "references": {
+                "table": "order",
+                "column": "id"
+              }
+            },
+            {
+              "name": "position",
+              "type": "INTEGER",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.tags",
+              "references": null
+            },
+            {
+              "name": "value",
+              "type": "TEXT",
+              "not_null": false,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": false,
+              "entity_key": "Order.tags",
+              "references": null
+            }
+          ],
+          "primary_key": [
+            "order_id",
+            "position"
+          ],
+          "unique": [],
+          "foreign_keys": [
+            {
+              "columns": [
+                "order_id"
+              ],
+              "table": "order",
+              "ref_columns": [
+                "id"
+              ],
+              "synthesized": true
+            }
+          ]
+        },
+        {
+          "name": "order",
+          "kind": "table",
+          "entity_key": "Order",
+          "synthesized": false,
+          "columns": [
+            {
+              "name": "id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": true,
+              "synthesized": true,
+              "entity_key": "Order",
+              "references": null
+            },
+            {
+              "name": "user",
+              "type": "TEXT",
+              "not_null": true,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": false,
+              "entity_key": "Order.user",
+              "references": null
+            },
+            {
+              "name": "ship_to_id",
+              "type": "BIGINT",
+              "not_null": false,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": true,
+              "entity_key": "Order.shipTo",
+              "references": {
+                "table": "address",
+                "column": "id"
+              }
+            }
+          ],
+          "primary_key": [
+            "id"
+          ],
+          "unique": [],
+          "foreign_keys": [
+            {
+              "columns": [
+                "ship_to_id"
+              ],
+              "table": "address",
+              "ref_columns": [
+                "id"
+              ],
+              "synthesized": true
+            }
+          ]
+        },
+        {
+          "name": "order_line",
+          "kind": "table",
+          "entity_key": "OrderLine",
+          "synthesized": false,
+          "columns": [
+            {
+              "name": "id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": true,
+              "synthesized": true,
+              "entity_key": "OrderLine",
+              "references": null
+            },
+            {
+              "name": "sku",
+              "type": "TEXT",
+              "not_null": true,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": false,
+              "entity_key": "OrderLine.sku",
+              "references": null
+            }
+          ],
+          "primary_key": [
+            "id"
+          ],
+          "unique": [],
+          "foreign_keys": []
+        },
+        {
+          "name": "address",
+          "kind": "table",
+          "entity_key": "Address",
+          "synthesized": false,
+          "columns": [
+            {
+              "name": "id",
+              "type": "BIGINT",
+              "not_null": true,
+              "primary_key": true,
+              "unique": false,
+              "identity": false,
+              "synthesized": false,
+              "entity_key": "Address.id",
+              "references": null
+            },
+            {
+              "name": "city",
+              "type": "TEXT",
+              "not_null": false,
+              "primary_key": false,
+              "unique": false,
+              "identity": false,
+              "synthesized": false,
+              "entity_key": "Address.city",
+              "references": null
+            }
+          ],
+          "primary_key": [
+            "id"
+          ],
+          "unique": [],
+          "foreign_keys": []
+        }
+      ]
+    }
+  },
+  "script": "-- Shop: SQL DDL (postgres), generated by Apiome.\nCREATE TABLE order_lines (\n  order_id BIGINT NOT NULL,\n  order_line_id BIGINT NOT NULL,\n  position INTEGER NOT NULL,\n  PRIMARY KEY (order_id, position)\n);\n\nCREATE TABLE order_tags (\n  order_id BIGINT NOT NULL,\n  position INTEGER NOT NULL,\n  \"value\" TEXT,\n  PRIMARY KEY (order_id, position)\n);\n\nCREATE TABLE \"order\" (\n  id BIGINT GENERATED BY DEFAULT AS IDENTITY NOT NULL,\n  \"user\" TEXT NOT NULL,\n  ship_to_id BIGINT,\n  PRIMARY KEY (id)\n);\n\nCREATE TABLE order_line (\n  id BIGINT GENERATED BY DEFAULT AS IDENTITY NOT NULL,\n  sku TEXT NOT NULL,\n  PRIMARY KEY (id)\n);\n\nCREATE TABLE address (\n  id BIGINT NOT NULL,\n  city TEXT,\n  PRIMARY KEY (id)\n);\n\nALTER TABLE order_lines ADD CONSTRAINT fk_order_lines_1 FOREIGN KEY (order_id) REFERENCES \"order\" (id);\n\nALTER TABLE order_lines ADD CONSTRAINT fk_order_lines_2 FOREIGN KEY (order_line_id) REFERENCES order_line (id);\n\nALTER TABLE order_tags ADD CONSTRAINT fk_order_tags_1 FOREIGN KEY (order_id) REFERENCES \"order\" (id);\n\nALTER TABLE \"order\" ADD CONSTRAINT fk_order_1 FOREIGN KEY (ship_to_id) REFERENCES address (id);\n",
+  "filename": "Shop.sql"
+}

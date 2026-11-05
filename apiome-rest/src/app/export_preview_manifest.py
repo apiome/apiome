@@ -72,6 +72,7 @@ from .export_projection import (
     normalize_options_for_hash,
     target_location_for_construct,
 )
+from .export_relational import RelationalSchema
 from .export_service import ExportError, resolve_emit_format
 from .export_source import ExportSource
 from .lossiness import LossinessReport, LossinessSeverity
@@ -290,6 +291,13 @@ class ExportPreviewManifest(BaseModel):
     )
     truncated: bool = Field(
         description="True when this response omits rows the full manifest has (more pages exist)."
+    )
+    relational: Optional[RelationalSchema] = Field(
+        default=None,
+        description="For a database target (SQL DDL and its DBML / Prisma / Liquibase / Flyway outputs), the "
+        "relational projection the artifact was written from — tables, columns, keys and foreign keys, the "
+        "made-up ones marked `synthesized` — which the Review step draws as an ERD (MFX-45.3). Whole on "
+        "every page (bounded by the table count); null for every other target.",
     )
 
 
@@ -599,6 +607,73 @@ def _locators_for(emitter_cls: type[Emitter]) -> Tuple[_Locator, ...]:
     return ()
 
 
+#: A table declaration and a column line, per relational text output (MFX-45.3). An optional schema
+#: qualifier and identifier quotes (`"order"`, `` `order` ``) are allowed.
+_RELATIONAL_TABLE_PATTERNS: Dict[str, "re.Pattern[str]"] = {
+    "ddl": re.compile(r'^CREATE TABLE\s+(?:[`"]?\w+[`"]?\.)?[`"]?(\w+)[`"]?\s*\('),
+    "dbml": re.compile(r'^Table\s+(?:"?\w+"?\.)?"?(\w+)"?\s*\{'),
+}
+_RELATIONAL_COLUMN_PATTERN = re.compile(r'^\s{2}[`"]?(\w+)[`"]?\s+\S')
+_RELATIONAL_BLOCK_END = {"ddl": ")", "dbml": "}"}
+
+
+def _locate_relational(
+    relational: Optional[Dict[str, Any]], files: List[_EmittedFileText]
+) -> Optional[Dict[str, ArtifactEntityLocation]]:
+    """Locate a database export's entities through its relational projection (MFX-45.3).
+
+    The projection names the table each record (or list field) became and the column each field became, so
+    a construct is found by those names rather than guessed from its own: a record is its ``CREATE TABLE``
+    (DDL) or ``Table`` (DBML) line, a list field the junction / child table it became, and any other field
+    the first column it became. Prisma and changelog outputs are not scanned (their names are the model's or
+    sit in changesets), so their entities truthfully carry no location.
+
+    Returns:
+        ``None`` when the export has no relational projection (the generic locators apply); otherwise
+        entity key → location for every construct found (possibly empty).
+    """
+    if not relational:
+        return None
+    output = str(relational.get("output") or "")
+    table_pattern = _RELATIONAL_TABLE_PATTERNS.get(output)
+    if table_pattern is None or not files:
+        return {}
+    file = files[0]
+    block_end = _RELATIONAL_BLOCK_END[output]
+    tables: Dict[str, Tuple[int, Dict[str, int]]] = {}
+    current: Optional[Dict[str, int]] = None
+    for line_number, line in enumerate(file.lines, start=1):
+        match = table_pattern.match(line)
+        if match:
+            current = {}
+            tables.setdefault(match.group(1), (line_number, current))
+            continue
+        if current is None:
+            continue
+        if line.startswith(block_end):
+            current = None
+            continue
+        column = _RELATIONAL_COLUMN_PATTERN.match(line)
+        if column:
+            current.setdefault(column.group(1), line_number)
+    located: Dict[str, ArtifactEntityLocation] = {}
+    for table in relational.get("tables") or []:
+        found = tables.get(str(table.get("name")))
+        if found is None:
+            continue
+        if table.get("entity_key"):
+            located.setdefault(str(table["entity_key"]), ArtifactEntityLocation(file=file.path, line=found[0]))
+    for table in relational.get("tables") or []:
+        found = tables.get(str(table.get("name")))
+        if found is None:
+            continue
+        for column in table.get("columns") or []:
+            line = found[1].get(str(column.get("name")))
+            if line is not None and column.get("entity_key"):
+                located.setdefault(str(column["entity_key"]), ArtifactEntityLocation(file=file.path, line=line))
+    return located
+
+
 def _locate_entity(
     entity_kind: str,
     key: str,
@@ -641,6 +716,7 @@ class _FullExportManifest:
     status_counts: Dict[str, int]
     reason_counts: Dict[str, int]
     dropped_entities: int
+    relational: Optional[RelationalSchema] = None
 
     @property
     def total_entities(self) -> int:
@@ -765,6 +841,8 @@ def build_export_preview_manifest(
     projection = build_projection_manifest(api, emitter_cls, options=options, report=report)
     facts_by_key = _collect_edge_facts(projection.projects_edges)
     files = _prepare_files(emit)
+    # MFX-45.3: a database export is located through its relational projection.
+    relational_locations = _locate_relational(emit.relational, files)
 
     entities: List[ExportPreviewEntity] = []
     order = 0
@@ -784,9 +862,15 @@ def build_export_preview_manifest(
     ) -> None:
         nonlocal order
         emitted = facts.status in _REPRESENTED_STATUSES
-        location = (
-            _locate_entity(entity_kind, key, name, files, emitter_cls) if emitted else None
-        )
+        if relational_locations is not None:
+            # MFX-45.3: the projection names the table / column the construct was written as, so its line
+            # is a fact about the artifact whatever the report files — a record renamed to its snake_case
+            # table is reported DROP (it reads back under another name) yet sits on its CREATE TABLE line.
+            location = relational_locations.get(key)
+        elif not emitted:
+            location = None
+        else:
+            location = _locate_entity(entity_kind, key, name, files, emitter_cls)
         entities.append(
             ExportPreviewEntity(
                 key=key,
@@ -917,6 +1001,7 @@ def build_export_preview_manifest(
         status_counts=status_counts,
         reason_counts=reason_counts,
         dropped_entities=dropped,
+        relational=RelationalSchema.model_validate(emit.relational) if emit.relational else None,
     )
 
 
@@ -956,6 +1041,7 @@ def paginate_export_preview_manifest(
         page_size=limit,
         next_cursor=next_cursor,
         truncated=next_cursor is not None or start > 0,
+        relational=full.relational,
     )
 
 

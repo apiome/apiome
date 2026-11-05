@@ -1546,6 +1546,16 @@
       ]
     },
     {
+      "id": "export-erd",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:export-erd/erd.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportErdView.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/exportErd.ts"
+      ]
+    },
+    {
       "id": "export-fidelity-overlay",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

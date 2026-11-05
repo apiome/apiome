@@ -33609,6 +33609,207 @@ tr:focus-within .pub-url__glyph {
   margin-block-start: var(--space-1);
 }
 
+/* ---- The ERD of a database export (MFX-45.3) ------------------------------ */
+/* A table is a node; its columns are buttons. What the export made up is
+   marked three ways: the ✚ glyph, the word SYNTH, and a dashed accent line. */
+.xstd-erd-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.xstd-erd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.xstd-erd__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.xstd-erd__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
+.xstd-erd__canvas {
+  /* React Flow's own theme variables, pointed at the app's tokens so the
+     controls and edge labels follow the appearance (light and dark). */
+  --xy-background-color: var(--bg-subtle);
+  --xy-background-pattern-dots-color: var(--border-strong);
+  --xy-controls-button-background-color: var(--bg-surface);
+  --xy-controls-button-background-color-hover: var(--bg-inset);
+  --xy-controls-button-color: var(--fg);
+  --xy-controls-button-color-hover: var(--fg);
+  --xy-controls-button-border-color: var(--border);
+  --xy-edge-label-background-color: var(--bg-surface);
+  --xy-edge-label-color: var(--fg-muted);
+  block-size: 26rem;
+  border-radius: var(--r-md);
+  background: var(--bg-subtle);
+  box-shadow: inset 0 0 0 1px var(--border);
+  overflow: hidden;
+}
+
+.xstd-erd__table {
+  inline-size: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  font-size: var(--fs-2xs);
+}
+
+.xstd-erd__table[data-synthesized='true'] {
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+.xstd-erd__table[data-selected='true'] {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.xstd-erd__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  inline-size: 100%;
+  padding: var(--space-1) var(--space-2);
+  border-block-end: 1px solid var(--border);
+  background: var(--bg-inset);
+  text-align: start;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.xstd-erd__name {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.xstd-erd__kind {
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.xstd-erd__synth {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  margin-inline-start: auto;
+  padding: 0 var(--space-1);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--accent-fg);
+}
+
+.xstd-erd__legend .xstd-erd__synth {
+  margin-inline-start: var(--space-2);
+}
+
+.xstd-erd__columns {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xstd-erd__column {
+  display: grid;
+  grid-template-columns: 3.75rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1);
+  inline-size: 100%;
+  block-size: 1.5rem;
+  padding: 0 var(--space-2);
+  text-align: start;
+  color: var(--fg);
+}
+
+.xstd-erd__column:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.xstd-erd__column[data-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.xstd-erd__column:disabled {
+  cursor: default;
+}
+
+.xstd-erd__markers {
+  display: inline-flex;
+  gap: 0.125rem;
+}
+
+.xstd-erd__marker {
+  padding: 0 0.1875rem;
+  border-radius: var(--r-xs);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.xstd-erd__colname {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+}
+
+.xstd-erd__synth-glyph {
+  color: var(--accent-fg);
+}
+
+.xstd-erd__type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
+.xstd-erd__handle {
+  opacity: 0;
+}
+
+.xstd-erd__edge .react-flow__edge-path {
+  stroke: var(--border-strong);
+  stroke-width: 1.5;
+}
+
+.xstd-erd__edge .react-flow__edge-text {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+}
+
+.xstd-erd__edge--synth .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-dasharray: 6 4;
+}
+
 /* ---- The projection graph SVG -------------------------------------------- */
 /* The nodes and edges of both graphs. `fill`/`stroke` are set from an
    attribute here rather than a class in the component: the reason the header

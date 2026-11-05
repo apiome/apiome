@@ -5,6 +5,26 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.660.0] - 2026-11-05
+
+### Added
+- **Relational projection for database exports (MFX-45.3, #4376).** The SQL DDL emitter (MFX-35.1) now returns the
+  tables it laid the model out as on `EmitResult.relational`, and `POST /v1/export/{tenant_slug}/preview-manifest` returns them
+  as `relational` (`RelationalSchema`, whole on every page) for SQL DDL and its DBML / Prisma / Liquibase / Flyway
+  outputs; `null` for every other target. The Review step draws it as an ERD.
+  - Each table has its `name`, `kind` (`table`, `junction` for a list of records, `child` for a list of values),
+    the canonical `entity_key` it came from, its columns, `primary_key`, `unique` keys and `foreign_keys`.
+  - Each column has its SQL `type` in the export's dialect, `not_null`, `primary_key`, `unique`, `identity`, the
+    canonical `entity_key`, and `references` (the column a single-column foreign key points at).
+  - What the projection made up — a generated key, a nested record's foreign key, a junction or child table and
+    its link columns — is marked `synthesized` (the decisions the fidelity report files as `SYNTH`); a key or
+    foreign key read from an imported SQL item is not.
+  - A database export's manifest entities are now **located** through the projection: a record on its
+    `CREATE TABLE` (DDL) or `Table` (DBML) line, a list field on the junction / child table it became, any other
+    field on its column's line — including a record the report files as dropped because it was renamed to its
+    `snake_case` table (its status is unchanged). Prisma and changelog outputs stay unlocated.
+  - OpenAPI 1.524.0.
+
 ## [1.659.0] - 2026-11-05
 
 ### Added

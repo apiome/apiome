@@ -20,6 +20,7 @@
 
 import type { editor } from 'monaco-editor';
 import { normalizeBundlePath } from './exportBundle';
+import type { RelationalSchema } from './exportErd';
 
 /** The shared CPDO-1.3 projection statuses an entity row can carry. */
 export type ExportEntityStatus =
@@ -112,6 +113,11 @@ export interface ExportPreviewManifestPage {
   page_size: number;
   next_cursor: string | null;
   truncated: boolean;
+  /**
+   * For a database target, the relational projection the artifact was written from — what the
+   * Review step's ERD draws (MFX-45.3). Absent or null for every other target.
+   */
+  relational?: RelationalSchema | null;
 }
 
 /** The endpoint's response (mirror of `ExportPreviewManifestResponse`). */

@@ -21,6 +21,11 @@ import 'jest-axe/extend-expect';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
+// MFX-45.3: the Review step's ERD draws with React Flow; the stand-in renders its table nodes.
+jest.mock('@xyflow/react', () =>
+  jest.requireActual<typeof import('./helpers/xyflow-mock')>('./helpers/xyflow-mock').xyflowMock(),
+);
+
 jest.mock('@monaco-editor/react', () => ({
   __esModule: true,
   default: ({ value, language }: { value?: string; language?: string }) => (
@@ -1259,6 +1264,60 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
       .find((row) => row.textContent?.includes('Timestamp'));
     expect(treeRow).toHaveAttribute('aria-selected', 'true');
     expect(within(graph).getByTestId('projection-detail')).toHaveTextContent('Timestamp');
+  });
+
+  it('reads a database export as an ERD on the step’s own selection (MFX-45.3)', async () => {
+    // The manifest of a database export carries its relational projection; here one table, the
+    // Timestamp record, with a made-up key.
+    const relational = {
+      dialect: 'postgres',
+      output: 'ddl',
+      schema_name: null,
+      tables: [
+        {
+          name: 'timestamp',
+          kind: 'table',
+          entity_key: 'Timestamp',
+          synthesized: false,
+          columns: [
+            { name: 'id', type: 'BIGINT', not_null: true, primary_key: true, unique: false, identity: true, synthesized: true, entity_key: 'Timestamp', references: null },
+          ],
+          primary_key: ['id'],
+          unique: [],
+          foreign_keys: [],
+        },
+      ],
+    };
+    const base = mockFetch();
+    const fetchMock = jest.fn(async (input: unknown, init?: { method?: string; body?: string }) => {
+      const res = (await base(input, init)) as { ok: boolean; json: () => Promise<Record<string, unknown>> };
+      if (!String(input).includes('/api/export/preview-manifest')) return res;
+      const body = await res.json();
+      const manifest = body.manifest as Record<string, unknown>;
+      return { ok: true, json: () => Promise.resolve({ ...body, manifest: { ...manifest, relational } }) };
+    }) as unknown as jest.Mock;
+    await advanceToVerify(fetchMock, 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await screen.findByTestId('export-artifact-preview');
+
+    fireEvent.click(await screen.findByTestId('export-artifact-view-erd'));
+    expect(screen.getByTestId('erd-table-timestamp')).toBeInTheDocument();
+    expect(screen.getByTestId('erd-column-timestamp.id')).toHaveAttribute('data-synthesized', 'true');
+
+    // An ERD click is the step's selection: the manifest tree follows.
+    fireEvent.click(screen.getByTestId('erd-table-select-timestamp'));
+    const treeRow = within(screen.getByTestId('export-manifest-panel'))
+      .getAllByTestId('export-manifest-entity')
+      .find((row) => row.textContent?.includes('Timestamp'));
+    expect(treeRow).toHaveAttribute('aria-selected', 'true');
+
+    // Back to the text and to the ERD again: the selection is still there.
+    fireEvent.click(screen.getByTestId('export-artifact-view-text'));
+    fireEvent.click(screen.getByTestId('export-artifact-view-erd'));
+    expect(screen.getByTestId('erd-table-select-timestamp')).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('paints the fidelity report onto the mapping graph (MFX-45.2)', async () => {

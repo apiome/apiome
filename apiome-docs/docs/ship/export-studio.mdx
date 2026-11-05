@@ -246,6 +246,30 @@ graph does not draw (yet, or at all), it says how many, and the treemap still sh
 
 <Screenshot id="export-fidelity-treemap" alt="The same findings as a treemap: a Pet group, a Category group and the default service, one tile per construct" />
 
+### Read a database export as an ERD
+
+A [SQL DDL export](./export-a-spec.md#sql-ddl-from-any-source), and its DBML, Prisma, Liquibase and
+Flyway outputs, is judged as tables rather than as text. Above the generated file, **click "ERD"** to see
+it as an entity-relationship diagram; **click "DDL text"** (**DBML text**, **Prisma schema text** or
+**Changelog text**) to go back.
+
+<Screenshot id="export-erd" alt="An order, order line and address model exported to PostgreSQL as an ERD: five tables, the junction table order_lines and the child table order_tags marked SYNTH, and dashed foreign keys" />
+
+- **Every table** shows its columns with their type in the export's dialect and **NOT NULL**. **PK**
+  marks the primary key, **FK** a foreign key and **UQ** a unique key.
+- **Every foreign key** is a line from the referencing table to the referenced one. The selected table's
+  keys are labelled, for example `ship_to_id → address.id`.
+- **What the export made up** is marked **✚**: a generated key column, the foreign key a nested object
+  became, and the **junction** table a list of objects became or the **child table** a list of values
+  became (with **✚ SYNTH** and a dashed border). Their lines are dashed too. These are the decisions the
+  fidelity report lists as SYNTH.
+- **The selection is shared.** Click a table or a column to select the type or field it came from: the
+  entity tree follows, and when you go back to DDL or DBML text the viewer scrolls to its `CREATE TABLE` /
+  `Table` or column line. Selecting something in the tree highlights it in the diagram and brings its table into view.
+
+Drag to pan, scroll or use **+** and **−** to zoom, and **⛶** to fit the whole diagram. The ERD is drawn
+from the tables Apiome wrote, so it is the same whichever output you picked.
+
 ### Test drive
 
 Under the generated file, **Test drive** has a tab for each tool that can try this format. Which tabs

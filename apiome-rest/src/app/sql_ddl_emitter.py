@@ -70,6 +70,13 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_relational import (
+    RelationalColumn,
+    RelationalForeignKey,
+    RelationalReference,
+    RelationalSchema,
+    RelationalTable,
+)
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .lossiness import LossinessReport, LossinessSeverity
 
@@ -330,6 +337,9 @@ class _Column:
     pointer: str = ""
     default_value: Any = None
     default_expression: Optional[str] = None
+    #: True when the projection made the column up (MFX-45.3): a generated key, the foreign key a nested
+    #: record became, or a junction / child table's owner, item and position columns.
+    synthesized: bool = False
 
 
 @dataclass
@@ -343,6 +353,9 @@ class _Table:
     unique: List[List[str]] = field(default_factory=list)
     checks: List[str] = field(default_factory=list)
     foreign_keys: List[Tuple[List[str], str, List[str]]] = field(default_factory=list)
+    #: ``table`` for a record; ``junction`` (a list of records) or ``child`` (a list of values) for a table the
+    #: projection made up (MFX-45.3).
+    kind: str = "table"
 
 
 class _SqlDdlWriter:
@@ -399,6 +412,53 @@ class _SqlDdlWriter:
     def title(self) -> str:
         """The name the output's header comment gives the model."""
         return self._api.title or self._api.identity.name or "schema"
+
+    def relational_schema(self) -> RelationalSchema:
+        """The projection as data — the tables the Review step draws as an ERD (MFX-45.3).
+
+        Run after :meth:`project`. A foreign key is ``synthesized`` when its first column is: the projection
+        made it up (a nested record's reference, a junction / child table's link), rather than reading it
+        from a declared ``sql_relationship``.
+        """
+        self.project()
+        tables: List[RelationalTable] = []
+        for table in self._tables:
+            synthesized_columns = {c.name for c in table.columns if c.synthesized}
+            unique_columns = {name for key in table.unique for name in key}
+            single_refs = {cols[0]: (target, refs[0]) for cols, target, refs in table.foreign_keys
+                           if len(cols) == 1 and len(refs) == 1}
+            columns = [
+                RelationalColumn(
+                    name=c.name,
+                    type=c.sql_type,
+                    not_null=c.not_null,
+                    primary_key=c.name in table.primary_key,
+                    unique=c.name in unique_columns,
+                    identity=c.identity,
+                    synthesized=c.synthesized,
+                    entity_key=c.pointer or None,
+                    references=(RelationalReference(table=single_refs[c.name][0], column=single_refs[c.name][1])
+                                if c.name in single_refs else None),
+                )
+                for c in table.columns
+            ]
+            made_up = table.kind != "table"
+            tables.append(RelationalTable(
+                name=table.name,
+                kind=table.kind,  # type: ignore[arg-type]
+                entity_key=table.key[: -len("#table")] if table.key.endswith("#table") else table.key,
+                synthesized=made_up,
+                columns=columns,
+                primary_key=list(table.primary_key),
+                unique=[list(key) for key in table.unique],
+                foreign_keys=[
+                    RelationalForeignKey(columns=list(cols), table=target, ref_columns=list(refs),
+                                         synthesized=bool(cols) and cols[0] in synthesized_columns)
+                    for cols, target, refs in table.foreign_keys
+                ],
+            ))
+        return RelationalSchema(dialect=self._dialect, output=self._options.output,
+                                schema_name=self._options.schema_name or None, tables=tables)
 
     def record_loss(self, kind: LossKind, subject: str, detail: str, pointer: str) -> None:
         """Record a loss a serializer makes (filed by the fidelity pack like the projection's)."""
@@ -617,7 +677,7 @@ class _SqlDdlWriter:
         if synthesized_key:
             namer.name(key[0])
             table.columns.append(_Column(name=key[0], sql_type="BIGINT", not_null=True, identity=True,
-                                         family="int64", pointer=record.key))
+                                         family="int64", pointer=record.key, synthesized=True))
             table.primary_key = [key[0]]
         self._field_columns: List[str] = []
         for member in record.fields:
@@ -720,7 +780,8 @@ class _SqlDdlWriter:
         if name != column_name and name in taken:
             # A field already takes `<field>_id`: keep the reference distinct, deterministically.
             name = f"{column_name}_ref_id"
-        table.columns.append(_Column(name=name, sql_type=key_type, not_null=not_null, pointer=member.key))
+        table.columns.append(_Column(name=name, sql_type=key_type, not_null=not_null, pointer=member.key,
+                                     synthesized=True))
         table.foreign_keys.append(([name], self._table_names[target.key], [key_column]))
         self._loss(LossKind.INFERRED, LOSS_KEY_SYNTHESIZED,
                    f"{member.key!r} is written as the foreign key {name!r} to {self._table_names[target.key]!r}",
@@ -756,17 +817,19 @@ class _SqlDdlWriter:
         owner_key, owner_type = self._keys[record.key]
         owner = self._table_names[record.key]
         name = self._table_namer.name(f"{owner}_{snake_case(member.name)}")
-        child = _Table(key=f"{member.key}#table", name=name)
+        child = _Table(key=f"{member.key}#table", name=name, kind="junction" if target is not None else "child")
         owner_column = f"{owner}_id"
-        child.columns.append(_Column(name=owner_column, sql_type=owner_type, not_null=True, pointer=member.key))
+        child.columns.append(_Column(name=owner_column, sql_type=owner_type, not_null=True, pointer=member.key,
+                                     synthesized=True))
         child.foreign_keys.append(([owner_column], owner, [owner_key]))
         if target is not None:
             item_key, item_type = self._keys[target.key]
             item_table = self._table_names[target.key]
             item_column = f"{item_table}_id" if item_table != owner else f"{item_table}_ref_id"
-            child.columns.append(_Column(name=item_column, sql_type=item_type, not_null=True, pointer=member.key))
+            child.columns.append(_Column(name=item_column, sql_type=item_type, not_null=True, pointer=member.key,
+                                         synthesized=True))
             child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True, family="int32",
-                                         pointer=member.key))
+                                         pointer=member.key, synthesized=True))
             child.foreign_keys.append(([item_column], item_table, [item_key]))
             child.primary_key = [owner_column, "position"]
             self._loss(LossKind.INFERRED, LOSS_JUNCTION_TABLE,
@@ -774,7 +837,7 @@ class _SqlDdlWriter:
                        member.key)
         else:
             child.columns.append(_Column(name="position", sql_type="INTEGER", not_null=True, family="int32",
-                                         pointer=member.key))
+                                         pointer=member.key, synthesized=True))
             enum = self._types.get(item.name or "")
             if enum is not None and enum.kind is TypeKind.ENUM:
                 value = self._enum_column(member, "value", enum, True)
@@ -1311,6 +1374,7 @@ class SqlDdlEmitter(Emitter, register=True):
             media_type=media_type,
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
+            relational=writer.relational_schema().model_dump(mode="json"),
         )
 
 
@@ -1339,6 +1403,7 @@ class SqlDdlEmitter(Emitter, register=True):
             provenance=writer.tracker.records(),
             losses=writer.losses.records(),
             changelog_baseline=output.baseline,
+            relational=writer.relational_schema().model_dump(mode="json"),
         )
 
 

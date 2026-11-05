@@ -448,6 +448,12 @@ class EmitResult(BaseModel):
         description="The baseline a SQL DDL changelog export (Liquibase / Flyway, MFX-35.3) leaves for the "
         "next export of the same artifact to diff against; ``None`` for every other emit.",
     )
+    relational: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="The relational projection a database export laid the model out as — tables, columns, "
+        "keys and foreign keys, each marked when the projection made it up (MFX-45.3; the wire shape is "
+        ":class:`app.export_relational.RelationalSchema`). ``None`` for every non-database emit.",
+    )
 
     @property
     def document(self) -> Dict[str, Any]:
@@ -805,8 +811,8 @@ def load_builtin_emitters() -> None:
     from . import apiblueprint_emitter as _apiblueprint  # noqa: F401
     from . import apigee_emitter as _apigee_emitter  # noqa: F401
     from . import arazzo_emitter as _arazzo_emitter  # noqa: F401
-    from . import asn1_emitter as _asn1  # noqa: F401
     from . import arrow_emitter as _arrow_emitter  # noqa: F401
+    from . import asn1_emitter as _asn1  # noqa: F401
     from . import asyncapi_emitter as _asyncapi  # noqa: F401
     from . import avro_emitter as _avro  # noqa: F401
     from . import aws_apigateway_emitter as _aws_apigateway_emitter  # noqa: F401
@@ -827,8 +833,8 @@ def load_builtin_emitters() -> None:
     # FMT-7.7 (#5461): the gateway family's remaining emit modes, on the shared projection.
     from . import envoy_xds_emitter as _envoy_xds_emitter  # noqa: F401
     from . import fhir_emitter as _fhir  # noqa: F401
-    from . import fix_orchestra_emitter as _fix_orchestra_emitter  # noqa: F401
     from . import fix_emitter as _fix  # noqa: F401
+    from . import fix_orchestra_emitter as _fix_orchestra_emitter  # noqa: F401
     from . import flatbuffers_emitter as _flatbuffers  # noqa: F401
     from . import gateway_api_emitter as _gateway_api_emitter  # noqa: F401
     from . import graphql_emitter as _graphql  # noqa: F401
