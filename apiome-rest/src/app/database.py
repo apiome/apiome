@@ -1454,6 +1454,17 @@ class Database:
         """
         return self.execute_query(query, (user_id, user_id, user_id, limit, offset))
 
+    def get_tenant_slug_by_id(self, tenant_id: str) -> Optional[str]:
+        """The slug of a tenant, by id (MFX-40.1: the MCP export tools know a key's tenant id only).
+
+        Returns:
+            The slug, or ``None`` for an unknown or non-UUID id.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query("SELECT slug FROM apiome.tenants WHERE id = %s::uuid", (tenant_id,))
+        return str(rows[0]["slug"]) if rows else None
+
     def get_tenant_row_by_slug(self, slug: str) -> Optional[Dict[str, Any]]:
         """Return tenant id/slug/name/created_at if slug exists and is active."""
         query = """

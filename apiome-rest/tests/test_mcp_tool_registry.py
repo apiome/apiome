@@ -21,6 +21,8 @@ _LIVE_FASTMCP_TOOL_IDS = frozenset(
         "spec.search_semantic",
         "spec.get_openapi",
         "spec.export_yaml",
+        "export.targets",
+        "version.export",
         "spec.list_operations",
         "spec.describe_operation",
         "spec.list_components",
@@ -45,7 +47,7 @@ _EXPECTED_TOOLSETS = {
         }
     ),
     "search": frozenset({"spec.search", "spec.search_semantic"}),
-    "document": frozenset({"spec.get_openapi", "spec.export_yaml"}),
+    "document": frozenset({"spec.get_openapi", "spec.export_yaml", "export.targets", "version.export"}),
     "structure": frozenset(
         {
             "spec.list_operations",

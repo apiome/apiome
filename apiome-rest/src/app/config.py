@@ -423,6 +423,13 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP export tools (MFX-40.1): the largest emitted output `version.export` returns inline, in bytes;
+    # a larger export answers with its REST `downloadPath` instead.
+    mcp_export_inline_max_bytes: int = Field(
+        default=262144,
+        validation_alias=AliasChoices("APIOME_MCP_EXPORT_INLINE_MAX_BYTES", "mcp_export_inline_max_bytes"),
+    )
+
     # Repository auto-refresh cadence (RAR-3.1, #3522). Per-repo cadence is stored
     # in apiome.tenant_repositories.refresh_interval_seconds; these set the default
     # applied when a repo has no explicit value and the global minimum floor that

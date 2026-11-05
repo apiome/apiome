@@ -190,6 +190,9 @@ services:
       APIOME_MCP_MOCK_INVOCATION_BASE_URL: ${APIOME_MCP_MOCK_INVOCATION_BASE_URL:-http://mock:8775}
       # AGX-2.1: opens the AGX-2.2 upstream vault; must match the rest service's value.
       APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
+      # MFX-40.1: export.targets / version.export call rest's internal export routes with its token.
+      APIOME_MCP_REST_INTERNAL_URL: ${APIOME_MCP_REST_INTERNAL_URL:-http://rest:8000}
+      APIOME_MCP_REST_INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
