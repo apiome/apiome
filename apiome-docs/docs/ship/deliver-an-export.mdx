@@ -1,0 +1,72 @@
+---
+title: Deliver an export
+description: Send finished exports to a repository, a webhook or a bucket.
+sidebar_position: 5.24
+---
+
+An export ends with a file to download. Most spec workflows don't stop there: the specs belong in a
+repository, a pipeline has to hear that a new version exists, or a data platform reads from a bucket.
+**Delivery** sends a finished export to where it is used, through one of three channels, and records
+every attempt on the export job and in the audit log.
+
+Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)). A dry
+run has no files to deliver.
+
+## Choose a channel
+
+| Channel | What it does | Use it when | Page |
+| --- | --- | --- | --- |
+| **Git repository** | Writes the bundle into a registered GitHub repository as a pull request, with the fidelity summary in its description, or as a direct commit. | Specs are reviewed and versioned in a repository. | [Deliver to git](./deliver-an-export-to-git.md) |
+| **Webhook** | POSTs the manifest, the fidelity report and the bundle (inline, or as a signed link) to a URL, signed with HMAC-SHA256 and retried with backoff. | A CI/CD pipeline or another service should act on each new export. | [Deliver to a webhook](./deliver-an-export-to-a-webhook.md) |
+| **Object storage** | Uploads the files to an S3-compatible bucket (AWS S3, MinIO, Cloudflare R2, Ceph) under a partitioned prefix, with a content-addressed manifest. | A data platform or archive reads exports from a bucket. | [Deliver to object storage](./deliver-an-export-to-object-storage.md) |
+
+Every channel works the same way:
+
+- **It needs `versions:publish`**, because it sends an export outside Apiome.
+- **Credentials stay in the workspace.** A git delivery uses the repository's linked account, an object
+  storage delivery a bucket credential sealed in the vault, and a webhook a shared secret that is sealed
+  or never stored. No secret is ever returned, logged or audited.
+- **Destinations are guarded.** A webhook URL or a custom storage endpoint that resolves to a private
+  network is refused.
+- **Failures are runs.** A delivery that reaches its destination and fails still answers with a run, a
+  stable `errorCode` and a message that says what to fix.
+
+## Save a destination as a profile
+
+To deliver to the same place again, save the destination once as a
+[delivery profile](./export-delivery-profiles.mdx): a name, a channel, the destination and the
+credential it delivers with. You can then:
+
+- **In Export studio**, manage profiles on the **Delivery** tab, tick them under **Deliver when it
+  completes** on **Review** before you click **Generate**, or pick one and click **Deliver now** once
+  the export has finished.
+- **In the CLI**, pass `--deliver PROFILE` to `apiome export <format>`, or run
+  `apiome export deliver JOB --profile PROFILE`.
+- **In the API**, send `delivery_profiles` with `POST /v1/export/{tenant}/jobs`, or a `profileId` to
+  `POST /v1/export/{tenant}/jobs/{job_id}/deliveries`.
+
+<Screenshot id="export-studio-delivery" alt="The Delivery tab of Export studio: three delivery profiles — object storage, webhook and git — with one profile's deliveries open, one delivered and one failed with its error code" />
+
+## Routes at a glance
+
+| Route | What it does |
+| --- | --- |
+| `POST /v1/export/{tenant}/jobs/{job_id}/deliveries/git` | Deliver to a git repository. |
+| `POST /v1/export/{tenant}/jobs/{job_id}/deliveries/webhook` | Deliver to a webhook. |
+| `POST /v1/export/{tenant}/jobs/{job_id}/deliveries/object-storage` | Deliver to an S3-compatible bucket. |
+| `POST /v1/export/{tenant}/storage-credentials` | Store a bucket credential in the vault. |
+| `POST /v1/export/{tenant}/delivery-profiles` | Save a destination as a profile. |
+| `POST /v1/export/{tenant}/jobs/{job_id}/deliveries` | Deliver with a profile. |
+| `GET /v1/export/{tenant}/jobs/{job_id}/deliveries` | Every delivery of a job, across all channels. |
+
+Each channel's own `GET` lists that channel's runs for a job. Every field is in the
+[export delivery reference](/reference/rest/export-delivery).
+
+## See what was delivered
+
+- **On the job:** `GET /v1/export/{tenant}/jobs/{job_id}/deliveries` lists every delivery, newest first,
+  with its channel, outcome (`in_progress`, `delivered` or `failed`), destination and attempt count. In
+  Export studio, the **Deliveries** panel on **Review** shows the same list.
+- **In the audit log:** each delivery is recorded as `export.git_delivery`, `export.webhook_delivery` or
+  `export.object_storage_delivery`, with its profile when it was made with one. Saving, changing and
+  deleting profiles and bucket credentials are recorded too.

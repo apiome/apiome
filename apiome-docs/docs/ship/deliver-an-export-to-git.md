@@ -9,7 +9,8 @@ deliver the export there: the bundle is written under a directory of the reposit
 **pull request** whose description carries the export's fidelity summary and a link to the full
 report. You can also commit **directly** to a branch.
 
-Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)).
+Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)). To
+compare the channels, see [Deliver an export](./deliver-an-export.mdx).
 
 ## Before you start
 
