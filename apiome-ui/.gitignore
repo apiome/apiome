@@ -57,3 +57,6 @@ yarn-error.log*
 next-env.d.ts
 
 visual-regression.spec.ts-snapshots/
+
+# MFX-44.3: the GraphiQL test-drive bundle, built by scripts/build-test-drive-graphiql.mjs.
+/public/test-drive/graphiql/
