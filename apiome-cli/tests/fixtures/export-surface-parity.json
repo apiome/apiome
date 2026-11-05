@@ -1,0 +1,1856 @@
+{
+  "envelope_version": 1,
+  "sources": {
+    "event-orders": {
+      "paradigm": "event",
+      "previews": {
+        "asyncapi": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to AsyncAPI 3.1.",
+            "message": "Exporting to AsyncAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "AsyncAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to AsyncAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "ok",
+                "message": "operation carried to AsyncAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "ok",
+                "message": "event channel carried to AsyncAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 3,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 3,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 3,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 3
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an AsyncAPI 3.1 JSON document (channels, operations, messages).",
+            "format": "asyncapi-3",
+            "icon": "radio-tower",
+            "key": "asyncapi",
+            "label": "AsyncAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "event",
+            "unavailable_reason": null
+          }
+        },
+        "avro": {
+          "advisory": {
+            "affected": 4,
+            "approximated": 1,
+            "dropped": 2,
+            "headline": "Fidelity notice — exporting to Apache Avro may lose detail.",
+            "message": "Exporting to Apache Avro may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 1,
+            "target_format": "Apache Avro"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to Apache Avro",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Order.id",
+                "kind": "approx",
+                "message": "Apache Avro maps optional/nullable fields to a null-union, not JSON Schema optional semantics",
+                "severity": "warn",
+                "target_mapping": "optional/nullable → [\"null\", T] union"
+              },
+              {
+                "construct": "Order.id",
+                "kind": "synth",
+                "message": "Apache Avro requires a default for schema-evolution compatibility; one is synthesized for this optional field",
+                "severity": "warn",
+                "target_mapping": "synthesized default for evolution"
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "drop",
+                "message": "Apache Avro is types-only — only data schemas are exported; the publish operation is dropped",
+                "severity": "critical",
+                "target_mapping": "operation → dropped (types-only export)"
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "drop",
+                "message": "Apache Avro is types-only — only data schemas are exported; the event channel is dropped",
+                "severity": "critical",
+                "target_mapping": "channel → dropped (types-only export)"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 2,
+              "ok": 1,
+              "synth": 1
+            },
+            "severity_counts": {
+              "critical": 2,
+              "info": 1,
+              "warn": 2
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 2,
+            "preserved": 1,
+            "preserved_percent": 20,
+            "synthesized": 1,
+            "tier": "types-only",
+            "total": 5
+          },
+          "target": {
+            "available": true,
+            "description": "Export data schemas as Avro .avsc (records, enums, unions, logical types).",
+            "format": "avro",
+            "icon": "database",
+            "key": "avro",
+            "label": "Apache Avro",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "graphql": {
+          "advisory": {
+            "affected": 2,
+            "approximated": 0,
+            "dropped": 2,
+            "headline": "Fidelity notice — exporting to GraphQL SDL may lose detail.",
+            "message": "Exporting to GraphQL SDL may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "GraphQL SDL"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to GraphQL SDL",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "drop",
+                "message": "GraphQL SDL cannot represent event operations; the operation is dropped",
+                "severity": "critical",
+                "target_mapping": null
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "drop",
+                "message": "GraphQL SDL cannot represent event channels; the channel is dropped",
+                "severity": "critical",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 2,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 2,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 2,
+            "preserved": 1,
+            "preserved_percent": 33,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 3
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a GraphQL schema definition language (SDL) document.",
+            "format": "graphql",
+            "icon": "share-2",
+            "key": "graphql",
+            "label": "GraphQL SDL",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "graph",
+            "unavailable_reason": null
+          }
+        },
+        "json-schema": {
+          "advisory": {
+            "affected": 4,
+            "approximated": 1,
+            "dropped": 3,
+            "headline": "Fidelity notice — exporting to JSON Schema may lose detail.",
+            "message": "Exporting to JSON Schema may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "JSON Schema"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "",
+                "kind": "drop",
+                "message": "JSON Schema is types-only — only data schemas are exported: 1 service(s) with 1 operation(s) and 1 channel(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+                "severity": "critical",
+                "target_mapping": "types-only"
+              },
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "The asyncapi-3.0 document is written as JSON Schema and reads back as a JSON Schema item; details specific to its format are not kept",
+                "severity": "info",
+                "target_mapping": "document → JSON Schema"
+              },
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to JSON Schema",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "drop",
+                "message": "JSON Schema is types-only — only data schemas are exported; the publish operation is dropped",
+                "severity": "critical",
+                "target_mapping": "operation → dropped (types-only export)"
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "drop",
+                "message": "JSON Schema is types-only — only data schemas are exported; the event channel is dropped",
+                "severity": "critical",
+                "target_mapping": "channel → dropped (types-only export)"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 3,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 3,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 3,
+            "preserved": 1,
+            "preserved_percent": 20,
+            "synthesized": 0,
+            "tier": "types-only",
+            "total": 5
+          },
+          "target": {
+            "available": true,
+            "description": "Export as JSON Schema (2020-12, draft-07 or draft-04): one bundle or one file per type.",
+            "format": "json-schema",
+            "icon": "braces",
+            "key": "json-schema",
+            "label": "JSON Schema",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "mcp": {
+          "advisory": {
+            "affected": 3,
+            "approximated": 1,
+            "dropped": 2,
+            "headline": "Fidelity notice — exporting to MCP Tool Definitions may lose detail.",
+            "message": "Exporting to MCP Tool Definitions may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "MCP Tool Definitions"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "approx",
+                "message": "MCP Tool Definitions has no component section; type 'Order' is inlined into each tool schema that uses it",
+                "severity": "info",
+                "target_mapping": "named type → inlined schema"
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "drop",
+                "message": "MCP Tool Definitions: a publish operation is an event flow with no single reply, and a tool returns one result; 'orderPlaced.publish' is dropped",
+                "severity": "critical",
+                "target_mapping": "operation → no tool"
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "drop",
+                "message": "MCP Tool Definitions has no channel vocabulary; channel 'orders/placed' is dropped — an event stream has no tool form",
+                "severity": "critical",
+                "target_mapping": "channel → dropped"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 2,
+              "ok": 0,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 2,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 2,
+            "preserved": 0,
+            "preserved_percent": 0,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 3
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an MCP server descriptor: one tool per operation, with a unique name, a description, an inputSchema from the parameters and body, and an outputSchema where the protocol revision supports it.",
+            "format": "mcp",
+            "icon": "bot",
+            "key": "mcp",
+            "label": "MCP Tool Definitions",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "agent",
+            "unavailable_reason": null
+          }
+        },
+        "openapi": {
+          "advisory": {
+            "affected": 2,
+            "approximated": 2,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to OpenAPI 3.1 may lose detail.",
+            "message": "Exporting to OpenAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "OpenAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to OpenAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "approx",
+                "message": "OpenAPI 3.1 has no pub/sub semantics; the 'publish' operation is emitted only as a non-normative documentation path with an x-apiome-event-action note",
+                "severity": "warn",
+                "target_mapping": "pub/sub action → non-normative path + x-apiome-event-action"
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "approx",
+                "message": "OpenAPI 3.1 has no event-channel construct; the channel is surfaced only as a non-normative documentation path and its protocol bindings and correlation ids are dropped",
+                "severity": "warn",
+                "target_mapping": "event channel → documentation path (bindings dropped)"
+              }
+            ],
+            "kind_counts": {
+              "approx": 2,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 2
+            }
+          },
+          "summary": {
+            "approximated": 2,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 33,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 3
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an OpenAPI 3.1 JSON document (JSON Schema components).",
+            "format": "openapi-3.1",
+            "icon": "file-json",
+            "key": "openapi",
+            "label": "OpenAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "rest",
+            "unavailable_reason": null
+          }
+        },
+        "protobuf": {
+          "advisory": {
+            "affected": 4,
+            "approximated": 2,
+            "dropped": 1,
+            "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 1,
+            "target_format": "Protocol Buffers (proto3)"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Order",
+                "kind": "ok",
+                "message": "object carried to Protocol Buffers (proto3)",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Order.id",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+                "severity": "warn",
+                "target_mapping": "nullable → proto3 optional"
+              },
+              {
+                "construct": "Order.id",
+                "kind": "synth",
+                "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+                "severity": "warn",
+                "target_mapping": "synthesized field number"
+              },
+              {
+                "construct": "orderPlaced.publish",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) has no pub/sub semantics; the 'publish' operation is reframed as a unary rpc",
+                "severity": "warn",
+                "target_mapping": "pub/sub action → unary rpc"
+              },
+              {
+                "construct": "orders/placed",
+                "kind": "drop",
+                "message": "Protocol Buffers (proto3) cannot represent event channels; the channel is dropped",
+                "severity": "critical",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 2,
+              "drop": 1,
+              "ok": 1,
+              "synth": 1
+            },
+            "severity_counts": {
+              "critical": 1,
+              "info": 1,
+              "warn": 3
+            }
+          },
+          "summary": {
+            "approximated": 2,
+            "dropped": 1,
+            "preserved": 1,
+            "preserved_percent": 20,
+            "synthesized": 1,
+            "tier": "lossy",
+            "total": 5
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a Protocol Buffers 3 .proto (gRPC services + messages).",
+            "format": "proto3",
+            "icon": "binary",
+            "key": "protobuf",
+            "label": "Protocol Buffers (proto3)",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "rpc",
+            "unavailable_reason": null
+          }
+        }
+      },
+      "targets": [
+        {
+          "default_options": {
+            "asyncapi_version": "3.1",
+            "include_channels": true,
+            "include_components": true
+          },
+          "key": "asyncapi",
+          "options": [
+            "asyncapi_version",
+            "include_channels",
+            "include_components"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "namespace": null,
+            "output_syntax": "avsc",
+            "subject_naming": "record_name",
+            "subject_role": "value",
+            "topic": null
+          },
+          "key": "avro",
+          "options": [
+            "namespace",
+            "output_syntax",
+            "subject_naming",
+            "subject_role",
+            "topic"
+          ],
+          "preserved_percent": 20,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "schema_description": null
+          },
+          "key": "graphql",
+          "options": [
+            "schema_description"
+          ],
+          "preserved_percent": 33,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "draft": "2020-12",
+            "id_base": null,
+            "mode": "json-schema",
+            "packaging": "bundle",
+            "pretty_print": true
+          },
+          "key": "json-schema",
+          "options": [
+            "draft",
+            "id_base",
+            "mode",
+            "packaging",
+            "pretty_print"
+          ],
+          "preserved_percent": 20,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "grouping": "single",
+            "include_deprecated": false,
+            "output_schema": true,
+            "protocol_version": "2025-06-18"
+          },
+          "key": "mcp",
+          "options": [
+            "grouping",
+            "include_deprecated",
+            "output_schema",
+            "protocol_version"
+          ],
+          "preserved_percent": 0,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "include_components": true,
+            "include_paths": true,
+            "include_projection_extensions": true,
+            "openapi_version": "3.1"
+          },
+          "key": "openapi",
+          "options": [
+            "include_components",
+            "include_paths",
+            "include_projection_extensions",
+            "openapi_version"
+          ],
+          "preserved_percent": 33,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "emit_services": true,
+            "package": null,
+            "persisted_field_numbers": {}
+          },
+          "key": "protobuf",
+          "options": [
+            "emit_services",
+            "package",
+            "persisted_field_numbers"
+          ],
+          "preserved_percent": 20,
+          "tier": "lossy"
+        }
+      ]
+    },
+    "rest-widgets": {
+      "paradigm": "rest",
+      "previews": {
+        "asyncapi": {
+          "advisory": {
+            "affected": 1,
+            "approximated": 1,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to AsyncAPI 3.1 may lose detail.",
+            "message": "Exporting to AsyncAPI 3.1 may lose some fidelity. The destination format can't represent everything in this API, so 1 construct will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "AsyncAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "approx",
+                "message": "AsyncAPI 3.1 has no HTTP operation vocabulary; the query exchange is reframed as an action: send + reply",
+                "severity": "warn",
+                "target_mapping": "request/response → send + reply"
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to AsyncAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 1
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 50,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 2
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an AsyncAPI 3.1 JSON document (channels, operations, messages).",
+            "format": "asyncapi-3",
+            "icon": "radio-tower",
+            "key": "asyncapi",
+            "label": "AsyncAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "event",
+            "unavailable_reason": null
+          }
+        },
+        "avro": {
+          "advisory": {
+            "affected": 3,
+            "approximated": 1,
+            "dropped": 1,
+            "headline": "Fidelity notice — exporting to Apache Avro may lose detail.",
+            "message": "Exporting to Apache Avro may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 1,
+            "target_format": "Apache Avro"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "drop",
+                "message": "Apache Avro is types-only — only data schemas are exported; the query operation is dropped",
+                "severity": "critical",
+                "target_mapping": "operation → dropped (types-only export)"
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to Apache Avro",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget.id",
+                "kind": "approx",
+                "message": "Apache Avro maps optional/nullable fields to a null-union, not JSON Schema optional semantics",
+                "severity": "warn",
+                "target_mapping": "optional/nullable → [\"null\", T] union"
+              },
+              {
+                "construct": "Widget.id",
+                "kind": "synth",
+                "message": "Apache Avro requires a default for schema-evolution compatibility; one is synthesized for this optional field",
+                "severity": "warn",
+                "target_mapping": "synthesized default for evolution"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 1,
+              "ok": 1,
+              "synth": 1
+            },
+            "severity_counts": {
+              "critical": 1,
+              "info": 1,
+              "warn": 2
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 1,
+            "preserved": 1,
+            "preserved_percent": 25,
+            "synthesized": 1,
+            "tier": "types-only",
+            "total": 4
+          },
+          "target": {
+            "available": true,
+            "description": "Export data schemas as Avro .avsc (records, enums, unions, logical types).",
+            "format": "avro",
+            "icon": "database",
+            "key": "avro",
+            "label": "Apache Avro",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "graphql": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to GraphQL SDL.",
+            "message": "Exporting to GraphQL SDL preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "GraphQL SDL"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "ok",
+                "message": "operation carried to GraphQL SDL",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to GraphQL SDL",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 2,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 2,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 2
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a GraphQL schema definition language (SDL) document.",
+            "format": "graphql",
+            "icon": "share-2",
+            "key": "graphql",
+            "label": "GraphQL SDL",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "graph",
+            "unavailable_reason": null
+          }
+        },
+        "json-schema": {
+          "advisory": {
+            "affected": 3,
+            "approximated": 1,
+            "dropped": 2,
+            "headline": "Fidelity notice — exporting to JSON Schema may lose detail.",
+            "message": "Exporting to JSON Schema may lose some fidelity. The destination format can't represent everything in this API, so 3 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": true,
+            "severity": "critical",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "JSON Schema"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "",
+                "kind": "drop",
+                "message": "JSON Schema is types-only — only data schemas are exported: 1 service(s) with 1 operation(s) are not exported. Export to OpenAPI or AsyncAPI as well to keep them",
+                "severity": "critical",
+                "target_mapping": "types-only"
+              },
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "The openapi-3.1 document is written as JSON Schema and reads back as a JSON Schema item; details specific to its format are not kept",
+                "severity": "info",
+                "target_mapping": "document → JSON Schema"
+              },
+              {
+                "construct": "GET /widgets",
+                "kind": "drop",
+                "message": "JSON Schema is types-only — only data schemas are exported; the query operation is dropped",
+                "severity": "critical",
+                "target_mapping": "operation → dropped (types-only export)"
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to JSON Schema",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 2,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 2,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 2,
+            "preserved": 1,
+            "preserved_percent": 25,
+            "synthesized": 0,
+            "tier": "types-only",
+            "total": 4
+          },
+          "target": {
+            "available": true,
+            "description": "Export as JSON Schema (2020-12, draft-07 or draft-04): one bundle or one file per type.",
+            "format": "json-schema",
+            "icon": "braces",
+            "key": "json-schema",
+            "label": "JSON Schema",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "mcp": {
+          "advisory": {
+            "affected": 1,
+            "approximated": 1,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to MCP Tool Definitions may lose detail.",
+            "message": "Exporting to MCP Tool Definitions may lose some fidelity. The destination format can't represent everything in this API, so 1 construct will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "info",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "MCP Tool Definitions"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "ok",
+                "message": "operation carried to the MCP tool 'listWidgets'",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget",
+                "kind": "approx",
+                "message": "MCP Tool Definitions has no component section; type 'Widget' is inlined into each tool schema that uses it",
+                "severity": "info",
+                "target_mapping": "named type → inlined schema"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 50,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 2
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an MCP server descriptor: one tool per operation, with a unique name, a description, an inputSchema from the parameters and body, and an outputSchema where the protocol revision supports it.",
+            "format": "mcp",
+            "icon": "bot",
+            "key": "mcp",
+            "label": "MCP Tool Definitions",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "agent",
+            "unavailable_reason": null
+          }
+        },
+        "openapi": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to OpenAPI 3.1.",
+            "message": "Exporting to OpenAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "OpenAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "ok",
+                "message": "operation carried to OpenAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to OpenAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 2,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 2,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 2
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an OpenAPI 3.1 JSON document (JSON Schema components).",
+            "format": "openapi-3.1",
+            "icon": "file-json",
+            "key": "openapi",
+            "label": "OpenAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "rest",
+            "unavailable_reason": null
+          }
+        },
+        "protobuf": {
+          "advisory": {
+            "affected": 2,
+            "approximated": 1,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 2 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 1,
+            "target_format": "Protocol Buffers (proto3)"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "GET /widgets",
+                "kind": "ok",
+                "message": "operation carried to Protocol Buffers (proto3)",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget",
+                "kind": "ok",
+                "message": "object carried to Protocol Buffers (proto3)",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Widget.id",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+                "severity": "warn",
+                "target_mapping": "nullable → proto3 optional"
+              },
+              {
+                "construct": "Widget.id",
+                "kind": "synth",
+                "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+                "severity": "warn",
+                "target_mapping": "synthesized field number"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 0,
+              "ok": 2,
+              "synth": 1
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 2,
+              "warn": 2
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 0,
+            "preserved": 2,
+            "preserved_percent": 50,
+            "synthesized": 1,
+            "tier": "lossy",
+            "total": 4
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a Protocol Buffers 3 .proto (gRPC services + messages).",
+            "format": "proto3",
+            "icon": "binary",
+            "key": "protobuf",
+            "label": "Protocol Buffers (proto3)",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "rpc",
+            "unavailable_reason": null
+          }
+        }
+      },
+      "targets": [
+        {
+          "default_options": {
+            "asyncapi_version": "3.1",
+            "include_channels": true,
+            "include_components": true
+          },
+          "key": "asyncapi",
+          "options": [
+            "asyncapi_version",
+            "include_channels",
+            "include_components"
+          ],
+          "preserved_percent": 50,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "namespace": null,
+            "output_syntax": "avsc",
+            "subject_naming": "record_name",
+            "subject_role": "value",
+            "topic": null
+          },
+          "key": "avro",
+          "options": [
+            "namespace",
+            "output_syntax",
+            "subject_naming",
+            "subject_role",
+            "topic"
+          ],
+          "preserved_percent": 25,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "schema_description": null
+          },
+          "key": "graphql",
+          "options": [
+            "schema_description"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "draft": "2020-12",
+            "id_base": null,
+            "mode": "json-schema",
+            "packaging": "bundle",
+            "pretty_print": true
+          },
+          "key": "json-schema",
+          "options": [
+            "draft",
+            "id_base",
+            "mode",
+            "packaging",
+            "pretty_print"
+          ],
+          "preserved_percent": 25,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "grouping": "single",
+            "include_deprecated": false,
+            "output_schema": true,
+            "protocol_version": "2025-06-18"
+          },
+          "key": "mcp",
+          "options": [
+            "grouping",
+            "include_deprecated",
+            "output_schema",
+            "protocol_version"
+          ],
+          "preserved_percent": 50,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "include_components": true,
+            "include_paths": true,
+            "include_projection_extensions": true,
+            "openapi_version": "3.1"
+          },
+          "key": "openapi",
+          "options": [
+            "include_components",
+            "include_paths",
+            "include_projection_extensions",
+            "openapi_version"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "emit_services": true,
+            "package": null,
+            "persisted_field_numbers": {}
+          },
+          "key": "protobuf",
+          "options": [
+            "emit_services",
+            "package",
+            "persisted_field_numbers"
+          ],
+          "preserved_percent": 50,
+          "tier": "lossy"
+        }
+      ]
+    },
+    "schema-customer": {
+      "paradigm": "data_schema",
+      "previews": {
+        "asyncapi": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to AsyncAPI 3.1.",
+            "message": "Exporting to AsyncAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "AsyncAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to AsyncAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 1
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an AsyncAPI 3.1 JSON document (channels, operations, messages).",
+            "format": "asyncapi-3",
+            "icon": "radio-tower",
+            "key": "asyncapi",
+            "label": "AsyncAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "event",
+            "unavailable_reason": null
+          }
+        },
+        "avro": {
+          "advisory": {
+            "affected": 4,
+            "approximated": 2,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to Apache Avro may lose detail.",
+            "message": "Exporting to Apache Avro may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 2,
+            "target_format": "Apache Avro"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to Apache Avro",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Customer.id",
+                "kind": "approx",
+                "message": "Apache Avro maps optional/nullable fields to a null-union, not JSON Schema optional semantics",
+                "severity": "warn",
+                "target_mapping": "optional/nullable → [\"null\", T] union"
+              },
+              {
+                "construct": "Customer.id",
+                "kind": "synth",
+                "message": "Apache Avro requires a default for schema-evolution compatibility; one is synthesized for this optional field",
+                "severity": "warn",
+                "target_mapping": "synthesized default for evolution"
+              },
+              {
+                "construct": "Customer.name",
+                "kind": "approx",
+                "message": "Apache Avro maps optional/nullable fields to a null-union, not JSON Schema optional semantics",
+                "severity": "warn",
+                "target_mapping": "optional/nullable → [\"null\", T] union"
+              },
+              {
+                "construct": "Customer.name",
+                "kind": "synth",
+                "message": "Apache Avro requires a default for schema-evolution compatibility; one is synthesized for this optional field",
+                "severity": "warn",
+                "target_mapping": "synthesized default for evolution"
+              }
+            ],
+            "kind_counts": {
+              "approx": 2,
+              "drop": 0,
+              "ok": 1,
+              "synth": 2
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 4
+            }
+          },
+          "summary": {
+            "approximated": 2,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 20,
+            "synthesized": 2,
+            "tier": "types-only",
+            "total": 5
+          },
+          "target": {
+            "available": true,
+            "description": "Export data schemas as Avro .avsc (records, enums, unions, logical types).",
+            "format": "avro",
+            "icon": "database",
+            "key": "avro",
+            "label": "Apache Avro",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "graphql": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to GraphQL SDL.",
+            "message": "Exporting to GraphQL SDL preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "GraphQL SDL"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to GraphQL SDL",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 1
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a GraphQL schema definition language (SDL) document.",
+            "format": "graphql",
+            "icon": "share-2",
+            "key": "graphql",
+            "label": "GraphQL SDL",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "graph",
+            "unavailable_reason": null
+          }
+        },
+        "json-schema": {
+          "advisory": {
+            "affected": 1,
+            "approximated": 1,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to JSON Schema may lose detail.",
+            "message": "Exporting to JSON Schema may lose some fidelity. The destination format can't represent everything in this API, so 1 construct will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "info",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "JSON Schema"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "",
+                "kind": "approx",
+                "message": "The json-schema-2020-12 document is written as JSON Schema and reads back as a JSON Schema item; details specific to its format are not kept",
+                "severity": "info",
+                "target_mapping": "document → JSON Schema"
+              },
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to JSON Schema",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 2,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 50,
+            "synthesized": 0,
+            "tier": "types-only",
+            "total": 2
+          },
+          "target": {
+            "available": true,
+            "description": "Export as JSON Schema (2020-12, draft-07 or draft-04): one bundle or one file per type.",
+            "format": "json-schema",
+            "icon": "braces",
+            "key": "json-schema",
+            "label": "JSON Schema",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "data_schema",
+            "unavailable_reason": null
+          }
+        },
+        "mcp": {
+          "advisory": {
+            "affected": 1,
+            "approximated": 1,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to MCP Tool Definitions may lose detail.",
+            "message": "Exporting to MCP Tool Definitions may lose some fidelity. The destination format can't represent everything in this API, so 1 construct will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "info",
+            "show": true,
+            "synthesized": 0,
+            "target_format": "MCP Tool Definitions"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "approx",
+                "message": "MCP Tool Definitions has no component section; type 'Customer' is inlined into each tool schema that uses it",
+                "severity": "info",
+                "target_mapping": "named type → inlined schema"
+              }
+            ],
+            "kind_counts": {
+              "approx": 1,
+              "drop": 0,
+              "ok": 0,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 1,
+            "dropped": 0,
+            "preserved": 0,
+            "preserved_percent": 0,
+            "synthesized": 0,
+            "tier": "lossy",
+            "total": 1
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an MCP server descriptor: one tool per operation, with a unique name, a description, an inputSchema from the parameters and body, and an outputSchema where the protocol revision supports it.",
+            "format": "mcp",
+            "icon": "bot",
+            "key": "mcp",
+            "label": "MCP Tool Definitions",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "agent",
+            "unavailable_reason": null
+          }
+        },
+        "openapi": {
+          "advisory": {
+            "affected": 0,
+            "approximated": 0,
+            "dropped": 0,
+            "headline": "No fidelity loss exporting to OpenAPI 3.1.",
+            "message": "Exporting to OpenAPI 3.1 preserves full fidelity — every construct in this API maps cleanly onto the target format.",
+            "requires_ack": false,
+            "severity": null,
+            "show": false,
+            "synthesized": 0,
+            "target_format": "OpenAPI 3.1"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to OpenAPI 3.1",
+                "severity": "info",
+                "target_mapping": null
+              }
+            ],
+            "kind_counts": {
+              "approx": 0,
+              "drop": 0,
+              "ok": 1,
+              "synth": 0
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 0
+            }
+          },
+          "summary": {
+            "approximated": 0,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 100,
+            "synthesized": 0,
+            "tier": "lossless",
+            "total": 1
+          },
+          "target": {
+            "available": true,
+            "description": "Export as an OpenAPI 3.1 JSON document (JSON Schema components).",
+            "format": "openapi-3.1",
+            "icon": "file-json",
+            "key": "openapi",
+            "label": "OpenAPI 3.1",
+            "multi_file": false,
+            "needs_toolchain": false,
+            "paradigm": "rest",
+            "unavailable_reason": null
+          }
+        },
+        "protobuf": {
+          "advisory": {
+            "affected": 4,
+            "approximated": 2,
+            "dropped": 0,
+            "headline": "Fidelity notice — exporting to Protocol Buffers (proto3) may lose detail.",
+            "message": "Exporting to Protocol Buffers (proto3) may lose some fidelity. The destination format can't represent everything in this API, so 4 constructs will be dropped or approximated — review the fidelity report before downloading.",
+            "requires_ack": false,
+            "severity": "warn",
+            "show": true,
+            "synthesized": 2,
+            "target_format": "Protocol Buffers (proto3)"
+          },
+          "report": {
+            "items": [
+              {
+                "construct": "Customer",
+                "kind": "ok",
+                "message": "object carried to Protocol Buffers (proto3)",
+                "severity": "info",
+                "target_mapping": null
+              },
+              {
+                "construct": "Customer.id",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+                "severity": "warn",
+                "target_mapping": "nullable → proto3 optional"
+              },
+              {
+                "construct": "Customer.id",
+                "kind": "synth",
+                "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+                "severity": "warn",
+                "target_mapping": "synthesized field number"
+              },
+              {
+                "construct": "Customer.name",
+                "kind": "approx",
+                "message": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+                "severity": "warn",
+                "target_mapping": "nullable → proto3 optional"
+              },
+              {
+                "construct": "Customer.name",
+                "kind": "synth",
+                "message": "Protocol Buffers (proto3) requires stable field numbers; one is synthesized for this field",
+                "severity": "warn",
+                "target_mapping": "synthesized field number"
+              }
+            ],
+            "kind_counts": {
+              "approx": 2,
+              "drop": 0,
+              "ok": 1,
+              "synth": 2
+            },
+            "severity_counts": {
+              "critical": 0,
+              "info": 1,
+              "warn": 4
+            }
+          },
+          "summary": {
+            "approximated": 2,
+            "dropped": 0,
+            "preserved": 1,
+            "preserved_percent": 20,
+            "synthesized": 2,
+            "tier": "lossy",
+            "total": 5
+          },
+          "target": {
+            "available": true,
+            "description": "Export as a Protocol Buffers 3 .proto (gRPC services + messages).",
+            "format": "proto3",
+            "icon": "binary",
+            "key": "protobuf",
+            "label": "Protocol Buffers (proto3)",
+            "multi_file": true,
+            "needs_toolchain": false,
+            "paradigm": "rpc",
+            "unavailable_reason": null
+          }
+        }
+      },
+      "targets": [
+        {
+          "default_options": {
+            "asyncapi_version": "3.1",
+            "include_channels": true,
+            "include_components": true
+          },
+          "key": "asyncapi",
+          "options": [
+            "asyncapi_version",
+            "include_channels",
+            "include_components"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "namespace": null,
+            "output_syntax": "avsc",
+            "subject_naming": "record_name",
+            "subject_role": "value",
+            "topic": null
+          },
+          "key": "avro",
+          "options": [
+            "namespace",
+            "output_syntax",
+            "subject_naming",
+            "subject_role",
+            "topic"
+          ],
+          "preserved_percent": 20,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "schema_description": null
+          },
+          "key": "graphql",
+          "options": [
+            "schema_description"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "draft": "2020-12",
+            "id_base": null,
+            "mode": "json-schema",
+            "packaging": "bundle",
+            "pretty_print": true
+          },
+          "key": "json-schema",
+          "options": [
+            "draft",
+            "id_base",
+            "mode",
+            "packaging",
+            "pretty_print"
+          ],
+          "preserved_percent": 50,
+          "tier": "types-only"
+        },
+        {
+          "default_options": {
+            "grouping": "single",
+            "include_deprecated": false,
+            "output_schema": true,
+            "protocol_version": "2025-06-18"
+          },
+          "key": "mcp",
+          "options": [
+            "grouping",
+            "include_deprecated",
+            "output_schema",
+            "protocol_version"
+          ],
+          "preserved_percent": 0,
+          "tier": "lossy"
+        },
+        {
+          "default_options": {
+            "include_components": true,
+            "include_paths": true,
+            "include_projection_extensions": true,
+            "openapi_version": "3.1"
+          },
+          "key": "openapi",
+          "options": [
+            "include_components",
+            "include_paths",
+            "include_projection_extensions",
+            "openapi_version"
+          ],
+          "preserved_percent": 100,
+          "tier": "lossless"
+        },
+        {
+          "default_options": {
+            "emit_services": true,
+            "package": null,
+            "persisted_field_numbers": {}
+          },
+          "key": "protobuf",
+          "options": [
+            "emit_services",
+            "package",
+            "persisted_field_numbers"
+          ],
+          "preserved_percent": 20,
+          "tier": "lossy"
+        }
+      ]
+    }
+  }
+}

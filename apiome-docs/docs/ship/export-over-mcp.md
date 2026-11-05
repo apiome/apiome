@@ -72,6 +72,13 @@ A severe conversion (most of the source lost) also fails unless you pass `"confi
 acknowledgement the Export dialog asks a person for. Options are checked against the target's
 `options_schema`; an unknown target or an invalid option is refused with the reason.
 
+## Same answer as the other surfaces
+
+For the same version, `export.targets` lists the same targets, options and defaults as the **Export**
+dialog, Browse and `apiome export`. `version.export` returns the same fidelity report, and its
+`advisory` is the same text, word for word. A parity check fails the build if any of them drift.
+See [Every surface says the same thing](./export-fidelity.md#every-surface-says-the-same-thing).
+
 ## Long exports
 
 `version.export` waits up to 60 seconds for the export. If it is still running, the answer is

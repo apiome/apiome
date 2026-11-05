@@ -132,8 +132,8 @@ Every loss also has a **severity**, independent of its status, that says how muc
 From the counts and the worst severity, Apiome writes one **advisory** — *“Exporting to Protobuf may
 lose some fidelity. The destination format can't represent everything in this API, so 7 constructs
 will be dropped or approximated — review the fidelity report before downloading.”* The Export dialog,
-the Export studio, Browse and the CLI all show this same sentence, word for word, so the warning never
-reads differently in two places. It is hidden for a lossless export, and when any loss is `critical` it
+the Export studio, Browse, the CLI and the [MCP tools](./export-over-mcp.md) all show this same
+sentence, word for word, so the warning never reads differently in two places. It is hidden for a lossless export, and when any loss is `critical` it
 also asks for an explicit acknowledgement before you continue. The REST API returns
 it as `advisory` on every preview and export (`show`, `severity`, `requires_ack`, the counts,
 `headline` and `message`); pass `min_severity` to raise it only for `warn` or `critical` losses.
@@ -345,6 +345,28 @@ outcomes:
 
 An export that crashes fails the check. The current grid is in the repository at
 `apiome-rest/tests/golden/export_conformance/matrix.md`.
+
+### Every surface says the same thing
+
+Four places export a version: the **Export** dialog, the public Browse export, `apiome export` and the
+MCP `version.export` tool. A parity check runs on every change. For the same source, all four must
+offer the same targets, options and defaults, and show the same fidelity report and the same advisory,
+word for word. Each one also stops a lossy export the same way:
+
+| Surface | To export a lossy conversion anyway |
+| --- | --- |
+| Export dialog and Browse | Tick the **Export anyway** acknowledgement |
+| `apiome export` | Pass `--force` (or confirm the prompt) |
+| MCP `version.export` | Pass `allow_lossy: true` |
+
+The check records what apiome-rest answers for a REST, an event and a schema-only source in
+`apiome-rest/tests/fixtures/export_surface_parity.json`. The UI, Browse and CLI tests read copies of
+that file. If a surface drifts, or a copy goes stale, the build fails. After an intended change,
+regenerate the file and its copies in `apiome-rest`, then review the diff:
+
+```bash
+pytest tests/test_export_surface_parity.py --update-golden
+```
 
 ## REST endpoints
 
