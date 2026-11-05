@@ -290,6 +290,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     ],
   },
   {
+    id: 'get-an-export-out',
+    title: 'Get an export out',
+    summary: 'One file or a zip with a manifest, kept 24 hours, delivered or pushed to a registry.',
+    page: 'apiome-docs/docs/ship/get-an-export-out.mdx',
+    section: 'spine',
+    keywords: ['download', 'zip', 'bundle', 'manifest', 'retention', 'schema registry', 'delivery'],
+  },
+  {
     id: 'run-exports-at-scale',
     title: 'Run exports at scale',
     summary: 'Follow every export, see who exported what, deliver it, automate it, recover from failures.',

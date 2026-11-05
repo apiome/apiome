@@ -1,0 +1,66 @@
+---
+title: Get an export out
+description: One file or a zip with a manifest, delivered or pushed to a registry.
+sidebar_position: 5.21
+tags: [export]
+---
+
+Every export ends the same way: a checked result you can take away. Whether you run it from the
+**Export** dialog, the [Export studio](./export-studio.mdx), the CLI or the API, the
+[export job](./export-jobs.mdx) packages what the emitter wrote. You can then download it, deliver it
+somewhere or register it on a schema registry. This page shows what you get and where each way out
+is described.
+
+## When you need it
+
+- **You want the file.** Download one document as itself, or several files as one `.zip` with a
+  manifest.
+- **Your pipeline wants the file.** Fetch the download over the API, with its size known up front so a
+  client can show progress.
+- **The file belongs somewhere else.** Deliver it to git, a webhook or a bucket, or register its schemas
+  on a schema registry.
+
+## At a glance
+
+| You get… | When | Details |
+| --- | --- | --- |
+| **One file**, with its own file name and content type | The target writes one document (OpenAPI, GraphQL SDL, an AsyncAPI document…) | [Export a spec](./export-a-spec.md) |
+| **A `.zip` with a `manifest.json`** listing every file | The target writes several files (Protocol Buffers packages, WSDL with its XSDs, Smithy namespaces, Avro subjects), or one job exports several formats or items | [How an export runs › The pipeline](./export-jobs.mdx#the-pipeline), [Export several at once](./export-several-at-once.mdx) |
+| **The file tree** of a bundle, to read before you download | Export studio's **6. Review & Generate** | [Bundles: the file tree and tabs](./read-an-exported-file.mdx#bundles-the-file-tree-and-tabs) |
+| **A download that is kept for 24 hours**, then answers `410 Gone` | Every completed job; run the export again after that | [Limits](./export-a-spec.md#limits) |
+| **Safe file names**, kept inside the folder you unpack into | Every download | [File names in a download](./export-a-spec.md#file-names-in-a-download) |
+| **The result in git, a webhook or a bucket** | You tick a delivery profile, or deliver a finished job | [Deliver an export](./deliver-an-export.mdx#choose-a-channel) |
+| **Schemas registered on a schema registry** | An Avro, JSON Schema or Protobuf export, through a Schema registry connector | [Push to a schema registry](./deliver-an-export.mdx#push-to-a-schema-registry) |
+
+## How the pieces fit
+
+- **Checked before it leaves.** A file is validated before it is packaged, and one that fails is never
+  offered for download or delivered. See [How an export is checked](./check-an-export.mdx).
+- **One file stays one file.** A single document is downloaded as itself. Anything with more than one
+  file comes as one `.zip`, and its `manifest.json` names every file, including any item or format that
+  failed, and why.
+- **Large downloads stream.** The download is sent in pieces, with its full size announced first, so a
+  browser or client shows progress. A download over 32 MiB fails the job instead (an administrator can
+  change the limit).
+- **Downloads are temporary; jobs are not.** The download is deleted after 24 hours. The job stays in
+  the job list for 7 days (30 days if it failed), and in the workspace's export history for 90 days.
+- **Delivery reuses the same result.** Delivering a finished job sends the files it already wrote, so
+  nothing is exported again. A registry push exports the same source, format and options itself.
+- **Registries:** any Confluent-compatible schema registry. The Buf Schema Registry is not supported;
+  run `buf push` on a downloaded Protocol Buffers export.
+
+## With the API
+
+| What | Endpoint |
+| --- | --- |
+| Start a job, and follow it to `completed` | [`POST /v1/export/{tenant}/jobs`](../reference/rest/export-jobs.md#start-export-job-v1-export-tenant-slug-jobs-post), [`GET …/jobs/{job_id}`](../reference/rest/export-jobs.md#get-export-job-status-v1-export-tenant-slug-jobs-job-id-get) |
+| Download the file or the `.zip` | [`GET /v1/export/{tenant}/jobs/{job_id}/download`](../reference/rest/export-jobs.md#download-export-job-artifact-v1-export-tenant-slug-jobs-job-id-download-get) |
+| Deliver a finished job with a delivery profile | [`POST /v1/export/{tenant}/jobs/{job_id}/deliveries`](../reference/rest/export-delivery.md#deliver-export-job-with-profile-v1-export-tenant-slug-jobs-job-id-deliveries-post) |
+| Register the schemas on a schema registry | [`POST /v1/export/{tenant}/schema-registry/push`](../reference/rest/export.md#push-registry-export-v1-export-tenant-slug-schema-registry-push-post) |
+
+## Where next
+
+- [How an export runs](./export-jobs.mdx): the pipeline, and the job states
+- [Read an exported file](./read-an-exported-file.mdx): read the file, or the bundle's files, first
+- [Deliver an export](./deliver-an-export.mdx): every channel, and delivery profiles
+- [Run exports at scale](./run-exports-at-scale.mdx): following jobs, history, presets and auto-export
