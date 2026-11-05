@@ -188,7 +188,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
               <EmptyState
                 icon={<Bookmark />}
                 title="No export presets yet"
-                description="On an export's Review step, click Save as preset to keep its targets and options."
+                description="On an export's Review step, click Save as preset to keep its targets."
               />
             ) : (
               <ul className="xdlv-profiles">
@@ -226,7 +226,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                         </Button>
                         {confirmDelete === preset.id ? (
                           <>
-                            <Button size="sm" variant="danger" disabled={saving} onClick={() => void remove(preset)}>
+                            <Button title={saving ? 'Wait for the save to finish' : undefined} size="sm" variant="danger" disabled={saving} onClick={() => void remove(preset)}>
                               Delete {preset.name}
                             </Button>
                             <Button size="sm" variant="ghost" onClick={() => setConfirmDelete(null)}>
@@ -284,7 +284,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                         <div className="xprs-target__head">
                           <Input id={`xprs-target-${index}`} value={row.target} placeholder="openapi-3.1"
                             onChange={(event) => setRow(index, { target: event.target.value })} />
-                          <Button type="button" size="sm" variant="ghost" aria-label={`Remove target ${index + 1}`}
+                          <Button title={draft.targets.length <= 1 ? 'A preset needs at least one target' : undefined} type="button" size="sm" variant="ghost" aria-label={`Remove target ${index + 1}`}
                             disabled={draft.targets.length <= 1}
                             onClick={() => setDraft({ ...draft, targets: draft.targets.filter((_, i) => i !== index) })}>
                             <Trash2 className="h-4 w-4" aria-hidden />
@@ -300,7 +300,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                     </div>
                   ))}
                   <div>
-                    <Button type="button" size="sm" variant="outline" disabled={draft.targets.length >= MAX_PRESET_TARGETS}
+                    <Button title={draft.targets.length >= MAX_PRESET_TARGETS ? `A preset holds at most ${MAX_PRESET_TARGETS} targets` : undefined} type="button" size="sm" variant="outline" disabled={draft.targets.length >= MAX_PRESET_TARGETS}
                       onClick={() => setDraft({ ...draft, targets: [...draft.targets, { target: '', optionsText: '' }] })}>
                       <Plus className="h-4 w-4" aria-hidden />
                       Add target
@@ -336,11 +336,11 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                   )}
                 </fieldset>
                 <div className="xdlv-form__actions">
-                  <Button type="button" variant="outline" disabled={saving}
+                  <Button title={saving ? 'Wait for the save to finish' : undefined} type="button" variant="outline" disabled={saving}
                     onClick={() => { setEditing(null); setDraft(null); }}>
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={saving} data-testid="xprs-save">
+                  <Button title={saving ? 'Saving the preset' : undefined} type="submit" disabled={saving} data-testid="xprs-save">
                     Save changes
                   </Button>
                 </div>

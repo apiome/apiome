@@ -90,7 +90,7 @@ function ToolchainCheckRow({
           <span className="xstd-testdrive__check-status">Installed on this server</span>
         )}
         {runnable && (
-          <Button
+          <Button title={running ? 'Wait for the check that is running' : undefined}
             size="sm"
             variant="outline"
             className="xstd-testdrive__check-run"

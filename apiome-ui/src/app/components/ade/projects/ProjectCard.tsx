@@ -181,7 +181,7 @@ export default function ProjectCard({
             <div className="prj-card__actions prj-card__above">
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger asChild>
-                  <Button
+                  <Button title={busy ? 'Wait for the last change to finish' : undefined}
                     variant="ghost"
                     size="sm"
                     className="px-1.5"

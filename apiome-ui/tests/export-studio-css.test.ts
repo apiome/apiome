@@ -385,10 +385,12 @@ describe('the export-studio section of globals.css', () => {
       ),
     ].map((match) => match[1].trim());
     expect(colourish.length).toBeGreaterThan(60);
+    // `Canvas` is the CSS system colour: it follows the rule's `color-scheme`, so the test-drive
+    // viewer frame (color-scheme: light) keeps the light surface Swagger UI and ReDoc expect.
     for (const value of colourish) {
       expect({
         value,
-        ok: /^(var\(--|color-mix\(|currentColor|transparent|inherit|none)/.test(value),
+        ok: /^(var\(--|color-mix\(|currentColor|transparent|inherit|none|Canvas$)/.test(value),
       }).toEqual({ value, ok: true });
     }
   });

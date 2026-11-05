@@ -137,7 +137,7 @@ export function RefreshDefaultsClient() {
           { label: 'Refresh defaults' },
         ]}
         title="Refresh defaults"
-        description="The cadence, conflict policy and auto-refresh switch every new repository starts from. A repository follows each default until that setting is changed on it."
+        description="Cadence, conflict policy and auto-refresh for new repositories, until a repository overrides one."
         tabs={<RepositoriesSubNav active="defaults" />}
       />
       <PageBody>
@@ -240,7 +240,7 @@ export function RefreshDefaultsClient() {
                     </Label>
                   </div>
                   <div>
-                    <Button
+                    <Button title={saving ? 'Wait for the save to finish' : !defaultsChanged(draft, data) && !applyToInheriting ? 'Change a default first' : undefined}
                       type="button"
                       disabled={saving || (!defaultsChanged(draft, data) && !applyToInheriting)}
                       onClick={() => void save()}

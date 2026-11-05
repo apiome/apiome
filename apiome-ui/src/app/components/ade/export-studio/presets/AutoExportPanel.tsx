@@ -148,11 +148,11 @@ export function AutoExportPanel({ scope, canEdit, embedded = false }: AutoExport
               </div>
               {canEdit ? (
                 <div className="xdlv-profile__actions">
-                  <Button size="sm" variant="ghost" disabled={busy}
+                  <Button title={busy ? 'Wait for the last change to finish' : undefined} size="sm" variant="ghost" disabled={busy}
                     onClick={() => void act(() => updateAutoExport(sub.id, { active: !sub.active }))}>
                     {sub.active ? 'Turn off' : 'Turn on'}
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={busy}
+                  <Button title={busy ? 'Wait for the last change to finish' : undefined} size="sm" variant="ghost" disabled={busy}
                     onClick={() => void act(() => deleteAutoExport(sub.id))}>
                     Remove
                   </Button>
@@ -167,7 +167,7 @@ export function AutoExportPanel({ scope, canEdit, embedded = false }: AutoExport
                     {run.lossReasons[0] ? <span>{run.lossReasons[0]}</span> : null}
                     {run.errorCode ? <code className="mono">{run.errorCode}</code> : null}
                     {run.status === 'halted' && canEdit ? (
-                      <Button size="sm" variant="outline" disabled={busy}
+                      <Button title={busy ? 'Wait for the last change to finish' : undefined} size="sm" variant="outline" disabled={busy}
                         onClick={() => void act(() => releaseAutoExportRun(run.id))}>
                         Release
                       </Button>
@@ -214,7 +214,7 @@ export function AutoExportPanel({ scope, canEdit, embedded = false }: AutoExport
             <span className="xdlv-choice__meta">Pre-approve the loss; recorded on every run.</span>
           </label>
           <div className="xdlv-form__actions">
-            <Button size="sm" disabled={!chosen || busy} data-testid="auto-export-add-button"
+            <Button title={busy ? 'Wait for the last change to finish' : !chosen ? (byPreset ? 'Choose a project first' : 'Choose a preset first') : undefined} size="sm" disabled={!chosen || busy} data-testid="auto-export-add-button"
               onClick={() => void act(async () => {
                 await createAutoExport({
                   projectId: byPreset ? chosen : scope.projectId,

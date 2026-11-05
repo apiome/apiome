@@ -242,7 +242,7 @@ export default function DeliveryProfilesClient({ tabs }: DeliveryProfilesClientP
                           </Button>
                           {confirmDelete === profile.id ? (
                             <>
-                              <Button size="sm" variant="danger" disabled={saving}
+                              <Button title={saving ? 'Wait for the save to finish' : undefined} size="sm" variant="danger" disabled={saving}
                                 onClick={() => void remove(profile)}>
                                 Delete {profile.name}
                               </Button>
