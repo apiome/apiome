@@ -70,6 +70,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_viz_modes import ExportVizModeKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 
@@ -1013,6 +1014,8 @@ class XRegistryEmitter(Emitter, register=True):
     paradigm = ApiParadigm.EVENT
     multi_file = False
     options_model = XRegistryEmitOptions
+    #: How the Review step can draw the output besides its text (MFX-45.4).
+    viz_modes = (ExportVizModeKind.CHANNEL_TOPOLOGY,)
 
     @classmethod
     def capability_profile(cls) -> CapabilityProfile:

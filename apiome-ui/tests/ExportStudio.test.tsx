@@ -1266,6 +1266,53 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(within(graph).getByTestId('projection-detail')).toHaveTextContent('Timestamp');
   });
 
+  it('draws the pictures a target declares, from its registry entry alone (MFX-45.4)', async () => {
+    // The proto target's registry entry declares a service map; its manifest carries the graph.
+    const serviceMap = {
+      mode: 'service-map',
+      nodes: [
+        { id: 'service:PetService', label: 'PetService', kind: 'service', entity_key: 'PetService' },
+        { id: 'message:Timestamp', label: 'Timestamp', kind: 'message', entity_key: 'Timestamp' },
+      ],
+      edges: [{ id: 'e', source: 'service:PetService', target: 'message:Timestamp', kind: 'method' }],
+    };
+    const base = mockFetch({ bundle: true });
+    const fetchMock = jest.fn(async (input: unknown, init?: { method?: string; body?: string }) => {
+      const res = (await base(input, init)) as { ok: boolean; json: () => Promise<Record<string, unknown>> };
+      const url = String(input);
+      if (url.includes('/api/export/targets')) {
+        const body = await res.json();
+        const targets = (body.targets as { key: string; descriptor: Record<string, unknown> }[]).map((target) =>
+          target.key === 'proto'
+            ? { ...target, descriptor: { ...target.descriptor, viz_modes: [{ kind: 'service-map', label: 'Service map' }] } }
+            : target,
+        );
+        return { ok: true, json: () => Promise.resolve({ ...body, targets }) };
+      }
+      if (!url.includes('/api/export/preview-manifest')) return res;
+      const body = await res.json();
+      const manifest = body.manifest as Record<string, unknown>;
+      return { ok: true, json: () => Promise.resolve({ ...body, manifest: { ...manifest, views: { 'service-map': serviceMap } } }) };
+    }) as unknown as jest.Mock;
+    await advanceToVerify(fetchMock, 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await screen.findByTestId('bundle-explorer');
+
+    fireEvent.click(await screen.findByTestId('bundle-view-service-map'));
+    expect(screen.getByTestId('export-viz-service-map')).toBeInTheDocument();
+    // A node click is the step's selection: the manifest tree follows.
+    fireEvent.click(screen.getByTestId('viz-node-message:Timestamp'));
+    const treeRow = within(screen.getByTestId('export-manifest-panel'))
+      .getAllByTestId('export-manifest-entity')
+      .find((row) => row.textContent?.includes('Timestamp'));
+    expect(treeRow).toHaveAttribute('aria-selected', 'true');
+    // Modes it does not declare are absent.
+    expect(screen.queryByTestId('bundle-view-proto-imports')).not.toBeInTheDocument();
+  });
+
   it('reads a database export as an ERD on the step’s own selection (MFX-45.3)', async () => {
     // The manifest of a database export carries its relational projection; here one table, the
     // Timestamp record, with a made-up key.

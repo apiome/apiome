@@ -14,7 +14,13 @@
         "needs_toolchain": false,
         "available": false,
         "unavailable_reason": "xRegistry export needs at least one type or event (publish / subscribe) operation; this source has neither.",
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": [
+          {
+            "kind": "channel-topology",
+            "label": "Channel topology"
+          }
+        ]
       },
       "capability_profile": {
         "operations": false,

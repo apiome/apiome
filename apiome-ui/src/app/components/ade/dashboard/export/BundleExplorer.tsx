@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FolderTree } from 'lucide-react';
 import type { editor as MonacoEditorApi } from 'monaco-editor';
 import { monacoLanguageForArtifact } from '@/app/utils/export-target-language';
@@ -32,6 +32,9 @@ import {
   type FileFindingCounts,
 } from './exportBundle';
 import { useEntityMarkers } from './useEntityMarkers';
+import { ArtifactViewSwitch, ArtifactVizPanel, useArtifactView } from './ArtifactViewSwitch';
+import type { RelationalSchema } from './exportErd';
+import type { ExportVizMode, VizGraph } from './exportViz';
 import {
   normalizedLocationFile,
   type EntityRevealRequest,
@@ -78,6 +81,14 @@ export interface BundleExplorerProps {
    * explorer just offers the action; omitted when the host has no bundle download to give.
    */
   onDownloadBundle?: (() => void) | null;
+  /** The target descriptor's declared visualization modes (MFX-45.4); each one with data is offered. */
+  vizModes?: ExportVizMode[] | null;
+  /** The manifest's relational projection (the `erd` mode's data). */
+  relational?: RelationalSchema | null;
+  /** The manifest's graph per visualization mode, e.g. the import graph of a proto bundle. */
+  views?: Record<string, VizGraph> | null;
+  /** Select an entity from a picture (the step records it and reveals it in its file). */
+  onSelectEntity?: (entity: ExportManifestEntity) => void;
   className?: string;
 }
 
@@ -110,12 +121,29 @@ export function BundleExplorer({
   reveal = null,
   manifestEntities = [],
   selectedEntityKey = null,
-  entityReveal = null,
+  entityReveal: outerEntityReveal = null,
   onEntityLineClick,
   onDownloadBundle = null,
+  vizModes,
+  relational = null,
+  views = null,
+  onSelectEntity,
   className,
 }: BundleExplorerProps) {
   const multi = isMultiFileBundle(manifest);
+  /** MFX-45.4: the files, or one of the target's pictures (an import graph, a service map…). */
+  const { modes, view, setView } = useArtifactView({ targetKey, vizModes, relational, views });
+  const showViz = view !== 'text';
+  // Coming back from a picture re-reveals the selected entity in its file: a local reveal request with its
+  // own (negative) nonces, dropped as soon as the step issues a reveal of its own.
+  const [localReveal, setLocalReveal] = useState<EntityRevealRequest | null>(null);
+  const [seenOuterRevealNonce, setSeenOuterRevealNonce] = useState<number | null>(outerEntityReveal?.nonce ?? null);
+  const localRevealNonce = useRef(0);
+  if ((outerEntityReveal?.nonce ?? null) !== seenOuterRevealNonce) {
+    setSeenOuterRevealNonce(outerEntityReveal?.nonce ?? null);
+    setLocalReveal(null);
+  }
+  const entityReveal = localReveal ?? outerEntityReveal;
   const tree = useMemo(() => buildBundleTree(manifest.files), [manifest.files]);
   const filesByPath = useMemo(
     () => new Map(manifest.files.map((file) => [file.path, file])),
@@ -302,6 +330,25 @@ export function BundleExplorer({
         : null,
     [manifestEntities, selectedEntityKey],
   );
+  // MFX-45.4: the picture → text toggle brings the selected entity back into view, in its own file.
+  const previousView = useRef(view);
+  useEffect(() => {
+    if (previousView.current !== 'text' && view === 'text' && selectedEntity?.location?.line != null) {
+      localRevealNonce.current -= 1;
+      setLocalReveal({ entity: selectedEntity, nonce: localRevealNonce.current });
+    }
+    previousView.current = view;
+  }, [view, selectedEntity]);
+
+  /** A click in a picture: the canonical construct, as the step's manifest entity. */
+  const selectFromViz = useCallback(
+    (entityKey: string) => {
+      const entity = manifestEntities.find((candidate) => candidate.key === entityKey);
+      if (entity) onSelectEntity?.(entity);
+    },
+    [manifestEntities, onSelectEntity],
+  );
+
   const entityMarkers = useEntityMarkers({
     entities: activeEntities,
     activeFile: activePath,
@@ -405,6 +452,29 @@ export function BundleExplorer({
     </div>
   );
 
+  // MFX-45.4: the view switch and the chosen picture, above the files.
+  const switchAndPicture = (
+    <>
+      <ArtifactViewSwitch
+        modes={modes}
+        view={view}
+        onChange={setView}
+        textLabel="Files"
+        testIdPrefix="bundle"
+        className="xstd-erd-toggle mt-2"
+      />
+      <ArtifactVizPanel
+        view={view}
+        modes={modes}
+        relational={relational}
+        views={views}
+        selectedEntityKey={selectedEntityKey}
+        onSelectEntityKey={selectFromViz}
+        className="mt-2"
+      />
+    </>
+  );
+
   // Single-file bundle: no tree, no tabs — just the one file in the viewer.
   if (!multi) {
     return (
@@ -414,7 +484,10 @@ export function BundleExplorer({
         className={cn('xstd-bundle', className)}
       >
         <BundleHeader fileCount={manifest.files.length} activeFile={activeFile} language={language} />
-        <div className="mt-2 flex min-h-0 flex-1 flex-col">{viewer}</div>
+        {switchAndPicture}
+        <div hidden={showViz} className="mt-2 flex min-h-0 flex-1 flex-col" data-testid="bundle-text-view">
+          {viewer}
+        </div>
       </div>
     );
   }
@@ -426,6 +499,8 @@ export function BundleExplorer({
       className={cn('xstd-bundle', className)}
     >
       <BundleHeader fileCount={manifest.files.length} activeFile={activeFile} language={language} />
+      {switchAndPicture}
+      <div hidden={showViz} data-testid="bundle-text-view" className="flex min-h-0 flex-1 flex-col">
       {/* MFX-43.5: say up front that some of this bundle loads on demand — a tree row that opens
           into a "load this file" panel should never be a surprise. */}
       {budgetNotice && (
@@ -454,6 +529,7 @@ export function BundleExplorer({
           />
           <div className="mt-2 flex min-h-0 flex-1 flex-col">{viewer}</div>
         </div>
+      </div>
       </div>
     </div>
   );

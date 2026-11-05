@@ -1533,6 +1533,11 @@ export function ExportStudio({
                       onEntityLineClick={handleEntityLineClick}
                       // MFX-43.5: the same .zip the footer builds, offered where the files are.
                       onDownloadBundle={handleDownloadZip}
+                      // MFX-45.4: the pictures the target declares (an import graph, a service map…).
+                      vizModes={selected.entry.descriptor.viz_modes}
+                      relational={manifestPage?.relational ?? null}
+                      views={manifestPage?.views ?? null}
+                      onSelectEntity={selectEntity}
                     />
                   </div>
                   {/* IXH-4.2: what became of each canonical entity in this bundle. */}
@@ -1584,6 +1589,9 @@ export function ExportStudio({
                       onEntityLineClick={handleEntityLineClick}
                       // MFX-45.3: a database export can be read as an ERD, on the same selection.
                       relational={manifestPage?.relational ?? null}
+                      // MFX-45.4: the other pictures the target declares (a channel topology…).
+                      vizModes={selected.entry.descriptor.viz_modes}
+                      views={manifestPage?.views ?? null}
                       onSelectEntity={selectEntity}
                     />
                   </div>

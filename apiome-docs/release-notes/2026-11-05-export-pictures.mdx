@@ -1,0 +1,23 @@
+---
+slug: export-pictures
+title: See a protobuf or event export as a picture
+description: "Import graph, service map and channel topology views on Export studio's Review step."
+authors: [apiome]
+---
+
+On **6. Review & Generate** in the Export studio, a switch above the generated file (or the file tree of a
+bundle) now offers the pictures a target has, beside its text. See
+[See an export as a picture](/ship/export-studio#see-an-export-as-a-picture).
+
+{/* truncate */}
+
+- **Protocol Buffers and Connect RPC:** an **Import graph** of the bundle's files and imports, and a
+  **Service map** of each service's methods and the messages they take and return, streams marked.
+- **AsyncAPI:** a **Channel topology** of operations, the channels they use and the messages those carry.
+- **xRegistry:** a **Channel topology** of message groups, their messages and each message's event type.
+- **One selection:** clicking a node selects the service, method, message, channel or operation in the
+  entity tree, and going back to the text scrolls to its line.
+- **Kept per target:** the picture you pick opens again for the next export to the same target, until you
+  close the tab.
+- **Declared, not guessed:** each target lists its pictures in `GET /v1/export/targets` (`viz_modes`), and
+  `POST /v1/export/{tenant_slug}/preview-manifest` returns their graphs as `views`.

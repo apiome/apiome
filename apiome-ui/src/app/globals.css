@@ -33810,6 +33810,74 @@ tr:focus-within .pub-url__glyph {
   stroke-dasharray: 6 4;
 }
 
+/* ---- Paradigm-specific pictures of an export (MFX-45.4) ------------------- */
+/* A node of an import graph, a service map or a channel topology. Its kind is
+   printed as a word above its label; an external node (referenced, not held)
+   is dashed and muted. */
+.xstd-viz__node-wrap {
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.xstd-viz__node {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.0625rem;
+  block-size: 100%;
+  inline-size: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  text-align: start;
+  color: var(--fg);
+}
+
+.xstd-viz__node:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.xstd-viz__node:disabled {
+  cursor: default;
+}
+
+.xstd-viz__node[data-external='true'] {
+  border-style: dashed;
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+}
+
+.xstd-viz__node[data-selected='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.xstd-viz__kind {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.xstd-viz__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.xstd-viz__detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+}
+
 /* ---- The projection graph SVG -------------------------------------------- */
 /* The nodes and edges of both graphs. `fill`/`stroke` are set from an
    attribute here rather than a class in the component: the reason the header

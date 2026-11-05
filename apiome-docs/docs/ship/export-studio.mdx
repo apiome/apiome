@@ -246,6 +246,34 @@ graph does not draw (yet, or at all), it says how many, and the treemap still sh
 
 <Screenshot id="export-fidelity-treemap" alt="The same findings as a treemap: a Pet group, a Category group and the default service, one tile per construct" />
 
+### See an export as a picture
+
+Some exports are easier to judge as a picture than as text. Above the generated file, or above the file
+tree of a bundle, a switch offers **Text** (or **Files**) and every picture the target has:
+
+| Target | Pictures |
+| --- | --- |
+| Protocol Buffers, Connect RPC | **Import graph**: the bundle's `.proto` files and the `import` lines between them. An import the bundle does not hold, such as `google/protobuf/empty.proto`, is dashed and marked **external**. **Service map**: each service, its methods (with **server stream**, **client stream** or **bidirectional stream**), and the messages they take (**request**) and return (**response**). |
+| AsyncAPI | **Channel topology**: each operation (with its action), the channel it uses (with its address), and the messages the channel carries. |
+| xRegistry | **Channel topology**: each message group, the messages it contains, and each message's CloudEvents event type. |
+| SQL DDL, DBML, Prisma, Liquibase, Flyway | **ERD** (see [Read a database export as an ERD](#read-a-database-export-as-an-erd)). |
+
+A target with no picture shows no switch. The picture you pick is kept for that target until you close
+the browser tab, so the next export to the same target opens on it.
+
+<Screenshot id="export-viz-service-map" alt="The service map of the Petstore exported to Protocol Buffers: the default service, its five methods, and the Pet and external google.protobuf.Empty messages they take and return" />
+
+- **Click a node** that stands for part of your API (a service, a method, a message, a channel or an
+  operation) to select it: the entity tree follows, and going back to the text scrolls to its line. A
+  file, an external message or an event type is not part of your API, so it cannot be selected.
+- **Selecting something in the tree** highlights its node and brings it into view.
+- Drag to pan, scroll or use **+** and **−** to zoom, and **⛶** to fit the whole picture.
+
+<Screenshot id="export-viz-channel-topology" alt="The channel topology of an AsyncAPI export: two receive operations, the orderPlaced and orderShipped channels with their addresses, and the messages they carry" />
+
+The pictures are drawn from the file Apiome wrote, so they show what the export holds, not what the
+source had.
+
 ### Read a database export as an ERD
 
 A [SQL DDL export](./export-a-spec.md#sql-ddl-from-any-source), and its DBML, Prisma, Liquibase and

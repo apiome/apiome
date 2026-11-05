@@ -16,6 +16,7 @@ from .emitter import (
     EmitResult,
     Emitter,
 )
+from .export_viz_modes import ExportVizModeKind
 from .proto_emitter import ProtoEmitOptions, ProtoEmitter, ProtoFidelityRulePack
 
 __all__ = ["ConnectRpcEmitOptions", "ConnectRpcEmitter", "ConnectRpcFidelityRulePack"]
@@ -42,6 +43,8 @@ class ConnectRpcEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = True
     options_model = ConnectRpcEmitOptions
+    #: How the Review step can draw the output besides its text (MFX-45.4).
+    viz_modes = (ExportVizModeKind.PROTO_IMPORTS, ExportVizModeKind.SERVICE_MAP)
 
     OUTPUT_MEDIA_TYPE = ProtoEmitter.OUTPUT_MEDIA_TYPE
 

@@ -21,7 +21,13 @@
         "needs_toolchain": false,
         "available": true,
         "unavailable_reason": null,
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": [
+          {
+            "kind": "erd",
+            "label": "ERD"
+          }
+        ]
       },
       "summary": {
         "tier": "types-only",

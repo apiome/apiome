@@ -14,8 +14,9 @@ import { downloadBlob } from './exportDownload';
 import { ProblemsPanel } from './ProblemsPanel';
 import { useProblemMarkers } from './useProblemMarkers';
 import { useEntityMarkers } from './useEntityMarkers';
-import { ExportErdView } from './ExportErdView';
+import { ArtifactViewSwitch, ArtifactVizPanel, useArtifactView } from './ArtifactViewSwitch';
 import { erdTextLabel, type RelationalSchema } from './exportErd';
+import type { ExportVizMode, VizGraph } from './exportViz';
 import type { LossinessReport } from './exportFidelityPreview';
 import type { LocatedProblem, ProblemRevealRequest } from './exportProblemMarkers';
 import {
@@ -69,7 +70,14 @@ interface ArtifactPreviewCardProps {
    * tables, the card offers an **ERD** view beside the text, sharing the step's entity selection.
    */
   relational?: RelationalSchema | null;
-  /** Select an entity from the ERD (the step records it and reveals it in the text). */
+  /** The manifest's graph per visualization mode (MFX-45.4), e.g. a channel topology. */
+  views?: Record<string, VizGraph> | null;
+  /**
+   * The target descriptor's declared visualization modes (MFX-45.4); the card offers each one that has
+   * data. Undefined when unknown — the data then decides.
+   */
+  vizModes?: ExportVizMode[] | null;
+  /** Select an entity from a picture (the step records it and reveals it in the text). */
   onSelectEntity?: (entity: ExportManifestEntity) => void;
   className?: string;
 }
@@ -102,13 +110,14 @@ export function ArtifactPreviewCard({
   entityReveal = null,
   onEntityLineClick,
   relational = null,
+  views = null,
+  vizModes,
   onSelectEntity,
   className,
 }: ArtifactPreviewCardProps) {
-  /** MFX-45.3: the text, or — for a database export — its ERD. */
-  const [view, setView] = useState<'text' | 'erd'>('text');
-  const hasErd = relational != null && relational.tables.length > 0;
-  const showErd = hasErd && view === 'erd';
+  /** MFX-45.3 / 45.4: the text, or one of the target's pictures (an ERD, a service map…). */
+  const { modes, view, setView } = useArtifactView({ targetKey, vizModes, relational, views });
+  const showViz = view !== 'text';
   /** The highlighted problem (MFX-43.3), kept in sync between the editor and the problems list. */
   const [selectedProblemId, setSelectedProblemId] = useState<string | null>(null);
   /** The last external reveal request seen, so a re-render never replays it. */
@@ -188,18 +197,18 @@ export function ArtifactPreviewCard({
     reveal: entityReveal,
   });
 
-  // MFX-45.3: the editor stays mounted (hidden) under the ERD, so its selection decoration survives the
+  // MFX-45.3: the editor stays mounted (hidden) under a picture, so its selection decoration survives the
   // toggle; coming back to the text brings the selected entity's line back into view.
-  // Only the ERD → text toggle re-reveals; a selection change reveals through the step's own request.
+  // Only the picture → text toggle re-reveals; a selection change reveals through the step's own request.
   const revealSelected = entityMarkers.reveal;
   const previousView = useRef(view);
   useEffect(() => {
-    if (previousView.current === 'erd' && view === 'text' && selectedEntity) revealSelected(selectedEntity);
+    if (previousView.current !== 'text' && view === 'text' && selectedEntity) revealSelected(selectedEntity);
     previousView.current = view;
   }, [view, selectedEntity, revealSelected]);
 
-  /** An ERD click: the canonical construct, as the step's manifest entity. */
-  const selectFromErd = useCallback(
+  /** A click in a picture: the canonical construct, as the step's manifest entity. */
+  const selectFromViz = useCallback(
     (entityKey: string) => {
       const entity = manifestEntities.find((candidate) => candidate.key === entityKey);
       if (entity) onSelectEntity?.(entity);
@@ -253,44 +262,26 @@ export function ArtifactPreviewCard({
         </Badge>
       </div>
 
-      {hasErd && (
-        <div
-          role="group"
-          aria-label="View"
-          className="xstd-erd-toggle mt-2"
-          data-testid="export-artifact-view-toggle"
-        >
-          <button
-            type="button"
-            className="xstd-chip"
-            aria-pressed={!showErd}
-            data-testid="export-artifact-view-text"
-            onClick={() => setView('text')}
-          >
-            {erdTextLabel(relational!.output)} text
-          </button>
-          <button
-            type="button"
-            className="xstd-chip"
-            aria-pressed={showErd}
-            data-testid="export-artifact-view-erd"
-            onClick={() => setView('erd')}
-          >
-            ERD
-          </button>
-        </div>
-      )}
+      <ArtifactViewSwitch
+        modes={modes}
+        view={view}
+        onChange={setView}
+        textLabel={relational ? `${erdTextLabel(relational.output)} text` : 'Text'}
+        testIdPrefix="export-artifact"
+        className="xstd-erd-toggle mt-2"
+      />
 
-      {showErd && (
-        <ExportErdView
-          schema={relational!}
-          selectedEntityKey={selectedEntityKey}
-          onSelectEntityKey={selectFromErd}
-          className="mt-2"
-        />
-      )}
+      <ArtifactVizPanel
+        view={view}
+        modes={modes}
+        relational={relational}
+        views={views}
+        selectedEntityKey={selectedEntityKey}
+        onSelectEntityKey={selectFromViz}
+        className="mt-2"
+      />
 
-      <div hidden={showErd} data-testid="export-artifact-text-view">
+      <div hidden={showViz} data-testid="export-artifact-text-view">
       <ViewerActionsBar
         file={{ name: artifact.filename, text: artifact.text, mediaType: artifact.mediaType }}
         wordWrap={wordWrap}

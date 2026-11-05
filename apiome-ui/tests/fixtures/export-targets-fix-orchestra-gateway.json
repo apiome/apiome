@@ -14,7 +14,8 @@
         "needs_toolchain": false,
         "available": false,
         "unavailable_reason": "FIX Orchestra export needs at least one record type (an object, struct or message); this source has none.",
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": []
       },
       "capability_profile": {
         "operations": false,

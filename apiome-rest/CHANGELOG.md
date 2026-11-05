@@ -5,6 +5,22 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.661.0] - 2026-11-05
+
+### Added
+- **Paradigm-specific visualization modes (MFX-45.4, #4377).** Which pictures a target's output can be drawn as
+  is registry data: emitters declare `viz_modes` (`app/export_viz_modes.py`), and every descriptor of
+  `GET /v1/export/targets` (and the fidelity envelope's `target`) carries them as `viz_modes` (`kind`, `label`).
+  - `proto3` and `connectrpc`: `proto-imports` (**Import graph**) and `service-map` (**Service map**);
+    `asyncapi-3` and `xregistry`: `channel-topology` (**Channel topology**); `sql-ddl`: `erd` (MFX-45.3). Every
+    other target declares none.
+  - `POST /v1/export/{tenant_slug}/preview-manifest` returns each graph mode's graph as `views` (`VizGraph`:
+    `nodes`, `edges`), built from the emitted files: proto files and their imports (an import the bundle does
+    not hold is `external`); services → methods (streams in `detail`) → request / response messages; AsyncAPI
+    operations → channels (address in `detail`) → messages, including 2.x publish / subscribe; xRegistry message
+    groups → messages → event types. A node that stands for a canonical construct carries its `entity_key`.
+  - OpenAPI 1.525.0.
+
 ## [1.660.0] - 2026-11-05
 
 ### Added

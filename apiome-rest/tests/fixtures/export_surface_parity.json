@@ -72,7 +72,13 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "event",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "channel-topology",
+                "label": "Channel topology"
+              }
+            ]
           }
         },
         "avro": {
@@ -157,7 +163,8 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "graphql": {
@@ -228,7 +235,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "graph",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "json-schema": {
@@ -313,7 +321,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "mcp": {
@@ -384,7 +393,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "agent",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "openapi": {
@@ -455,7 +465,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "rest",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "protobuf": {
@@ -540,7 +551,17 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "rpc",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "proto-imports",
+                "label": "Import graph"
+              },
+              {
+                "kind": "service-map",
+                "label": "Service map"
+              }
+            ]
           }
         }
       },
@@ -724,7 +745,13 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "event",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "channel-topology",
+                "label": "Channel topology"
+              }
+            ]
           }
         },
         "avro": {
@@ -802,7 +829,8 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "graphql": {
@@ -866,7 +894,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "graph",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "json-schema": {
@@ -944,7 +973,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "mcp": {
@@ -1008,7 +1038,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "agent",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "openapi": {
@@ -1072,7 +1103,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "rest",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "protobuf": {
@@ -1150,7 +1182,17 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "rpc",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "proto-imports",
+                "label": "Import graph"
+              },
+              {
+                "kind": "service-map",
+                "label": "Service map"
+              }
+            ]
           }
         }
       },
@@ -1327,7 +1369,13 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "event",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "channel-topology",
+                "label": "Channel topology"
+              }
+            ]
           }
         },
         "avro": {
@@ -1412,7 +1460,8 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "graphql": {
@@ -1469,7 +1518,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "graph",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "json-schema": {
@@ -1533,7 +1583,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "data_schema",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "mcp": {
@@ -1590,7 +1641,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "agent",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "openapi": {
@@ -1647,7 +1699,8 @@
             "multi_file": false,
             "needs_toolchain": false,
             "paradigm": "rest",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": []
           }
         },
         "protobuf": {
@@ -1732,7 +1785,17 @@
             "multi_file": true,
             "needs_toolchain": false,
             "paradigm": "rpc",
-            "unavailable_reason": null
+            "unavailable_reason": null,
+            "viz_modes": [
+              {
+                "kind": "proto-imports",
+                "label": "Import graph"
+              },
+              {
+                "kind": "service-map",
+                "label": "Service map"
+              }
+            ]
           }
         }
       },

@@ -77,6 +77,7 @@ from .export_relational import (
     RelationalSchema,
     RelationalTable,
 )
+from .export_viz_modes import ExportVizModeKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, types_only_advisory
 from .lossiness import LossinessReport, LossinessSeverity
 
@@ -1326,6 +1327,8 @@ class SqlDdlEmitter(Emitter, register=True):
     paradigm = ApiParadigm.DATA_SCHEMA
     multi_file = False
     options_model = SqlDdlEmitOptions
+    #: How the Review step can draw the output besides its text (MFX-45.4).
+    viz_modes = (ExportVizModeKind.ERD,)
 
     @classmethod
     def capability_profile(cls) -> CapabilityProfile:

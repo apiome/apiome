@@ -58,6 +58,7 @@ from .canonical_model import (
     TypeRef,
 )
 from .export_test_tools import ExportTestTool, ExportTestToolSpec, resolve_test_tools
+from .export_viz_modes import ExportVizMode, ExportVizModeKind, resolve_viz_modes
 from .zip_bundle import safe_bundle_path
 
 __all__ = [
@@ -564,6 +565,12 @@ class EmitterDescriptor(BaseModel):
         "GraphiQL, the AsyncAPI viewer, a mock server, toolchain checks. Server-side tools say whether "
         "they are available on this server, and why not.",
     )
+    viz_modes: List[ExportVizMode] = Field(
+        default_factory=list,
+        description="The ways the Review step can draw this target's output besides its text (MFX-45.4): "
+        "`erd` (tables), `proto-imports` (files and imports), `service-map` (services → methods → messages), "
+        "`channel-topology` (channels ↔ messages ↔ operations). Empty for a target drawn as text only.",
+    )
 
 
 class EmitterTarget(BaseModel):
@@ -643,6 +650,9 @@ class Emitter(ABC):
     #: The tools that can test drive this emitter's output (MFX-44.1), in tab order — see
     #: :mod:`app.export_test_tools`. A mock-servable format gains ``mock-server`` without declaring it.
     test_tools: ClassVar[Tuple[ExportTestToolSpec, ...]] = ()
+    #: The ways the Review step can draw this emitter's output besides its text (MFX-45.4) — see
+    #: :mod:`app.export_viz_modes`. The preview manifest builds each graph mode from the emitted files.
+    viz_modes: ClassVar[Tuple[ExportVizModeKind, ...]] = ()
 
     def __init_subclass__(cls, *, register: bool = False, **kwargs: Any) -> None:
         """Optionally self-register a concrete subclass in the format registry.
@@ -741,6 +751,7 @@ class Emitter(ABC):
             available=available,
             unavailable_reason=unavailable_reason,
             test_tools=resolve_test_tools(cls.test_tools, target_format=cls.format),
+            viz_modes=resolve_viz_modes(cls.viz_modes),
         )
 
     @abstractmethod
