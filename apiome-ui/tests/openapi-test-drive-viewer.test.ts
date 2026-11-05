@@ -73,7 +73,7 @@ describe('the vendor bundles', () => {
       /node_modules[\\/]swagger-ui-dist[\\/]swagger-ui-bundle\.js$/,
     );
     expect(await findInNodeModules('no-such-package/x.js')).toBeNull();
-    expect(testDriveVendorVersion()).toMatch(/^\d+\.\d+\.\d+-\d+\.\d+\.\d+$/);
+    expect(testDriveVendorVersion()).toMatch(/^\d+\.\d+\.\d+-\d+\.\d+\.\d+-\d+\.\d+\.\d+$/);
   });
 });
 

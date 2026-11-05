@@ -927,8 +927,8 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     const fetchMock = mockFetch({
       testTools: {
         openapi: [
-          // No renderer in this build yet (MFX-44.4): declared, but not drawn.
-          { kind: 'asyncapi-render', label: 'AsyncAPI viewer', params: {}, server_side: false, available: true, unavailable_reason: null },
+          // A kind a newer server may declare but this build has no renderer for: declared, but not drawn.
+          { kind: 'future-viewer', label: 'Future viewer', params: {}, server_side: false, available: true, unavailable_reason: null },
           { kind: 'toolchain', label: 'redocly lint', params: { tool: 'redocly', check: 'lint' }, server_side: true,
             available: true, unavailable_reason: null },
           { kind: 'toolchain', label: 'spectral lint', params: { tool: 'spectral', check: 'lint' }, server_side: true,
@@ -1004,6 +1004,26 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(within(panel).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['GraphiQL']);
     expect(await within(panel).findByTestId('graphql-test-drive-unreadable')).toHaveTextContent('not valid GraphQL SDL');
     expect(within(panel).queryByTestId('graphql-test-drive-frame')).toBeNull();
+  });
+
+  it('draws the AsyncAPI viewer tab, with a notice for a file that is not AsyncAPI (MFX-44.4)', async () => {
+    const tool = { kind: 'asyncapi-render', label: 'AsyncAPI viewer', params: {}, server_side: false, available: true, unavailable_reason: null };
+    // The recorded registry's OpenAPI target declares the AsyncAPI viewer: its file has no `asyncapi`
+    // version, which is exactly the case that must degrade to a notice.
+    const fetchMock = mockFetch({ testTools: { openapi: [tool] } });
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const panel = await screen.findByTestId('test-drive-panel');
+    expect(within(panel).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['AsyncAPI viewer']);
+    expect(await within(panel).findByTestId('asyncapi-test-drive-unreadable')).toHaveTextContent('no `asyncapi` version');
+    expect(within(panel).queryByTestId('asyncapi-test-drive-frame')).toBeNull();
   });
 
   it('downloads the generated file and a .zip from the Review step', async () => {

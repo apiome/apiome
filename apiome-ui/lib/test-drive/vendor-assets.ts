@@ -1,8 +1,8 @@
 /**
  * The OpenAPI test-drive viewer's vendor bundles, read from `node_modules` — MFX-44.2 (#4368).
  *
- * `swagger-ui-dist` and `redoc` are build-time dependencies whose standalone bundles the viewer page
- * loads from `/test-drive/vendor/…`. They are found by walking up from the server's working directory
+ * `swagger-ui-dist`, `redoc` and (MFX-44.4) `@asyncapi/react-component` are build-time dependencies
+ * whose standalone bundles the viewer pages load from `/test-drive/vendor/…`. They are found by walking up from the server's working directory
  * to the nearest `node_modules` holding them — `apiome-ui/` in development (hoisted to the monorepo
  * root), the standalone output in production, where `outputFileTracingIncludes` copies them.
  */
@@ -10,6 +10,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
+import asyncApiReactPackage from '@asyncapi/react-component/package.json';
 import redocPackage from 'redoc/package.json';
 import swaggerUiPackage from 'swagger-ui-dist/package.json';
 
@@ -56,10 +57,10 @@ export async function readTestDriveVendorAsset(
 }
 
 /**
- * The bundles' cache key: their package versions, joined (`5.34.0-2.5.4`).
+ * The bundles' cache key: their package versions, joined (`5.34.0-2.5.4-3.2.2`).
  *
  * @returns The key.
  */
 export function testDriveVendorVersion(): string {
-  return `${swaggerUiPackage.version}-${redocPackage.version}`;
+  return `${swaggerUiPackage.version}-${redocPackage.version}-${asyncApiReactPackage.version}`;
 }

@@ -60,6 +60,7 @@ import { MockTestDrivePanel } from './MockTestDrivePanel';
 import { TestDrivePanel, ToolchainChecksList, type TestDriveRenderers } from './TestDrivePanel';
 import { OpenApiTestDriveFrame } from './OpenApiTestDriveFrame';
 import { GraphQLTestDriveFrame } from './GraphQLTestDriveFrame';
+import { AsyncApiTestDriveFrame } from './AsyncApiTestDriveFrame';
 import { mockIsLive } from './exportMockTestDrive';
 import { useExportMockTestDrive } from './useExportMockTestDrive';
 import { useExportPreviewManifest } from './useExportPreviewManifest';
@@ -1053,6 +1054,8 @@ export function ExportStudio({
     redoc: () => (emitted ? <OpenApiTestDriveFrame viewer="redoc" text={emitted.text} /> : null),
     // MFX-44.3: GraphiQL over the emitted SDL, answering with mock data in the browser.
     graphiql: () => (emitted ? <GraphQLTestDriveFrame sdl={emitted.text} /> : null),
+    // MFX-44.4: the AsyncAPI React component over the emitted AsyncAPI 2.x / 3.x document.
+    'asyncapi-render': () => (emitted ? <AsyncApiTestDriveFrame text={emitted.text} /> : null),
     'mock-server': () => mockPanel,
     toolchain: (tab) => <ToolchainChecksList tools={tab.tools} />,
   };

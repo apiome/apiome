@@ -29,11 +29,19 @@ export const OPENAPI_VIEWER_PATH = '/test-drive/openapi';
 /** The route that serves the self-hosted viewer bundles. */
 export const TEST_DRIVE_VENDOR_PATH = '/test-drive/vendor';
 
-/** The vendor files the page may load, and where each lives under `node_modules`. */
+/**
+ * The vendor files the test-drive pages may load, and where each lives under `node_modules` — the
+ * OpenAPI viewers' here and, since MFX-44.4, the AsyncAPI renderer's (`asyncapi-viewer.ts`).
+ */
 export const TEST_DRIVE_VENDOR_ASSETS: Readonly<Record<string, { file: string; contentType: string }>> = {
   'swagger-ui-bundle.js': { file: 'swagger-ui-dist/swagger-ui-bundle.js', contentType: 'text/javascript; charset=utf-8' },
   'swagger-ui.css': { file: 'swagger-ui-dist/swagger-ui.css', contentType: 'text/css; charset=utf-8' },
   'redoc.standalone.js': { file: 'redoc/bundles/redoc.standalone.js', contentType: 'text/javascript; charset=utf-8' },
+  'asyncapi-react.standalone.js': {
+    file: '@asyncapi/react-component/browser/standalone/index.js',
+    contentType: 'text/javascript; charset=utf-8',
+  },
+  'asyncapi-react.css': { file: '@asyncapi/react-component/styles/default.min.css', contentType: 'text/css; charset=utf-8' },
 };
 
 /** The largest document the `#spec=` fragment feed accepts, in characters. */

@@ -1,0 +1,18 @@
+---
+slug: asyncapi-test-drive
+title: Read your exported AsyncAPI in the AsyncAPI viewer
+description: "Export studio shows a generated AsyncAPI file as navigable documentation."
+authors: [apiome]
+---
+
+After you generate an AsyncAPI file in the Export studio, **Test drive** now opens it in the
+**AsyncAPI viewer**, the standard AsyncAPI documentation renderer, so you can read it before you ship
+it. See [AsyncAPI viewer](/ship/export-studio#asyncapi-viewer).
+
+{/* truncate */}
+
+- **AsyncAPI 3.x and 2.x:** the viewer reads every version the exporter writes (3.1, 3.0 and 2.6).
+- **Navigable:** the sidebar lists every operation by channel, then the messages and schemas; click
+  one to jump to it.
+- **Sandboxed:** the viewer runs with no access to your session and cannot reach the network.
+- **Errors say why:** a file the renderer rejects shows its errors, line by line.
