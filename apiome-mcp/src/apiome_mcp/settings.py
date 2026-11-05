@@ -144,6 +144,28 @@ class Settings(BaseSettings):
         ),
     )
 
+    rest_internal_url: str | None = Field(
+        default=None,
+        description=(
+            "MFX-40.1: root of apiome-rest as this process reaches it (e.g. http://rest:8000 inside docker "
+            "compose). The export.targets / version.export tools call its /v1/internal/mcp/export routes. "
+            "Unset = the export tools answer that export is not configured."
+        ),
+    )
+    rest_internal_service_token: SecretStr | None = Field(
+        default=None,
+        description=(
+            "MFX-40.1: apiome-rest's INTERNAL_SERVICE_TOKEN, sent as X-Internal-Service-Token to its internal "
+            "export routes. Must match the rest service's value byte for byte."
+        ),
+    )
+    export_wait_seconds: int = Field(
+        default=60,
+        ge=0,
+        le=300,
+        description="MFX-40.1: how long version.export waits for an export job before answering `running`.",
+    )
+
     mock_invocation_base_url: str | None = Field(
         default=None,
         description=(

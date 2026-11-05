@@ -128,6 +128,22 @@ _REGISTRY: Final[Tuple[McpToolDescriptor, ...]] = (
         toolset="document",
     ),
     McpToolDescriptor(
+        id="export.targets",
+        description=(
+            "List every registered export target for an artifact version, each with its fidelity tier "
+            "and options schema (MFX-40.1)."
+        ),
+        toolset="document",
+    ),
+    McpToolDescriptor(
+        id="version.export",
+        description=(
+            "Export an artifact version to any registered target: the emitted files (inline or a "
+            "download reference) and the structured fidelity report (MFX-40.1)."
+        ),
+        toolset="document",
+    ),
+    McpToolDescriptor(
         id="spec.list_operations",
         description=(
             "Compact index of HTTP operations (path, method, operation_id, summary, tags) for a revision."

@@ -1,3 +1,3 @@
 """Apiome MCP server package."""
 
-__version__ = "0.10.11"
+__version__ = "0.11.0"

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.519.0
+  version: 1.520.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -65280,6 +65280,106 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for deliverahaltedautoexportanywayresponse422.
+  /v1/internal/mcp/export/targets:
+    post:
+      tags:
+      - internal-mcp-export
+      summary: Export targets for the MCP `export.targets` tool
+      description: 'Internal (`X-Internal-Service-Token`). The same answer as `GET /v1/export/{tenant}/targets`
+        for the given tenant: every registered target with its per-source fidelity tier.'
+      operationId: mcp_export_targets_v1_internal_mcp_export_targets_post
+      parameters:
+      - name: X-Internal-Service-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Exporttargetsforthe Mcpexporttargetstool Xinternal Service
+              Toke schema.
+          - type: 'null'
+            description: Exporttargetsforthe Mcpexporttargetstool Xinternal Service
+              Toke schema.
+          title: X-Internal-Service-Token
+          description: X-Internal-Service-Token schema.
+        description: 'Header parameter: X Internal Service Token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpExportTargetsRequest'
+              description: Request body for exporttargetsforthe mcpexporttargetstoolrequest.
+        description: Request body for export targets for the mcp `export.targets` tool.
+      responses:
+        '200':
+          description: Successful response for export targets for the mcp `export.targets`
+            tool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportTargetsResponse'
+                description: Response payload for exporttargetsforthe mcpexporttargetstoolresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for exporttargetsforthe mcpexporttargetstoolresponse422.
+  /v1/internal/mcp/export/run:
+    post:
+      tags:
+      - internal-mcp-export
+      summary: Run an export for the MCP `version.export` tool
+      description: Internal (`X-Internal-Service-Token`). Starts an export job for any
+        registered `target` (the pipeline of `POST /v1/export/{tenant}/jobs`) and waits
+        up to `waitSeconds`; or, with `jobId`, collects a job a previous call left running.
+        A completed job answers with the fidelity envelope (including the structured
+        `LossinessReport`), the guard and the files — inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES`,
+        otherwise with `downloadPath`. `400` / `422` for an unknown target or invalid
+        options; `429` when the tenant's export slots are full; `404` for an unknown
+        job.
+      operationId: mcp_export_run_v1_internal_mcp_export_run_post
+      parameters:
+      - name: X-Internal-Service-Token
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runanexportforthe Mcpversionexporttool Xinternal Service Toke
+              schema.
+          - type: 'null'
+            description: Runanexportforthe Mcpversionexporttool Xinternal Service Toke
+              schema.
+          title: X-Internal-Service-Token
+          description: X-Internal-Service-Token schema.
+        description: 'Header parameter: X Internal Service Token.'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpExportRunRequest'
+              description: Request body for runanexportforthe mcpversionexporttoolrequest.
+        description: Request body for run an export for the mcp `version.export` tool.
+      responses:
+        '200':
+          description: Successful response for run an export for the mcp `version.export`
+            tool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpExportRunResponse'
+                description: Response payload for runanexportforthe mcpversionexporttoolresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for runanexportforthe mcpversionexporttoolresponse422.
   /v1/export/{tenant_slug}/jobs/{job_id}/attestation:
     get:
       tags:
@@ -120203,6 +120303,276 @@ components:
         of those
 
         changes are ``breaking`` / ``additive`` / ``review``.'
+    McpExportFile:
+      properties:
+        path:
+          type: string
+          title: Path
+          description: Path.
+          example: /resources/{id}
+        mediaType:
+          anyOf:
+          - type: string
+            description: MCP Export File schema.
+          - type: 'null'
+            description: MCP Export File schema.
+          title: Mediatype
+          description: Media Type.
+        sizeBytes:
+          type: integer
+          title: Sizebytes
+          description: Size Bytes.
+          example: 50
+        content:
+          anyOf:
+          - type: string
+            description: MCP Export File schema.
+          - type: 'null'
+            description: MCP Export File schema.
+          title: Content
+          description: The file's text, when the files are inline.
+      additionalProperties: false
+      type: object
+      required:
+      - path
+      - sizeBytes
+      title: McpExportFile
+      description: 'One emitted file: its path, type and size, and its content when inline.'
+    McpExportRunRequest:
+      properties:
+        tenantId:
+          type: string
+          title: Tenantid
+          description: 'The MCP key''s tenant (trusted: internal route).'
+          example: example
+        artifact:
+          anyOf:
+          - type: string
+            description: Request body for mcp export run.
+          - type: 'null'
+            description: Request body for mcp export run.
+          title: Artifact
+          description: The artifact id (required to start a job).
+        version:
+          anyOf:
+          - type: string
+            description: Request body for mcp export run.
+          - type: 'null'
+            description: Request body for mcp export run.
+          title: Version
+          description: Revision id or label; the latest when omitted.
+        target:
+          anyOf:
+          - type: string
+            description: Request body for mcp export run.
+          - type: 'null'
+            description: Request body for mcp export run.
+          title: Target
+          description: Any registered target key (`export.targets`).
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for mcp export run.
+          - type: 'null'
+            description: Request body for mcp export run.
+          title: Options
+          description: The target's emit options (MFX-1.4).
+        confirm:
+          type: boolean
+          title: Confirm
+          description: Proceed with a severe conversion (MFX-3.3).
+          default: false
+          example: false
+        jobId:
+          anyOf:
+          - type: string
+            description: Request body for mcp export run.
+          - type: 'null'
+            description: Request body for mcp export run.
+          title: Jobid
+          description: Collect a job a previous call left running, instead of starting
+            one.
+        waitSeconds:
+          type: integer
+          maximum: 300.0
+          minimum: 0.0
+          title: Waitseconds
+          description: How long to wait for the job before answering `running`.
+          default: 60
+          example: 1
+      additionalProperties: false
+      type: object
+      required:
+      - tenantId
+      title: McpExportRunRequest
+      description: '``version.export``: start an export (``target``) or collect one (``jobId``).'
+    McpExportRunResponse:
+      properties:
+        jobId:
+          type: string
+          title: Jobid
+          description: Job ID.
+          example: example
+        state:
+          type: string
+          enum:
+          - queued
+          - running
+          - completed
+          - failed
+          - canceled
+          title: State
+          description: State.
+          example: queued
+        artifact:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Artifact
+          description: Artifact.
+        target:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Target
+          description: Target.
+        versionRecordId:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Versionrecordid
+          description: Version Record ID.
+        versionLabel:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Versionlabel
+          description: Version Label.
+        fidelity:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Fidelity
+          description: Fidelity.
+        guard:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Guard
+          description: Guard.
+        validation:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Validation
+          description: Validation.
+        delivery:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Delivery
+          description: Delivery.
+        mediaType:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Mediatype
+          description: Media Type.
+        files:
+          items:
+            $ref: '#/components/schemas/McpExportFile'
+          type: array
+          title: Files
+          description: Files.
+          maxItems: 1000
+        contentInline:
+          type: boolean
+          title: Contentinline
+          default: false
+          description: Content Inline.
+          example: false
+        downloadPath:
+          anyOf:
+          - type: string
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Downloadpath
+          description: Download Path.
+        error:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for mcp export run.
+          - type: 'null'
+            description: Response payload for mcp export run.
+          title: Error
+          description: Error.
+      additionalProperties: false
+      type: object
+      required:
+      - jobId
+      - state
+      title: McpExportRunResponse
+      description: "What ``version.export`` answers.\n\nAttributes:\n    job_id: The export\
+        \ job.\n    state: ``queued`` / ``running`` (collect it again with ``jobId``),\
+        \ ``completed``, ``failed`` or\n        ``canceled``.\n    fidelity: The full\
+        \ fidelity envelope of a one-target export: tier, the structured\n        ``LossinessReport``\
+        \ (``report``), the advisory.\n    guard: The transcoding guard (MFX-3.3): verdict,\
+        \ whether it needs ``confirm``.\n    files: The emitted files; each carries ``content``\
+        \ when ``content_inline``.\n    download_path: The REST download of the whole\
+        \ artifact, for files too large to inline.\n    error: The structured failure\
+        \ of a failed job."
+    McpExportTargetsRequest:
+      properties:
+        tenantId:
+          type: string
+          title: Tenantid
+          description: 'The MCP key''s tenant (trusted: internal route).'
+          example: example
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project or catalog item) id.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Request body for mcp export targets.
+          - type: 'null'
+            description: Request body for mcp export targets.
+          title: Version
+          description: Revision id or label; the latest when omitted.
+      additionalProperties: false
+      type: object
+      required:
+      - tenantId
+      - artifact
+      title: McpExportTargetsRequest
+      description: '``export.targets``: which source''s targets.'
     McpFacetedSearchResponse:
       properties:
         success:

@@ -149,6 +149,7 @@ from .export_object_storage_delivery_routes import router as export_object_stora
 from .export_delivery_profile_routes import router as export_delivery_profile_router
 from .export_preset_routes import router as export_preset_router
 from .export_auto_routes import router as export_auto_router
+from .mcp_export_routes import router as mcp_export_router
 from .sdk_kit_routes import router as sdk_kit_router
 from .sdk_publish_routes import router as sdk_publish_router
 from .sdk_publish_routes import tenant_router as sdk_publish_tenant_router
@@ -210,7 +211,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.519.0",
+    version="1.520.0",
 )
 
 
@@ -391,6 +392,7 @@ app.include_router(export_object_storage_delivery_router)
 app.include_router(export_delivery_profile_router)
 app.include_router(export_preset_router)
 app.include_router(export_auto_router)
+app.include_router(mcp_export_router)
 # sdk_regen_router shares the `/v1/projects` prefix for the same reason and is registered after it
 # too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged `sdk-regen-runs`,
 # `sdk-regen-jobs` or `sdk-regen-subscriptions` (SDK-4.3, #4497).

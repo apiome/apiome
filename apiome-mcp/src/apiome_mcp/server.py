@@ -16,6 +16,7 @@ from structlog.contextvars import bound_contextvars
 from apiome_mcp.agent_usage_sweep import start_agent_usage_sweep, stop_agent_usage_sweep
 from apiome_mcp.capability_middleware import CapabilityCallGateMiddleware
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
+from apiome_mcp.export_tools import build_export_targets_response, build_version_export_response
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
 from apiome_mcp.mcp_auth import McpAuthContext, require_mcp_auth, resolve_optional_mcp_auth
@@ -150,6 +151,51 @@ async def project_list(
         limit=limit,
         cursor=cursor,
         auth_ctx=auth_ctx,
+    )
+
+
+@mcp.tool(
+    name="export.targets",
+    description=(
+        "List every registered export target for an artifact version (MFX-40.1): each target's descriptor "
+        "(key, format, label), its fidelity tier and preserved share for this source, its options schema and "
+        "defaults. Requires an API key; exports within the key's tenant and scope. Pass a target key to "
+        "version.export. artifact: the artifact / project id; version: a revision id or label (latest when omitted)."
+    ),
+)
+async def export_targets(
+    ctx: Context,
+    artifact: str,
+    version: str | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_export_targets_response(auth_ctx=auth, artifact=artifact, version=version)
+
+
+@mcp.tool(
+    name="version.export",
+    description=(
+        "Export an artifact version to any registered target (MFX-40.1) — the same pipeline as the Export "
+        "dialog and `apiome export`. Returns the job's state, the structured fidelity report (fidelity.summary "
+        "tier/preserved share, fidelity.report: the per-construct LossinessReport, fidelity.advisory), the "
+        "transcoding guard, and the files: inline `content` when small (contentInline), otherwise a REST "
+        "downloadPath. A severe conversion fails unless confirm=true. When the job outlives the wait it answers "
+        "state=running with jobId: call again with job_id to collect it. Requires an API key."
+    ),
+)
+async def version_export(
+    ctx: Context,
+    artifact: str | None = None,
+    target: str | None = None,
+    version: str | None = None,
+    options: dict[str, Any] | None = None,
+    confirm: bool = False,
+    job_id: str | None = None,
+    auth: McpAuthContext = Depends(require_mcp_auth),
+) -> dict[str, Any]:
+    return await build_version_export_response(
+        auth_ctx=auth, artifact=artifact, target=target, version=version, options=options, confirm=confirm,
+        job_id=job_id,
     )
 
 

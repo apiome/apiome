@@ -118,7 +118,9 @@ With only one of them set, the check stays off. While it is on, **Create account
 check, and the form is refused if Cloudflare does not confirm the answer — or cannot be reached.
 Provider sign-up and **Resend email** never show it. Refusals are listed under
 [Recent blocked sign-ups](./auth-providers.mdx#abuse-protection); they reach it only when
-`INTERNAL_SERVICE_TOKEN` is set on apiome-ui and apiome-rest, like every sign-in event.
+`INTERNAL_SERVICE_TOKEN` is set on apiome-ui and apiome-rest, like every sign-in event. The same token,
+set on apiome-mcp as `APIOME_MCP_REST_INTERNAL_SERVICE_TOKEN`, turns on
+[export over MCP](../ship/export-over-mcp.md).
 
 ### Email for notifications
 

@@ -5,6 +5,23 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.656.0] - 2026-11-05
+
+### Added
+- **Generic export over MCP (MFX-40.1, #4339).** apiome-mcp 0.11.0 serves `export.targets` and `version.export`
+  for **any** registered emitter — no per-format tool code (supersedes the per-format tools of #2866/#2867).
+  - `POST /v1/internal/mcp/export/targets` answers what `GET /v1/export/{tenant}/targets` does (every registered
+    target with its per-source fidelity tier and options schema) for the MCP key's tenant.
+  - `POST /v1/internal/mcp/export/run` runs an export job through the same pipeline as `POST …/jobs`
+    (`target`, `options`, `confirm`) and waits up to `waitSeconds`: a completed job answers with the full fidelity
+    envelope — tier, the structured `LossinessReport`, the advisory — the transcoding guard, the validation and
+    delivery decisions, and the files inline up to `APIOME_MCP_EXPORT_INLINE_MAX_BYTES` (256 KiB), otherwise with
+    `downloadPath`; a job still running answers `running` with `jobId`, which collects it.
+  - Both are internal: fail-closed behind `X-Internal-Service-Token` (`INTERNAL_SERVICE_TOKEN`), trusting the tenant
+    the MCP server resolved from the caller's key and scope.
+  - `export.targets` and `version.export` registered in `app/mcp_tool_registry.py` (toolset `document`).
+  - `app/mcp_export_routes.py`; `Database.get_tenant_slug_by_id`.
+
 ## [1.655.0] - 2026-11-05
 
 ### Added

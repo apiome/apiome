@@ -1,0 +1,19 @@
+---
+slug: export-over-mcp
+title: Export over MCP
+description: "AI agents can export any version to any format, with its fidelity report."
+authors: [apiome]
+---
+
+Apiome's MCP server now exports. Two tools — `export.targets` and `version.export` — cover every
+export format, so an agent can convert an API version to any target Apiome supports and see exactly
+what the conversion keeps and loses. See [Export over MCP](/ship/export-over-mcp).
+
+{/* truncate */}
+
+- **Every format, no per-format tools:** a format Apiome learns to export is available to agents at once.
+- **The fidelity report comes with it:** the tier, every construct dropped or approximated with its
+  severity, and the advisory a person would see.
+- **Same rules as people:** the key's workspace and scope, option checks, and `confirm` for a severe
+  conversion.
+- **Inline or by reference:** small exports come back in the answer; larger ones as a download path.
