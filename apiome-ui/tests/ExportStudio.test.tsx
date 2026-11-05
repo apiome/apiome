@@ -965,6 +965,69 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(checks).toHaveTextContent('The spectral toolchain is not installed on this server.');
   });
 
+  it('runs a toolchain check on the generated artifact and attaches it to the verify report (MFX-44.6)', async () => {
+    const base = mockFetch({
+      testTools: {
+        openapi: [
+          { kind: 'toolchain', label: 'redocly lint', params: { tool: 'redocly', check: 'lint' }, server_side: true,
+            available: true, unavailable_reason: null },
+        ],
+      },
+    });
+    const events = [
+      { event: 'start', tool: 'redocly', check: 'lint', label: 'redocly lint', command: 'redocly lint openapi.json', files: ['openapi.json'] },
+      { event: 'output', stream: 'stderr', text: '\u001b[31m[1] openapi.json:4:3 at #/info/license\u001b[0m Info object should contain `license` field.\n' },
+      { event: 'result', tool: 'redocly', check: 'lint', label: 'redocly lint', status: 'failed', exit_code: 1,
+        duration_ms: 950, command: 'redocly lint openapi.json', files: ['openapi.json'], message: 'redocly lint exited 1.' },
+    ];
+    const encoded = new TextEncoder().encode(events.map((event) => `${JSON.stringify(event)}\n`).join(''));
+    const checkCalls: Array<{ url: string; body: Record<string, unknown> }> = [];
+    const fetchMock = jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
+      const url = String(input);
+      if (url.includes('/api/export/verify/tool-checks/')) {
+        checkCalls.push({ url, body: JSON.parse(init?.body ?? '{}') });
+        let sent = false;
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({}),
+          body: {
+            getReader: () => ({
+              read: () =>
+                Promise.resolve(sent ? { value: undefined, done: true } : ((sent = true), { value: encoded, done: false })),
+            }),
+          },
+        });
+      }
+      return base(input, init);
+    }) as jest.Mock;
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const panel = await screen.findByTestId('test-drive-panel');
+    expect(screen.queryByTestId('toolcheck-report')).toBeNull();
+    fireEvent.click(within(panel).getByTestId('toolchain-run-redocly-lint'));
+
+    expect(await within(panel).findByTestId('toolchain-status-redocly-lint')).toHaveTextContent('Failed · exit 1');
+    expect(checkCalls).toEqual([
+      {
+        url: '/api/export/verify/tool-checks/redocly',
+        body: expect.objectContaining({ artifact: 'proj-petstore', version: 'rev-1', target: 'openapi', check: 'lint', jobId: 'job-1' }),
+      },
+    ]);
+    const log = within(panel).getByRole('log', { name: 'redocly lint output' });
+    expect(log).toHaveTextContent('Info object should contain `license` field.');
+    expect(log.textContent).not.toContain('\u001b');
+    // The settled check attaches to the verify report above the artifact.
+    expect(screen.getByTestId('toolcheck-report')).toHaveTextContent('redocly lintFailed · exit 1openapi.json');
+  });
+
   it('opens the generated OpenAPI file in Swagger UI and ReDoc (MFX-44.2)', async () => {
     const tool = (kind: string, label: string) => ({ kind, label, params: {}, server_side: false, available: true, unavailable_reason: null });
     const fetchMock = mockFetch({ testTools: { openapi: [tool('swagger-ui', 'Swagger UI'), tool('redoc', 'ReDoc')] } });

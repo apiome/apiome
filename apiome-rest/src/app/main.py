@@ -63,6 +63,7 @@ from .draft_lock_routes import router as draft_lock_router
 from .entity_owner_routes import router as entity_owner_router
 from .export_job_routes import router as export_job_router
 from .export_mock_routes import router as export_mock_router
+from .export_tool_check_routes import router as export_tool_check_router
 from .export_routes import router as export_router
 from .export_routes import tenant_router as export_tenant_router
 from .format_matrix_routes import router as format_matrix_router
@@ -211,7 +212,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.522.0",
+    version="1.523.0",
 )
 
 
@@ -574,6 +575,7 @@ app.include_router(schema_registry_push_router)
 # artifact. Bound to the Mock Server engine below — this surface only provisions and inspects;
 # the mock itself is served by the public /v1/mock data plane.
 app.include_router(export_mock_router)
+app.include_router(export_tool_check_router)
 app.include_router(tenant_repositories_router)
 # Repository webhook ingestion (REPO-4.3, #2781): unauthenticated by necessity — a provider
 # holds no token — and authenticated instead by the HMAC signature over the raw body.

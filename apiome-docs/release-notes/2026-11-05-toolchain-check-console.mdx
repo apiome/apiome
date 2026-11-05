@@ -1,0 +1,22 @@
+---
+slug: toolchain-check-console
+title: Run the format's own toolchain on your export
+description: "Export studio runs buf lint, tsp compile and other format checks on demand."
+authors: [apiome]
+---
+
+After you generate a file in the Export studio, **Test drive** › **Toolchain checks** now runs the
+format's own tools on it, such as `buf lint` and `buf build` for Protocol Buffers, `tsp compile`,
+`smithy build` or `redocly lint`, and streams their output as they run. See
+[Toolchain checks](/ship/export-studio#toolchain-checks).
+
+{/* truncate */}
+
+- **Live console:** stdout and stderr appear as the tool writes them, in a monospace console you can
+  copy. Colour codes and control characters are removed.
+- **Exit status:** a chip says **Passed**, **Failed · exit N**, **Timed out** or **Could not run**, and
+  each finished check is listed with the verify result on **6. Review & Generate**.
+- **Honest availability:** a tool this server does not have shows why, instead of a **Run** button.
+- **Safe to run:** checks run in the toolchain sandbox on the generated file (nothing is uploaded from
+  the browser), within your workspace, and are rate limited per person.
+- **API:** `POST /v1/export/{tenant}/verify/tool-checks/{tool}` streams the same console as NDJSON.

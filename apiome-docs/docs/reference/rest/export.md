@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 13 operations."
+description: "REST endpoints tagged export: 14 operations."
 sidebar_position: 31
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.522.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.523.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 13 operations
+Tag: `export` · 14 operations
 
 ## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
 
@@ -352,6 +352,40 @@ Request body for one-call pre-generation verify: fidelity + validation + lint + 
 | 200 | Successful response for one-call pre-generation verify: fidelity + validation + lint + verdict. | `application/json` [`ExportVerifyResponse`](#schema-exportverifyresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/export/{tenant_slug}/verify/tool-checks/{tool}` {#run-export-tool-check-v1-export-tenant-slug-verify-tool-checks-tool-post}
+
+**Run a target's toolchain check on the artifact under review, streaming its console**
+
+Run one toolchain check the target's registry entry declares (``test_tools`` of kind ``toolchain``: ``tool`` in the path, ``check`` in the body) through the sandboxed toolchain runner, against a completed export job's artifact (``jobId``) or the source re-emitted for ``target`` and ``options``. The body streams as NDJSON: a ``start`` event, an ``output`` event per stdout/stderr chunk, and a closing ``result`` event (``status`` ``passed`` / ``failed`` / ``timed_out`` / ``unavailable`` / ``error``, ``exit_code``, ``duration_ms``, ``command``, ``files``, ``message``). A check whose tool is not installed answers ``503`` with the reason; runs are rate-limited per user (``429``).
+
+Operation id: `run_export_tool_check_v1_export__tenant_slug__verify_tool_checks__tool__post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `tool` | path | string | yes | Path parameter identifying the tool segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for run a target's toolchain check on the artifact under review, streaming its console.
+
+- `application/json` — [`ExportToolCheckRequest`](#schema-exporttoolcheckrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The check's console, one JSON event per line. | `application/x-ndjson` string |
+| 404 | Unknown target, job or source, or the target declares no such check. | — |
+| 409 | The job is not a completed export of this target. | — |
+| 422 | No runnable command for the check, or the artifact cannot be staged. | — |
+| 429 | Too many toolchain checks in a short time. | — |
+| 503 | The check's toolchain is not installed on this server. | — |
+
 ## `POST /v1/tenants/{tenant_slug}/export/preflight` {#preflight-export-v1-tenants-tenant-slug-export-preflight-post}
 
 **Pre-flight an export: source lint + target-readiness ranking (no job, no artifact)**
@@ -691,6 +725,19 @@ The per-target fidelity list for one source revision (MFX-2.5).
 | `version_record_id` | string | yes | The resolved revision (``versions.id``). |
 | `version_label` | string or null | no | The resolved revision's version label (e.g. ``1.0.0``). |
 | `targets` | array of `ExportTargetFidelity` | no | Every registered target with its per-source fidelity, sorted by target key. |
+
+### `ExportToolCheckRequest` {#schema-exporttoolcheckrequest}
+
+Run one declared toolchain check on the artifact under review.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `artifact` | string | yes | The artifact (project) id the export is of. |
+| `version` | string or null | no | Revision UUID, version label (``1.0.0``), or null for the latest revision. |
+| `target` | string | yes | Target emitter key (``proto``) or format key (``proto3``). |
+| `options` | object or null | no | Per-target emit options (MFX-1.4); null or empty applies the target defaults. |
+| `check` | string | yes | The declared check of the tool to run, e.g. ``lint`` for ``buf lint``. |
+| `jobId` | string or null | no | A completed export job whose artifact to check; null re-emits the source for ``target`` and ``options`` (the verify buffer). |
 
 ### `ExportVerifyRequest` {#schema-exportverifyrequest}
 

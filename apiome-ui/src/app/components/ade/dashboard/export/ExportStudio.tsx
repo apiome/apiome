@@ -57,12 +57,14 @@ import { FidelityLossHeatmapPanel } from './FidelityLossHeatmapPanel';
 import { RoundtripComparisonPanel } from './RoundtripComparisonPanel';
 import { useExportRoundtrip } from './useExportRoundtrip';
 import { MockTestDrivePanel } from './MockTestDrivePanel';
-import { TestDrivePanel, ToolchainChecksList, type TestDriveRenderers } from './TestDrivePanel';
+import { TestDrivePanel, type TestDriveRenderers } from './TestDrivePanel';
+import { ToolCheckReport, ToolchainChecksConsole } from './ToolchainChecksConsole';
 import { OpenApiTestDriveFrame } from './OpenApiTestDriveFrame';
 import { GraphQLTestDriveFrame } from './GraphQLTestDriveFrame';
 import { AsyncApiTestDriveFrame } from './AsyncApiTestDriveFrame';
 import { mockIsLive } from './exportMockTestDrive';
 import { useExportMockTestDrive } from './useExportMockTestDrive';
+import { useExportToolChecks } from './useExportToolChecks';
 import { useExportPreviewManifest } from './useExportPreviewManifest';
 import type { EntityRevealRequest, ExportManifestEntity } from './exportPreviewManifest';
 import { OriginalSourceOption } from './OriginalSourceOption';
@@ -400,6 +402,17 @@ export function ExportStudio({
   const jobStatus = job?.status ?? null;
   const jobState = jobStatus?.state ?? null;
   const jobCompleted = jobState === 'completed' && !jobStatus?.result?.dry_run;
+
+  // MFX-44.6: the target's toolchain checks (`buf lint`, `tsp compile`…), run on demand against the
+  // completed job's artifact the Review step shows. Keyed by configuration + job, so another target,
+  // option or generate starts with no results; the settled ones attach to the verify report below.
+  const toolChecks = useExportToolChecks({
+    artifact,
+    version,
+    target: selectedKey,
+    options: changedOpts,
+    jobId: jobCompleted ? (job?.jobId ?? null) : null,
+  });
   // The delivery gate's decision, when it has something to say (IXH-2.5): a warning on a delivered
   // artifact, or the reasons a blocked delivery was refused. A clean allow yields null.
   const deliveryDecision = jobStatus ? deliveryReportFor(jobStatus) : null;
@@ -1057,7 +1070,7 @@ export function ExportStudio({
     // MFX-44.4: the AsyncAPI React component over the emitted AsyncAPI 2.x / 3.x document.
     'asyncapi-render': () => (emitted ? <AsyncApiTestDriveFrame text={emitted.text} /> : null),
     'mock-server': () => mockPanel,
-    toolchain: (tab) => <ToolchainChecksList tools={tab.tools} />,
+    toolchain: (tab) => <ToolchainChecksConsole tools={tab.tools} runs={toolChecks.runs} onRun={toolChecks.run} />,
   };
   const testDriveTools = selected?.entry.descriptor.test_tools;
   const testDrivePanel = !selected ? null : testDriveTools === undefined ? (
@@ -1462,6 +1475,8 @@ export function ExportStudio({
               {/* The verify verdict follows the user to Review (MFX-42.1): the same banner it saw
                   on the Verify step, so what gated Generate stays visible while generating. */}
               {verifyVerdict && <VerdictBanner verdict={verifyVerdict} />}
+              {/* MFX-44.6: what the format's own toolchain said, attached to the verify report. */}
+              <ToolCheckReport results={toolChecks.results} />
               {/* MFX-38.4: deliver with saved profiles — chosen before Generate, listed after. */}
               {(!job || (jobCompleted && job.jobId)) && (
                 <ExportJobDeliveryPanel

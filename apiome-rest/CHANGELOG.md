@@ -5,6 +5,27 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.659.0] - 2026-11-05
+
+### Added
+- **Toolchain check console (MFX-44.6, #4372).** `POST /v1/export/{tenant}/verify/tool-checks/{tool}` runs one
+  toolchain check a target's registry entry declares (`test_tools` of kind `toolchain`, MFX-44.1 — `tool` in the
+  path, `check` in the body: `buf lint`, `buf build`, `tsp compile`, `smithy build`, `capnp compile`,
+  `thrift compile`, `drafter parse`, `redocly lint`, `asyncapi validate`) on the artifact under review and streams
+  its console as NDJSON: a `start` event, an `output` event per stdout/stderr chunk, and a closing `result`
+  (`status` `passed` / `failed` / `timed_out` / `unavailable` / `error`, `exit_code`, `duration_ms`, `command`,
+  `files`, `message`).
+  - The artifact is a completed export job's (`jobId`, same target) or the source re-emitted server-side for
+    `target` + `options`; the browser never uploads bytes. Paths are confined to a scratch directory; at most 500
+    files / 20 MB are staged.
+  - Runs go through the shared toolchain runner (sandbox, timeout, concurrency cap). A tool that is not installed
+    answers `503` with the registry's reason; a check the target does not declare is `404`.
+  - Tenant-scoped (source and job looked up within the caller's tenant) and rate-limited per user:
+    `APIOME_EXPORT_TOOL_CHECK_RATE_LIMIT_PER_MINUTE` (default 10) → `429` with `Retry-After`.
+  - `ToolchainRunner.run` / `run_spec` take an optional `on_output(stream, chunk)` callback that receives output
+    as it is read; a cancelled run now kills and reaps its tool.
+  - OpenAPI 1.523.0.
+
 ## [1.658.0] - 2026-11-05
 
 ### Added
