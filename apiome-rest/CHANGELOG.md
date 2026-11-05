@@ -5,6 +5,20 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.657.1] - 2026-11-05
+
+### Added
+- **Export surface parity suite (MFX-40.3, #4341).** `tests/test_export_surface_parity.py` drives, for a REST, an
+  event and a schema-only fixture source, the routes behind each export surface — the UI and CLI
+  (`GET /v1/export/{tenant}/targets`, `POST …/preview`), browse (`/v1/browse/…/export/targets|preview`) and MCP
+  (`POST /v1/internal/mcp/export/targets|run`) — and asserts identical targets, options, defaults, fidelity badges,
+  reports and advisory wording (MCP's top-level `advisory` equal to the envelope's message; `blocked` exactly when
+  the tier is not lossless).
+  - The sampled previews are recorded in `tests/fixtures/export_surface_parity.json`; apiome-cli, apiome-ui and
+    apiome-browse consume byte-identical copies (asserted here) to prove they render the advisory verbatim and
+    gate the same exports. Regenerate with `pytest tests/test_export_surface_parity.py --update-golden`.
+  - No API change (OpenAPI 1.521.1).
+
 ## [1.657.0] - 2026-11-05
 
 ### Added

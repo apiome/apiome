@@ -1,0 +1,18 @@
+---
+slug: export-surface-parity
+title: One export answer on every surface
+description: "The UI, Browse, CLI and MCP now share one checked export contract."
+authors: [apiome]
+---
+
+The Export dialog, the public Browse export, `apiome export` and the MCP `version.export` tool are now
+held to one contract. For the same version they offer the same targets and options, and show the same
+fidelity report and advisory, word for word. See
+[Every surface says the same thing](/ship/export-fidelity#every-surface-says-the-same-thing).
+
+{/* truncate */}
+
+- **Drift fails the build:** a parity check compares the answers of all four surfaces for a REST, an
+  event and a schema-only source.
+- **One lossy gate:** **Export anyway** in the app, `--force` on the CLI and `allow_lossy` over MCP stop
+  the same exports.
