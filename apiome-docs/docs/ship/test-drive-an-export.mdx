@@ -1,0 +1,65 @@
+---
+title: Test drive an export
+description: Try a generated file with the tools that fit its format, before shipping.
+sidebar_position: 4.6
+tags: [export]
+---
+
+<Route path="/ade/dashboard/export/studio" />
+
+A file that passes validation is legal in its format, but that doesn't make it *good*. **Test drive**
+lets you try the generated file the way its consumers will: read it as documentation, query it, call
+it as a live API, or put it through the format's own toolchain. It sits under the generated file on
+the **6. Review & Generate** step of the [Export studio](./export-studio.mdx#test-drive), with one tab
+for each tool that fits the format.
+
+<Screenshot id="export-studio-test-drive" alt="Test drive with the redocly lint tab open, showing it is installed with a Run button, and the Mock server tab disabled because mocks are disabled on this server" />
+
+## Choose a tool
+
+| You want to… | Tab | Formats | Runs |
+| --- | --- | --- | --- |
+| Read the API as interactive docs, and try its operations | [**Swagger UI**](./export-studio.mdx#swagger-ui-and-redoc) | OpenAPI | In your browser |
+| Read it as a three-pane reference | [**ReDoc**](./export-studio.mdx#swagger-ui-and-redoc) | OpenAPI | In your browser |
+| Explore a schema and run queries against mock data | [**GraphiQL**](./export-studio.mdx#graphiql) | GraphQL | In your browser |
+| Read an event API by channel, message and payload | [**AsyncAPI viewer**](./export-studio.mdx#asyncapi-viewer) | AsyncAPI | In your browser |
+| Call the file as a live API for a while | [**Mock server**](./mock-try-out.mdx#test-drive-an-export) | OpenAPI | On the server |
+| Run the format's own checker on it | [**Toolchain checks**](./export-studio.mdx#toolchain-checks) | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protocol Buffers (`buf lint`, `buf build`), TypeSpec (`tsp compile`), Smithy (`smithy build`), Cap'n Proto (`capnp compile`), Thrift (`thrift compile`), API Blueprint (`drafter parse`) | On the server |
+
+A format with none of these tools has no **Test drive**.
+
+## How the pieces fit
+
+- **The format decides the tabs.** Each export format declares which tools can test its output, and
+  the studio draws one tab per tool. A new format brings its own tabs, with no change to the studio.
+  The same list comes from the API as `test_tools` on each target of
+  [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get).
+- **Browser tools stay in the browser.** Swagger UI, ReDoc, GraphiQL and the AsyncAPI viewer read the
+  file you just generated, inside a sandbox with no access to your session, and make no network
+  requests. The one exception is **Try it out** in Swagger UI, which works only while the mock server
+  runs and sends requests only to that mock.
+- **Server tools use the file the server made.** The mock server and the toolchain checks never take a
+  file from your browser. They use your last **Generate**, or re-generate the file on the server. Both
+  run inside your workspace and have limits: a mock lives **30 minutes** by default (up to 4 hours), a
+  workspace can have **3** running at once, and each person can run **10** toolchain checks a minute.
+- **Unavailable is shown, not hidden.** A server tool this server lacks, such as a toolchain that is
+  not installed or mocks that are turned off, still has its tab or row, greyed out, with the reason.
+  Ask your administrator to install the tool or turn the feature on.
+- **Results join the review.** A finished toolchain check is listed under **Toolchain checks** beside
+  the verify result. The mock server's request log shows whether each response matched the file's
+  schema.
+
+## With the API
+
+| What | Endpoint |
+| --- | --- |
+| Which tools each format has, and whether each can run here | [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get) (`test_tools`) |
+| Start, read and stop a test-drive mock | `/v1/export/{tenant}/mock…` (see [Mock try-out](./mock-try-out.mdx#with-the-cli-or-the-api)) |
+| Run a toolchain check and stream its output | [`POST /v1/export/{tenant}/verify/tool-checks/{tool}`](../reference/rest/export.md#run-export-tool-check-v1-export-tenant-slug-verify-tool-checks-tool-post) |
+
+## Where next
+
+- [Export studio › Test drive](./export-studio.mdx#test-drive): every tab, step by step
+- [Mock try-out](./mock-try-out.mdx): every way to try a mock, including an export's
+- [How an export is checked](./check-an-export.mdx): the validation and lint that run before a download
+- [Read an exported file](./read-an-exported-file.mdx): the viewer the tabs sit under
