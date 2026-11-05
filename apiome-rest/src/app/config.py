@@ -1950,6 +1950,33 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Auto-export on version publish (MFX-39.4, #4336). A background async loop (app.export_auto_worker)
+    # runs the auto-exports a publish queues for each active subscription: the preset's export job on this
+    # instance, a loss check, and delivery — or a halt and a notification when the loss reaches the
+    # subscription's `halt_at`. Opt-in per subscription.
+    #
+    # export_auto_enabled           Global kill switch; queued runs wait while it is off.
+    # export_auto_interval_seconds  How often the loop wakes to claim pending runs.
+    # export_auto_batch_size        Max runs per tick (each runs a whole export job).
+    # export_auto_lease_seconds     How long a claimed run may take before the sweep presumes its instance
+    #                               lost (the export job lives in that instance's memory) and fails it.
+    export_auto_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("APIOME_EXPORT_AUTO_ENABLED", "export_auto_enabled"),
+    )
+    export_auto_interval_seconds: int = Field(
+        default=30,
+        validation_alias=AliasChoices("APIOME_EXPORT_AUTO_INTERVAL", "export_auto_interval_seconds"),
+    )
+    export_auto_batch_size: int = Field(
+        default=5,
+        validation_alias=AliasChoices("APIOME_EXPORT_AUTO_BATCH_SIZE", "export_auto_batch_size"),
+    )
+    export_auto_lease_seconds: int = Field(
+        default=7200,
+        validation_alias=AliasChoices("APIOME_EXPORT_AUTO_LEASE_SECONDS", "export_auto_lease_seconds"),
+    )
+
     # Usage index sweep (RDG-1.1, #5759). A background loop (app.usage_sweep) rolls usage_hourly up
     # into usage_daily, finalizes closed UTC days and prunes the index per license tier. The same
     # tick runs from cron as `python -m app.usage_sweep`.

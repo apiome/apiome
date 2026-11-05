@@ -46,7 +46,8 @@ credential it delivers with. You can then:
   `POST /v1/export/{tenant}/jobs/{job_id}/deliveries`.
 
 A [preset](./export-presets.mdx) can carry a delivery profile too, so applying it delivers the export
-without ticking anything.
+without ticking anything — and [subscribed to a project](./auto-export-on-publish.mdx), it delivers every
+new version as it is published, unless the export loses too much.
 
 <Screenshot id="export-studio-delivery" alt="The Delivery tab of Export studio: three delivery profiles — object storage, webhook and git — with one profile's deliveries open, one delivered and one failed with its error code" />
 

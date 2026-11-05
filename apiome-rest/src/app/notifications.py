@@ -28,6 +28,7 @@ __all__ = [
     "NOTIFICATION_TYPES",
     "OWNER_NOTIFICATION_TYPES",
     "RETENTION_PER_USER",
+    "TYPE_EXPORT_AUTO_HALTED",
     "TYPE_MENTION",
     "TYPE_OWNER_BREAKING_CHANGE",
     "TYPE_OWNER_FINDING",
@@ -87,19 +88,24 @@ OWNER_NOTIFICATION_TYPES = (
     TYPE_OWNER_SYNC_FAILED,
 )
 
-#: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286).
+#: An auto-export on publish (MFX-39.4) halted before delivery, or failed — told to the publisher and
+#: the subscription's owner. Its payload carries its own ``summary`` and ``link``.
+TYPE_EXPORT_AUTO_HALTED = "export_auto_halted"
+
+#: The whole vocabulary. Mirrors ``notifications_type_check`` (apiome-db V263, widened by V286, V359).
 NOTIFICATION_TYPES = (
     TYPE_MENTION,
     TYPE_REVIEW_REQUESTED,
     TYPE_REVIEW_DECISION,
     TYPE_THREAD_RESOLVED,
     TYPE_VERSION_PUBLISHED,
+    TYPE_EXPORT_AUTO_HALTED,
     *OWNER_NOTIFICATION_TYPES,
 )
 
 NotificationType = Literal[
     "mention", "review_requested", "review_decision", "thread_resolved", "version_published",
-    "owner_finding", "owner_breaking_change", "owner_verification_drift", "owner_gate_blocked",
+    "export_auto_halted", "owner_finding", "owner_breaking_change", "owner_verification_drift", "owner_gate_blocked",
     "owner_trust_drift", "owner_shadow_api", "owner_sync_failed",
 ]
 

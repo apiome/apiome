@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.518.0",
+    "version": "1.519.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -40700,6 +40700,7 @@
                     "review_decision",
                     "thread_resolved",
                     "version_published",
+                    "export_auto_halted",
                     "owner_finding",
                     "owner_breaking_change",
                     "owner_verification_drift",
@@ -88386,6 +88387,688 @@
         }
       }
     },
+    "/v1/export/{tenant_slug}/auto-exports": {
+      "post": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "Run an export preset on every publish of a project",
+        "description": "Subscribes an export preset (by id or name) to a project: every later publish runs the preset's export on the published version and delivers it through the preset's delivery profile \u2014 unless the export's loss reaches `haltAt` (`critical`, the default: a severe or near-empty conversion, a types-only result or any critical construct; `warn`: any loss). A halted export is not delivered; the publisher and the subscriber are notified, and a person can release it. `approveLoss` pre-approves the loss: the export is delivered anyway. Requires `projects:edit` and `versions:publish`; audited as `export.auto_export.subscription.created`. `400` for an unknown project or preset; `409` when the project already runs that preset.",
+        "operationId": "create_auto_export_v1_export__tenant_slug__auto_exports_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Runanexportpresetoneverypublishofaprojecauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Runanexportpresetoneverypublishofaprojecauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Runanexportpresetoneverypublishofaprojec Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Runanexportpresetoneverypublishofaprojec Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoExportSubscriptionCreate",
+                "description": "Request body for runanexportpresetoneverypublishofaprojecrequest."
+              }
+            }
+          },
+          "description": "Request body for run an export preset on every publish of a project."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for run an export preset on every publish of a project.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoExportSubscriptionModel",
+                  "description": "Response payload for runanexportpresetoneverypublishofaprojecresponse201."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown project or preset."
+          },
+          "409": {
+            "description": "The project already runs that preset on publish."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for runanexportpresetoneverypublishofaprojecresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "List auto-export subscriptions",
+        "description": "Every export preset run on publish, by project. `projectId` or `preset` (id or name) narrow. Requires `projects:view`.",
+        "operationId": "list_auto_exports_v1_export__tenant_slug__auto_exports_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportsubscriptionsproject ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportsubscriptionsproject ID schema."
+                }
+              ],
+              "title": "Projectid",
+              "description": "Projectid schema."
+            },
+            "description": "Query parameter: project id."
+          },
+          {
+            "name": "preset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportsubscriptionspreset schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportsubscriptionspreset schema."
+                }
+              ],
+              "title": "Preset",
+              "description": "Preset schema."
+            },
+            "description": "Query parameter: preset."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportsubscriptionsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportsubscriptionsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportsubscriptions Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportsubscriptions Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list auto-export subscriptions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoExportSubscriptionListResponse",
+                  "description": "Response payload for listautoexportsubscriptionsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listautoexportsubscriptionsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/auto-exports/{subscription_id}": {
+      "patch": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "Change an auto-export subscription",
+        "description": "Changes `haltAt`, `approveLoss` or `active`. Turning a subscription on or pre-approving loss requires `versions:publish` as well as `projects:edit`. Audited as `export.auto_export.subscription.updated`.",
+        "operationId": "update_auto_export_v1_export__tenant_slug__auto_exports__subscription_id__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subscription Id",
+              "description": "Subscription Id schema."
+            },
+            "description": "Path parameter identifying the subscription id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanautoexportsubscriptionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanautoexportsubscriptionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Changeanautoexportsubscription Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Changeanautoexportsubscription Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoExportSubscriptionUpdate",
+                "description": "Request body for changeanautoexportsubscriptionrequest."
+              }
+            }
+          },
+          "description": "Request body for change an auto-export subscription."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for change an auto-export subscription.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoExportSubscriptionModel",
+                  "description": "Response payload for changeanautoexportsubscriptionresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown subscription for this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for changeanautoexportsubscriptionresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "Remove an auto-export subscription",
+        "description": "Stops running the preset on publish. Its past runs keep their record. Requires `projects:edit`; audited as `export.auto_export.subscription.deleted`.",
+        "operationId": "delete_auto_export_v1_export__tenant_slug__auto_exports__subscription_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "subscription_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Subscription Id",
+              "description": "Subscription Id schema."
+            },
+            "description": "Path parameter identifying the subscription id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removeanautoexportsubscriptionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removeanautoexportsubscriptionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Removeanautoexportsubscription Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Removeanautoexportsubscription Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for remove an auto-export subscription."
+          },
+          "404": {
+            "description": "Unknown subscription for this tenant."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for removeanautoexportsubscriptionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/auto-export-runs": {
+      "get": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "List auto-export runs",
+        "description": "What each publish's auto-exports did, newest first: the export job, the loss it measured, whether delivery was halted, and every delivery's outcome. `projectId` or `subscriptionId` narrow. Requires `projects:view`.",
+        "operationId": "list_auto_export_runs_v1_export__tenant_slug__auto_export_runs_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportrunsproject ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportrunsproject ID schema."
+                }
+              ],
+              "title": "Projectid",
+              "description": "Projectid schema."
+            },
+            "description": "Query parameter: project id."
+          },
+          {
+            "name": "subscriptionId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportrunssubscription ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportrunssubscription ID schema."
+                }
+              ],
+              "title": "Subscriptionid",
+              "description": "Subscriptionid schema."
+            },
+            "description": "Query parameter: subscription id."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit",
+              "description": "Limit schema."
+            },
+            "description": "Maximum number of rows to return."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportrunsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportrunsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listautoexportruns Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listautoexportruns Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list auto-export runs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoExportRunListResponse",
+                  "description": "Response payload for listautoexportrunsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listautoexportrunsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/auto-export-runs/{run_id}/release": {
+      "post": {
+        "tags": [
+          "export-auto"
+        ],
+        "summary": "Deliver a halted auto-export anyway",
+        "description": "Delivers a **halted** auto-export through its preset's delivery profile, as the caller, while the export's artifact is retained. Requires `versions:publish`; audited as `export.auto_export.released`. `409` when the run is not halted or the preset names no delivery profile; `410` when the artifact has expired.",
+        "operationId": "release_auto_export_run_v1_export__tenant_slug__auto_export_runs__run_id__release_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id",
+              "description": "Run Id schema."
+            },
+            "description": "Path parameter identifying the run id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliverahaltedautoexportanywayauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliverahaltedautoexportanywayauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliverahaltedautoexportanyway Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliverahaltedautoexportanyway Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for deliver a halted auto-export anyway.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutoExportRunModel",
+                  "description": "Response payload for deliverahaltedautoexportanywayresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown run for this tenant."
+          },
+          "409": {
+            "description": "Not halted, or nothing to deliver with."
+          },
+          "410": {
+            "description": "The export's artifact has expired."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deliverahaltedautoexportanywayresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/export/{tenant_slug}/jobs/{job_id}/attestation": {
       "get": {
         "tags": [
@@ -115118,6 +115801,516 @@
         ],
         "title": "AuthorizeResponse",
         "description": "The edge's on-demand TLS answer for one hostname."
+      },
+      "AutoExportRunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/AutoExportRunModel"
+            },
+            "type": "array",
+            "title": "Runs",
+            "description": "Runs.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AutoExportRunListResponse",
+        "description": "Auto-export runs, newest first."
+      },
+      "AutoExportRunModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "versionRecordId": {
+            "type": "string",
+            "title": "Versionrecordid",
+            "description": "Version Record ID.",
+            "example": "1.0.0"
+          },
+          "subscriptionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Subscriptionid",
+            "description": "Subscription ID."
+          },
+          "presetId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Presetid",
+            "description": "Preset ID."
+          },
+          "presetName": {
+            "type": "string",
+            "title": "Presetname",
+            "description": "Preset Name.",
+            "example": "Example"
+          },
+          "haltAt": {
+            "type": "string",
+            "title": "Haltat",
+            "description": "Halt At.",
+            "example": "example"
+          },
+          "approveLoss": {
+            "type": "boolean",
+            "title": "Approveloss",
+            "description": "Approve Loss.",
+            "example": false
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "jobId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Jobid",
+            "description": "Job ID."
+          },
+          "lossSeverity": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Lossseverity",
+            "description": "Loss Severity."
+          },
+          "lossReasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Lossreasons",
+            "description": "Loss Reasons.",
+            "maxItems": 1000
+          },
+          "deliveries": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Deliveries",
+            "description": "Deliveries.",
+            "maxItems": 1000
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Errorcode",
+            "description": "Error Code."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          },
+          "publishedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Publishedby",
+            "description": "Published By."
+          },
+          "releasedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Releasedby",
+            "description": "Released By."
+          },
+          "releasedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Releasedat",
+            "description": "Released At."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Auto Export Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Run Model schema."
+              }
+            ],
+            "title": "Finishedat",
+            "description": "Finished At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "versionRecordId",
+          "presetName",
+          "haltAt",
+          "approveLoss",
+          "status"
+        ],
+        "title": "AutoExportRunModel",
+        "description": "One auto-export: a publish \u00d7 a subscription.\n\nAttributes:\n    status: ``pending``, ``running``, ``delivered``, ``exported`` (no delivery profile), ``halted`` (the\n        loss reached ``haltAt``: nothing delivered, people notified), ``delivery_failed`` or ``failed``.\n    loss_severity: The loss the export measured: ``info``, ``warn`` or ``critical``.\n    loss_reasons: Why, one line per target.\n    deliveries: Each delivery's outcome."
+      },
+      "AutoExportSubscriptionCreate": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "The project whose publishes trigger the export.",
+            "example": "example"
+          },
+          "preset": {
+            "type": "string",
+            "title": "Preset",
+            "description": "The export preset (MFX-39.3), by id or name.",
+            "example": "example"
+          },
+          "haltAt": {
+            "type": "string",
+            "enum": [
+              "warn",
+              "critical"
+            ],
+            "title": "Haltat",
+            "description": "Halt auto-delivery when the export's loss reaches this severity: `critical` (default) for a severe or near-empty conversion, a types-only result or any critical construct; `warn` for any loss at all.",
+            "default": "critical",
+            "example": "critical"
+          },
+          "approveLoss": {
+            "type": "boolean",
+            "title": "Approveloss",
+            "description": "Pre-approve the loss: deliver even when it reaches `haltAt`. Recorded on every run.",
+            "default": false,
+            "example": false
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "description": "Whether publishes trigger it.",
+            "default": true,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "projectId",
+          "preset"
+        ],
+        "title": "AutoExportSubscriptionCreate",
+        "description": "Subscribe a preset to a project's publishes: ``POST /v1/export/{tenant}/auto-exports``."
+      },
+      "AutoExportSubscriptionListResponse": {
+        "properties": {
+          "subscriptions": {
+            "items": {
+              "$ref": "#/components/schemas/AutoExportSubscriptionModel"
+            },
+            "type": "array",
+            "title": "Subscriptions",
+            "description": "Subscriptions.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AutoExportSubscriptionListResponse",
+        "description": "Auto-export subscriptions."
+      },
+      "AutoExportSubscriptionModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Subscription Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Model schema."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "presetId": {
+            "type": "string",
+            "title": "Presetid",
+            "description": "Preset ID.",
+            "example": "example"
+          },
+          "presetName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Subscription Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Model schema."
+              }
+            ],
+            "title": "Presetname",
+            "description": "Preset Name."
+          },
+          "haltAt": {
+            "type": "string",
+            "title": "Haltat",
+            "description": "`warn` or `critical`.",
+            "example": "example"
+          },
+          "approveLoss": {
+            "type": "boolean",
+            "title": "Approveloss",
+            "description": "Approve Loss.",
+            "example": false
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active",
+            "description": "Active.",
+            "example": false
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Auto Export Subscription Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Model schema."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Auto Export Subscription Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Model schema."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Auto Export Subscription Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Model schema."
+              }
+            ],
+            "title": "Createdby",
+            "description": "Created By."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "presetId",
+          "haltAt",
+          "approveLoss",
+          "active"
+        ],
+        "title": "AutoExportSubscriptionModel",
+        "description": "An export preset subscribed to a project's publishes."
+      },
+      "AutoExportSubscriptionUpdate": {
+        "properties": {
+          "haltAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "warn",
+                  "critical"
+                ],
+                "description": "Auto Export Subscription Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Update schema."
+              }
+            ],
+            "title": "Haltat",
+            "description": "Halt At."
+          },
+          "approveLoss": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Auto Export Subscription Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Update schema."
+              }
+            ],
+            "title": "Approveloss",
+            "description": "Approve Loss."
+          },
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Auto Export Subscription Update schema."
+              },
+              {
+                "type": "null",
+                "description": "Auto Export Subscription Update schema."
+              }
+            ],
+            "title": "Active",
+            "description": "Active."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AutoExportSubscriptionUpdate",
+        "description": "A change to a subscription: ``PATCH /v1/export/{tenant}/auto-exports/{id}``."
       },
       "AvailableFieldOut": {
         "properties": {
@@ -168176,6 +169369,7 @@
               "review_decision",
               "thread_resolved",
               "version_published",
+              "export_auto_halted",
               "owner_finding",
               "owner_breaking_change",
               "owner_verification_drift",

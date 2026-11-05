@@ -36888,6 +36888,419 @@ class Database:
             raise e
 
     # -------------------------------------------------------------------------------------------
+    # MFX-39.4 (#4336) — auto-export on version publish
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of an auto-export subscription, with its preset and project names.
+    _EXPORT_AUTO_SUBSCRIPTION_COLUMNS = """
+        s.id::text AS id,
+        s.tenant_id::text AS tenant_id,
+        s.project_id::text AS project_id,
+        p.name AS project_name,
+        s.preset_id::text AS preset_id,
+        x.name AS preset_name,
+        s.halt_at,
+        s.approve_loss,
+        s.active,
+        s.created_at,
+        s.updated_at,
+        s.created_by::text AS created_by,
+        s.updated_by::text AS updated_by
+    """
+
+    _EXPORT_AUTO_SUBSCRIPTION_FROM = """
+        apiome.export_auto_subscriptions s
+        JOIN apiome.export_presets x ON x.id = s.preset_id
+        JOIN apiome.projects p ON p.id = s.project_id
+    """
+
+    #: Every column of an auto-export run.
+    _EXPORT_AUTO_RUN_COLUMNS = """
+        r.id::text AS id,
+        r.tenant_id::text AS tenant_id,
+        r.project_id::text AS project_id,
+        r.version_record_id,
+        r.subscription_id::text AS subscription_id,
+        r.preset_id::text AS preset_id,
+        r.preset_name,
+        r.halt_at,
+        r.approve_loss,
+        r.status,
+        r.job_id,
+        r.loss_severity,
+        r.loss_reasons,
+        r.deliveries,
+        r.error_code,
+        r.error_message,
+        r.published_by::text AS published_by,
+        r.released_by::text AS released_by,
+        r.released_at,
+        r.created_at,
+        r.finished_at
+    """
+
+    def _export_auto_subscription_by_id(self, tenant_id: str, subscription_id: str) -> Optional[Dict[str, Any]]:
+        rows = self.execute_query(
+            f"SELECT {self._EXPORT_AUTO_SUBSCRIPTION_COLUMNS} FROM {self._EXPORT_AUTO_SUBSCRIPTION_FROM} "
+            "WHERE s.tenant_id = %s::uuid AND s.id = %s::uuid",
+            (tenant_id, subscription_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_export_auto_subscription(
+        self,
+        *,
+        tenant_id: str,
+        project_id: str,
+        preset_id: str,
+        halt_at: str,
+        approve_loss: bool,
+        active: bool,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Subscribe an export preset to a project's publishes (MFX-39.4).
+
+        Returns:
+            The stored row (with project and preset names), or ``None`` for a non-UUID id.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When the project already runs that preset on publish.
+        """
+        if not all(is_uuid_string(str(v or "")) for v in (tenant_id, project_id, preset_id)):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.export_auto_subscriptions (
+                        tenant_id, project_id, preset_id, halt_at, approve_loss, active, created_by, updated_by
+                    ) VALUES (%s::uuid, %s::uuid, %s::uuid, %s, %s, %s, %s::uuid, %s::uuid)
+                    RETURNING id::text AS id
+                    """,
+                    (tenant_id, project_id, preset_id, halt_at, bool(approve_loss), bool(active), actor, actor),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        return self._export_auto_subscription_by_id(tenant_id, row["id"]) if row else None
+
+    def list_export_auto_subscriptions(
+        self, tenant_id: str, *, project_id: Optional[str] = None, preset_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """A tenant's auto-export subscriptions, optionally of one project or one preset (MFX-39.4)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        for value in (project_id, preset_id):
+            if value is not None and not is_uuid_string(str(value)):
+                return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_AUTO_SUBSCRIPTION_COLUMNS} FROM {self._EXPORT_AUTO_SUBSCRIPTION_FROM}
+            WHERE s.tenant_id = %s::uuid
+              AND (%s::uuid IS NULL OR s.project_id = %s::uuid)
+              AND (%s::uuid IS NULL OR s.preset_id = %s::uuid)
+            ORDER BY p.name ASC, x.name ASC
+            """,
+            (tenant_id, project_id, project_id, preset_id, preset_id),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_export_auto_subscription(self, tenant_id: str, subscription_id: str) -> Optional[Dict[str, Any]]:
+        """One auto-export subscription of the tenant (MFX-39.4)."""
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(subscription_id or ""))):
+            return None
+        return self._export_auto_subscription_by_id(tenant_id, subscription_id)
+
+    def update_export_auto_subscription(
+        self,
+        tenant_id: str,
+        subscription_id: str,
+        *,
+        halt_at: str,
+        approve_loss: bool,
+        active: bool,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a subscription's ``halt_at``, ``approve_loss`` and ``active`` (MFX-39.4).
+
+        Returns:
+            The updated row, or ``None`` when the tenant has no such subscription.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(subscription_id or ""))):
+            return None
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.export_auto_subscriptions
+                    SET halt_at = %s, approve_loss = %s, active = %s,
+                        updated_at = CURRENT_TIMESTAMP, updated_by = %s::uuid
+                    WHERE tenant_id = %s::uuid AND id = %s::uuid
+                    RETURNING id::text AS id
+                    """,
+                    (halt_at, bool(approve_loss), bool(active),
+                     actor_id if is_uuid_string(str(actor_id or "")) else None, tenant_id, subscription_id),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        return self._export_auto_subscription_by_id(tenant_id, subscription_id) if row else None
+
+    def delete_export_auto_subscription(self, tenant_id: str, subscription_id: str) -> bool:
+        """Remove a subscription; its runs keep their history (MFX-39.4)."""
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(subscription_id or ""))):
+            return False
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM apiome.export_auto_subscriptions WHERE tenant_id = %s::uuid AND id = %s::uuid",
+                    (tenant_id, subscription_id),
+                )
+                deleted = cursor.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def enqueue_export_auto_runs(
+        self, *, tenant_id: str, project_id: str, version_record_id: str, published_by: Optional[str]
+    ) -> int:
+        """Queue one auto-export run per active subscription of a published project (MFX-39.4).
+
+        One statement: nothing is written when the project has no active subscription.
+
+        Returns:
+            How many runs were queued.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(project_id or ""))):
+            return 0
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.export_auto_runs (
+                        tenant_id, project_id, version_record_id, subscription_id, preset_id, preset_name,
+                        halt_at, approve_loss, published_by
+                    )
+                    SELECT s.tenant_id, s.project_id, %s, s.id, s.preset_id, x.name, s.halt_at, s.approve_loss,
+                           %s::uuid
+                    FROM apiome.export_auto_subscriptions s
+                    JOIN apiome.export_presets x ON x.id = s.preset_id
+                    WHERE s.tenant_id = %s::uuid AND s.project_id = %s::uuid AND s.active
+                    """,
+                    (str(version_record_id), published_by if is_uuid_string(str(published_by or "")) else None,
+                     tenant_id, project_id),
+                )
+                queued = cursor.rowcount or 0
+            conn.commit()
+            return queued
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def claim_next_export_auto_run(self, claim_token: str) -> Optional[Dict[str, Any]]:
+        """Claim the oldest pending auto-export run (``FOR UPDATE SKIP LOCKED``; MFX-39.4).
+
+        Returns:
+            The run, now ``running``, with ``tenant_slug``, ``project_name`` and the preset's current
+            ``preset_targets`` / ``preset_delivery_profile_id`` (``NULL`` when the preset was deleted) —
+            or ``None`` when nothing is pending.
+        """
+        if not is_uuid_string(str(claim_token or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            WITH next_run AS (
+                SELECT id FROM apiome.export_auto_runs
+                WHERE status = 'pending'
+                ORDER BY created_at ASC, id ASC
+                FOR UPDATE SKIP LOCKED
+                LIMIT 1
+            ),
+            claimed AS (
+                UPDATE apiome.export_auto_runs r
+                SET status = 'running', claimed_at = CURRENT_TIMESTAMP, claim_token = %s::uuid
+                FROM next_run WHERE r.id = next_run.id
+                RETURNING r.*
+            )
+            SELECT {self._EXPORT_AUTO_RUN_COLUMNS},
+                   t.slug AS tenant_slug,
+                   p.name AS project_name,
+                   x.targets AS preset_targets,
+                   x.delivery_profile_id::text AS preset_delivery_profile_id
+            FROM claimed r
+            JOIN apiome.tenants t ON t.id = r.tenant_id
+            JOIN apiome.projects p ON p.id = r.project_id
+            LEFT JOIN apiome.export_presets x ON x.id = r.preset_id
+            """,
+            (claim_token,),
+        )
+        return dict(rows[0]) if rows else None
+
+    def set_export_auto_run_job(self, run_id: str, claim_token: str, job_id: str) -> None:
+        """Record the export job a claimed run started (MFX-39.4)."""
+        self.execute_query(
+            "UPDATE apiome.export_auto_runs SET job_id = %s WHERE id = %s::uuid AND claim_token = %s::uuid "
+            "RETURNING id",
+            (str(job_id), run_id, claim_token),
+        )
+
+    def finish_export_auto_run(
+        self,
+        run_id: str,
+        *,
+        status: str,
+        claim_token: Optional[str] = None,
+        loss_severity: Optional[str] = None,
+        loss_reasons: Optional[List[str]] = None,
+        deliveries: Optional[List[Dict[str, Any]]] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+        released_by: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Close (or re-close, on a release) an auto-export run (MFX-39.4).
+
+        Args:
+            run_id: The run.
+            status: Its terminal status — or ``pending`` to hand a run back to the queue.
+            claim_token: When given, the run must still be held by this claim.
+            loss_severity: The measured loss (kept when ``None``).
+            loss_reasons: Why (kept when ``None``).
+            deliveries: Every delivery's outcome (kept when ``None``).
+            error_code: Set when it failed.
+            error_message: Set when it failed.
+            released_by: Who delivered a halted run anyway.
+
+        Returns:
+            The updated run, or ``None`` when no run matched.
+        """
+        if not is_uuid_string(str(run_id or "")):
+            return None
+        pending = status == "pending"
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.export_auto_runs r SET
+                status = %s,
+                loss_severity = COALESCE(%s, r.loss_severity),
+                loss_reasons = COALESCE(%s, r.loss_reasons),
+                deliveries = COALESCE(%s, r.deliveries),
+                error_code = %s,
+                error_message = %s,
+                released_by = COALESCE(%s::uuid, r.released_by),
+                released_at = CASE WHEN %s::uuid IS NULL THEN r.released_at ELSE CURRENT_TIMESTAMP END,
+                claim_token = CASE WHEN %s THEN NULL ELSE r.claim_token END,
+                claimed_at = CASE WHEN %s THEN NULL ELSE r.claimed_at END,
+                finished_at = CASE WHEN %s THEN NULL ELSE CURRENT_TIMESTAMP END
+            WHERE r.id = %s::uuid AND (%s::uuid IS NULL OR r.claim_token = %s::uuid)
+            RETURNING {self._EXPORT_AUTO_RUN_COLUMNS}
+            """,
+            (
+                status, loss_severity, Json(loss_reasons) if loss_reasons is not None else None,
+                Json(deliveries) if deliveries is not None else None, error_code, error_message,
+                released_by if is_uuid_string(str(released_by or "")) else None,
+                released_by if is_uuid_string(str(released_by or "")) else None,
+                pending, pending, pending, run_id, claim_token, claim_token,
+            ),
+        )
+        return dict(rows[0]) if rows else None
+
+    def reap_stale_export_auto_runs(self, lease_seconds: int) -> List[Dict[str, Any]]:
+        """Fail runs whose worker outlived its lease — their export job lived on a lost instance (MFX-39.4).
+
+        Returns:
+            The runs failed, as rows.
+        """
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.export_auto_runs r SET
+                status = 'failed', error_code = 'export-auto-lost',
+                error_message = 'The auto-export stopped before it finished (the server restarted). Publish '
+                                'again, or run the preset by hand.',
+                finished_at = CURRENT_TIMESTAMP
+            WHERE r.status = 'running' AND r.claimed_at < CURRENT_TIMESTAMP - make_interval(secs => %s)
+            RETURNING {self._EXPORT_AUTO_RUN_COLUMNS}
+            """,
+            (max(60, int(lease_seconds)),),
+        )
+        return [dict(row) for row in rows or []]
+
+    def list_export_auto_runs(
+        self,
+        tenant_id: str,
+        *,
+        project_id: Optional[str] = None,
+        subscription_id: Optional[str] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """Auto-export runs, newest first, optionally of one project or subscription (MFX-39.4)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        for value in (project_id, subscription_id):
+            if value is not None and not is_uuid_string(str(value)):
+                return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_AUTO_RUN_COLUMNS}, p.name AS project_name
+            FROM apiome.export_auto_runs r JOIN apiome.projects p ON p.id = r.project_id
+            WHERE r.tenant_id = %s::uuid
+              AND (%s::uuid IS NULL OR r.project_id = %s::uuid)
+              AND (%s::uuid IS NULL OR r.subscription_id = %s::uuid)
+            ORDER BY r.created_at DESC, r.id DESC
+            LIMIT %s
+            """,
+            (tenant_id, project_id, project_id, subscription_id, subscription_id, max(1, int(limit))),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_export_auto_run(self, tenant_id: str, run_id: str) -> Optional[Dict[str, Any]]:
+        """One auto-export run of the tenant (MFX-39.4), with ``tenant_slug`` and ``project_name``."""
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(run_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_AUTO_RUN_COLUMNS}, t.slug AS tenant_slug, p.name AS project_name
+            FROM apiome.export_auto_runs r
+            JOIN apiome.tenants t ON t.id = r.tenant_id
+            JOIN apiome.projects p ON p.id = r.project_id
+            WHERE r.tenant_id = %s::uuid AND r.id = %s::uuid
+            """,
+            (tenant_id, run_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def notify_export_auto_run(self, tenant_id: str, drafts: List[Any]) -> int:
+        """Write the inbox rows a halted or failed auto-export sends (MFX-39.4).
+
+        Args:
+            tenant_id: The run's tenant.
+            drafts: :class:`app.notification_fanout.NotificationDraft` rows.
+
+        Returns:
+            How many rows were written.
+        """
+        if not drafts or not is_uuid_string(str(tenant_id or "")):
+            return 0
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                written = self._insert_notifications(cursor, tenant_id=tenant_id, notify=lambda _produced: drafts)
+            conn.commit()
+            return int(written or 0)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 

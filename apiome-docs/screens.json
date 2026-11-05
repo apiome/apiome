@@ -1585,6 +1585,18 @@
       ]
     },
     {
+      "id": "export-studio-auto-export",
+      "route": "/ade/dashboard/export/studio?tab=presets",
+      "waitFor": "#a11y-mount > *",
+      "mask": [
+        "time"
+      ],
+      "data": "fixture:hive-export-studio/auto-export.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/presets"
+      ]
+    },
+    {
       "id": "export-studio-failure",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

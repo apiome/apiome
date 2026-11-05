@@ -148,6 +148,7 @@ from .export_webhook_delivery_routes import router as export_webhook_delivery_ro
 from .export_object_storage_delivery_routes import router as export_object_storage_delivery_router
 from .export_delivery_profile_routes import router as export_delivery_profile_router
 from .export_preset_routes import router as export_preset_router
+from .export_auto_routes import router as export_auto_router
 from .sdk_kit_routes import router as sdk_kit_router
 from .sdk_publish_routes import router as sdk_publish_router
 from .sdk_publish_routes import tenant_router as sdk_publish_tenant_router
@@ -209,7 +210,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.518.0",
+    version="1.519.0",
 )
 
 
@@ -389,6 +390,7 @@ app.include_router(export_webhook_delivery_router)
 app.include_router(export_object_storage_delivery_router)
 app.include_router(export_delivery_profile_router)
 app.include_router(export_preset_router)
+app.include_router(export_auto_router)
 # sdk_regen_router shares the `/v1/projects` prefix for the same reason and is registered after it
 # too, so `/{tenant}/by-slug/{project_slug}` still wins for a project slugged `sdk-regen-runs`,
 # `sdk-regen-jobs` or `sdk-regen-subscriptions` (SDK-4.3, #4497).
@@ -633,6 +635,7 @@ _async_job_retention_task: asyncio.Task | None = None
 _repository_webhook_secret_task: asyncio.Task | None = None
 _repository_webhook_ip_range_task: asyncio.Task | None = None
 _sdk_regen_task: asyncio.Task | None = None
+_export_auto_task: asyncio.Task | None = None
 
 
 @app.on_event("startup")
@@ -1150,6 +1153,29 @@ async def startup_event():
                 log.exception("repository webhook IP range refresh sweep")
             await asyncio.sleep(3600)
 
+    async def _export_auto_sweep() -> None:
+        """Run the auto-exports version publishes queue (MFX-39.4, #4336).
+
+        Ticks on ``APIOME_EXPORT_AUTO_INTERVAL`` (default 30s). Unlike the threaded sweeps it runs on the
+        event loop: each run schedules an export job on this instance's export engine and awaits it, then
+        halts or delivers. Database calls go through ``asyncio.to_thread``. The claim is ``FOR UPDATE SKIP
+        LOCKED``, so replicas share the queue. ``APIOME_EXPORT_AUTO_ENABLED=false`` halts it.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.export_auto_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+                from .export_auto_worker import process_auto_export_sweep
+
+                await process_auto_export_sweep(db)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("export auto sweep")
+
     async def _sdk_regen_sweep() -> None:
         """Regenerate and deliver subscribed SDKs after each publish (SDK-4.3, #4497).
 
@@ -1223,6 +1249,8 @@ async def startup_event():
     )
     global _sdk_regen_task
     _sdk_regen_task = asyncio.create_task(_sdk_regen_sweep())
+    global _export_auto_task
+    _export_auto_task = asyncio.create_task(_export_auto_sweep())
 
 
 @app.on_event("shutdown")
@@ -1356,6 +1384,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _sdk_regen_task = None
+    global _export_auto_task
+    if _export_auto_task is not None:
+        _export_auto_task.cancel()
+        try:
+            await _export_auto_task
+        except asyncio.CancelledError:
+            pass
+        _export_auto_task = None
     db.close()
 
 

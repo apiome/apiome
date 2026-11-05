@@ -15,6 +15,7 @@ import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { fetchMyPermissions, type MyPermissions } from '@/app/ade/dashboard/style-guides/api';
 
 import { fetchDeliveryProfiles } from '../delivery/deliveryProfilesApi';
+import { AutoExportPanel } from './AutoExportPanel';
 import type { DeliveryProfile } from '../delivery/deliveryProfilesModel';
 import {
   ExportPresetsError,
@@ -62,6 +63,8 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // MFX-39.4: the preset whose auto-export-on-publish panel is open (instead of the edit form).
+  const [autoPreset, setAutoPreset] = useState<ExportPreset | null>(null);
 
   const canEdit = permissions
     ? permissions.is_admin === true ||
@@ -94,6 +97,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
   }, [reload]);
 
   const startEdit = (preset: ExportPreset) => {
+    setAutoPreset(null);
     setEditing(preset);
     setDraft(draftFromPreset(preset));
     setProblems([]);
@@ -185,7 +189,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
               <ul className="xdlv-profiles">
                 {presets.map((preset) => (
                   <li key={preset.id} className="xdlv-profile" data-testid="xprs-preset"
-                    data-selected={editing?.id === preset.id}>
+                    data-selected={editing?.id === preset.id || autoPreset?.id === preset.id}>
                     <div className="xdlv-profile__head">
                       <span className="xdlv-profile__name">{preset.name}</span>
                       <span className="xdlv-profile__channel">
@@ -200,8 +204,12 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                     <p className="xdlv-quiet">
                       CLI: <code className="mono">apiome export --preset {preset.name} ARTIFACT --out PATH</code>
                     </p>
+                    <div className="xdlv-profile__actions">
+                      <Button size="sm" variant="ghost" onClick={() => { setEditing(null); setDraft(null); setAutoPreset(preset); }}>
+                        Auto-export
+                      </Button>
                     {canEdit ? (
-                      <div className="xdlv-profile__actions">
+                      <>
                         <Button size="sm" variant="ghost" onClick={() => startEdit(preset)}>
                           Edit
                         </Button>
@@ -219,13 +227,16 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
                             Delete
                           </Button>
                         )}
-                      </div>
+                      </>
                     ) : null}
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
           </section>
+
+          {autoPreset ? <AutoExportPanel key={autoPreset.id} preset={autoPreset} canEdit={canEdit} /> : null}
 
           {editing && draft ? (
             <section className="xdlv-panel" aria-label={`Edit ${editing.name}`}>

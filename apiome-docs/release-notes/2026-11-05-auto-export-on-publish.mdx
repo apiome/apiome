@@ -1,0 +1,21 @@
+---
+slug: auto-export-on-publish
+title: Auto-export on every publish
+description: "Publish once; the export and its delivery follow, unless it loses too much."
+authors: [apiome]
+---
+
+Subscribe an export preset to a project and every publish runs the preset's export on the new version and
+delivers it — to a repository, a webhook or a bucket. See
+[Export automatically on every publish](/ship/auto-export-on-publish).
+
+{/* truncate */}
+
+- **Kept current:** downstream copies follow every publish, with no one re-running the export.
+- **Guarded:** delivery halts when the export's loss reaches critical (or, if you choose, any loss) — the
+  fidelity advisory is now a gate. The publisher and the subscriber are notified; a pre-approved loss is
+  delivered anyway and recorded.
+- **Released by a person:** a halted export can be delivered with **Release**, or fixed and republished.
+- **Audited:** every run lists its export, its loss and why, and each delivery's outcome.
+- **Everywhere:** **Auto-export** on Export studio's **Presets** tab, `apiome export auto`, and
+  `/v1/export/{tenant}/auto-exports`.

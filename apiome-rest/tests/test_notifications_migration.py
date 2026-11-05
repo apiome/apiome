@@ -80,17 +80,22 @@ def test_migration_adds_no_rbac_resource_no_enum_type_and_no_preferences():
 
 def test_the_type_vocabulary_matches_the_rest_models():
     """V263 created the five collaboration types; V286 (CDG-2.3) swapped the CHECK to add the seven
-    owner types. Together they are exactly the vocabulary the API knows."""
-    from app.notifications import NOTIFICATION_TYPES, OWNER_NOTIFICATION_TYPES
+    owner types, and V359 (MFX-39.4) `export_auto_halted`. Together they are exactly the vocabulary the
+    API knows."""
+    from app.notifications import NOTIFICATION_TYPES, OWNER_NOTIFICATION_TYPES, TYPE_EXPORT_AUTO_HALTED
 
     statements = _statements()
     check = statements[statements.index("CHECK (type IN (") : statements.index("payload JSONB")]
     original = {fragment.split("'")[0] for fragment in check.split("'")[1::2]}
-    assert original == set(NOTIFICATION_TYPES) - set(OWNER_NOTIFICATION_TYPES)
+    assert original == set(NOTIFICATION_TYPES) - set(OWNER_NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED}
 
-    swap = (_REPO_ROOT / "apiome-db/scripts/V286__owner_routing_cdg_2_3.sql").read_text()
-    widened = swap[swap.index("CHECK (type IN (") : swap.index("COMMENT ON COLUMN notifications.type")]
-    assert {fragment for fragment in widened.split("'")[1::2]} == set(NOTIFICATION_TYPES)
+    def widened(script: str) -> set:
+        text = (_REPO_ROOT / f"apiome-db/scripts/{script}").read_text()
+        check = text[text.index("CHECK (type IN (") : text.index("COMMENT ON COLUMN notifications.type")]
+        return {fragment for fragment in check.split("'")[1::2]}
+
+    assert widened("V286__owner_routing_cdg_2_3.sql") == set(NOTIFICATION_TYPES) - {TYPE_EXPORT_AUTO_HALTED}
+    assert widened("V359__export_auto_on_publish_4336.sql") == set(NOTIFICATION_TYPES)
 
 
 def test_the_retention_cap_matches_the_constant_the_api_advertises():

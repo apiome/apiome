@@ -5,6 +5,35 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.655.0] - 2026-11-05
+
+### Added
+- **Auto-export on version publish (MFX-39.4, #4336).**
+  - **Subscriptions:** `POST` / `GET /v1/export/{tenant_slug}/auto-exports` and `PATCH` / `DELETE …/{subscription_id}`
+    run an export preset (MFX-39.3) on every publish of a project: `projectId`, `preset` (id or name), `haltAt`
+    (`critical` default, or `warn`), `approveLoss` (pre-approval) and `active`. Subscribing, switching on and
+    pre-approving need `projects:edit` + `versions:publish`; switching off and removing `projects:edit`; reading
+    `projects:view`. Audited as `export.auto_export.subscription.*`.
+  - **On publish:** `publish_version` queues one run per active subscription after its response
+    (`BackgroundTasks`, `enqueue_auto_export_on_publish`); a queueing error is logged and never fails the publish.
+    A new sweep (`app/export_auto_worker.py`, ticked by `main.py`) claims runs (`FOR UPDATE SKIP LOCKED`), applies
+    the preset to the published revision with `confirm`, runs the export job, and measures its loss (MFX-2.4 made a
+    gate): `critical` for a severe or near-empty conversion, a types-only result or a critical construct; `warn`
+    for any other loss. At or past `haltAt` without `approveLoss` the run is **halted** — nothing delivered, the
+    publisher and the subscriber get an `export_auto_halted` inbox notification, audited as
+    `export.auto_export.halted`; otherwise it is delivered through the preset's delivery profile as the publisher
+    (`export.auto_export.completed`, with every delivery's outcome). Failed jobs, stale presets and lost runs
+    (`APIOME_EXPORT_AUTO_LEASE_SECONDS`) fail the run and notify; full export slots re-queue it.
+  - **Runs:** `GET /v1/export/{tenant_slug}/auto-export-runs` (`projectId`, `subscriptionId`, `limit`) lists what each
+    publish did — status, export job, loss and reasons, deliveries; `POST …/auto-export-runs/{run_id}/release`
+    (`versions:publish`) delivers a halted run anyway (`export.auto_export.released`).
+  - Settings: `APIOME_EXPORT_AUTO_ENABLED`, `APIOME_EXPORT_AUTO_INTERVAL`, `APIOME_EXPORT_AUTO_BATCH_SIZE`,
+    `APIOME_EXPORT_AUTO_LEASE_SECONDS`.
+  - `app/export_auto.py` (rules), `app/export_auto_worker.py`, `app/export_auto_routes.py`; tables
+    `export_auto_subscriptions` and `export_auto_runs`, and the `export_auto_halted` inbox type (V359).
+  - OpenAPI: the auto-export paths and schemas merged; the notifications path and `NotificationRecord` gain
+    `export_auto_halted`.
+
 ## [1.654.0] - 2026-11-05
 
 ### Added

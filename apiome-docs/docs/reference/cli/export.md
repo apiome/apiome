@@ -18,7 +18,7 @@ Export a version to a target format via the emitter registry. Registered targets
 apiome export [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`asyncapi`](#export-asyncapi), [`avro`](#export-avro), [`deliver`](#export-deliver), [`deliveries`](#export-deliveries), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`presets`](#export-presets), [`profiles`](#export-profiles), [`targets`](#export-targets).
+Subcommands: [`asyncapi`](#export-asyncapi), [`auto`](#export-auto), [`avro`](#export-avro), [`deliver`](#export-deliver), [`deliveries`](#export-deliveries), [`evidence`](#export-evidence), [`graphql`](#export-graphql), [`grpc`](#export-grpc), [`openapi`](#export-openapi), [`preflight`](#export-preflight), [`presets`](#export-presets), [`profiles`](#export-profiles), [`targets`](#export-targets).
 
 **Options**
 
@@ -47,6 +47,125 @@ apiome export asyncapi [OPTIONS]
 | `--force` | flag |  |  | Write and exit 0 even when the export loses fidelity (lossy/types-only). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+
+## apiome export auto {#export-auto}
+
+Run export presets on every publish of a project (auto-export), and see what each publish did.
+
+```text
+apiome export auto [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`add`](#export-auto-add), [`list`](#export-auto-list), [`release`](#export-auto-release), [`remove`](#export-auto-remove), [`runs`](#export-auto-runs), [`update`](#export-auto-update).
+
+## apiome export auto add {#export-auto-add}
+
+Run an export preset on every publish of a project.
+
+```text
+apiome export auto add [OPTIONS] PROJECT
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PROJECT` | text | yes | The project (id or slug). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--preset` | text |  | yes | The export preset (name or id). |
+| `--halt-at` | text | `critical` |  | Halt auto-delivery when the export's loss reaches this severity: critical (default: a severe or near-empty conversion, types-only, or a critical construct) or warn (any loss). |
+| `--approve-loss` | flag |  |  | Pre-approve the loss: deliver even past --halt-at. |
+| `--inactive` | flag |  |  | Add it switched off. |
+
+## apiome export auto list {#export-auto-list}
+
+List the auto-export subscriptions (presets run on publish).
+
+```text
+apiome export auto list [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project` | text |  |  | Only this project (id or slug). |
+| `--preset` | text |  |  | Only this preset (name or id). |
+
+## apiome export auto release {#export-auto-release}
+
+Deliver a halted auto-export anyway (needs versions:publish). Exits 1 if a delivery failed.
+
+```text
+apiome export auto release [OPTIONS] RUN_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `RUN_ID` | text | yes | The halted run's id. |
+
+## apiome export auto remove {#export-auto-remove}
+
+Stop running a preset on publish. Past runs keep their record.
+
+```text
+apiome export auto remove [OPTIONS] SUBSCRIPTION_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SUBSCRIPTION_ID` | text | yes | The subscription id. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--yes`, `-y` | flag |  |  | Skip the confirmation prompt. |
+
+## apiome export auto runs {#export-auto-runs}
+
+List what each publish's auto-exports did: delivered, halted (and why) or failed.
+
+```text
+apiome export auto runs [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project` | text |  |  | Only this project (id or slug). |
+| `--limit` | integer range | `50` |  | How many runs, newest first. |
+
+## apiome export auto update {#export-auto-update}
+
+Change a subscription's --halt-at, its loss pre-approval, or switch it on or off.
+
+```text
+apiome export auto update [OPTIONS] SUBSCRIPTION_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `SUBSCRIPTION_ID` | text | yes | The subscription id (apiome export auto list). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--halt-at` | text |  |  | Halt auto-delivery when the export's loss reaches this severity: critical (default: a severe or near-empty conversion, types-only, or a critical construct) or warn (any loss). |
+| `--approve-loss` / `--no-approve-loss` | flag | `--no-approve-loss` |  | Pre-approve the loss, or stop pre-approving it. |
+| `--on` / `--off` | flag | `--off` |  | Switch it on or off. |
 
 ## apiome export avro {#export-avro}
 
