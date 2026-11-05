@@ -973,6 +973,12 @@ export function ExportStudio({
    * the node. The drawer's remediation navigates back to Target/Options, which resets the
    * verify, the acknowledgement, and any generated artifact.
    */
+  // MFX-45.2: the fidelity overlay paints this report onto the mapping graph — the completed job's
+  // own report when it carries one (the artifact under review), else the Verify step's prediction.
+  const overlayReport =
+    (jobStatus?.state === 'completed' ? jobStatus.result?.fidelity?.report : null) ??
+    displayVerifyResult?.fidelity?.report ??
+    null;
   const mappingGraph = selected ? (
     <ExportMappingGraphPanel
       page={manifestPage}
@@ -986,6 +992,7 @@ export function ExportStudio({
       onSelectEntity={selectEntity}
       onClearSelection={clearEntitySelection}
       showEvidence={evidenceSurface === 'mapping'}
+      report={overlayReport}
       onChangeTarget={() => setStep('target')}
       onChangeOptions={() => setStep('options')}
     />

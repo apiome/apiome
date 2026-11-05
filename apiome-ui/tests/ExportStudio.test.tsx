@@ -1260,6 +1260,27 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(treeRow).toHaveAttribute('aria-selected', 'true');
     expect(within(graph).getByTestId('projection-detail')).toHaveTextContent('Timestamp');
   });
+
+  it('paints the fidelity report onto the mapping graph (MFX-45.2)', async () => {
+    await advanceToVerify(mockFetch({ bundle: true }), 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+    await screen.findByTestId('bundle-explorer');
+
+    const graph = await screen.findByTestId('export-mapping-graph');
+    // The legend is the report's own counts.
+    const controls = await within(graph).findByTestId('fidelity-overlay-controls');
+    expect(within(controls).getByTestId('fidelity-overlay-count-drop')).toHaveTextContent('1');
+    expect(within(controls).getByTestId('fidelity-overlay-count-ok')).toHaveTextContent('0');
+    // The report's one finding names a construct the manifest does not walk — stated, not lost.
+    expect(within(graph).getByTestId('fidelity-overlay-reconciliation')).toHaveTextContent(
+      '1 finding, the counts of the fidelity report. 1 is on constructs the graph does not draw (yet)',
+    );
+    fireEvent.click(within(graph).getByTestId('fidelity-overlay-view-treemap'));
+    expect(within(graph).getByTestId('fidelity-treemap-tile-User.email')).toHaveAttribute('data-kind', 'drop');
+  });
 });
 
 describe('ExportStudio — re-verify on change + result caching (MFX-42.6)', () => {

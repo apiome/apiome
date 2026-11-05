@@ -33447,6 +33447,168 @@ tr:focus-within .pub-url__glyph {
   color: var(--fg-muted);
 }
 
+/* ---- The fidelity overlay (MFX-45.2) -------------------------------------- */
+/* The report's loss kinds painted onto the mapping graph. Each mark carries the
+   kind's glyph and word as well as its hue, so colour is never the only channel. */
+.xstd-fov {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.xstd-fov__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xstd-fov__title {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.xstd-fov__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.xstd-fov__views {
+  margin-inline-start: auto;
+}
+
+/* A kind chip that is also its filter toggle: the report-row palette when on,
+   struck through and muted when off (the pressed state is also aria-pressed). */
+.xstd-fov__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.0625rem var(--space-2);
+  border-radius: var(--r-full);
+  background: var(--neutral-soft);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  color: var(--neutral-fg);
+  outline-offset: 2px;
+}
+
+.xstd-fov__filter[data-tone='danger'] {
+  background: var(--danger-soft);
+  color: var(--danger-fg);
+}
+
+.xstd-fov__filter[data-tone='warn'] {
+  background: var(--warn-soft);
+  color: var(--warn-fg);
+}
+
+.xstd-fov__filter[data-tone='accent'] {
+  background: var(--accent-soft);
+  color: var(--accent-fg);
+}
+
+.xstd-fov__filter[data-tone='ok'] {
+  background: var(--ok-soft);
+  color: var(--ok-fg);
+}
+
+.xstd-fov__filter[aria-pressed='false'] {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--border);
+  color: var(--fg-muted);
+  text-decoration: line-through;
+}
+
+/* The SVG marks: a node's kind pill and the treemap's tiles. Each -soft fill
+   states its own -fg ink, which the mark's text takes through currentColor. */
+.xstd-fov__mark {
+  fill: var(--bg-subtle);
+  stroke: var(--fg-subtle);
+}
+
+.xstd-fov__mark[data-tone='danger'] {
+  fill: var(--danger-soft);
+  stroke: var(--danger);
+  color: var(--danger-fg);
+}
+
+.xstd-fov__mark[data-tone='warn'] {
+  fill: var(--warn-soft);
+  stroke: var(--warn);
+  color: var(--warn-fg);
+}
+
+.xstd-fov__mark[data-tone='accent'] {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  color: var(--accent-fg);
+}
+
+.xstd-fov__mark[data-tone='ok'] {
+  fill: var(--ok-soft);
+  stroke: var(--ok);
+  color: var(--ok-fg);
+}
+
+.xstd-fov__mark[data-selected='true'] {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.xstd-fov__mark-text {
+  fill: var(--fg);
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* Filtered out by kind: still in place (the layout never jumps), but faded. */
+.xstd-fov-dimmed {
+  opacity: 0.25;
+}
+
+.xstd-fov__group {
+  fill: var(--bg-subtle);
+  stroke: var(--border);
+}
+
+.xstd-fov__heading {
+  fill: var(--fg-muted);
+  font-weight: 600;
+}
+
+.xstd-fov__tile {
+  stroke-width: 1;
+}
+
+[role='button']:focus-visible > .xstd-fov__tile {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.xstd-fov__detail {
+  min-block-size: 2.5rem;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.xstd-fov__detail-title {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.xstd-fov__detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-start: var(--space-1);
+}
+
 /* ---- The projection graph SVG -------------------------------------------- */
 /* The nodes and edges of both graphs. `fill`/`stroke` are set from an
    attribute here rather than a class in the component: the reason the header
