@@ -267,7 +267,7 @@ export function RepositorySettingsTab({
                   {inherits[setting] ? (
                     <span />
                   ) : (
-                    <Button
+                    <Button title={savingRefreshSettings ? 'Wait for the save to finish' : !onUseWorkspaceDefault ? 'You can’t change refresh settings here' : undefined}
                       type="button"
                       variant="ghost"
                       size="sm"

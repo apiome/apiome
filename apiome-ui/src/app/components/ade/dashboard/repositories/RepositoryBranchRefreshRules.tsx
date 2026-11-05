@@ -275,7 +275,7 @@ export function RepositoryBranchRefreshRules({ repositoryId }: { repositoryId: s
               <Plus aria-hidden />
               Add rule
             </Button>
-            <Button type="button" disabled={!dirty} onClick={() => void save()} data-testid="branch-refresh-save">
+            <Button title={!dirty ? 'Change a rule first' : undefined} type="button" disabled={!dirty} onClick={() => void save()} data-testid="branch-refresh-save">
               Save rules
             </Button>
           </div>

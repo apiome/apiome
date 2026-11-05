@@ -75,7 +75,7 @@ export function ExportPresetPicker({ onApply, notice, manageHref }: ExportPreset
             </option>
           ))}
         </select>
-        <Button size="sm" variant="outline" disabled={!preset} onClick={() => preset && onApply(preset)}>
+        <Button title={!preset ? 'Choose a preset first' : undefined} size="sm" variant="outline" disabled={!preset} onClick={() => preset && onApply(preset)}>
           Apply
         </Button>
       </div>
@@ -184,10 +184,10 @@ export function SavePresetForm({ targets, deliveryProfileIds, onSaved }: SavePre
             </div>
           ) : null}
           <div className="xdlv-form__actions">
-            <Button size="sm" variant="outline" disabled={saving} onClick={() => setOpen(false)}>
+            <Button title={saving ? 'Wait for the save to finish' : undefined} size="sm" variant="outline" disabled={saving} onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button size="sm" disabled={saving} onClick={() => void save()} data-testid="xprs-save-preset">
+            <Button title={saving ? 'Saving the preset' : undefined} size="sm" disabled={saving} onClick={() => void save()} data-testid="xprs-save-preset">
               Save preset
             </Button>
           </div>

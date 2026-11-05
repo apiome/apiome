@@ -251,10 +251,10 @@ export function DeliveryProfileForm({
       ) : null}
 
       <div className="xdlv-form__actions">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
+        <Button title={saving ? 'Wait for the save to finish' : undefined} type="button" variant="outline" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button type="submit" disabled={saving} data-testid="xdlv-save">
+        <Button title={saving ? 'Saving the delivery profile' : undefined} type="submit" disabled={saving} data-testid="xdlv-save">
           {creating ? 'Create profile' : 'Save changes'}
         </Button>
       </div>
