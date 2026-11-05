@@ -61,10 +61,10 @@ describe('applying a preset', () => {
 
 describe('saving a preset', () => {
   it('sends only what is set', () => {
-    expect(presetBody(' nightly ', '', [{ target: 'openapi', options: null }, { target: 'protobuf', options: { a: 1 } }], null))
+    expect(presetBody(' nightly ', '', [{ target: 'openapi', options: null }, { target: 'protobuf', options: { a: 1 } }], []))
       .toEqual({ name: 'nightly', targets: [{ target: 'openapi' }, { target: 'protobuf', options: { a: 1 } }] });
-    expect(presetBody('n', ' Nightly ', [{ target: 'openapi', options: {} }], 'p1'))
-      .toEqual({ name: 'n', description: 'Nightly', targets: [{ target: 'openapi' }], deliveryProfileId: 'p1' });
+    expect(presetBody('n', ' Nightly ', [{ target: 'openapi', options: {} }], ['p1']))
+      .toEqual({ name: 'n', description: 'Nightly', targets: [{ target: 'openapi' }], deliveryProfileIds: ['p1'] });
   });
 
   it('summarises targets with their options', () => {
@@ -77,16 +77,17 @@ describe('the Presets tab form', () => {
   it('round-trips a preset into the PATCH body', () => {
     const draft = draftFromPreset(preset());
     expect(draft.targets[0].optionsText).toContain('"openapi_version": "3.0"');
-    expect(updateFromDraft({ ...draft, deliveryProfileId: '' })).toEqual({
+    expect(draft.deliveryProfileIds).toEqual(['p1']);
+    expect(updateFromDraft({ ...draft, deliveryProfileIds: [] })).toEqual({
       problems: [],
       body: { name: 'nightly-sync', description: '', targets: [{ target: 'openapi-3.1', options: { openapi_version: '3.0' } }],
-        deliveryProfileId: null },
+        deliveryProfileIds: [] },
     });
   });
 
   it('lists every problem', () => {
     const { body, problems } = updateFromDraft({
-      name: ' ', description: '', deliveryProfileId: '',
+      name: ' ', description: '', deliveryProfileIds: [],
       targets: [{ target: '', optionsText: '{}' }, { target: 'openapi', optionsText: '[1]' }, { target: 'x', optionsText: '{' }],
     });
     expect(body).toBeUndefined();
@@ -94,7 +95,7 @@ describe('the Presets tab form', () => {
       'Name the preset.', 'Target 1 needs a format.', 'The options of openapi must be a JSON object.',
       'The options of x must be a JSON object.',
     ]);
-    expect(updateFromDraft({ name: 'n', description: '', deliveryProfileId: '', targets: [{ target: '', optionsText: '' }] }).problems)
+    expect(updateFromDraft({ name: 'n', description: '', deliveryProfileIds: [], targets: [{ target: '', optionsText: '' }] }).problems)
       .toEqual(['Keep at least one target.']);
   });
 });

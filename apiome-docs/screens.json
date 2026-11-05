@@ -1694,6 +1694,15 @@
       ]
     },
     {
+      "id": "export-studio-review-auto-export",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/review-auto-export.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/presets"
+      ]
+    },
+    {
       "id": "export-studio-failure",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

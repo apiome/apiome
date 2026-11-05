@@ -1,0 +1,22 @@
+---
+slug: presets-from-the-studio
+title: Presets and auto-export, straight from Export studio
+description: "Presets keep every delivery profile; Review subscribes the project to auto-export."
+authors: [apiome]
+---
+
+Export studio now feeds export presets and auto-export on publish instead of sending you elsewhere. See
+[Save an export as a preset](/ship/export-presets#run-it-on-every-publish-from-review).
+
+{/* truncate */}
+
+- **Every delivery profile:** a preset keeps up to five delivery profiles, in the order you ticked them,
+  so saving an export and applying the preset again gives you the same export.
+- **Auto-export on publish, from Review:** tick **Run _preset_ on every publish of this project** to run
+  the preset you just saved or applied on every publish. Clear it to stop. The halt rule and the runs stay
+  on the **Presets** tab.
+- **Open in Studio:** on the **Presets** tab, start an export with a preset; choose the source, and the
+  studio applies the preset on **Target**.
+- **Edit the delivery profiles:** the **Presets** tab's **Edit** ticks up to five profiles, in order.
+- **API:** presets take and return `deliveryProfileIds` (with `deliveryProfileNames`); `deliveryProfileId`
+  stays the first, for older clients.

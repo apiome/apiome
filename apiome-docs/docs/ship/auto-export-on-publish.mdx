@@ -7,7 +7,7 @@ sidebar_position: 5.296
 Repositories, registries and buckets that hold your exported specs fall behind the moment a new version
 is published. **Auto-export** keeps them current: subscribe an [export preset](./export-presets.mdx) to a
 project, and every publish of that project runs the preset's export on the new version and delivers it
-through the preset's [delivery profile](./export-delivery-profiles.mdx).
+through the preset's [delivery profiles](./export-delivery-profiles.mdx).
 
 Delivery is guarded. Before anything leaves Apiome, the export's loss is measured. When it is too high, the
 export is **halted**: nothing is delivered, and the person who published and the person who set up the
@@ -29,7 +29,7 @@ even past it**; every run records that it was pre-approved.
 
 ## Before you start
 
-- **An export preset**, with a delivery profile if the export should be delivered. A preset without one
+- **An export preset**, with delivery profiles if the export should be delivered. A preset without any
   still exports on publish, but has nothing to deliver.
 - **The `projects:edit` and `versions:publish` permissions** to subscribe, switch a subscription on or
   pre-approve loss — every publish then delivers outside Apiome. Switching one off or removing it needs
@@ -45,6 +45,10 @@ even past it**; every run records that it was pre-approved.
 
 <Screenshot id="export-studio-auto-export" alt="The Auto-export panel for nightly-sync: Orders API halts at critical loss, with one halted run (avro, a severe conversion at 12% preserved) and its Release button, one delivered run, and the form to add another project" />
 
+You can also subscribe from an export itself: on **Review**, tick **Auto-export on publish** to run the
+preset you just saved or applied (see
+[Run it on every publish from Review](./export-presets.mdx#run-it-on-every-publish-from-review)).
+
 The same panel is on each version of the project: **View spec** on a version shows an **Auto-export on
 publish** card next to **Recent exports**, listing the presets every publish of the project runs (see
 [The version's Export panel](./export-dialog.mdx#the-versions-export-panel)).
@@ -58,7 +62,7 @@ a subscription, and **Remove** stops it; past runs keep their record.
 A halted export is not delivered. The publisher and the person who set up the auto-export get a
 notification that names the preset, the version and the reason, and links to the **Presets** tab.
 
-- **Release** on the halted run delivers it anyway, through the preset's delivery profile, as you. It
+- **Release** on the halted run delivers it anyway, through every one of the preset's delivery profiles, as you. It
   works while the export's download is still kept (24 hours by default).
 - Or fix the source and publish a new version; that publish runs the preset again.
 

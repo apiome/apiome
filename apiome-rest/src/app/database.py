@@ -36737,6 +36737,16 @@ class Database:
         x.targets,
         x.delivery_profile_id::text AS delivery_profile_id,
         p.name AS delivery_profile_name,
+        COALESCE((
+            SELECT array_agg(pd.delivery_profile_id::text ORDER BY pd.position)
+            FROM apiome.export_preset_delivery_profiles pd WHERE pd.preset_id = x.id
+        ), ARRAY[]::text[]) AS delivery_profile_ids,
+        COALESCE((
+            SELECT array_agg(dp.name ORDER BY pd.position)
+            FROM apiome.export_preset_delivery_profiles pd
+            JOIN apiome.export_delivery_profiles dp ON dp.id = pd.delivery_profile_id
+            WHERE pd.preset_id = x.id
+        ), ARRAY[]::text[]) AS delivery_profile_names,
         x.created_at,
         x.updated_at,
         x.created_by::text AS created_by,
@@ -36765,6 +36775,7 @@ class Database:
         targets: List[Dict[str, Any]],
         delivery_profile_id: Optional[str] = None,
         actor_id: Optional[str] = None,
+        delivery_profile_ids: Optional[List[str]] = None,
     ) -> Optional[Dict[str, Any]]:
         """Store one export preset (MFX-39.3).
 
@@ -36773,11 +36784,15 @@ class Database:
             name: Unique within the tenant.
             description: Free text, or ``None``.
             targets: The validated ``[{target, options}]`` list.
-            delivery_profile_id: The tenant's delivery profile the export is delivered with, or ``None``.
+            delivery_profile_id: The tenant's delivery profile the export is delivered with, or ``None``
+                (used when ``delivery_profile_ids`` is not given).
             actor_id: Who stored it.
+            delivery_profile_ids: Every delivery profile, in order (MFX-46.4); the first is also stored
+                as ``delivery_profile_id``.
 
         Returns:
-            The stored row (with ``delivery_profile_name``), or ``None`` when the tenant id is not a UUID.
+            The stored row (with ``delivery_profile_name`` and the ordered ``delivery_profile_ids`` /
+            ``delivery_profile_names``), or ``None`` when the tenant id is not a UUID.
 
         Raises:
             psycopg2.errors.UniqueViolation: When the tenant already has a preset of that name.
@@ -36785,7 +36800,7 @@ class Database:
         if not is_uuid_string(str(tenant_id or "")):
             return None
         actor = actor_id if is_uuid_string(str(actor_id or "")) else None
-        profile = delivery_profile_id if is_uuid_string(str(delivery_profile_id or "")) else None
+        profiles = _preset_profile_ids(delivery_profile_ids, delivery_profile_id)
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
@@ -36796,14 +36811,31 @@ class Database:
                     ) VALUES (%s::uuid, %s, %s, %s, %s::uuid, %s::uuid, %s::uuid)
                     RETURNING id::text AS id
                     """,
-                    (tenant_id, name, description, Json(targets), profile, actor, actor),
+                    (tenant_id, name, description, Json(targets), profiles[0] if profiles else None, actor, actor),
                 )
                 row = cursor.fetchone()
+                if row:
+                    self._write_preset_profiles(cursor, row["id"], profiles)
             conn.commit()
         except Exception as e:
             conn.rollback()
             raise e
         return self._export_preset_by_id(tenant_id, row["id"]) if row else None
+
+    @staticmethod
+    def _write_preset_profiles(cursor: Any, preset_id: str, profiles: List[str]) -> None:
+        """Replace a preset's ordered delivery profiles (MFX-46.4), inside the caller's transaction."""
+        cursor.execute(
+            "DELETE FROM apiome.export_preset_delivery_profiles WHERE preset_id = %s::uuid", (preset_id,)
+        )
+        for position, profile_id in enumerate(profiles):
+            cursor.execute(
+                """
+                INSERT INTO apiome.export_preset_delivery_profiles (preset_id, delivery_profile_id, position)
+                VALUES (%s::uuid, %s::uuid, %s)
+                """,
+                (preset_id, profile_id, position),
+            )
 
     def list_export_presets(self, tenant_id: str) -> List[Dict[str, Any]]:
         """A tenant's export presets by name (MFX-39.3)."""
@@ -36852,8 +36884,12 @@ class Database:
         targets: List[Dict[str, Any]],
         delivery_profile_id: Optional[str],
         actor_id: Optional[str] = None,
+        delivery_profile_ids: Optional[List[str]] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Replace a preset's name, description, targets and delivery profile (MFX-39.3).
+        """Replace a preset's name, description, targets and delivery profiles (MFX-39.3, MFX-46.4).
+
+        ``delivery_profile_ids`` (in order) replaces the preset's profiles; without it, ``delivery_profile_id``
+        is the only one (or none).
 
         Returns:
             The updated row, or ``None`` when the tenant has no such preset.
@@ -36863,7 +36899,8 @@ class Database:
         """
         if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(preset_id or ""))):
             return None
-        profile = delivery_profile_id if is_uuid_string(str(delivery_profile_id or "")) else None
+        profiles = _preset_profile_ids(delivery_profile_ids, delivery_profile_id)
+        profile = profiles[0] if profiles else None
         conn = self.connect()
         try:
             with conn.cursor() as cursor:
@@ -36879,6 +36916,8 @@ class Database:
                      actor_id if is_uuid_string(str(actor_id or "")) else None, tenant_id, preset_id),
                 )
                 row = cursor.fetchone()
+                if row:
+                    self._write_preset_profiles(cursor, preset_id, profiles)
             conn.commit()
         except Exception as e:
             conn.rollback()
@@ -37157,7 +37196,11 @@ class Database:
                    t.slug AS tenant_slug,
                    p.name AS project_name,
                    x.targets AS preset_targets,
-                   x.delivery_profile_id::text AS preset_delivery_profile_id
+                   x.delivery_profile_id::text AS preset_delivery_profile_id,
+                   COALESCE((
+                       SELECT array_agg(pd.delivery_profile_id::text ORDER BY pd.position)
+                       FROM apiome.export_preset_delivery_profiles pd WHERE pd.preset_id = x.id
+                   ), ARRAY[]::text[]) AS preset_delivery_profile_ids
             FROM claimed r
             JOIN apiome.tenants t ON t.id = r.tenant_id
             JOIN apiome.projects p ON p.id = r.project_id
@@ -42257,6 +42300,17 @@ class Database:
         )
         return len(rows)
 
+
+def _preset_profile_ids(profile_ids: Optional[List[str]], profile_id: Optional[str]) -> List[str]:
+    """A preset's delivery profiles (MFX-46.4): the ordered list, else the single one — UUIDs only, each
+    once, at most five (a job's limit)."""
+    given = profile_ids if profile_ids is not None else ([profile_id] if profile_id else [])
+    out: List[str] = []
+    for value in given:
+        text = str(value or "").strip()
+        if is_uuid_string(text) and text not in out:
+            out.append(text)
+    return out[:5]
 
 def _json_or_none(value: Any) -> Optional[str]:
     """``value`` as JSON text for a ``jsonb`` parameter, or ``None``."""

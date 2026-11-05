@@ -24,7 +24,7 @@ import type { ExportPreset } from '@/app/components/ade/export-studio/presets/ex
 const NIGHTLY: ExportPreset = {
   id: 'x1', name: 'nightly-sync', description: 'Every night, for the data lake',
   targets: [{ target: 'openapi', options: { openapi_version: '3.0' } }, { target: 'protobuf', options: null }],
-  deliveryProfileId: 'p1', deliveryProfileName: 'lake',
+  deliveryProfileId: 'p1', deliveryProfileName: 'lake', deliveryProfileIds: ['p1', 'p2'], deliveryProfileNames: ['lake', 'release-bucket'],
 };
 const RELEASE: ExportPreset = {
   id: 'x2', name: 'release-graphql', description: null, targets: [{ target: 'graphql', options: null }],
@@ -43,7 +43,11 @@ function mockFetch(options: { presets?: ExportPreset[]; canEdit?: boolean; refus
       return json({ success: true, data: { is_admin: false, permissions: options.canEdit === false ? ['projects:view'] : ['projects:edit'] } });
     }
     if (path.startsWith('/api/export/delivery-profiles')) {
-      return json({ success: true, data: { profiles: [{ id: 'p1', name: 'lake', channel: 'object_storage', destination: {}, credentialRef: { kind: 'storage_credential', id: 'c1' } }] } });
+      return json({ success: true, data: { profiles: [
+        { id: 'p1', name: 'lake', channel: 'object_storage', destination: {}, credentialRef: { kind: 'storage_credential', id: 'c1' } },
+        { id: 'p2', name: 'release-bucket', channel: 'object_storage', destination: {}, credentialRef: { kind: 'storage_credential', id: 'c1' } },
+        { id: 'p3', name: 'contracts-repo', channel: 'git', destination: {}, credentialRef: { kind: 'git_credential', id: 'c2' } },
+      ] } });
     }
     if (path.startsWith('/api/export/presets') && init?.method && init.method !== 'GET') {
       if (options.refuse) return json({ success: false, ...options.refuse }, 400);
@@ -68,7 +72,8 @@ describe('Presets tab', () => {
     const [nightly] = await screen.findAllByTestId('xprs-preset');
     expect(within(nightly).getByText('nightly-sync')).toBeInTheDocument();
     expect(within(nightly).getByText('openapi (openapi_version=3.0), protobuf')).toBeInTheDocument();
-    expect(within(nightly).getByText(/Delivered with lake/)).toBeInTheDocument();
+    expect(within(nightly).getByText(/Delivered with lake, release-bucket/)).toBeInTheDocument();
+    expect(within(nightly).getByTestId('xprs-open-studio')).toHaveAttribute('href', '/ade/dashboard/export/studio?preset=x1');
     expect(within(nightly).getByText('apiome export --preset nightly-sync ARTIFACT --out PATH')).toBeInTheDocument();
   });
 
@@ -79,13 +84,17 @@ describe('Presets tab', () => {
     await waitFor(() => expect(within(nightly).getByRole('button', { name: 'Edit' })).toBeInTheDocument());
     fireEvent.click(within(nightly).getByRole('button', { name: 'Edit' }));
     fireEvent.change(screen.getByLabelText('Options (JSON)', { selector: '#xprs-options-1' }), { target: { value: '{"package": "acme.v1"}' } });
-    fireEvent.change(screen.getByLabelText('Delivery profile'), { target: { value: '' } });
+    const delivery = await screen.findByTestId('xprs-delivery');
+    await within(delivery).findByRole('checkbox', { name: /^lake/ });
+    expect(within(delivery).getByText('#2')).toBeInTheDocument();
+    fireEvent.click(within(delivery).getByRole('checkbox', { name: /^lake/ }));
+    fireEvent.click(within(delivery).getByRole('checkbox', { name: /^contracts-repo/ }));
     fireEvent.click(screen.getByTestId('xprs-save'));
     await waitFor(() => expect(calls.some((c) => c.init?.method === 'PATCH')).toBe(true));
     const patch = calls.find((c) => c.init?.method === 'PATCH')!;
     expect(patch.url).toBe('/api/export/presets/x1');
     expect(JSON.parse(String(patch.init!.body))).toEqual({
-      name: 'nightly-sync', description: 'Every night, for the data lake', deliveryProfileId: null,
+      name: 'nightly-sync', description: 'Every night, for the data lake', deliveryProfileIds: ['p2', 'p3'],
       targets: [{ target: 'openapi', options: { openapi_version: '3.0' } }, { target: 'protobuf', options: { package: 'acme.v1' } }],
     });
   });
@@ -142,8 +151,10 @@ describe('Apply a preset and Save as preset', () => {
 
   it('saves the studio targets and delivery as a preset', async () => {
     mockFetch();
-    render(<SavePresetForm targets={[{ target: 'openapi', options: { openapi_version: '3.0' } }]} deliveryProfileId="p1" />);
+    const onSaved = jest.fn();
+    render(<SavePresetForm targets={[{ target: 'openapi', options: { openapi_version: '3.0' } }]} deliveryProfileIds={['p1', 'p2']} onSaved={onSaved} />);
     fireEvent.click(screen.getByRole('button', { name: 'Save as preset' }));
+    expect(screen.getByText(/and the 2 ticked delivery profiles/)).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('xprs-save-preset'));
     expect(await screen.findByText('Name the preset.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Preset name'), { target: { value: 'nightly-sync' } });
@@ -151,8 +162,9 @@ describe('Apply a preset and Save as preset', () => {
     expect(await screen.findByText('Saved preset nightly-sync.')).toBeInTheDocument();
     const post = calls.find((c) => c.init?.method === 'POST')!;
     expect(JSON.parse(String(post.init!.body))).toEqual({
-      name: 'nightly-sync', targets: [{ target: 'openapi', options: { openapi_version: '3.0' } }], deliveryProfileId: 'p1',
+      name: 'nightly-sync', targets: [{ target: 'openapi', options: { openapi_version: '3.0' } }], deliveryProfileIds: ['p1', 'p2'],
     });
+    expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ name: 'nightly-sync' }));
   });
 });
 
@@ -185,8 +197,7 @@ describe('the docs fixtures', () => {
       if (edit) {
         await waitFor(() => expect(within(nightly).getByRole('button', { name: 'Edit' })).toBeInTheDocument());
         fireEvent.click(within(nightly).getByRole('button', { name: 'Edit' }));
-        await screen.findByLabelText('Delivery profile');
-        await screen.findByRole('option', { name: 'lake' });
+        await within(await screen.findByTestId('xprs-delivery')).findByRole('checkbox', { name: /^release-bucket/ });
       }
       expect(screen.getByRole('link', { name: 'Presets' })).toHaveAttribute('aria-current', 'page');
       write(edit ? 'preset-edit' : 'presets');

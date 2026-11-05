@@ -98,7 +98,7 @@ describe('parseExportStudioUrlState', () => {
     const encoded = encodeStudioOptions({ package: 'com.example' });
     const { state, issues } = parseExportStudioUrlState(
       params(
-        `artifact=proj-1&version=rev-9&label=Pet+Store+API&target=proto&from=catalog&sourceFormat=graphql&opts=${encoded}&step=verify`,
+        `artifact=proj-1&version=rev-9&label=Pet+Store+API&target=proto&from=catalog&sourceFormat=graphql&opts=${encoded}&step=verify&preset=nightly-sync`,
       ),
     );
     expect(issues).toEqual([]);
@@ -111,6 +111,7 @@ describe('parseExportStudioUrlState', () => {
       sourceFormat: 'graphql',
       options: { package: 'com.example' },
       step: 'verify',
+      preset: 'nightly-sync',
     });
   });
 

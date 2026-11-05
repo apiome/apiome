@@ -5,6 +5,18 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.664.0] - 2026-11-05
+
+### Added
+- **Presets deliver with several profiles (MFX-46.4, #4382).** An export preset holds up to five delivery
+  profiles, in order: `POST` / `PATCH /v1/export/{tenant_slug}/presets` take `deliveryProfileIds` (it takes
+  precedence over `deliveryProfileId`; `[]` on a `PATCH` removes delivery, leaving both out keeps the list), and
+  every preset answers `deliveryProfileIds` and `deliveryProfileNames`. `deliveryProfileId` stays the first
+  profile, so older clients keep working. A job naming the preset, an auto-export on publish and the release of a
+  halted auto-export deliver with every profile. Each unknown profile is named (`deliveryProfileIds[i]: …`).
+  - Migration V361: `export_preset_delivery_profiles` (existing presets keep their one profile).
+  - OpenAPI 1.528.0.
+
 ## [1.663.0] - 2026-11-05
 
 ### Added

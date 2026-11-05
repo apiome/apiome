@@ -16,8 +16,8 @@ A preset holds:
 - **Options:** each target's options. They are checked against that target's options when the preset is
   saved, and again every time it is applied, so a preset an emitter has since outgrown is refused rather
   than guessed at.
-- **Delivery:** optionally, a [delivery profile](./export-delivery-profiles.mdx) the export is delivered
-  with as soon as it finishes.
+- **Delivery:** optionally, up to five [delivery profiles](./export-delivery-profiles.mdx), in order, that
+  the export is delivered with as soon as it finishes.
 
 The source — which item, which version — is never part of a preset. You choose it each time, or let
 every publish of a project run the preset: see [Export automatically on every publish](./auto-export-on-publish.mdx).
@@ -35,7 +35,25 @@ every publish of a project run the preset: see [Export automatically on every pu
 2. On **Review**, optionally tick a profile under **Deliver when it completes**.
 3. Click **Save as preset**, enter a **Preset name** and a **Description**, and click **Save preset**.
 
-The preset keeps the targets, the options you changed and the first ticked delivery profile.
+The preset keeps the targets, the options you changed and every ticked delivery profile, in order. Apply
+it again and you get exactly the same export.
+
+## Run it on every publish from Review
+
+Under **Save as preset** on **Review**, **Auto-export on publish** runs the preset in play on every
+publish of this project. The preset in play is the one you just saved, or the one you applied and haven't
+changed since.
+
+1. Save the export as a preset, or apply one and leave its targets, options and delivery as they are.
+2. Tick **Run _preset_ on every publish of this project**. Delivery halts at critical loss.
+3. To stop, clear the tick.
+
+<Screenshot id="export-studio-review-auto-export" alt="Review in Export studio: Save as preset with nightly-sync named and its two ticked delivery profiles, and Auto-export on publish with Run nightly-sync on every publish of this project ticked, halting at critical loss" />
+
+Change something after applying a preset, and the box asks you to save it as a preset first. To halt at
+any loss, pre-approve loss or see the runs, click **Manage on Presets** (see
+[Export automatically on every publish](./auto-export-on-publish.mdx)). A catalog item has no publishes,
+so the box isn't shown there.
 
 ## Apply a preset in Export studio
 
@@ -43,10 +61,15 @@ On the **Target** step, choose a preset under **Apply a preset** and click **App
 
 - **A one-target preset** selects that target with its options.
 - **A multi-target preset** ticks its targets under **Several targets**, each with its options.
-- **Its delivery profile** is ticked under **Deliver when it completes** on **Review**.
+- **Its delivery profiles** are ticked, in order, under **Deliver when it completes** on **Review**.
 
 A target this source can't export to is named under the picker and left out. Continue to **Verify** and
 **Generate** as usual; you can still change anything before you generate.
+
+### Open a preset in Studio
+
+On the **Presets** tab, **Open in Studio** starts a new export with the preset. Choose the source, and the
+studio applies the preset on **Target**.
 
 The quick **Export** dialog on a version or catalog item has the same **Apply a preset** picker and
 **Save as preset** button on its **Target** step (see [The Export dialog](./export-dialog.mdx#several-targets-and-presets)).
@@ -54,17 +77,18 @@ The quick **Export** dialog on a version or catalog item has the same **Apply a 
 ## Manage presets
 
 The **Presets** tab of **Export studio** lists the workspace's presets, each with its targets, its delivery
-and the CLI command that runs it.
+profiles and the CLI command that runs it.
 
-<Screenshot id="export-studio-presets" alt="The Presets tab of Export studio: nightly-sync with two targets, OpenAPI with its version option and Protocol Buffers, delivered with the lake profile, and release-graphql with one target and no delivery" />
+<Screenshot id="export-studio-presets" alt="The Presets tab of Export studio: nightly-sync with two targets, OpenAPI with its version option and Protocol Buffers, delivered with lake and release-bucket, and release-graphql with one target and no delivery; each has Open in Studio, Auto-export, Edit and Delete" />
 
 - **Edit** changes the **Name**, the **Description**, the **Targets** — each a format and its **Options
-  (JSON)**, added with **Add target** — and the **Delivery profile**. Click **Save changes**; every problem
-  is listed at once.
+  (JSON)**, added with **Add target** — and the **Delivery profiles**. Tick up to five; they deliver in the
+  order you tick them (**#1**, **#2**…), and none ticked means export only. Click **Save changes**; every
+  problem is listed at once.
 - **Delete** asks you to confirm with **Delete _name_**. Exports already started with the preset are not
   affected.
 
-<Screenshot id="export-studio-preset-edit" alt="Editing nightly-sync: its name and description, two targets with their JSON options, Add target, and the lake delivery profile" />
+<Screenshot id="export-studio-preset-edit" alt="Editing nightly-sync: its name and description, two targets with their JSON options, Add target, and the delivery profiles lake (#1) and release-bucket (#2) ticked, contracts-repo not" />
 
 Members without `projects:edit` see the presets read-only.
 
@@ -97,12 +121,12 @@ curl -X POST "$APIOME/v1/export/acme/presets" \
   -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
   -d '{"name": "nightly-sync",
        "targets": [{"target": "openapi", "options": {"openapi_version": "3.0"}}, {"target": "protobuf"}],
-       "deliveryProfileId": "<profile id>"}'
+       "deliveryProfileIds": ["<profile id>", "<another profile id>"]}'
 ```
 
 | Answer | Why |
 | --- | --- |
-| `400` | A target is unknown, an option isn't valid for its target, two targets are the same format, or the delivery profile doesn't exist. Every problem is listed in `errors`. |
+| `400` | A target is unknown, an option isn't valid for its target, two targets are the same format, or a delivery profile doesn't exist (`deliveryProfileIds[1]: …`). Every problem is listed in `errors`. |
 | `409` | Another preset in the workspace already has that name. |
 
 Apply it by naming it, by name or id, when you start a job — instead of `target`, `targets` and `options`:
@@ -113,13 +137,13 @@ curl -X POST "$APIOME/v1/export/acme/jobs" \
   -d '{"artifact": "<artifact id>", "version": "1.4.0", "preset": "nightly-sync"}'
 ```
 
-The preset's targets and options stand in for the job's, and its delivery profile goes first among
-`delivery_profiles`. Everything else — the source, `version`, `items`, `overlays`, `confirm`, `dry_run` —
+The preset's targets and options stand in for the job's, and its delivery profiles go first, in order,
+among `delivery_profiles` (at most five in all). Everything else — the source, `version`, `items`, `overlays`, `confirm`, `dry_run` —
 is the request's own; a dry run isn't delivered. An unknown preset, or one whose options no longer validate,
 is refused with `400`.
 
 `GET /v1/export/acme/presets` lists presets, `GET …/presets/{preset}` reads one by id or name,
-`PATCH …/presets/{id}` changes one (`targets` is replaced whole; `"deliveryProfileId": null` removes
-delivery) and `DELETE …/presets/{id}` removes one. Saving, changing and deleting are recorded in the audit
+`PATCH …/presets/{id}` changes one (`targets` and `deliveryProfileIds` are replaced whole;
+`"deliveryProfileIds": []` removes delivery) and `DELETE …/presets/{id}` removes one. Saving, changing and deleting are recorded in the audit
 log as `export.preset.created`, `.updated` and `.deleted`. Every field is in the
 [export presets reference](/reference/rest/export-presets).

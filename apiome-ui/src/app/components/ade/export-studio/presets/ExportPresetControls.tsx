@@ -8,7 +8,13 @@ import { Input } from '@/app/components/ui/Input';
 import { Label } from '@/app/components/ui/Label';
 
 import { ExportPresetsError, createExportPreset, fetchExportPresets } from './exportPresetsApi';
-import { presetBody, targetsSummary, type ExportPreset, type PresetTarget } from './exportPresetsModel';
+import {
+  presetBody,
+  presetProfileNames,
+  targetsSummary,
+  type ExportPreset,
+  type PresetTarget,
+} from './exportPresetsModel';
 
 /** Props for {@link ExportPresetPicker}. */
 export interface ExportPresetPickerProps {
@@ -24,7 +30,7 @@ export interface ExportPresetPickerProps {
  * **Apply a preset** on Export studio's Target step (MFX-39.3, #4335).
  *
  * Lists the workspace's presets; **Apply** selects the preset's target (with its options) — or ticks its
- * targets under **Several targets** — and ticks its delivery profile on Review. Renders nothing while the
+ * targets under **Several targets** — and ticks its delivery profiles on Review. Renders nothing while the
  * presets load, and a pointer to **Save as preset** when there are none.
  *
  * @param props See {@link ExportPresetPickerProps}.
@@ -76,7 +82,7 @@ export function ExportPresetPicker({ onApply, notice, manageHref }: ExportPreset
       {preset ? (
         <p className="xdlv-quiet">
           <span className="mono">{targetsSummary(preset.targets)}</span>
-          {preset.deliveryProfileName ? ` · delivered with ${preset.deliveryProfileName}` : ''}
+          {presetProfileNames(preset).length ? ` · delivered with ${presetProfileNames(preset).join(', ')}` : ''}
         </p>
       ) : null}
       {notice ? <p className="xdlv-quiet" role="status">{notice}</p> : null}
@@ -88,21 +94,23 @@ export function ExportPresetPicker({ onApply, notice, manageHref }: ExportPreset
 export interface SavePresetFormProps {
   /** The targets the studio would export, in order, each with its changed options. */
   targets: PresetTarget[];
-  /** The delivery profile ticked on Review (the first, when several), or null. */
-  deliveryProfileId: string | null;
+  /** The delivery profiles ticked on Review, in order (MFX-46.4: every one is saved). */
+  deliveryProfileIds: readonly string[];
+  /** Called with the stored preset once it is saved — Export studio keeps it as the preset in play. */
+  onSaved?: (preset: ExportPreset) => void;
 }
 
 /**
  * **Save as preset** on Export studio's Review step (MFX-39.3, #4335).
  *
- * Saves the current targets, their changed options and the first ticked delivery profile as a named
- * preset. The REST layer validates every option against its emitter's schema; a refusal lists each
+ * Saves the current targets, their changed options and every ticked delivery profile (in order) as a
+ * named preset. The REST layer validates every option against its emitter's schema; a refusal lists each
  * problem.
  *
  * @param props See {@link SavePresetFormProps}.
  * @returns The button, then the form once opened.
  */
-export function SavePresetForm({ targets, deliveryProfileId }: SavePresetFormProps) {
+export function SavePresetForm({ targets, deliveryProfileIds, onSaved }: SavePresetFormProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -120,8 +128,9 @@ export function SavePresetForm({ targets, deliveryProfileId }: SavePresetFormPro
     setSaving(true);
     setError(null);
     try {
-      const preset = await createExportPreset(presetBody(name, description, targets, deliveryProfileId));
+      const preset = await createExportPreset(presetBody(name, description, targets, deliveryProfileIds));
       setSaved(preset.name);
+      onSaved?.(preset);
       setOpen(false);
       setName('');
       setDescription('');
@@ -149,7 +158,8 @@ export function SavePresetForm({ targets, deliveryProfileId }: SavePresetFormPro
         <div className="xdlv-form">
           <p className="xdlv-quiet">
             Saves <span className="mono">{targetsSummary(targets)}</span>
-            {deliveryProfileId ? ' and the ticked delivery profile' : ''}.
+            {deliveryProfileIds.length === 1 ? ' and the ticked delivery profile' : ''}
+            {deliveryProfileIds.length > 1 ? ` and the ${deliveryProfileIds.length} ticked delivery profiles` : ''}.
           </p>
           <div className="xdlv-field">
             <Label htmlFor="xprs-save-name">Preset name</Label>

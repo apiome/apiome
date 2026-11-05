@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.527.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.528.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `export-presets` · 5 operations
 
@@ -161,7 +161,8 @@ A new preset: ``POST /v1/export/{tenant}/presets``.
 | `name` | string | yes | A name unique in the workspace (`nightly-sync`), up to 120 characters. |
 | `description` | string or null | no | What the preset is for. |
 | `targets` | array of `PresetTarget` | yes | The targets, in order: one is a single-target export, 2–16 a multi-target export with one directory per target. |
-| `deliveryProfileId` | string or null | no | A delivery profile (MFX-38.4) the export is delivered with as soon as it completes. |
+| `deliveryProfileId` | string or null | no | A delivery profile (MFX-38.4) the export is delivered with as soon as it completes. Ignored when `deliveryProfileIds` is sent. |
+| `deliveryProfileIds` | array of string or null | no | Up to 5 delivery profiles (MFX-46.4), in the order the export is delivered with them; takes precedence over `deliveryProfileId`. |
 
 ### `ExportPresetListResponse` {#schema-exportpresetlistresponse}
 
@@ -180,8 +181,10 @@ Attributes:
     name: Its unique name in the workspace.
     description: What it is for.
     targets: The targets, in order, each with its emit options.
-    delivery_profile_id: The delivery profile the export is delivered with, or null.
+    delivery_profile_id: The first delivery profile the export is delivered with, or null.
     delivery_profile_name: That profile's name (null when none, or the profile was deleted).
+    delivery_profile_ids: Every delivery profile, in the order the export is delivered with them (MFX-46.4).
+    delivery_profile_names: Their names, in the same order.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -191,6 +194,8 @@ Attributes:
 | `targets` | array of `PresetTarget` | no | Targets. |
 | `deliveryProfileId` | string or null | no | Delivery Profile ID. |
 | `deliveryProfileName` | string or null | no | Delivery Profile Name. |
+| `deliveryProfileIds` | array of string | no | Delivery Profile IDs. |
+| `deliveryProfileNames` | array of string | no | Delivery Profile Names. |
 | `createdAt` | string (date-time) or null | no | Created At. |
 | `updatedAt` | string (date-time) or null | no | Updated At. |
 | `createdBy` | string or null | no | Created By. |
@@ -205,7 +210,8 @@ A change to a preset: ``PATCH /v1/export/{tenant}/presets/{id}``. Omitted fields
 | `name` | string or null | no | A new name. |
 | `description` | string or null | no | A new description; `""` clears it. |
 | `targets` | array of `PresetTarget` or null | no | A new target list (replaces it). |
-| `deliveryProfileId` | string or null | no | A new delivery profile; `null` removes delivery from the preset. |
+| `deliveryProfileId` | string or null | no | A new (single) delivery profile; `null` removes delivery from the preset. Ignored when `deliveryProfileIds` is sent. |
+| `deliveryProfileIds` | array of string or null | no | A new ordered list of delivery profiles (MFX-46.4), replacing the preset's; `[]` removes delivery. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
