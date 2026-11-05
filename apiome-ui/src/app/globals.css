@@ -1171,6 +1171,15 @@ html[data-rail="collapsed"] {
   transition: grid-template-columns var(--dur-slow) var(--ease-out);
 }
 
+/* The rail paints over the page. Its menus (the workspace switcher, the user menu) and the
+   collapse handle on its edge reach out over the content column, where a positioned card
+   would otherwise cover them. The rail sits at the page-chrome layer: above every card,
+   below the notices (40) and dialogs. `main` is deliberately not isolated, so a fixed
+   overlay a page renders inline still rises above the rail. */
+.hive-shell > .rail {
+  z-index: 20;
+}
+
 /* Rail parts that answer to icon mode. Unlayered on purpose: `@layer utilities`
    loses to these, so a Tailwind `flex` on the same element cannot re-show a
    label the collapsed rail has hidden. */
