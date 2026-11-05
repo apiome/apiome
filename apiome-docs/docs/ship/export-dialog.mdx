@@ -48,15 +48,36 @@ what the badges and the report mean is on [Understand export fidelity](./export-
 **“Open in Export Studio”** at the foot of the dialog carries the source, target and options into
 the studio.
 
+## Several targets and presets
+
+On the **Target** step you can also export to several formats at once, or start from a saved
+[preset](./export-presets.mdx):
+
+- **Tick “Several targets — one archive with a folder per target”**, then tick two or more formats.
+  Each shows this source's fidelity badge and how much it preserves. **Click “Continue”**, then
+  **“Generate”**: one export job builds every format, and **“Download .zip”** saves the archive with a
+  folder per format and an outcome for each.
+- **Apply a preset:** choose one under **Apply a preset** and **click “Apply”**. A one-format preset
+  selects that card with its options; a preset with several formats ticks them under **Several
+  targets**, each with its options, and its delivery profile delivers the archive once it is built.
+  A format this source cannot export to is named under the picker.
+- **Save as preset** keeps the format (or the ticked formats) and the options you changed. Enter a
+  **Preset name** and **click “Save preset”**.
+
+<Screenshot id="export-dialog-multi-target" alt="The Export dialog's target step with the nightly-sync preset applied: Several targets ticked, OpenAPI 3.1 and gRPC / Protobuf checked with their fidelity badges, Avro greyed out, and Save as preset" />
+
 ## The version's Export panel
 
-**View spec** on a version shows its OpenAPI document and, under it, two cards:
+**View spec** on a version shows its OpenAPI document and, under it, three cards:
 
 - **Convert to any format** — the formats grouped for this version before you pick one:
   **Best-fidelity targets** and **Lossy targets**, each a chip coloured by its fidelity tier (hover
   one for how much it preserves). **Click a chip** to open the
   [Export studio](./export-studio.mdx) for this version with that format already chosen, or
-  **click “Export this version”** to open it with no format chosen.
+  **click “Export this version”** to open it with no format chosen. **Click “Export all versions…”**
+  to export **every version of the project** at once: tick one or more formats and **click
+  “Generate”**; one job builds an archive with a folder per version and format, and lists each
+  outcome before you **click “Download .zip”**.
 - **Recent exports** — the last eight exports of this version made in this browser, each with its
   format, fidelity badge and when it ran. **Click “Re-run in Studio”** to open the studio on the
   same format with the same options. Until you export, it reads *No exports of this version yet.*
@@ -64,7 +85,12 @@ the studio.
 The list is kept in your browser, so it is yours alone and does not follow you to another browser
 or device.
 
-<Screenshot id="version-export-panel" alt="A version's Export panel: best-fidelity and lossy target chips, Export this version, and recent exports with fidelity badges" />
+- **Auto-export on publish** — the [presets that run on every publish](./auto-export-on-publish.mdx)
+  of this project, each with its halt rule and its recent runs. Choose an **Export preset**, set
+  **Halt delivery at**, and **click “Run on every publish”** to add one; **“Turn off”**,
+  **“Remove”** and, on a halted run, **“Release”** work as on the Presets tab.
+
+<Screenshot id="version-export-panel" alt="A version's Export panel: best-fidelity and lossy target chips with Export all versions and Export this version, recent exports, and Auto-export on publish with nightly-sync's halted and delivered runs" />
 
 ## See what a round trip changes
 

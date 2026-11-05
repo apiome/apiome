@@ -12,6 +12,10 @@ export interface MultiTargetChecklistProps {
   selected: readonly string[];
   /** Tick or untick one target. */
   onToggle: (key: string) => void;
+  /** How many targets must be ticked to continue (default 2; the all-versions batch needs 1). */
+  minimum?: number;
+  /** The heading (default "Choose two or more targets"). */
+  heading?: string;
 }
 
 /**
@@ -19,16 +23,22 @@ export interface MultiTargetChecklistProps {
  * each with this source's fidelity badge. Two or more ticked targets continue to Verify; an
  * unavailable target cannot be ticked.
  */
-export function MultiTargetChecklist({ cards, selected, onToggle }: MultiTargetChecklistProps) {
+export function MultiTargetChecklist({
+  cards,
+  selected,
+  onToggle,
+  minimum = 2,
+  heading = 'Choose two or more targets',
+}: MultiTargetChecklistProps) {
   const full = selected.length >= MAX_EXPORT_PAIRS;
   return (
     <div className="xstd-stack xstd-stack--tight" data-testid="export-studio-multi-targets">
       <div>
-        <div className="xstd-source__name">Choose two or more targets</div>
+        <div className="xstd-source__name">{heading}</div>
         <p className="xstd-quiet" role="status">
           {selected.length === 0
             ? 'Nothing ticked yet.'
-            : `${selected.length} target${selected.length === 1 ? '' : 's'} ticked${selected.length < 2 ? ' — tick one more to continue' : ''}.`}
+            : `${selected.length} target${selected.length === 1 ? '' : 's'} ticked${selected.length < minimum ? ' — tick one more to continue' : ''}.`}
         </p>
       </div>
       <ul className="xstd-multi__list">

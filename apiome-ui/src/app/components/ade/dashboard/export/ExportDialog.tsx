@@ -35,10 +35,20 @@ import { downloadBlob, filenameFromDisposition } from './exportDownload';
 import { MissingSourceNotice, isMissingSourceCode } from './MissingSourceNotice';
 import {
   downloadMultiExportArchive,
+  multiTargetJobBody,
   pollMultiExportJob,
   singleTargetJobBody,
   submitMultiExportJob,
+  withTargetOptions,
 } from './exportBatchJob';
+import { MultiTargetChecklist } from './MultiTargetChecklist';
+import { MultiExportRun } from './MultiExportRun';
+import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
+import {
+  applyPresetToStudio,
+  type ExportPreset,
+  type PresetTarget,
+} from '../../export-studio/presets/exportPresetsModel';
 import { exportStudioHref, type ExportStudioOrigin } from './exportStudioLink';
 import type { ExportStudioStep } from './exportStudioUrlState';
 import {
@@ -181,6 +191,16 @@ export function ExportDialog({
   const [acknowledged, setAcknowledged] = useState(false);
   /** Whether a multi-file target's bundle is being exported for download (E1-4). */
   const [zipping, setZipping] = useState(false);
+  /**
+   * MFX-39.5: "Several targets" — one job, one archive with a folder per target, each with this
+   * source's fidelity badge in the checklist and its own options when a preset gave it some.
+   */
+  const [multiMode, setMultiMode] = useState(false);
+  const [multiKeys, setMultiKeys] = useState<string[]>([]);
+  const [multiOptions, setMultiOptions] = useState<Record<string, Record<string, unknown>>>({});
+  /** MFX-39.5: the delivery profile an applied preset carries, sent with the multi-target job. */
+  const [presetDelivery, setPresetDelivery] = useState<{ id: string; name: string | null } | null>(null);
+  const [presetNotice, setPresetNotice] = useState<string | null>(null);
 
   const {
     response,
@@ -244,6 +264,11 @@ export function ExportDialog({
     setEmitted(null);
     setError(null);
     setAcknowledged(false);
+    setMultiMode(false);
+    setMultiKeys([]);
+    setMultiOptions({});
+    setPresetDelivery(null);
+    setPresetNotice(null);
   }, []);
 
   const handleClose = useCallback(() => {
@@ -300,6 +325,61 @@ export function ExportDialog({
     }
     setOptionValues(defaults);
   }, []);
+
+  /** Tick or untick one target of "Several targets" (an unticked target forgets its preset options). */
+  const toggleMultiKey = useCallback((key: string) => {
+    setMultiKeys((keys) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]));
+    setMultiOptions((current) => Object.fromEntries(Object.entries(current).filter(([k]) => k !== key)));
+  }, []);
+
+  /**
+   * Apply an export preset (MFX-39.3 / 39.5): a one-target preset selects its card with its options; a
+   * multi-target one ticks its targets under "Several targets" with theirs. Its delivery profile rides
+   * with a multi-target job; a target this source cannot export to is named instead.
+   */
+  const applyPreset = useCallback(
+    (preset: ExportPreset) => {
+      const applied = applyPresetToStudio(preset, cards);
+      if (applied.single) {
+        setMultiMode(false);
+        const { card, options: presetOptions } = applied.single;
+        handleSelect(card);
+        // Only options this target's schema knows are seeded, as the Studio's restore does.
+        const known = new Set(
+          optionFieldsFromSchema(card.entry.options_schema, card.entry.default_options).map((field) => field.key),
+        );
+        const seeded = Object.fromEntries(Object.entries(presetOptions).filter(([key]) => known.has(key)));
+        setOptionValues((current) => ({ ...current, ...seeded }));
+      } else if (applied.multi) {
+        setMultiMode(true);
+        setMultiKeys(applied.multi.keys);
+        setMultiOptions(applied.multi.options);
+      }
+      setPresetDelivery(preset.deliveryProfileId ? { id: preset.deliveryProfileId, name: preset.deliveryProfileName } : null);
+      setPresetNotice(
+        applied.missing.length > 0
+          ? `Applied ${preset.name}, except ${applied.missing.join(', ')}, which this source cannot export to.`
+          : `Applied ${preset.name}.`,
+      );
+    },
+    [cards, handleSelect],
+  );
+
+  /** The multi-target job (MFX-39.1): the ticked targets with their preset options, and its delivery. */
+  const multiBody = useMemo(() => {
+    const body = withTargetOptions(multiTargetJobBody(artifact, version ?? null, multiKeys), multiOptions);
+    return presetDelivery ? { ...body, delivery_profiles: [presetDelivery.id] } : body;
+  }, [artifact, version, multiKeys, multiOptions, presetDelivery]);
+  const targetLabels = useMemo(
+    () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
+    [cards],
+  );
+
+  /** What "Save as preset" saves: the ticked targets, or the selected one with its changed options. */
+  const presetTargets = useMemo<PresetTarget[]>(() => {
+    if (multiMode) return multiKeys.map((key) => ({ target: key, options: multiOptions[key] ?? null }));
+    return selected ? [{ target: selected.key, options: changedOpts }] : [];
+  }, [multiMode, multiKeys, multiOptions, selected, changedOpts]);
 
   // CDG-5.3 push-back: open on the requested target's fidelity report once the targets load, so
   // the reader sees what the gateway format will lose before anything is exported.
@@ -513,6 +593,28 @@ export function ExportDialog({
 
         {step === 'target' && (
           <div className="space-y-4">
+            {/* MFX-39.5: apply a saved preset, or pick several targets for one job. */}
+            <ExportPresetPicker
+              onApply={applyPreset}
+              notice={presetNotice}
+              manageHref="/ade/dashboard/export/studio?tab=presets"
+            />
+            <label className="xstd-check" data-testid="export-dialog-multi-toggle">
+              <input
+                type="checkbox"
+                checked={multiMode}
+                onChange={(event) => {
+                  setMultiMode(event.target.checked);
+                  setMultiKeys(event.target.checked && selectedKey ? [selectedKey] : []);
+                  setMultiOptions({});
+                }}
+              />
+              Several targets — one archive with a folder per target
+            </label>
+            {multiMode ? (
+              <MultiTargetChecklist cards={cards} selected={multiKeys} onToggle={toggleMultiKey} />
+            ) : (
+            <>
             {sourceFormat && <OriginalSourceOption artifact={artifact} sourceFormat={sourceFormat} />}
             <ExportTargetGrid
               cards={cards}
@@ -551,6 +653,26 @@ export function ExportDialog({
                 />
               </div>
             )}
+            </>
+            )}
+            <SavePresetForm targets={presetTargets} deliveryProfileId={presetDelivery?.id ?? null} />
+          </div>
+        )}
+
+        {step === 'export' && multiMode && (
+          <div className="space-y-4" data-testid="export-dialog-multi-run">
+            {presetDelivery ? (
+              <p className="xstd-quiet">
+                Delivered with <strong>{presetDelivery.name ?? 'the preset’s delivery profile'}</strong> as soon as
+                the archive is built.
+              </p>
+            ) : null}
+            <MultiExportRun
+              mode="generate"
+              body={multiBody}
+              labels={targetLabels}
+              archiveName={`${sourceLabel}-export.zip`}
+            />
           </div>
         )}
 
@@ -586,7 +708,7 @@ export function ExportDialog({
           </div>
         )}
 
-        {step === 'export' &&
+        {step === 'export' && !multiMode &&
           (emitted ? (
             <div className="flex h-full min-h-0 flex-col gap-2">
               <p className="shrink-0 text-xs text-fg-muted" data-testid="export-dialog-emitted">
@@ -637,10 +759,10 @@ export function ExportDialog({
             )}
           </div>
           <div className="flex gap-2">
-            {(step === 'target' || step === 'fidelity') && (
+            {(step === 'target' || step === 'fidelity' || (step === 'export' && multiMode)) && (
               <Button
                 variant="outline"
-                onClick={() => setStep(step === 'fidelity' ? 'target' : 'source')}
+                onClick={() => setStep(step === 'target' ? 'source' : 'target')}
               >
                 Back
               </Button>
@@ -657,8 +779,8 @@ export function ExportDialog({
             )}
             {step === 'target' && (
               <Button
-                onClick={() => setStep('fidelity')}
-                disabled={!selected}
+                onClick={() => setStep(multiMode ? 'export' : 'fidelity')}
+                disabled={multiMode ? multiKeys.length < 2 : !selected}
                 data-testid="export-dialog-continue"
               >
                 Continue

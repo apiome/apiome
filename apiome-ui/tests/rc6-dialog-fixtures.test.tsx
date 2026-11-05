@@ -53,6 +53,7 @@ import { unpublishVersionConfirm } from '../src/app/components/ade/versions/vers
 import type { ImportSourceDescriptor } from '../src/app/components/ade/dashboard/importSourceCatalog';
 
 import { EXPORT_DIALOG_COLLECTION_TARGETS, mockExportDialogFetch } from './helpers/export-dialog-fixture';
+import { liveMarkup } from './helpers/a11y-fixture-dump';
 
 const OUT = path.join(__dirname, '..', 'e2e', 'fixtures', 'hive-rc6-dialogs');
 const DUMP = process.env.RC6_DIALOGS_FIXTURE_DUMP === '1';
@@ -242,6 +243,34 @@ describe('the version Export dialog', () => {
     fireEvent.click(screen.getByTestId('export-target-postman'));
     await waitFor(() => expect(screen.getByRole('radiogroup', { name: 'Flavor' })).toBeInTheDocument());
     await judgeAndWrite('export-target-clients', openDialog());
+  });
+
+  it('draws several targets with a preset applied (MFX-39.5)', async () => {
+    const base = mockExportDialogFetch();
+    global.fetch = jest.fn((input: unknown, init?: unknown) => {
+      if (String(input).startsWith('/api/export/presets')) {
+        return ok({ success: true, data: { presets: [{ id: 'x1', name: 'nightly-sync', description: null,
+          targets: [{ target: 'openapi', options: { openapi_version: '3.0' } }, { target: 'proto' }],
+          deliveryProfileId: 'p1', deliveryProfileName: 'lake' }] } });
+      }
+      return base(input as never, init as never);
+    }) as unknown as typeof fetch;
+    render(<ExportDialog open onClose={() => {}} artifact="proj-petstore" artifactLabel="Pet Store API" version="rev-1" />);
+
+    const chooseTarget = await screen.findByTestId('export-dialog-choose-target');
+    await waitFor(() => expect(chooseTarget).toBeEnabled());
+    fireEvent.click(chooseTarget);
+    fireEvent.change(await screen.findByLabelText('Export preset'), { target: { value: 'x1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+    await screen.findByText('Applied nightly-sync.');
+    expect(screen.getByTestId('export-dialog-continue')).toBeEnabled();
+    // The live checkbox state (the ticked "Several targets" toggle) is carried into the fixture.
+    const dialog = openDialog();
+    expect(await axe(dialog, AXE_OPTIONS)).toHaveNoViolations();
+    if (DUMP) {
+      fs.mkdirSync(OUT, { recursive: true });
+      fs.writeFileSync(path.join(OUT, 'export-multi-target.html'), `${liveMarkup(dialog)}\n`);
+    }
   });
 
   it('draws the target, fidelity and emitted steps', async () => {

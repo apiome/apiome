@@ -37,7 +37,7 @@ import { MultiTargetChecklist } from './MultiTargetChecklist';
 import { ExportOverlaysStep } from './ExportOverlaysStep';
 import { OverlayReportPanel } from './OverlayReportPanel';
 import { overlaysRequestField, type ExportStudioOverlay } from './exportOverlays';
-import { multiTargetJobBody } from './exportBatchJob';
+import { multiTargetJobBody, withTargetOptions } from './exportBatchJob';
 import type { ExportJobStatus } from './exportJob';
 import { useCatalogSourceContext } from './useCatalogSourceContext';
 import type { EmittedValidationReport } from './exportVerify';
@@ -598,12 +598,10 @@ export function ExportStudio({
   }, []);
 
   const multiBody = useMemo(() => {
-    const body = multiTargetJobBody(artifact, version, multiKeys, false, overlayField);
     // MFX-39.3 / 38.4: a preset's per-target options, and the delivery profiles ticked on Review.
-    body.targets = body.targets.map((spec) =>
-      multiOptions[spec.target] && Object.keys(multiOptions[spec.target]).length > 0
-        ? { ...spec, options: multiOptions[spec.target] }
-        : spec,
+    const body = withTargetOptions(
+      multiTargetJobBody(artifact, version, multiKeys, false, overlayField),
+      multiOptions,
     );
     return deliveryProfileIds.length > 0 ? { ...body, delivery_profiles: deliveryProfileIds } : body;
   }, [artifact, version, multiKeys, overlayField, multiOptions, deliveryProfileIds]);
