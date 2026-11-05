@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.665.0] - 2026-11-05
+
+### Added
+- **Export studio usage telemetry (MFX-46.5, #4383).** `POST /v1/export/{tenant_slug}/studio-metrics` counts one
+  privacy-safe usage event from Export studio or the Export dialog and logs it as `export.studio`: `target_chosen`
+  (the canonical export format; `single` / `multi`), `verify_verdict` (`clean` / `lossy` / `severe` / `invalid` /
+  `error`), `lossy_prompt_shown` and `lossy_acknowledged` (the acknowledge-lossy rate), `test_drive_used` (the tool;
+  `open` / `run`) and `viz_used` (the view). Every field is a controlled vocabulary; unknown fields, values or
+  targets are refused with `422`. Same analytics path as the projection metrics (EFP-3.2).
+  - OpenAPI 1.529.0.
+
 ## [1.664.0] - 2026-11-05
 
 ### Added

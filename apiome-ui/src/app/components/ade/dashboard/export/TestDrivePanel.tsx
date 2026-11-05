@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNod
 import { FlaskConical } from 'lucide-react';
 
 import { TAB_LIST_CLASS, tabTriggerClass } from '../../../ui/tabStyles';
+import { EmptyState } from '../../../ui/EmptyState';
 import {
   initialTestDriveTab,
   testDriveTabs,
@@ -22,6 +23,8 @@ export interface TestDrivePanelProps {
   targetKey: string;
   /** The renderers for the kinds this build can draw; a kind without one gets no tab. */
   renderers: TestDriveRenderers;
+  /** A tab the user opened (MFX-46.5 usage telemetry); not called for the tab opened by default. */
+  onOpen?: (kind: ExportTestToolKind) => void;
 }
 
 /**
@@ -31,12 +34,13 @@ export interface TestDrivePanelProps {
  * tabs appear and disappear with the registry alone, and a new emitter that declares tools needs no
  * UI change. A tab whose tools cannot run on this server is drawn **disabled**, with the server's
  * reason listed under the strip. Full WAI-ARIA tabs: one Tab stop, ←/→/Home/End between the tabs
- * that can open.
+ * that can open. A tab with nothing to show yet (no generated export) says so instead of staying blank
+ * (MFX-46.5).
  *
  * @param props See {@link TestDrivePanelProps}.
  * @returns The strip and the open tab, or nothing when the target declares no drawable tool.
  */
-export function TestDrivePanel({ tools, targetKey, renderers }: TestDrivePanelProps) {
+export function TestDrivePanel({ tools, targetKey, renderers, onOpen }: TestDrivePanelProps) {
   const drawable = useMemo(() => new Set(Object.keys(renderers)), [renderers]);
   const tabs = useMemo(() => testDriveTabs(tools, drawable), [tools, drawable]);
   const [active, setActive] = useState<ExportTestToolKind | null>(() => initialTestDriveTab(tabs));
@@ -80,6 +84,7 @@ export function TestDrivePanel({ tools, targetKey, renderers }: TestDrivePanelPr
     event.preventDefault();
     const kind = openable[next].kind;
     setActive(kind);
+    onOpen?.(kind);
     tabRefs.current[kind]?.focus();
   };
 
@@ -107,7 +112,11 @@ export function TestDrivePanel({ tools, targetKey, renderers }: TestDrivePanelPr
               tabIndex={selected || (!activeTab && tab === openable[0]) ? 0 : -1}
               title={tab.reason ?? undefined}
               data-testid={`test-drive-tab-${tab.kind}`}
-              onClick={() => tab.available && setActive(tab.kind)}
+              onClick={() => {
+                if (!tab.available) return;
+                setActive(tab.kind);
+                onOpen?.(tab.kind);
+              }}
               className={tabTriggerClass({ active: selected, disabled: !tab.available })}
             >
               {tab.label}
@@ -133,7 +142,14 @@ export function TestDrivePanel({ tools, targetKey, renderers }: TestDrivePanelPr
           className="xstd-testdrive__body"
           data-testid={`test-drive-body-${activeTab.kind}`}
         >
-          {renderers[activeTab.kind]?.(activeTab)}
+          {renderers[activeTab.kind]?.(activeTab) ?? (
+            <EmptyState
+              variant="inline"
+              title="Nothing to test drive yet"
+              description="Generate the export, then try it here."
+              data-testid="test-drive-empty"
+            />
+          )}
         </div>
       )}
     </section>

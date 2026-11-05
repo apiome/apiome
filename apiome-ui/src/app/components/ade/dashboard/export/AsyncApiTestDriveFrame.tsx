@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, Loader2, ShieldCheck } from 'lucide-react';
 
 import { isTestDriveMessage, TEST_DRIVE_MESSAGE_PREFIX } from './openApiTestDrive';
 import { asyncApiSummaryText, asyncApiViewerSrc, parseAsyncApiDocument } from './asyncApiTestDrive';
@@ -79,6 +79,13 @@ export function AsyncApiTestDriveFrame({ text }: AsyncApiTestDriveFrameProps) {
           menu (☰) to jump to an operation, message or schema.
         </span>
       </p>
+      {/* MFX-46.5: the sandboxed viewer takes a moment to start — say so instead of a blank frame. */}
+      {state === 'loading' ? (
+        <p className="xstd-loading-row" role="status" data-testid="test-drive-frame-loading">
+          <Loader2 className="motion-safe:animate-spin" aria-hidden />
+          Drawing the viewer…
+        </p>
+      ) : null}
       {state === 'error' && error ? (
         <p className="xstd-notice" data-tone="warn" role="alert">
           <AlertTriangle aria-hidden />

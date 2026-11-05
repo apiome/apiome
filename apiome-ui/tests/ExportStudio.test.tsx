@@ -801,6 +801,28 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(toReview).toBeEnabled();
   });
 
+  it('reports the verdict, the acknowledgement asked for and given, and the target (MFX-46.5)', async () => {
+    const fetchMock = mockFetch();
+    await advanceToVerify(fetchMock, 'proto');
+    await runVerification();
+    fireEvent.click(within(screen.getByTestId('verify-panel-fidelity')).getByRole('checkbox'));
+    const sent = () =>
+      fetchMock.mock.calls
+        .filter(([url]) => String(url) === '/api/export/studio-metrics')
+        .map(([, init]) => JSON.parse(String((init as { body: string }).body)));
+    await waitFor(() =>
+      expect(sent()).toEqual(
+        expect.arrayContaining([
+          { kind: 'verify_verdict', verdict: 'lossy', surface: 'studio' },
+          { kind: 'lossy_prompt_shown', verdict: 'lossy', surface: 'studio' },
+          { kind: 'lossy_acknowledged', verdict: 'lossy', surface: 'studio' },
+        ]),
+      ),
+    );
+    // Once per verdict, not once per render.
+    expect(sent().filter((event) => event.kind === 'verify_verdict')).toHaveLength(1);
+  });
+
   it('blocks Generate for an invalid output and shows the validator detail (MFX-42.1)', async () => {
     await advanceToVerify(mockFetch({ invalidVerify: true }), 'proto');
     await runVerification();

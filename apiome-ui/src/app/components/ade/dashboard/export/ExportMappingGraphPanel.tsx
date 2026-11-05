@@ -106,6 +106,7 @@ import {
   ProjectionOutcomeBox,
   fitProjectionLabel,
 } from './projectionGraphSvg';
+import { trackStudioEvent } from './studioTelemetry';
 
 /** Uniform evidence-table row height (px) the windowing assumes; matches the `h-9` row class. */
 const TABLE_ROW_HEIGHT = 36;
@@ -533,6 +534,8 @@ export function ExportMappingGraphPanel({
           onChangeView={(next) => {
             setOverlayView(next);
             setHovered(null);
+            // MFX-46.5: which fidelity picture people use.
+            void trackStudioEvent({ kind: 'viz_used', view: next === 'treemap' ? 'fidelity-treemap' : 'fidelity-overlay' });
           }}
         />
       )}

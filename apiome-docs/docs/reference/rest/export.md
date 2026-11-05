@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 17 operations."
+description: "REST endpoints tagged export: 18 operations."
 sidebar_position: 31
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.528.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.529.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 17 operations
+Tag: `export` · 18 operations
 
 ## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
 
@@ -377,6 +377,35 @@ Request body for register an avro, json schema or protobuf export on a schema re
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for register an avro, json schema or protobuf export on a schema registry through a connector. | `application/json` [`RegistryPushResponse`](#schema-registrypushresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/export/{tenant_slug}/studio-metrics` {#record-studio-metric-v1-export-tenant-slug-studio-metrics-post}
+
+**Record a privacy-safe Export studio usage event**
+
+Count one Export studio (or Export dialog) usage event and emit a structured ``export.studio`` log line (MFX-46.5): a target chosen, a verify verdict, the lossy acknowledgement asked for or given, a test-drive tool opened or run, a visualization shown. Every field is a controlled vocabulary — never an artifact name, source, file or option value.
+
+Operation id: `record_studio_metric_v1_export__tenant_slug__studio_metrics_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for record a privacy-safe export studio usage event.
+
+- `application/json` — [`StudioMetricRequest`](#schema-studiometricrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record a privacy-safe export studio usage event. | `application/json` [`StudioMetricResponse`](#schema-studiometricresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/export/{tenant_slug}/targets` {#list-export-targets-v1-export-tenant-slug-targets-get}
@@ -947,3 +976,30 @@ What the push did for each subject.
 | `dry_run` | boolean | yes | Whether nothing was written. |
 | `summary` | map of integer | yes | How many subjects ended in each status (``registered``, ``already_registered``, ``would_register``, ``incompatible``, ``failed``, ``skipped``). |
 | `subjects` | array of `RegistryPushSubjectResult` | yes | One result per subject, in the order they were pushed (referenced schemas first). |
+
+### `StudioMetricRequest` {#schema-studiometricrequest}
+
+One Export studio usage event: ``POST /v1/export/{tenant}/studio-metrics``.
+
+Unknown fields are refused, every value is a controlled vocabulary, and each kind names the one
+field it needs (``target`` / ``verdict`` / ``tool`` / ``view``).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `kind` | enum `"target_chosen"`, `"verify_verdict"`, `"lossy_prompt_shown"`, `"lossy_acknowledged"`, `"test_drive_used"`, `"viz_used"` | yes | What happened (whitelist). |
+| `surface` | enum `"studio"`, `"dialog"` | no | Export studio or the Export dialog. |
+| `target` | string or null | no | `target_chosen`: the chosen export target (a registered format or key). |
+| `mode` | enum `"single"`, `"multi"` or null | no | `target_chosen`: one target, or one of several. |
+| `verdict` | enum `"clean"`, `"lossy"`, `"severe"`, `"invalid"`, `"error"` or null | no | `verify_verdict` / `lossy_*`: the verification's verdict. |
+| `tool` | enum `"swagger-ui"`, `"redoc"`, `"graphiql"`, `"asyncapi-render"`, `"mock-server"`, `"toolchain"` or null | no | `test_drive_used`: the test-drive tool. |
+| `action` | enum `"open"`, `"run"` or null | no | `test_drive_used`: the tool was opened, or run. |
+| `view` | enum `"erd"`, `"proto-imports"`, `"service-map"`, `"channel-topology"`, `"fidelity-overlay"`, `"fidelity-treemap"` or null | no | `viz_used`: the visualization shown. |
+
+### `StudioMetricResponse` {#schema-studiometricresponse}
+
+Acknowledgement that a usage event was recorded.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `recorded` | boolean | no | Recorded. |
+| `kind` | string | yes | Kind. |

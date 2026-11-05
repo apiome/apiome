@@ -166,6 +166,12 @@ async function renderAtFidelityStep(fetchMock: jest.Mock, target: string) {
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
 }
 
+
+// MFX-46.5: useExportTargets keeps each source's last list for the session; start every test without one.
+beforeEach(() => {
+  window.sessionStorage.clear();
+});
+
 describe('ExportDialog — target-card grid (MFX-6.1)', () => {
   beforeEach(() => {
     // jsdom implements neither createObjectURL nor revokeObjectURL; the download helper needs both.
