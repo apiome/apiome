@@ -927,8 +927,8 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     const fetchMock = mockFetch({
       testTools: {
         openapi: [
-          // No renderer in this build yet (MFX-44.2): declared, but not drawn.
-          { kind: 'swagger-ui', label: 'Swagger UI', params: {}, server_side: false, available: true, unavailable_reason: null },
+          // No renderer in this build yet (MFX-44.3): declared, but not drawn.
+          { kind: 'graphiql', label: 'GraphiQL', params: {}, server_side: false, available: true, unavailable_reason: null },
           { kind: 'toolchain', label: 'redocly lint', params: { tool: 'redocly', check: 'lint' }, server_side: true,
             available: true, unavailable_reason: null },
           { kind: 'toolchain', label: 'spectral lint', params: { tool: 'spectral', check: 'lint' }, server_side: true,
@@ -963,6 +963,27 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
     expect(checks).toHaveTextContent('redocly lint');
     expect(checks).toHaveTextContent('Installed on this server');
     expect(checks).toHaveTextContent('The spectral toolchain is not installed on this server.');
+  });
+
+  it('opens the generated OpenAPI file in Swagger UI and ReDoc (MFX-44.2)', async () => {
+    const tool = (kind: string, label: string) => ({ kind, label, params: {}, server_side: false, available: true, unavailable_reason: null });
+    const fetchMock = mockFetch({ testTools: { openapi: [tool('swagger-ui', 'Swagger UI'), tool('redoc', 'ReDoc')] } });
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const panel = await screen.findByTestId('test-drive-panel');
+    expect(within(panel).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Swagger UI', 'ReDoc']);
+    const swagger = within(panel).getByTestId('openapi-test-drive-frame-swagger-ui');
+    expect(swagger).toHaveAttribute('sandbox', 'allow-scripts');
+    expect(swagger).toHaveAttribute('src', '/test-drive/openapi?viewer=swagger-ui');
+    fireEvent.click(within(panel).getByTestId('test-drive-tab-redoc'));
+    expect(within(panel).getByTestId('openapi-test-drive-frame-redoc')).toHaveAttribute('src', '/test-drive/openapi?viewer=redoc');
   });
 
   it('downloads the generated file and a .zip from the Review step', async () => {

@@ -58,6 +58,8 @@ import { RoundtripComparisonPanel } from './RoundtripComparisonPanel';
 import { useExportRoundtrip } from './useExportRoundtrip';
 import { MockTestDrivePanel } from './MockTestDrivePanel';
 import { TestDrivePanel, ToolchainChecksList, type TestDriveRenderers } from './TestDrivePanel';
+import { OpenApiTestDriveFrame } from './OpenApiTestDriveFrame';
+import { mockIsLive } from './exportMockTestDrive';
 import { useExportMockTestDrive } from './useExportMockTestDrive';
 import { useExportPreviewManifest } from './useExportPreviewManifest';
 import type { EntityRevealRequest, ExportManifestEntity } from './exportPreviewManifest';
@@ -1040,7 +1042,14 @@ export function ExportStudio({
    * shows a tab per declared kind, disabled with the server's reason when it cannot run here. An
    * older REST that sends no `test_tools` keeps the mock panel on its own.
    */
+  // MFX-44.2: Swagger UI's Try it out reaches the test-drive mock while one is running.
+  const liveMock = mockIsLive(mockTestDrive.instance) && mockTestDrive.instance
+    ? { id: mockTestDrive.instance.id, baseUrl: mockTestDrive.instance.baseUrl }
+    : null;
   const testDriveRenderers: TestDriveRenderers = {
+    'swagger-ui': () =>
+      emitted ? <OpenApiTestDriveFrame viewer="swagger-ui" text={emitted.text} mock={liveMock} /> : null,
+    redoc: () => (emitted ? <OpenApiTestDriveFrame viewer="redoc" text={emitted.text} /> : null),
     'mock-server': () => mockPanel,
     toolchain: (tab) => <ToolchainChecksList tools={tab.tools} />,
   };

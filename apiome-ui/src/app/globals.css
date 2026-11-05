@@ -33877,6 +33877,40 @@ tr:focus-within .pub-url__glyph {
   outline-offset: 2px;
 }
 
+/* MFX-44.2 — Swagger UI / ReDoc in a sandboxed iframe. The viewers draw their own (light) chrome, so
+   the frame keeps a light surface in every theme and scrolls inside a fixed share of the viewport. */
+.xstd-testdrive__viewer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.xstd-testdrive__viewer-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.xstd-testdrive__viewer-note > svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex-shrink: 0;
+  color: var(--ok);
+}
+
+.xstd-testdrive__frame {
+  inline-size: 100%;
+  block-size: min(70vh, 48rem);
+  border: 0;
+  border-radius: var(--r-md);
+  box-shadow: inset 0 0 0 1px var(--border);
+  color-scheme: light;
+  background: Canvas;
+}
+
 .xstd-testdrive__checks {
   display: flex;
   flex-direction: column;
