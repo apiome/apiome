@@ -290,6 +290,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     ],
   },
   {
+    id: 'run-exports-at-scale',
+    title: 'Run exports at scale',
+    summary: 'Follow every export, see who exported what, deliver it, automate it, recover from failures.',
+    page: 'apiome-docs/docs/ship/run-exports-at-scale.mdx',
+    section: 'spine',
+    keywords: ['history', 'audit', 'job progress', 'retry', 'delivery', 'preset', 'auto-export', 'operations'],
+  },
+  {
     id: 'export-fidelity',
     title: 'Understand export fidelity',
     summary:

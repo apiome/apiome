@@ -1,0 +1,21 @@
+---
+slug: run-exports-at-scale
+title: Run exports at scale
+description: "Job progress, history, delivery, presets and clear states: Export studio's operations side."
+authors: [apiome]
+---
+
+Export studio now covers the operations side of exporting, end to end. The new
+[Run exports at scale](/ship/run-exports-at-scale) page shows where each part lives.
+
+{/* truncate */}
+
+- **Job progress and recovery:** follow each stage, cancel, retry, or fix a failed job in Verify.
+- **History and audit:** the **History** tab lists every export in the workspace for 90 days, with who
+  ran it, how much it lost and where it was delivered; **Re-run in Studio** repeats one.
+- **Delivery:** the **Deliver** section sends the result to git, a webhook, a bucket or a schema registry,
+  and shows what each delivery left behind.
+- **Presets and auto-export:** a preset keeps every delivery profile, and **Auto-export on publish** runs
+  it on each publish, from Review.
+- **States and telemetry:** every step says what's happening when there's nothing to show or something
+  failed, and the studio records a few anonymous usage events.
