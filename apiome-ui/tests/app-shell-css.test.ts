@@ -115,6 +115,21 @@ describe('the shell grid', () => {
     expect(shell.get('transition')).toContain('grid-template-columns');
     expect(shell.get('transition')).toContain('var(--dur-slow)');
   });
+
+  // The workspace switcher's menu and the collapse handle reach out over the page column;
+  // a card in the page must never paint over them.
+  it('stacks the rail above the page\'s cards', () => {
+    expect(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index')).toBe('20');
+  });
+
+  it('leaves the page unisolated, so an inline fixed overlay still rises above the rail', () => {
+    expect(rules.some((rule) => rule.prelude === '.hive-shell > main')).toBe(false);
+  });
+
+  it('keeps the rail below the notices and dialogs that float over the shell', () => {
+    const notices = parseDeclarations(ruleFor('.tfa-notice-stack').body);
+    expect(Number(notices.get('z-index'))).toBeGreaterThan(20);
+  });
 });
 
 describe('the rows that read the vocabulary', () => {
