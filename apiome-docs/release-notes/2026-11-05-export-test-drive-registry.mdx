@@ -1,0 +1,18 @@
+---
+slug: export-test-drive-registry
+title: Test drive tabs for every export format
+description: "Review shows the tools that can try each export format, honestly."
+authors: [apiome]
+---
+
+After you generate a file in the Export studio, **Review** now has a **Test drive** section with a tab
+for each tool that can try that format. See [Test drive](/ship/export-studio#test-drive).
+
+{/* truncate */}
+
+- **Per format:** the **Mock server** for OpenAPI, and each format's own checks, such as `buf lint`,
+  `tsp compile` or `redocly lint`.
+- **Honest about this server:** a tool the server cannot run, such as a toolchain that isn't installed
+  or mocks that are turned off, is greyed out with the reason.
+- **From the API too:** every target in `GET /v1/export/{tenant}/targets` lists its `test_tools`, so a
+  new export format brings its own tabs.

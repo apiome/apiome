@@ -47,6 +47,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .field_identity_store import FieldNumberAllocator
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
@@ -418,6 +419,8 @@ class ThriftEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = False
     options_model = ThriftEmitOptions
+    #: MFX-44.1: the Apache Thrift compiler checks the emitted IDL.
+    test_tools = (toolchain_check("thrift", "compile"),)
 
     OUTPUT_MEDIA_TYPE = "application/x-thrift"
 

@@ -190,8 +190,18 @@ def _shape(value: Any) -> Any:
 
 
 def _without_projection(fidelity: Dict[str, Any]) -> Dict[str, Any]:
-    """The envelope as the golden records it: the projection summary is pinned by its own goldens."""
-    return {key: value for key, value in fidelity.items() if key != "projection"}
+    """The envelope as the golden records it.
+
+    The projection summary is pinned by its own goldens, and the target's ``test_tools`` (MFX-44.1) by
+    ``test_export_test_tools.py``: a server-side tool's availability depends on what this machine has
+    installed, so recording it would make the golden differ from one machine to the next. The live
+    surfaces are still compared with both, above.
+    """
+    envelope = {key: value for key, value in fidelity.items() if key != "projection"}
+    target = envelope.get("target")
+    if isinstance(target, dict):
+        envelope["target"] = {key: value for key, value in target.items() if key != "test_tools"}
+    return envelope
 
 
 @pytest.mark.parametrize("name", list(SOURCES))

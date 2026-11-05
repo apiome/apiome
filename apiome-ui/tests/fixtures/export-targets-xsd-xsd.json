@@ -13,7 +13,8 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": true,
-        "unavailable_reason": null
+        "unavailable_reason": null,
+        "test_tools": []
       },
       "capability_profile": {
         "operations": false,

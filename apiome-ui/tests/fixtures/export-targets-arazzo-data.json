@@ -13,7 +13,8 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": false,
-        "unavailable_reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events)."
+        "unavailable_reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
+        "test_tools": []
       },
       "capability_profile": {
         "operations": true,

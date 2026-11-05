@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.521.1
+  version: 1.522.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -101989,8 +101989,18 @@ components:
           - type: 'null'
             description: Emitter Descriptor schema.
           title: Unavailable Reason
-          description: Human-readable reason the target is unavailable, or ``null``
-            when available.
+          description: Human-readable reason the target is unavailable, or ``null`` when
+            available.
+        test_tools:
+          items:
+            $ref: '#/components/schemas/ExportTestTool'
+          type: array
+          title: Test Tools
+          description: 'The tools that can test drive this target''s output (MFX-44.1):
+            Swagger UI, ReDoc, GraphiQL, the AsyncAPI viewer, a mock server, toolchain
+            checks. Server-side tools say whether they are available on this server, and
+            why not.'
+          maxItems: 1000
       type: object
       required:
       - key
@@ -102002,8 +102012,7 @@ components:
       - multi_file
       - needs_toolchain
       title: EmitterDescriptor
-      description: Self-description of an export target for UI/CLI/REST enumeration
-        (MFX-1.1).
+      description: Self-description of an export target for UI/CLI/REST enumeration (MFX-1.1).
     EmpiricalLoss:
       properties:
         entity:
@@ -106848,6 +106857,62 @@ components:
       - version_record_id
       title: ExportTargetsResponse
       description: The per-target fidelity list for one source revision (MFX-2.5).
+    ExportTestTool:
+      properties:
+        kind:
+          $ref: '#/components/schemas/ExportTestToolKind'
+          description: The tool kind, e.g. ``swagger-ui`` or ``toolchain``.
+        label:
+          type: string
+          title: Label
+          description: The tab / row label, e.g. ``Swagger UI`` or ``buf lint``.
+          example: example
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+          description: Kind-specific parameters, e.g. a toolchain check's ``tool`` and
+            ``check``.
+        server_side:
+          type: boolean
+          title: Server Side
+          description: Whether the tool runs on this server (``mock-server``, ``toolchain``)
+            rather than in the browser.
+          example: false
+        available:
+          type: boolean
+          title: Available
+          description: Whether the tool can run here; a client-side tool always can.
+          default: true
+          example: false
+        unavailable_reason:
+          anyOf:
+          - type: string
+            description: Export Test Tool schema.
+          - type: 'null'
+            description: Export Test Tool schema.
+          title: Unavailable Reason
+          description: Why a server-side tool cannot run on this server, or ``null`` when
+            it can.
+      type: object
+      required:
+      - kind
+      - label
+      - server_side
+      title: ExportTestTool
+      description: One test-drive tool for a target, as ``GET /export/targets`` reports
+        it.
+    ExportTestToolKind:
+      type: string
+      enum:
+      - swagger-ui
+      - redoc
+      - graphiql
+      - asyncapi-render
+      - mock-server
+      - toolchain
+      title: ExportTestToolKind
+      description: What a test-drive tool does with the emitted artifact.
     ExportVerifyRequest:
       properties:
         artifact:

@@ -240,6 +240,8 @@ function mockFetch(
     invalidVerify?: boolean;
     bundle?: boolean;
     jobFailure?: 'validation' | 'confirmation' | 'emit';
+    /** MFX-44.1: per-target `descriptor.test_tools`, as the registry would declare them. */
+    testTools?: Record<string, unknown[]>;
   } = {},
 ): jest.Mock {
   // Closure state so a job's GET status reflects what its POST was submitted with (target/confirm).
@@ -248,7 +250,18 @@ function mockFetch(
   return jest.fn((input: unknown, init?: { method?: string; body?: string }) => {
     const url = typeof input === 'string' ? input : String(input);
     if (url.includes('/api/export/targets')) {
-      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, ...TARGETS }) });
+      const tools = opts.testTools;
+      const registry = tools
+        ? {
+            ...TARGETS,
+            targets: TARGETS.targets.map((entry) =>
+              tools[entry.descriptor.key]
+                ? { ...entry, descriptor: { ...entry.descriptor, test_tools: tools[entry.descriptor.key] } }
+                : entry,
+            ),
+          }
+        : TARGETS;
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true, ...registry }) });
     }
     // IXH-4.1 structural manifest — MUST be matched before the '/api/export/preview'
     // substring branch below, which this URL also contains.
@@ -908,6 +921,48 @@ describe('ExportStudio — Verify workbench gate + generate (MFX-42.1)', () => {
       // are null — a re-run of this record reopens the target at its defaults (MFX-41.3).
       options: null,
     });
+  });
+
+  it('draws the Test drive tabs from the target registry alone (MFX-44.1)', async () => {
+    const fetchMock = mockFetch({
+      testTools: {
+        openapi: [
+          // No renderer in this build yet (MFX-44.2): declared, but not drawn.
+          { kind: 'swagger-ui', label: 'Swagger UI', params: {}, server_side: false, available: true, unavailable_reason: null },
+          { kind: 'toolchain', label: 'redocly lint', params: { tool: 'redocly', check: 'lint' }, server_side: true,
+            available: true, unavailable_reason: null },
+          { kind: 'toolchain', label: 'spectral lint', params: { tool: 'spectral', check: 'lint' }, server_side: true,
+            available: false, unavailable_reason: 'The spectral toolchain is not installed on this server.' },
+          { kind: 'mock-server', label: 'Mock server', params: {}, server_side: true, available: false,
+            unavailable_reason: 'Export test-drive mocks are disabled on this server.' },
+        ],
+      },
+    });
+    await renderStudio(fetchMock, { initialTarget: 'openapi' });
+    fireEvent.click(screen.getByRole('button', { name: /choose target/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → options
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → overlays
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i })); // → verify
+    await runVerification();
+    fireEvent.click(screen.getByRole('button', { name: /continue to review/i }));
+    fireEvent.click(screen.getByTestId('export-studio-generate'));
+
+    const panel = await screen.findByTestId('test-drive-panel');
+    const tabs = within(panel).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Toolchain checks', 'Mock server']);
+    expect(within(panel).getByTestId('test-drive-tab-toolchain')).toHaveAttribute('aria-selected', 'true');
+    // The unavailable tool is disabled, with the server's reason, and does not open.
+    const mock = within(panel).getByTestId('test-drive-tab-mock-server');
+    expect(mock).toHaveAttribute('aria-disabled', 'true');
+    expect(within(panel).getByTestId('test-drive-unavailable')).toHaveTextContent(
+      'Mock server is unavailable on this server: Export test-drive mocks are disabled on this server.',
+    );
+    fireEvent.click(mock);
+    expect(mock).toHaveAttribute('aria-selected', 'false');
+    const checks = within(panel).getByTestId('toolchain-checks');
+    expect(checks).toHaveTextContent('redocly lint');
+    expect(checks).toHaveTextContent('Installed on this server');
+    expect(checks).toHaveTextContent('The spectral toolchain is not installed on this server.');
   });
 
   it('downloads the generated file and a .zip from the Review step', async () => {

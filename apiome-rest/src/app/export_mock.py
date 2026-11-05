@@ -62,6 +62,7 @@ __all__ = [
     "expiry_from_now",
     "instance_is_export_mock",
     "is_mock_servable_target",
+    "mock_engine_unavailable_reason",
     "mock_request_log",
     "mock_servable_targets",
     "operation_summaries",
@@ -150,6 +151,23 @@ class ExportMockAvailability:
     rate_limit_per_minute: int
 
 
+def mock_engine_unavailable_reason() -> Optional[str]:
+    """Why this server cannot start a test-drive mock, or ``None`` when it can.
+
+    The switch half of :func:`export_mock_availability`, without the target list — the per-target
+    tooling registry (MFX-44.1) asks it while building each descriptor, so it must not enumerate the
+    registry itself.
+
+    Returns:
+        The reason naming which switch is down (the Mock Server, or the export binding), else ``None``.
+    """
+    if not settings.mock_server_enabled:
+        return "The Mock Server is not enabled on this server, so an export cannot be mocked."
+    if not settings.export_mock_enabled:
+        return "Export test-drive mocks are disabled on this server."
+    return None
+
+
 def export_mock_availability() -> ExportMockAvailability:
     """Describe this server's test-drive mock capability.
 
@@ -161,12 +179,7 @@ def export_mock_availability() -> ExportMockAvailability:
         The capability descriptor, always fully populated — an unavailable server still reports the
         bounds it *would* apply, so the disabled panel can explain itself.
     """
-    reason: Optional[str] = None
-    if not settings.mock_server_enabled:
-        reason = "The Mock Server is not enabled on this server, so an export cannot be mocked."
-    elif not settings.export_mock_enabled:
-        reason = "Export test-drive mocks are disabled on this server."
-
+    reason = mock_engine_unavailable_reason()
     return ExportMockAvailability(
         available=reason is None,
         reason=reason,

@@ -13,7 +13,8 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": false,
-        "unavailable_reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none."
+        "unavailable_reason": "MCP Tool Definitions export needs at least one operation an agent can call (not an event, a stream, an MCP resource or a prompt); this source has none.",
+        "test_tools": []
       },
       "capability_profile": {
         "operations": true,

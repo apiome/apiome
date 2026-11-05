@@ -66,6 +66,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
 from .scalar_aliases import scalar_kind
@@ -259,6 +260,8 @@ class TypeSpecEmitter(Emitter, register=True):
     paradigm = ApiParadigm.REST
     multi_file = False
     options_model = TypeSpecEmitOptions
+    #: MFX-44.1: the TypeSpec compiler checks the emitted file.
+    test_tools = (toolchain_check("tsp", "compile"),)
 
     OUTPUT_MEDIA_TYPE = "text/plain"
 

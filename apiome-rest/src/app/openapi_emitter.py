@@ -94,6 +94,7 @@ from .emitter import (
     SchemaEmitter,
     _emit_constraints,
 )
+from .export_test_tools import ExportTestToolKind, test_tool, toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
 from .openapi_downgrade import (
@@ -359,6 +360,12 @@ class OpenApiEmitter(Emitter, register=True):
     paradigm = ApiParadigm.REST
     multi_file = False
     options_model = OpenApiEmitOptions
+    #: MFX-44.1: interactive and reference docs, the format's lint; the mock is derived from the format.
+    test_tools = (
+        test_tool(ExportTestToolKind.SWAGGER_UI),
+        test_tool(ExportTestToolKind.REDOC),
+        toolchain_check("redocly", "lint"),
+    )
 
     #: The OpenAPI version string this emitter targets natively (before any downgrade).
     OPENAPI_VERSION = "3.1.0"

@@ -57,6 +57,7 @@ import { FidelityLossHeatmapPanel } from './FidelityLossHeatmapPanel';
 import { RoundtripComparisonPanel } from './RoundtripComparisonPanel';
 import { useExportRoundtrip } from './useExportRoundtrip';
 import { MockTestDrivePanel } from './MockTestDrivePanel';
+import { TestDrivePanel, ToolchainChecksList, type TestDriveRenderers } from './TestDrivePanel';
 import { useExportMockTestDrive } from './useExportMockTestDrive';
 import { useExportPreviewManifest } from './useExportPreviewManifest';
 import type { EntityRevealRequest, ExportManifestEntity } from './exportPreviewManifest';
@@ -1033,6 +1034,23 @@ export function ExportStudio({
     />
   ) : null;
 
+  /**
+   * MFX-44.1: the Test drive tab strip, drawn from the selected target's registry entry
+   * (`descriptor.test_tools`) alone. Each kind this build can draw has a renderer here; the strip
+   * shows a tab per declared kind, disabled with the server's reason when it cannot run here. An
+   * older REST that sends no `test_tools` keeps the mock panel on its own.
+   */
+  const testDriveRenderers: TestDriveRenderers = {
+    'mock-server': () => mockPanel,
+    toolchain: (tab) => <ToolchainChecksList tools={tab.tools} />,
+  };
+  const testDriveTools = selected?.entry.descriptor.test_tools;
+  const testDrivePanel = !selected ? null : testDriveTools === undefined ? (
+    mockPanel
+  ) : (
+    <TestDrivePanel tools={testDriveTools} targetKey={selected.key} renderers={testDriveRenderers} />
+  );
+
   /** Whether the current step permits advancing to the next one. */
   const canAdvance = useMemo(() => {
     switch (step) {
@@ -1486,8 +1504,8 @@ export function ExportStudio({
                   {lossHeatmap}
                   {/* IXH-4.4: check the prediction empirically — emit, re-import, diff. */}
                   {roundtripPanel}
-                  {/* MFX-44.5: the strongest check of all — serve it and send it real requests. */}
-                  {mockPanel}
+                  {/* MFX-44.1: the target's test-drive tools — the mock (MFX-44.5), toolchain checks. */}
+                  {testDrivePanel}
                 </div>
               ) : emitted ? (
                 <div className="xstd-stack xstd-stack--tight">
@@ -1535,8 +1553,8 @@ export function ExportStudio({
                   {lossHeatmap}
                   {/* IXH-4.4: check the prediction empirically — emit, re-import, diff. */}
                   {roundtripPanel}
-                  {/* MFX-44.5: the strongest check of all — serve it and send it real requests. */}
-                  {mockPanel}
+                  {/* MFX-44.1: the target's test-drive tools — the mock (MFX-44.5), toolchain checks. */}
+                  {testDrivePanel}
                 </div>
               ) : job && jobStatus ? (
                 jobCompleted ? (

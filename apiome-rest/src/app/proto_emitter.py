@@ -82,6 +82,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .field_identity_store import FieldNumberAllocator
 from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 from .proto_editions import (
@@ -482,6 +483,8 @@ class ProtoEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = True
     options_model = ProtoEmitOptions
+    #: MFX-44.1: the bundle's own toolchain checks.
+    test_tools = (toolchain_check("buf", "lint"), toolchain_check("buf", "build"))
 
     #: Primary bundle media type for ``.proto`` source text.
     OUTPUT_MEDIA_TYPE = "text/x-protobuf"

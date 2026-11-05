@@ -13,7 +13,8 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": false,
-        "unavailable_reason": "SQL DDL export needs at least one record type (an object, struct or message); this source has none."
+        "unavailable_reason": "SQL DDL export needs at least one record type (an object, struct or message); this source has none.",
+        "test_tools": []
       },
       "capability_profile": {
         "operations": false,
