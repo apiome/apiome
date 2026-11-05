@@ -58,8 +58,14 @@ def _error_message(response: httpx.Response) -> str:
     return str(detail or f"HTTP {response.status_code}")
 
 
-async def _post(path: str, body: dict[str, Any], *, settings: Settings, wait_seconds: float,
-                transport: httpx.AsyncBaseTransport | None) -> dict[str, Any]:
+async def _post(
+    path: str,
+    body: dict[str, Any],
+    *,
+    settings: Settings,
+    wait_seconds: float,
+    transport: httpx.AsyncBaseTransport | None,
+) -> dict[str, Any]:
     """POST one internal export route and return its JSON, or raise a ``ToolError`` naming the problem."""
     base = (settings.rest_internal_url or "").strip().rstrip("/")
     token = settings.rest_internal_service_token.get_secret_value() if settings.rest_internal_service_token else ""
@@ -71,8 +77,7 @@ async def _post(path: str, body: dict[str, Any], *, settings: Settings, wait_sec
     timeout = httpx.Timeout(wait_seconds + _HTTP_MARGIN_SECONDS, connect=10.0)
     try:
         async with httpx.AsyncClient(timeout=timeout, transport=transport) as client:
-            response = await client.post(f"{base}{path}", json=body,
-                                         headers={"X-Internal-Service-Token": token})
+            response = await client.post(f"{base}{path}", json=body, headers={"X-Internal-Service-Token": token})
     except httpx.HTTPError as exc:
         raise ToolError(f"apiome-rest could not be reached for the export: {exc.__class__.__name__}.") from exc
     if response.status_code >= 400:
@@ -109,9 +114,13 @@ async def build_export_targets_response(
     """
     _require_in_scope(auth_ctx, artifact)
     resolved = settings or get_settings()
-    return await _post("/v1/internal/mcp/export/targets",
-                       {"tenantId": str(auth_ctx.tenant_id), "artifact": artifact.strip(), "version": version},
-                       settings=resolved, wait_seconds=0, transport=transport)
+    return await _post(
+        "/v1/internal/mcp/export/targets",
+        {"tenantId": str(auth_ctx.tenant_id), "artifact": artifact.strip(), "version": version},
+        settings=resolved,
+        wait_seconds=0,
+        transport=transport,
+    )
 
 
 async def build_version_export_response(
@@ -158,12 +167,23 @@ async def build_version_export_response(
         _require_in_scope(auth_ctx, artifact or "")
         if not target or not target.strip():
             raise ToolError("target is required: any target key export.targets lists (e.g. openapi-3.1).")
-        body = {"tenantId": str(auth_ctx.tenant_id), "artifact": (artifact or "").strip(), "version": version,
-                "target": target.strip(), "options": options, "confirm": bool(confirm),
-                "allowLossy": bool(allow_lossy)}
+        body = {
+            "tenantId": str(auth_ctx.tenant_id),
+            "artifact": (artifact or "").strip(),
+            "version": version,
+            "target": target.strip(),
+            "options": options,
+            "confirm": bool(confirm),
+            "allowLossy": bool(allow_lossy),
+        }
     body["waitSeconds"] = resolved.export_wait_seconds
-    result = await _post("/v1/internal/mcp/export/run", body, settings=resolved,
-                         wait_seconds=float(resolved.export_wait_seconds), transport=transport)
+    result = await _post(
+        "/v1/internal/mcp/export/run",
+        body,
+        settings=resolved,
+        wait_seconds=float(resolved.export_wait_seconds),
+        transport=transport,
+    )
     # A collected job names its artifact only now: a project-limited key may not read another project's.
     exported = result.get("artifact")
     if job_id and exported and not auth_ctx.scope.allows(str(auth_ctx.tenant_id), str(exported)):
