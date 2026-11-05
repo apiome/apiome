@@ -53,6 +53,7 @@ import json
 import re
 from collections import OrderedDict
 from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -75,6 +76,7 @@ from .export_projection import (
 from .export_relational import RelationalSchema
 from .export_service import ExportError, resolve_emit_format
 from .export_source import ExportSource
+from .export_viz_modes import EntityRef, VizFile, VizGraph, attach_entity_keys, build_viz_graphs
 from .lossiness import LossinessReport, LossinessSeverity
 from .projection_taxonomy import ProjectionReason, ProjectionStatus
 
@@ -298,6 +300,14 @@ class ExportPreviewManifest(BaseModel):
         "relational projection the artifact was written from — tables, columns, keys and foreign keys, the "
         "made-up ones marked `synthesized` — which the Review step draws as an ERD (MFX-45.3). Whole on "
         "every page (bounded by the table count); null for every other target.",
+    )
+    views: Dict[str, VizGraph] = Field(
+        default_factory=dict,
+        description="The graph of each visualization mode the target declares (MFX-45.4), keyed by mode: "
+        "`proto-imports` (files and imports), `service-map` (services → methods → messages), "
+        "`channel-topology` (channels ↔ messages ↔ operations). Built from the emitted files; a node that "
+        "stands for a canonical construct carries its `entity_key`. Whole on every page; empty for a target "
+        "with no graph mode.",
     )
 
 
@@ -717,6 +727,7 @@ class _FullExportManifest:
     reason_counts: Dict[str, int]
     dropped_entities: int
     relational: Optional[RelationalSchema] = None
+    views: Dict[str, VizGraph] = dataclass_field(default_factory=dict)
 
     @property
     def total_entities(self) -> int:
@@ -771,6 +782,19 @@ def _aggregate_service_facts(operation_facts: List[_EdgeFacts]) -> _EdgeFacts:
         detail=f"aggregated from {len(operation_facts)} operation(s): {worst.detail}",
         target_mapping=None,
     )
+
+
+def _viz_graphs(
+    emitter_cls: type[Emitter], files: List[_EmittedFileText], entities: List[ExportPreviewEntity]
+) -> Dict[str, VizGraph]:
+    """The graphs of the target's declared visualization modes, nodes pointed at their entities (MFX-45.4)."""
+    graphs = build_viz_graphs(emitter_cls.viz_modes, [VizFile(path=f.path, text=f.text) for f in files])
+    attach_entity_keys(graphs, [
+        EntityRef(key=e.key, name=e.name, kind=e.entity_kind,
+                  file=e.location.file if e.location else None, line=e.location.line if e.location else None)
+        for e in entities
+    ])
+    return graphs
 
 
 def _default_facts(key: str) -> _EdgeFacts:
@@ -1002,6 +1026,7 @@ def build_export_preview_manifest(
         reason_counts=reason_counts,
         dropped_entities=dropped,
         relational=RelationalSchema.model_validate(emit.relational) if emit.relational else None,
+        views=_viz_graphs(emitter_cls, files, entities),
     )
 
 
@@ -1042,6 +1067,7 @@ def paginate_export_preview_manifest(
         next_cursor=next_cursor,
         truncated=next_cursor is not None or start > 0,
         relational=full.relational,
+        views=dict(full.views),
     )
 
 

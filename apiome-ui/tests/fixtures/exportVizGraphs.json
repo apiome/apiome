@@ -1,0 +1,1136 @@
+{
+  "_comment": "Real export preview manifests captured from apiome-rest for the MFX-45.4 visualization tests and docs screenshots: the Petstore (OpenAPI) as Protocol Buffers, and the order-events AsyncAPI document as AsyncAPI 3 and as xRegistry. Each entry keeps the manifest's entities and views, plus the target descriptor's viz_modes.",
+  "proto3": {
+    "viz_modes": [
+      {
+        "kind": "proto-imports",
+        "label": "Import graph"
+      },
+      {
+        "kind": "service-map",
+        "label": "Service map"
+      }
+    ],
+    "entities": [
+      {
+        "key": "default",
+        "name": "default",
+        "entity_kind": "service",
+        "parent_key": null,
+        "order": 0,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "aggregated from 5 operation(s): operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 25,
+          "pointer": null
+        },
+        "aggregated": true,
+        "reported": true,
+        "native_name": "default",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "DELETE /pets/{petId}",
+        "name": "deletePet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 1,
+        "description": "Delete a pet",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 27,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "deletePet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "GET /pets",
+        "name": "listPets",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 2,
+        "description": "List all pets",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 29,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "listPets",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "GET /pets/{petId}",
+        "name": "getPetById",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 3,
+        "description": "Get a pet by ID",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 31,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "getPetById",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "POST /pets",
+        "name": "createPet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 4,
+        "description": "Create a new pet",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 33,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "createPet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "PUT /pets/{petId}",
+        "name": "updatePet",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 5,
+        "description": "Update a pet by ID",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 35,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "updatePet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category",
+        "name": "Category",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 6,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 5,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Category",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.description",
+        "name": "description",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 7,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 6,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "description",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.id",
+        "name": "id",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 8,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 7,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "id",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Category.name",
+        "name": "name",
+        "entity_kind": "field",
+        "parent_key": "Category",
+        "order": 9,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 8,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "name",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet",
+        "name": "Pet",
+        "entity_kind": "type",
+        "parent_key": null,
+        "order": 10,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "object carried to Protocol Buffers (proto3)",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 11,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "Pet",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.age",
+        "name": "age",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 11,
+        "description": "Age of the pet (must be positive)",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 13,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "age",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.category",
+        "name": "category",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 12,
+        "description": null,
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 14,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "category",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.id",
+        "name": "id",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 13,
+        "description": "Unique identifier for the pet",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 7,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "id",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.name",
+        "name": "name",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 14,
+        "description": "Name of the pet",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce a non-null/required guarantee; the field is emitted without proto3 ``required`` semantics",
+        "target_mapping": "required/non-null \u2192 proto3 field (presence not enforced)",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 8,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "name",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.tag",
+        "name": "tag",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 15,
+        "description": "Optional tag for categorization",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) maps nullable fields to proto3 ``optional`` presence, not JSON nullability",
+        "target_mapping": "nullable \u2192 proto3 optional",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 20,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "tag",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "Pet.weight",
+        "name": "weight",
+        "entity_kind": "field",
+        "parent_key": "Pet",
+        "order": 16,
+        "description": "Weight in kilograms (must be less than 500)",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "Protocol Buffers (proto3) cannot enforce validation constraints; they are demoted to documentation comments",
+        "target_mapping": "constraints \u2192 doc comment",
+        "emitted": true,
+        "location": {
+          "file": "api.proto",
+          "line": 22,
+          "pointer": null
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "weight",
+        "native_id": null,
+        "source_location": null
+      }
+    ],
+    "views": {
+      "proto-imports": {
+        "mode": "proto-imports",
+        "nodes": [
+          {
+            "id": "file:api.proto",
+            "label": "api.proto",
+            "kind": "file",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 1,
+            "entity_key": null
+          },
+          {
+            "id": "file:google/protobuf/empty.proto",
+            "label": "google/protobuf/empty.proto",
+            "kind": "file",
+            "detail": null,
+            "external": true,
+            "file": null,
+            "line": null,
+            "entity_key": null
+          }
+        ],
+        "edges": [
+          {
+            "id": "import:file:api.proto->file:google/protobuf/empty.proto",
+            "source": "file:api.proto",
+            "target": "file:google/protobuf/empty.proto",
+            "kind": "import",
+            "label": null
+          }
+        ]
+      },
+      "service-map": {
+        "mode": "service-map",
+        "nodes": [
+          {
+            "id": "service:default",
+            "label": "default",
+            "kind": "service",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 25,
+            "entity_key": "default"
+          },
+          {
+            "id": "method:default.deletePet",
+            "label": "deletePet",
+            "kind": "method",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 27,
+            "entity_key": "DELETE /pets/{petId}"
+          },
+          {
+            "id": "message:google.protobuf.Empty",
+            "label": "google.protobuf.Empty",
+            "kind": "message",
+            "detail": null,
+            "external": true,
+            "file": null,
+            "line": null,
+            "entity_key": null
+          },
+          {
+            "id": "method:default.listPets",
+            "label": "listPets",
+            "kind": "method",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 29,
+            "entity_key": "GET /pets"
+          },
+          {
+            "id": "method:default.getPetById",
+            "label": "getPetById",
+            "kind": "method",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 31,
+            "entity_key": "GET /pets/{petId}"
+          },
+          {
+            "id": "message:Pet",
+            "label": "Pet",
+            "kind": "message",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 11,
+            "entity_key": "Pet"
+          },
+          {
+            "id": "method:default.createPet",
+            "label": "createPet",
+            "kind": "method",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 33,
+            "entity_key": "POST /pets"
+          },
+          {
+            "id": "method:default.updatePet",
+            "label": "updatePet",
+            "kind": "method",
+            "detail": null,
+            "external": false,
+            "file": "api.proto",
+            "line": 35,
+            "entity_key": "PUT /pets/{petId}"
+          }
+        ],
+        "edges": [
+          {
+            "id": "method:service:default->method:default.deletePet",
+            "source": "service:default",
+            "target": "method:default.deletePet",
+            "kind": "method",
+            "label": null
+          },
+          {
+            "id": "request:method:default.deletePet->message:google.protobuf.Empty",
+            "source": "method:default.deletePet",
+            "target": "message:google.protobuf.Empty",
+            "kind": "request",
+            "label": null
+          },
+          {
+            "id": "response:method:default.deletePet->message:google.protobuf.Empty",
+            "source": "method:default.deletePet",
+            "target": "message:google.protobuf.Empty",
+            "kind": "response",
+            "label": null
+          },
+          {
+            "id": "method:service:default->method:default.listPets",
+            "source": "service:default",
+            "target": "method:default.listPets",
+            "kind": "method",
+            "label": null
+          },
+          {
+            "id": "request:method:default.listPets->message:google.protobuf.Empty",
+            "source": "method:default.listPets",
+            "target": "message:google.protobuf.Empty",
+            "kind": "request",
+            "label": null
+          },
+          {
+            "id": "response:method:default.listPets->message:google.protobuf.Empty",
+            "source": "method:default.listPets",
+            "target": "message:google.protobuf.Empty",
+            "kind": "response",
+            "label": null
+          },
+          {
+            "id": "method:service:default->method:default.getPetById",
+            "source": "service:default",
+            "target": "method:default.getPetById",
+            "kind": "method",
+            "label": null
+          },
+          {
+            "id": "request:method:default.getPetById->message:google.protobuf.Empty",
+            "source": "method:default.getPetById",
+            "target": "message:google.protobuf.Empty",
+            "kind": "request",
+            "label": null
+          },
+          {
+            "id": "response:method:default.getPetById->message:Pet",
+            "source": "method:default.getPetById",
+            "target": "message:Pet",
+            "kind": "response",
+            "label": null
+          },
+          {
+            "id": "method:service:default->method:default.createPet",
+            "source": "service:default",
+            "target": "method:default.createPet",
+            "kind": "method",
+            "label": null
+          },
+          {
+            "id": "request:method:default.createPet->message:Pet",
+            "source": "method:default.createPet",
+            "target": "message:Pet",
+            "kind": "request",
+            "label": null
+          },
+          {
+            "id": "response:method:default.createPet->message:Pet",
+            "source": "method:default.createPet",
+            "target": "message:Pet",
+            "kind": "response",
+            "label": null
+          },
+          {
+            "id": "method:service:default->method:default.updatePet",
+            "source": "service:default",
+            "target": "method:default.updatePet",
+            "kind": "method",
+            "label": null
+          },
+          {
+            "id": "request:method:default.updatePet->message:Pet",
+            "source": "method:default.updatePet",
+            "target": "message:Pet",
+            "kind": "request",
+            "label": null
+          },
+          {
+            "id": "response:method:default.updatePet->message:Pet",
+            "source": "method:default.updatePet",
+            "target": "message:Pet",
+            "kind": "response",
+            "label": null
+          }
+        ]
+      }
+    },
+    "files": [
+      {
+        "path": "api.proto",
+        "text": "syntax = \"proto3\";\n\nimport \"google/protobuf/empty.proto\";\n\nmessage Category {\n  string description = 1;\n  int64 id = 2;\n  string name = 3;\n}\n\nmessage Pet {\n  // Age of the pet (must be positive)\n  int32 age = 1;\n  .Category category = 2;\n  // Unique identifier for the pet\n  int64 id = 3;\n  // Name of the pet\n  string name = 4;\n  // Optional tag for categorization\n  string tag = 5;\n  // Weight in kilograms (must be less than 500)\n  double weight = 6;\n}\n\nservice default {\n  // Delete a pet\n  rpc deletePet (.google.protobuf.Empty) returns (.google.protobuf.Empty);\n  // List all pets\n  rpc listPets (.google.protobuf.Empty) returns (.google.protobuf.Empty);\n  // Get a pet by ID\n  rpc getPetById (.google.protobuf.Empty) returns (.Pet);\n  // Create a new pet\n  rpc createPet (.Pet) returns (.Pet);\n  // Update a pet by ID\n  rpc updatePet (.Pet) returns (.Pet);\n}\n"
+      }
+    ]
+  },
+  "asyncapi": {
+    "viz_modes": [
+      {
+        "kind": "channel-topology",
+        "label": "Channel topology"
+      }
+    ],
+    "entities": [
+      {
+        "key": "default",
+        "name": "default",
+        "entity_kind": "service",
+        "parent_key": null,
+        "order": 0,
+        "description": null,
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "aggregated from 2 operation(s): operation carried to AsyncAPI 3.1",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "asyncapi.json",
+          "line": 51,
+          "pointer": "/channels/orderPlaced/messages/orderPlaced/payload/properties/currency/default"
+        },
+        "aggregated": true,
+        "reported": true,
+        "native_name": "default",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "receiveOrderPlaced",
+        "name": "receiveOrderPlaced",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 1,
+        "description": "Handle a newly placed order.",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to AsyncAPI 3.1",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "asyncapi.json",
+          "line": 106,
+          "pointer": "/operations/receiveOrderPlaced"
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "receiveOrderPlaced",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "receiveOrderShipped",
+        "name": "receiveOrderShipped",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 2,
+        "description": "Handle a shipped order.",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "operation carried to AsyncAPI 3.1",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "asyncapi.json",
+          "line": 118,
+          "pointer": "/operations/receiveOrderShipped"
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "receiveOrderShipped",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "order/placed",
+        "name": "orderPlaced",
+        "entity_kind": "channel",
+        "parent_key": null,
+        "order": 3,
+        "description": "An order was placed by a customer.",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "event channel carried to AsyncAPI 3.1",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "asyncapi.json",
+          "line": 16,
+          "pointer": "/channels/orderPlaced"
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "orderPlaced",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "order/shipped",
+        "name": "orderShipped",
+        "entity_kind": "channel",
+        "parent_key": null,
+        "order": 4,
+        "description": "An order was handed to the carrier.",
+        "deprecated": false,
+        "status": "retained",
+        "reason": null,
+        "severity": "info",
+        "detail": "event channel carried to AsyncAPI 3.1",
+        "target_mapping": null,
+        "emitted": true,
+        "location": {
+          "file": "asyncapi.json",
+          "line": 64,
+          "pointer": "/channels/orderShipped"
+        },
+        "aggregated": false,
+        "reported": true,
+        "native_name": "orderShipped",
+        "native_id": null,
+        "source_location": null
+      }
+    ],
+    "views": {
+      "channel-topology": {
+        "mode": "channel-topology",
+        "nodes": [
+          {
+            "id": "channel:orderPlaced",
+            "label": "orderPlaced",
+            "kind": "channel",
+            "detail": "order/placed",
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": "order/placed"
+          },
+          {
+            "id": "message:orderPlaced/orderPlaced",
+            "label": "orderPlaced",
+            "kind": "message",
+            "detail": null,
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": null
+          },
+          {
+            "id": "channel:orderShipped",
+            "label": "orderShipped",
+            "kind": "channel",
+            "detail": "order/shipped",
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": "order/shipped"
+          },
+          {
+            "id": "message:orderShipped/orderShipped",
+            "label": "orderShipped",
+            "kind": "message",
+            "detail": null,
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": null
+          },
+          {
+            "id": "operation:receiveOrderPlaced",
+            "label": "receiveOrderPlaced",
+            "kind": "operation",
+            "detail": "receive",
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": "receiveOrderPlaced"
+          },
+          {
+            "id": "operation:receiveOrderShipped",
+            "label": "receiveOrderShipped",
+            "kind": "operation",
+            "detail": "receive",
+            "external": false,
+            "file": "asyncapi.json",
+            "line": null,
+            "entity_key": "receiveOrderShipped"
+          }
+        ],
+        "edges": [
+          {
+            "id": "carries:channel:orderPlaced->message:orderPlaced/orderPlaced",
+            "source": "channel:orderPlaced",
+            "target": "message:orderPlaced/orderPlaced",
+            "kind": "carries",
+            "label": null
+          },
+          {
+            "id": "carries:channel:orderShipped->message:orderShipped/orderShipped",
+            "source": "channel:orderShipped",
+            "target": "message:orderShipped/orderShipped",
+            "kind": "carries",
+            "label": null
+          },
+          {
+            "id": "uses:operation:receiveOrderPlaced->channel:orderPlaced",
+            "source": "operation:receiveOrderPlaced",
+            "target": "channel:orderPlaced",
+            "kind": "uses",
+            "label": null
+          },
+          {
+            "id": "receives:operation:receiveOrderPlaced->message:orderPlaced/orderPlaced",
+            "source": "operation:receiveOrderPlaced",
+            "target": "message:orderPlaced/orderPlaced",
+            "kind": "receives",
+            "label": null
+          },
+          {
+            "id": "uses:operation:receiveOrderShipped->channel:orderShipped",
+            "source": "operation:receiveOrderShipped",
+            "target": "channel:orderShipped",
+            "kind": "uses",
+            "label": null
+          },
+          {
+            "id": "receives:operation:receiveOrderShipped->message:orderShipped/orderShipped",
+            "source": "operation:receiveOrderShipped",
+            "target": "message:orderShipped/orderShipped",
+            "kind": "receives",
+            "label": null
+          }
+        ]
+      }
+    },
+    "files": [
+      {
+        "path": "asyncapi.json",
+        "text": "{\n  \"asyncapi\": \"3.1.0\",\n  \"info\": {\n    \"title\": \"Order Service\",\n    \"version\": \"2.0.0\",\n    \"description\": \"Streams order lifecycle events to fulfilment and analytics.\"\n  },\n  \"servers\": {\n    \"production\": {\n      \"host\": \"broker.example.com:9092\",\n      \"protocol\": \"kafka\",\n      \"description\": \"Production Kafka cluster.\"\n    }\n  },\n  \"channels\": {\n    \"orderPlaced\": {\n      \"address\": \"order/placed\",\n      \"description\": \"An order was placed by a customer.\",\n      \"messages\": {\n        \"orderPlaced\": {\n          \"title\": \"Order placed\",\n          \"name\": \"orderPlaced\",\n          \"payload\": {\n            \"type\": \"object\",\n            \"description\": \"Details of a placed order.\",\n            \"required\": [\n              \"orderId\",\n              \"customerId\",\n              \"total\",\n              \"placedAt\"\n            ],\n            \"properties\": {\n              \"orderId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"Unique order identifier.\"\n              },\n              \"customerId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"Customer who placed the order.\"\n              },\n              \"total\": {\n                \"type\": \"number\",\n                \"format\": \"double\",\n                \"description\": \"Order total in the order currency.\"\n              },\n              \"currency\": {\n                \"type\": \"string\",\n                \"description\": \"ISO 4217 currency code.\",\n                \"default\": \"USD\"\n              },\n              \"placedAt\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\",\n                \"description\": \"When the order was placed.\"\n              }\n            }\n          },\n          \"contentType\": \"application/json\"\n        }\n      }\n    },\n    \"orderShipped\": {\n      \"address\": \"order/shipped\",\n      \"description\": \"An order was handed to the carrier.\",\n      \"messages\": {\n        \"orderShipped\": {\n          \"title\": \"Order shipped\",\n          \"name\": \"orderShipped\",\n          \"payload\": {\n            \"type\": \"object\",\n            \"description\": \"Shipment details for an order.\",\n            \"required\": [\n              \"orderId\",\n              \"trackingNumber\",\n              \"shippedAt\"\n            ],\n            \"properties\": {\n              \"orderId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"The order being shipped.\"\n              },\n              \"trackingNumber\": {\n                \"type\": \"string\",\n                \"description\": \"Carrier tracking number.\"\n              },\n              \"carrier\": {\n                \"type\": \"string\",\n                \"description\": \"Shipping carrier name.\"\n              },\n              \"shippedAt\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\",\n                \"description\": \"When the shipment left the warehouse.\"\n              }\n            }\n          },\n          \"contentType\": \"application/json\"\n        }\n      }\n    }\n  },\n  \"operations\": {\n    \"receiveOrderPlaced\": {\n      \"action\": \"receive\",\n      \"channel\": {\n        \"$ref\": \"#/channels/orderPlaced\"\n      },\n      \"messages\": [\n        {\n          \"$ref\": \"#/channels/orderPlaced/messages/orderPlaced\"\n        }\n      ],\n      \"description\": \"Handle a newly placed order.\"\n    },\n    \"receiveOrderShipped\": {\n      \"action\": \"receive\",\n      \"channel\": {\n        \"$ref\": \"#/channels/orderShipped\"\n      },\n      \"messages\": [\n        {\n          \"$ref\": \"#/channels/orderShipped/messages/orderShipped\"\n        }\n      ],\n      \"description\": \"Handle a shipped order.\"\n    }\n  }\n}"
+      }
+    ]
+  },
+  "xregistry": {
+    "viz_modes": [
+      {
+        "kind": "channel-topology",
+        "label": "Channel topology"
+      }
+    ],
+    "entities": [
+      {
+        "key": "default",
+        "name": "default",
+        "entity_kind": "service",
+        "parent_key": null,
+        "order": 0,
+        "description": null,
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "aggregated from 2 operation(s): xRegistry: the message is keyed by its message group and id, so 'receiveOrderPlaced' reads back as 'default.receiveOrderPlaced'",
+        "target_mapping": null,
+        "emitted": false,
+        "location": null,
+        "aggregated": true,
+        "reported": true,
+        "native_name": "default",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "receiveOrderPlaced",
+        "name": "receiveOrderPlaced",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 1,
+        "description": "Handle a newly placed order.",
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "xRegistry: the message is keyed by its message group and id, so 'receiveOrderPlaced' reads back as 'default.receiveOrderPlaced'",
+        "target_mapping": "operation key \u2192 default.receiveOrderPlaced",
+        "emitted": false,
+        "location": null,
+        "aggregated": false,
+        "reported": true,
+        "native_name": "receiveOrderPlaced",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "receiveOrderShipped",
+        "name": "receiveOrderShipped",
+        "entity_kind": "operation",
+        "parent_key": "default",
+        "order": 2,
+        "description": "Handle a shipped order.",
+        "deprecated": false,
+        "status": "dropped",
+        "reason": "destination_unsupported",
+        "severity": "info",
+        "detail": "xRegistry: the message is keyed by its message group and id, so 'receiveOrderShipped' reads back as 'default.receiveOrderShipped'",
+        "target_mapping": "operation key \u2192 default.receiveOrderShipped",
+        "emitted": false,
+        "location": null,
+        "aggregated": false,
+        "reported": true,
+        "native_name": "receiveOrderShipped",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "order/placed",
+        "name": "orderPlaced",
+        "entity_kind": "channel",
+        "parent_key": null,
+        "order": 3,
+        "description": "An order was placed by a customer.",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "xRegistry: channel 'order/placed' is re-read from its messages' CloudEvents type; its protocol, bindings, parameters and description are not written",
+        "target_mapping": "channel \u2192 CloudEvents type",
+        "emitted": true,
+        "location": null,
+        "aggregated": false,
+        "reported": true,
+        "native_name": "orderPlaced",
+        "native_id": null,
+        "source_location": null
+      },
+      {
+        "key": "order/shipped",
+        "name": "orderShipped",
+        "entity_kind": "channel",
+        "parent_key": null,
+        "order": 4,
+        "description": "An order was handed to the carrier.",
+        "deprecated": false,
+        "status": "approximated",
+        "reason": "destination_unsupported",
+        "severity": "warn",
+        "detail": "xRegistry: channel 'order/shipped' is re-read from its messages' CloudEvents type; its protocol, bindings, parameters and description are not written",
+        "target_mapping": "channel \u2192 CloudEvents type",
+        "emitted": true,
+        "location": null,
+        "aggregated": false,
+        "reported": true,
+        "native_name": "orderShipped",
+        "native_id": null,
+        "source_location": null
+      }
+    ],
+    "views": {
+      "channel-topology": {
+        "mode": "channel-topology",
+        "nodes": [
+          {
+            "id": "group:default",
+            "label": "default",
+            "kind": "message-group",
+            "detail": "CloudEvents/1.0",
+            "external": false,
+            "file": "order-service.xregistry.json",
+            "line": null,
+            "entity_key": "default"
+          },
+          {
+            "id": "message:default/receiveOrderPlaced",
+            "label": "orderPlaced",
+            "kind": "message",
+            "detail": "receiveOrderPlaced",
+            "external": false,
+            "file": "order-service.xregistry.json",
+            "line": null,
+            "entity_key": "receiveOrderPlaced"
+          },
+          {
+            "id": "type:order/placed",
+            "label": "order/placed",
+            "kind": "event-type",
+            "detail": null,
+            "external": false,
+            "file": null,
+            "line": null,
+            "entity_key": null
+          },
+          {
+            "id": "message:default/receiveOrderShipped",
+            "label": "orderShipped",
+            "kind": "message",
+            "detail": "receiveOrderShipped",
+            "external": false,
+            "file": "order-service.xregistry.json",
+            "line": null,
+            "entity_key": "receiveOrderShipped"
+          },
+          {
+            "id": "type:order/shipped",
+            "label": "order/shipped",
+            "kind": "event-type",
+            "detail": null,
+            "external": false,
+            "file": null,
+            "line": null,
+            "entity_key": null
+          }
+        ],
+        "edges": [
+          {
+            "id": "contains:group:default->message:default/receiveOrderPlaced",
+            "source": "group:default",
+            "target": "message:default/receiveOrderPlaced",
+            "kind": "contains",
+            "label": null
+          },
+          {
+            "id": "typed:message:default/receiveOrderPlaced->type:order/placed",
+            "source": "message:default/receiveOrderPlaced",
+            "target": "type:order/placed",
+            "kind": "typed",
+            "label": null
+          },
+          {
+            "id": "contains:group:default->message:default/receiveOrderShipped",
+            "source": "group:default",
+            "target": "message:default/receiveOrderShipped",
+            "kind": "contains",
+            "label": null
+          },
+          {
+            "id": "typed:message:default/receiveOrderShipped->type:order/shipped",
+            "source": "message:default/receiveOrderShipped",
+            "target": "type:order/shipped",
+            "kind": "typed",
+            "label": null
+          }
+        ]
+      }
+    },
+    "files": [
+      {
+        "path": "order-service.xregistry.json",
+        "text": "{\n  \"specversion\": \"1.0-rc1\",\n  \"registryid\": \"order-service\",\n  \"name\": \"Order Service\",\n  \"description\": \"Streams order lifecycle events to fulfilment and analytics.\",\n  \"messagegroups\": {\n    \"default\": {\n      \"messagegroupid\": \"default\",\n      \"envelope\": \"CloudEvents/1.0\",\n      \"messages\": {\n        \"receiveOrderPlaced\": {\n          \"messageid\": \"receiveOrderPlaced\",\n          \"name\": \"orderPlaced\",\n          \"description\": \"Handle a newly placed order.\",\n          \"envelope\": \"CloudEvents/1.0\",\n          \"envelopemetadata\": {\n            \"type\": {\n              \"value\": \"order/placed\"\n            },\n            \"source\": {\n              \"value\": \"/order-service\"\n            }\n          },\n          \"datacontenttype\": \"application/json\",\n          \"dataschemaformat\": \"JsonSchema/draft/2020-12\",\n          \"dataschema\": {\n            \"type\": \"object\",\n            \"description\": \"Details of a placed order.\",\n            \"required\": [\n              \"orderId\",\n              \"customerId\",\n              \"total\",\n              \"placedAt\"\n            ],\n            \"properties\": {\n              \"orderId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"Unique order identifier.\"\n              },\n              \"customerId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"Customer who placed the order.\"\n              },\n              \"total\": {\n                \"type\": \"number\",\n                \"format\": \"double\",\n                \"description\": \"Order total in the order currency.\"\n              },\n              \"currency\": {\n                \"type\": \"string\",\n                \"description\": \"ISO 4217 currency code.\",\n                \"default\": \"USD\"\n              },\n              \"placedAt\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\",\n                \"description\": \"When the order was placed.\"\n              }\n            }\n          }\n        },\n        \"receiveOrderShipped\": {\n          \"messageid\": \"receiveOrderShipped\",\n          \"name\": \"orderShipped\",\n          \"description\": \"Handle a shipped order.\",\n          \"envelope\": \"CloudEvents/1.0\",\n          \"envelopemetadata\": {\n            \"type\": {\n              \"value\": \"order/shipped\"\n            },\n            \"source\": {\n              \"value\": \"/order-service\"\n            }\n          },\n          \"datacontenttype\": \"application/json\",\n          \"dataschemaformat\": \"JsonSchema/draft/2020-12\",\n          \"dataschema\": {\n            \"type\": \"object\",\n            \"description\": \"Shipment details for an order.\",\n            \"required\": [\n              \"orderId\",\n              \"trackingNumber\",\n              \"shippedAt\"\n            ],\n            \"properties\": {\n              \"orderId\": {\n                \"type\": \"string\",\n                \"format\": \"uuid\",\n                \"description\": \"The order being shipped.\"\n              },\n              \"trackingNumber\": {\n                \"type\": \"string\",\n                \"description\": \"Carrier tracking number.\"\n              },\n              \"carrier\": {\n                \"type\": \"string\",\n                \"description\": \"Shipping carrier name.\"\n              },\n              \"shippedAt\": {\n                \"type\": \"string\",\n                \"format\": \"date-time\",\n                \"description\": \"When the shipment left the warehouse.\"\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n}\n"
+      }
+    ]
+  }
+}

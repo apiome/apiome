@@ -14,7 +14,8 @@
         "needs_toolchain": false,
         "available": false,
         "unavailable_reason": "Arazzo export needs at least one operation to sequence into a workflow; this source has none (only types or events).",
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": []
       },
       "capability_profile": {
         "operations": true,

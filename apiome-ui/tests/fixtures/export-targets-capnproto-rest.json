@@ -26,7 +26,8 @@
             "available": false,
             "unavailable_reason": "The capnp toolchain is not installed on this server."
           }
-        ]
+        ],
+        "viz_modes": []
       },
       "capability_profile": {
         "operations": true,

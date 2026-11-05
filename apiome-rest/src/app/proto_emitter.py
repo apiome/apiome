@@ -69,8 +69,6 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
-from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
-from .lossiness import LossinessSeverity
 from .emitter import (
     CapabilityProfile,
     EmitOptions,
@@ -83,8 +81,9 @@ from .emitter import (
     ProvenanceTracker,
 )
 from .export_test_tools import toolchain_check
+from .export_viz_modes import ExportVizModeKind
+from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .field_identity_store import FieldNumberAllocator
-from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY,
     ENUM_CLOSED_EXTRA_KEY,
@@ -93,6 +92,7 @@ from .proto_editions import (
     FIELD_PRESENCE_EXTRA_KEY,
     FIELD_PRESENCE_LEGACY_REQUIRED,
 )
+from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 
 __all__ = [
     "ProtoEmitOptions",
@@ -483,6 +483,8 @@ class ProtoEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = True
     options_model = ProtoEmitOptions
+    #: How the Review step can draw the output besides its text (MFX-45.4).
+    viz_modes = (ExportVizModeKind.PROTO_IMPORTS, ExportVizModeKind.SERVICE_MAP)
     #: MFX-44.1: the bundle's own toolchain checks.
     test_tools = (toolchain_check("buf", "lint"), toolchain_check("buf", "build"))
 

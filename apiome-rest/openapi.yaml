@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.524.0
+  version: 1.525.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -102088,6 +102088,16 @@ components:
             checks. Server-side tools say whether they are available on this server, and
             why not.'
           maxItems: 1000
+        viz_modes:
+          items:
+            $ref: '#/components/schemas/ExportVizMode'
+          type: array
+          title: Viz Modes
+          description: 'The ways the Review step can draw this target''s output besides its
+            text (MFX-45.4): `erd` (tables), `proto-imports` (files and imports), `service-map`
+            (services → methods → messages), `channel-topology` (channels ↔ messages ↔ operations).
+            Empty for a target drawn as text only.'
+          maxItems: 1000
       type: object
       required:
       - key
@@ -102100,6 +102110,32 @@ components:
       - needs_toolchain
       title: EmitterDescriptor
       description: Self-description of an export target for UI/CLI/REST enumeration (MFX-1.1).
+    ExportVizMode:
+      properties:
+        kind:
+          $ref: '#/components/schemas/ExportVizModeKind'
+          description: The mode, e.g. ``proto-imports`` or ``channel-topology``.
+        label:
+          type: string
+          title: Label
+          description: The view switch label, e.g. ``Import graph``.
+          example: example
+      type: object
+      required:
+      - kind
+      - label
+      title: ExportVizMode
+      description: One visualization mode of a target, as ``GET /export/targets`` reports
+        it.
+    ExportVizModeKind:
+      type: string
+      enum:
+      - erd
+      - proto-imports
+      - service-map
+      - channel-topology
+      title: ExportVizModeKind
+      description: A way to draw an emitted artifact.
     EmpiricalLoss:
       properties:
         entity:
@@ -106198,6 +106234,16 @@ components:
             columns, keys and foreign keys, the made-up ones marked `synthesized` — which
             the Review step draws as an ERD (MFX-45.3). Whole on every page (bounded by the
             table count); null for every other target.
+        views:
+          additionalProperties:
+            $ref: '#/components/schemas/VizGraph'
+          type: object
+          title: Views
+          description: 'The graph of each visualization mode the target declares (MFX-45.4),
+            keyed by mode: `proto-imports` (files and imports), `service-map` (services →
+            methods → messages), `channel-topology` (channels ↔ messages ↔ operations). Built
+            from the emitted files; a node that stands for a canonical construct carries its
+            `entity_key`. Whole on every page; empty for a target with no graph mode.'
       additionalProperties: false
       type: object
       required:
@@ -106219,6 +106265,138 @@ components:
         the **full** manifest; ``entities`` carries the requested page. ``truncated``
 
         states whether this response omits rows — truncation is declared, never silent.'
+    VizEdge:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable edge id within the graph.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        source:
+          type: string
+          title: Source
+          description: The source node id.
+          example: human
+        target:
+          type: string
+          title: Target
+          description: The target node id.
+          example: example
+        kind:
+          type: string
+          title: Kind
+          description: '`import`, `method`, `request`, `response`, `carries` (channel
+            → message), `uses` (operation → channel), `sends` / `receives` (operation
+            → message), `contains` (group → message) or `typed` (message → event type).'
+          example: example
+        label:
+          anyOf:
+          - type: string
+            description: Viz Edge schema.
+          - type: 'null'
+            description: Viz Edge schema.
+          title: Label
+          description: A short edge label, e.g. `stream`.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - source
+      - target
+      - kind
+      title: VizEdge
+      description: One edge of a mode's graph.
+    VizGraph:
+      properties:
+        mode:
+          $ref: '#/components/schemas/ExportVizModeKind'
+          description: The mode this graph is for.
+        nodes:
+          items:
+            $ref: '#/components/schemas/VizNode'
+          type: array
+          title: Nodes
+          description: The nodes, in a stable order.
+          maxItems: 1000
+        edges:
+          items:
+            $ref: '#/components/schemas/VizEdge'
+          type: array
+          title: Edges
+          description: The edges, in a stable order.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - mode
+      title: VizGraph
+      description: The graph one mode draws.
+    VizNode:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable node id within the graph, e.g. ``file:api.proto``.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        label:
+          type: string
+          title: Label
+          description: What the node is called in the artifact.
+          example: example
+        kind:
+          type: string
+          title: Kind
+          description: '`file`, `service`, `method`, `message`, `channel`, `operation`,
+            `message-group` or `event-type`.'
+          example: example
+        detail:
+          anyOf:
+          - type: string
+            description: Viz Node schema.
+          - type: 'null'
+            description: Viz Node schema.
+          title: Detail
+          description: 'A short fact shown under the label: a package, an address, an
+            action.'
+        external:
+          type: boolean
+          title: External
+          description: True for something the artifact references but does not hold (a
+            well-known import).
+          default: false
+          example: false
+        file:
+          anyOf:
+          - type: string
+            description: Viz Node schema.
+          - type: 'null'
+            description: Viz Node schema.
+          title: File
+          description: The emitted file the node is declared in.
+        line:
+          anyOf:
+          - type: integer
+            description: Viz Node schema.
+          - type: 'null'
+            description: Viz Node schema.
+          title: Line
+          description: The 1-based line it is declared on, when known.
+        entity_key:
+          anyOf:
+          - type: string
+            description: Viz Node schema.
+          - type: 'null'
+            description: Viz Node schema.
+          title: Entity Key
+          description: The canonical construct the node stands for, when there is one.
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - label
+      - kind
+      title: VizNode
+      description: One node of a mode's graph.
     RelationalColumn:
       properties:
         name:

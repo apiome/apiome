@@ -21,6 +21,7 @@
 import type { editor } from 'monaco-editor';
 import { normalizeBundlePath } from './exportBundle';
 import type { RelationalSchema } from './exportErd';
+import type { VizGraph } from './exportViz';
 
 /** The shared CPDO-1.3 projection statuses an entity row can carry. */
 export type ExportEntityStatus =
@@ -118,6 +119,11 @@ export interface ExportPreviewManifestPage {
    * Review step's ERD draws (MFX-45.3). Absent or null for every other target.
    */
   relational?: RelationalSchema | null;
+  /**
+   * The graph of each visualization mode the target declares (MFX-45.4), keyed by mode — an import
+   * graph, a service map, a channel topology. Absent or empty for a target with no graph mode.
+   */
+  views?: Record<string, VizGraph> | null;
 }
 
 /** The endpoint's response (mirror of `ExportPreviewManifestResponse`). */

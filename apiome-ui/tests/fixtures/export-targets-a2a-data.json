@@ -14,7 +14,8 @@
         "needs_toolchain": false,
         "available": false,
         "unavailable_reason": "A2A Agent Card export needs an agent or at least one operation that is not an event; this source has neither.",
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": []
       },
       "capability_profile": {
         "operations": true,

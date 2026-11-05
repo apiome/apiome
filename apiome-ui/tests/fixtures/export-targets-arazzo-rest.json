@@ -14,7 +14,8 @@
         "needs_toolchain": false,
         "available": true,
         "unavailable_reason": null,
-        "test_tools": []
+        "test_tools": [],
+        "viz_modes": []
       },
       "capability_profile": {
         "operations": true,

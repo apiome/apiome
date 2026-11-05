@@ -102,6 +102,7 @@ from .emitter import (
     SchemaEmitter,
 )
 from .export_test_tools import ExportTestToolKind, test_tool, toolchain_check
+from .export_viz_modes import ExportVizModeKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .inference_provenance import without_provenance_stamp
 from .lossiness import LossinessReport, LossinessSeverity
@@ -330,6 +331,8 @@ class AsyncApiEmitter(Emitter, register=True):
     paradigm = ApiParadigm.EVENT
     multi_file = False
     options_model = AsyncApiEmitOptions
+    #: How the Review step can draw the output besides its text (MFX-45.4).
+    viz_modes = (ExportVizModeKind.CHANNEL_TOPOLOGY,)
     #: MFX-44.1: the rendered document and the AsyncAPI CLI's validation.
     test_tools = (test_tool(ExportTestToolKind.ASYNCAPI_RENDER), toolchain_check("asyncapi", "validate"))
 

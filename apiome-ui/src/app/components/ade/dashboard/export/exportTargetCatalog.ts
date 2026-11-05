@@ -12,6 +12,7 @@
  * `../importSourceCatalog.ts`, whose icon resolver it reuses.
  */
 
+import type { ExportVizMode } from './exportViz';
 import type { LucideIcon } from 'lucide-react';
 import type { StatusTone } from '@/app/components/ui/statusVocabulary';
 import {
@@ -52,6 +53,8 @@ export interface ExportTargetDescriptor {
    * Absent on an older REST.
    */
   test_tools?: ExportTestTool[];
+  /** The pictures the Review step can draw the output as besides its text (MFX-45.4). */
+  viz_modes?: ExportVizMode[];
 }
 
 /** The cheap per-target fidelity summary for one source (mirrors Python `TargetFidelity`, MFX-2.5). */
