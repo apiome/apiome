@@ -1,0 +1,23 @@
+---
+slug: export-studio-states
+title: Export studio says what's happening, even when nothing is
+description: "Designed loading, empty and error states in Export studio, and privacy-safe usage telemetry."
+authors: [apiome]
+---
+
+Every step of Export studio now explains itself when there's nothing to show yet or something didn't
+load, and points to the way forward. See
+[When something is missing or fails](/ship/export-studio#when-something-is-missing-or-fails).
+
+{/* truncate */}
+
+- **Target:** *Loading export targets…*, *No export targets for this source*, *Choose a target to
+  continue*, and **Retry** when the targets couldn't be loaded.
+- **When export targets can't be reached:** the studio and the Export dialog keep the list this source
+  loaded earlier, say how old it is and that its fidelity may be out of date, and offer **Retry**.
+- **Verify, Review, Test drive and pictures:** no more blank panels. A file that couldn't be opened gets
+  **Try again**; a test-drive tab or a picture with nothing to show says so.
+- **History:** an opened run whose reports couldn't load has its own **Try again**.
+- **Usage telemetry:** Export studio counts a few anonymous events — the target chosen, verify verdicts,
+  the lossy acknowledgement, test drive and pictures — never names, sources, files or option values.
+  See [What Export studio records](/ship/export-studio#what-export-studio-records).

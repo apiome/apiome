@@ -127,6 +127,7 @@ from .lossiness import LossinessSeverity
 from .projection_manifest_cache import build_manifest_cache_key, manifest_cache
 from .projection_telemetry import ALLOWED_METRIC_KINDS, ALLOWED_REASON_CATEGORIES, projection_telemetry
 from .quality_rank_telemetry import observe_delivery
+from .studio_telemetry import StudioMetricRequest, StudioMetricResponse, normalize_event, studio_telemetry
 from .transcoding_guards import TranscodeGuard, TranscodeGuardError, classify_transcode
 
 router = APIRouter(prefix="/v1/export", tags=["export"])
@@ -961,6 +962,45 @@ async def record_projection_metric(
         page_total=request.page_total,
     )
     return ExportProjectionMetricResponse(kind=request.kind)
+
+
+@router.post(
+    "/{tenant_slug}/studio-metrics",
+    response_model=StudioMetricResponse,
+    summary="Record a privacy-safe Export studio usage event",
+    description=(
+        "Count one Export studio (or Export dialog) usage event and emit a structured ``export.studio`` "
+        "log line (MFX-46.5): a target chosen, a verify verdict, the lossy acknowledgement asked for or "
+        "given, a test-drive tool opened or run, a visualization shown. Every field is a controlled "
+        "vocabulary — never an artifact name, source, file or option value."
+    ),
+)
+async def record_studio_metric(
+    tenant_slug: str,
+    request: StudioMetricRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StudioMetricResponse:
+    """Record one privacy-safe Export studio usage event.
+
+    Args:
+        tenant_slug: Tenant slug (scopes the call; not part of any counter key by design).
+        request: The whitelisted event.
+        auth_data: Authenticated tenant context (JWT or API key).
+
+    Returns:
+        ``{"recorded": true, "kind": ...}``.
+
+    Raises:
+        HTTPException: 422 when the kind's field is missing, the target is not a registered export
+            target, or a lossy event names a verdict that asks for no acknowledgement.
+    """
+    _ = tenant_slug, auth_data  # auth required; the tenant is not folded into metric keys
+    try:
+        event = normalize_event(request)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    studio_telemetry.record(event)
+    return StudioMetricResponse(kind=request.kind)
 
 
 @router.post(

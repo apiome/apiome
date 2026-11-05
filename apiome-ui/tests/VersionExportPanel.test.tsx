@@ -104,6 +104,12 @@ function studioParams(href: string): URLSearchParams {
   return new URLSearchParams(href.slice(href.indexOf('?')));
 }
 
+
+// MFX-46.5: useExportTargets keeps each source's last list for the session; start every test without one.
+beforeEach(() => {
+  window.sessionStorage.clear();
+});
+
 describe('VersionExportPanel — fidelity pre-summary (MFX-6.5)', () => {
   beforeEach(() => {
     localStorage.clear();

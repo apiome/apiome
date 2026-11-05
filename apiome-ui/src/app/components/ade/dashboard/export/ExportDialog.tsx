@@ -44,6 +44,8 @@ import {
 import { MultiTargetChecklist } from './MultiTargetChecklist';
 import { MultiExportRun } from './MultiExportRun';
 import { ExportPresetPicker, SavePresetForm } from '../../export-studio/presets/ExportPresetControls';
+import { StaleTargetsNotice } from './StaleTargetsNotice';
+import { trackStudioEvent } from './studioTelemetry';
 import {
   applyPresetToStudio,
   presetProfileIds,
@@ -210,6 +212,7 @@ export function ExportDialog({
     error: targetsError,
     code: targetsErrorCode,
     retry: retryTargets,
+    stale: staleTargets,
   } = useExportTargets(open, artifact, version);
   // IXH-2.4: the same readiness ranking the Studio uses, so the dialog's grid orders by expected
   // outcome and surfaces a policy-blocked target's reason before a job is submitted.
@@ -319,6 +322,8 @@ export function ExportDialog({
     if (!card.available) return;
     setSelectedKey(card.key);
     setError(null);
+    // MFX-46.5: which targets people choose, from the dialog.
+    void trackStudioEvent({ kind: 'target_chosen', target: card.key, mode: 'single' }, 'dialog');
     // A different target is a different conversion — its loss must be re-acknowledged.
     setAcknowledged(false);
     const defaults: Record<string, unknown> = {};
@@ -551,6 +556,12 @@ export function ExportDialog({
             onRetry={retryTargets}
             data-testid="export-dialog-targets-error"
           />
+        ) : staleTargets ? (
+          // MFX-46.5: the targets service is unreachable — keep this source's last list, like the
+          // import dialog keeps its built-in cards.
+          <div className="mt-3 shrink-0">
+            <StaleTargetsNotice savedAt={staleTargets.savedAt} onRetry={retryTargets} />
+          </div>
         ) : null}
 
         <div

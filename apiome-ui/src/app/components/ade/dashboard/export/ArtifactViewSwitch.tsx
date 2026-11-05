@@ -11,7 +11,9 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
+import { EmptyState } from '../../../ui/EmptyState';
 import { ExportErdView } from './ExportErdView';
+import { isStudioViz, trackStudioEvent } from './studioTelemetry';
 import { ExportVizGraphView } from './ExportVizGraphView';
 import type { RelationalSchema } from './exportErd';
 import {
@@ -72,6 +74,8 @@ export function useArtifactView({ targetKey, vizModes, relational, views }: Arti
     (view: ArtifactView) => {
       setChosen({ target: targetKey ?? null, modeKey, view, picked: true });
       saveVizChoice(targetKey, view);
+      // MFX-46.5: which pictures people use (the text view is not counted).
+      if (isStudioViz(view)) void trackStudioEvent({ kind: 'viz_used', view });
     },
     [targetKey, modeKey],
   );
@@ -144,7 +148,17 @@ export function ArtifactVizPanel({
   className?: string;
 }) {
   if (view === 'text') return null;
+  // MFX-46.5: a chosen picture with nothing to draw says so rather than leaving a blank panel.
+  const nothing = (
+    <EmptyState
+      variant="compact"
+      title="Nothing to draw"
+      description="Nothing here for this view. Switch to Text to read the file."
+      data-testid="artifact-viz-empty"
+    />
+  );
   if (view === 'erd') {
+    if (relational && relational.tables.length === 0) return nothing;
     return relational ? (
       <ExportErdView
         schema={relational}
@@ -152,10 +166,12 @@ export function ArtifactVizPanel({
         onSelectEntityKey={onSelectEntityKey}
         className={className}
       />
-    ) : null;
+    ) : (
+      nothing
+    );
   }
   const graph = views?.[view];
-  if (!graph) return null;
+  if (!graph || graph.nodes.length === 0) return nothing;
   const title = modes.find((mode) => mode.kind === view)?.label ?? view;
   return (
     <ExportVizGraphView

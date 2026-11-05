@@ -341,3 +341,26 @@ describe('the docs fixtures', () => {
     }
   });
 });
+
+describe('the opened run when its reports cannot load (MFX-46.5)', () => {
+  it('says so and reads the run again on Retry', async () => {
+    mockFetch();
+    const answer = global.fetch as jest.Mock;
+    let failed = false;
+    global.fetch = jest.fn((url: string, init?: RequestInit) => {
+      if (String(url) === '/api/export/runs/job-1' && !failed) {
+        failed = true;
+        return Promise.resolve({ ok: false, status: 503, json: async () => ({ success: false, error: 'The run store is down.' }) });
+      }
+      return answer(url, init);
+    }) as unknown as typeof fetch;
+    await renderHistory();
+    fireEvent.click(screen.getByText('Petstore @ 1.4.0'));
+    const drawer = await screen.findByTestId('export-history-detail');
+    const problem = await within(drawer).findByTestId('export-history-detail-error');
+    expect(problem).toHaveTextContent("This run's reports could not be loaded");
+    fireEvent.click(within(problem).getByRole('button', { name: /try again|retry/i }));
+    await within(drawer).findByTestId('export-history-target-report');
+    expect(within(drawer).queryByTestId('export-history-detail-error')).not.toBeInTheDocument();
+  });
+});

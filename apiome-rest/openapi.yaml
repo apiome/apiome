@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.528.0
+  version: 1.529.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -62191,6 +62191,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for recordaprivacysafeprojectionmetricresponse422.
+  /v1/export/{tenant_slug}/studio-metrics:
+    post:
+      tags:
+      - export
+      summary: Record a privacy-safe Export studio usage event
+      description: 'Count one Export studio (or Export dialog) usage event and emit
+        a structured ``export.studio`` log line (MFX-46.5): a target chosen, a verify
+        verdict, the lossy acknowledgement asked for or given, a test-drive tool opened
+        or run, a visualization shown. Every field is a controlled vocabulary — never
+        an artifact name, source, file or option value.'
+      operationId: record_studio_metric_v1_export__tenant_slug__studio_metrics_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordaprivacysafe Exportstudiousageeventauthorization schema.
+          - type: 'null'
+            description: Recordaprivacysafe Exportstudiousageeventauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Recordaprivacysafe Exportstudiousageevent Xapikey schema.
+          - type: 'null'
+            description: Recordaprivacysafe Exportstudiousageevent Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudioMetricRequest'
+              description: Request body for recordaprivacysafe exportstudiousageeventrequest.
+        description: Request body for record a privacy-safe export studio usage event.
+      responses:
+        '200':
+          description: Successful response for record a privacy-safe export studio usage
+            event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudioMetricResponse'
+                description: Response payload for recordaprivacysafe exportstudiousageeventresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for recordaprivacysafe exportstudiousageeventresponse422.
   /v1/export/{tenant_slug}/projection-evidence:
     post:
       tags:
@@ -169281,6 +169350,137 @@ components:
       - accessKeyHint
       title: StorageCredentialModel
       description: A stored bucket credential, described without its secrets.
+    StudioMetricRequest:
+      properties:
+        kind:
+          type: string
+          enum:
+          - target_chosen
+          - verify_verdict
+          - lossy_prompt_shown
+          - lossy_acknowledged
+          - test_drive_used
+          - viz_used
+          title: Kind
+          description: What happened (whitelist).
+          example: target_chosen
+        surface:
+          type: string
+          enum:
+          - studio
+          - dialog
+          title: Surface
+          description: Export studio or the Export dialog.
+          default: studio
+          example: studio
+        target:
+          anyOf:
+          - type: string
+            maxLength: 64
+            pattern: ^[a-z0-9][a-z0-9._+-]*$
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: Target
+          description: '`target_chosen`: the chosen export target (a registered format
+            or key).'
+        mode:
+          anyOf:
+          - type: string
+            enum:
+            - single
+            - multi
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: Mode
+          description: '`target_chosen`: one target, or one of several.'
+        verdict:
+          anyOf:
+          - type: string
+            enum:
+            - clean
+            - lossy
+            - severe
+            - invalid
+            - error
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: Verdict
+          description: '`verify_verdict` / `lossy_*`: the verification''s verdict.'
+        tool:
+          anyOf:
+          - type: string
+            enum:
+            - swagger-ui
+            - redoc
+            - graphiql
+            - asyncapi-render
+            - mock-server
+            - toolchain
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: Tool
+          description: '`test_drive_used`: the test-drive tool.'
+        action:
+          anyOf:
+          - type: string
+            enum:
+            - open
+            - run
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: Action
+          description: '`test_drive_used`: the tool was opened, or run.'
+        view:
+          anyOf:
+          - type: string
+            enum:
+            - erd
+            - proto-imports
+            - service-map
+            - channel-topology
+            - fidelity-overlay
+            - fidelity-treemap
+            description: Request body for studio metric.
+          - type: 'null'
+            description: Request body for studio metric.
+          title: View
+          description: '`viz_used`: the visualization shown.'
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: StudioMetricRequest
+      description: 'One Export studio usage event: ``POST /v1/export/{tenant}/studio-metrics``.
+
+
+        Unknown fields are refused, every value is a controlled vocabulary, and each kind
+        names the one
+
+        field it needs (``target`` / ``verdict`` / ``tool`` / ``view``).'
+    StudioMetricResponse:
+      properties:
+        recorded:
+          type: boolean
+          title: Recorded
+          default: true
+          description: Recorded.
+          example: false
+        kind:
+          type: string
+          title: Kind
+          description: Kind.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - kind
+      title: StudioMetricResponse
+      description: Acknowledgement that a usage event was recorded.
     WebhookDeliveryRequest:
       properties:
         url:

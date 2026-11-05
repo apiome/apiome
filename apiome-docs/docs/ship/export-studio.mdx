@@ -494,6 +494,48 @@ to request a waiver.
 
 <Screenshot id="export-studio-gate" alt="Delivery blocked by quality policy: conversion fidelity and source quality reasons, and the waiver request" />
 
+## When something is missing or fails
+
+Every step says what is going on when there is nothing to show yet, or when something could not
+load, and offers the way forward:
+
+| Where | What you see | What to do |
+| --- | --- | --- |
+| **Target** | *Loading export targets…* while the targets are measured for this source. | Wait a moment. |
+| **Target** | *Choose a target to continue.* | Click a target card (or tick **Several targets**). |
+| **Target** | *No export targets for this source* | Check that the source imported completely, or export another version. |
+| **Target** | The targets couldn't be loaded, with **Retry**. | **Click “Retry”**. A deleted version or a source you can't see says so instead. |
+| **Target** | *Export targets couldn't be reached. Showing the list loaded at …; fidelity may be out of date.* | Carry on with the list, or **click “Retry”**. **Verify** and **Generate** still need the server. |
+| **Verify** | *Choose a target to verify* | **Click “Choose a target”**. |
+| **Verify** | *Run all three checks…* — nothing has been verified yet. | **Click “Run verification”**. If it fails, **“Try again”**. |
+| **Review** | *The generated file could not be opened* | **Click “Try again”** to fetch it again; the export itself is done. |
+| **Test drive** | *Nothing to test drive yet* | Generate the export first. A tool this server can't run is greyed out, with the reason. |
+| **Test drive** | *Drawing the viewer…* | Wait while the sandboxed viewer starts; a document it can't read says why. |
+| **Pictures** | *Nothing to draw* | This export has nothing for that view; switch to **Text**. |
+| **History** | *No exports yet*, or *The export history could not be loaded* with **Try again**. | Export something, or **click “Try again”**. An opened run whose reports can't load has its own **Try again**. |
+
+The Export dialog keeps the last list too when the targets can't be reached, like the import
+dialog keeps its built-in sources.
+
+<Screenshot id="export-studio-targets-stale" alt="The Target step while export targets can't be reached: a warning that the list loaded at 09:30 is shown and its fidelity may be out of date, a Retry button, and the target cards below" />
+
+## What Export studio records
+
+To see which parts of the studio are used, Export studio records a few events. They are counted on
+the server and written to its log as `export.studio`:
+
+| Event | Records |
+| --- | --- |
+| A target chosen | The target's format, and whether it was one of several. |
+| Verify finished | Its verdict: clean, lossy, severe, invalid, or that it could not run. |
+| The lossy acknowledgement | That it was asked for, and that it was given (lossy or severe). |
+| Test drive | The tool opened or run, such as GraphiQL or a toolchain check. |
+| A picture shown | Which one: ERD, import graph, service map, channel topology, fidelity overlay or treemap. |
+
+Each event also says whether it came from the studio or the Export dialog. Nothing else is sent: no
+item or version name, no source, no generated file, no option value. The server refuses an event that
+carries anything else. The REST endpoint is `POST /v1/export/{tenant}/studio-metrics`.
+
 ## Export several catalog items at once
 
 The Catalog's bulk bar exports several items to one format in one `.zip`, without the studio — see

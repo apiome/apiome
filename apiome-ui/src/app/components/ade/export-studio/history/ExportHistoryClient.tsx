@@ -21,6 +21,7 @@ import { History, RotateCcw } from 'lucide-react';
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { ErrorState } from '@/app/components/ui/ErrorState';
 import {
   DataTable,
   DataTableCellPrimary,
@@ -391,6 +392,8 @@ function RunDrawer({ run, onClose }: { run: ExportRunSummary | null; onClose: ()
   const current = loaded && loaded.jobId === jobId ? loaded : null;
   const detail = current?.detail ?? null;
   const error = current?.error ?? null;
+  // MFX-46.5: Retry reads the run again.
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!jobId) return;
@@ -407,7 +410,7 @@ function RunDrawer({ run, onClose }: { run: ExportRunSummary | null; onClose: ()
     return () => {
       cancelled = true;
     };
-  }, [jobId]);
+  }, [jobId, attempt]);
 
   return (
     <Drawer open={run !== null} onOpenChange={(open) => !open && onClose()}>
@@ -464,9 +467,16 @@ function RunDrawer({ run, onClose }: { run: ExportRunSummary | null; onClose: ()
               </section>
 
               {error && (
-                <p className="xhis-error" role="alert">
-                  {error}
-                </p>
+                <ErrorState
+                  variant="compact"
+                  title="This run's reports could not be loaded"
+                  description={error}
+                  data-testid="export-history-detail-error"
+                  onRetry={() => {
+                    setLoaded(null);
+                    setAttempt((count) => count + 1);
+                  }}
+                />
               )}
               {!detail && !error && <Skeleton className="xhis-skeleton" />}
               {detail?.reports.length === 0 && (

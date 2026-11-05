@@ -20,6 +20,10 @@ import { Button } from '../../../ui/Button';
 import { Alert } from '../../../ui/Alert';
 import { Badge } from '../../../ui/Badge';
 import { LoadingState } from '../../../ui/LoadingState';
+import { EmptyState } from '../../../ui/EmptyState';
+import { ErrorState } from '../../../ui/ErrorState';
+import { StaleTargetsNotice } from './StaleTargetsNotice';
+import { isStudioTestTool, trackStudioEvent } from './studioTelemetry';
 import { ExportStudioSteps, STUDIO_STEPS } from './ExportStudioSteps';
 import PageHeader from '../../../shell/PageHeader';
 import { Page, PageBody } from '../../../shell/pageChrome';
@@ -268,6 +272,9 @@ export function ExportStudio({
   /** Monotonic nonce so re-selecting the same entity still re-triggers the reveal. */
   const entityRevealNonce = useRef(0);
   const [error, setError] = useState<string | null>(null);
+  // MFX-46.5: a generated artifact that could not be fetched for Review — shown by the viewer with Retry.
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadAttempt, setDownloadAttempt] = useState(0);
   /**
    * The validation report from a validation-gate job failure (MFX-46.2). When set, the Verify
    * step renders it in place of the last verify result so the user sees exactly what the real emit
@@ -283,6 +290,8 @@ export function ExportStudio({
     error: targetsError,
     status: targetsStatus,
     code: targetsErrorCode,
+    retry: retryTargets,
+    stale: staleTargets,
   } = useExportTargets(true, artifact, version);
   // IXH-2.4: rank the same targets by expected outcome — source lint grade, projected fidelity,
   // capability fit, and the tenant's export policy — so the grid leads with the best bet and shows
@@ -376,6 +385,32 @@ export function ExportStudio({
     auto: autoVerify && step === 'verify',
   });
   const verifyVerdict = verifyResult ? deriveVerifyVerdict(verifyResult) : null;
+
+  // MFX-46.5: every verify verdict (or a verification that could not run), and each time a lossy
+  // verdict asks for the acknowledgement — once per result, never for a cached replay of the same one.
+  const reportedVerify = useRef<unknown>(null);
+  useEffect(() => {
+    const outcome = verifyResult ?? verifyError;
+    if (!outcome || reportedVerify.current === outcome) return;
+    reportedVerify.current = outcome;
+    if (!verifyResult) {
+      void trackStudioEvent({ kind: 'verify_verdict', verdict: 'error' });
+      return;
+    }
+    const verdict = deriveVerifyVerdict(verifyResult);
+    void trackStudioEvent({ kind: 'verify_verdict', verdict });
+    if (verdict === 'lossy' || verdict === 'severe') void trackStudioEvent({ kind: 'lossy_prompt_shown', verdict });
+  }, [verifyResult, verifyError]);
+  /** The acknowledgement ticked (or typed) on Verify — counted for the acknowledge-lossy rate. */
+  const onAcknowledgedChange = useCallback(
+    (value: boolean) => {
+      setAcknowledged(value);
+      if (value && (verifyVerdict === 'lossy' || verifyVerdict === 'severe')) {
+        void trackStudioEvent({ kind: 'lossy_acknowledged', verdict: verifyVerdict });
+      }
+    },
+    [verifyVerdict],
+  );
 
   // The on-demand round-trip comparison (IXH-4.4): emit → re-import → diff → reconcile with
   // the fidelity report, run only when the Review step's panel action asks for it (there is
@@ -628,11 +663,13 @@ export function ExportStudio({
 
   /** Tick or untick one target of the "Several targets" checklist (a change re-opens Verify). */
   const toggleMultiKey = useCallback((key: string) => {
+    // MFX-46.5: a target ticked under "Several targets" is a target chosen, too.
+    if (!multiKeys.includes(key)) void trackStudioEvent({ kind: 'target_chosen', target: key, mode: 'multi' });
     setMultiVerified(false);
     setMultiKeys((keys) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key]));
     // An unticked target forgets the options a preset gave it.
     setMultiOptions((current) => Object.fromEntries(Object.entries(current).filter(([k]) => k !== key)));
-  }, []);
+  }, [multiKeys]);
 
   const multiBody = useMemo(() => {
     // MFX-39.3 / 38.4: a preset's per-target options, and the delivery profiles ticked on Review.
@@ -739,6 +776,8 @@ export function ExportStudio({
       selectCard(card);
       // Whatever the link could not honour about *its* target is now moot: the user just chose one.
       setResolvedIssues(EMPTY_LINK_ISSUES);
+      // MFX-46.5: which targets people choose.
+      if (card.available) void trackStudioEvent({ kind: 'target_chosen', target: card.key, mode: 'single' });
     },
     [clearActiveJob, selectCard],
   );
@@ -833,6 +872,7 @@ export function ExportStudio({
     let cancelled = false;
     let settled = false;
     void (async () => {
+      setDownloadError(null);
       try {
         const res = await fetch(`/api/export/jobs/${encodeURIComponent(jobId)}/download`, {
           credentials: 'include',
@@ -884,9 +924,9 @@ export function ExportStudio({
         settled = true;
       } catch (e) {
         if (cancelled) return;
-        // Allow the fetch to be retried (e.g. by re-generating) after a transient download error.
+        // Allow the fetch to be retried (Retry by the viewer) after a transient download error.
         downloadedJobRef.current = null;
-        setError(
+        setDownloadError(
           e instanceof Error ? e.message : 'The generated artifact could not be downloaded.',
         );
         settled = true;
@@ -899,7 +939,7 @@ export function ExportStudio({
       }
     };
     // `jobStatus` is derived from `job`; depending on `job` alone keeps this to one run per job id.
-  }, [job, jobStatus, artifact, selected, cards, onGenerated]);
+  }, [job, jobStatus, artifact, selected, cards, onGenerated, downloadAttempt]);
 
   // MFX-46.3: an Avro, JSON Schema or Protobuf export can also be registered on a schema registry.
   const registryFormat = selected ? registryFormatFor(selected.key, selected.entry.descriptor.format) : null;
@@ -1141,6 +1181,14 @@ export function ExportStudio({
   const liveMock = mockIsLive(mockTestDrive.instance) && mockTestDrive.instance
     ? { id: mockTestDrive.instance.id, baseUrl: mockTestDrive.instance.baseUrl }
     : null;
+  // MFX-46.5: test-drive usage — a tab opened, a toolchain check run.
+  const onTestDriveOpen = (kind: string) => {
+    if (isStudioTestTool(kind)) void trackStudioEvent({ kind: 'test_drive_used', tool: kind });
+  };
+  const runToolCheck = (tool: Parameters<typeof toolChecks.run>[0]) => {
+    void trackStudioEvent({ kind: 'test_drive_used', tool: 'toolchain', action: 'run' });
+    toolChecks.run(tool);
+  };
   const testDriveRenderers: TestDriveRenderers = {
     'swagger-ui': () =>
       emitted ? <OpenApiTestDriveFrame viewer="swagger-ui" text={emitted.text} mock={liveMock} /> : null,
@@ -1150,13 +1198,13 @@ export function ExportStudio({
     // MFX-44.4: the AsyncAPI React component over the emitted AsyncAPI 2.x / 3.x document.
     'asyncapi-render': () => (emitted ? <AsyncApiTestDriveFrame text={emitted.text} /> : null),
     'mock-server': () => mockPanel,
-    toolchain: (tab) => <ToolchainChecksConsole tools={tab.tools} runs={toolChecks.runs} onRun={toolChecks.run} />,
+    toolchain: (tab) => <ToolchainChecksConsole tools={tab.tools} runs={toolChecks.runs} onRun={runToolCheck} />,
   };
   const testDriveTools = selected?.entry.descriptor.test_tools;
   const testDrivePanel = !selected ? null : testDriveTools === undefined ? (
     mockPanel
   ) : (
-    <TestDrivePanel tools={testDriveTools} targetKey={selected.key} renderers={testDriveRenderers} />
+    <TestDrivePanel tools={testDriveTools} targetKey={selected.key} renderers={testDriveRenderers} onOpen={onTestDriveOpen} />
   );
 
   /** Whether the current step permits advancing to the next one. */
@@ -1302,11 +1350,24 @@ export function ExportStudio({
           <MissingSourceNotice code={targetsErrorCode} sourceLabel={sourceLabel} />
         ) : (
           (error || sourceError) && (
-            <Alert variant="error" data-testid="export-studio-error">
+            <Alert
+              variant="error"
+              data-testid="export-studio-error"
+              // MFX-46.5: a targets load that failed can be tried again from here.
+              actions={
+                !error && sourceError ? (
+                  <Button size="sm" variant="outline" onClick={retryTargets} data-testid="export-studio-retry-targets">
+                    Retry
+                  </Button>
+                ) : undefined
+              }
+            >
               {error || sourceError}
             </Alert>
           )
         )}
+        {/* MFX-46.5: the targets service is unreachable — keep this source's last list, say so. */}
+        {staleTargets ? <StaleTargetsNotice savedAt={staleTargets.savedAt} onRetry={retryTargets} /> : null}
 
         {/* MFX-41.4: every part of the deep link that could not be honoured, stated plainly. */}
         {linkNotices.length > 0 && (
@@ -1386,6 +1447,23 @@ export function ExportStudio({
                 />
                 Several targets — one archive with a folder per target, each with its default options
               </label>
+              {/* MFX-46.5: the Target step's non-happy paths — loading, nothing to export to, nothing chosen. */}
+              {loading && !response ? (
+                <LoadingState message="Loading export targets…" minHeightClassName="min-h-40" />
+              ) : null}
+              {!loading && response && cards.length === 0 ? (
+                <EmptyState
+                  variant="compact"
+                  title="No export targets for this source"
+                  description="No registered target can take this source. Check that it imported completely."
+                  data-testid="export-studio-no-targets"
+                />
+              ) : null}
+              {!multiMode && cards.length > 0 && !selectedKey ? (
+                <p className="xstd-quiet" data-testid="export-studio-choose-target">
+                  Choose a target to continue.
+                </p>
+              ) : null}
               {multiMode ? (
                 <MultiTargetChecklist cards={cards} selected={multiKeys} onToggle={toggleMultiKey} />
               ) : (
@@ -1499,6 +1577,20 @@ export function ExportStudio({
             </div>
           )}
 
+          {/* MFX-46.5: nothing to verify yet — never a blank step. */}
+          {step === 'verify' && !multiMode && !(selected && fidelity) && (
+            <EmptyState
+              variant="compact"
+              title="Choose a target to verify"
+              description="Verify checks one export target's fidelity, validation and lint."
+              data-testid="export-studio-verify-no-target"
+              action={
+                <Button size="sm" variant="outline" onClick={() => setStep('target')}>
+                  Choose a target
+                </Button>
+              }
+            />
+          )}
           {step === 'verify' && !multiMode && selected && fidelity && (
             <>
               {jobValidationOverride && (
@@ -1519,7 +1611,7 @@ export function ExportStudio({
                 result={displayVerifyResult}
                 verdict={displayVerifyVerdict}
                 acknowledged={acknowledged}
-                onAcknowledgedChange={setAcknowledged}
+                onAcknowledgedChange={onAcknowledgedChange}
                 onRun={handleRunVerify}
                 autoVerify={autoVerify}
                 onAutoVerifyChange={setAutoVerify}
@@ -1700,7 +1792,15 @@ export function ExportStudio({
                   {testDrivePanel}
                 </div>
               ) : job && jobStatus ? (
-                jobCompleted ? (
+                jobCompleted && downloadError ? (
+                  // MFX-46.5: generated, but the artifact could not be fetched — say so here, with Retry.
+                  <ErrorState
+                    data-testid="export-studio-download-error"
+                    title="The generated file could not be opened"
+                    description={downloadError}
+                    onRetry={() => setDownloadAttempt((count) => count + 1)}
+                  />
+                ) : jobCompleted ? (
                   // Completed — the emitted artifact is being fetched for the preview/download.
                   <LoadingState
                     data-testid="export-studio-preparing-download"
