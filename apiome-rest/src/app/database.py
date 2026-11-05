@@ -36705,6 +36705,189 @@ class Database:
         return [dict(row) for row in rows or []]
 
     # -------------------------------------------------------------------------------------------
+    # MFX-39.3 (#4335) — export presets
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of an export preset, plus its delivery profile's name (``p``: the profile join).
+    _EXPORT_PRESET_COLUMNS = """
+        x.id::text AS id,
+        x.tenant_id::text AS tenant_id,
+        x.name,
+        x.description,
+        x.targets,
+        x.delivery_profile_id::text AS delivery_profile_id,
+        p.name AS delivery_profile_name,
+        x.created_at,
+        x.updated_at,
+        x.created_by::text AS created_by,
+        x.updated_by::text AS updated_by
+    """
+
+    _EXPORT_PRESET_FROM = """
+        apiome.export_presets x
+        LEFT JOIN apiome.export_delivery_profiles p ON p.id = x.delivery_profile_id
+    """
+
+    def _export_preset_by_id(self, tenant_id: str, preset_id: str) -> Optional[Dict[str, Any]]:
+        rows = self.execute_query(
+            f"SELECT {self._EXPORT_PRESET_COLUMNS} FROM {self._EXPORT_PRESET_FROM} "
+            "WHERE x.tenant_id = %s::uuid AND x.id = %s::uuid",
+            (tenant_id, preset_id),
+        )
+        return dict(rows[0]) if rows else None
+
+    def insert_export_preset(
+        self,
+        *,
+        tenant_id: str,
+        name: str,
+        description: Optional[str],
+        targets: List[Dict[str, Any]],
+        delivery_profile_id: Optional[str] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store one export preset (MFX-39.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            name: Unique within the tenant.
+            description: Free text, or ``None``.
+            targets: The validated ``[{target, options}]`` list.
+            delivery_profile_id: The tenant's delivery profile the export is delivered with, or ``None``.
+            actor_id: Who stored it.
+
+        Returns:
+            The stored row (with ``delivery_profile_name``), or ``None`` when the tenant id is not a UUID.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When the tenant already has a preset of that name.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        actor = actor_id if is_uuid_string(str(actor_id or "")) else None
+        profile = delivery_profile_id if is_uuid_string(str(delivery_profile_id or "")) else None
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.export_presets (
+                        tenant_id, name, description, targets, delivery_profile_id, created_by, updated_by
+                    ) VALUES (%s::uuid, %s, %s, %s, %s::uuid, %s::uuid, %s::uuid)
+                    RETURNING id::text AS id
+                    """,
+                    (tenant_id, name, description, Json(targets), profile, actor, actor),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        return self._export_preset_by_id(tenant_id, row["id"]) if row else None
+
+    def list_export_presets(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """A tenant's export presets by name (MFX-39.3)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"SELECT {self._EXPORT_PRESET_COLUMNS} FROM {self._EXPORT_PRESET_FROM} "
+            "WHERE x.tenant_id = %s::uuid ORDER BY x.name ASC",
+            (tenant_id,),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_export_preset(self, tenant_id: str, ref: str) -> Optional[Dict[str, Any]]:
+        """One export preset of the tenant, by id or by name (MFX-39.3).
+
+        Args:
+            tenant_id: The caller's tenant — another tenant's preset is never returned.
+            ref: The preset's id, or its name.
+
+        Returns:
+            The row, or ``None``.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        ref = str(ref or "").strip()
+        if not ref:
+            return None
+        if is_uuid_string(ref):
+            found = self._export_preset_by_id(tenant_id, ref)
+            if found:
+                return found
+        rows = self.execute_query(
+            f"SELECT {self._EXPORT_PRESET_COLUMNS} FROM {self._EXPORT_PRESET_FROM} "
+            "WHERE x.tenant_id = %s::uuid AND x.name = %s",
+            (tenant_id, ref),
+        )
+        return dict(rows[0]) if rows else None
+
+    def update_export_preset(
+        self,
+        tenant_id: str,
+        preset_id: str,
+        *,
+        name: str,
+        description: Optional[str],
+        targets: List[Dict[str, Any]],
+        delivery_profile_id: Optional[str],
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Replace a preset's name, description, targets and delivery profile (MFX-39.3).
+
+        Returns:
+            The updated row, or ``None`` when the tenant has no such preset.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When another preset of the tenant has that name.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(preset_id or ""))):
+            return None
+        profile = delivery_profile_id if is_uuid_string(str(delivery_profile_id or "")) else None
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE apiome.export_presets SET
+                        name = %s, description = %s, targets = %s, delivery_profile_id = %s::uuid,
+                        updated_at = CURRENT_TIMESTAMP, updated_by = %s::uuid
+                    WHERE tenant_id = %s::uuid AND id = %s::uuid
+                    RETURNING id::text AS id
+                    """,
+                    (name, description, Json(targets), profile,
+                     actor_id if is_uuid_string(str(actor_id or "")) else None, tenant_id, preset_id),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            raise e
+        return self._export_preset_by_id(tenant_id, preset_id) if row else None
+
+    def delete_export_preset(self, tenant_id: str, preset_id: str) -> bool:
+        """Delete one export preset (MFX-39.3).
+
+        Returns:
+            Whether a row was deleted.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(preset_id or ""))):
+            return False
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM apiome.export_presets WHERE tenant_id = %s::uuid AND id = %s::uuid",
+                    (tenant_id, preset_id),
+                )
+                deleted = cursor.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 

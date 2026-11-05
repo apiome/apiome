@@ -43,6 +43,11 @@ export interface MultiExportJobBody {
   confirm?: boolean;
   /** Overlays applied, in order, to the source before every target (GVM-4.2). */
   overlays?: ExportStudioOverlay[];
+  /**
+   * Delivery profiles (MFX-38.4) the export is delivered with on completion. Never sent with a dry
+   * run: {@link MultiExportRun}'s Verify drops them.
+   */
+  delivery_profiles?: string[];
 }
 
 /**

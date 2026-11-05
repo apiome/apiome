@@ -68,7 +68,10 @@ export function MultiExportRun({
     abortRef.current = controller;
     setRun({ phase: 'running', percent: 0 });
     try {
-      const jobId = await submitMultiExportJob({ ...body, ...(mode === 'verify' ? { dry_run: true } : {}) });
+      // A dry run cannot deliver: Verify drops the delivery profiles (MFX-38.4) Generate sends.
+      const jobId = await submitMultiExportJob(
+        mode === 'verify' ? { ...body, delivery_profiles: undefined, dry_run: true } : body,
+      );
       const status = await pollMultiExportJob(jobId, {
         signal: controller.signal,
         intervalMs: pollIntervalMs,

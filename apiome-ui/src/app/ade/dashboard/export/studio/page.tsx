@@ -24,6 +24,7 @@ import { Page, PageBody } from '../../../../components/shell/pageChrome';
 import UnreleasedFeatureGate from '../../../../components/shell/UnreleasedFeatureGate';
 import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 import DeliveryProfilesClient from '../../../../components/ade/export-studio/delivery/DeliveryProfilesClient';
+import ExportPresetsClient from '../../../../components/ade/export-studio/presets/ExportPresetsClient';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -44,7 +45,8 @@ import DeliveryProfilesClient from '../../../../components/ade/export-studio/del
  * because both decide how a version leaves the platform (`/ade/dashboard/sdk-settings` redirects
  * to it). That tab needs no source, so it renders before the source check; it keeps its own
  * release gate. `?tab=delivery` selects **Delivery** — the workspace's delivery profiles (MFX-38.4),
- * also source-free. Every header on this route draws the same {@link ExportStudioTabs} strip.
+ * also source-free, and `?tab=presets` **Presets** — saved export combinations (MFX-39.3). Every
+ * header on this route draws the same {@link ExportStudioTabs} strip.
  */
 function ExportStudioRouteContent() {
   const { data: session, status } = useAuthSession();
@@ -91,6 +93,11 @@ function ExportStudioRouteContent() {
   // needs no source, so it renders before the source check.
   if (tab === 'delivery') {
     return <DeliveryProfilesClient tabs={tabs} />;
+  }
+
+  // MFX-39.3 (#4335): `?tab=presets` — the workspace's export presets; source-free like Delivery.
+  if (tab === 'presets') {
+    return <ExportPresetsClient tabs={tabs} />;
   }
 
   // The Studio always exports a source. Without an `artifact` (the rail, the command palette) the

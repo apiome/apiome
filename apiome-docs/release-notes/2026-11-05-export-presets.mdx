@@ -1,0 +1,22 @@
+---
+slug: export-presets
+title: Export presets
+description: "Save an export's targets, options and delivery once; apply them by name."
+authors: [apiome]
+---
+
+Exports you run again and again — a nightly sync, a release export — can now be saved as a **preset**:
+the targets, each target's options and a delivery profile, applied by name in Export studio, the CLI and
+the API. See [Save an export as a preset](/ship/export-presets).
+
+{/* truncate */}
+
+- **Save as preset** on an export's **Review** step keeps its targets, the options you changed and the
+  ticked delivery profile.
+- **Apply a preset** on the **Target** step selects its targets and options, and ticks its delivery.
+- **The Presets tab** of Export studio lists, edits and deletes presets.
+- **From the CLI:** `apiome export presets create|list|show|update|delete`, and
+  `apiome export --preset nightly-sync ARTIFACT --out PATH`.
+- **From the API:** `/v1/export/{tenant}/presets`, and `"preset"` on `POST /v1/export/{tenant}/jobs`.
+- **Checked every time:** each target's options are validated against its emitter when the preset is saved
+  and again when it is applied.

@@ -391,6 +391,16 @@ class ExportJobStartRequest(BaseModel):
         "`EXPORT_DELIVERED` or `EXPORT_DELIVERY_FAILED` event.",
     )
 
+    preset: Optional[str] = Field(
+        default=None,
+        max_length=120,
+        description="An export preset (MFX-39.3, `GET /v1/export/{tenant}/presets`), by id or name. Its "
+        "targets and their options stand in for ``target`` / ``targets`` / ``options`` — which must then "
+        "be left out — and its delivery profile is added ahead of ``delivery_profiles``. Everything else "
+        "(the source, ``version``, ``items``, ``overlays``, ``confirm``, ``dry_run``) is this request's own. "
+        "`400` for an unknown preset or one whose targets no longer validate.",
+    )
+
     @model_validator(mode="after")
     def _delivery_shape(self) -> "ExportJobStartRequest":
         """Keep ``delivery_profiles`` distinct and off dry runs (which have nothing to deliver).
@@ -425,9 +435,19 @@ class ExportJobStartRequest(BaseModel):
                 single-target field (``options`` / ``acknowledged_snapshot``) accompanies
                 ``targets`` (surfaced by FastAPI as a 422).
         """
+        if self.preset is not None:
+            if self.target is not None or self.targets is not None or self.options is not None:
+                raise ValueError(
+                    "A 'preset' names its own targets and options; drop 'target', 'targets' and 'options'."
+                )
+            if not self.preset.strip():
+                raise ValueError("'preset' cannot be blank.")
+            return self
         if self.targets is None:
             if self.target is None:
-                raise ValueError("Name a 'target', or a 'targets' list for a multi-target export.")
+                raise ValueError(
+                    "Name a 'target', a 'targets' list for a multi-target export, or a 'preset'."
+                )
             return self
         if self.target is not None:
             raise ValueError("Set either 'target' or 'targets', not both.")
@@ -3243,6 +3263,9 @@ async def schedule_export_job(
         ExportError: When the target is unknown (400) or its options are invalid (422), or the
             tenant already runs ``export_max_concurrent_jobs_per_tenant`` jobs (429, X5).
     """
+    if request.preset is not None:
+        # The route expands a preset (MFX-39.3, app.export_presets.apply_preset) before scheduling.
+        raise ExportError("Apply the export preset before scheduling the job.", status_code=400)
     # Fail fast on a bad target/options; also warms the emitter registry.
     if request.targets is not None:
         _validate_target_specs(request.targets)

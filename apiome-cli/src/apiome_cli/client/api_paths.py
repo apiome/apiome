@@ -94,6 +94,16 @@ def export_job_deliveries(tenant_slug: str, job_id: str) -> str:
     return f"{export_job(tenant_slug, job_id)}/deliveries"
 
 
+def export_presets(tenant_slug: str) -> str:
+    """The workspace's export presets (MFX-39.3): ``GET`` lists, ``POST`` creates."""
+    return f"{V1}/export/{tenant_slug}/presets"
+
+
+def export_preset(tenant_slug: str, preset: str) -> str:
+    """One export preset, by id or name (MFX-39.3): ``GET`` / ``PATCH`` / ``DELETE``."""
+    return f"{export_presets(tenant_slug)}/{quote(preset, safe='')}"
+
+
 def export_delivery_profiles(tenant_slug: str) -> str:
     """The workspace's export delivery profiles (MFX-38.4): ``GET`` lists, ``POST`` creates."""
     return f"{V1}/export/{tenant_slug}/delivery-profiles"

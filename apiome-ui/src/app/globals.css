@@ -35080,6 +35080,18 @@ tr:focus-within .pub-url__glyph {
   font-size: var(--fs-sm);
 }
 
+/* Export presets (MFX-39.3, #4335): one target row of the Presets tab's edit form. */
+.xprs-target {
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border);
+}
+
+.xprs-target__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* ==========================================================================
    PROJECT DISCUSSION  (COL-1.3, #4515)
    --------------------------------------------------------------------------

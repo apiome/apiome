@@ -45,6 +45,9 @@ credential it delivers with. You can then:
 - **In the API**, send `delivery_profiles` with `POST /v1/export/{tenant}/jobs`, or a `profileId` to
   `POST /v1/export/{tenant}/jobs/{job_id}/deliveries`.
 
+A [preset](./export-presets.mdx) can carry a delivery profile too, so applying it delivers the export
+without ticking anything.
+
 <Screenshot id="export-studio-delivery" alt="The Delivery tab of Export studio: three delivery profiles — object storage, webhook and git — with one profile's deliveries open, one delivered and one failed with its error code" />
 
 ## Routes at a glance

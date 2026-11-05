@@ -52,7 +52,8 @@ from apiome_cli.export_output import (
     format_projection_snapshot_lines,
     target_rows,
 )
-from apiome_cli.commands import export_profiles
+from apiome_cli.commands import export_presets, export_profiles
+from apiome_cli.commands.export_presets import PRESET_RUN_COMMAND
 from apiome_cli.export_overlays import OVERLAY_HELP
 from apiome_cli.client.preflight import fetch_export_preflight
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
@@ -403,6 +404,20 @@ class DispatchExportGroup(TyperGroup):
             return existing
         return _build_generic_export_command(name)
 
+    def resolve_command(
+        self, ctx: click.Context, args: list[str]
+    ) -> tuple[str | None, click.Command | None, list[str]]:
+        """Route ``export --preset NAME …`` to the preset run (MFX-39.3), keeping every argument.
+
+        The group lets unknown options through (so ``--preset NAME --items … --out …`` reach the run);
+        without ``--preset`` an option where a subcommand belongs is still refused as before.
+        """
+        if ctx.params.get("preset"):
+            return PRESET_RUN_COMMAND, super().get_command(ctx, PRESET_RUN_COMMAND), args
+        if args and args[0].startswith("-"):
+            ctx.fail(f"No such option: {args[0]}")
+        return super().resolve_command(ctx, args)
+
 
 app = typer.Typer(
     name="export",
@@ -415,16 +430,36 @@ app = typer.Typer(
         "--force, and a job whose acknowledged preview snapshot no longer matches fails with "
         "STALE_PREVIEW — re-preview and acknowledge the current snapshot."
     ),
-    context_settings={"help_option_names": ["-h", "--help"]},
+    # MFX-39.3: unknown options pass through to the preset run; DispatchExportGroup refuses them otherwise.
+    context_settings={"help_option_names": ["-h", "--help"], "ignore_unknown_options": True},
     add_completion=False,
 )
 
 
 @app.callback(invoke_without_command=True)
-def export_group(ctx: typer.Context) -> None:
+def export_group(
+    ctx: typer.Context,
+    preset: str | None = typer.Option(
+        None,
+        "--preset",
+        metavar="NAME",
+        help="Run a saved export preset (name or id): apiome export --preset NAME ARTIFACT --out PATH "
+        "[--version V | --items …] [--deliver PROFILE]. Manage presets with 'apiome export presets'.",
+    ),
+) -> None:
     """Emitter-registry export commands."""
+    if preset and ctx.invoked_subcommand is None:
+        typer.echo("--preset needs an ARTIFACT (or --items) and --out: apiome export --preset NAME ARTIFACT "
+                   "--out PATH.", err=True)
+        raise typer.Exit(EXIT_USAGE)
     group_callback_without_subcommand(ctx)
 
+
+# MFX-39.3: export presets, and the hidden command `export --preset NAME …` runs.
+app.add_typer(export_presets.app, name="presets")
+app.command(PRESET_RUN_COMMAND, hidden=True, context_settings={"ignore_unknown_options": False})(
+    export_presets.run_preset
+)
 
 # MFX-38.4: registered explicitly — DispatchExportGroup would otherwise read these names as formats.
 app.add_typer(export_profiles.app, name="profiles")
