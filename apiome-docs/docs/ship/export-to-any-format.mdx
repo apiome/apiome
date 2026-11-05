@@ -1,0 +1,68 @@
+---
+title: Export to any format
+description: Convert a version or catalog item into another format, seeing what survives first.
+sidebar_position: 4.25
+tags: [export]
+---
+
+<Route path="/ade/dashboard/export/studio" />
+
+Anything Apiome imports can be exported to any format it writes: an OpenAPI API as GraphQL, Protocol
+Buffers, AsyncAPI, Avro, WSDL, SQL or a Postman collection, and back again. The full list, and which formats
+round-trip, is on [Supported formats](../bring-in/supported-formats.md).
+
+Formats don't all say the same things, so a conversion can lose detail. Apiome tells you **before** you
+export: every target shows how much of your API it preserves, and every construct that is dropped,
+approximated or invented is listed with the reason. Then the file is written, checked with the format's
+own rules, and handed to you or delivered.
+
+<Screenshot id="export-studio" alt="Export studio on the Target step: compact target tiles grouped by family, each with its three-segment fidelity meter" />
+
+## When to use it
+
+- **A consumer speaks another format.** A gRPC team wants `.proto`, a data team wants Avro or SQL, a
+  partner wants WSDL, a front end wants GraphQL.
+- **Moving from one format to another.** Convert an API, check what the new format can't hold, and fix it
+  before you switch.
+- **Publishing everywhere at once.** Export several formats or items in one job, keep the combination as a
+  preset, and run it on every publish.
+
+## Where you export from
+
+| Where | Best for | Details |
+| --- | --- | --- |
+| **Export** dialog, on a version or a catalog item | One quick conversion: pick a target, check its fidelity, download | [The Export dialog](./export-dialog.mdx) |
+| **Export studio** (Ship › Export studio) | Step by step: options, overlays, verify fidelity, validation and lint, then read, picture and test drive the result | [Export studio](./export-studio.mdx) |
+| **Browse**, the public portal | Anyone downloading a public API in another format | [Export a spec](./export-a-spec.md) |
+| **CLI** (`apiome export`) | Scripts and CI, with fidelity gates | [Export from the CLI](./export-from-the-cli.md) |
+| **MCP** | An agent exporting through tools | [Export over MCP](./export-over-mcp.md) |
+| **REST API** (`POST /v1/export/{tenant}/jobs`) | Anything else | [How an export runs](./export-jobs.mdx) |
+
+## At a glance
+
+| You want to… | Read |
+| --- | --- |
+| Know what a conversion keeps, and why it loses what it loses | [Understand export fidelity](./export-fidelity.md) |
+| See the exact steps every export goes through | [How an export runs](./export-jobs.mdx) |
+| Know why an export is safe to use | [How an export is checked](./check-an-export.mdx) |
+| Read the file, or a bundle's files, before you take it | [Read an exported file](./read-an-exported-file.mdx) |
+| See where it loses fidelity, or its shape, as a picture | [Visualize an export](./visualize-an-export.mdx) |
+| Try the file with the tools its format uses | [Test drive an export](./test-drive-an-export.mdx) |
+| Download it, deliver it, or register it on a schema registry | [Get an export out](./get-an-export-out.mdx) |
+| Export several formats, items or versions at once | [Export several at once](./export-several-at-once.mdx) |
+| Follow jobs, audit the history, use presets and auto-export | [Run exports at scale](./run-exports-at-scale.mdx) |
+| Look up one format's options and what it writes | [Export a spec](./export-a-spec.md) |
+
+## How the pieces fit
+
+- **One engine, every surface.** The dialog, the studio, Browse, the CLI, MCP and the API all start the
+  same export job, with the same targets, options and fidelity report.
+- **Fidelity first.** Each target shows a tier — **lossless**, **lossy** or **types-only** — and how much
+  it preserves, worked out for *your* source. A lossy conversion asks you to acknowledge it, and a severe
+  one to confirm it.
+- **Checked before it leaves.** The written file is validated with the format's own parser or toolchain
+  where the server has it, or by reading it back. A file that fails is never downloaded or delivered.
+- **The workspace decides what may leave.** An export quality policy can warn about, or block, delivery
+  when the source's lint grade or the conversion's fidelity is too low.
+- **The format decides the rest.** Each target declares its options, whether it writes one file or a
+  bundle, its pictures and its test-drive tools, and every surface picks them up from there.
