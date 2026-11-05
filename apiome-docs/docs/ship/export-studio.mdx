@@ -220,6 +220,7 @@ appear comes from the format itself, so each target shows its own:
 | --- | --- | --- |
 | **Swagger UI** | Interactive docs for the file: every operation, its parameters and responses; **Try it out** while the mock server runs | OpenAPI |
 | **ReDoc** | A read-only reference of the file, in three panes | OpenAPI |
+| **GraphiQL** | Explore the schema (docs and autocomplete) and run queries that answer with mock data | GraphQL |
 | **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
 | **Toolchain checks** (or the check's name, when there is one) | Lists the format's own checks, such as `buf lint`, and whether each tool is installed on this server | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec, Smithy, Cap'n Proto, Thrift, API Blueprint |
 
@@ -245,6 +246,32 @@ generated, read straight from the Studio: nothing is uploaded again.
   mock, **Try it out** is hidden. ReDoc never sends requests.
 - **Large files open collapsed.** A file with more than 300 operations (or over 1 MB) opens with every
   section closed, so the page stays quick; open the tag you need.
+
+#### GraphiQL
+
+For a GraphQL file, **GraphiQL** opens on the schema you just generated, with an example query
+already answered. Every answer is **mock data**: values of the right type that your browser makes
+up from the schema. No server is involved, so you can try the schema before anything implements it.
+
+<Screenshot id="export-studio-graphql-test-drive" alt="Test drive with the GraphiQL tab open on a pet store schema: an example pets query on the left and its mock data answer on the right, under the Mock data label" />
+
+1. **Read the schema.** **Click the book icon** (**Show Documentation Explorer**) to browse every
+   type, field and argument, with its description.
+2. **Write a query.** Type in the editor; **Ctrl+Space** suggests the fields, arguments and enum
+   values the schema allows, and mistakes are underlined as you type.
+3. **Run it.** **Click the run button** (**Execute query**), or press **Ctrl+Enter**. The answer has the shape the schema
+   promises: `ID`s like `id-1`, text as `Example text`, a real value of each enum, two items in each
+   list, and custom scalars by their name (a `DateTime` gets a timestamp, a `UUID` a UUID). Ask the
+   same question twice and you get the same answer.
+
+- **It makes no network requests.** GraphiQL runs in a sandbox with no access to your session or
+  the rest of Apiome, and cannot reach the network. The **Mock data** label above it, and in its
+  corner, is a reminder that the answers are made up.
+- **Queries and mutations are answered; subscriptions are not.** A subscription answers with
+  *Subscriptions are not mocked in the test drive.*
+- **A file GraphiQL cannot read shows a notice instead**, with the reason, for example
+  `The file is not valid GraphQL SDL: Syntax Error: Expected Name, found <EOF>.` Directives the file
+  uses without declaring them, such as federation's `@key`, do not stop it.
 
 The list also comes back from the API, as `test_tools` on each target of
 [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get). Each entry gives the tool's `kind`,

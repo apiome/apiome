@@ -1,0 +1,31 @@
+/* MFX-44.3 — the GraphiQL test-drive page (inside the sandboxed iframe). GraphiQL fills the frame. */
+html,
+body,
+#test-drive-root {
+  block-size: 100%;
+  margin: 0;
+}
+
+#test-drive-status {
+  margin: 0;
+  padding: 16px;
+  font: 14px/1.5 system-ui, sans-serif;
+  color: #4b5563;
+}
+
+#test-drive-status[hidden] {
+  display: none;
+}
+
+/* The "Mock data" label in GraphiQL's logo slot: answers are generated, not real. */
+.test-drive-mock-label {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: hsl(var(--color-warning));
+  background: hsla(var(--color-warning), var(--alpha-background-medium));
+}

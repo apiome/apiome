@@ -1,0 +1,19 @@
+---
+slug: graphql-test-drive
+title: Try your exported GraphQL schema in GraphiQL
+description: "Export studio opens a generated GraphQL schema in GraphiQL, with mock data."
+authors: [apiome]
+---
+
+After you generate a GraphQL schema in the Export studio, **Test drive** now opens it in
+**GraphiQL**: browse its docs, write queries with autocomplete, and run them against mock data. See
+[GraphiQL](/ship/export-studio#graphiql).
+
+{/* truncate */}
+
+- **Mock data, clearly labelled:** every query is answered in your browser with values of the right
+  type, including custom scalars such as `DateTime` and `UUID`. No server is involved.
+- **Sandboxed:** GraphiQL runs with no access to your session and cannot reach the network.
+- **Ready to read:** an example query opens already answered, and the docs explorer and autocomplete
+  come straight from the schema.
+- **Invalid schemas say why:** a file GraphiQL cannot read shows a notice with the reason instead.

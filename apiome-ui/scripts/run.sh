@@ -36,6 +36,8 @@ shift || true
 
 case "$MODE" in
   dev)
+    # MFX-44.3: the GraphiQL test-drive page loads a bundle built outside Next.
+    node "$ROOT/scripts/build-test-drive-graphiql.mjs"
     exec yarn exec next dev "$@"
     ;;
   start)
