@@ -149,7 +149,7 @@ describe('WhatsNewDialog', () => {
 
     const link = await screen.findByRole('link', { name: /full release notes/i });
     expect(link).toHaveAttribute('href', RELEASE_NOTES_URL);
-    expect(RELEASE_NOTES_URL).toBe('https://apiome.github.io/apiome/release-notes');
+    expect(RELEASE_NOTES_URL).toBe('https://docs.apiome.dev/release-notes');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
     expect(link).toHaveAccessibleName(/opens in a new tab/i);
