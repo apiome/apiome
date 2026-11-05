@@ -23,6 +23,8 @@ syncs are. Pushing is available from the REST API only.
   be allowed to change subject configuration too.
 - **Permission.** A push uses the connector's credentials to write to the registry, so you need
   `imports:edit`: the same permission as changing the connector. A dry run needs it too.
+- **A Confluent-compatible registry.** The Buf Schema Registry (BSR) is not supported. To publish a
+  Protobuf export there, download the export and run `buf push` on its files.
 
 ## What is pushed
 

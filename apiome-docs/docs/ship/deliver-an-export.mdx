@@ -31,6 +31,16 @@ Every channel works the same way:
 - **Failures are runs.** A delivery that reaches its destination and fails still answers with a run, a
   stable `errorCode` and a message that says what to fix.
 
+### Push to a schema registry
+
+An **Avro**, **JSON Schema** or **Protobuf** export can also be registered on a Confluent-compatible schema
+registry (Confluent Platform or Cloud, Karapace, Apicurio's `ccompat` API). Each schema becomes a subject
+version: the push checks each one for compatibility first and skips any that are already registered. It
+also orders the schemas so each one comes after the ones it references, and a **dry run** checks every
+subject without writing anything. It goes through a **Schema registry** connector, which holds the
+registry's credentials, and needs `imports:edit` rather than `versions:publish`. In Export studio it is
+the **Schema registry** destination in **Deliver**. See [Push to a schema registry](./push-avro-to-a-schema-registry.md).
+
 ## Deliver from Export studio
 
 On **6. Review & Generate**, the **Deliver** section lists every destination for this export:
