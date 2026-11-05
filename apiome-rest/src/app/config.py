@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import logging
 from typing import Optional
 
@@ -1063,6 +1065,40 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "APIOME_EXPORT_ARTIFACT_DB_MAX_BYTES",
             "export_artifact_db_max_bytes",
+        ),
+    )
+
+    # Export webhook delivery (MFX-38.2, #4329). A delivery POSTs the export result to a URL; a
+    # bundle up to ``export_webhook_inline_max_bytes`` rides in the body, a larger one as a signed
+    # fetch link on ``api_public_url`` (falling back to ``repository_webhook_base_url``), valid for
+    # ``export_webhook_fetch_url_ttl_seconds`` or until the artifact expires, whichever is first.
+    # The link is signed with ``export_fetch_url_signing_key`` — when unset, a key derived from the
+    # JWT secret (domain-separated, so a link signature is never a valid token signature).
+    api_public_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("APIOME_API_PUBLIC_URL", "api_public_url"),
+        description="Public base URL of apiome-rest (no trailing slash), for links handed to "
+        "outside systems such as an export webhook's bundle fetch link.",
+    )
+    export_webhook_inline_max_bytes: int = Field(
+        default=1_048_576,  # 1 MiB
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_WEBHOOK_INLINE_MAX_BYTES",
+            "export_webhook_inline_max_bytes",
+        ),
+    )
+    export_webhook_fetch_url_ttl_seconds: int = Field(
+        default=86_400,  # 24 hours
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_WEBHOOK_FETCH_URL_TTL_SECONDS",
+            "export_webhook_fetch_url_ttl_seconds",
+        ),
+    )
+    export_fetch_url_signing_key: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_FETCH_URL_SIGNING_KEY",
+            "export_fetch_url_signing_key",
         ),
     )
 
@@ -2136,6 +2172,23 @@ class Settings(BaseSettings):
             "for any non-local deployment."
         )
         return INSECURE_JWT_SECRET_FALLBACK
+
+    @property
+    def effective_export_fetch_url_signing_key(self) -> bytes:
+        """
+        Get the key that signs export bundle fetch links (MFX-38.2, #4329).
+
+        ``APIOME_EXPORT_FETCH_URL_SIGNING_KEY`` when set; otherwise an HMAC of a fixed label under
+        the JWT secret, so no new configuration is needed and a link signature can never double as
+        a token signature. Fails closed in production exactly as :attr:`effective_jwt_secret` does.
+
+        Returns:
+            The key bytes.
+        """
+        if self.export_fetch_url_signing_key:
+            return self.export_fetch_url_signing_key.encode("utf-8")
+        return hmac.new(self.effective_jwt_secret.encode("utf-8"), b"apiome-export-fetch-url-v1",
+                        hashlib.sha256).digest()
 
     @property
     def effective_slate_artifact_signing_key(self) -> str:

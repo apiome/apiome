@@ -35841,6 +35841,267 @@ class Database:
         return [dict(row) for row in rows or []]
 
     # -------------------------------------------------------------------------------------------
+    # MFX-38.2 (#4329) — export webhook delivery runs
+    # -------------------------------------------------------------------------------------------
+
+    #: Every column of an export webhook delivery run the API shows (never the payload).
+    _EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        job_id,
+        artifact_id,
+        version_record_id,
+        version_label,
+        export_target,
+        target_url,
+        status,
+        artifact_delivery,
+        payload_sha256,
+        fidelity,
+        attempt_count,
+        max_attempts,
+        attempts,
+        next_attempt_at,
+        last_http_status,
+        error_code,
+        error_message,
+        started_at,
+        updated_at,
+        finished_at,
+        created_by::text AS created_by
+    """
+
+    def insert_export_webhook_delivery_run(
+        self,
+        *,
+        run_id: str,
+        tenant_id: str,
+        job_id: str,
+        artifact_id: str,
+        target_url: str,
+        artifact_delivery: str,
+        payload: bytes,
+        payload_sha256: str,
+        signature: str,
+        max_attempts: int,
+        status: str = "delivering",
+        version_record_id: Optional[str] = None,
+        version_label: Optional[str] = None,
+        export_target: Optional[str] = None,
+        fidelity: Optional[Dict[str, Any]] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Open one export webhook delivery run (MFX-38.2).
+
+        Inserted before the first attempt (``delivering``: the caller makes it at once), so a delivery
+        that fails at any later step is recorded rather than lost.
+
+        Args:
+            run_id: The run id, minted by the caller (it is signed into the body and the fetch link).
+            tenant_id: Owning tenant.
+            job_id: The export job being delivered.
+            artifact_id: The exported artifact (project or catalog item).
+            target_url: The receiver URL.
+            artifact_delivery: ``inline`` or ``fetch``.
+            payload: The exact signed body.
+            payload_sha256: Its SHA-256, hex.
+            signature: ``sha256=<hex>`` — the body's signature (the secret itself is never stored).
+            max_attempts: Attempts before the run fails.
+            status: The initial status (``delivering``, or ``pending`` to leave it to the sweep).
+            version_record_id: The exported revision.
+            version_label: Its version label.
+            export_target: The resolved export target, or ``multi``.
+            fidelity: The export's fidelity summary.
+            actor_id: The user who asked for the delivery.
+
+        Returns:
+            The stored row (API columns), or ``None`` when an id is not a UUID.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        query = f"""
+            INSERT INTO apiome.export_webhook_delivery_runs (
+                id, tenant_id, job_id, artifact_id, version_record_id, version_label, export_target,
+                target_url, status, artifact_delivery, payload, payload_sha256, signature, fidelity,
+                max_attempts, next_attempt_at, created_by
+            ) VALUES (
+                %s::uuid, %s::uuid, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, CASE WHEN %s = 'pending' THEN CURRENT_TIMESTAMP END, %s::uuid
+            )
+            RETURNING {self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            run_id,
+            tenant_id,
+            str(job_id),
+            str(artifact_id),
+            version_record_id,
+            version_label,
+            export_target,
+            target_url,
+            status,
+            artifact_delivery,
+            psycopg2.Binary(payload),
+            payload_sha256,
+            signature,
+            Json(fidelity or {}),
+            max(1, int(max_attempts)),
+            status,
+            actor_id if is_uuid_string(str(actor_id or "")) else None,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def record_export_webhook_delivery_attempt(
+        self,
+        run_id: str,
+        *,
+        attempt: Dict[str, Any],
+        status: str,
+        next_attempt_at: Optional[datetime] = None,
+        http_status: Optional[int] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Record one attempt of an export webhook delivery and the run's new state (MFX-38.2).
+
+        Appends ``attempt`` to ``attempts``, counts it, and closes the run (``finished_at``) when the
+        new status is ``delivered`` or ``failed``.
+
+        Args:
+            run_id: The run.
+            attempt: ``{attempt, at, httpStatus, latencyMs, error, responsePreview}``.
+            status: ``delivered``, ``retrying`` or ``failed``.
+            next_attempt_at: When the sweep makes the next attempt (``retrying`` only).
+            http_status: The receiver's status code, when it answered.
+            error_code: Machine-readable failure code (``failed``; the last failure while ``retrying``).
+            error_message: Failure message.
+
+        Returns:
+            The updated row (API columns), or ``None`` when the id is not a UUID or nothing matched.
+        """
+        if not is_uuid_string(str(run_id or "")):
+            return None
+        query = f"""
+            UPDATE apiome.export_webhook_delivery_runs
+            SET status = %s,
+                attempt_count = attempt_count + 1,
+                attempts = attempts || jsonb_build_array(%s::jsonb),
+                next_attempt_at = %s,
+                last_http_status = %s,
+                error_code = %s,
+                error_message = %s,
+                updated_at = CURRENT_TIMESTAMP,
+                finished_at = CASE WHEN %s IN ('delivered', 'failed') THEN CURRENT_TIMESTAMP END
+            WHERE id = %s::uuid
+            RETURNING {self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS}
+        """
+        params = (
+            status,
+            Json(attempt),
+            next_attempt_at,
+            http_status,
+            error_code,
+            error_message,
+            status,
+            run_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def claim_next_due_export_webhook_delivery(self, *, stale_after_seconds: int = 600) -> Optional[Dict[str, Any]]:
+        """Atomically claim one export webhook delivery due for an attempt (MFX-38.2).
+
+        Due means ``pending`` / ``retrying`` with ``next_attempt_at`` passed — or ``delivering`` but
+        untouched for ``stale_after_seconds`` (the process making the attempt died). The claim moves it
+        to ``delivering`` under ``FOR UPDATE SKIP LOCKED``, so two instances never send one attempt.
+
+        Args:
+            stale_after_seconds: How long an in-flight attempt may run before it is presumed lost.
+
+        Returns:
+            The run with its ``payload`` (bytes) and ``signature``, or ``None`` when nothing is due.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    WITH next_run AS (
+                        SELECT id
+                        FROM apiome.export_webhook_delivery_runs
+                        WHERE (status IN ('pending', 'retrying') AND next_attempt_at <= CURRENT_TIMESTAMP)
+                           OR (status = 'delivering'
+                               AND updated_at <= CURRENT_TIMESTAMP - make_interval(secs => %s))
+                        ORDER BY COALESCE(next_attempt_at, updated_at) ASC
+                        FOR UPDATE SKIP LOCKED
+                        LIMIT 1
+                    )
+                    UPDATE apiome.export_webhook_delivery_runs r
+                    SET status = 'delivering', updated_at = CURRENT_TIMESTAMP
+                    FROM next_run
+                    WHERE r.id = next_run.id
+                    RETURNING {self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS.replace(" id::text AS id,", " r.id::text AS id,", 1)},
+                              r.payload, r.signature
+                    """,
+                    (max(1, int(stale_after_seconds)),),
+                )
+                row = cursor.fetchone()
+            conn.commit()
+            if not row:
+                return None
+            out = dict(row)
+            out["payload"] = bytes(out["payload"]) if out.get("payload") is not None else b""
+            return out
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_webhook_delivery_runs(
+        self, tenant_id: str, job_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """List one export job's webhook deliveries, newest first (MFX-38.2).
+
+        Args:
+            tenant_id: Owning tenant.
+            job_id: The export job.
+            limit: The most rows to return.
+
+        Returns:
+            The matching rows (never the payload). Empty when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_WEBHOOK_DELIVERY_RUN_COLUMNS}
+            FROM apiome.export_webhook_delivery_runs
+            WHERE tenant_id = %s::uuid AND job_id = %s
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s
+            """,
+            (tenant_id, str(job_id), max(1, int(limit))),
+        )
+        return [dict(row) for row in rows or []]
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 
