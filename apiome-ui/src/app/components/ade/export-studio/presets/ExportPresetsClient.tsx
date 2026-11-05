@@ -236,7 +236,7 @@ export default function ExportPresetsClient({ tabs }: ExportPresetsClientProps =
             )}
           </section>
 
-          {autoPreset ? <AutoExportPanel key={autoPreset.id} preset={autoPreset} canEdit={canEdit} /> : null}
+          {autoPreset ? <AutoExportPanel key={autoPreset.id} scope={{ kind: 'preset', preset: autoPreset }} canEdit={canEdit} /> : null}
 
           {editing && draft ? (
             <section className="xdlv-panel" aria-label={`Edit ${editing.name}`}>

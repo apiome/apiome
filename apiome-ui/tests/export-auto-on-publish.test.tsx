@@ -96,7 +96,7 @@ describe('the inbox row', () => {
 describe('the Auto-export panel', () => {
   it('lists subscriptions with their recent runs', async () => {
     mockFetch();
-    render(<AutoExportPanel preset={PRESET} canEdit />);
+    render(<AutoExportPanel scope={{ kind: 'preset', preset: PRESET }} canEdit />);
     const sub = await screen.findByTestId('auto-export-subscription');
     expect(within(sub).getByText('Orders API')).toBeInTheDocument();
     expect(within(sub).getByText('Halts at critical loss')).toBeInTheDocument();
@@ -105,11 +105,12 @@ describe('the Auto-export panel', () => {
     expect(runs[0]).toHaveTextContent('avro: a severe conversion (12% preserved)');
     expect(runs[1]).toHaveTextContent('Delivered');
     expect(calls.some((c) => c.url === '/api/export/auto-export-runs?subscriptionId=s1&limit=10')).toBe(true);
+    expect(calls.some((c) => c.url === '/api/export/auto-exports?preset=x1')).toBe(true);
   });
 
   it('adds a project with its halt rule, turns one off and releases a halted run', async () => {
     mockFetch();
-    render(<AutoExportPanel preset={PRESET} canEdit />);
+    render(<AutoExportPanel scope={{ kind: 'preset', preset: PRESET }} canEdit />);
     await screen.findByTestId('auto-export-subscription');
     await screen.findByRole('option', { name: 'Payments API' });
     expect(screen.queryByRole('option', { name: 'Orders API' })).not.toBeInTheDocument();
@@ -131,7 +132,7 @@ describe('the Auto-export panel', () => {
 
   it('is read-only without projects:edit', async () => {
     mockFetch();
-    render(<AutoExportPanel preset={PRESET} canEdit={false} />);
+    render(<AutoExportPanel scope={{ kind: 'preset', preset: PRESET }} canEdit={false} />);
     await screen.findAllByTestId('auto-export-run');
     expect(screen.queryByRole('button', { name: 'Release' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Turn off' })).not.toBeInTheDocument();

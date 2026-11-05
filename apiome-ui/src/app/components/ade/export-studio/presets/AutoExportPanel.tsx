@@ -6,7 +6,7 @@ import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
 import { Label } from '@/app/components/ui/Label';
 import { Skeleton } from '@/app/components/ui/Skeleton';
-import { fetchProjectOptions, type ProjectOption } from '@/app/ade/dashboard/style-guides/api';
+import { fetchProjectOptions } from '@/app/ade/dashboard/style-guides/api';
 
 import {
   RUN_STATUS_LABELS,
@@ -22,40 +22,57 @@ import {
   type AutoExportSubscription,
   type HaltAt,
 } from './autoExportApi';
+import { fetchExportPresets } from './exportPresetsApi';
 import type { ExportPreset } from './exportPresetsModel';
+
+/** What the panel is about: one preset's projects, or one project's presets. */
+export type AutoExportScope =
+  | { kind: 'preset'; preset: ExportPreset }
+  | { kind: 'project'; projectId: string; projectName?: string | null };
 
 /** Props for {@link AutoExportPanel}. */
 export interface AutoExportPanelProps {
-  /** The preset the panel subscribes. */
-  preset: ExportPreset;
+  /** A preset (Export studio's Presets tab) or a project (the version view, MFX-39.5). */
+  scope: AutoExportScope;
   /** Whether the viewer may change subscriptions (`projects:edit`; the API also needs `versions:publish`). */
   canEdit: boolean;
+  /** Drawn inside another card that carries the title (the version view): no box, no heading of its own. */
+  embedded?: boolean;
+}
+
+/** One choice of the add form: a project (preset scope) or a preset (project scope). */
+interface Choice {
+  id: string;
+  name: string;
 }
 
 /**
- * **Auto-export on publish** for one preset, on Export studio's Presets tab (MFX-39.4, #4336).
+ * **Auto-export on publish** (MFX-39.4, #4336; on the version view, MFX-39.5, #4337).
  *
- * Lists the projects whose every publish runs this preset, each with its halt rule and recent runs; adds a
- * project (**Halt delivery at** `critical` or `warn`, **Deliver even past it**); switches a subscription
- * on or off or removes it; and **Release**s a halted run — delivers it anyway. A preset without a delivery
- * profile still exports on publish, but has nothing to deliver.
+ * Lists the subscriptions in scope — the projects whose every publish runs a preset, or the presets every
+ * publish of a project runs — each with its halt rule and recent runs. Adds one (**Halt delivery at**
+ * `critical` or `warn`, **Deliver even past it**), switches one on or off or removes it, and **Release**s a
+ * halted run — delivers it anyway.
  *
  * @param props See {@link AutoExportPanelProps}.
  * @returns The panel.
  */
-export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
+export function AutoExportPanel({ scope, canEdit, embedded = false }: AutoExportPanelProps) {
   const [subs, setSubs] = useState<AutoExportSubscription[] | null>(null);
   const [runs, setRuns] = useState<Record<string, AutoExportRun[]>>({});
-  const [projects, setProjects] = useState<ProjectOption[]>([]);
-  const [projectId, setProjectId] = useState('');
+  const [choices, setChoices] = useState<Choice[]>([]);
+  const [chosen, setChosen] = useState('');
   const [haltAt, setHaltAt] = useState<HaltAt>('critical');
   const [approveLoss, setApproveLoss] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const byPreset = scope.kind === 'preset';
+  const scopeKey = byPreset ? scope.preset.id : scope.projectId;
+
   const load = useCallback(async () => {
     try {
-      const rows = await fetchAutoExports(preset.id);
+      const rows = await fetchAutoExports(byPreset ? { preset: scopeKey } : { projectId: scopeKey });
       setSubs(rows);
       const entries = await Promise.all(
         rows.map(async (sub) => [sub.id, await fetchAutoExportRuns(sub.id).catch(() => [])] as const),
@@ -65,12 +82,15 @@ export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
       setSubs([]);
       setError(cause instanceof Error ? cause.message : 'Could not load the auto-exports');
     }
-  }, [preset.id]);
+  }, [byPreset, scopeKey]);
 
   useEffect(() => {
     void load();
-    void fetchProjectOptions().then(setProjects).catch(() => setProjects([]));
-  }, [load]);
+    const options: Promise<Choice[]> = byPreset
+      ? fetchProjectOptions()
+      : fetchExportPresets().then((presets) => presets.map((p) => ({ id: p.id, name: p.name })));
+    void options.then(setChoices).catch(() => setChoices([]));
+  }, [load, byPreset]);
 
   const act = async (work: () => Promise<unknown>) => {
     setBusy(true);
@@ -85,30 +105,45 @@ export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
     }
   };
 
-  const subscribed = new Set((subs ?? []).map((sub) => sub.projectId));
+  const taken = new Set((subs ?? []).map((sub) => (byPreset ? sub.projectId : sub.presetId)));
+  const rowName = (sub: AutoExportSubscription) =>
+    byPreset ? (sub.projectName ?? sub.projectId) : (sub.presetName ?? sub.presetId);
+  const title = byPreset ? `Auto-export ${scope.preset.name} on publish` : 'Auto-export on publish';
 
   return (
-    <section className="xdlv-job" aria-label={`Auto-export ${preset.name} on publish`} data-testid="auto-export-panel">
-      <div className="xdlv-job__head">
-        <h3 className="xdlv-job__title">Auto-export on publish</h3>
-      </div>
+    <section className={embedded ? 'xdlv-embedded' : 'xdlv-job'} aria-label={title} data-testid="auto-export-panel">
+      {embedded ? null : (
+        <div className="xdlv-job__head">
+          <h3 className="xdlv-job__title">Auto-export on publish</h3>
+        </div>
+      )}
       <p className="xdlv-quiet">
-        Every publish of these projects runs <strong>{preset.name}</strong> and delivers it
-        {preset.deliveryProfileName ? ` with ${preset.deliveryProfileName}` : ' (no delivery profile: export only)'} —
-        unless the export loses too much.
+        {byPreset ? (
+          <>
+            Every publish of these projects runs <strong>{scope.preset.name}</strong> and delivers it
+            {scope.preset.deliveryProfileName
+              ? ` with ${scope.preset.deliveryProfileName}`
+              : ' (no delivery profile: export only)'}{' '}
+            — unless the export loses too much.
+          </>
+        ) : (
+          <>Every publish of this project runs these export presets and delivers them — unless the export loses too much.</>
+        )}
       </p>
       {error ? <p className="xdlv-job__error" role="alert">{error}</p> : null}
 
       {subs === null ? (
         <Skeleton className="xdlv-skeleton" />
       ) : subs.length === 0 ? (
-        <p className="xdlv-quiet">No project runs this preset on publish yet.</p>
+        <p className="xdlv-quiet">
+          {byPreset ? 'No project runs this preset on publish yet.' : 'No export preset runs on publish of this project yet.'}
+        </p>
       ) : (
         <ul className="xdlv-attempts">
           {subs.map((sub) => (
             <li key={sub.id} className="xdlv-attempt" data-testid="auto-export-subscription">
               <div className="xdlv-attempt__head">
-                <span className="xdlv-profile__name">{sub.projectName ?? sub.projectId}</span>
+                <span className="xdlv-profile__name">{rowName(sub)}</span>
                 <span className="xdlv-attempt__channel">{subscriptionSummary(sub)}</span>
               </div>
               {canEdit ? (
@@ -123,7 +158,7 @@ export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
                   </Button>
                 </div>
               ) : null}
-              <ul className="xdlv-attempts" aria-label={`Recent auto-exports of ${sub.projectName ?? sub.projectId}`}>
+              <ul className="xdlv-attempts" aria-label={`Recent auto-exports of ${rowName(sub)}`}>
                 {(runs[sub.id] ?? []).map((run) => (
                   <li key={run.id} className="xdlv-attempt__meta" data-testid="auto-export-run">
                     <Badge variant={runTone(run.status)}>{RUN_STATUS_LABELS[run.status]}</Badge>
@@ -148,20 +183,23 @@ export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
       {canEdit ? (
         <div className="xdlv-form" data-testid="auto-export-add">
           <div className="xdlv-field">
-            <Label htmlFor="xauto-project">Project</Label>
-            <select id="xauto-project" className="hive-control xdlv-select" value={projectId}
-              onChange={(event) => setProjectId(event.target.value)}>
-              <option value="">Choose a project…</option>
-              {projects.filter((p) => !subscribed.has(p.id)).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
+            <Label htmlFor={`xauto-choice-${scopeKey}`}>{byPreset ? 'Project' : 'Export preset'}</Label>
+            <select id={`xauto-choice-${scopeKey}`} className="hive-control xdlv-select" value={chosen}
+              onChange={(event) => setChosen(event.target.value)}>
+              <option value="">{byPreset ? 'Choose a project…' : 'Choose a preset…'}</option>
+              {choices.filter((c) => !taken.has(c.id)).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
                 </option>
               ))}
             </select>
+            {!byPreset && choices.length === 0 ? (
+              <p className="xdlv-hint">No export presets yet. Save one with Save as preset in Export studio.</p>
+            ) : null}
           </div>
           <div className="xdlv-field">
-            <Label htmlFor="xauto-halt">Halt delivery at</Label>
-            <select id="xauto-halt" className="hive-control xdlv-select" value={haltAt}
+            <Label htmlFor={`xauto-halt-${scopeKey}`}>Halt delivery at</Label>
+            <select id={`xauto-halt-${scopeKey}`} className="hive-control xdlv-select" value={haltAt}
               onChange={(event) => setHaltAt(event.target.value === 'warn' ? 'warn' : 'critical')}>
               <option value="critical">Critical loss</option>
               <option value="warn">Any loss</option>
@@ -176,10 +214,15 @@ export function AutoExportPanel({ preset, canEdit }: AutoExportPanelProps) {
             <span className="xdlv-choice__meta">Pre-approve the loss; recorded on every run.</span>
           </label>
           <div className="xdlv-form__actions">
-            <Button size="sm" disabled={!projectId || busy} data-testid="auto-export-add-button"
+            <Button size="sm" disabled={!chosen || busy} data-testid="auto-export-add-button"
               onClick={() => void act(async () => {
-                await createAutoExport({ projectId, preset: preset.id, haltAt, approveLoss });
-                setProjectId('');
+                await createAutoExport({
+                  projectId: byPreset ? chosen : scope.projectId,
+                  preset: byPreset ? scope.preset.id : chosen,
+                  haltAt,
+                  approveLoss,
+                });
+                setChosen('');
                 setApproveLoss(false);
               })}>
               Run on every publish

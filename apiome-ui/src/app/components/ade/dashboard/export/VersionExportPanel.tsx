@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Download, FileClock, Loader2, RotateCcw, Shuffle } from 'lucide-react';
+import { Download, FileClock, Layers, Loader2, RotateCcw, Send, Shuffle } from 'lucide-react';
 import { Alert } from '../../../ui/Alert';
 import { Badge } from '../../../ui/Badge';
 import { Button } from '../../../ui/Button';
@@ -17,6 +17,11 @@ import {
 import { fidelityBadgeLabel, loadRecentExports, type RecentExport } from './recentExports';
 import { exportStudioHref } from './exportStudioLink';
 import { formatRelativeTime } from '../../../../ade/dashboard/versions/version-history-dag';
+import { fetchMyPermissions } from '../../../../ade/dashboard/style-guides/api';
+import { MultiTargetChecklist } from './MultiTargetChecklist';
+import { MultiExportRun } from './MultiExportRun';
+import { allVersionsJobBody } from './exportBatchJob';
+import { AutoExportPanel } from '../../export-studio/presets/AutoExportPanel';
 
 interface VersionExportPanelProps {
   /** The artifact (project) id the viewed version belongs to. */
@@ -46,6 +51,14 @@ interface VersionExportPanelProps {
  *  - **Recent exports** — this version's past exports with their fidelity % and relative time
  *    (browser-local, recorded when an export emits; see `recentExports.ts`). Each row offers
  *    *re-run in Studio*, reopening the Studio with that run's target and options pre-filled.
+ *
+ * MFX-39.5 (#4337) adds the project-level surfaces of MFX-EPIC-39 beside them:
+ *
+ *  - **Export all versions…** (in the first card) — the project-level batch (MFX-39.2): tick one or
+ *    more targets, each with this version's fidelity badge, and one job exports every version of the
+ *    project to them, as one archive with a folder per version × target.
+ *  - **Auto-export on publish** — the export presets every publish of this project runs (MFX-39.4),
+ *    with their recent runs, managed here next to the recent exports.
  */
 export function VersionExportPanel({
   artifact,
@@ -64,6 +77,34 @@ export function VersionExportPanel({
     () => (active ? loadRecentExports(artifact, version) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [active, artifact, version, refreshToken],
+  );
+
+  // MFX-39.5: the all-versions batch picker, and whether the viewer may manage auto-exports.
+  const [batchOpen, setBatchOpen] = useState(false);
+  const [batchKeys, setBatchKeys] = useState<string[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
+  useEffect(() => {
+    if (!active) return undefined;
+    let live = true;
+    void fetchMyPermissions().then((perms) => {
+      if (!live) return;
+      setCanEdit(
+        perms?.is_admin === true ||
+          (Array.isArray(perms?.permissions) && perms.permissions.includes('projects:edit')),
+      );
+    });
+    return () => {
+      live = false;
+    };
+  }, [active]);
+  const toggleBatchKey = useCallback(
+    (key: string) => setBatchKeys((keys) => (keys.includes(key) ? keys.filter((k) => k !== key) : [...keys, key])),
+    [],
+  );
+  const batchBody = useMemo(() => allVersionsJobBody(artifact, batchKeys), [artifact, batchKeys]);
+  const targetLabels = useMemo(
+    () => Object.fromEntries(cards.map((card) => [card.key, card.entry.descriptor.label])),
+    [cards],
   );
 
   // The Studio deep link for this version, with no target pre-selected — the "Export this version"
@@ -119,6 +160,15 @@ export function VersionExportPanel({
         )}
 
         <div className="vdlg-export__cta">
+          <Button
+            variant="outline"
+            onClick={() => setBatchOpen((open) => !open)}
+            aria-expanded={batchOpen}
+            data-testid="version-export-all-versions"
+          >
+            <Layers aria-hidden />
+            Export all versions…
+          </Button>
           <Button asChild>
             <Link href={studioHref} data-testid="version-export-open-studio">
               <Download aria-hidden />
@@ -126,6 +176,27 @@ export function VersionExportPanel({
             </Link>
           </Button>
         </div>
+
+        {batchOpen && (
+          <div className="vdlg-export__batch" data-testid="version-export-batch">
+            <MultiTargetChecklist
+              cards={cards}
+              selected={batchKeys}
+              onToggle={toggleBatchKey}
+              minimum={1}
+              heading="Export every version of this project to"
+            />
+            {batchKeys.length > 0 ? (
+              <MultiExportRun
+                mode="generate"
+                body={batchBody}
+                labels={targetLabels}
+                showItem
+                archiveName={`${artifactLabel || artifact}-all-versions.zip`}
+              />
+            ) : null}
+          </div>
+        )}
       </div>
 
       <div className="vdlg-export__card">
@@ -164,6 +235,20 @@ export function VersionExportPanel({
           </ul>
         )}
       </div>
+
+      {active && (
+        <div className="vdlg-export__card">
+          <div className="vdlg-caps vdlg-export__card-title">
+            <Send aria-hidden />
+            Auto-export on publish
+          </div>
+          <AutoExportPanel
+            scope={{ kind: 'project', projectId: artifact, projectName: artifactLabel }}
+            canEdit={canEdit}
+            embedded
+          />
+        </div>
+      )}
     </div>
   );
 }

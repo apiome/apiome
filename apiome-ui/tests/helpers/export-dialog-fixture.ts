@@ -444,6 +444,15 @@ export function mockExportDialogFetch(targets: ExportTargetsResponse = EXPORT_DI
     }
     if (url.includes('/api/export/preview') && init?.method === 'POST') {
       const target = String(JSON.parse(init?.body ?? '{}').target);
+      if (!EXPORT_DIALOG_PREVIEWS[target]) {
+        // No preview recorded for this target: answer as the API does when it cannot preview,
+        // rather than with a fidelity-less envelope no real response carries.
+        return Promise.resolve({
+          ok: false,
+          status: 404,
+          json: () => Promise.resolve({ success: false, error: `No preview recorded for ${target}` }),
+        });
+      }
       return Promise.resolve({
         ok: true,
         json: () =>

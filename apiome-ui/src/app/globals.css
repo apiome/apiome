@@ -18499,7 +18499,19 @@ button.tfa-reset-notice__close > svg {
 }
 
 .vdlg-export__cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   margin-block-start: auto;
+}
+
+/* MFX-39.5: the all-versions batch picker under the first card's actions. */
+.vdlg-export__batch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
 }
 
 .vdlg-export__recent {
@@ -35081,6 +35093,12 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* Export presets (MFX-39.3, #4335): one target row of the Presets tab's edit form. */
+/* MFX-39.5: an auto-export panel drawn inside another card (the version view) — no box of its own. */
+.xdlv-embedded {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .xprs-target {
   padding-block-end: var(--space-3);
   border-block-end: 1px solid var(--border);

@@ -23,6 +23,8 @@ export const MAX_EXPORT_PAIRS = 100;
 export interface ExportJobTargetSpec {
   /** The registry target key. */
   target: string;
+  /** This target's non-default emit options (MFX-1.4) — e.g. from an export preset (MFX-39.3). */
+  options?: Record<string, unknown>;
 }
 
 /** One requested item of a multi-item batch job. */
@@ -38,6 +40,8 @@ export interface MultiExportJobBody {
   artifact?: string;
   version?: string;
   items?: ExportJobItemRef[];
+  /** Every version of `artifact`, newest first (MFX-39.2) — the project-level batch. */
+  all_versions?: boolean;
   targets: ExportJobTargetSpec[];
   dry_run?: boolean;
   confirm?: boolean;
@@ -73,6 +77,42 @@ export function multiTargetJobBody(
     targets: [...new Set(targetKeys)].map((target) => ({ target })),
     ...(dryRun ? { dry_run: true } : {}),
     ...(overlays && overlays.length > 0 ? { overlays: [...overlays] } : {}),
+  };
+}
+
+/**
+ * Give a multi-target body's targets their emit options (MFX-39.3 presets carry them per target).
+ *
+ * @param body The body.
+ * @param options Each target key's options; a target without (or with empty) options keeps its defaults.
+ * @returns A new body; `body` is not modified.
+ */
+export function withTargetOptions(
+  body: MultiExportJobBody,
+  options: Readonly<Record<string, Record<string, unknown> | null | undefined>>,
+): MultiExportJobBody {
+  return {
+    ...body,
+    targets: body.targets.map((spec) => {
+      const opts = options[spec.target];
+      return opts && Object.keys(opts).length > 0 ? { ...spec, options: { ...opts } } : spec;
+    }),
+  };
+}
+
+/**
+ * The body for every version of one project exported to one or more targets (MFX-39.2): one archive
+ * with a folder per version × target.
+ *
+ * @param artifact The project id.
+ * @param targetKeys The target keys, in order; duplicates are dropped.
+ * @returns The request body.
+ */
+export function allVersionsJobBody(artifact: string, targetKeys: readonly string[]): MultiExportJobBody {
+  return {
+    artifact,
+    all_versions: true,
+    targets: [...new Set(targetKeys)].map((target) => ({ target })),
   };
 }
 

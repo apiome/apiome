@@ -712,16 +712,43 @@ describe('the browser fixtures', () => {
     write('compare-cards', (cards.container.firstElementChild as HTMLElement).outerHTML);
     cards.unmount();
 
-    // 5 — the export panel with both fidelity buckets filled.
-    fetchMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => TARGETS_RESPONSE,
-    } as never);
+    // 5 — the export panel with both fidelity buckets filled, and (MFX-39.5) the presets that run
+    // on every publish of the project, one of them halted.
+    const reply = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as never;
+    fetchMock.mockImplementation(async (input: unknown) => {
+      const url = String(input);
+      if (url.startsWith('/api/access/permissions/me')) {
+        return reply({ success: true, data: { is_admin: false, permissions: ['projects:edit'] } });
+      }
+      if (url.startsWith('/api/export/presets')) {
+        return reply({ success: true, data: { presets: [{ id: 'x1', name: 'nightly-sync', description: null,
+          targets: [{ target: 'openapi' }], deliveryProfileId: null, deliveryProfileName: null },
+        { id: 'x2', name: 'release-graphql', description: null, targets: [{ target: 'graphql' }],
+          deliveryProfileId: null, deliveryProfileName: null }] } });
+      }
+      if (url.startsWith('/api/export/auto-exports')) {
+        return reply({ success: true, data: { subscriptions: [{ id: 's1', projectId: 'p-1', projectName: 'Payments API',
+          presetId: 'x1', presetName: 'nightly-sync', haltAt: 'critical', approveLoss: false, active: true }] } });
+      }
+      if (url.startsWith('/api/export/auto-export-runs')) {
+        return reply({ success: true, data: { runs: [
+          { id: 'r2', projectId: 'p-1', projectName: 'Payments API', versionRecordId: 'v2', subscriptionId: 's1',
+            presetName: 'nightly-sync', status: 'halted', lossSeverity: 'critical',
+            lossReasons: ['avro: a severe conversion (12% preserved)'], deliveries: [], errorCode: null,
+            errorMessage: null, releasedAt: null, createdAt: '2026-11-05T09:00:00Z' },
+          { id: 'r1', projectId: 'p-1', projectName: 'Payments API', versionRecordId: 'v1', subscriptionId: 's1',
+            presetName: 'nightly-sync', status: 'delivered', lossSeverity: 'info', lossReasons: [], deliveries: [],
+            errorCode: null, errorMessage: null, releasedAt: null, createdAt: '2026-11-04T09:00:00Z' },
+        ] } });
+      }
+      return reply(TARGETS_RESPONSE);
+    });
     const exportPanel = render(
       <VersionExportPanel artifact="p-1" version="2.3.1" artifactLabel="Payments API" active />
     );
     await screen.findAllByTestId('version-export-target-chip');
+    await screen.findAllByTestId('auto-export-run');
+    await screen.findByRole('option', { name: 'release-graphql' });
     write('export-panel', (exportPanel.container.firstElementChild as HTMLElement).outerHTML);
     exportPanel.unmount();
   });

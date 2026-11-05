@@ -44,10 +44,18 @@ export interface AutoExportRun {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-/** The subscriptions of one preset (by id). */
-export async function fetchAutoExports(presetId: string): Promise<AutoExportSubscription[]> {
+/**
+ * Auto-export subscriptions, narrowed to one preset or one project.
+ *
+ * @param filter `{ preset }` (id or name) or `{ projectId }`.
+ * @returns The subscriptions.
+ */
+export async function fetchAutoExports(filter: { preset?: string; projectId?: string }): Promise<AutoExportSubscription[]> {
+  const params = new URLSearchParams();
+  if (filter.preset) params.set('preset', filter.preset);
+  if (filter.projectId) params.set('projectId', filter.projectId);
   const data = await deliveryApi<{ subscriptions?: AutoExportSubscription[] }>(
-    `/api/export/auto-exports?preset=${encodeURIComponent(presetId)}`,
+    `/api/export/auto-exports?${params.toString()}`,
   );
   return Array.isArray(data?.subscriptions) ? data.subscriptions : [];
 }

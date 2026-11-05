@@ -303,7 +303,14 @@
       "id": "version-export-panel",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-version-dialogs/export-panel.html"
+      "data": "fixture:hive-version-dialogs/export-panel.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/VersionExportPanel.tsx",
+        "apiome-ui/src/app/components/ade/export-studio/presets/AutoExportPanel.tsx"
+      ],
+      "mask": [
+        "time"
+      ]
     },
     {
       "id": "export-dialog-targets",
@@ -324,6 +331,17 @@
         "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx",
         "apiome-ui/src/app/components/ade/dashboard/export/ExportTargetGrid.tsx",
         "apiome-ui/src/app/components/ade/dashboard/export/ExportOptionsForm.tsx"
+      ]
+    },
+    {
+      "id": "export-dialog-multi-target",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"export-dialog-body\"]",
+      "data": "fixture:hive-rc6-dialogs/export-multi-target.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/export/MultiTargetChecklist.tsx",
+        "apiome-ui/src/app/components/ade/export-studio/presets/ExportPresetControls.tsx"
       ]
     },
     {
