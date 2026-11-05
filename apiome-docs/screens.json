@@ -1654,6 +1654,16 @@
       ]
     },
     {
+      "id": "export-studio-asyncapi-test-drive",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "[data-testid=\"asyncapi-test-drive-frame\"] >> internal:control=enter-frame >> #introduction",
+      "data": "fixture:hive-a11y/export-studio-asyncapi-test-drive.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/AsyncApiTestDriveFrame.tsx",
+        "apiome-ui/lib/test-drive/asyncapi-viewer.ts"
+      ]
+    },
+    {
       "id": "export-studio-test-drive",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

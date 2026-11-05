@@ -221,6 +221,7 @@ appear comes from the format itself, so each target shows its own:
 | **Swagger UI** | Interactive docs for the file: every operation, its parameters and responses; **Try it out** while the mock server runs | OpenAPI |
 | **ReDoc** | A read-only reference of the file, in three panes | OpenAPI |
 | **GraphiQL** | Explore the schema (docs and autocomplete) and run queries that answer with mock data | GraphQL |
+| **AsyncAPI viewer** | The file as AsyncAPI documentation: its operations by channel, their messages and payloads, and the schemas, with a sidebar to jump between them | AsyncAPI |
 | **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
 | **Toolchain checks** (or the check's name, when there is one) | Lists the format's own checks, such as `buf lint`, and whether each tool is installed on this server | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec, Smithy, Cap'n Proto, Thrift, API Blueprint |
 
@@ -272,6 +273,30 @@ up from the schema. No server is involved, so you can try the schema before anyt
 - **A file GraphiQL cannot read shows a notice instead**, with the reason, for example
   `The file is not valid GraphQL SDL: Syntax Error: Expected Name, found <EOF>.` Directives the file
   uses without declaring them, such as federation's `@key`, do not stop it.
+
+#### AsyncAPI viewer
+
+For an AsyncAPI file, **AsyncAPI viewer** draws the file you just generated with the standard
+AsyncAPI documentation renderer. It reads AsyncAPI 3.x and 2.x, so it shows the file whichever
+AsyncAPI version you export (3.1, 3.0 or 2.6). The note above it counts the
+file's channels and operations, for example *AsyncAPI 3.1.0 · 2 channels · 2 operations*.
+
+<Screenshot id="export-studio-asyncapi-test-drive" alt="Test drive with the AsyncAPI viewer tab open on Order Events 1.2.0: the RECEIVE operation on orders/created with its OrderCreated message, and the menu button at the bottom right" />
+
+1. **Read the operations.** Each operation shows its action (**SEND** or **RECEIVE**; **PUB** or
+   **SUB** in a 2.x file), its channel address, and the message it carries with its payload.
+2. **Jump to a channel.** **Click the menu button** (☰, bottom right) to open the sidebar, then
+   **click an operation**. The sidebar lists every operation by channel, then the messages and
+   schemas. When the window is wide enough, the sidebar stays open on the left.
+3. **Look inside a payload.** **Click "Expand all"** on a payload to open every property, or
+   **click "Payload"** under **Examples** for a generated example.
+
+- **It makes no network requests.** The viewer runs in a sandbox with no access to your session or
+  the rest of Apiome, and cannot reach the network.
+- **A file the renderer rejects shows its errors**, line by line, in the viewer and in a notice above
+  it, for example `There are errors in your Asyncapi document: "info" property must have required
+  property "version"`. A file with no `asyncapi` version, or a version other than 2.x or 3.x, shows a
+  notice instead of the viewer.
 
 The list also comes back from the API, as `test_tools` on each target of
 [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get). Each entry gives the tool's `kind`,

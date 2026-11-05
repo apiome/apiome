@@ -26,12 +26,14 @@ const nextConfig: NextConfig = {
   // Enable standalone output for Docker
   output: "standalone",
   outputFileTracingRoot: monorepoRoot,
-  // MFX-44.2: the OpenAPI test-drive viewer serves these bundles from node_modules at runtime.
+  // MFX-44.2 / MFX-44.4: the test-drive viewers serve these bundles from node_modules at runtime.
   outputFileTracingIncludes: {
     '/test-drive/vendor/[asset]': [
       '../node_modules/swagger-ui-dist/swagger-ui-bundle.js',
       '../node_modules/swagger-ui-dist/swagger-ui.css',
       '../node_modules/redoc/bundles/redoc.standalone.js',
+      '../node_modules/@asyncapi/react-component/browser/standalone/index.js',
+      '../node_modules/@asyncapi/react-component/styles/default.min.css',
     ],
   },
   ...(allowedDevOrigins.length > 0 ? { allowedDevOrigins } : {}),
