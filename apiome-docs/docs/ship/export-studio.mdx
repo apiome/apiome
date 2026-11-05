@@ -200,9 +200,11 @@ When it completes:
 - **A bundle** — browse the files in the tree, then **“Download .zip”**.
 - **Keep it** — **click “Save as preset”** to save the targets, options and delivery; apply a preset on
   **2. Target** with **Apply a preset** (see [Save an export as a preset](./export-presets.mdx)).
-- **Deliver it** — tick delivery profiles under **Deliver when it completes** before you click
-  **“Generate”**, or choose one under **Deliveries** and **click “Deliver now”**. The **Delivery** tab
-  manages the profiles; see [Deliver an export](./deliver-an-export.mdx).
+- **Deliver it** — the **Deliver** section lists **Download** (the default), your delivery profiles and,
+  for Avro, JSON Schema or Protobuf, a schema registry. Tick profiles under **Deliver when it completes**
+  before you click **“Generate”**, or choose one and **click “Deliver now”**; each delivery shows its pull
+  request, receipt or objects. The **Delivery** tab manages the profiles; see
+  [Deliver from Export studio](./deliver-an-export.mdx#deliver-from-export-studio).
 - **Artifact entities**, **Problems**, the mapping graph and **What … loses, worst first** explain
   the result. The **Fidelity overlay** paints the fidelity report onto the mapping graph (see
   [See where the export loses fidelity](#see-where-the-export-loses-fidelity)), and **“Run

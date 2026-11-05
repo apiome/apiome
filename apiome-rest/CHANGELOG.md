@@ -5,6 +5,17 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.663.0] - 2026-11-05
+
+### Added
+- **Delivery results (MFX-46.3, #4381).** Every delivery attempt of `GET /v1/export/{tenant_slug}/jobs/{job_id}/deliveries`
+  (and the answer to `POST …/deliveries`) carries `result`, what the delivery left at its destination: a git
+  delivery's `pullRequestUrl` / `pullRequestNumber`, `branch`, `commitSha` and `mode`; a webhook's `httpStatus`
+  (the receiver's last answer) and `payloadSha256`; an object-storage delivery's `objectUrls` (up to 20,
+  path-style on a custom endpoint, `s3://` on AWS), `objectCount` and `manifestUrl`. Null until the delivery
+  produced something. URLs lose their user-info and query; signatures, payloads and credentials never appear.
+  - OpenAPI 1.527.0.
+
 ## [1.662.0] - 2026-11-05
 
 ### Added

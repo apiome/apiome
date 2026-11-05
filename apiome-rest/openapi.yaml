@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.526.0
+  version: 1.527.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -103754,6 +103754,14 @@ components:
             description: Export Delivery Attempt Model schema.
           title: Createdby
           description: Created By.
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/ExportDeliveryResult'
+          - type: 'null'
+            description: Export Delivery Attempt Model schema.
+          description: 'What the delivery left at its destination (MFX-46.3): the pull
+            request or commit, the webhook receiver''s HTTP status, the objects written.
+            Null until it has produced something.'
         run:
           anyOf:
           - additionalProperties: true
@@ -103779,8 +103787,95 @@ components:
         \    profile_name: That profile's name.\n    destination: Where it went: ``owner/repo``,\
         \ the receiver URL without its query, or ``bucket/prefix``.\n    attempt_count:\
         \ Send attempts so far (a webhook retries; the other channels make one).\n   \
-        \ run: In the answer to a delivery only — the channel's full run, as its own endpoint\
-        \ returns it."
+        \ result: What it left at the destination — PR link, receiver status, object URLs\
+        \ (MFX-46.3).\n    run: In the answer to a delivery only — the channel's full\
+        \ run, as its own endpoint returns it."
+    ExportDeliveryResult:
+      properties:
+        mode:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Mode
+          description: 'git: `pr` or `commit`.'
+        pullRequestUrl:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Pullrequesturl
+          description: 'git: the pull request opened or updated.'
+        pullRequestNumber:
+          anyOf:
+          - type: integer
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Pullrequestnumber
+          description: Pull Request Number.
+        branch:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Branch
+          description: 'git: the branch the files were written on.'
+        commitSha:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Commitsha
+          description: 'git: the commit.'
+        httpStatus:
+          anyOf:
+          - type: integer
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Httpstatus
+          description: 'webhook: the receiver''s last HTTP status.'
+        payloadSha256:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Payloadsha256
+          description: 'webhook: the digest of the body sent.'
+        objectUrls:
+          items:
+            type: string
+          type: array
+          title: Objecturls
+          description: 'object storage: the objects written (at most 20).'
+          maxItems: 1000
+        objectCount:
+          anyOf:
+          - type: integer
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Objectcount
+          description: 'object storage: how many objects were written.'
+        manifestUrl:
+          anyOf:
+          - type: string
+            description: Export Delivery schema.
+          - type: 'null'
+            description: Export Delivery schema.
+          title: Manifesturl
+          description: 'object storage: the delivery manifest.'
+      additionalProperties: false
+      type: object
+      title: ExportDeliveryResult
+      description: The artifact one delivery left at its destination (the fields of its
+        own channel only).
     ExportDeliveryProfileListResponse:
       properties:
         profiles:

@@ -1625,6 +1625,15 @@
       ]
     },
     {
+      "id": "export-studio-deliver",
+      "route": "/ade/dashboard/export/studio",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/deliver.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/delivery"
+      ]
+    },
+    {
       "id": "export-studio-job-delivery",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",

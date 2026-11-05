@@ -6,6 +6,7 @@ import {
   CHANNEL_LABELS,
   OUTCOME_LABELS,
   outcomeTone,
+  resultLines,
   type DeliveryAttempt,
 } from './deliveryProfilesModel';
 
@@ -26,7 +27,8 @@ export interface DeliveryAttemptListProps {
  *
  * Shared by a profile's trail on the **Delivery** tab and a job's deliveries on Review. Each row
  * names the channel, the outcome, where it went, how many attempts it took and, on a failure, the
- * channel's error code and message.
+ * channel's error code and message — and (MFX-46.3) what it left there: the pull request or commit, the
+ * webhook receiver's answer, the objects written.
  *
  * @param props See {@link DeliveryAttemptListProps}.
  * @returns The list.
@@ -57,6 +59,22 @@ export function DeliveryAttemptList({ attempts, emptyMessage, showProfile = true
             {attempt.attemptCount > 1 ? <span>{attempt.attemptCount} attempts</span> : null}
             {attempt.startedAt ? <time dateTime={attempt.startedAt}>{new Date(attempt.startedAt).toLocaleString()}</time> : null}
           </div>
+          {resultLines(attempt.channel, attempt.result).length > 0 ? (
+            <ul className="xdlv-attempt__result" aria-label="Result" data-testid="delivery-result">
+              {resultLines(attempt.channel, attempt.result).map((line, lineIndex) => (
+                <li key={`${line.label}-${lineIndex}`}>
+                  <span className="xdlv-attempt__result-label">{line.label}</span>{' '}
+                  {line.href ? (
+                    <a href={line.href} target="_blank" rel="noopener noreferrer" className="mono">
+                      {line.value}
+                    </a>
+                  ) : (
+                    <span className="mono">{line.value}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {attempt.errorCode ? (
             <p className="xdlv-attempt__error">
               <code className="mono">{attempt.errorCode}</code>

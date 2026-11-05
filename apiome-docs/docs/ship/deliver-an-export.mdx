@@ -31,6 +31,31 @@ Every channel works the same way:
 - **Failures are runs.** A delivery that reaches its destination and fails still answers with a run, a
   stable `errorCode` and a message that says what to fix.
 
+## Deliver from Export studio
+
+On **6. Review & Generate**, the **Deliver** section lists every destination for this export:
+
+<Screenshot id="export-studio-deliver" alt="The Deliver section of a finished Avro export: Download as the default, deliveries to git with its pull request link, a webhook with the receiver's HTTP 202, object storage with the objects written, and a schema registry push listing each subject with its version and schema id" />
+
+1. **Download** is always there, and the default: the file and the `.zip` are yours whatever else happens.
+2. **Delivery profiles**: before you click **“Generate”**, tick profiles under **Deliver when it
+   completes**; after, pick one and **click “Deliver now”**. Each delivery shows what it left behind:
+   - **Git repository**: the **pull request** it opened or updated, as a link, or the commit it made
+     on its branch;
+   - **Webhook**: the HTTP status the receiver answered with, and the digest of the body sent;
+   - **Object storage**: the objects it wrote (a link for an `http(s)` endpoint, the `s3://` address
+     for AWS) and the delivery manifest.
+3. **Schema registry**, for an Avro, JSON Schema or Protobuf export: choose a **Schema registry**
+   connector, how subjects are named (**Record name**, **Topic name** or **Topic and record**, with the
+   Kafka topic for the topic strategies) and whether they are **Value** or **Key** subjects, then **click
+   “Push to registry”**. Tick **Dry run** to check every subject against the registry without registering
+   anything. Each subject is listed with its status (**Registered**, **Already registered**,
+   **Incompatible**…), its **version** and its schema **id**. Pushing needs `imports:edit`.
+
+With no delivery profile, the section says where to create one (the **Delivery** tab); with no schema
+registry connector, where to add one (**Connectors**). Profiles and connectors are managed on their own
+screens, and no credential is ever shown here.
+
 ## Save a destination as a profile
 
 To deliver to the same place again, save the destination once as a
@@ -62,6 +87,7 @@ new version as it is published, unless the export loses too much.
 | `POST /v1/export/{tenant}/delivery-profiles` | Save a destination as a profile. |
 | `POST /v1/export/{tenant}/jobs/{job_id}/deliveries` | Deliver with a profile. |
 | `GET /v1/export/{tenant}/jobs/{job_id}/deliveries` | Every delivery of a job, across all channels. |
+| `POST /v1/export/{tenant}/schema-registry/push` | Register an Avro, JSON Schema or Protobuf export on a schema registry, through a connector. |
 
 Each channel's own `GET` lists that channel's runs for a job. Every field is in the
 [export delivery reference](/reference/rest/export-delivery).
@@ -69,8 +95,10 @@ Each channel's own `GET` lists that channel's runs for a job. Every field is in 
 ## See what was delivered
 
 - **On the job:** `GET /v1/export/{tenant}/jobs/{job_id}/deliveries` lists every delivery, newest first,
-  with its channel, outcome (`in_progress`, `delivered` or `failed`), destination and attempt count. In
-  Export studio, the **Deliveries** panel on **Review** shows the same list.
+  with its channel, outcome (`in_progress`, `delivered` or `failed`), destination, attempt count and
+  `result`: the pull request (`pullRequestUrl`, `pullRequestNumber`) or commit, the webhook receiver's
+  `httpStatus`, or the `objectUrls` and `manifestUrl` written. In Export studio, the **Deliver** section on
+  **Review** shows the same list.
 - **In the audit log:** each delivery is recorded as `export.git_delivery`, `export.webhook_delivery` or
   `export.object_storage_delivery`, with its profile when it was made with one. Saving, changing and
   deleting profiles and bucket credentials are recorded too.
