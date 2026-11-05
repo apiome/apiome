@@ -1,0 +1,19 @@
+---
+slug: export-over-mcp-overview
+title: AI agents can export, with the same warnings people see
+description: "MCP now exports every format, with fidelity checks matching the app's."
+authors: [apiome]
+---
+
+Agents connected to Apiome over MCP can now export any version to any format, and they get the same
+fidelity warnings as someone using the app. See [Export over MCP](/ship/export-over-mcp).
+
+{/* truncate */}
+
+- **Two generic tools:** `export.targets` lists every format with its fidelity for the source;
+  `version.export` exports and returns the files and the fidelity report. A new export format reaches
+  agents at once, with no new tool.
+- **Lossy needs consent:** an export that loses anything returns the report and the advisory and writes
+  nothing until the agent passes `allow_lossy: true`, as the CLI needs `--force`.
+- **One answer everywhere:** the app, Browse, the CLI and MCP offer the same formats and options and show
+  the same report and wording; a parity check keeps them that way.
