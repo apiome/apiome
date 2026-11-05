@@ -63,6 +63,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, rename_verdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import CAPNP_SCALAR_FOR_KIND, target_scalar
@@ -230,6 +231,8 @@ class CapnpEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = False
     options_model = CapnpEmitOptions
+    #: MFX-44.1: the Cap'n Proto compiler checks the emitted schema.
+    test_tools = (toolchain_check("capnp", "compile"),)
 
     OUTPUT_MEDIA_TYPE = "text/x-capnproto"
 

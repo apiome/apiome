@@ -80,6 +80,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import ExportTestToolKind, test_tool
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .lossiness import LossinessReport
 
@@ -275,6 +276,8 @@ class GraphQlEmitter(Emitter, register=True):
     paradigm = ApiParadigm.GRAPH
     multi_file = False
     options_model = GraphQlEmitOptions
+    #: MFX-44.1: explore the emitted schema in GraphiQL.
+    test_tools = (test_tool(ExportTestToolKind.GRAPHIQL),)
 
     OUTPUT_MEDIA_TYPE = "application/graphql"
 

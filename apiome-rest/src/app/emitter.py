@@ -57,6 +57,7 @@ from .canonical_model import (
     TypeKind,
     TypeRef,
 )
+from .export_test_tools import ExportTestTool, ExportTestToolSpec, resolve_test_tools
 from .zip_bundle import safe_bundle_path
 
 __all__ = [
@@ -551,6 +552,12 @@ class EmitterDescriptor(BaseModel):
         default=None,
         description="Human-readable reason the target is unavailable, or ``null`` when available.",
     )
+    test_tools: List[ExportTestTool] = Field(
+        default_factory=list,
+        description="The tools that can test drive this target's output (MFX-44.1): Swagger UI, ReDoc, "
+        "GraphiQL, the AsyncAPI viewer, a mock server, toolchain checks. Server-side tools say whether "
+        "they are available on this server, and why not.",
+    )
 
 
 class EmitterTarget(BaseModel):
@@ -627,6 +634,9 @@ class Emitter(ABC):
     requires_source: ClassVar[Tuple[str, ...]] = ()
     #: Pydantic model describing this emitter's per-target options (MFX-1.4).
     options_model: ClassVar[type[EmitOptions]] = EmitOptions
+    #: The tools that can test drive this emitter's output (MFX-44.1), in tab order — see
+    #: :mod:`app.export_test_tools`. A mock-servable format gains ``mock-server`` without declaring it.
+    test_tools: ClassVar[Tuple[ExportTestToolSpec, ...]] = ()
 
     def __init_subclass__(cls, *, register: bool = False, **kwargs: Any) -> None:
         """Optionally self-register a concrete subclass in the format registry.
@@ -724,6 +734,7 @@ class Emitter(ABC):
             needs_toolchain=bool(cls.required_tools),
             available=available,
             unavailable_reason=unavailable_reason,
+            test_tools=resolve_test_tools(cls.test_tools, target_format=cls.format),
         )
 
     @abstractmethod

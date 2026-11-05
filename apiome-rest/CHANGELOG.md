@@ -5,6 +5,21 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.658.0] - 2026-11-05
+
+### Added
+- **Per-target test-drive tooling registry (MFX-44.1, #4367).** Every export target's descriptor carries
+  `test_tools` — on `GET /v1/export/{tenant}/targets` (and wherever a descriptor appears): the tools that can test
+  drive its output, each with `kind` (`swagger-ui`, `redoc`, `graphiql`, `asyncapi-render`, `mock-server`,
+  `toolchain`), `label`, `params`, `server_side`, and for server-side tools `available` / `unavailable_reason`.
+  - Emitters declare them (`Emitter.test_tools`, `app/export_test_tools.py`): Swagger UI, ReDoc and `redocly lint` on
+    OpenAPI; GraphiQL; the AsyncAPI viewer and `asyncapi validate`; `buf lint` / `buf build` on Protobuf;
+    `tsp compile`, `smithy build`, `capnp compile`, `thrift compile`, `drafter parse`.
+  - `mock-server` is derived for every mock-servable format; its availability is the Mock Server / export-mock
+    switch (`export_mock.mock_engine_unavailable_reason`, shared with `GET …/mock/capability`). A toolchain check is
+    available when the toolchain runner resolves its tool.
+  - OpenAPI 1.522.0.
+
 ## [1.657.1] - 2026-11-05
 
 ### Added

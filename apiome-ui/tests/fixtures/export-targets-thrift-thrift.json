@@ -13,7 +13,20 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": true,
-        "unavailable_reason": null
+        "unavailable_reason": null,
+        "test_tools": [
+          {
+            "kind": "toolchain",
+            "label": "thrift compile",
+            "params": {
+              "tool": "thrift",
+              "check": "compile"
+            },
+            "server_side": true,
+            "available": false,
+            "unavailable_reason": "The thrift toolchain is not installed on this server."
+          }
+        ]
       },
       "capability_profile": {
         "operations": true,

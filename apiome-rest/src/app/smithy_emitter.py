@@ -64,6 +64,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .fidelity_rulepack import ROOT_CONSTRUCT_KEY, CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessSeverity
 from .scalar_aliases import SMITHY_SCALAR_FOR_KIND, target_scalar
@@ -254,6 +255,8 @@ class SmithyEmitter(Emitter, register=True):
     paradigm = ApiParadigm.RPC
     multi_file = False
     options_model = SmithyEmitOptions
+    #: MFX-44.1: the Smithy CLI builds the emitted model.
+    test_tools = (toolchain_check("smithy", "build"),)
 
     OUTPUT_MEDIA_TYPE = "text/plain"
     AST_MEDIA_TYPE = "application/json"

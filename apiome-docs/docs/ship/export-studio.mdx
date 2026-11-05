@@ -206,11 +206,32 @@ When it completes:
 - **Artifact entities**, **Problems**, the mapping graph and **What … loses, worst first** explain
   the result; **“Run round-trip check”** reads the file back and compares it with the source (see
   [Check a round trip](#check-a-round-trip)).
-- For an OpenAPI target, **Mock server test drive** serves the file as a live API — see
-  [Mock try-out](./mock-try-out.mdx#test-drive-an-export).
+- **Test drive** tries the file with the tools that fit its format (see [Test drive](#test-drive)).
 
 The viewer, the file tree, the problem markers and the large-file limits are described on
 [Read an exported file](./read-an-exported-file.mdx).
+
+### Test drive
+
+Under the generated file, **Test drive** has a tab for each tool that can try this format. Which tabs
+appear comes from the format itself, so each target shows its own:
+
+| Tab | What it does | Targets |
+| --- | --- | --- |
+| **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
+| **Toolchain checks** (or the check's name, when there is one) | Lists the format's own checks, such as `buf lint`, and whether each tool is installed on this server | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec, Smithy, Cap'n Proto, Thrift, API Blueprint |
+
+<Screenshot id="export-studio-test-drive" alt="Test drive with the redocly lint tab open, showing it is installed, and the Mock server tab disabled because mocks are disabled on this server" />
+
+A tool that needs something this server does not have is still shown, greyed out, with the reason
+under the tabs, for example *Mock server is unavailable on this server: Export test-drive mocks are
+disabled on this server.* Ask your administrator to install the tool or turn the feature on. A
+format with no tools shows no **Test drive**.
+
+The list also comes back from the API, as `test_tools` on each target of
+[`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get). Each entry gives the tool's `kind`,
+`label` and `params`, whether it runs on the server, and, for server tools, `available` and
+`unavailable_reason`. The format's exporter declares its tools, so a new format brings its own tabs.
 
 ### Check a round trip
 

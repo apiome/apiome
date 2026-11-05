@@ -13,7 +13,8 @@
         "multi_file": false,
         "needs_toolchain": false,
         "available": false,
-        "unavailable_reason": "xRegistry export needs at least one type or event (publish / subscribe) operation; this source has neither."
+        "unavailable_reason": "xRegistry export needs at least one type or event (publish / subscribe) operation; this source has neither.",
+        "test_tools": []
       },
       "capability_profile": {
         "operations": false,

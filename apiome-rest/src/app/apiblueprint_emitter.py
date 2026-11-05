@@ -70,6 +70,7 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
+from .export_test_tools import toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .lossiness import LossinessKind, LossinessReport, LossinessSeverity
 from .scalar_aliases import scalar_kind
@@ -785,6 +786,8 @@ class ApiblueprintEmitter(Emitter, register=True):
     paradigm = ApiParadigm.REST
     multi_file = False
     options_model = ApiblueprintEmitOptions
+    #: MFX-44.1: drafter parses the emitted blueprint.
+    test_tools = (toolchain_check("drafter", "parse"),)
     requires_source = ("http-operation-or-type",)
 
     OUTPUT_MEDIA_TYPE = "text/markdown"

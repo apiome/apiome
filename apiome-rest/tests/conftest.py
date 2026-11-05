@@ -343,6 +343,25 @@ def _in_memory_async_job_store(monkeypatch):
     yield
 
 @pytest.fixture(autouse=True)
+def _pin_test_tool_availability(monkeypatch):
+    """
+    Report every toolchain test-drive check (MFX-44.1) as "not installed" in the test session.
+
+    An export target's descriptor carries ``test_tools``, and a toolchain check's ``available`` flag
+    depends on which binaries the machine running the tests has (``buf`` on one laptop, nothing in
+    CI). Descriptors are recorded in many golden fixtures — the target-card fixtures the CLI and UI
+    replay, the export goldens — so an unpinned flag would make them differ from machine to machine.
+    Pinning it here keeps every recording deterministic. ``test_export_test_tools.py`` patches the
+    same seam per test to cover both answers.
+    """
+    try:
+        module = __import__("app.export_test_tools", fromlist=["_tool_installed"])
+    except Exception:
+        return
+    monkeypatch.setattr(module, "_tool_installed", lambda tool: False)
+
+
+@pytest.fixture(autouse=True)
 def _allow_permissions_by_default(monkeypatch):
     """
     Default the RBAC permission guard (#3611) to "allow" for route unit tests.

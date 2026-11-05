@@ -20,6 +20,7 @@ import {
 } from '@/app/components/ade/version-dialogs/versionDialogsModel';
 import { resolveLucideIcon } from '../importSourceCatalog';
 import { kindGlyph } from './exportFidelityPreview';
+import type { ExportTestTool } from './exportTestDrive';
 
 /** One-word fidelity badge for a (source, target) pairing (mirrors Python `ExportFidelityTier`). */
 export type ExportFidelityTier = 'lossless' | 'lossy' | 'types-only';
@@ -46,6 +47,11 @@ export interface ExportTargetDescriptor {
   available?: boolean;
   /** Human-readable reason the target is unavailable, when `available` is `false`. */
   unavailable_reason?: string | null;
+  /**
+   * The tools that can test drive this target's output (MFX-44.1) — the Review step's Test drive tabs.
+   * Absent on an older REST.
+   */
+  test_tools?: ExportTestTool[];
 }
 
 /** The cheap per-target fidelity summary for one source (mirrors Python `TargetFidelity`, MFX-2.5). */

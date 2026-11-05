@@ -101,6 +101,7 @@ from .emitter import (
     ProvenanceTracker,
     SchemaEmitter,
 )
+from .export_test_tools import ExportTestToolKind, test_tool, toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict
 from .inference_provenance import without_provenance_stamp
 from .lossiness import LossinessReport, LossinessSeverity
@@ -329,6 +330,8 @@ class AsyncApiEmitter(Emitter, register=True):
     paradigm = ApiParadigm.EVENT
     multi_file = False
     options_model = AsyncApiEmitOptions
+    #: MFX-44.1: the rendered document and the AsyncAPI CLI's validation.
+    test_tools = (test_tool(ExportTestToolKind.ASYNCAPI_RENDER), toolchain_check("asyncapi", "validate"))
 
     #: The AsyncAPI version string this emitter targets natively.
     ASYNCAPI_VERSION = "3.1.0"
