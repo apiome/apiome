@@ -91,7 +91,9 @@ Content-Type: application/json
    `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/git` (see
    [Deliver an export to a git repository](./deliver-an-export-to-git.md)), or push it to a pipeline
    as a signed webhook with `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/webhook` (see
-   [Deliver an export to a webhook](./deliver-an-export-to-a-webhook.md)).
+   [Deliver an export to a webhook](./deliver-an-export-to-a-webhook.md)), or upload it to an
+   S3-compatible bucket with `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/object-storage` (see
+   [Deliver an export to object storage](./deliver-an-export-to-object-storage.md)).
 
 Set `"dry_run": true` to stop after the fidelity report, and `"confirm": true` to run a severe
 conversion. Pass the preview's snapshot hash as `acknowledged_snapshot` to make sure the export is the

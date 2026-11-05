@@ -5,6 +5,32 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.652.0] - 2026-11-04
+
+### Added
+- **Object-storage delivery for exports (MFX-38.3, #4330).**
+  - **Bucket credentials in the vault:** `POST` / `GET /v1/export/{tenant_slug}/storage-credentials` and
+    `DELETE …/storage-credentials/{credential_id}` store, list and remove a workspace's S3-compatible credentials
+    (`accessKeyId`, `secretAccessKey`, optional `sessionToken`; `endpointUrl` for MinIO / R2 / Ceph, `region`,
+    `forcePathStyle`). The key pair is sealed on arrival (`app.mcp_credential_crypto`, the envelope connector
+    credentials use) and is write-only: reads show the endpoint, region and the access key id's last four characters.
+    A custom endpoint must resolve to public addresses (checked when stored and at every delivery). `projects:edit`
+    (listing: `projects:view`); `409` for a taken name, `503` without `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`.
+  - `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/object-storage` (`credentialId`, `bucket`, `prefix`,
+    `partitioning` — default `[artifact, version, target]`) uploads a **completed** export's bundle under
+    `<prefix>/<artifact>/<version>/<target>/` (each file at its bundle path, SHA-256 in `x-amz-meta-sha256`), then a
+    manifest of every object's key, size and SHA-256 with the export's provenance and fidelity — at
+    `manifests/<sha256>.json` (content-addressed: the same export writes the same manifest) and `manifest.json`.
+    `GET` on the same path lists the job's deliveries. `versions:publish`; audited as `export.object_storage_delivery`.
+  - Failures are `failed` runs with stable `export-object-storage-delivery-*` codes (`credential-missing`,
+    `credential-unavailable`, `credential-rejected`, `permission-denied`, `bucket-missing`, `endpoint-refused`,
+    `endpoint-unreachable`, `upload-failed`); messages are redacted of the key id, secret and token, which never reach
+    a response, a log line or the audit.
+  - `app/export_object_storage_delivery.py` (rules), `app/export_object_storage_delivery_pipeline.py` (boto3 uploads),
+    `app/export_object_storage_delivery_routes.py`; tables `export_storage_credentials` and
+    `export_object_storage_delivery_runs` (V356).
+  - OpenAPI: the three new paths and their seven schemas merged into the committed documents.
+
 ## [1.651.0] - 2026-11-04
 
 ### Added

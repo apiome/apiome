@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.515.0",
+    "version": "1.516.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -86497,6 +86497,507 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for fetchawebhookdeliverysbundlesignedlinkresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/storage-credentials": {
+      "post": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Store an S3-compatible bucket credential",
+        "description": "Stores an access key pair (and optional session token) for export object-storage delivery, sealed in the credential vault on arrival. The answer \u2014 and every later read \u2014 names the endpoint, region and the access key id's last four characters, never a secret. A custom `endpointUrl` must resolve to public addresses. Requires `projects:edit`. `409` for a name already in use; `503` when the deployment has no credential encryption key (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`).",
+        "operationId": "create_storage_credential_v1_export__tenant_slug__storage_credentials_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Storean S3compatiblebucketcredentialauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Storean S3compatiblebucketcredentialauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Storean S3compatiblebucketcredential Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Storean S3compatiblebucketcredential Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageCredentialCreate",
+                "description": "Request body for storean s3compatiblebucketcredentialrequest."
+              }
+            }
+          },
+          "description": "Request body for store an s3-compatible bucket credential."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for store an s3-compatible bucket credential.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageCredentialModel",
+                  "description": "Response payload for storean s3compatiblebucketcredentialresponse201."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid field, or a refused endpoint."
+          },
+          "409": {
+            "description": "A credential of that name exists."
+          },
+          "503": {
+            "description": "Credential encryption is not configured."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for storean s3compatiblebucketcredentialresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "List the workspace's bucket credentials",
+        "description": "Every storage credential, by name \u2014 never a secret. Requires `projects:view`.",
+        "operationId": "list_storage_credentials_v1_export__tenant_slug__storage_credentials_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacesbucketcredentialsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacesbucketcredentialsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listtheworkspacesbucketcredentials Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listtheworkspacesbucketcredentials Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list the workspace's bucket credentials.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageCredentialListResponse",
+                  "description": "Response payload for listtheworkspacesbucketcredentialsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listtheworkspacesbucketcredentialsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/storage-credentials/{credential_id}": {
+      "delete": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Delete a bucket credential",
+        "description": "Removes the credential from the vault; past deliveries keep their record. Requires `projects:edit`. `404` when the workspace has no such credential.",
+        "operationId": "delete_storage_credential_v1_export__tenant_slug__storage_credentials__credential_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "credential_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Credential Id",
+              "description": "Credential Id schema."
+            },
+            "description": "Path parameter identifying the credential id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteabucketcredentialauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteabucketcredentialauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deleteabucketcredential Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deleteabucketcredential Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful response for delete a bucket credential."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deleteabucketcredentialresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/export/{tenant_slug}/jobs/{job_id}/deliveries/object-storage": {
+      "post": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "Deliver a completed export to an S3-compatible bucket",
+        "description": "Uploads a **completed** export job's bundle to `bucket` with a stored credential (`credentialId`). Objects are written under `<prefix>/<artifact>/<version>/<target>/` \u2014 `partitioning` picks and orders the partitions, `[]` writes straight under `prefix` \u2014 each at its bundle path, with its SHA-256 in `x-amz-meta-sha256`.\n\n**Manifest, last.** A manifest listing every object's key, size and SHA-256, with the export's provenance and fidelity summary, is written after the objects at `<keyPrefix>/manifests/<sha256>.json` (content-addressed, immutable: the same export writes the same manifest) and at `<keyPrefix>/manifest.json` (the latest delivery to that prefix).\n\n**Failures are runs.** A missing or unreadable credential, a refused endpoint, an unknown bucket, a rejected key or a failed upload answers `200` with `status: failed`, a stable `errorCode` and a redacted message; the objects written before it are listed. Credentials never appear in a response, a log line or the audit.\n\nRequires `versions:publish`. Audited as `export.object_storage_delivery`.",
+        "operationId": "deliver_export_job_to_object_storage_v1_export__tenant_slug__jobs__job_id__deliveries_object_storage_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id",
+              "description": "Job Id schema."
+            },
+            "description": "Asynchronous job identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveracompletedexporttoan S3compatiblebauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveracompletedexporttoan S3compatiblebauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Deliveracompletedexporttoan S3compatibleb Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Deliveracompletedexporttoan S3compatibleb Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ObjectStorageDeliveryRequest",
+                "description": "Request body for deliveracompletedexporttoan s3compatiblebrequest."
+              }
+            }
+          },
+          "description": "Request body for deliver a completed export to an s3-compatible bucket."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for deliver a completed export to an s3-compatible bucket.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportObjectStorageDeliveryRunModel",
+                  "description": "Response payload for deliveracompletedexporttoan s3compatiblebresponse200."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid credential id, bucket, prefix or partitioning."
+          },
+          "404": {
+            "description": "Unknown export job for this tenant."
+          },
+          "409": {
+            "description": "The job is not completed, is a dry run, or its bundle cannot be read."
+          },
+          "410": {
+            "description": "The export's artifact has expired; export again, then deliver."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for deliveracompletedexporttoan s3compatiblebresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "export-delivery"
+        ],
+        "summary": "List a job's object-storage deliveries",
+        "description": "Every object-storage delivery of one export job, newest first. Requires `projects:view`.",
+        "operationId": "list_export_job_object_storage_deliveries_v1_export__tenant_slug__jobs__job_id__deliveries_object_storage_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id",
+              "description": "Job Id schema."
+            },
+            "description": "Asynchronous job identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listajobsobjectstoragedeliveriesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listajobsobjectstoragedeliveriesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Listajobsobjectstoragedeliveries Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Listajobsobjectstoragedeliveries Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list a job's object-storage deliveries.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportObjectStorageDeliveryRunListResponse",
+                  "description": "Response payload for listajobsobjectstoragedeliveriesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for listajobsobjectstoragedeliveriesresponse422."
                 }
               }
             }
@@ -217483,6 +217984,494 @@
         ],
         "title": "WebhookDeliveryRequest",
         "description": "Where to deliver an export: ``POST \u2026/jobs/{job_id}/deliveries/webhook``."
+      },
+      "ExportObjectStorageDeliveryRunListResponse": {
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/ExportObjectStorageDeliveryRunModel"
+            },
+            "type": "array",
+            "title": "Runs",
+            "description": "Runs.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExportObjectStorageDeliveryRunListResponse",
+        "description": "A job's object-storage deliveries, newest first."
+      },
+      "ExportObjectStorageDeliveryRunModel": {
+        "properties": {
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Runid",
+            "description": "Run ID."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "jobId": {
+            "type": "string",
+            "title": "Jobid",
+            "description": "Job ID.",
+            "example": "example"
+          },
+          "credentialId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Credentialid",
+            "description": "Credential ID."
+          },
+          "endpointUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Endpointurl",
+            "description": "Endpoint URL."
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket",
+            "description": "Bucket.",
+            "example": "example"
+          },
+          "keyPrefix": {
+            "type": "string",
+            "title": "Keyprefix",
+            "default": "",
+            "description": "Key Prefix.",
+            "example": "example"
+          },
+          "partitioning": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Partitioning",
+            "description": "Partitioning.",
+            "maxItems": 1000
+          },
+          "objects": {
+            "items": {
+              "$ref": "#/components/schemas/ExportObjectStorageObjectModel"
+            },
+            "type": "array",
+            "title": "Objects",
+            "description": "Objects.",
+            "maxItems": 1000
+          },
+          "manifestKey": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Manifestkey",
+            "description": "Manifest Key."
+          },
+          "manifestSha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Manifestsha256",
+            "description": "Manifest Sha256."
+          },
+          "fidelity": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fidelity",
+            "description": "Fidelity."
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Errorcode",
+            "description": "Error Code."
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Errormessage",
+            "description": "Error Message."
+          },
+          "startedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Startedat",
+            "description": "Started At."
+          },
+          "finishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Export Object Storage Delivery Run Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Delivery Run Model schema."
+              }
+            ],
+            "title": "Finishedat",
+            "description": "Finished At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "jobId",
+          "bucket"
+        ],
+        "title": "ExportObjectStorageDeliveryRunModel",
+        "description": "One export object-storage delivery.\n\nAttributes:\n    run_id: The run record (null only when it could not be stored).\n    status: ``in_progress``, ``delivered`` or ``failed``.\n    job_id: The export job delivered.\n    credential_id: The storage credential used.\n    endpoint_url: The endpoint (null for AWS S3).\n    bucket: The bucket.\n    key_prefix: The resolved prefix every object is under.\n    partitioning: The partitions used, in order.\n    objects: Every object written (on a failure, those written before it).\n    manifest_key: The content-addressed manifest (``<keyPrefix>/manifests/<sha256>.json``).\n    manifest_sha256: Its SHA-256.\n    fidelity: The export's fidelity summary.\n    error_code: Set when the run failed.\n    error_message: Set when the run failed, redacted."
+      },
+      "ExportObjectStorageObjectModel": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Key.",
+            "example": "example"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "title": "Sizebytes",
+            "description": "Size Bytes.",
+            "example": 50
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256",
+            "description": "Sha256.",
+            "example": "example"
+          },
+          "contentType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Export Object Storage Object Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Export Object Storage Object Model schema."
+              }
+            ],
+            "title": "Contenttype",
+            "description": "Content Type."
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "sizeBytes",
+          "sha256"
+        ],
+        "title": "ExportObjectStorageObjectModel",
+        "description": "One object a delivery wrote."
+      },
+      "ObjectStorageDeliveryRequest": {
+        "properties": {
+          "credentialId": {
+            "type": "string",
+            "title": "Credentialid",
+            "description": "A storage credential of this workspace (`GET /v1/export/{tenant}/storage-credentials`).",
+            "example": "example"
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket",
+            "description": "The bucket (S3 naming rules: 3\u201363 lowercase letters, digits, `.` and `-`).",
+            "example": "example"
+          },
+          "prefix": {
+            "type": "string",
+            "title": "Prefix",
+            "description": "The key prefix every object is written under (`exports/apis`). Empty means the bucket root.",
+            "default": "",
+            "example": "example"
+          },
+          "partitioning": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "artifact",
+                "version",
+                "target"
+              ]
+            },
+            "type": "array",
+            "title": "Partitioning",
+            "description": "The partitions below the prefix, in order. Default `[artifact, version, target]` \u2192 `<prefix>/orders/1.4.0/openapi-3.1/\u2026`; `[]` writes straight under the prefix.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "credentialId",
+          "bucket"
+        ],
+        "title": "ObjectStorageDeliveryRequest",
+        "description": "Where to deliver an export: ``POST \u2026/jobs/{job_id}/deliveries/object-storage``."
+      },
+      "StorageCredentialCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "A name unique in the workspace (`data-lake-prod`).",
+            "example": "Pet"
+          },
+          "accessKeyId": {
+            "type": "string",
+            "format": "password",
+            "title": "Accesskeyid",
+            "description": "The access key id. Sealed; only its last four characters are ever shown.",
+            "writeOnly": true,
+            "example": "example"
+          },
+          "secretAccessKey": {
+            "type": "string",
+            "format": "password",
+            "title": "Secretaccesskey",
+            "description": "The secret access key. Sealed; never shown.",
+            "writeOnly": true,
+            "example": "example"
+          },
+          "sessionToken": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "password",
+                "writeOnly": true,
+                "description": "Storage Credential Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Storage Credential Create schema."
+              }
+            ],
+            "title": "Sessiontoken",
+            "description": "A session token, for temporary credentials."
+          },
+          "endpointUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Storage Credential Create schema."
+              },
+              {
+                "type": "null",
+                "description": "Storage Credential Create schema."
+              }
+            ],
+            "title": "Endpointurl",
+            "description": "An S3-compatible endpoint (`https://minio.example.com`, `https://<account>.r2.cloudflarestorage.com`). Empty means AWS S3. It must resolve to public addresses only."
+          },
+          "region": {
+            "type": "string",
+            "title": "Region",
+            "description": "The bucket's region (`auto` for R2).",
+            "default": "us-east-1",
+            "example": "example"
+          },
+          "forcePathStyle": {
+            "type": "boolean",
+            "title": "Forcepathstyle",
+            "description": "Address buckets as `<endpoint>/<bucket>/\u2026` instead of `<bucket>.<endpoint>/\u2026` \u2014 most self-hosted stores (MinIO, Ceph) need it.",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "accessKeyId",
+          "secretAccessKey"
+        ],
+        "title": "StorageCredentialCreate",
+        "description": "A bucket credential for the vault: ``POST /v1/export/{tenant}/storage-credentials``."
+      },
+      "StorageCredentialListResponse": {
+        "properties": {
+          "credentials": {
+            "items": {
+              "$ref": "#/components/schemas/StorageCredentialModel"
+            },
+            "type": "array",
+            "title": "Credentials",
+            "description": "Credentials.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "StorageCredentialListResponse",
+        "description": "A workspace's storage credentials, by name."
+      },
+      "StorageCredentialModel": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": "s3",
+            "description": "Provider.",
+            "example": "example"
+          },
+          "endpointUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Storage Credential Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Storage Credential Model schema."
+              }
+            ],
+            "title": "Endpointurl",
+            "description": "The S3-compatible endpoint; null for AWS S3."
+          },
+          "region": {
+            "type": "string",
+            "title": "Region",
+            "description": "Region.",
+            "example": "example"
+          },
+          "forcePathStyle": {
+            "type": "boolean",
+            "title": "Forcepathstyle",
+            "default": false,
+            "description": "Force Path Style.",
+            "example": false
+          },
+          "accessKeyHint": {
+            "type": "string",
+            "title": "Accesskeyhint",
+            "description": "The access key id's last four characters.",
+            "example": "example"
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Storage Credential Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Storage Credential Model schema."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Storage Credential Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Storage Credential Model schema."
+              }
+            ],
+            "title": "Updatedat",
+            "description": "Updated At."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "region",
+          "accessKeyHint"
+        ],
+        "title": "StorageCredentialModel",
+        "description": "A stored bucket credential, described without its secrets."
       }
     },
     "securitySchemes": {

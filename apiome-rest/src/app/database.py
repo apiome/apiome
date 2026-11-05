@@ -36102,6 +36102,299 @@ class Database:
         return [dict(row) for row in rows or []]
 
     # -------------------------------------------------------------------------------------------
+    # MFX-38.3 (#4330) — export storage credentials and object-storage delivery runs
+    # -------------------------------------------------------------------------------------------
+
+    #: The columns of a storage credential any route may show (never the sealed payload).
+    _EXPORT_STORAGE_CREDENTIAL_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        name,
+        provider,
+        endpoint_url,
+        region,
+        force_path_style,
+        access_key_hint,
+        key_version,
+        created_at,
+        updated_at,
+        created_by::text AS created_by
+    """
+
+    def insert_export_storage_credential(
+        self,
+        *,
+        tenant_id: str,
+        name: str,
+        endpoint_url: Optional[str],
+        region: str,
+        force_path_style: bool,
+        access_key_hint: str,
+        encrypted_payload: bytes,
+        key_version: int,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Store one sealed bucket credential (MFX-38.3).
+
+        Args:
+            tenant_id: Owning tenant.
+            name: Unique within the tenant.
+            endpoint_url: The S3-compatible endpoint, or ``None`` for AWS S3.
+            region: The bucket region.
+            force_path_style: Path-style addressing.
+            access_key_hint: The access key id's last four characters.
+            encrypted_payload: The sealed key pair (``app.mcp_credential_crypto``).
+            key_version: The master-key version that sealed it.
+            actor_id: Who stored it.
+
+        Returns:
+            The stored row (no payload), or ``None`` when the tenant id is not a UUID.
+
+        Raises:
+            psycopg2.errors.UniqueViolation: When the tenant already has a credential of that name.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        query = f"""
+            INSERT INTO apiome.export_storage_credentials (
+                tenant_id, name, endpoint_url, region, force_path_style, access_key_hint,
+                encrypted_payload, key_version, created_by
+            ) VALUES (%s::uuid, %s, %s, %s, %s, %s, %s, %s, %s::uuid)
+            RETURNING {self._EXPORT_STORAGE_CREDENTIAL_COLUMNS}
+        """
+        params = (
+            tenant_id, name, endpoint_url, region, bool(force_path_style), access_key_hint,
+            psycopg2.Binary(encrypted_payload), int(key_version),
+            actor_id if is_uuid_string(str(actor_id or "")) else None,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_storage_credentials(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """A tenant's storage credentials by name, without their sealed payloads (MFX-38.3)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_STORAGE_CREDENTIAL_COLUMNS}
+            FROM apiome.export_storage_credentials
+            WHERE tenant_id = %s::uuid
+            ORDER BY name ASC
+            """,
+            (tenant_id,),
+        )
+        return [dict(row) for row in rows or []]
+
+    def get_export_storage_credential(self, tenant_id: str, credential_id: str) -> Optional[Dict[str, Any]]:
+        """One storage credential **with** its sealed payload, for the delivery pipeline only (MFX-38.3).
+
+        Args:
+            tenant_id: The caller's tenant — a credential of another tenant is never returned.
+            credential_id: The credential.
+
+        Returns:
+            The row plus ``encrypted_payload`` (bytes), or ``None``.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(credential_id or ""))):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_STORAGE_CREDENTIAL_COLUMNS}, encrypted_payload
+            FROM apiome.export_storage_credentials
+            WHERE tenant_id = %s::uuid AND id = %s::uuid
+            """,
+            (tenant_id, credential_id),
+        )
+        if not rows:
+            return None
+        row = dict(rows[0])
+        row["encrypted_payload"] = bytes(row["encrypted_payload"]) if row.get("encrypted_payload") else None
+        return row
+
+    def delete_export_storage_credential(self, tenant_id: str, credential_id: str) -> bool:
+        """Delete one storage credential; its delivery runs keep their history (MFX-38.3).
+
+        Returns:
+            Whether a row was deleted.
+        """
+        if not (is_uuid_string(str(tenant_id or "")) and is_uuid_string(str(credential_id or ""))):
+            return False
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM apiome.export_storage_credentials WHERE tenant_id = %s::uuid AND id = %s::uuid",
+                    (tenant_id, credential_id),
+                )
+                deleted = cursor.rowcount > 0
+            conn.commit()
+            return deleted
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    #: Every column of an export object-storage delivery run.
+    _EXPORT_OBJECT_STORAGE_RUN_COLUMNS = """
+        id::text AS id,
+        tenant_id::text AS tenant_id,
+        job_id,
+        artifact_id,
+        version_record_id,
+        version_label,
+        export_target,
+        credential_id::text AS credential_id,
+        endpoint_url,
+        bucket,
+        key_prefix,
+        partitioning,
+        status,
+        objects,
+        manifest_key,
+        manifest_sha256,
+        fidelity,
+        error_code,
+        error_message,
+        started_at,
+        finished_at,
+        created_by::text AS created_by
+    """
+
+    def insert_export_object_storage_delivery_run(
+        self,
+        *,
+        tenant_id: str,
+        job_id: str,
+        artifact_id: str,
+        credential_id: Optional[str],
+        bucket: str,
+        key_prefix: str,
+        partitioning: Sequence[str],
+        version_record_id: Optional[str] = None,
+        version_label: Optional[str] = None,
+        export_target: Optional[str] = None,
+        endpoint_url: Optional[str] = None,
+        fidelity: Optional[Dict[str, Any]] = None,
+        actor_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Open one export object-storage delivery run, ``in_progress`` (MFX-38.3).
+
+        Inserted before the first upload, so a delivery that fails at any later step is recorded.
+
+        Returns:
+            The stored row, or ``None`` when the tenant id is not a UUID.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        query = f"""
+            INSERT INTO apiome.export_object_storage_delivery_runs (
+                tenant_id, job_id, artifact_id, version_record_id, version_label, export_target,
+                credential_id, endpoint_url, bucket, key_prefix, partitioning, status, fidelity, created_by
+            ) VALUES (
+                %s::uuid, %s, %s, %s, %s, %s,
+                %s::uuid, %s, %s, %s, %s, 'in_progress', %s, %s::uuid
+            )
+            RETURNING {self._EXPORT_OBJECT_STORAGE_RUN_COLUMNS}
+        """
+        params = (
+            tenant_id, str(job_id), str(artifact_id), version_record_id, version_label, export_target,
+            credential_id if is_uuid_string(str(credential_id or "")) else None, endpoint_url, bucket,
+            key_prefix or "", Json(list(partitioning)), Json(fidelity or {}),
+            actor_id if is_uuid_string(str(actor_id or "")) else None,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def finish_export_object_storage_delivery_run(
+        self,
+        run_id: str,
+        tenant_id: str,
+        *,
+        status: str,
+        objects: Optional[List[Dict[str, Any]]] = None,
+        manifest_key: Optional[str] = None,
+        manifest_sha256: Optional[str] = None,
+        error_code: Optional[str] = None,
+        error_message: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Close an export object-storage delivery run with its outcome (MFX-38.3).
+
+        Args:
+            run_id: The run.
+            tenant_id: The caller's tenant, which also scopes the update.
+            status: ``delivered`` or ``failed``.
+            objects: Every object written (on a failure: those written before it).
+            manifest_key: The content-addressed manifest's key.
+            manifest_sha256: Its SHA-256.
+            error_code: Machine-readable failure code.
+            error_message: Redacted failure message.
+
+        Returns:
+            The updated row, or ``None`` when the ids are not UUIDs or nothing matched.
+        """
+        if not (is_uuid_string(str(run_id or "")) and is_uuid_string(str(tenant_id or ""))):
+            return None
+        query = f"""
+            UPDATE apiome.export_object_storage_delivery_runs
+            SET status = %s,
+                objects = COALESCE(%s, objects),
+                manifest_key = %s,
+                manifest_sha256 = %s,
+                error_code = %s,
+                error_message = %s,
+                finished_at = CURRENT_TIMESTAMP
+            WHERE id = %s::uuid AND tenant_id = %s::uuid
+            RETURNING {self._EXPORT_OBJECT_STORAGE_RUN_COLUMNS}
+        """
+        params = (
+            status, Json(objects) if objects is not None else None, manifest_key, manifest_sha256, error_code,
+            error_message, run_id, tenant_id,
+        )
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+            conn.commit()
+            return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def list_export_object_storage_delivery_runs(
+        self, tenant_id: str, job_id: str, *, limit: int = 50
+    ) -> List[Dict[str, Any]]:
+        """One export job's object-storage deliveries, newest first (MFX-38.3)."""
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_OBJECT_STORAGE_RUN_COLUMNS}
+            FROM apiome.export_object_storage_delivery_runs
+            WHERE tenant_id = %s::uuid AND job_id = %s
+            ORDER BY started_at DESC, id DESC
+            LIMIT %s
+            """,
+            (tenant_id, str(job_id), max(1, int(limit))),
+        )
+        return [dict(row) for row in rows or []]
+
+    # -------------------------------------------------------------------------------------------
     # SDK-4.3 (#4497) — auto-regen on publish: subscriptions, runs and jobs
     # -------------------------------------------------------------------------------------------
 
