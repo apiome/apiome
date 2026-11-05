@@ -1,0 +1,56 @@
+---
+title: Export several at once, and on every publish
+description: Several formats, items or versions in one job; presets; auto-export on publish.
+sidebar_position: 5.22
+---
+
+A single export is one version, to one format, downloaded once. That stops scaling when a repository,
+a registry or a bucket has to keep up with every version in several formats. Apiome can export **many
+things in one job**, save the combination as a **preset**, and run it **on every publish** — so nobody
+has to click through each version and format again.
+
+## Choose what you need
+
+| You want to… | Use | In the app | From the CLI or API |
+| --- | --- | --- | --- |
+| Export one version to **several formats** | A multi-target job: one archive, a folder per format | **Several targets** in the [Export dialog](./export-dialog.mdx#several-targets-and-presets) or [Export studio](./export-studio.mdx) | `apiome export <format> --targets …`; `"targets"` on the job |
+| Export **several catalog items** | A batch: a folder per item, failures per item | **Export *n*…** on the [Catalog](./export-catalog-items.mdx#export-several-items-at-once) | `apiome export <format> --items …`; `"items"` |
+| Export **every version** of a project | A batch over versions: a folder per version × format | **Export all versions…** on a [version's Export panel](./export-dialog.mdx#the-versions-export-panel) | `"all_versions": true` or a `"versions"` list |
+| Run the **same formats and options** again | An [export preset](./export-presets.mdx) | **Apply a preset** / **Save as preset**, and the **Presets** tab in Export studio | `apiome export --preset NAME …`; `"preset"` |
+| Export and deliver **every new version** | [Auto-export on publish](./auto-export-on-publish.mdx) | **Auto-export** on the Presets tab, or the version's Export panel | `apiome export auto …`; `/auto-exports` |
+
+Every job produces one download — a single file, or a `.zip` with a folder per format, item or
+version and a `manifest.json` describing each outcome. A job can also be [delivered](./deliver-an-export.mdx)
+to a git repository, a webhook or a bucket as soon as it finishes.
+
+## How the pieces fit
+
+- **One job, many outputs.** Several formats share one source and one job; a failure in any format fails
+  the whole multi-target export. In a batch (several items or versions), each item succeeds or fails on
+  its own, and the job completes with whatever succeeded.
+- **A preset is the reusable part.** It holds the formats, each one's options (checked against that
+  format's options every time it is applied) and, optionally, a delivery profile. It never holds the
+  source, so the same preset works on any item or version.
+- **Auto-export is a preset bound to a project.** Every publish runs it on the new version. Before
+  anything is delivered, the export's loss is measured; at **critical** loss (or, if you choose, any
+  loss) delivery stops, the people concerned are notified, and someone can release it.
+
+## Limits
+
+| Limit | Value |
+| --- | --- |
+| Formats in one job or preset | 16, each a distinct format |
+| Items × formats in one batch | 100 (`versions` lists: 50 versions) |
+| Delivery profiles per job | 5 |
+
+The limits every export shares — jobs running at once, run time, download size and how long a download
+is kept — are on [Export a spec](./export-a-spec.md#limits). The request fields for each kind of job are
+on [How an export runs](./export-jobs.mdx).
+
+## Where next
+
+- [The Export dialog](./export-dialog.mdx) — several targets and presets on a single source
+- [Export catalog items](./export-catalog-items.mdx) — the dialog, the studio and bulk export side by side
+- [Save an export as a preset](./export-presets.mdx)
+- [Export automatically on every publish](./auto-export-on-publish.mdx)
+- [Deliver an export](./deliver-an-export.mdx) — where a finished export goes
