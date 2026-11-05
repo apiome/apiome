@@ -290,6 +290,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     ],
   },
   {
+    id: 'export-to-any-format',
+    title: 'Export to any format',
+    summary: 'Convert a version or catalog item into another format, seeing what survives first.',
+    page: 'apiome-docs/docs/ship/export-to-any-format.mdx',
+    section: 'spine',
+    keywords: ['convert', 'transcode', 'fidelity', 'lossy', 'overview', 'graphql', 'protobuf', 'avro'],
+  },
+  {
     id: 'get-an-export-out',
     title: 'Get an export out',
     summary: 'One file or a zip with a manifest, kept 24 hours, delivered or pushed to a registry.',
