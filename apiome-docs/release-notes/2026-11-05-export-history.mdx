@@ -1,0 +1,21 @@
+---
+slug: export-history
+title: See every export in your workspace
+description: "Export studio's History tab: who exported what, where, and with how much loss."
+authors: [apiome]
+---
+
+Export studio has a new **History** tab that answers "who exported what, where, and with how much loss?"
+for your whole workspace. See [Export history](/ship/export-studio#export-history).
+
+{/* truncate */}
+
+- **Every run, for 90 days:** source and version → target, outcome, share preserved, validation and lint
+  verdicts, the delivery gate, where the file was delivered (git, webhook, bucket), who ran it and when.
+- **Filters:** by source, target, person, outcome, delivery channel, validation verdict, delivery gate and
+  dates.
+- **The stored reports:** open a run to read its deliveries and, per target, the fidelity findings,
+  validation result and delivery gate as they were.
+- **Re-run in Studio:** opens Export studio on the same source, version, target and options.
+- **API:** `GET /v1/export/{tenant}/runs` with the same filters, and `GET /v1/export/{tenant}/runs/{job_id}`
+  for one run's reports.

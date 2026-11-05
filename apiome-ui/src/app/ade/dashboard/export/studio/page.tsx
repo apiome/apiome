@@ -25,6 +25,7 @@ import UnreleasedFeatureGate from '../../../../components/shell/UnreleasedFeatur
 import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
 import DeliveryProfilesClient from '../../../../components/ade/export-studio/delivery/DeliveryProfilesClient';
 import ExportPresetsClient from '../../../../components/ade/export-studio/presets/ExportPresetsClient';
+import ExportHistoryClient from '../../../../components/ade/export-studio/history/ExportHistoryClient';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -45,7 +46,8 @@ import ExportPresetsClient from '../../../../components/ade/export-studio/preset
  * because both decide how a version leaves the platform (`/ade/dashboard/sdk-settings` redirects
  * to it). That tab needs no source, so it renders before the source check; it keeps its own
  * release gate. `?tab=delivery` selects **Delivery** — the workspace's delivery profiles (MFX-38.4),
- * also source-free, and `?tab=presets` **Presets** — saved export combinations (MFX-39.3). Every
+ * also source-free, `?tab=presets` **Presets** — saved export combinations (MFX-39.3) — and
+ * `?tab=history` **History** — every export run in the workspace (MFX-46.1). Every
  * header on this route draws the same {@link ExportStudioTabs} strip.
  */
 function ExportStudioRouteContent() {
@@ -98,6 +100,11 @@ function ExportStudioRouteContent() {
   // MFX-39.3 (#4335): `?tab=presets` — the workspace's export presets; source-free like Delivery.
   if (tab === 'presets') {
     return <ExportPresetsClient tabs={tabs} />;
+  }
+
+  // MFX-46.1 (#4379): `?tab=history` — the workspace's export history; source-free like Delivery.
+  if (tab === 'history') {
+    return <ExportHistoryClient tabs={tabs} />;
   }
 
   // The Studio always exports a source. Without an `artifact` (the rail, the command palette) the

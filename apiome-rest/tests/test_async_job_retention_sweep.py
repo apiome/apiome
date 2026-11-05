@@ -14,12 +14,14 @@ class FakeDb:
         self.reap_artifact_calls = []
         self.reap_job_calls = []
         self.prune_calls = []
+        self.export_run_prune_calls = []
         self.quota_window_prune_calls = []
         self.quality_rank_prune_calls = []
         self.suite_run_prune_calls = []
         self._job_batches = []
         self._artifact_counts = []
         self._prune_counts = []
+        self._export_run_prune_counts = []
         self._quota_window_prune_counts = []
         self._quality_rank_prune_counts = []
         self._suite_run_prune_counts = []
@@ -40,6 +42,12 @@ class FakeDb:
         self.prune_calls.append((older_than, limit))
         if self._prune_counts:
             return self._prune_counts.pop(0)
+        return 0
+
+    def prune_export_run_ledger(self, *, older_than, limit=100):
+        self.export_run_prune_calls.append((older_than, limit))
+        if self._export_run_prune_counts:
+            return self._export_run_prune_counts.pop(0)
         return 0
 
     def prune_repository_quota_windows(self, *, older_than):
@@ -86,6 +94,7 @@ def test_sweep_reaps_artifacts_jobs_and_history():
         ]
     ]
     db._prune_counts = [1]
+    db._export_run_prune_counts = [7]
     db._quota_window_prune_counts = [4]
     db._quality_rank_prune_counts = [5]
     db._suite_run_prune_counts = [6]
@@ -109,6 +118,7 @@ def test_sweep_reaps_artifacts_jobs_and_history():
         "artifacts_reaped": 3,
         "jobs_deleted": 2,
         "history_pruned": 1,
+        "export_runs_pruned": 7,
         "quota_windows_pruned": 4,
         "quality_ranks_pruned": 5,
         "suite_runs_pruned": 6,
@@ -116,6 +126,8 @@ def test_sweep_reaps_artifacts_jobs_and_history():
     assert db.reap_artifact_calls[0][1] == 50
     assert len(db.reap_job_calls[0][0]) == 6
     assert db.prune_calls[0][0] == now - timedelta(days=90)
+    # MFX-46.1: the export history ledger is pruned on the same window, with the same batch.
+    assert db.export_run_prune_calls[0] == (now - timedelta(days=90), 50)
     assert db.quota_window_prune_calls[0] == now - timedelta(days=120)
     assert db.quality_rank_prune_calls[0] == now - timedelta(days=180)
     assert db.suite_run_prune_calls[0] == (now - timedelta(days=180), 20)
@@ -129,6 +141,7 @@ def test_sweep_second_tick_is_idempotent_when_empty():
         "artifacts_reaped": 0,
         "jobs_deleted": 0,
         "history_pruned": 0,
+        "export_runs_pruned": 0,
         "quota_windows_pruned": 0,
         "quality_ranks_pruned": 0,
         "suite_runs_pruned": 0,

@@ -35525,6 +35525,103 @@ tr:focus-within .pub-url__glyph {
 }
 
 /* ==========================================================================
+   EXPORT HISTORY  (MFX-46.1, #4379)
+   --------------------------------------------------------------------------
+   Export studio's History tab (`?tab=history`): a filterable table of the
+   workspace's export runs, and a read-only drawer with a run's deliveries
+   and stored reports. Verdicts are badges (word + tone), so no state is told
+   by colour alone.
+   ========================================================================== */
+
+.xhis-toolbar {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+
+.xhis-filter {
+  max-inline-size: 12rem;
+  block-size: var(--control-h-sm);
+  padding-inline: var(--space-2);
+  border-radius: var(--r-sm);
+  background: var(--bg-surface);
+  color: var(--fg);
+  font-size: var(--fs-xs);
+}
+
+.xhis-none {
+  color: var(--fg-muted);
+}
+
+.xhis-sub {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.xhis-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.xhis-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xhis-error {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--danger-soft);
+  font-size: var(--fs-xs);
+  color: var(--danger-fg);
+}
+
+.xhis-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--border);
+}
+
+.xhis-heading {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.xhis-subheading {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+
+.xhis-deliveries,
+.xhis-findings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.xhis-delivery {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.xhis-skeleton {
+  block-size: 6rem;
+}
+
+/* ==========================================================================
    EXPORT DELIVERY PROFILES  (MFX-38.4, #4331)
    --------------------------------------------------------------------------
    Export studio's Delivery tab (`?tab=delivery`): the workspace's saved

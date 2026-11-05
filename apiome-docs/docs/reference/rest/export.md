@@ -1,6 +1,6 @@
 ---
 title: "Export"
-description: "REST endpoints tagged export: 14 operations."
+description: "REST endpoints tagged export: 17 operations."
 sidebar_position: 31
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.525.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.526.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export` · 14 operations
+Tag: `export` · 17 operations
 
 ## `POST /v1/export/{tenant_slug}/avro/push` {#push-avro-export-v1-export-tenant-slug-avro-push-post}
 
@@ -267,6 +267,87 @@ Request body for on-demand round-trip comparison: emit → re-import → diff �
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for on-demand round-trip comparison: emit → re-import → diff → reconcile with fidelity. | `application/json` [`ExportRoundtripResponse`](#schema-exportroundtripresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/runs` {#list-export-runs-v1-export-tenant-slug-runs-get}
+
+**List the export history**
+
+The tenant's export runs, newest first (MFX-46.1): source and revision, target, actor, outcome, preserved %, validation and lint verdicts, delivery decision and every delivery. Filter by `artifact`, `target`, `actor`, `state`, `channel` (`git`, `webhook`, `object-storage`, `none`), `validation`, `decision` and `finished_after` / `finished_before`. Runs are kept for the job history window (90 days by default). Requires `projects:view`.
+
+Operation id: `list_export_runs_v1_export__tenant_slug__runs_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `artifact` | query | string or null | no | Only runs of this artifact (project or catalog item) id. |
+| `target` | query | string or null | no | Only runs that requested this target key. |
+| `actor` | query | string or null | no | Only runs started by this user id. |
+| `state` | query | enum `"completed"`, `"failed"`, `"canceled"` or null | no | Only runs that ended so. |
+| `channel` | query | enum `"git"`, `"webhook"`, `"object-storage"`, `"none"` or null | no | Only runs delivered through this channel, or (`none`) never delivered. |
+| `validation` | query | enum `"valid"`, `"invalid"`, `"skipped"`, `"not_applicable"` or null | no | Only runs with this validation verdict. |
+| `decision` | query | enum `"allow"`, `"allow_with_warning"`, `"block"` or null | no | Only runs with this delivery decision. |
+| `finished_after` | query | string (date-time) or null | no | Inclusive lower bound on when the run ended. |
+| `finished_before` | query | string (date-time) or null | no | Inclusive upper bound on when the run ended. |
+| `limit` | query | integer | no | Page size (default 50, max 200). |
+| `offset` | query | integer | no | Runs to skip. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the export history. | `application/json` [`ExportRunListResponse`](#schema-exportrunlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/runs/actors` {#list-export-run-actors-v1-export-tenant-slug-runs-actors-get}
+
+**List the people in the export history**
+
+Everyone who started a recorded export, most recent first (for the actor filter). Requires `projects:view`.
+
+Operation id: `list_export_run_actors_v1_export__tenant_slug__runs_actors_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the people in the export history. | `application/json` [`ExportRunActorsResponse`](#schema-exportrunactorsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/runs/{job_id}` {#get-export-run-v1-export-tenant-slug-runs-job-id-get}
+
+**Get one export run with its stored reports**
+
+One run of the export history with its deliveries and, per target, the fidelity, validation and delivery-gate reports as they were when it ran (read-only). Requires `projects:view`.
+
+Operation id: `get_export_run_v1_export__tenant_slug__runs__job_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `job_id` | path | string | yes | Asynchronous job identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get one export run with its stored reports. | `application/json` [`ExportRunDetail`](#schema-exportrundetail) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/export/{tenant_slug}/schema-registry/push` {#push-registry-export-v1-export-tenant-slug-schema-registry-push-post}
@@ -713,6 +794,54 @@ its reproduction coordinates without shipping any source bytes.
 | `measurement` | `FidelityMeasurement` or null | no | The empirical loss list and its corroboration of the fidelity report (MFX-2.6): every observed difference as a loss, every predicted ``drop`` with the differences that confirm it, and every divergence (unpredicted loss, unobserved drop, over-claim). Null when the loop did not close. |
 | `text_diff` | `RoundtripTextDiff` or null | no | The emitted artifact beside the same format re-emitted from the re-imported model (MFX-43.4); null when the loop did not close or the artifact cannot be diffed as text (see ``text_diff_reason``). |
 | `text_diff_reason` | string or null | no | Why ``text_diff`` is null when the loop closed: a multi-file bundle, a binary artifact, one too large to send, or a re-emit that failed. |
+
+### `ExportRunActorsResponse` {#schema-exportrunactorsresponse}
+
+Everyone who started a recorded export, most recent first.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `actors` | array of `ExportRunActor` | yes | Actors. |
+
+### `ExportRunDetail` {#schema-exportrundetail}
+
+One run with its stored reports, per target.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `job_id` | string | yes | Job ID. |
+| `artifact_id` | string | yes | The exported artifact (project or catalog item) id. |
+| `artifact_name` | string or null | no | The source's name, when known. |
+| `version_record_id` | string or null | no | Version Record ID. |
+| `version_label` | string or null | no | The exported revision's version label. |
+| `target` | string | yes | The requested target(s), comma-joined for a multi-target job. |
+| `actor_id` | string or null | no | The user who started the job. |
+| `actor_label` | string | yes | Their email or name (kept after the account is gone). |
+| `state` | string | yes | `completed`, `failed` or `canceled`. |
+| `dry_run` | boolean | yes | True for a fidelity-only dry run (no artifact). |
+| `preserved_percent` | integer or null | no | Share of constructs preserved (the weakest target's for a multi-target job). |
+| `fidelity_tier` | string or null | no | The fidelity tier badge. |
+| `validation_verdict` | string or null | no | `valid`, `invalid`, `skipped` or `not_applicable` (the worst target's). |
+| `lint_verdict` | string or null | no | `pass`, `warn` or `block` (the worst target's). |
+| `delivery_decision` | string or null | no | The delivery gate: `allow`, `allow_with_warning` or `block` (the worst target's). |
+| `error_code` | string or null | no | Why a failed job failed. |
+| `error_message` | string or null | no | Error Message. |
+| `options` | object or null | no | The per-target options the job was submitted with (for a re-run). |
+| `deliveries` | array of `ExportRunDelivery` | no | Every delivery of the job's artifact, newest first. |
+| `created_at` | string (date-time) | yes | Creation timestamp (ISO 8601). |
+| `finished_at` | string (date-time) | yes | Finished At timestamp (ISO 8601). |
+| `reports` | array of `ExportRunTargetReport` | no | Reports. |
+
+### `ExportRunListResponse` {#schema-exportrunlistresponse}
+
+A page of the tenant's export history.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `runs` | array of `ExportRunSummary` | yes | Runs. |
+| `total` | integer | no | Runs matching the filters (not just this page). |
+| `limit` | integer | no | Limit. |
+| `offset` | integer | no | Offset. |
 
 ### `ExportTargetsResponse` {#schema-exporttargetsresponse}
 

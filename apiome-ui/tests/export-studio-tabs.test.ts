@@ -32,6 +32,7 @@ describe('Export studio tabs', () => {
       ['sdk', 'SDK & branding', 'sdk-settings'],
       ['delivery', 'Delivery', 'export-studio'],
       ['presets', 'Presets', 'export-studio'],
+      ['history', 'History', 'export-studio'],
     ]);
     expect(EXPORT_STUDIO_TAB_PARAM).toBe('tab');
   });
@@ -40,6 +41,7 @@ describe('Export studio tabs', () => {
     expect(exportStudioTabFromParams(new URLSearchParams('tab=sdk'))).toBe('sdk');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=delivery'))).toBe('delivery');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=presets'))).toBe('presets');
+    expect(exportStudioTabFromParams(new URLSearchParams('tab=history'))).toBe('history');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=Delivery'))).toBe('export');
     expect(exportStudioTabFromParams(new URLSearchParams(''))).toBe('export');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=export'))).toBe('export');

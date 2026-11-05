@@ -1637,6 +1637,24 @@
       ]
     },
     {
+      "id": "export-studio-history",
+      "route": "/ade/dashboard/export/studio?tab=history",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/history.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/history"
+      ]
+    },
+    {
+      "id": "export-studio-history-run",
+      "route": "/ade/dashboard/export/studio?tab=history",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-export-studio/history-run.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/export-studio/history"
+      ]
+    },
+    {
       "id": "export-studio-presets",
       "route": "/ade/dashboard/export/studio?tab=presets",
       "waitFor": "#a11y-mount > *",
