@@ -26,16 +26,19 @@ import { PLATFORM_NAV_SDK_SETTINGS_HREF } from '../lib/platform-nav';
 const STUDIO = '/ade/dashboard/export/studio';
 
 describe('Export studio tabs', () => {
-  it('lists Export then SDK & branding, each gated by its own feature id', () => {
+  it('lists Export, SDK & branding, then Delivery, each gated by its feature id', () => {
     expect(EXPORT_STUDIO_TABS.map((tab) => [tab.id, tab.label, tab.feature])).toEqual([
       ['export', 'Export', 'export-studio'],
       ['sdk', 'SDK & branding', 'sdk-settings'],
+      ['delivery', 'Delivery', 'export-studio'],
     ]);
     expect(EXPORT_STUDIO_TAB_PARAM).toBe('tab');
   });
 
   it('selects SDK & branding only for ?tab=sdk', () => {
     expect(exportStudioTabFromParams(new URLSearchParams('tab=sdk'))).toBe('sdk');
+    expect(exportStudioTabFromParams(new URLSearchParams('tab=delivery'))).toBe('delivery');
+    expect(exportStudioTabFromParams(new URLSearchParams('tab=Delivery'))).toBe('export');
     expect(exportStudioTabFromParams(new URLSearchParams(''))).toBe('export');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=export'))).toBe('export');
     expect(exportStudioTabFromParams(new URLSearchParams('tab=SDK'))).toBe('export');

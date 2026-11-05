@@ -23,6 +23,7 @@ import PageHeader from '../../../../components/shell/PageHeader';
 import { Page, PageBody } from '../../../../components/shell/pageChrome';
 import UnreleasedFeatureGate from '../../../../components/shell/UnreleasedFeatureGate';
 import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
+import DeliveryProfilesClient from '../../../../components/ade/export-studio/delivery/DeliveryProfilesClient';
 
 /**
  * Export Studio route — `…/ade/dashboard/export/studio` (MFX-41.1, #4348).
@@ -42,7 +43,8 @@ import SdkSettingsClient from '../../sdk-settings/SdkSettingsClient';
  * `?tab=sdk` selects **SDK & branding** — the SDK settings screen, which left the rail for here
  * because both decide how a version leaves the platform (`/ade/dashboard/sdk-settings` redirects
  * to it). That tab needs no source, so it renders before the source check; it keeps its own
- * release gate. Every header on this route draws the same {@link ExportStudioTabs} strip.
+ * release gate. `?tab=delivery` selects **Delivery** — the workspace's delivery profiles (MFX-38.4),
+ * also source-free. Every header on this route draws the same {@link ExportStudioTabs} strip.
  */
 function ExportStudioRouteContent() {
   const { data: session, status } = useAuthSession();
@@ -76,12 +78,19 @@ function ExportStudioRouteContent() {
 
   const tabs = <ExportStudioTabs />;
 
-  if (exportStudioTabFromParams(searchParams) === 'sdk') {
+  const tab = exportStudioTabFromParams(searchParams);
+  if (tab === 'sdk') {
     return (
       <UnreleasedFeatureGate feature="sdk-settings">
         <SdkSettingsClient tabs={tabs} />
       </UnreleasedFeatureGate>
     );
+  }
+
+  // MFX-38.4 (#4331): `?tab=delivery` — the workspace's delivery profiles. Like SDK & branding it
+  // needs no source, so it renders before the source check.
+  if (tab === 'delivery') {
+    return <DeliveryProfilesClient tabs={tabs} />;
   }
 
   // The Studio always exports a source. Without an `artifact` (the rail, the command palette) the

@@ -1,6 +1,6 @@
 ---
 title: "Export delivery"
-description: "REST endpoints tagged export-delivery: 10 operations."
+description: "REST endpoints tagged export-delivery: 18 operations."
 sidebar_position: 32
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,239 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.516.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.517.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `export-delivery` · 10 operations
+Tag: `export-delivery` · 18 operations
+
+## `GET /v1/export/{tenant_slug}/delivery-profiles` {#list-delivery-profiles-v1-export-tenant-slug-delivery-profiles-get}
+
+**List the workspace's export delivery profiles**
+
+Every delivery profile, by name — never a secret. `channel` narrows to one channel. Requires `projects:view`.
+
+Operation id: `list_delivery_profiles_v1_export__tenant_slug__delivery_profiles_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `channel` | query | enum `"git"`, `"webhook"`, `"object_storage"` or null | no | Query parameter: channel. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list the workspace's export delivery profiles. | `application/json` [`ExportDeliveryProfileListResponse`](#schema-exportdeliveryprofilelistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/export/{tenant_slug}/delivery-profiles` {#create-delivery-profile-v1-export-tenant-slug-delivery-profiles-post}
+
+**Store an export delivery profile**
+
+Stores a reusable delivery destination: a `name`, a `channel` (`git`, `webhook` or `object_storage`) and that channel's delivery body in the matching block — `git`, `webhook` or `objectStorage` — validated by the channel's own rules. The credential is a reference: the git repository's linked account, or a storage credential in the vault. A webhook's `secret` is sealed on the profile and never returned. Requires `projects:edit`; audited as `export.delivery_profile.created`.
+
+`400` for an invalid field, an unknown repository or storage credential, or a refused receiver; `409` for a name already in use; `503` when a webhook secret cannot be sealed (`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`).
+
+Operation id: `create_delivery_profile_v1_export__tenant_slug__delivery_profiles_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for store an export delivery profile.
+
+- `application/json` — [`DeliveryProfileCreate`](#schema-deliveryprofilecreate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for store an export delivery profile. | `application/json` [`ExportDeliveryProfileModel`](#schema-exportdeliveryprofilemodel) |
+| 400 | Invalid field, unknown reference or refused receiver. | — |
+| 409 | A profile of that name exists. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | Credential encryption is not configured. | — |
+
+## `GET /v1/export/{tenant_slug}/delivery-profiles/{profile_id}` {#get-delivery-profile-v1-export-tenant-slug-delivery-profiles-profile-id-get}
+
+**Read an export delivery profile**
+
+One delivery profile — never its secret. Requires `projects:view`. `404` when the workspace has no such profile.
+
+Operation id: `get_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `profile_id` | path | string | yes | Path parameter identifying the profile id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for read an export delivery profile. | `application/json` [`ExportDeliveryProfileModel`](#schema-exportdeliveryprofilemodel) |
+| 404 | Unknown profile for this tenant. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PATCH /v1/export/{tenant_slug}/delivery-profiles/{profile_id}` {#update-delivery-profile-v1-export-tenant-slug-delivery-profiles-profile-id-patch}
+
+**Change an export delivery profile**
+
+Changes a profile's `name`, `description` or destination. A destination block replaces the stored destination whole and must be the profile's own channel — the channel never changes. On a webhook profile, leave `webhook.secret` out to keep the stored secret. Past deliveries keep their record. Requires `projects:edit`; audited as `export.delivery_profile.updated`.
+
+Operation id: `update_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `profile_id` | path | string | yes | Path parameter identifying the profile id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for change an export delivery profile.
+
+- `application/json` — [`DeliveryProfileUpdate`](#schema-deliveryprofileupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for change an export delivery profile. | `application/json` [`ExportDeliveryProfileModel`](#schema-exportdeliveryprofilemodel) |
+| 400 | Invalid field, another channel's block, unknown reference or refused receiver. | — |
+| 404 | Unknown profile for this tenant. | — |
+| 409 | Another profile has that name. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | Credential encryption is not configured. | — |
+
+## `DELETE /v1/export/{tenant_slug}/delivery-profiles/{profile_id}` {#delete-delivery-profile-v1-export-tenant-slug-delivery-profiles-profile-id-delete}
+
+**Delete an export delivery profile**
+
+Removes the profile (and a webhook profile's sealed secret); its deliveries keep their record, no longer naming it. Requires `projects:edit`; audited as `export.delivery_profile.deleted`. `404` when the workspace has no such profile.
+
+Operation id: `delete_delivery_profile_v1_export__tenant_slug__delivery_profiles__profile_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `profile_id` | path | string | yes | Path parameter identifying the profile id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 204 | Successful response for delete an export delivery profile. | — |
+| 404 | Unknown profile for this tenant. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/delivery-profiles/{profile_id}/deliveries` {#list-delivery-profile-deliveries-v1-export-tenant-slug-delivery-profiles-profile-id-deliveries-get}
+
+**List a delivery profile's deliveries**
+
+Every delivery made with the profile, across export jobs, newest first (at most `limit`). Requires `projects:view`.
+
+Operation id: `list_delivery_profile_deliveries_v1_export__tenant_slug__delivery_profiles__profile_id__deliveries_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `profile_id` | path | string | yes | Path parameter identifying the profile id segment. |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list a delivery profile's deliveries. | `application/json` [`ExportDeliveryAttemptListResponse`](#schema-exportdeliveryattemptlistresponse) |
+| 404 | Unknown profile for this tenant. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` {#list-export-job-deliveries-v1-export-tenant-slug-jobs-job-id-deliveries-get}
+
+**List every delivery of an export job**
+
+Every delivery of one export job across the git, webhook and object-storage channels, newest first, each with its profile (when it was made from one), outcome and attempt count. Requires `projects:view`.
+
+Operation id: `list_export_job_deliveries_v1_export__tenant_slug__jobs__job_id__deliveries_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `job_id` | path | string | yes | Asynchronous job identifier. |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list every delivery of an export job. | `application/json` [`ExportDeliveryAttemptListResponse`](#schema-exportdeliveryattemptlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/export/{tenant_slug}/jobs/{job_id}/deliveries` {#deliver-export-job-with-profile-v1-export-tenant-slug-jobs-job-id-deliveries-post}
+
+**Deliver a completed export with a delivery profile**
+
+Delivers a **completed** export job to the profile's destination through the channel's own delivery — exactly as `POST …/deliveries/git`, `…/webhook` or `…/object-storage` with the profile's body — and records the profile on the run. The answer summarises the attempt (`outcome`: `in_progress`, `delivered` or `failed`) and carries the channel's full run in `run`.
+
+As with each channel, a delivery that reaches the destination and fails answers `200` with `outcome: failed` and the channel's `errorCode`. Requires `versions:publish`; audited by the channel (`export.git_delivery`, `export.webhook_delivery`, `export.object_storage_delivery`) with `profileId`.
+
+Operation id: `deliver_export_job_with_profile_v1_export__tenant_slug__jobs__job_id__deliveries_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `job_id` | path | string | yes | Asynchronous job identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for deliver a completed export with a delivery profile.
+
+- `application/json` — [`ProfileDeliveryRequest`](#schema-profiledeliveryrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for deliver a completed export with a delivery profile. | `application/json` [`ExportDeliveryAttemptModel`](#schema-exportdeliveryattemptmodel) |
+| 400 | The stored destination is no longer valid for its channel. | — |
+| 404 | Unknown export job or profile for this tenant. | — |
+| 409 | The job is not completed, is a dry run, or its bundle cannot be read. | — |
+| 410 | The export's artifact has expired; export again, then deliver. | — |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | A webhook profile's secret cannot be opened on this deployment. | — |
 
 ## `GET /v1/export/{tenant_slug}/jobs/{job_id}/deliveries/git` {#list-export-job-git-deliveries-v1-export-tenant-slug-jobs-job-id-deliveries-git-get}
 
@@ -315,6 +545,107 @@ Operation id: `delete_storage_credential_v1_export__tenant_slug__storage_credent
 
 ## Schemas used {#schemas-used}
 
+### `DeliveryProfileCreate` {#schema-deliveryprofilecreate}
+
+A new delivery profile: ``POST /v1/export/{tenant}/delivery-profiles``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string | yes | A name unique in the workspace (`orders-to-data-lake`), up to 120 characters. |
+| `description` | string or null | no | What the profile is for. |
+| `channel` | enum `"git"`, `"webhook"`, `"object_storage"` | yes | The delivery channel. |
+| `git` | [`GitDeliveryRequest`](#schema-gitdeliveryrequest) or null | no | For `channel: git` — the git delivery body. |
+| `webhook` | `WebhookProfileDestination` or null | no | For `channel: webhook` — the webhook delivery body. |
+| `objectStorage` | [`ObjectStorageDeliveryRequest`](#schema-objectstoragedeliveryrequest) or null | no | For `channel: object_storage` — the object-storage delivery body. |
+
+### `DeliveryProfileUpdate` {#schema-deliveryprofileupdate}
+
+A change to a profile: ``PATCH /v1/export/{tenant}/delivery-profiles/{id}``. The channel is fixed.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `name` | string or null | no | A new name. |
+| `description` | string or null | no | A new description; `""` clears it. |
+| `git` | [`GitDeliveryRequest`](#schema-gitdeliveryrequest) or null | no | A new git destination (replaces it). |
+| `webhook` | `WebhookProfileDestination` or null | no | A new webhook destination (replaces it; leave `secret` out to keep it). |
+| `objectStorage` | [`ObjectStorageDeliveryRequest`](#schema-objectstoragedeliveryrequest) or null | no | A new object-storage destination (replaces it). |
+
+### `ExportDeliveryAttemptListResponse` {#schema-exportdeliveryattemptlistresponse}
+
+Delivery attempts across every channel, newest first.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `deliveries` | array of [`ExportDeliveryAttemptModel`](#schema-exportdeliveryattemptmodel) | no | Deliveries. |
+
+### `ExportDeliveryAttemptModel` {#schema-exportdeliveryattemptmodel}
+
+One delivery attempt, whatever its channel.
+
+Attributes:
+    channel: ``git``, ``webhook`` or ``object_storage``.
+    run_id: The channel's run.
+    status: The channel's own status (``opened``, ``retrying``, ``delivered``, …).
+    outcome: ``in_progress``, ``delivered`` or ``failed``.
+    profile_id: The profile it was made from (null for a direct delivery or a deleted profile).
+    profile_name: That profile's name.
+    destination: Where it went: ``owner/repo``, the receiver URL without its query, or ``bucket/prefix``.
+    attempt_count: Send attempts so far (a webhook retries; the other channels make one).
+    run: In the answer to a delivery only — the channel's full run, as its own endpoint returns it.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `channel` | string | yes | Channel. |
+| `runId` | string or null | no | Run ID. |
+| `jobId` | string | yes | Job ID. |
+| `artifactId` | string or null | no | Artifact ID. |
+| `exportTarget` | string or null | no | Export Target. |
+| `status` | string | yes | Status. |
+| `outcome` | enum `"in_progress"`, `"delivered"`, `"failed"` | yes | Outcome. |
+| `profileId` | string or null | no | Profile ID. |
+| `profileName` | string or null | no | Profile Name. |
+| `destination` | string or null | no | Destination. |
+| `attemptCount` | integer | no | Number of attempt. |
+| `errorCode` | string or null | no | Error Code. |
+| `errorMessage` | string or null | no | Error Message. |
+| `startedAt` | string (date-time) or null | no | Started At. |
+| `finishedAt` | string (date-time) or null | no | Finished At. |
+| `createdBy` | string or null | no | Created By. |
+| `run` | object or null | no | Run. |
+
+### `ExportDeliveryProfileListResponse` {#schema-exportdeliveryprofilelistresponse}
+
+A workspace's delivery profiles, by name.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `profiles` | array of [`ExportDeliveryProfileModel`](#schema-exportdeliveryprofilemodel) | no | Profiles. |
+
+### `ExportDeliveryProfileModel` {#schema-exportdeliveryprofilemodel}
+
+A stored delivery profile, described without its secret.
+
+Attributes:
+    id: The profile.
+    name: Its unique name in the workspace.
+    description: What it is for.
+    channel: ``git``, ``webhook`` or ``object_storage``.
+    destination: The channel's delivery body, minus any secret (a webhook URL without its query).
+    credential_ref: What it delivers with.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `name` | string | yes | Human-readable name. |
+| `description` | string or null | no | Free-text description. |
+| `channel` | string | yes | Channel. |
+| `destination` | object | no | Destination. |
+| `credentialRef` | `CredentialRefModel` | yes | Credential Ref. |
+| `createdAt` | string (date-time) or null | no | Created At. |
+| `updatedAt` | string (date-time) or null | no | Updated At. |
+| `createdBy` | string or null | no | Created By. |
+| `updatedBy` | string or null | no | Updated By. |
+
 ### `ExportGitDeliveryRunListResponse` {#schema-exportgitdeliveryrunlistresponse}
 
 A job's deliveries, newest first.
@@ -494,6 +825,14 @@ Where to deliver an export: ``POST …/jobs/{job_id}/deliveries/object-storage``
 | `bucket` | string | yes | The bucket (S3 naming rules: 3–63 lowercase letters, digits, `.` and `-`). |
 | `prefix` | string | no | The key prefix every object is written under (`exports/apis`). Empty means the bucket root. |
 | `partitioning` | array of enum `"artifact"`, `"version"`, `"target"` | no | The partitions below the prefix, in order. Default `[artifact, version, target]` → `<prefix>/orders/1.4.0/openapi-3.1/…`; `[]` writes straight under the prefix. |
+
+### `ProfileDeliveryRequest` {#schema-profiledeliveryrequest}
+
+Deliver a job with a profile: ``POST …/jobs/{job_id}/deliveries``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `profileId` | string | yes | A delivery profile of this workspace (`GET /v1/export/{tenant}/delivery-profiles`). |
 
 ### `StorageCredentialCreate` {#schema-storagecredentialcreate}
 

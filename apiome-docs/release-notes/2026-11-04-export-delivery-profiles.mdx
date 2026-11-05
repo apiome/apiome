@@ -1,0 +1,25 @@
+---
+slug: export-delivery-profiles
+title: Reusable delivery profiles for exports
+description: "Save an export destination once, deliver by name, and audit every delivery."
+authors: [apiome]
+---
+
+Git, webhook and object-storage delivery destinations can now be saved once per workspace as a
+**delivery profile** and used by name — in Export studio, the CLI and the API. See
+[Reuse a delivery destination with a profile](/ship/export-delivery-profiles).
+
+{/* truncate */}
+
+- **Reusable, named destinations:** a profile holds a channel, its destination and a reference to the
+  credential it delivers with, the repository or a stored bucket credential.
+- **Secrets stay sealed:** a webhook's signing secret is sealed on the profile and never shown again.
+- **Manage them in Export studio:** a new **Delivery** tab lists, creates, edits and deletes profiles
+  and shows each one's deliveries.
+- **Deliver on completion:** tick profiles under **Deliver when it completes** on **Review**, pass
+  `--deliver` to `apiome export`, or send `delivery_profiles` with a job; the export is delivered as
+  soon as it finishes.
+- **Deliver by name:** **Deliver now** on a finished export, `apiome export deliver`, or
+  `POST …/jobs/{job_id}/deliveries` with a profile id.
+- **Every delivery audited:** list a job's deliveries across all channels, or every delivery made with
+  a profile. Profile changes and deliveries are in the audit log.

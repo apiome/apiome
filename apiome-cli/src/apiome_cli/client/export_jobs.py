@@ -120,10 +120,12 @@ def start_export_job(
     confirm: bool = False,
     acknowledged_snapshot: str | None = None,
     overlays: Sequence[Mapping[str, Any]] | None = None,
+    delivery_profiles: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Submit ``POST /v1/export/{tenant}/jobs`` and return the 202 acceptance payload.
 
     ``overlays`` (GVM-4.2) is the inline ``[{name, document}]`` list, applied in order.
+    ``delivery_profiles`` (MFX-38.4) are profile ids the job is delivered with on completion.
     """
     body: dict[str, Any] = {"artifact": artifact, "target": target, "confirm": confirm}
     if version is not None:
@@ -134,6 +136,8 @@ def start_export_job(
         body["acknowledged_snapshot"] = acknowledged_snapshot
     if overlays:
         body["overlays"] = [dict(overlay) for overlay in overlays]
+    if delivery_profiles:
+        body["delivery_profiles"] = list(delivery_profiles)
     response = client.post(api_paths.export_jobs(tenant_slug), json=body)
     payload = response.json()
     if not isinstance(payload, dict):

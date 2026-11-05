@@ -21,13 +21,15 @@ like the sibling export endpoints.
 
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import StreamingResponse
 
 from .auth import validate_authentication
+from .database import db
 from .download_headers import attachment_headers
 from .export_delivery_gate import DeliveryAttestation
 from .export_job_engine import (
@@ -51,8 +53,32 @@ from .export_job_engine import (
     resolve_export_download as engine_resolve_export_download,
 )
 from .export_service import ExportError
+from .permissions import Action, Resource, enforce_permission
 
 router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
+
+
+def _check_delivery_profiles(auth_data: Dict[str, Any], tenant_id: str, profile_ids: List[str]) -> None:
+    """Refuse a job's ``delivery_profiles`` before it runs (MFX-38.4).
+
+    Delivering needs ``versions:publish`` (403 without it), and every profile must exist in the
+    tenant (400 naming the unknown ones), so a job never finishes only to find it cannot deliver.
+
+    Args:
+        auth_data: The submitter.
+        tenant_id: The submitter's tenant.
+        profile_ids: The requested profiles.
+
+    Raises:
+        HTTPException: 403 without ``versions:publish``; 400 for an unknown profile.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
+    unknown = [pid for pid in profile_ids if not db.get_export_delivery_profile(tenant_id, pid)]
+    if unknown:
+        raise HTTPException(status_code=400, detail={
+            "code": "export-delivery-profile-unknown",
+            "errors": [f"delivery_profiles: no delivery profile {pid!r} exists in this workspace" for pid in unknown],
+        })
 
 
 @router.post(
@@ -98,6 +124,11 @@ router = APIRouter(prefix="/v1/export", tags=["export-jobs"])
         "OpenAPI fails with ``OVERLAY_SOURCE_UNSUPPORTED``; an unreadable overlay with "
         "``OVERLAY_INVALID``. Overlays apply to one source, so they cannot be combined with a batch. "
         "Send the same ``overlays`` to ``POST …/verify`` so its snapshot matches the job's.\n\n"
+        "**Delivery (MFX-38.4):** ``delivery_profiles`` lists delivery profiles the export is "
+        "delivered with as soon as it completes — each through its channel, recorded on the job "
+        "(``GET …/jobs/{job_id}/deliveries``) and as an ``EXPORT_DELIVERED`` / "
+        "``EXPORT_DELIVERY_FAILED`` event. It needs ``versions:publish`` (403) and existing profiles "
+        "(400).\n\n"
         "**Limits (X5):** each refusal names the limit it hit. A tenant runs at most "
         "``APIOME_EXPORT_MAX_CONCURRENT_JOBS_PER_TENANT`` (default 5) queued or running export jobs; "
         "a submit past it is refused with **429**. A job running longer than "
@@ -132,8 +163,10 @@ async def start_export_job(
             job status.
     """
     tenant_id = str(auth_data["tenant_id"])
+    if request.delivery_profiles:
+        await asyncio.to_thread(_check_delivery_profiles, auth_data, tenant_id, request.delivery_profiles)
     try:
-        return await schedule_export_job(tenant_slug, tenant_id, request)
+        return await schedule_export_job(tenant_slug, tenant_id, request, auth_data=auth_data)
     except ExportError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 

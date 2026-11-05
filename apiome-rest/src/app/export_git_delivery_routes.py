@@ -211,6 +211,73 @@ def _subject(tenant_slug: str, tenant_id: str, job_id: str, result: ExportJobRes
     )
 
 
+async def perform_git_delivery(
+    tenant_slug: str,
+    tenant_id: str,
+    job_id: str,
+    body: GitDeliveryRequest,
+    auth_data: Dict[str, Any],
+    *,
+    profile_id: Optional[str] = None,
+) -> ExportGitDeliveryRunModel:
+    """Deliver one completed export job's bundle to a repository, record it and audit it.
+
+    Shared by the direct route and a delivery profile (MFX-38.4); the caller has already enforced
+    ``versions:publish`` and checked the tenant.
+
+    Args:
+        tenant_slug: The tenant the job was submitted under.
+        tenant_id: That tenant's id.
+        job_id: The export job.
+        body: Where, and how.
+        auth_data: Authenticated principal.
+        profile_id: The delivery profile the request came from, recorded on the run and in the audit.
+
+    Returns:
+        The run — whatever its outcome.
+
+    Raises:
+        HTTPException: 400 for an invalid request; 404 for an unknown job; 409 for a job that cannot
+            be delivered; 410 for an expired artifact.
+    """
+    try:
+        request = normalize_request(body)
+    except ExportGitDeliveryRequestError as exc:
+        raise HTTPException(status_code=400, detail={"code": "export-git-delivery-request-invalid",
+                                                     "errors": exc.errors}) from exc
+
+    status = await get_export_job_status(tenant_slug, job_id)
+    result = _completed_result(status)
+    files = await asyncio.to_thread(_bundle, tenant_slug, job_id, result)
+    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
+    outcome = await asyncio.to_thread(
+        deliver_export, tenant_id=tenant_id, actor_id=get_authenticated_user_id(auth_data), subject=subject,
+        request=request, files=files,
+    )
+    if profile_id and outcome.run_id:
+        await asyncio.to_thread(db.set_export_delivery_run_profile, "git", tenant_id, outcome.run_id, profile_id)
+    write_audit(
+        tenant_id=tenant_id,
+        action=AUDIT_DELIVERY,
+        auth_data=auth_data,
+        target=result.artifact,
+        detail={
+            "runId": outcome.run_id,
+            "status": outcome.status,
+            "mode": outcome.mode,
+            "jobId": job_id,
+            "exportTarget": subject.target,
+            "repositoryFullName": outcome.repository_full_name,
+            "branchName": outcome.branch_name,
+            "commitSha": outcome.commit_sha,
+            "pullRequestNumber": outcome.pull_request_number,
+            "errorCode": outcome.error_code,
+            **({"profileId": profile_id} if profile_id else {}),
+        },
+    )
+    return _run_model(outcome)
+
+
 @router.post(
     "/{tenant_slug}/jobs/{job_id}/deliveries/git",
     response_model=ExportGitDeliveryRunModel,
@@ -261,39 +328,7 @@ async def deliver_export_job_to_git(
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    try:
-        request = normalize_request(body)
-    except ExportGitDeliveryRequestError as exc:
-        raise HTTPException(status_code=400, detail={"code": "export-git-delivery-request-invalid",
-                                                     "errors": exc.errors}) from exc
-
-    status = await get_export_job_status(tenant_slug, job_id)
-    result = _completed_result(status)
-    files = await asyncio.to_thread(_bundle, tenant_slug, job_id, result)
-    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
-    outcome = await asyncio.to_thread(
-        deliver_export, tenant_id=tenant_id, actor_id=get_authenticated_user_id(auth_data), subject=subject,
-        request=request, files=files,
-    )
-    write_audit(
-        tenant_id=tenant_id,
-        action=AUDIT_DELIVERY,
-        auth_data=auth_data,
-        target=result.artifact,
-        detail={
-            "runId": outcome.run_id,
-            "status": outcome.status,
-            "mode": outcome.mode,
-            "jobId": job_id,
-            "exportTarget": subject.target,
-            "repositoryFullName": outcome.repository_full_name,
-            "branchName": outcome.branch_name,
-            "commitSha": outcome.commit_sha,
-            "pullRequestNumber": outcome.pull_request_number,
-            "errorCode": outcome.error_code,
-        },
-    )
-    return _run_model(outcome)
+    return await perform_git_delivery(tenant_slug, tenant_id, job_id, body, auth_data)
 
 
 @router.get(

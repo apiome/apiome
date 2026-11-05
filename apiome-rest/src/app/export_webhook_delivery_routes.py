@@ -202,6 +202,91 @@ def _fetch_link(tenant_slug: str, job_id: str, delivery_id: str, result: ExportJ
         "+00:00", "Z")}
 
 
+async def perform_webhook_delivery(
+    tenant_slug: str,
+    tenant_id: str,
+    job_id: str,
+    body: WebhookDeliveryRequest,
+    auth_data: Dict[str, Any],
+    *,
+    profile_id: Optional[str] = None,
+) -> ExportWebhookDeliveryRunModel:
+    """Send one completed export job's result to a webhook, record it and audit it.
+
+    Shared by the direct route and a delivery profile (MFX-38.4); the caller has already enforced
+    ``versions:publish`` and checked the tenant.
+
+    Args:
+        tenant_slug: The tenant the job was submitted under.
+        tenant_id: That tenant's id.
+        job_id: The export job.
+        body: The receiver, the signing secret and how the bundle travels.
+        auth_data: Authenticated principal.
+        profile_id: The delivery profile the request came from, recorded on the run and in the audit.
+
+    Returns:
+        The run — whatever its outcome.
+
+    Raises:
+        HTTPException: 400 for an invalid or refused destination; 404 for an unknown job; 409 for a job
+            that cannot be delivered; 410 for an expired artifact.
+    """
+    try:
+        request = normalize_request(body)
+        await asyncio.to_thread(validate_url, request.url)
+    except ExportWebhookDeliveryRequestError as exc:
+        raise HTTPException(status_code=400, detail={"code": "export-webhook-delivery-request-invalid",
+                                                     "errors": exc.errors}) from exc
+    except SSRFError as exc:
+        raise HTTPException(status_code=400, detail={"code": "export-webhook-delivery-destination-refused",
+                                                     "errors": [f"url: {exc}"]}) from exc
+
+    status = await get_export_job_status(tenant_slug, job_id)
+    result = _completed_result(status)
+    download = await asyncio.to_thread(resolve_export_download, tenant_slug, job_id)  # 409 / 410 propagate
+    artifact = BundleArtifact(download.filename, download.media_type, download.body, download.content_sha256)
+    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
+
+    run_id = str(uuid.uuid4())
+    inline = request.artifact == "auto" and len(artifact.data) <= settings.export_webhook_inline_max_bytes
+    fetch = None if inline else _fetch_link(tenant_slug, job_id, run_id, result)
+    payload = stable_body(build_payload(
+        delivery_id=run_id, created_at=datetime.now(timezone.utc), subject=subject,
+        files=_manifest_files(result), fidelity_report=_fidelity_report(result),
+        download_path=result.download_path, artifact=artifact, inline=inline, fetch=fetch,
+    ))
+    row = await asyncio.to_thread(
+        start_delivery, db, run_id=run_id, tenant_id=tenant_id, job_id=job_id, artifact_id=result.artifact,
+        target_url=request.url, artifact_delivery="inline" if inline else "fetch", payload=payload,
+        payload_sha256=hashlib.sha256(payload).hexdigest(), signature=sign_body(request.secret, payload),
+        version_record_id=result.version_record_id, version_label=result.version_label,
+        export_target=subject.target, fidelity=subject.fidelity, actor_id=get_authenticated_user_id(auth_data),
+    )
+    if row is None:
+        raise HTTPException(status_code=500, detail={"code": "export-webhook-delivery-internal-error",
+                                                     "message": "The delivery could not be recorded."})
+    if profile_id and run_id:
+        await asyncio.to_thread(db.set_export_delivery_run_profile, "webhook", tenant_id, run_id, profile_id)
+    write_audit(
+        tenant_id=tenant_id,
+        action=AUDIT_DELIVERY,
+        auth_data=auth_data,
+        target=result.artifact,
+        detail={
+            "runId": run_id,
+            "status": row.get("status"),
+            "jobId": job_id,
+            "exportTarget": subject.target,
+            "receiverHost": urlsplit(request.url).hostname,
+            "artifactDelivery": "inline" if inline else "fetch",
+            "httpStatus": row.get("last_http_status"),
+            "errorCode": row.get("error_code"),
+            **({"profileId": profile_id} if profile_id else {}),
+        },
+    )
+    return run_model(row)
+
+
 @router.post(
     "/{tenant_slug}/jobs/{job_id}/deliveries/webhook",
     response_model=ExportWebhookDeliveryRunModel,
@@ -258,57 +343,7 @@ async def deliver_export_job_to_webhook(
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.PUBLISH)
     tenant_id = tenant_id_of(auth_data)
     _check_tenant(tenant_slug, tenant_id)
-    try:
-        request = normalize_request(body)
-        await asyncio.to_thread(validate_url, request.url)
-    except ExportWebhookDeliveryRequestError as exc:
-        raise HTTPException(status_code=400, detail={"code": "export-webhook-delivery-request-invalid",
-                                                     "errors": exc.errors}) from exc
-    except SSRFError as exc:
-        raise HTTPException(status_code=400, detail={"code": "export-webhook-delivery-destination-refused",
-                                                     "errors": [f"url: {exc}"]}) from exc
-
-    status = await get_export_job_status(tenant_slug, job_id)
-    result = _completed_result(status)
-    download = await asyncio.to_thread(resolve_export_download, tenant_slug, job_id)  # 409 / 410 propagate
-    artifact = BundleArtifact(download.filename, download.media_type, download.body, download.content_sha256)
-    subject = await asyncio.to_thread(_subject, tenant_slug, tenant_id, job_id, result)
-
-    run_id = str(uuid.uuid4())
-    inline = request.artifact == "auto" and len(artifact.data) <= settings.export_webhook_inline_max_bytes
-    fetch = None if inline else _fetch_link(tenant_slug, job_id, run_id, result)
-    payload = stable_body(build_payload(
-        delivery_id=run_id, created_at=datetime.now(timezone.utc), subject=subject,
-        files=_manifest_files(result), fidelity_report=_fidelity_report(result),
-        download_path=result.download_path, artifact=artifact, inline=inline, fetch=fetch,
-    ))
-    row = await asyncio.to_thread(
-        start_delivery, db, run_id=run_id, tenant_id=tenant_id, job_id=job_id, artifact_id=result.artifact,
-        target_url=request.url, artifact_delivery="inline" if inline else "fetch", payload=payload,
-        payload_sha256=hashlib.sha256(payload).hexdigest(), signature=sign_body(request.secret, payload),
-        version_record_id=result.version_record_id, version_label=result.version_label,
-        export_target=subject.target, fidelity=subject.fidelity, actor_id=get_authenticated_user_id(auth_data),
-    )
-    if row is None:
-        raise HTTPException(status_code=500, detail={"code": "export-webhook-delivery-internal-error",
-                                                     "message": "The delivery could not be recorded."})
-    write_audit(
-        tenant_id=tenant_id,
-        action=AUDIT_DELIVERY,
-        auth_data=auth_data,
-        target=result.artifact,
-        detail={
-            "runId": run_id,
-            "status": row.get("status"),
-            "jobId": job_id,
-            "exportTarget": subject.target,
-            "receiverHost": urlsplit(request.url).hostname,
-            "artifactDelivery": "inline" if inline else "fetch",
-            "httpStatus": row.get("last_http_status"),
-            "errorCode": row.get("error_code"),
-        },
-    )
-    return run_model(row)
+    return await perform_webhook_delivery(tenant_slug, tenant_id, job_id, body, auth_data)
 
 
 @router.get(
