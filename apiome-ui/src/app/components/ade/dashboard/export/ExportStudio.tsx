@@ -1582,6 +1582,9 @@ export function ExportStudio({
                       selectedEntityKey={selectedEntityKey}
                       entityReveal={entityReveal}
                       onEntityLineClick={handleEntityLineClick}
+                      // MFX-45.3: a database export can be read as an ERD, on the same selection.
+                      relational={manifestPage?.relational ?? null}
+                      onSelectEntity={selectEntity}
                     />
                   </div>
                   {/* IXH-4.2: what became of each canonical entity in this document. */}

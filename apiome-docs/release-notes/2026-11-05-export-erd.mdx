@@ -1,0 +1,22 @@
+---
+slug: export-erd
+title: Read a database export as an ERD
+description: "SQL DDL, DBML and Prisma exports get an entity-relationship diagram on Review."
+authors: [apiome]
+---
+
+A SQL DDL export, and its DBML, Prisma, Liquibase and Flyway outputs, now has an **ERD** view on
+**6. Review & Generate** in the Export studio, beside the text. See
+[Read a database export as an ERD](/ship/export-studio#read-a-database-export-as-an-erd).
+
+{/* truncate */}
+
+- **Tables and keys:** every table with its columns, their types in the export's dialect, **NOT NULL**, and
+  **PK**, **FK** and **UQ** markers, with a line for every foreign key.
+- **What was made up, marked:** generated key columns, the foreign keys nested objects became, and the
+  junction and child tables lists became carry **✚**, and their lines are dashed. These are the
+  decisions the fidelity report lists as SYNTH.
+- **One selection:** clicking a table or column selects the type or field it came from in the entity
+  tree. Going back to the DDL or DBML text scrolls to its line.
+- **API:** `POST /v1/export/{tenant_slug}/preview-manifest` returns the tables as `relational` for a
+  database export, and locates its entities on their `CREATE TABLE` / `Table` and column lines.

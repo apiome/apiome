@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.523.0",
+    "version": "1.524.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -142459,6 +142459,18 @@
             "title": "Truncated",
             "description": "True when this response omits rows the full manifest has (more pages exist).",
             "example": false
+          },
+          "relational": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelationalSchema"
+              },
+              {
+                "type": "null",
+                "description": "Export Preview Manifest schema."
+              }
+            ],
+            "description": "For a database target (SQL DDL and its DBML / Prisma / Liquibase / Flyway outputs), the relational projection the artifact was written from \u2014 tables, columns, keys and foreign keys, the made-up ones marked `synthesized` \u2014 which the Review step draws as an ERD (MFX-45.3). Whole on every page (bounded by the table count); null for every other target."
           }
         },
         "additionalProperties": false,
@@ -142475,6 +142487,288 @@
         ],
         "title": "ExportPreviewManifest",
         "description": "One page of the export preview manifest (IXH-4.1).\n\nIdentity fields (``manifest_hash``, ``target``, counts, ``files``) always describe\nthe **full** manifest; ``entities`` carries the requested page. ``truncated``\nstates whether this response omits rows \u2014 truncation is declared, never silent."
+      },
+      "RelationalColumn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The column name, as written.",
+            "example": "Pet"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "The column's SQL type in the export's dialect (e.g. `VARCHAR(64)`, `BIGINT`).",
+            "example": "example"
+          },
+          "not_null": {
+            "type": "boolean",
+            "title": "Not Null",
+            "description": "True when the column is NOT NULL.",
+            "default": false,
+            "example": false
+          },
+          "primary_key": {
+            "type": "boolean",
+            "title": "Primary Key",
+            "description": "True when the column is part of the primary key.",
+            "default": false,
+            "example": false
+          },
+          "unique": {
+            "type": "boolean",
+            "title": "Unique",
+            "description": "True when the column is part of a unique key.",
+            "default": false,
+            "example": false
+          },
+          "identity": {
+            "type": "boolean",
+            "title": "Identity",
+            "description": "True when the database generates the value.",
+            "default": false,
+            "example": false
+          },
+          "synthesized": {
+            "type": "boolean",
+            "title": "Synthesized",
+            "description": "True when the projection made the column up (a generated key, a foreign key a nested record became, a junction or child table's column).",
+            "default": false,
+            "example": false
+          },
+          "entity_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Relational Column schema."
+              },
+              {
+                "type": "null",
+                "description": "Relational Column schema."
+              }
+            ],
+            "title": "Entity Key",
+            "description": "The canonical construct the column came from (a field or the record's key)."
+          },
+          "references": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelationalReference"
+              },
+              {
+                "type": "null",
+                "description": "Relational Column schema."
+              }
+            ],
+            "description": "The column this one points at, when it is a single-column foreign key."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "type"
+        ],
+        "title": "RelationalColumn",
+        "description": "One column of a table."
+      },
+      "RelationalForeignKey": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns",
+            "description": "The referencing columns, in this table.",
+            "maxItems": 1000
+          },
+          "table": {
+            "type": "string",
+            "title": "Table",
+            "description": "The referenced table's name.",
+            "example": "example"
+          },
+          "ref_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ref Columns",
+            "description": "The referenced columns.",
+            "maxItems": 1000
+          },
+          "synthesized": {
+            "type": "boolean",
+            "title": "Synthesized",
+            "description": "True when the projection made the foreign key up (not declared in the source).",
+            "default": false,
+            "example": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "columns",
+          "table",
+          "ref_columns"
+        ],
+        "title": "RelationalForeignKey",
+        "description": "One foreign key (an edge of the diagram)."
+      },
+      "RelationalReference": {
+        "properties": {
+          "table": {
+            "type": "string",
+            "title": "Table",
+            "description": "The referenced table's name.",
+            "example": "example"
+          },
+          "column": {
+            "type": "string",
+            "title": "Column",
+            "description": "The referenced column's name.",
+            "example": "example"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "table",
+          "column"
+        ],
+        "title": "RelationalReference",
+        "description": "The column a foreign-key column points at."
+      },
+      "RelationalSchema": {
+        "properties": {
+          "dialect": {
+            "type": "string",
+            "title": "Dialect",
+            "description": "`postgres`, `mysql` or `ansi`.",
+            "example": "example"
+          },
+          "output": {
+            "type": "string",
+            "title": "Output",
+            "description": "The written output: `ddl`, `dbml`, `prisma`, `liquibase` or `flyway`.",
+            "example": "example"
+          },
+          "schema_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Relational schema."
+              },
+              {
+                "type": "null",
+                "description": "Relational schema."
+              }
+            ],
+            "title": "Schema Name",
+            "description": "The schema the tables are created in, if any."
+          },
+          "tables": {
+            "items": {
+              "$ref": "#/components/schemas/RelationalTable"
+            },
+            "type": "array",
+            "title": "Tables",
+            "description": "Every table, in written order.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "dialect",
+          "output"
+        ],
+        "title": "RelationalSchema",
+        "description": "The relational projection of one database export."
+      },
+      "RelationalTable": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The table name, as written.",
+            "example": "Pet"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "table",
+              "junction",
+              "child"
+            ],
+            "title": "Kind",
+            "description": "`table` for a record; `junction` for a list of records; `child` for a list of values.",
+            "example": "table"
+          },
+          "entity_key": {
+            "type": "string",
+            "title": "Entity Key",
+            "description": "The canonical construct the table came from: the record, or the list field a junction or child table holds.",
+            "example": "example"
+          },
+          "synthesized": {
+            "type": "boolean",
+            "title": "Synthesized",
+            "description": "True for a junction or child table \u2014 a table the projection made up.",
+            "default": false,
+            "example": false
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/RelationalColumn"
+            },
+            "type": "array",
+            "title": "Columns",
+            "description": "The columns, in written order.",
+            "maxItems": 1000
+          },
+          "primary_key": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Primary Key",
+            "description": "The primary key's columns.",
+            "maxItems": 1000
+          },
+          "unique": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Unique",
+            "description": "Each unique key's columns.",
+            "maxItems": 1000
+          },
+          "foreign_keys": {
+            "items": {
+              "$ref": "#/components/schemas/RelationalForeignKey"
+            },
+            "type": "array",
+            "title": "Foreign Keys",
+            "description": "The foreign keys.",
+            "maxItems": 1000
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "entity_key"
+        ],
+        "title": "RelationalTable",
+        "description": "One table."
       },
       "ExportPreviewManifestRequest": {
         "properties": {

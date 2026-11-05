@@ -572,6 +572,7 @@ of the fidelity report. Unlike most targets, SQL keeps validation rules as `CHEC
 | **Check** what is kept, approximated, dropped or made up | The fidelity report on the card | [What the fidelity report lists](#what-the-sql-ddl-fidelity-report-lists) |
 | **Write** DBML or a Prisma schema instead | **Output** `dbml` / `prisma` | [DBML and Prisma](#dbml-and-prisma) |
 | **Migrate** a database: full changesets, then only the changes | **Output** `liquibase` / `flyway` | [Liquibase and Flyway changelogs](#liquibase-and-flyway-changelogs) |
+| **Read** the tables as a diagram | **6. Review & Generate** in Export studio → **ERD** | [Read a database export as an ERD](./export-studio.mdx#read-a-database-export-as-an-erd) |
 | **Trust** the file | Parsed in its dialect and read back (DBML, Prisma and Liquibase by their own tools) before every download | [What the fidelity report lists](#what-the-sql-ddl-fidelity-report-lists) |
 | **Export** from the CLI | `apiome export sql`, `dbml`, `prisma`, `liquibase` or `flyway`, with `--dialect` | [Where to find the SQL DDL card](#where-to-find-the-sql-ddl-card) |
 
