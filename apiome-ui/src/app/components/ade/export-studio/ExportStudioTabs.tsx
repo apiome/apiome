@@ -15,7 +15,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Bookmark, Package, PanelsTopLeft, Send, type LucideIcon } from 'lucide-react';
+import { Bookmark, History, Package, PanelsTopLeft, Send, type LucideIcon } from 'lucide-react';
 
 import { isFeatureReleased } from '@lib/feature-release';
 import { TAB_LIST_CLASS, tabTriggerClass } from '@/app/components/ui/tabStyles';
@@ -36,6 +36,7 @@ const TAB_ICON: Readonly<Record<ExportStudioTabId, LucideIcon>> = {
   sdk: Package,
   delivery: Send,
   presets: Bookmark,
+  history: History,
 };
 
 /** Props for {@link ExportStudioTabs}. */

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.525.0
+  version: 1.526.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -65502,6 +65502,339 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for fetchadeliveredartifactssigneddeliveryatresponse422.
+  /v1/export/{tenant_slug}/runs:
+    get:
+      tags:
+      - export
+      summary: List the export history
+      description: 'The tenant''s export runs, newest first (MFX-46.1): source and revision,
+        target, actor, outcome, preserved %, validation and lint verdicts, delivery
+        decision and every delivery. Filter by `artifact`, `target`, `actor`, `state`,
+        `channel` (`git`, `webhook`, `object-storage`, `none`), `validation`, `decision`
+        and `finished_after` / `finished_before`. Runs are kept for the job history
+        window (90 days by default). Requires `projects:view`.'
+      operationId: list_export_runs_v1_export__tenant_slug__runs_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: artifact
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheexporthistoryartifact schema.
+          - type: 'null'
+            description: Listtheexporthistoryartifact schema.
+          description: Only runs of this artifact (project or catalog item) id.
+          title: Artifact
+        description: Only runs of this artifact (project or catalog item) id.
+      - name: target
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheexporthistorytarget schema.
+          - type: 'null'
+            description: Listtheexporthistorytarget schema.
+          description: Only runs that requested this target key.
+          title: Target
+        description: Only runs that requested this target key.
+      - name: actor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheexporthistoryactor schema.
+          - type: 'null'
+            description: Listtheexporthistoryactor schema.
+          description: Only runs started by this user id.
+          title: Actor
+        description: Only runs started by this user id.
+      - name: state
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - completed
+            - failed
+            - canceled
+            type: string
+            description: Listtheexporthistorystate schema.
+          - type: 'null'
+            description: Listtheexporthistorystate schema.
+          description: Only runs that ended so.
+          title: State
+        description: Only runs that ended so.
+      - name: channel
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - git
+            - webhook
+            - object-storage
+            - none
+            type: string
+            description: Listtheexporthistorychannel schema.
+          - type: 'null'
+            description: Listtheexporthistorychannel schema.
+          description: Only runs delivered through this channel, or (`none`) never delivered.
+          title: Channel
+        description: Only runs delivered through this channel, or (`none`) never delivered.
+      - name: validation
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - valid
+            - invalid
+            - skipped
+            - not_applicable
+            type: string
+            description: Listtheexporthistoryvalidation schema.
+          - type: 'null'
+            description: Listtheexporthistoryvalidation schema.
+          description: Only runs with this validation verdict.
+          title: Validation
+        description: Only runs with this validation verdict.
+      - name: decision
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - allow
+            - allow_with_warning
+            - block
+            type: string
+            description: Listtheexporthistorydecision schema.
+          - type: 'null'
+            description: Listtheexporthistorydecision schema.
+          description: Only runs with this delivery decision.
+          title: Decision
+        description: Only runs with this delivery decision.
+      - name: finished_after
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Listtheexporthistoryfinishedafter schema.
+          - type: 'null'
+            description: Listtheexporthistoryfinishedafter schema.
+          description: Inclusive lower bound on when the run ended.
+          title: Finished After
+        description: Inclusive lower bound on when the run ended.
+      - name: finished_before
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Listtheexporthistoryfinishedbefore schema.
+          - type: 'null'
+            description: Listtheexporthistoryfinishedbefore schema.
+          description: Inclusive upper bound on when the run ended.
+          title: Finished Before
+        description: Inclusive upper bound on when the run ended.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          description: Page size (default 50, max 200).
+          default: 50
+          title: Limit
+        description: Page size (default 50, max 200).
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          description: Runs to skip.
+          default: 0
+          title: Offset
+        description: Runs to skip.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheexporthistoryauthorization schema.
+          - type: 'null'
+            description: Listtheexporthistoryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listtheexporthistory Xapikey schema.
+          - type: 'null'
+            description: Listtheexporthistory Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the export history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportRunListResponse'
+                description: Response payload for listtheexporthistoryresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listtheexporthistoryresponse422.
+  /v1/export/{tenant_slug}/runs/actors:
+    get:
+      tags:
+      - export
+      summary: List the people in the export history
+      description: Everyone who started a recorded export, most recent first (for the
+        actor filter). Requires `projects:view`.
+      operationId: list_export_run_actors_v1_export__tenant_slug__runs_actors_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthepeopleintheexporthistoryauthorization schema.
+          - type: 'null'
+            description: Listthepeopleintheexporthistoryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Listthepeopleintheexporthistory Xapikey schema.
+          - type: 'null'
+            description: Listthepeopleintheexporthistory Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list the people in the export history.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportRunActorsResponse'
+                description: Response payload for listthepeopleintheexporthistoryresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for listthepeopleintheexporthistoryresponse422.
+  /v1/export/{tenant_slug}/runs/{job_id}:
+    get:
+      tags:
+      - export
+      summary: Get one export run with its stored reports
+      description: One run of the export history with its deliveries and, per target,
+        the fidelity, validation and delivery-gate reports as they were when it ran
+        (read-only). Requires `projects:view`.
+      operationId: get_export_run_v1_export__tenant_slug__runs__job_id__get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Job Id
+          description: Job Id schema.
+        description: Asynchronous job identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getoneexportrunwithitsstoredreportsauthorization schema.
+          - type: 'null'
+            description: Getoneexportrunwithitsstoredreportsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getoneexportrunwithitsstoredreports Xapikey schema.
+          - type: 'null'
+            description: Getoneexportrunwithitsstoredreports Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get one export run with its stored reports.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportRunDetail'
+                description: Response payload for getoneexportrunwithitsstoredreportsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for getoneexportrunwithitsstoredreportsresponse422.
   /v1/export/{tenant_slug}/avro/push:
     post:
       tags:
@@ -104264,6 +104597,511 @@ components:
       - jobs
       title: ExportJobListResponse
       description: Paginated tenant-scoped export jobs (IXH-6.3).
+    ExportRunActor:
+      properties:
+        actor_id:
+          type: string
+          title: Actor Id
+          description: Actor ID.
+          example: actor_01h2xcejqtf3fz5y5j0v8k9m2p
+        actor_label:
+          type: string
+          title: Actor Label
+          description: Actor Label.
+          example: example
+      additionalProperties: false
+      type: object
+      required:
+      - actor_id
+      - actor_label
+      title: ExportRunActor
+      description: Someone who started a recorded export (for the history's actor filter).
+    ExportRunActorsResponse:
+      properties:
+        actors:
+          items:
+            $ref: '#/components/schemas/ExportRunActor'
+          type: array
+          title: Actors
+          description: Actors.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - actors
+      title: ExportRunActorsResponse
+      description: Everyone who started a recorded export, most recent first.
+    ExportRunDelivery:
+      properties:
+        channel:
+          type: string
+          title: Channel
+          description: '`git`, `webhook` or `object-storage`.'
+          example: example
+        status:
+          type: string
+          title: Status
+          description: The channel's own status, e.g. `opened`, `delivered`, `failed`.
+          example: active
+        outcome:
+          type: string
+          title: Outcome
+          description: '`delivered`, `failed` or `in_progress`, whatever the channel.'
+          example: example
+        destination:
+          anyOf:
+          - type: string
+            description: Export Run Delivery schema.
+          - type: 'null'
+            description: Export Run Delivery schema.
+          title: Destination
+          description: The repository, URL or bucket.
+        error_code:
+          anyOf:
+          - type: string
+            description: Export Run Delivery schema.
+          - type: 'null'
+            description: Export Run Delivery schema.
+          title: Error Code
+          description: Why a failed delivery failed.
+        started_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Export Run Delivery schema.
+          - type: 'null'
+            description: Export Run Delivery schema.
+          title: Started At
+          description: Started At timestamp (ISO 8601).
+        finished_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Export Run Delivery schema.
+          - type: 'null'
+            description: Export Run Delivery schema.
+          title: Finished At
+          description: Finished At timestamp (ISO 8601).
+      additionalProperties: false
+      type: object
+      required:
+      - channel
+      - status
+      - outcome
+      title: ExportRunDelivery
+      description: One delivery of an export job (git, webhook or object storage).
+    ExportRunDetail:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+          description: Job ID.
+          example: job_01h2xcejqtf3fz5y5j0v8k9m2p
+        artifact_id:
+          type: string
+          title: Artifact Id
+          description: The exported artifact (project or catalog item) id.
+          example: artifact_01h2xcejqtf3fz5y5j0v8k9m2p
+        artifact_name:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Artifact Name
+          description: The source's name, when known.
+        version_record_id:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Version Record Id
+          description: Version Record ID.
+        version_label:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Version Label
+          description: The exported revision's version label.
+        target:
+          type: string
+          title: Target
+          description: The requested target(s), comma-joined for a multi-target job.
+          example: example
+        actor_id:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Actor Id
+          description: The user who started the job.
+        actor_label:
+          type: string
+          title: Actor Label
+          description: Their email or name (kept after the account is gone).
+          example: example
+        state:
+          type: string
+          title: State
+          description: '`completed`, `failed` or `canceled`.'
+          example: example
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: True for a fidelity-only dry run (no artifact).
+          example: true
+        preserved_percent:
+          anyOf:
+          - type: integer
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Preserved Percent
+          description: Share of constructs preserved (the weakest target's for a multi-target
+            job).
+        fidelity_tier:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Fidelity Tier
+          description: The fidelity tier badge.
+        validation_verdict:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Validation Verdict
+          description: '`valid`, `invalid`, `skipped` or `not_applicable` (the worst target''s).'
+        lint_verdict:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Lint Verdict
+          description: '`pass`, `warn` or `block` (the worst target''s).'
+        delivery_decision:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Delivery Decision
+          description: 'The delivery gate: `allow`, `allow_with_warning` or `block` (the
+            worst target''s).'
+        error_code:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Error Code
+          description: Why a failed job failed.
+        error_message:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Error Message
+          description: Error Message.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Options
+          description: The per-target options the job was submitted with (for a re-run).
+        deliveries:
+          items:
+            $ref: '#/components/schemas/ExportRunDelivery'
+          type: array
+          title: Deliveries
+          description: Every delivery of the job's artifact, newest first.
+          maxItems: 1000
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+          description: Finished At timestamp (ISO 8601).
+          example: '2026-11-05T17:28:24Z'
+        reports:
+          items:
+            $ref: '#/components/schemas/ExportRunTargetReport'
+          type: array
+          title: Reports
+          description: Reports.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - job_id
+      - artifact_id
+      - target
+      - actor_label
+      - state
+      - dry_run
+      - created_at
+      - finished_at
+      title: ExportRunDetail
+      description: One run with its stored reports, per target.
+    ExportRunListResponse:
+      properties:
+        runs:
+          items:
+            $ref: '#/components/schemas/ExportRunSummary'
+          type: array
+          title: Runs
+          description: Runs.
+          maxItems: 1000
+        total:
+          type: integer
+          minimum: 0.0
+          title: Total
+          description: Runs matching the filters (not just this page).
+          default: 0
+          example: 1
+        limit:
+          type: integer
+          maximum: 200.0
+          minimum: 1.0
+          title: Limit
+          default: 50
+          description: Limit.
+          example: 50
+        offset:
+          type: integer
+          minimum: 0.0
+          title: Offset
+          default: 0
+          description: Offset.
+          example: 0
+      additionalProperties: false
+      type: object
+      required:
+      - runs
+      title: ExportRunListResponse
+      description: A page of the tenant's export history.
+    ExportRunSummary:
+      properties:
+        job_id:
+          type: string
+          title: Job Id
+          description: Job ID.
+          example: job_01h2xcejqtf3fz5y5j0v8k9m2p
+        artifact_id:
+          type: string
+          title: Artifact Id
+          description: The exported artifact (project or catalog item) id.
+          example: artifact_01h2xcejqtf3fz5y5j0v8k9m2p
+        artifact_name:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Artifact Name
+          description: The source's name, when known.
+        version_record_id:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Version Record Id
+          description: Version Record ID.
+        version_label:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Version Label
+          description: The exported revision's version label.
+        target:
+          type: string
+          title: Target
+          description: The requested target(s), comma-joined for a multi-target job.
+          example: example
+        actor_id:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Actor Id
+          description: The user who started the job.
+        actor_label:
+          type: string
+          title: Actor Label
+          description: Their email or name (kept after the account is gone).
+          example: example
+        state:
+          type: string
+          title: State
+          description: '`completed`, `failed` or `canceled`.'
+          example: example
+        dry_run:
+          type: boolean
+          title: Dry Run
+          description: True for a fidelity-only dry run (no artifact).
+          example: true
+        preserved_percent:
+          anyOf:
+          - type: integer
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Preserved Percent
+          description: Share of constructs preserved (the weakest target's for a multi-target
+            job).
+        fidelity_tier:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Fidelity Tier
+          description: The fidelity tier badge.
+        validation_verdict:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Validation Verdict
+          description: '`valid`, `invalid`, `skipped` or `not_applicable` (the worst target''s).'
+        lint_verdict:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Lint Verdict
+          description: '`pass`, `warn` or `block` (the worst target''s).'
+        delivery_decision:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Delivery Decision
+          description: 'The delivery gate: `allow`, `allow_with_warning` or `block` (the
+            worst target''s).'
+        error_code:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Error Code
+          description: Why a failed job failed.
+        error_message:
+          anyOf:
+          - type: string
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Error Message
+          description: Error Message.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Run schema.
+          - type: 'null'
+            description: Export Run schema.
+          title: Options
+          description: The per-target options the job was submitted with (for a re-run).
+        deliveries:
+          items:
+            $ref: '#/components/schemas/ExportRunDelivery'
+          type: array
+          title: Deliveries
+          description: Every delivery of the job's artifact, newest first.
+          maxItems: 1000
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Creation timestamp (ISO 8601).
+          example: '2026-07-12T00:00:00Z'
+        finished_at:
+          type: string
+          format: date-time
+          title: Finished At
+          description: Finished At timestamp (ISO 8601).
+          example: '2026-11-05T17:28:24Z'
+      additionalProperties: false
+      type: object
+      required:
+      - job_id
+      - artifact_id
+      - target
+      - actor_label
+      - state
+      - dry_run
+      - created_at
+      - finished_at
+      title: ExportRunSummary
+      description: 'One export run in the history: who exported what, where, with how
+        much loss.'
+    ExportRunTargetReport:
+      properties:
+        target:
+          anyOf:
+          - type: string
+            description: Export Run Target Report schema.
+          - type: 'null'
+            description: Export Run Target Report schema.
+          title: Target
+          description: Target.
+        fidelity:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Run Target Report schema.
+          - type: 'null'
+            description: Export Run Target Report schema.
+          title: Fidelity
+          description: The fidelity envelope, as it was.
+        validation:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Run Target Report schema.
+          - type: 'null'
+            description: Export Run Target Report schema.
+          title: Validation
+          description: The validation report, as it was.
+        delivery_gate:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Export Run Target Report schema.
+          - type: 'null'
+            description: Export Run Target Report schema.
+          title: Delivery Gate
+          description: The delivery-gate report, as it was.
+      additionalProperties: false
+      type: object
+      title: ExportRunTargetReport
+      description: The stored reports of one target of a run (read-only).
     ExportJobProgress:
       properties:
         phase:

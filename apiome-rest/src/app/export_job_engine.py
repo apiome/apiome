@@ -75,7 +75,7 @@ import threading
 import time
 import uuid
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, Iterator, List, Literal, Optional, Tuple, Union
 
@@ -105,6 +105,7 @@ from .export_overlay import (
     apply_export_overlays,
     overlay_events,
 )
+from .export_run_ledger import actor_from_auth, build_ledger_row, record_export_run
 from .export_service import (
     ExportError,
     ExportPersistenceContext,
@@ -1056,6 +1057,11 @@ class _ExportJobRecord:
     # MFX-38.4: the submitter's authenticated context, kept (in memory only, never mirrored) so the
     # deliveries named by ``request.delivery_profiles`` run — and are audited — as them on completion.
     auth_data: Optional[Dict[str, Any]] = None
+    # MFX-46.1: when the job was submitted, the source's name once loaded, and whether its finished run
+    # is already in the export history ledger (written once, at the first terminal mirror).
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    source_name: Optional[str] = None
+    ledger_recorded: bool = False
 
 
 _jobs: Dict[str, _ExportJobRecord] = {}
@@ -1087,6 +1093,21 @@ def _mirror_export_job(job_id: str) -> None:
         status_json = rec.status.model_dump(mode="json")
         request_json = rec.request.model_dump(mode="json")
         rec_target_label = rec.request.target_label
+        # MFX-46.1: a finished job goes into the export history ledger once, with its actor and reports.
+        ledger_row = None
+        if state in _TERMINAL_STATES and not rec.ledger_recorded:
+            rec.ledger_recorded = True
+            ledger_row = build_ledger_row(
+                tenant_id=rec.tenant_id,
+                job_id=job_id,
+                state=state,
+                request=request_json,
+                result=status_json.get("result"),
+                error=status_json.get("error"),
+                artifact_name=rec.source_name,
+                actor=actor_from_auth(rec.auth_data),
+                created_at=rec.created_at,
+            )
     # List rows carry request metadata that isn't part of the poll payload; stash the fields
     # the list endpoint needs so any instance can render its rows from the shared store.
     extra = {
@@ -1107,6 +1128,9 @@ def _mirror_export_job(job_id: str) -> None:
         )
     except Exception:  # noqa: BLE001 - mirroring is best-effort
         logger.warning("Failed to mirror export job %s to shared store", job_id, exc_info=True)
+    # MFX-46.1: after the shared store has the terminal state, so the history never delays a poll.
+    if ledger_row is not None:
+        record_export_run(ledger_row)
 
 
 def _sync_export_cancel_flag(job_id: str) -> None:
@@ -2346,6 +2370,11 @@ async def _load_job_source(
     except ExportSourceError as exc:
         await _fail(job_id, "SOURCE_LOAD_FAILED", str(exc), _source_error_context(exc))
         return None
+    # MFX-46.1: the export history names the source, not just its id.
+    with _jobs_lock:
+        rec = _jobs.get(job_id)
+        if rec is not None:
+            rec.source_name = source.api.title or source.api.identity.name or None
     try:
         return await asyncio.to_thread(apply_export_overlays, source, request.overlays)
     except ExportOverlayError as exc:

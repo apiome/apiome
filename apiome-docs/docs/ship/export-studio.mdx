@@ -499,7 +499,45 @@ The Catalog's bulk bar exports several items to one format in one `.zip`, withou
 
 ## Recent export jobs
 
-**Recent export jobs**, under every step, lists earlier jobs with their state, target and progress.
+**Recent export jobs**, under every step, lists earlier jobs with their state, target and progress. For
+every export in the workspace, with who ran it and how much it lost, see [Export history](#export-history).
+
+## Export history
+
+**Who exported what, where, and with how much loss?** The **History** tab of Export studio lists every export
+run in your workspace, newest first, once it finishes. Runs are kept for **90 days**.
+
+<Screenshot id="export-studio-history" alt="The History tab: two runs, a Petstore export to Protocol Buffers that completed with 64% preserved, valid, lint warnings and delivered to git, and an Orders export to GraphQL that failed" />
+
+Each row shows:
+
+| Column | What it says |
+| --- | --- |
+| **Source → target** | The catalog item or project, its version, and the target (several for a multi-target run; **dry run** for a fidelity-only run). |
+| **Outcome** | **Completed**, **Failed** or **Canceled**. |
+| **Preserved** | The share of your API the export kept. A multi-target run shows its weakest target. |
+| **Validation** | **Valid**, **Invalid**, **Skipped** or **Not checked**. |
+| **Lint** | **Pass**, **Warnings** or **Blocking**, from the source's quality check. |
+| **Delivery** | The delivery gate (**Allowed**, **Allowed with warnings**, **Blocked**) and where the file went: git, a webhook or a bucket, delivered, failed or in progress. |
+| **By** | Who ran it, and when it finished. |
+
+The filters above the table narrow it by **Source**, **Target**, **By**, **Outcome**, **Delivered to** (including
+**Not delivered**), **Validation**, **Delivery gate** and a date range. **Clear filters** removes them all.
+
+**Click a run** to open it, read-only:
+
+<Screenshot id="export-studio-history-run" alt="An opened run: its outcome and share preserved, Re-run in Studio, its git and webhook deliveries, and the stored fidelity findings, validation result and delivery gate for protobuf" />
+
+- **Deliveries**: every delivery of the file, with its destination and, for a failure, its error code.
+- **Per target**: the fidelity findings (everything but OK), the validation result and the delivery gate,
+  exactly as they were when the run finished.
+- **“Re-run in Studio”** opens Export studio on the same source, version, target and options, at
+  **3. Options**, so you can check them and generate again. A multi-target run opens at **2. Target**.
+
+The history shows your own workspace only, and needs the `projects:view` permission. From the API it is
+[`GET /v1/export/{tenant}/runs`](../reference/rest/export.md#list-export-runs-v1-export-tenant-slug-runs-get)
+(with the same filters), one run with its reports at `GET /v1/export/{tenant}/runs/{job_id}`, and the people
+in it at `GET /v1/export/{tenant}/runs/actors`.
 
 ## Who can export
 

@@ -144,6 +144,7 @@ from .sdk_generation_settings_routes import (
 )
 from .sdk_git_delivery_routes import router as sdk_git_delivery_router
 from .export_git_delivery_routes import router as export_git_delivery_router
+from .export_run_routes import router as export_run_router
 from .export_webhook_delivery_pipeline import process_due_export_webhook_deliveries
 from .export_webhook_delivery_routes import router as export_webhook_delivery_router
 from .export_object_storage_delivery_routes import router as export_object_storage_delivery_router
@@ -212,7 +213,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.525.0",
+    version="1.526.0",
 )
 
 
@@ -388,6 +389,7 @@ app.include_router(sdk_publish_router)
 # `sdk-git-delivery` or `sdk-git-delivery-targets` (SDK-4.2, #4496).
 app.include_router(sdk_git_delivery_router)
 app.include_router(export_git_delivery_router)
+app.include_router(export_run_router)
 app.include_router(export_webhook_delivery_router)
 app.include_router(export_object_storage_delivery_router)
 app.include_router(export_delivery_profile_router)

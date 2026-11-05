@@ -163,7 +163,7 @@ describe('Export Studio route — the SDK & branding tab (HIVE-12.2)', () => {
     render(<ExportStudioPage />);
     const strip = screen.getByRole('navigation', { name: 'Export studio sections' });
     const links = strip.querySelectorAll('a');
-    expect([...links].map((link) => link.textContent)).toEqual(['Export', 'SDK & branding']);
+    expect([...links].map((link) => link.textContent)).toEqual(['Export', 'SDK & branding', 'Delivery', 'Presets', 'History']);
     expect(screen.getByRole('link', { name: 'SDK & branding' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Export' })).not.toHaveAttribute('aria-current');
     expect(screen.getByRole('link', { name: 'Export' })).toHaveAttribute(

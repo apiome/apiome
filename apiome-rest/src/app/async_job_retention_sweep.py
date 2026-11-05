@@ -8,7 +8,8 @@ unbounded table. This sweep:
 2. Claims terminal job rows past the configured per-(kind, state) retention window under
    ``FOR UPDATE SKIP LOCKED``, writes a slim ``async_job_history`` summary, then deletes the
    live job (CASCADE removes any leftover ``export_job_artifact`` row).
-3. Prunes ``async_job_history`` rows older than ``async_job_history_retention_days``.
+3. Prunes ``async_job_history`` rows — and the export history ledger (``export_run_ledger``,
+   MFX-46.1) — older than ``async_job_history_retention_days``.
 4. Prunes ``repository_quota_window`` counter rows older than
    ``repository_quota_window_retention_days`` (REPO-7.3, #2801). Those aggregates accrue on
    a schedule of their own, and this tick is already the deployment's retention worker —
@@ -111,7 +112,7 @@ def process_async_job_retention_sweep(
             to ``settings.schema_suite_run_keep_min``.
 
     Returns:
-        Counts: ``artifacts_reaped``, ``jobs_deleted``, ``history_pruned``,
+        Counts: ``artifacts_reaped``, ``jobs_deleted``, ``history_pruned``, ``export_runs_pruned``,
         ``quota_windows_pruned``, ``quality_ranks_pruned``, ``suite_runs_pruned``.
     """
     limit = (
@@ -143,6 +144,7 @@ def process_async_job_retention_sweep(
             logger.warning("async job retention sweep: job reap failed", exc_info=True)
 
     history_pruned = 0
+    export_runs_pruned = 0
     days = (
         history_retention_days
         if history_retention_days is not None
@@ -158,6 +160,17 @@ def process_async_job_retention_sweep(
         except Exception:  # noqa: BLE001
             logger.warning(
                 "async job retention sweep: history prune failed", exc_info=True
+            )
+        # MFX-46.1: the export history ledger is kept for the same window as the slim job history.
+        try:
+            export_runs_pruned = int(
+                database.prune_export_run_ledger(
+                    older_than=clock - timedelta(days=days), limit=limit
+                )
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "async job retention sweep: export history prune failed", exc_info=True
             )
 
     quota_windows_pruned = 0
@@ -203,17 +216,19 @@ def process_async_job_retention_sweep(
         artifacts_reaped
         or jobs_deleted
         or history_pruned
+        or export_runs_pruned
         or quota_windows_pruned
         or quality_ranks_pruned
         or suite_runs_pruned
     ):
         logger.info(
             "async job retention sweep: artifacts_reaped=%d jobs_deleted=%d "
-            "history_pruned=%d quota_windows_pruned=%d quality_ranks_pruned=%d "
-            "suite_runs_pruned=%d",
+            "history_pruned=%d export_runs_pruned=%d quota_windows_pruned=%d "
+            "quality_ranks_pruned=%d suite_runs_pruned=%d",
             artifacts_reaped,
             jobs_deleted,
             history_pruned,
+            export_runs_pruned,
             quota_windows_pruned,
             quality_ranks_pruned,
             suite_runs_pruned,
@@ -222,6 +237,7 @@ def process_async_job_retention_sweep(
         "artifacts_reaped": artifacts_reaped,
         "jobs_deleted": jobs_deleted,
         "history_pruned": history_pruned,
+        "export_runs_pruned": export_runs_pruned,
         "quota_windows_pruned": quota_windows_pruned,
         "quality_ranks_pruned": quality_ranks_pruned,
         "suite_runs_pruned": suite_runs_pruned,

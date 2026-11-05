@@ -41971,5 +41971,288 @@ class Database:
         )
 
 
+    # -------------------------------------------------------------------------------------------
+    # MFX-46.1 (#4379) — export history & audit ledger
+    # -------------------------------------------------------------------------------------------
+
+    #: Every ledger column a summary row shows (the stored reports are read by the detail only).
+    _EXPORT_RUN_SUMMARY_COLUMNS = """
+        job_id,
+        tenant_id::text AS tenant_id,
+        artifact_id,
+        artifact_name,
+        version_record_id,
+        version_label,
+        target,
+        actor_id::text AS actor_id,
+        actor_label,
+        state,
+        dry_run,
+        preserved_percent,
+        fidelity_tier,
+        validation_verdict,
+        lint_verdict,
+        delivery_decision,
+        error_code,
+        error_message,
+        options,
+        created_at,
+        finished_at
+    """
+
+    #: The delivery run tables an export job's deliveries live in, by channel (V354–V356).
+    _EXPORT_RUN_DELIVERY_TABLES = (
+        ("git", "apiome.export_git_delivery_runs"),
+        ("webhook", "apiome.export_webhook_delivery_runs"),
+        ("object-storage", "apiome.export_object_storage_delivery_runs"),
+    )
+
+    def insert_export_run(self, row: Dict[str, Any]) -> bool:
+        """Record one finished export job in the history ledger (MFX-46.1), once.
+
+        Args:
+            row: The ledger columns (see ``V360__export_run_ledger_4379.sql``); JSON columns as dicts.
+
+        Returns:
+            True when the row was written, False when the job was already recorded or the tenant id is
+            not a UUID.
+        """
+        if not is_uuid_string(str(row.get("tenant_id") or "")):
+            return False
+        actor_id = row.get("actor_id")
+        rows = self.execute_query(
+            """
+            INSERT INTO apiome.export_run_ledger (
+                job_id, tenant_id, artifact_id, artifact_name, version_record_id, version_label, target,
+                actor_id, actor_label, state, dry_run, preserved_percent, fidelity_tier, validation_verdict,
+                lint_verdict, delivery_decision, error_code, error_message, options, fidelity, validation,
+                delivery_gate, created_at, finished_at
+            ) VALUES (
+                %s, %s::uuid, %s, %s, %s, %s, %s, %s::uuid, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s::jsonb, %s::jsonb, %s::jsonb, %s::jsonb, %s, COALESCE(%s, CURRENT_TIMESTAMP)
+            )
+            ON CONFLICT (job_id) DO NOTHING
+            RETURNING job_id
+            """,
+            (
+                row["job_id"], row["tenant_id"], row["artifact_id"], row.get("artifact_name"),
+                row.get("version_record_id"), row.get("version_label"), row["target"],
+                actor_id if is_uuid_string(str(actor_id or "")) else None,
+                row.get("actor_label") or "Unknown", row["state"], bool(row.get("dry_run")),
+                row.get("preserved_percent"), row.get("fidelity_tier"), row.get("validation_verdict"),
+                row.get("lint_verdict"), row.get("delivery_decision"), row.get("error_code"),
+                row.get("error_message"),
+                _json_or_none(row.get("options")), _json_or_none(row.get("fidelity")),
+                _json_or_none(row.get("validation")), _json_or_none(row.get("delivery_gate")),
+                row["created_at"], row.get("finished_at"),
+            ),
+        )
+        return bool(rows)
+
+    def list_export_runs(
+        self,
+        tenant_id: str,
+        *,
+        artifact_id: Optional[str] = None,
+        target: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        state: Optional[str] = None,
+        channel: Optional[str] = None,
+        validation_verdict: Optional[str] = None,
+        delivery_decision: Optional[str] = None,
+        finished_after: Optional[Any] = None,
+        finished_before: Optional[Any] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Dict[str, Any]:
+        """List a tenant's export history, newest first, filtered (MFX-46.1).
+
+        Args:
+            tenant_id: Owning tenant (the only rows ever returned).
+            artifact_id: Only runs of this artifact.
+            target: Only runs that requested this target (one of a multi-target job counts).
+            actor_id: Only runs started by this user.
+            state: ``completed``, ``failed`` or ``canceled``.
+            channel: ``git``, ``webhook``, ``object-storage`` (delivered there at least once) or ``none``
+                (never delivered anywhere).
+            validation_verdict: ``valid``, ``invalid``, ``skipped`` or ``not_applicable``.
+            delivery_decision: ``allow``, ``allow_with_warning`` or ``block``.
+            finished_after: Inclusive lower bound on ``finished_at``.
+            finished_before: Inclusive upper bound on ``finished_at``.
+            limit: Page size, clamped to ``[1, 200]``.
+            offset: Rows to skip.
+
+        Returns:
+            ``{"runs": [...], "total": int, "limit": int, "offset": int}`` — empty when the tenant id is
+            not a UUID.
+        """
+        page_limit = max(1, min(int(limit), 200))
+        page_offset = max(0, int(offset))
+        empty: Dict[str, Any] = {"runs": [], "total": 0, "limit": page_limit, "offset": page_offset}
+        if not is_uuid_string(str(tenant_id or "")):
+            return empty
+        where = ["l.tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        for column, value in (
+            ("l.artifact_id", artifact_id),
+            ("l.state", state),
+            ("l.validation_verdict", validation_verdict),
+            ("l.delivery_decision", delivery_decision),
+        ):
+            if value is not None and str(value).strip():
+                where.append(f"{column} = %s")
+                params.append(str(value).strip())
+        if target is not None and str(target).strip():
+            where.append("%s = ANY (string_to_array(l.target, ','))")
+            params.append(str(target).strip())
+        if actor_id is not None and str(actor_id).strip():
+            if not is_uuid_string(str(actor_id).strip()):
+                return empty
+            where.append("l.actor_id = %s::uuid")
+            params.append(str(actor_id).strip())
+        if channel is not None and str(channel).strip():
+            tables = dict(self._EXPORT_RUN_DELIVERY_TABLES)
+            wanted = str(channel).strip()
+            exists = "EXISTS (SELECT 1 FROM {t} d WHERE d.tenant_id = l.tenant_id AND d.job_id = l.job_id)"
+            if wanted == "none":
+                where.append(" AND ".join(f"NOT {exists.format(t=t)}" for t in tables.values()))
+            elif wanted in tables:
+                where.append(exists.format(t=tables[wanted]))
+            else:
+                return empty
+        if finished_after is not None:
+            where.append("l.finished_at >= %s")
+            params.append(finished_after)
+        if finished_before is not None:
+            where.append("l.finished_at <= %s")
+            params.append(finished_before)
+        where_sql = " AND ".join(where)
+        count_rows = self.execute_query(
+            f"SELECT COUNT(*)::int AS total FROM apiome.export_run_ledger l WHERE {where_sql}", tuple(params)
+        )
+        total = int(count_rows[0]["total"]) if count_rows else 0
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_RUN_SUMMARY_COLUMNS}
+            FROM apiome.export_run_ledger l
+            WHERE {where_sql}
+            ORDER BY l.finished_at DESC, l.job_id DESC
+            LIMIT %s OFFSET %s
+            """,
+            tuple(params) + (page_limit, page_offset),
+        )
+        return {"runs": [dict(r) for r in rows or []], "total": total, "limit": page_limit, "offset": page_offset}
+
+    def get_export_run(self, tenant_id: str, job_id: str) -> Optional[Dict[str, Any]]:
+        """One ledger row with its stored reports (MFX-46.1), or ``None`` outside the tenant.
+
+        Args:
+            tenant_id: Owning tenant.
+            job_id: The export job.
+
+        Returns:
+            The row (summary columns plus ``fidelity``, ``validation``, ``delivery_gate``), or ``None``.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return None
+        rows = self.execute_query(
+            f"""
+            SELECT {self._EXPORT_RUN_SUMMARY_COLUMNS}, fidelity, validation, delivery_gate
+            FROM apiome.export_run_ledger l
+            WHERE l.tenant_id = %s::uuid AND l.job_id = %s
+            """,
+            (tenant_id, str(job_id)),
+        )
+        return dict(rows[0]) if rows else None
+
+    def list_export_run_deliveries(self, tenant_id: str, job_ids: List[str]) -> List[Dict[str, Any]]:
+        """Every delivery run of these export jobs, across channels, newest first (MFX-46.1).
+
+        Args:
+            tenant_id: Owning tenant.
+            job_ids: The export jobs.
+
+        Returns:
+            Rows of ``job_id``, ``channel`` (``git`` / ``webhook`` / ``object-storage``), ``status``,
+            ``destination`` (repository, URL or bucket), ``error_code``, ``started_at`` and
+            ``finished_at``. Empty for no jobs or a non-UUID tenant.
+        """
+        ids = [str(j) for j in job_ids if j]
+        if not ids or not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT job_id, 'git' AS channel, status, repository_full_name AS destination, error_code,
+                   started_at, finished_at
+            FROM apiome.export_git_delivery_runs WHERE tenant_id = %s::uuid AND job_id = ANY(%s)
+            UNION ALL
+            SELECT job_id, 'webhook', status, target_url, error_code, started_at, finished_at
+            FROM apiome.export_webhook_delivery_runs WHERE tenant_id = %s::uuid AND job_id = ANY(%s)
+            UNION ALL
+            SELECT job_id, 'object-storage', status, bucket, error_code, started_at, finished_at
+            FROM apiome.export_object_storage_delivery_runs WHERE tenant_id = %s::uuid AND job_id = ANY(%s)
+            ORDER BY started_at DESC
+            """,
+            (tenant_id, ids, tenant_id, ids, tenant_id, ids),
+        )
+        return [dict(r) for r in rows or []]
+
+    def list_export_run_actors(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """The people who started the tenant's recorded exports, for the history's actor filter.
+
+        Args:
+            tenant_id: Owning tenant.
+
+        Returns:
+            ``actor_id`` / ``actor_label`` rows, most recent first; empty for a non-UUID tenant.
+        """
+        if not is_uuid_string(str(tenant_id or "")):
+            return []
+        rows = self.execute_query(
+            """
+            SELECT actor_id::text AS actor_id, actor_label, MAX(finished_at) AS last_finished_at
+            FROM apiome.export_run_ledger
+            WHERE tenant_id = %s::uuid AND actor_id IS NOT NULL
+            GROUP BY actor_id, actor_label
+            ORDER BY MAX(finished_at) DESC
+            LIMIT 200
+            """,
+            (tenant_id,),
+        )
+        return [dict(r) for r in rows or []]
+
+    def prune_export_run_ledger(self, *, older_than: Any, limit: int = 100) -> int:
+        """Delete up to ``limit`` ledger rows finished before ``older_than`` (MFX-46.1 retention).
+
+        Args:
+            older_than: Exclusive upper bound on ``finished_at``.
+            limit: Max rows deleted this call.
+
+        Returns:
+            Number of ledger rows removed.
+        """
+        batch = max(1, min(int(limit), 500))
+        rows = self.execute_query(
+            """
+            DELETE FROM apiome.export_run_ledger
+            WHERE job_id IN (
+                SELECT job_id FROM apiome.export_run_ledger
+                WHERE finished_at < %s
+                ORDER BY finished_at ASC
+                LIMIT %s
+                FOR UPDATE SKIP LOCKED
+            )
+            RETURNING job_id
+            """,
+            (older_than, batch),
+        )
+        return len(rows)
+
+
+def _json_or_none(value: Any) -> Optional[str]:
+    """``value`` as JSON text for a ``jsonb`` parameter, or ``None``."""
+    return None if value is None else json.dumps(value, default=str)
+
+
 # Global database instance
 db = Database()

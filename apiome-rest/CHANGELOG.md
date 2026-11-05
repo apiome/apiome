@@ -5,6 +5,25 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.662.0] - 2026-11-05
+
+### Added
+- **Export history & audit ledger (MFX-46.1, #4379).** Every export job is recorded in a new ledger
+  (`apiome.export_run_ledger`, migration V360) when it finishes: the source and revision, the target(s), **who
+  started it**, the outcome, the share preserved, the validation and lint verdicts, the delivery decision, the
+  options it ran with, and its stored fidelity, validation and delivery-gate reports per target. A multi-target
+  job's headline numbers are its weakest target's. Rows are kept for `APIOME_ASYNC_JOB_HISTORY_RETENTION_DAYS`
+  (90 by default) and pruned by the async-job retention sweep (`export_runs_pruned`).
+  - `GET /v1/export/{tenant_slug}/runs` lists the tenant's history, newest first, filtered by `artifact`,
+    `target`, `actor`, `state`, `channel` (`git`, `webhook`, `object-storage`, `none`), `validation`, `decision`
+    and `finished_after` / `finished_before`; each run carries its git, webhook and object-storage deliveries
+    with a normalized `outcome` (`delivered`, `failed`, `in_progress`).
+  - `GET /v1/export/{tenant_slug}/runs/{job_id}` returns one run with its stored reports, read-only;
+    `GET /v1/export/{tenant_slug}/runs/actors` the people in the history.
+  - All three need `projects:view` and the caller's own tenant. The actor is the authenticated user; an API key
+    with no user is recorded as "API key", never attributed to someone else.
+  - OpenAPI 1.526.0.
+
 ## [1.661.0] - 2026-11-05
 
 ### Added
