@@ -1,0 +1,23 @@
+---
+slug: export-delivery-channels-overview
+title: Export delivery channels, end to end
+description: "Send finished exports to a repository, a webhook or a bucket."
+authors: [apiome]
+---
+
+A finished export no longer stops at a download: Apiome delivers it to where it is used — a git
+repository, a pipeline's webhook or an S3-compatible bucket — and records every delivery. See
+[Deliver an export](/ship/deliver-an-export).
+
+{/* truncate */}
+
+- **Git repository:** a pull request carrying the fidelity summary, or a direct commit, on a registered
+  GitHub repository.
+- **Webhook:** the manifest, fidelity report and bundle POSTed to your URL, HMAC-signed and retried with
+  backoff.
+- **Object storage:** files uploaded to AWS S3, MinIO, Cloudflare R2 or Ceph under a partitioned prefix,
+  with a content-addressed manifest.
+- **Delivery profiles:** save a destination once and deliver by name from Export studio's **Delivery**
+  tab, `apiome export --deliver`, or the API — on completion or on demand.
+- **Safe and audited:** credentials sealed in the workspace, private-network destinations refused, and
+  every attempt listed on the job and in the audit log.

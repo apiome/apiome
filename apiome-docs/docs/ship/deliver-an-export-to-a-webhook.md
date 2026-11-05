@@ -8,7 +8,8 @@ An export ends with a file to download, and a pipeline would have to keep asking
 Webhook delivery pushes the result instead. Apiome sends one signed `POST` to your URL with the export's
 file manifest, its fidelity report and the bundle itself. If your endpoint is down, Apiome tries again.
 
-Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)).
+Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)). To
+compare the channels, see [Deliver an export](./deliver-an-export.mdx).
 
 ## Before you start
 

@@ -9,7 +9,8 @@ predictable paths. Apiome can upload a finished export to any S3-compatible buck
 Cloudflare R2 or Ceph. The files land under a prefix you choose, partitioned by artifact, version and
 target, next to a manifest that lists every file with its SHA-256.
 
-Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)).
+Delivery works on an export job that has finished (see [How an export runs](./export-jobs.mdx)). To
+compare the channels, see [Deliver an export](./deliver-an-export.mdx).
 
 ## Before you start
 
