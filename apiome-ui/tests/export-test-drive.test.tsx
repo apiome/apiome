@@ -20,9 +20,9 @@ import {
 } from '../src/app/components/ade/dashboard/export/exportTestDrive';
 import {
   TestDrivePanel,
-  ToolchainChecksList,
   type TestDriveRenderers,
 } from '../src/app/components/ade/dashboard/export/TestDrivePanel';
+import { ToolchainChecksConsole } from '../src/app/components/ade/dashboard/export/ToolchainChecksConsole';
 import { writeA11yFixture } from './helpers/a11y-fixture-dump';
 
 const tool = (kind: string, label: string, extra: Partial<ExportTestTool> = {}): ExportTestTool => ({
@@ -50,7 +50,7 @@ const PROTO: ExportTestTool[] = [
 const RENDERERS: TestDriveRenderers = {
   'swagger-ui': () => <p>swagger body</p>,
   'mock-server': () => <p>mock body</p>,
-  toolchain: (tab) => <ToolchainChecksList tools={tab.tools} />,
+  toolchain: (tab) => <ToolchainChecksConsole tools={tab.tools} runs={{}} onRun={() => undefined} />,
 };
 
 describe('testDriveTabs', () => {

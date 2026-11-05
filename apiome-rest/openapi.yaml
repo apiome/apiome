@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.522.0
+  version: 1.523.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -66056,6 +66056,93 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Request body for readatestdrivemocksrequestlogresponse422.
+  /v1/export/{tenant_slug}/verify/tool-checks/{tool}:
+    post:
+      tags:
+      - export
+      summary: Run a target's toolchain check on the artifact under review, streaming
+        its console
+      description: 'Run one toolchain check the target''s registry entry declares (``test_tools``
+        of kind ``toolchain``: ``tool`` in the path, ``check`` in the body) through
+        the sandboxed toolchain runner, against a completed export job''s artifact (``jobId``)
+        or the source re-emitted for ``target`` and ``options``. The body streams as
+        NDJSON: a ``start`` event, an ``output`` event per stdout/stderr chunk, and
+        a closing ``result`` event (``status`` ``passed`` / ``failed`` / ``timed_out``
+        / ``unavailable`` / ``error``, ``exit_code``, ``duration_ms``, ``command``,
+        ``files``, ``message``). A check whose tool is not installed answers ``503``
+        with the reason; runs are rate-limited per user (``429``).'
+      operationId: run_export_tool_check_v1_export__tenant_slug__verify_tool_checks__tool__post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: tool
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tool
+          description: Tool schema.
+        description: Path parameter identifying the tool segment.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runatargetstoolchaincheckontheartifactunauthorization schema.
+          - type: 'null'
+            description: Runatargetstoolchaincheckontheartifactunauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization: Bearer
+          <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Runatargetstoolchaincheckontheartifactun Xapikey schema.
+          - type: 'null'
+            description: Runatargetstoolchaincheckontheartifactun Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportToolCheckRequest'
+              description: Request body for runatargetstoolchaincheckontheartifactunrequest.
+        description: Request body for run a target's toolchain check on the artifact
+          under review, streaming its console.
+      responses:
+        '200':
+          description: The check's console, one JSON event per line.
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: Response payload for runatargetstoolchaincheckontheartifactunresponse200.
+        '404':
+          description: Unknown target, job or source, or the target declares no such
+            check.
+        '409':
+          description: The job is not a completed export of this target.
+        '422':
+          description: No runnable command for the check, or the artifact cannot be
+            staged.
+        '429':
+          description: Too many toolchain checks in a short time.
+        '503':
+          description: The check's toolchain is not installed on this server.
   /v1/tenants/{tenant_slug}/repository-polling-quota:
     get:
       tags:
@@ -106913,6 +107000,60 @@ components:
       - toolchain
       title: ExportTestToolKind
       description: What a test-drive tool does with the emitted artifact.
+    ExportToolCheckRequest:
+      properties:
+        artifact:
+          type: string
+          title: Artifact
+          description: The artifact (project) id the export is of.
+          example: example
+        version:
+          anyOf:
+          - type: string
+            description: Request body for export tool check.
+          - type: 'null'
+            description: Request body for export tool check.
+          title: Version
+          description: Revision UUID, version label (``1.0.0``), or null for the latest
+            revision.
+        target:
+          type: string
+          title: Target
+          description: Target emitter key (``proto``) or format key (``proto3``).
+          example: example
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Request body for export tool check.
+          - type: 'null'
+            description: Request body for export tool check.
+          title: Options
+          description: Per-target emit options (MFX-1.4); null or empty applies the target
+            defaults.
+        check:
+          type: string
+          title: Check
+          description: The declared check of the tool to run, e.g. ``lint`` for ``buf
+            lint``.
+          example: example
+        jobId:
+          anyOf:
+          - type: string
+            description: Request body for export tool check.
+          - type: 'null'
+            description: Request body for export tool check.
+          title: Jobid
+          description: A completed export job whose artifact to check; null re-emits the
+            source for ``target`` and ``options`` (the verify buffer).
+      additionalProperties: false
+      type: object
+      required:
+      - artifact
+      - target
+      - check
+      title: ExportToolCheckRequest
+      description: Run one declared toolchain check on the artifact under review.
     ExportVerifyRequest:
       properties:
         artifact:

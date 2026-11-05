@@ -206,3 +206,48 @@ async def test_concurrency_is_capped():
     assert runner.peak_active == cap
     # All slots released after completion.
     assert runner.active == 0
+
+
+# --- live output (MFX-44.6) -------------------------------------------------
+
+
+async def test_on_output_receives_each_stream_as_it_is_read():
+    """A streamed run hands every retained chunk to ``on_output`` and still returns the full capture."""
+    runner = _runner()
+    spec = _py_spec(
+        "two-streams",
+        "import sys; sys.stdout.write('out-line\\n'); sys.stdout.flush(); sys.stderr.write('err-line\\n')",
+        parses_json=False,
+    )
+    seen: dict = {"stdout": b"", "stderr": b""}
+
+    def _on_output(stream: str, chunk: bytes) -> None:
+        seen[stream] += chunk
+
+    result = await runner.run_spec(spec, on_output=_on_output)
+    assert seen == {"stdout": b"out-line\n", "stderr": b"err-line\n"}
+    assert result.stdout == "out-line\n" and result.stderr == "err-line\n"
+
+
+async def test_on_output_streams_a_failing_run_before_it_raises():
+    """A non-zero exit still streams what the tool wrote — the console shows why it failed."""
+    runner = _runner()
+    spec = _py_spec("fails-loudly", "import sys; sys.stderr.write('broken\\n'); sys.exit(3)", parses_json=False)
+    chunks: list = []
+    with pytest.raises(ToolExecutionError) as ei:
+        await runner.run_spec(spec, on_output=lambda stream, chunk: chunks.append((stream, chunk)))
+    assert ei.value.exit_code == 3
+    assert chunks == [("stderr", b"broken\n")]
+
+
+async def test_cancelling_a_run_stops_the_tool_and_frees_its_slot():
+    """A caller that goes away (a disconnected stream) takes the tool process with it."""
+    runner = _runner(max_concurrency=1)
+    spec = _py_spec("long-sleeper", "import time; time.sleep(30)", parses_json=False)
+    task = asyncio.ensure_future(runner.run_spec(spec))
+    await asyncio.sleep(0.3)
+    assert runner.active == 1
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert runner.active == 0

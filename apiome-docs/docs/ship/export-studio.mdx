@@ -223,9 +223,9 @@ appear comes from the format itself, so each target shows its own:
 | **GraphiQL** | Explore the schema (docs and autocomplete) and run queries that answer with mock data | GraphQL |
 | **AsyncAPI viewer** | The file as AsyncAPI documentation: its operations by channel, their messages and payloads, and the schemas, with a sidebar to jump between them | AsyncAPI |
 | **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
-| **Toolchain checks** (or the check's name, when there is one) | Lists the format's own checks, such as `buf lint`, and whether each tool is installed on this server | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec, Smithy, Cap'n Proto, Thrift, API Blueprint |
+| **Toolchain checks** (or the check's name, when there is one) | Runs the format's own checks, such as `buf lint`, on the file and shows their output; see [Toolchain checks](#toolchain-checks) | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec (`tsp compile`), Smithy (`smithy build`), Cap'n Proto (`capnp compile`), Thrift (`thrift compile`), API Blueprint (`drafter parse`) |
 
-<Screenshot id="export-studio-test-drive" alt="Test drive with the redocly lint tab open, showing it is installed, and the Mock server tab disabled because mocks are disabled on this server" />
+<Screenshot id="export-studio-test-drive" alt="Test drive with the redocly lint tab open, showing it is installed with a Run button, and the Mock server tab disabled because mocks are disabled on this server" />
 
 A tool that needs something this server does not have is still shown, greyed out, with the reason
 under the tabs, for example *Mock server is unavailable on this server: Export test-drive mocks are
@@ -297,6 +297,48 @@ file's channels and operations, for example *AsyncAPI 3.1.0 · 2 channels · 2 o
   it, for example `There are errors in your Asyncapi document: "info" property must have required
   property "version"`. A file with no `asyncapi` version, or a version other than 2.x or 3.x, shows a
   notice instead of the viewer.
+
+#### Toolchain checks
+
+For formats with their own tools, such as Protocol Buffers, TypeSpec or Smithy, the real test of the
+file is that tool. **Toolchain checks** lists the checks the format declares, such as `buf lint` and
+`buf build`, and runs them on this server against the file you just generated.
+
+<Screenshot id="export-studio-toolchain-console" alt="Test drive with the Toolchain checks tab open: buf lint failed with exit 100 and its console lists two naming findings in acme/v1/shop.proto; buf build passed. Above, the Toolchain checks summary repeats both results" />
+
+1. **Click "Run"** beside a check. Its console opens under it and fills as the tool writes. Error
+   output (stderr) is marked with a red bar beside it. The console's first line is the command, such
+   as `$ buf lint`.
+2. **Read the result.** When the tool finishes, a chip says how it ended:
+   - **Passed**: the tool exited 0.
+   - **Failed · exit 100**: the tool exited with that code (the file did not pass the check).
+   - **Timed out**: the tool ran too long and was stopped.
+   - **Not installed**: the tool was removed from this server after the page loaded.
+   - **Could not run**: the check did not start; the reason is under the console.
+
+   The time it took is shown at the top right of the console.
+3. **Click "Copy"** to copy the console as text: the command, the output, and the result.
+4. **Click "Run again"** after you change the source and generate again.
+
+- **Results join the verify report.** Each finished check is listed under **Toolchain checks**, below
+  the verify result at the top of **6. Review & Generate**. A new target, new options or a new
+  **Generate** clears the list.
+- **It checks the generated file.** The server runs the tool on the file of your last **Generate**.
+  Nothing is uploaded from your browser.
+- **The tool runs in a sandbox** with no network access, a time limit and a cap on output. Colour
+  codes and other control characters in its output are removed, never applied to the page.
+- **A tool that is not installed has no "Run" button.** Its row shows the reason, for example
+  *The buf toolchain is not installed on this server.* Ask your administrator to install it.
+- **Runs are rate limited.** Each person can run 10 checks a minute by default. Past that, the console
+  says *Too many toolchain checks in a short time. Wait a moment, then run it again.* Administrators
+  change the limit with `APIOME_EXPORT_TOOL_CHECK_RATE_LIMIT_PER_MINUTE`.
+
+The same check runs from the API with
+[`POST /v1/export/{tenant}/verify/tool-checks/{tool}`](../reference/rest/export.md#run-export-tool-check-v1-export-tenant-slug-verify-tool-checks-tool-post):
+name the check in the body (`"check": "lint"`) with the same `artifact`, `version`, `target` and
+`options` as `POST …/verify`, and a `jobId` to check a finished job's file. The answer streams one
+JSON event per line: `start`, an `output` event per chunk, and a closing `result` with `status` and
+`exit_code`.
 
 The list also comes back from the API, as `test_tools` on each target of
 [`GET /v1/export/{tenant}/targets`](../reference/rest/export.md#list-export-targets-v1-export-tenant-slug-targets-get). Each entry gives the tool's `kind`,
@@ -426,8 +468,9 @@ Every step, the source picker, the target grid and the bulk dialog are checked b
   [Export a spec](./export-a-spec.md) and the [CLI quick-start](../reference/cli-quickstart.md).
   `apiome export <format> --targets …` and `--items …` run the several-targets and several-items
   jobs — see [From the CLI: several formats or several items](./export-a-spec.md#from-the-cli-several-formats-or-several-items).
-- REST: `GET /v1/export/{tenant}/targets`, `POST /v1/export/{tenant}/preview` and
-  `POST /v1/export/{tenant}/jobs` — see
+- REST: `GET /v1/export/{tenant}/targets`, `POST /v1/export/{tenant}/preview`,
+  `POST /v1/export/{tenant}/jobs` and `POST /v1/export/{tenant}/verify/tool-checks/{tool}`
+  ([Toolchain checks](#toolchain-checks)) — see
   [Understand export fidelity](./export-fidelity.md#rest-endpoints) and the
   [API reference](../reference/api-reference.md).
 

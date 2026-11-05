@@ -788,6 +788,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Export toolchain checks (MFX-44.6, #4372). Each run of a target's toolchain check (``buf lint``…) from
+    # Export Studio's Test drive spawns a sandboxed tool process, so one user gets a per-tenant budget of runs
+    # on top of the global middleware. Shares ``rate_limit_window_seconds`` and honours the global
+    # ``rate_limit_enabled`` kill switch; the toolchain runner's concurrency cap still applies.
+    export_tool_check_rate_limit_per_minute: int = Field(
+        default=10,
+        validation_alias=AliasChoices(
+            "APIOME_EXPORT_TOOL_CHECK_RATE_LIMIT_PER_MINUTE",
+            "export_tool_check_rate_limit_per_minute",
+        ),
+    )
+
     # Mock Server (#3615, RC1-2.2). Free-tier mocks auto-expire after a default TTL (capped at a
     # maximum) and are rate limited per instance on the data plane. Set
     # APIOME_MOCK_SERVER_ENABLED=false to disable provisioning + serving entirely.

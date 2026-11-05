@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { CheckCircle2, CircleSlash, FlaskConical } from 'lucide-react';
+import { FlaskConical } from 'lucide-react';
 
 import { TAB_LIST_CLASS, tabTriggerClass } from '../../../ui/tabStyles';
 import {
   initialTestDriveTab,
   testDriveTabs,
-  toolAvailable,
   type ExportTestTool,
   type ExportTestToolKind,
   type TestDriveTab,
@@ -141,27 +140,3 @@ export function TestDrivePanel({ tools, targetKey, renderers }: TestDrivePanelPr
   );
 }
 
-/**
- * The toolchain tab's body: each declared check, and whether its tool is installed on this server.
- *
- * @param props The tab's toolchain checks.
- * @returns One row per check.
- */
-export function ToolchainChecksList({ tools }: { tools: readonly ExportTestTool[] }) {
-  return (
-    <ul className="xstd-testdrive__checks" data-testid="toolchain-checks">
-      {tools.map((tool) => {
-        const ok = toolAvailable(tool);
-        return (
-          <li key={tool.label} className="xstd-testdrive__check" data-tone={ok ? 'ok' : 'muted'}>
-            {ok ? <CheckCircle2 aria-hidden /> : <CircleSlash aria-hidden />}
-            <code className="mono">{tool.label}</code>
-            <span className="xstd-testdrive__check-status">
-              {ok ? 'Installed on this server' : (tool.unavailable_reason ?? 'Not installed on this server.')}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}

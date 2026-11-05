@@ -49,7 +49,7 @@ import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -73,6 +73,7 @@ __all__ = [
     "ToolResourceLimitError",
     "ToolSandboxError",
     "ToolchainRunner",
+    "OutputCallback",
     "SandboxPolicy",
     "register_tool",
     "is_tool_available",
@@ -85,6 +86,12 @@ __all__ = [
     "run_tool_blocking",
     "SAMPLE_ECHO_TOOL_KEY",
 ]
+
+
+#: Receives each retained output chunk as it is read: ``(stream, chunk)``, where ``stream`` is
+#: ``"stdout"`` or ``"stderr"`` and ``chunk`` the raw bytes (a multi-byte character may be split
+#: across two chunks, so decode incrementally). Called on the event loop; it must not block.
+OutputCallback = Callable[[str, bytes], None]
 
 
 # ===========================================================================
@@ -517,6 +524,7 @@ class ToolchainRunner:
         cwd: Optional[str] = None,
         extra_env: Optional[Dict[str, str]] = None,
         policy: Optional[SandboxPolicy] = None,
+        on_output: Optional[OutputCallback] = None,
     ) -> ToolRunResult:
         """Run a registered tool by ``key`` with ``args`` and return its result.
 
@@ -530,7 +538,8 @@ class ToolchainRunner:
         if spec is None:
             raise ToolNotRegisteredError(key)
         return await self.run_spec(
-            spec, args, stdin=stdin, timeout=timeout, cwd=cwd, extra_env=extra_env, policy=policy
+            spec, args, stdin=stdin, timeout=timeout, cwd=cwd, extra_env=extra_env, policy=policy,
+            on_output=on_output,
         )
 
     async def run_spec(
@@ -543,6 +552,7 @@ class ToolchainRunner:
         cwd: Optional[str] = None,
         extra_env: Optional[Dict[str, str]] = None,
         policy: Optional[SandboxPolicy] = None,
+        on_output: Optional[OutputCallback] = None,
     ) -> ToolRunResult:
         """Run a tool described by ``spec`` (no registry lookup) and return its result.
 
@@ -562,6 +572,9 @@ class ToolchainRunner:
             extra_env: Optional environment overrides merged onto the sanitized env.
             policy: Sandbox policy for this call; falls back to the runner's
                 :attr:`default_policy`.
+            on_output: Optional :data:`OutputCallback` fed each retained stdout/stderr chunk as it
+                is read, so a caller can stream a run's output live (MFX-44.6). The result still
+                carries the full captured streams.
 
         Returns:
             A :class:`ToolRunResult` with exit code, captured streams, parsed JSON (when
@@ -610,7 +623,8 @@ class ToolchainRunner:
             started = time.monotonic()
             try:
                 return await self._spawn_and_capture(
-                    spec, argv, env, cwd, stdin_bytes, effective_timeout, started, effective_policy
+                    spec, argv, env, cwd, stdin_bytes, effective_timeout, started, effective_policy,
+                    on_output,
                 )
             finally:
                 self._active -= 1
@@ -625,6 +639,7 @@ class ToolchainRunner:
         timeout_seconds: float,
         started: float,
         policy: SandboxPolicy,
+        on_output: Optional[OutputCallback] = None,
     ) -> ToolRunResult:
         """Spawn the constrained subprocess, capture its (capped) output, build the result."""
         logger.info(
@@ -658,11 +673,16 @@ class ToolchainRunner:
         max_output = policy.max_output_bytes
         try:
             stdout_b, stderr_b, output_exceeded = await asyncio.wait_for(
-                self._capture(proc, stdin_bytes, max_output), timeout=timeout_seconds
+                self._capture(proc, stdin_bytes, max_output, on_output), timeout=timeout_seconds
             )
         except asyncio.TimeoutError as exc:
             await self._terminate_and_reap(proc, spec.key)
             raise ToolTimeoutError(spec.key, timeout_seconds) from exc
+        except asyncio.CancelledError:
+            # The caller went away (a streamed run whose client disconnected): never leave the
+            # tool running unobserved. Shielded so the cancellation cannot interrupt the reap.
+            await asyncio.shield(self._terminate_and_reap(proc, spec.key))
+            raise
 
         # _capture drained both pipes to EOF (killing the tool first if the output cap was
         # blown), so the transports have disconnected and this reap settles the return code
@@ -722,6 +742,7 @@ class ToolchainRunner:
         proc: "asyncio.subprocess.Process",
         stdin_bytes: Optional[bytes],
         max_output_bytes: Optional[int],
+        on_output: Optional[OutputCallback] = None,
     ) -> Tuple[bytes, bytes, bool]:
         """Feed stdin and drain stdout/stderr concurrently, capping the *retained* output.
 
@@ -732,7 +753,8 @@ class ToolchainRunner:
         is load-bearing: :meth:`asyncio.subprocess.Process.wait` resolves only once every pipe
         transport has disconnected, so a *paused* (unread) pipe would otherwise wedge the
         subsequent reap. This replaces :meth:`~asyncio.subprocess.Process.communicate` so the
-        cap can bite while still keeping the reap safe.
+        cap can bite while still keeping the reap safe. Each *retained* chunk is also handed to
+        ``on_output`` as it arrives (nothing past the cap is).
         """
         # Shared budget across both streams; asyncio is single-threaded so reads interleave
         # only at await points — a plain mutable counter is safe (no lock needed).
@@ -763,7 +785,9 @@ class ToolchainRunner:
                 except ProcessLookupError:
                     pass  # already gone
 
-        async def _drain(stream: Optional["asyncio.StreamReader"], sink: List[bytes]) -> None:
+        async def _drain(
+            stream: Optional["asyncio.StreamReader"], sink: List[bytes], name: str
+        ) -> None:
             if stream is None:
                 return
             while True:
@@ -773,6 +797,8 @@ class ToolchainRunner:
                 state["total"] += len(chunk)
                 if max_output_bytes is None or state["total"] <= max_output_bytes:
                     sink.append(chunk)
+                    if on_output is not None:
+                        on_output(name, chunk)
                 else:
                     # Over the cap: stop retaining and kill the tool to bound further output,
                     # but keep reading to EOF so the pipe transport disconnects cleanly.
@@ -782,8 +808,8 @@ class ToolchainRunner:
         # deadlock a tool that floods stdout before reading all of stdin (the classic pipe
         # deadlock ``communicate`` exists to avoid).
         feed_task = asyncio.ensure_future(_feed())
-        out_task = asyncio.ensure_future(_drain(proc.stdout, out_chunks))
-        err_task = asyncio.ensure_future(_drain(proc.stderr, err_chunks))
+        out_task = asyncio.ensure_future(_drain(proc.stdout, out_chunks, "stdout"))
+        err_task = asyncio.ensure_future(_drain(proc.stderr, err_chunks, "stderr"))
         all_tasks = (out_task, err_task, feed_task)
         try:
             await asyncio.gather(out_task, err_task)
