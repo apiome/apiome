@@ -5,6 +5,16 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.666.0] - 2026-11-05
+
+### Fixed
+- **Export targets failed to load in the Docker image.** The image installs `requirements.txt`, which was missing
+  `pyarrow` and `pyiceberg` from `pyproject.toml`; the Arrow target's fidelity round trip then raised and
+  `POST /v1/export/{tenant_slug}/preflight` answered `500` ("Couldn't load the export targets"). Both are now
+  installed, an Arrow round trip that cannot run reports no measurement instead of failing the ranking, and a test
+  keeps `requirements.txt` in step with `pyproject.toml`.
+  - OpenAPI 1.530.0.
+
 ## [1.665.0] - 2026-11-05
 
 ### Added

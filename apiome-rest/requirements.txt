@@ -29,6 +29,7 @@ regex>=2024.4.16
 asn1tools>=0.167.0
 pyx12>=4.0.0
 defusedxml>=0.7.1
+pyarrow>=17.0.0
 # AWS API Gateway connector (CDG-1.3): sts:AssumeRole + apigateway/apigatewayv2 reads.
 boto3>=1.34.0
 # Apigee connector (CDG-1.5): service-account keys and workload identity federation.
@@ -41,3 +42,4 @@ rdflib>=7.0.0
 xmlschema>=3.4
 # Thrift export validation (MFX-25.4): structural spot-checks with an independent Thrift parser.
 thriftpy2>=0.7.1
+pyiceberg>=0.12.0

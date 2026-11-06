@@ -52,6 +52,7 @@ from .arrow_schema import (
     ARROW_EXTENSION_NAME_KEY,
     ArrowDictionaryEncoding,
     ArrowField,
+    ArrowParseError,
     ArrowSchema,
     ArrowType,
 )
@@ -876,7 +877,8 @@ def _measure_round_trip(api: CanonicalApi,
     try:
         result = ArrowEmitter().emit(api, opts=options.model_copy(update={"parquet": False}))
         back = reimport_emitted(source, result, multi_file=True)
-    except (EmitPreconditionError, EmitOptionsError, ImportSourceError, ValueError):
+    except (EmitPreconditionError, EmitOptionsError, ImportSourceError, ArrowParseError, ValueError):
+        # ArrowParseError covers a runtime without pyarrow (ArrowIpcError): no measurement, not a crash.
         return {}, {}
     diff = canonical_diff(api, back)
     changes: Dict[str, DiffChangeKind] = {}
