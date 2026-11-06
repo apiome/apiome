@@ -338,7 +338,7 @@ describe('density and font-scale independence', () => {
       ['.vdlg-canvas__stack', 'min-block-size'],
       ['.vdlg-compare__tabpanel', 'min-block-size'],
       ['.vdlg-diff', 'min-block-size'],
-      ['.vdlg-classdiff__list', 'max-block-size'],
+      ['.vdlg-classdiff__list', 'min-block-size'],
       ['.vdlg-changes__list', 'max-block-size'],
       ['.vdlg-conflicts__scroll', 'max-block-size'],
       ['.vdlg-compat__findings', 'max-block-size'],
@@ -419,6 +419,21 @@ describe('horizontal containment', () => {
         floor: '0',
       });
     }
+  });
+
+  it('runs every compare tab body, and the Schema Changes box and class list, to the footer', () => {
+    for (const [prelude, property, value] of [
+      ['.vdlg-compare__results', 'flex', '1 0 auto'],
+      ['.vdlg-compare__tabpanel', 'flex', '1 1 0'],
+      ['.vdlg-diff', 'flex', '1 1 0'],
+      ['.vdlg-classdiff', 'flex', '1 0 auto'],
+      ['.vdlg-classdiff__block', 'flex', '1 1 0'],
+      ['.vdlg-classdiff__list', 'flex', '1 1 0'],
+      ['.vdlg-doc__body', 'flex', '1 1 auto'],
+    ] as const) {
+      expect({ prelude, value: declaration(prelude, property) }).toEqual({ prelude, value });
+    }
+    expect(declaration('.vdlg-classdiff__list', 'max-block-size')).toBeUndefined();
   });
 
   it('scrolls the wide surfaces inside their own box', () => {

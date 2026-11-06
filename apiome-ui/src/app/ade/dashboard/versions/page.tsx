@@ -522,6 +522,8 @@ const Versions = () => {
   /** When true, show all property drill lines for that class (performance for large schemas / #741). */
   const [propDrillShowAllByClass, setPropDrillShowAllByClass] = useState<Record<string, boolean>>({});
   const [classListScrollTop, setClassListScrollTop] = useState(0);
+  /** The class list's drawn height; the list now fills the tab, so virtualisation measures it. */
+  const [classListViewportPx, setClassListViewportPx] = useState(0);
   const classListScrollRef = useRef<HTMLDivElement | null>(null);
   const [diffViewMode, setDiffViewMode] = useState<'overlay' | 'side-by-side'>('overlay');
   /** Diff View folds unchanged lines by default: a spec can run to hundreds of thousands of lines. */
@@ -2215,6 +2217,7 @@ const Versions = () => {
   }, [versionTags]);
 
   const CLASS_DIFF_ROW_PX = 40;
+  /** The class list's height until it has been measured (and in tests, where nothing is laid out). */
   const CLASS_DIFF_VIEWPORT_PX = 288;
   const CLASS_PROP_DRILL_LIMIT = 64;
 
@@ -2299,7 +2302,9 @@ const Versions = () => {
     const start = Math.max(0, Math.floor(classListScrollTop / CLASS_DIFF_ROW_PX) - overscan);
     const end = Math.min(
       total,
-      Math.ceil((classListScrollTop + CLASS_DIFF_VIEWPORT_PX) / CLASS_DIFF_ROW_PX) + overscan
+      Math.ceil(
+        (classListScrollTop + Math.max(classListViewportPx, CLASS_DIFF_VIEWPORT_PX)) / CLASS_DIFF_ROW_PX
+      ) + overscan
     );
     return {
       visibleRows: filteredClassDiffRows.slice(start, end),
@@ -2307,7 +2312,18 @@ const Versions = () => {
       padBottom: Math.max(0, (total - end) * CLASS_DIFF_ROW_PX),
       total,
     };
-  }, [filteredClassDiffRows, classListScrollTop]);
+  }, [filteredClassDiffRows, classListScrollTop, classListViewportPx]);
+
+  /* Track the class list's height: it grows with the dialog, and the virtual window must
+     cover all of it or the rows below the first 288 px would be blank. */
+  const classListMounted = activeCompareTab === 'summary' && classDiffRows !== null;
+  useEffect(() => {
+    const el = classListScrollRef.current;
+    if (!classListMounted || !el || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => setClassListViewportPx(entry.contentRect.height));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [classListMounted]);
 
   /** Class-diff rows with at least one stored breaking entry (badges sourced from the stored classification, #4476). */
   const storedBreakingIds = useMemo(
@@ -4775,9 +4791,6 @@ const Versions = () => {
                         <div
                           ref={classListScrollRef}
                           className="vdlg-classdiff__list"
-                          style={
-                            classDiffListRender.virtualize ? { height: CLASS_DIFF_VIEWPORT_PX } : undefined
-                          }
                           onScroll={(e) => setClassListScrollTop(e.currentTarget.scrollTop)}
                         >
                           <div style={{ height: classDiffListRender.padTop }} aria-hidden />
