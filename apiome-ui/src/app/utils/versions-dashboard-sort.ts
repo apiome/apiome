@@ -121,3 +121,29 @@ export function sortVersionsDashboardRows<T extends VersionSortRow>(
   if (!column) return [...rows];
   return [...rows].sort((a, b) => compareVersionsDashboardRows(a, b, column, direction));
 }
+
+/**
+ * The revision with the highest version number — the one the Versions screen marks "(latest)".
+ *
+ * Uses the Version column's own comparison (numeric, so `1.10.0` is above `1.9.0`), so the
+ * marked row is the one a "Version, highest first" sort puts on top. When two revisions carry
+ * the same version number, the newer one (by `created_at`) wins.
+ *
+ * @param versions Every revision of the project — not a filtered or paged slice, so the mark
+ *   never moves to a lower version when the higher one is filtered out.
+ * @returns The revision's record id, or `null` when there are no revisions.
+ */
+export function projectLatestRevisionId<T extends { id: string; version_id: string; created_at: string }>(
+  versions: readonly T[]
+): string | null {
+  let best: T | null = null;
+  for (const v of versions) {
+    if (best === null) {
+      best = v;
+      continue;
+    }
+    const c = compareVersionIds(v.version_id, best.version_id, 1);
+    if (c > 0 || (c === 0 && Date.parse(v.created_at) > Date.parse(best.created_at))) best = v;
+  }
+  return best ? best.id : null;
+}

@@ -920,7 +920,7 @@ describe('the status strip and the overview', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('the table', () => {
-  it('draws the seven columns and the six rows, newest first', async () => {
+  it('draws the seven columns and the six rows, highest version first', async () => {
     await renderVersions();
     const table = screen.getByTestId('versions-table');
     const headers = within(table).getAllByRole('columnheader').map((th) => th.textContent?.trim());
@@ -929,7 +929,7 @@ describe('the table', () => {
     expect(rows).toHaveLength(6);
     expect(rows[0]).toHaveTextContent('v2.4.0');
     expect(rows[5]).toHaveTextContent('v2.0.0-beta.1');
-    expect(screen.getByTestId('versions-table-foot')).toHaveTextContent('6 revisions · sorted by created ↓ · lifecycle filter: all');
+    expect(screen.getByTestId('versions-table-foot')).toHaveTextContent('6 revisions · sorted by version ↓ · lifecycle filter: all');
     expect(screen.getByTestId('versions-table-foot-head')).toHaveTextContent('Head v2.4.0 · last published v2.3.1');
   });
 

@@ -134,6 +134,7 @@ export default function VersionsTimeline({
   projectId,
   projectSlug,
   headRevisionId,
+  latestRevisionId = null,
   tagsByVersionId,
   hasClassSchemaMap,
   reviewsByVersionId = null,
@@ -222,6 +223,7 @@ export default function VersionsTimeline({
                   version={version}
                   projectId={projectId}
                   isHead={isHead}
+                  isLatest={latestRevisionId != null && version.id === latestRevisionId}
                   tags={tagsByVersionId.get(version.id) ?? []}
                   onView={() => onRowAction('view', version)}
                 />
