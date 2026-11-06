@@ -13,7 +13,7 @@ We continue to improve the platform based on your feedback with improvements and
   - **Export** targets are compact tiles with a three-segment **fidelity meter** and the tier under each name; the **Changes** tab of a version with no classified changelog yet explains the three steps that fill it
   - **Mock scenarios** — the headers, body and match-rules fields are editor panes that name what they hold, and the advanced match rules fold away until an operation has some
   - **Versions** lists versions by version number, highest first, and the highest one reads **(latest)** beside its number; **Sorted by** still switches to created date or any other column
-  - **Compare version schemas** opens its **Diff View** with **Show only changes** ticked, so only the changed lines and three lines around each show, with the rest folded; every tab's body now fills the dialog. The **Canvas** tab is switched off while it is fixed
+  - **Compare version schemas** opens its **Diff View** with **Show only changes** ticked, so only the changed lines and three lines around each show, with the rest folded; every tab's body, including the **Schema Changes** class list, now fills the dialog. The **Canvas** tab is switched off while it is fixed
   - On a project's **Changes** tab, the newest published version reads **Latest** instead of **No changes** when nothing changed since the version before it
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
 - Documentation:
