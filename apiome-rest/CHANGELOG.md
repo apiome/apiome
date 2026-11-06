@@ -5,6 +5,15 @@ All notable changes to the Apiome REST API will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.666.1] - 2026-11-06
+
+### Changed
+- **Docs links point at docs.apiome.dev.** `DOCS_SITE_URL` (`app/docs_site.py`), which every lint rule's
+  reference URL and every `docsUrl` is built from, is now `https://docs.apiome.dev/` instead of the old
+  GitHub Pages address. The generated REST reference names `apiome-rest/openapi.yaml` as plain text
+  rather than linking to the file on GitHub, and the lint-rule catalog page no longer links to GitHub.
+  OpenAPI document 1.530.1 (no schema change).
 ## [1.666.0] - 2026-11-05
 
 ### Fixed

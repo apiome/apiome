@@ -16,8 +16,7 @@ const REDESIGN_ISSUE = 5272;
 export default function Legacy(): ReactNode {
   return (
     <Admonition type="note" title="Legacy screen">
-      This surface predates the Hive redesign; it is scheduled under{' '}
-      <a href={`https://github.com/apiome/apiome/issues/${REDESIGN_ISSUE}`}>#{REDESIGN_ISSUE}</a>.
+      This surface predates the Hive redesign; it is scheduled under #{REDESIGN_ISSUE}.
     </Admonition>
   );
 }

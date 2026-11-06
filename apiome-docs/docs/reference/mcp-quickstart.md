@@ -10,8 +10,8 @@ IDEs, automation). It is **read-only**: it lists, searches, and returns publishe
 fragments. Anonymous callers see **public** specs; a valid **MCP API key** additionally unlocks
 **in-scope private** specs for its tenant.
 
-Full reference: [`apiome-mcp/README.md`](https://github.com/apiome/apiome/blob/main/apiome-mcp/README.md) and
-[`apiome-mcp/docs/CONFIGURATION.md`](https://github.com/apiome/apiome/blob/main/apiome-mcp/docs/CONFIGURATION.md).
+Full reference: the [MCP tools](./mcp/tools.md), [resources](./mcp/resources.md) and
+[prompts](./mcp/prompts.md) pages.
 
 ---
 
@@ -109,17 +109,17 @@ A tenant admin must enable it before it can be called.*) — never secret key ma
 
 Non-admins can browse the same panel read-only; only tenant admins can save changes. For scripted
 break-glass flows, use `apiome mcp policy` / `apiome mcp key capabilities` (see
-[`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md)).
+the [CLI reference](./cli/mcp.md)).
 
-Operator-depth ADRs: [`LIST_ALWAYS.md`](https://github.com/apiome/apiome/blob/main/apiome-mcp/docs/LIST_ALWAYS.md),
-[`EFFECTIVE_POLICY.md`](https://github.com/apiome/apiome/blob/main/apiome-mcp/docs/EFFECTIVE_POLICY.md),
-[`AGX_COORDINATION.md`](https://github.com/apiome/apiome/blob/main/apiome-mcp/docs/AGX_COORDINATION.md) (catalog MCP vs agent tools).
+Operator-depth ADRs: `LIST_ALWAYS.md`,
+`EFFECTIVE_POLICY.md`,
+`AGX_COORDINATION.md` (catalog MCP vs agent tools).
 
 ## Verify
 
 Call `ping` from your host — it returns the service version and confirms Postgres reachability. Then
 `spec.list` should return the published specs (including the seeded `petstore-sample` if you loaded
-the dev seed). This is the same query the [Golden Path](https://github.com/apiome/apiome/blob/main/docs/GOLDEN_PATH.md) runs as its final step.
+the dev seed). This is the same query the [Golden Path](../getting-started/index.mdx) runs as its final step.
 
 If a later tool call fails with `capability_disabled`, use
 [Governed keys: list vs call](#governed-keys-list-vs-call) and **Tenants → MCP Settings** to enable it.

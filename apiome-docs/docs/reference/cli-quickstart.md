@@ -9,7 +9,7 @@ tags: [cli]
 tenant resources, lint, and export specs from the terminal. It follows [clig.dev](https://clig.dev/)
 conventions — structured `--help`, sensible exit codes, tables on stdout, diagnostics on stderr.
 
-Full details live in [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md); this page is the
+Full details live in the [CLI reference](./cli/index.mdx); this page is the
 30-second start.
 
 ---

@@ -72,8 +72,8 @@ violation always links back to the rule documented here. The **default severity*
 rule applies when no style guide overrides it.
 
 Blocking (`error`) rules additionally publish reference, remediation, false-positive guidance,
-fixture id, and scan-mode requirements (CLX-4.3 / #4861). See
-[scanner evaluation](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md).
+fixture id, and scan-mode requirements (CLX-4.3 / #4861). See the scanner evaluation in
+`apiome-rest/docs/scanner_evaluation.md`.
 
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).

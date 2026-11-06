@@ -385,7 +385,7 @@ def to_sarif(
                     "driver": {
                         "name": TOOL_NAME,
                         "version": tool_version,
-                        "informationUri": "https://github.com/apiome/apiome",
+                        "informationUri": "https://docs.apiome.dev/reference/cli",
                         "rules": rules,
                     }
                 },

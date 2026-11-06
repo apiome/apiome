@@ -6,7 +6,8 @@
  * file (`apiome-rest/CHANGELOG.md`, one section per REST version) and the app's What's new
  * feed (`apiome-ui/public/WHATS_NEW.md`, one document per RC). This script merges them by
  * release into `apiome-docs/release-notes/<release>.md` — blog posts of the Docusaurus site —
- * and turns every `#1234` into a link to the issue.
+ * Issue references (`#1234`) stay plain text, and a link to a repository file that is not a
+ * page of the site keeps its text and loses its link: the docs never link to GitHub.
  *
  * Which REST versions belong to which RC is recorded in `apiome-docs/release-notes/releases.json`
  * (`restAfter` < version ≤ `restThrough`), as is the git ref the RC's What's new is read from.
@@ -49,7 +50,7 @@ export const UNRELEASED_FILE = 'unreleased.md';
 export interface Release {
   /** The RC's name, which is also its milestone title and its tag, e.g. `RC4`. */
   name: string;
-  /** GitHub milestone number, for the "issues in this release" link. Optional. */
+  /** GitHub milestone number, recorded for maintainers. The posts never link to it. */
   milestone?: number;
   /** The day the RC closed (`YYYY-MM-DD`); the post's date. */
   closed: string;
@@ -63,7 +64,7 @@ export interface Release {
 
 /** The whole of `releases.json`. */
 export interface Manifest {
-  /** GitHub repository URL; issue, milestone and file links hang off it. */
+  /** GitHub repository URL, recorded for maintainers. The posts never link to GitHub. */
   repository: string;
   /** Closed RCs, oldest first. */
   releases: Release[];
@@ -248,27 +249,6 @@ export function demoteHeadings(markdown: string, levels: number): string {
 }
 
 /**
- * Turn bare issue references (`#5628`, `(#5628, DOCS-1.11)`) into links to the issue.
- *
- * References inside code, already-linked references (`[#5628](…)`) and URL fragments
- * (`page#12`) are left alone.
- *
- * @param markdown Source markdown.
- * @param repository GitHub repository URL.
- * @returns The markdown with issue links.
- */
-export function linkIssues(markdown: string, repository: string): string {
-  return mapProseLines(markdown, (line) =>
-    mapOutsideCode(line, (text) =>
-      text.replace(
-        /(^|[\s(,;:])#(\d+)\b(?!\]|\()/g,
-        (_match, lead: string, issue: string) => `${lead}[#${issue}](${repository}/issues/${issue})`,
-      ),
-    ),
-  );
-}
-
-/**
  * The site route of a page under `apiome-docs/docs/`, honouring an absolute `slug`.
  *
  * @param relPage Path relative to the docs directory, e.g. `build/lint-rules.md`.
@@ -310,13 +290,14 @@ export function collectSiteRoutes(root: string, docsDir: string): Map<string, st
  *
  * - a page of the docs site → its route (the site build then checks it);
  * - `docs/guide/<page>.md`, the folder the guide moved out of → the page of that name on the site;
- * - any other repository file → the file on GitHub.
+ * - any other repository file → `null`: it is not on the site, and the docs never link to
+ *   GitHub, so the caller keeps the link's text and drops the link.
  *
  * @param target The link target as written, e.g. `../docs/guide/mock-callbacks.md#setup`.
  * @param context Where the markdown came from and what the site holds.
- * @returns The rewritten target.
+ * @returns The rewritten target, or `null` when the file is not a page of the site.
  */
-export function resolveLink(target: string, context: LinkContext): string {
+export function resolveLink(target: string, context: LinkContext): string | null {
   const [file, anchor] = target.split('#', 2);
   const suffix = anchor ? `#${anchor}` : '';
   const repoPath = path.posix.normalize(path.posix.join(context.sourceDir, file));
@@ -330,7 +311,7 @@ export function resolveLink(target: string, context: LinkContext): string {
       if (path.posix.basename(page).replace(/\.mdx?$/, '') === legacy[1]) return `${route}${suffix}`;
     }
   }
-  return `${context.repository}/blob/main/${repoPath}${suffix}`;
+  return null;
 }
 
 /**
@@ -345,15 +326,18 @@ export function resolveLink(target: string, context: LinkContext): string {
 export function rewriteRelativeLinks(markdown: string, context: LinkContext): string {
   return mapProseLines(markdown, (line) =>
     mapOutsideCode(line, (text) =>
-      text.replace(/\]\(([^)\s]+)\)/g, (match, target: string) =>
-        /^([a-z][a-z0-9+.-]*:|\/|#)/i.test(target) ? match : `](${resolveLink(target, context)})`,
-      ),
+      text.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (match, label: string, target: string) => {
+        if (/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(target)) return match;
+        const resolved = resolveLink(target, context);
+        return resolved === null ? label : `[${label}](${resolved})`;
+      }),
     ),
   );
 }
 
 /**
- * Prepare markdown from a source file for a post: links, issue references, heading levels.
+ * Prepare markdown from a source file for a post: links and heading levels. Issue references
+ * (`#5628`) stay plain text — the site links nowhere but itself.
  *
  * @param markdown Source markdown.
  * @param context Where it came from (for relative links).
@@ -361,7 +345,7 @@ export function rewriteRelativeLinks(markdown: string, context: LinkContext): st
  * @returns Markdown ready to embed.
  */
 export function prepareMarkdown(markdown: string, context: LinkContext, levels: number): string {
-  return demoteHeadings(linkIssues(rewriteRelativeLinks(markdown, context), context.repository), levels);
+  return demoteHeadings(rewriteRelativeLinks(markdown, context), levels);
 }
 
 /* -------------------------------------------------------------------------
@@ -467,15 +451,12 @@ export interface Sources {
 export function renderReleasePost(release: Release, whatsNew: WhatsNew | null, sources: Sources): string {
   const {repository} = sources.manifest;
   const rest = sectionsInRange(sources.sections, release.restAfter, release.restThrough);
-  const milestone = release.milestone
-    ? ` See [every issue in the ${release.name} milestone](${repository}/milestone/${release.milestone}?closed=1).`
-    : '';
   return renderPost({
     slug: release.name.toLowerCase(),
     title: `Apiome ${release.name}`,
     description: `Everything in Apiome ${release.name}: the app's What's new and the REST API changes.`,
     date: release.closed,
-    intro: `${release.name} closed on ${release.closed}. It brings the app notes below and ${restSpan(rest)}.${milestone}`,
+    intro: `${release.name} closed on ${release.closed}. It brings the app notes below and ${restSpan(rest)}.`,
     whatsNew,
     rest,
     whatsNewLinks: {sourceDir: path.posix.dirname(PATHS.whatsNew), repository, siteRoutes: sources.siteRoutes},

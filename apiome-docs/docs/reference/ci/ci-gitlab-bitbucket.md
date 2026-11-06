@@ -7,7 +7,7 @@ tags: [ci]
 
 Gate merge requests / pull requests on **GitLab CI** or **Bitbucket Pipelines** when an OpenAPI
 change breaks (or warns against) a published Apiome project version. Both recipes run the same
-[`apiome diff`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) gate as the [GitHub Action](./ci-diff-gate.md), from the
+[`apiome diff`](../cli/index.mdx) gate as the [GitHub Action](./ci-diff-gate.md), from the
 same container image (CTG-2.4).
 
 | CLI exit | Job result | Meaning |
@@ -204,6 +204,6 @@ echo "exit: $?"                    # 0 pass · 1 gate failed · 2 error
 ## Related
 
 - [CI contract gate (GitHub Action)](./ci-diff-gate.md)
-- Recipe sources (kept in sync with this page by CI): [`diff-action/recipes/`](https://github.com/apiome/apiome/tree/main/diff-action/recipes/)
-- Action & image source: [`diff-action/`](https://github.com/apiome/apiome/tree/main/diff-action/)
+- Recipe sources (kept in sync with this page by CI): `diff-action/recipes/`
+- The action and its image: [diff-action](./diff-action.md)
 - CLI quick-start: [CLI quick-start](../cli-quickstart.md)

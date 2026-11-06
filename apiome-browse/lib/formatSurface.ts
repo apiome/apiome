@@ -25,7 +25,7 @@ import { FORMAT_COUNTS, FORMAT_PARADIGMS } from './generated/formatCounts';
  * the portal — the production image ships the app, not the guide — so a relative link would 404.
  */
 export const SUPPORTED_FORMATS_DOC_URL =
-  'https://apiome.github.io/apiome/bring-in/supported-formats';
+  'https://docs.apiome.dev/bring-in/supported-formats';
 
 /**
  * The headline claim: how many formats Apiome reads, how many it writes, and that the conversions

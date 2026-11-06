@@ -1,0 +1,21 @@
+---
+slug: docs-on-docs-apiome-dev
+title: Every docs link points at docs.apiome.dev
+description: "Docs and in-app guide links now point at docs.apiome.dev, never GitHub."
+authors: [apiome]
+---
+
+Apiome's documentation lives at **docs.apiome.dev**, and every link to it now says so. The app's
+**Help & docs** page, lint rule references, governance panels, the What's new dialog, Browse and the
+REST API's `docsUrl` fields all open the site. The site itself links nowhere but itself: there is no
+**Edit this page** link and no GitHub link in the navbar or footer.
+
+{/* truncate */}
+
+- **Issue numbers stay as plain text.** Release notes and pages still name the issue a change came
+  from (`#4382`), but no longer link to GitHub.
+- **Repository-only files keep their names.** A runbook, an `.env.example` or a design note the
+  site does not carry is named in code (`docs/runbooks/PRODUCTION_DEPLOY.md`) instead of linked.
+- **README links open the page that replaces them.** The CLI README is the
+  [CLI reference](/reference/cli), the MCP README is the [MCP quick-start](/reference/mcp-quickstart),
+  and the CI actions' READMEs are their pages under [Reference › CI](/reference/ci/diff-action).

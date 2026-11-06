@@ -71,7 +71,7 @@ jobs:
           # Set the DOCS_IMAGE_URL repository variable to the public origin the image is served
           # from, so canonical links and the sitemap point there.
           build-args: |
-            DOCS_URL=${{ vars.DOCS_IMAGE_URL || 'http://localhost' }}
+            DOCS_URL=${{ vars.DOCS_IMAGE_URL || 'https://docs.apiome.dev' }}
           tags: |
             ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
             ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest

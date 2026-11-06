@@ -302,4 +302,4 @@ reports what actually served the requests rather than what the workflow asked fo
 * [Portable mock runtime](./portable-mock-runtime.md) — the runtime, its conformance corpus, and
   its exit codes
 * [Mock fixture packs](./mock-fixture-packs.md) — fixture pack digests and provenance
-* [mock-action/README.md](https://github.com/apiome/apiome/blob/main/mock-action/README.md) — starting a pinned runtime in a job
+* [mock-action](../ci/mock-action.md) — starting a pinned runtime in a job

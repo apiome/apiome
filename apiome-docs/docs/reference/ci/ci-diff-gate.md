@@ -6,7 +6,7 @@ tags: [ci]
 ---
 
 Gate pull requests when an OpenAPI change breaks (or warns against) a published
-Apiome project version. The Action wraps [`apiome diff`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md)
+Apiome project version. The Action wraps [`apiome diff`](../cli/index.mdx)
 (CTG-2.1) and posts one sticky PR comment with the markdown changelog (CTG-2.2).
 
 | CLI exit | Check result | Meaning |
@@ -94,7 +94,7 @@ apiome diff ./openapi.yaml --against payments-api@latest --fail-on breaking --fo
 
 ## Related
 
-- Action source: [`diff-action/`](https://github.com/apiome/apiome/tree/main/diff-action/)
+- The action: [diff-action](./diff-action.md)
 - GitLab / Bitbucket recipes: [CI contract gate on GitLab and Bitbucket](./ci-gitlab-bitbucket.md)
 - CLI quick-start: [CLI quick-start](../cli-quickstart.md)
-- Classified diff details: [`apiome-cli` README](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md#classified-diff-ci-gate)
+- Classified diff details: [`apiome diff`](../cli/diff.md)

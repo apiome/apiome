@@ -14,8 +14,8 @@ violation always links back to the rule documented here. The **default severity*
 rule applies when no style guide overrides it.
 
 Blocking (`error`) rules additionally publish reference, remediation, false-positive guidance,
-fixture id, and scan-mode requirements (CLX-4.3 / #4861). See
-[scanner evaluation](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md).
+fixture id, and scan-mode requirements (CLX-4.3 / #4861). See the scanner evaluation in
+`apiome-rest/docs/scanner_evaluation.md`.
 
 Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 [Lint and check quality](./lint-and-quality.md)).
@@ -35,7 +35,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag skill ids repeated within one card.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#a2a-duplicate-skill-id
+- **Reference:** https://docs.apiome.dev/build/lint-rules#a2a-duplicate-skill-id
 - **Remediation:** Give each skill in `skills` a unique `id` (rename the repeat, or merge the two skills if they are the same).
 - **False-positive guidance:** None expected: the A2A specification requires skill ids to be unique within a card.
 - **Fixture:** `catalog/a2a-duplicate-skill-id`
@@ -67,7 +67,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Default severity:** error
 - **Rationale:** Flag security requirements that name an undefined scheme.
 - **Security weight:** 1.0
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#a2a-security-undeclared-scheme
+- **Reference:** https://docs.apiome.dev/build/lint-rules#a2a-security-undeclared-scheme
 - **Remediation:** Define the scheme under `securitySchemes`, or correct the name in the card's or the skill's `security` list.
 - **False-positive guidance:** A card served to anonymous callers may omit schemes that only its authenticated extended card declares; import the extended card instead.
 - **Fixture:** `catalog/a2a-security-undeclared-scheme`
@@ -118,7 +118,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag agent names repeated within one listing.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#acp-duplicate-agent-name
+- **Reference:** https://docs.apiome.dev/build/lint-rules#acp-duplicate-agent-name
 - **Remediation:** Rename one of the agents so every name in the `GET /agents` listing is unique.
 - **False-positive guidance:** A listing concatenated from two servers can repeat a name legitimately; import each server's listing separately.
 - **Fixture:** `catalog/acp-duplicate-agent-name`
@@ -168,7 +168,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Flag endpoint and action addresses that do not resolve to a URL.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#agents-manifest-broken-endpoint-ref
+- **Reference:** https://docs.apiome.dev/build/lint-rules#agents-manifest-broken-endpoint-ref
 - **Remediation:** Write the endpoint as an absolute https URL, or give the manifest its site (`site.url` in agents.json, `domain` in agent.json) so relative paths resolve.
 - **False-positive guidance:** An agents.txt or llms.txt imported from a file has no site, so a relative path cannot resolve; import it from its URL (or with discovery) instead.
 - **Fixture:** `catalog/agents-manifest-broken-endpoint-ref`
@@ -204,7 +204,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** structure
 - **Default severity:** error
 - **Rationale:** Flag AWP actions routed via a protocol the manifest does not declare.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#agents-manifest-undeclared-via
+- **Reference:** https://docs.apiome.dev/build/lint-rules#agents-manifest-undeclared-via
 - **Remediation:** Declare the protocol under `protocols` with its `endpoint`, or correct the action's `via`.
 - **False-positive guidance:** None expected: the Agent Web Protocol requires every `via` to name a declared protocol.
 - **Fixture:** `catalog/agents-manifest-undeclared-via`
@@ -238,7 +238,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** version
 - **Default severity:** error
 - **Rationale:** An AsyncAPI sourceDescription requires Arazzo 1.1 or newer.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#arazzo-async-source-before-1-1
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-async-source-before-1-1
 - **Remediation:** Declare `arazzo: 1.1.0` at the top of the document, or change the source description's `type` to one Arazzo 1.0 defines (`openapi` or `arazzo`).
 - **False-positive guidance:** Only false if a runner is known to accept the 1.1 source types under a 1.0 marker; the published 1.0 schema does not, so prefer declaring 1.1.
 - **Fixture:** `catalog/arazzo-async-source-before-1-1`
@@ -249,7 +249,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationId must resolve to an embedded sourceDescription.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#arazzo-dangling-operation-id
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arazzo-dangling-operation-id
 - **Remediation:** Point the step's operationId at an operation declared in an embedded OpenAPI sourceDescription, or remove the step.
 - **False-positive guidance:** Only false if the engine cannot see an operation that exists only in an external (non-embedded) source — embed the description or switch to operationRef.
 - **Fixture:** `catalog/arazzo-dangling-operation-id`
@@ -272,7 +272,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** reference
 - **Default severity:** error
 - **Rationale:** Step operationRef must point at a declared sourceDescription.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#arzzo-unresolvable-operation-ref
+- **Reference:** https://docs.apiome.dev/build/lint-rules#arzzo-unresolvable-operation-ref
 - **Remediation:** Use a local JSON Pointer under #/sourceDescriptions/<name>/… for a declared source, or fix the sourceDescription name.
 - **False-positive guidance:** External HTTP operationRef targets are out of scope for static resolution — prefer embedded sources for gateable workflows.
 - **Fixture:** `catalog/arzzo-unresolvable-operation-ref`
@@ -1087,7 +1087,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A composition error reported by `rover supergraph compose` over the imported subgraph set.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#graphql-composition-error
+- **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-error
 - **Remediation:** Fix the subgraph the finding names so the set composes (run `rover supergraph compose` locally for the full report), then re-import.
 - **False-positive guidance:** The verdict is captured at import time; if the subgraphs changed since, re-import the set to refresh it.
 - **Fixture:** `catalog/graphql-composition-error`
@@ -1098,7 +1098,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A @key(fields:) selection must name fields its type declares in that subgraph.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#graphql-composition-invalid-key
+- **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-invalid-key
 - **Remediation:** Make the @key selection reference fields the type declares in the named subgraph (declare the field, or fix the selection).
 - **False-positive guidance:** Nested key selections are checked at the top level only; a top-level field reported missing is genuinely undeclared in that subgraph's file.
 - **Fixture:** `catalog/graphql-composition-invalid-key`
@@ -1109,7 +1109,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A field resolved by more than one subgraph must be @shareable in every subgraph that resolves it.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#graphql-composition-non-shareable-field
+- **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-non-shareable-field
 - **Remediation:** Mark the field @shareable in every subgraph that resolves it, mark the stub copies @external, or move the field to a single owning subgraph.
 - **False-positive guidance:** Key fields and @external stubs are already exempt; a hit means two subgraphs genuinely both resolve the field.
 - **Fixture:** `catalog/graphql-composition-non-shareable-field`
@@ -1120,7 +1120,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** composition
 - **Default severity:** error
 - **Rationale:** A @requires/@provides selection must reference fields some subgraph declares.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#graphql-composition-unresolvable-selection
+- **Reference:** https://docs.apiome.dev/build/lint-rules#graphql-composition-unresolvable-selection
 - **Remediation:** Point the @requires/@provides selection at fields declared on the target type in some subgraph (declare the field there, or fix the selection).
 - **False-positive guidance:** The check unions declarations across the whole set; a hit means no subgraph declares the selected field at all.
 - **Fixture:** `catalog/graphql-composition-unresolvable-selection`
@@ -1284,7 +1284,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** naming
 - **Default severity:** error
 - **Rationale:** Flag colliding tool names within a bundle.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#llm-tools-duplicate-tool-name
+- **Reference:** https://docs.apiome.dev/build/lint-rules#llm-tools-duplicate-tool-name
 - **Remediation:** Give each tool a unique `name` within the bundle (rename or drop duplicates).
 - **False-positive guidance:** Cross-dialect wrappers that intentionally alias the same tool should still expose a single canonical name to agents.
 - **Fixture:** `catalog/llm-tools-duplicate-tool-name`
@@ -1434,7 +1434,7 @@ Fetch this catalog programmatically with `GET /v1/lint/rules` (see
 - **Category:** compatibility
 - **Default severity:** error
 - **Rationale:** A change relative to the base revision breaks existing consumers.
-- **Reference:** https://apiome.github.io/apiome/build/lint-rules#compatibility-breaking
+- **Reference:** https://docs.apiome.dev/build/lint-rules#compatibility-breaking
 - **Remediation:** Restore the removed/changed contract surface, introduce a new path or version, or deliberately gate with a documented breaking-change process.
 - **False-positive guidance:** Diff noise from reorder-only or documentation-only revisions should not appear; if it does, file a scanner bug with the base/head pair.
 - **Fixture:** `catalog/compatibility-breaking`

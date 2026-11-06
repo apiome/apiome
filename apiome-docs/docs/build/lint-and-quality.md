@@ -188,7 +188,7 @@ a declared source is imported or the publish is forced with a reason. See
 
 Multi-axis evaluations display algorithm `clx-axis-v1` — see [Axis score algorithm](./axis-score.md).
 Scanner-evaluation corpus and adapter deprecation policy:
-[scanner_evaluation.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md).
+`apiome-rest/docs/scanner_evaluation.md`.
 
 ### Validate a custom-rule style guide
 

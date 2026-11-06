@@ -73,7 +73,7 @@ Unknown keys, a trigger naming an operation the spec does not have, an unresolva
 `http`/`https` URL all fail validation with a 422 listing every error.
 
 Payload and header templates are the same bounded language scenario responses use — see
-[Declarative matching and templates](https://github.com/apiome/apiome/blob/main/apiome-mock/README.md#declarative-matching-and-templates-pmr-21).
+*Declarative matching and templates* in `apiome-mock/README.md`.
 Fixture data (`{{fixture.<name>}}`) comes from the version's flat `fixtures` map and from
 [fixture packs](./mock-fixture-packs.md), so an event body can be driven by the same reviewable
 seed data as the rest of a test.

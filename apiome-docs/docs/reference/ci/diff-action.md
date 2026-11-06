@@ -6,9 +6,9 @@ tags: [ci, reference]
 generated: apiome-docs/scripts/sync-action-pages.mjs from diff-action/README.md
 ---
 
-> This page is [`diff-action/README.md`](https://github.com/apiome/apiome/blob/main/diff-action/README.md), copied by `yarn workspace apiome-docs sync:action-pages` — edit the README, not this page.
+> This page is `diff-action/README.md`, copied by `yarn workspace apiome-docs sync:action-pages` — edit the README, not this page.
 
-GitHub Action that runs [`apiome diff`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) as a PR contract
+GitHub Action that runs [`apiome diff`](../cli/index.mdx) as a PR contract
 gate (CTG-2.2 / #4472).
 
 - Fails the check when the CLI exits `1` (threshold met)
@@ -103,12 +103,12 @@ never `1`), defaults `APIOME_BASE_URL`, forces `APIOME_LOAD_DOTENV=0` so a commi
 `.env` cannot override CI variables, and tolerates a repeated `apiome` binary name
 (`… <image> apiome diff …`). `--help` / `--version` need no credentials.
 
-Copy-paste pipelines live in [`recipes/`](https://github.com/apiome/apiome/blob/main/diff-action/recipes/):
+Copy-paste pipelines live in [`recipes/`](ci-gitlab-bitbucket.md):
 
 | File | Platform |
 |---|---|
-| [`recipes/.gitlab-ci.yml`](https://github.com/apiome/apiome/blob/main/diff-action/recipes/.gitlab-ci.yml) | GitLab CI |
-| [`recipes/bitbucket-pipelines.yml`](https://github.com/apiome/apiome/blob/main/diff-action/recipes/bitbucket-pipelines.yml) | Bitbucket Pipelines |
+| [`recipes/.gitlab-ci.yml`](ci-gitlab-bitbucket.md) | GitLab CI |
+| [`recipes/bitbucket-pipelines.yml`](ci-gitlab-bitbucket.md) | Bitbucket Pipelines |
 
 Guide: [`apiome-docs/docs/reference/ci/ci-gitlab-bitbucket.md`](ci-gitlab-bitbucket.md). The guide
 embeds those files verbatim and `tests/test_ci_recipes.sh` fails if either copy drifts.
@@ -125,4 +125,4 @@ bash -n entrypoint.sh ci_entrypoint.sh sticky_comment.sh tests/*.sh
 The recipe smoke test extracts each recipe's `variables:` / `script:` blocks and runs them
 under `set -e` against a stub CLI, asserting exit-code propagation (`0`/`1`/`2`), the changelog
 artifact, and fail-fast behaviour when a credential is missing.
-CI: [`.github/workflows/diff-action.yml`](https://github.com/apiome/apiome/blob/main/.github/workflows/diff-action.yml).
+CI: `.github/workflows/diff-action.yml`.

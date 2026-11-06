@@ -83,10 +83,10 @@ describe('lintAxisUi', () => {
 
   it('builds governance docs hrefs for algorithm and policy pages', () => {
     expect(buildGovernanceDocsHref('apiome-docs/docs/build/axis-score.md')).toBe(
-      'https://apiome.github.io/apiome/build/axis-score',
+      'https://docs.apiome.dev/build/axis-score',
     );
     expect(buildGovernanceDocsHref(POLICY_DOCS_PAGE)).toBe(
-      'https://apiome.github.io/apiome/build/lint-and-quality',
+      'https://docs.apiome.dev/build/lint-and-quality',
     );
   });
 

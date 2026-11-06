@@ -6,7 +6,7 @@ tags: [ci, reference]
 generated: apiome-docs/scripts/sync-action-pages.mjs from mock-action/README.md
 ---
 
-> This page is [`mock-action/README.md`](https://github.com/apiome/apiome/blob/main/mock-action/README.md), copied by `yarn workspace apiome-docs sync:action-pages` — edit the README, not this page.
+> This page is `mock-action/README.md`, copied by `yarn workspace apiome-docs sync:action-pages` — edit the README, not this page.
 
 Start a version-pinned [portable mock](../mock-runtime/portable-mock-runtime.md) for the rest of a CI
 job, get a loopback-only service URL back, and have the container removed automatically when the

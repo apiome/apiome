@@ -8,7 +8,7 @@ tags: [content]
 The Catalog to project journey is one Playwright test that walks the whole path RC6 ships, through
 the real app, REST API and database. Each screen has its own unit tests; this one notices when a
 change to one screen breaks the hand-off to the next. RC6-H1
-([#6208](https://github.com/apiome/apiome/issues/6208)) added it.
+(#6208) added it.
 
 ## What it walks
 
@@ -57,7 +57,7 @@ CATALOG_JOURNEY_USE_BUILD=1 yarn test:e2e:catalog-journey
 ## The Catalog Exporter journey
 
 A second test in the same workflow walks the export path from import to download (X2,
-[#6223](https://github.com/apiome/apiome/issues/6223)):
+#6223):
 
 | Step | Screen | What must happen |
 | --- | --- | --- |

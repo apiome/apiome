@@ -275,7 +275,7 @@ difference.
 
 ## In CI
 
-The [mock action](https://github.com/apiome/apiome/blob/main/mock-action/README.md) starts a pinned runtime for the rest of a job,
+The [mock action](../ci/mock-action.md) starts a pinned runtime for the rest of a job,
 hands back a loopback-only service URL, and removes the container automatically when the job ends:
 
 ```yaml

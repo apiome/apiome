@@ -41,7 +41,7 @@ COPY scripts/package.json scripts/gen-release-notes.ts scripts/
 COPY apiome-rest/CHANGELOG.md apiome-rest/
 COPY apiome-ui/public/WHATS_NEW.md apiome-ui/public/
 
-ARG DOCS_URL=http://localhost
+ARG DOCS_URL=https://docs.apiome.dev
 ARG DOCS_BASE_URL=/
 ENV DOCS_URL=${DOCS_URL} \
     DOCS_BASE_URL=${DOCS_BASE_URL}

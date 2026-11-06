@@ -28,7 +28,7 @@ __all__ = [
 DOCS_SITE_PAGES_ROOT = "apiome-docs/docs"
 
 #: The published site. Pages are served without a trailing slash or a ``.md`` suffix.
-DOCS_SITE_URL = "https://apiome.github.io/apiome/"
+DOCS_SITE_URL = "https://docs.apiome.dev/"
 
 
 def guide_page(group: str, slug: str) -> str:
@@ -52,7 +52,7 @@ def site_url(page: str, anchor: str | None = None) -> str:
         anchor: Optional heading anchor, without the ``#``.
 
     Returns:
-        The absolute URL, e.g. ``https://apiome.github.io/apiome/build/lint-rules#rule-id``.
+        The absolute URL, e.g. ``https://docs.apiome.dev/build/lint-rules#rule-id``.
 
     Raises:
         ValueError: When ``page`` is not under :data:`DOCS_SITE_PAGES_ROOT`.
