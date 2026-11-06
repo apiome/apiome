@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@lib/auth/session-client';
 import { controlState, useMyPermissions } from '@/app/components/ade/access/useMyPermissions';
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { Fragment, useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import {
   Check,
   GitBranch,
@@ -97,9 +97,11 @@ import {
   VERSION_CHANGE_TONE,
   VERSION_DIALOG_COPY,
   VERSION_DIFF_LEGEND,
+  buildVersionDiffRows,
   diffLinePrefix,
-  diffPartChange,
+  versionDiffFoldLabel,
   type VersionChangeClass,
+  type VersionDiffRow,
 } from '../../../components/ade/version-dialogs/versionDialogsModel';
 import {
   DEFAULT_VERSIONS_SORT,
@@ -322,6 +324,31 @@ function SpecJsonYamlToggle({
   );
 }
 
+/**
+ * The Compare dialog's Canvas tab is switched off: its layout read is not reliable yet, so the
+ * tab is not offered. Flip this back on once the canvas compare works; the tab's code is kept.
+ */
+const COMPARE_CANVAS_ENABLED = false;
+
+/**
+ * One drawn diff row: a spec line, or a fold standing in for unchanged lines.
+ *
+ * @param row The row, from `buildVersionDiffRows`.
+ * @param showLineNo Draw the gutter line number (the split view does; the overlay does not).
+ * @returns The row's element; the caller supplies the key.
+ */
+function renderDiffRow(row: VersionDiffRow, showLineNo: boolean) {
+  if (row.kind === 'fold') {
+    return <div className="vdlg-diff__fold">{versionDiffFoldLabel(row.hidden)}</div>;
+  }
+  return (
+    <div className="vdlg-diff__line" data-change={row.change}>
+      {showLineNo ? <span className="vdlg-diff__ln">{row.lineNo}</span> : null}
+      {showLineNo ? row.text || ' ' : `${diffLinePrefix(row.change)}${row.text}`}
+    </div>
+  );
+}
+
 const VersionCanvasCompare = dynamic(() => import('./VersionCanvasCompare'), {
   ssr: false,
   loading: () => (
@@ -497,6 +524,20 @@ const Versions = () => {
   const [classListScrollTop, setClassListScrollTop] = useState(0);
   const classListScrollRef = useRef<HTMLDivElement | null>(null);
   const [diffViewMode, setDiffViewMode] = useState<'overlay' | 'side-by-side'>('overlay');
+  /** Diff View folds unchanged lines by default: a spec can run to hundreds of thousands of lines. */
+  const [diffChangesOnly, setDiffChangesOnly] = useState(true);
+  /** The Diff View's rows, rebuilt only when the diff, the fold or the layout changes. */
+  const diffRows = useMemo(
+    () =>
+      diffViewMode === 'overlay'
+        ? { unified: buildVersionDiffRows(diffResult, 'unified', diffChangesOnly), left: [], right: [] }
+        : {
+            unified: [],
+            left: buildVersionDiffRows(diffResult, 'left', diffChangesOnly),
+            right: buildVersionDiffRows(diffResult, 'right', diffChangesOnly),
+          },
+    [diffResult, diffChangesOnly, diffViewMode],
+  );
   const [diffFilter, setDiffFilter] = useState<{
     showAdded: boolean;
     showRemoved: boolean;
@@ -4367,9 +4408,17 @@ const Versions = () => {
                     <SegmentedItem value="side-by-side">Side-by-side</SegmentedItem>
                   </Segmented>
                   <SpecJsonYamlToggle value={compareFormat} onChange={handleCompareFormatChange} />
+                  <label className="vdlg-check">
+                    <Checkbox
+                      checked={diffChangesOnly}
+                      onCheckedChange={(checked) => setDiffChangesOnly(checked === true)}
+                      data-testid="compare-changes-only"
+                    />
+                    Show only changes
+                  </label>
                 </div>
               )}
-              {diffResult.length > 0 && activeCompareTab === 'canvas' && (
+              {COMPARE_CANVAS_ENABLED && diffResult.length > 0 && activeCompareTab === 'canvas' && (
                 <Segmented
                   value={canvasCompareViewMode}
                   onValueChange={(next) => setCanvasCompareViewMode(next as 'split' | 'overlay')}
@@ -4382,7 +4431,7 @@ const Versions = () => {
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="vdlg-compare__scroll">
             {diffResult.length === 0 ? (
               <div className="vdlg-compare__picker">
                 <div className="vdlg-compare__picker-row">
@@ -4483,7 +4532,7 @@ const Versions = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col h-full">
+              <div className="vdlg-compare__results">
                 {(() => {
                   const vBase = versions.find((v) => v.id === compareVersion1Id);
                   const vTo = versions.find((v) => v.id === compareVersion2Id);
@@ -4587,6 +4636,7 @@ const Versions = () => {
                       <span>Migration guide</span>
                     </div>
                   </button>
+                  {COMPARE_CANVAS_ENABLED && (
                   <button
                     type="button"
                     role="tab"
@@ -4599,12 +4649,13 @@ const Versions = () => {
                       <span>Canvas</span>
                     </div>
                   </button>
+                  )}
                 </div>
 
                 {/* Tab Content */}
                 {activeCompareTab === 'diff' ? (
                   // Diff View Tab
-                  <div>
+                  <div className="vdlg-compare__tabpanel vdlg-compare__tabpanel--diff">
                     <div className="vdlg-compare__legend-row">
                       <div className="vdlg-legend">
                         {VERSION_DIFF_LEGEND.map((entry) => (
@@ -4620,22 +4671,13 @@ const Versions = () => {
                       </div>
                       <div className="vdlg-quiet">{formatVersionWithPrefix(versions.find(v => v.id === compareVersion1Id)?.version_id)} → {formatVersionWithPrefix(versions.find(v => v.id === compareVersion2Id)?.version_id)}</div>
                     </div>
-                    <div className="vdlg-diff">
+                    <div className="vdlg-diff" data-testid="compare-diff" data-changes-only={diffChangesOnly}>
                       {diffViewMode === 'overlay' ? (
                         // Overlay/Unified diff view
                         <div className="vdlg-diff__scroll">
-                          {diffResult.map((part, i) => {
-                            const change = diffPartChange(part);
-                            return (
-                              <div key={i} data-change={change}>
-                                {part.value.split('\n').filter(Boolean).map((line, j) => (
-                                  <div key={j} className="vdlg-diff__line">
-                                    {diffLinePrefix(change)}{line}
-                                  </div>
-                                ))}
-                              </div>
-                            );
-                          })}
+                          {diffRows.unified.map((row, i) => (
+                            <Fragment key={i}>{renderDiffRow(row, false)}</Fragment>
+                          ))}
                         </div>
                       ) : (
                         // Side-by-side view
@@ -4649,18 +4691,9 @@ const Versions = () => {
                             <div className="vdlg-diff__pane-title">
                               v{versions.find(v => v.id === compareVersion1Id)?.version_id} (base)
                             </div>
-                            {(() => {
-                              const content1 = compareFormat === 'json' ? compareSpec1 : YAML.stringify(JSON.parse(compareSpec1));
-                              return content1.split('\n').map((line, i) => {
-                                const isRemoved = diffResult.some(part => part.removed && part.value.includes(line));
-                                return (
-                                  <div key={i} className="vdlg-diff__line" data-change={isRemoved ? 'removed' : 'unchanged'}>
-                                    <span className="vdlg-diff__ln">{i + 1}</span>
-                                    {line || ' '}
-                                  </div>
-                                );
-                              });
-                            })()}
+                            {diffRows.left.map((row, i) => (
+                              <Fragment key={i}>{renderDiffRow(row, true)}</Fragment>
+                            ))}
                           </div>
                           {/* Right panel - Version 2 (Compare To) */}
                           <div
@@ -4671,18 +4704,9 @@ const Versions = () => {
                             <div className="vdlg-diff__pane-title">
                               v{versions.find(v => v.id === compareVersion2Id)?.version_id} (compare to)
                             </div>
-                            {(() => {
-                              const content2 = compareFormat === 'json' ? compareSpec2 : YAML.stringify(JSON.parse(compareSpec2));
-                              return content2.split('\n').map((line, i) => {
-                                const isAdded = diffResult.some(part => part.added && part.value.includes(line));
-                                return (
-                                  <div key={i} className="vdlg-diff__line" data-change={isAdded ? 'added' : 'unchanged'}>
-                                    <span className="vdlg-diff__ln">{i + 1}</span>
-                                    {line || ' '}
-                                  </div>
-                                );
-                              });
-                            })()}
+                            {diffRows.right.map((row, i) => (
+                              <Fragment key={i}>{renderDiffRow(row, true)}</Fragment>
+                            ))}
                           </div>
                         </div>
                       )}
@@ -5122,7 +5146,7 @@ const Versions = () => {
                       aria-label="Generated migration guide markdown"
                     />
                   </div>
-                ) : (
+                ) : COMPARE_CANVAS_ENABLED ? (
                   <div className="vdlg-compare__tabpanel">
                     {canvasCompareLoading ? (
                       <LoadingState
@@ -5150,7 +5174,7 @@ const Versions = () => {
                       />
                     )}
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </div>

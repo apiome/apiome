@@ -1,0 +1,22 @@
+---
+slug: compare-shows-only-changes
+title: Compare shows only what changed
+description: "Compare version schemas opens on the changed lines, not both whole documents."
+authors: [apiome]
+---
+
+**Compare version schemas** used to open its **Diff View** on both documents in full, and a
+spec can run to hundreds of thousands of lines. It now opens with **Show only changes** ticked.
+
+{/* truncate */}
+
+- **Only the changes, with context.** Each run of unchanged lines keeps three lines next to a
+  change and folds the rest into one *⋯ N unchanged lines* row, in **Overlay** and
+  **Side-by-side** alike. Untick **Show only changes** to read both documents in full.
+- **Side-by-side lines up with the diff.** Each side numbers its own lines and marks exactly the
+  lines the diff added or removed.
+- **The tabs fill the dialog.** **Diff View**, **Schema Changes**, **Breaking doc** and
+  **Migration guide** now take the dialog's full remaining height, with no empty space under them.
+- **Canvas is switched off.** The **Canvas** tab is not offered while the layout compare is fixed.
+
+See [Version dialogs](/build/version-dialogs#compare).

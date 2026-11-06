@@ -77,20 +77,24 @@ timeline.
 ## Compare
 
 **Click “Compare”** in the page header (it needs at least two versions). Pick **Version 1 (base)** and
-**Version 2 (compare to)**, then **click “Compare versions”**. The result has five tabs:
+**Version 2 (compare to)**, then **click “Compare versions”**. The result has four tabs, and each
+tab's body fills the rest of the dialog:
 
-- **Diff View** — the two documents side by side;
+- **Diff View** — what changed between the two documents, as one **Overlay** or **Side-by-side**,
+  in JSON or YAML. **Show only changes** is ticked by default: each run of unchanged lines keeps
+  three lines of context next to a change and folds the rest into one *⋯ N unchanged lines* row,
+  so even a very large spec opens quickly. Untick it to read both documents in full;
 - **Schema Changes** — each version's revision note and changelog, with breaking hints;
 - **Breaking doc** — the compatibility report: whether the change is breaking, the rules that fired
   and where;
-- **Migration guide** — what consumers need to change;
-- **Canvas** — the two schema layouts, with added, removed and moved elements coloured.
+- **Migration guide** — what consumers need to change.
+
+The **Canvas** tab, which compared the two schema layouts, is switched off for now while it is
+fixed.
 
 <Screenshot id="version-compare-cards" alt="Compare, Schema Changes: the base and compare versions' revision notes and changelogs side by side, with a breaking hint" />
 
 <Screenshot id="version-compat-report" alt="Compare, Breaking doc: the overall verdict, the rules that fired, and breaking and safe changes by path" />
-
-<Screenshot id="version-canvas-compare" alt="Compare, Canvas: the base and compare schema layouts with a legend for added, removed, moved and unchanged elements" />
 
 ## Export
 

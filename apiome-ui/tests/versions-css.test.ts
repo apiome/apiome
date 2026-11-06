@@ -180,6 +180,7 @@ const VERSION_PRELUDES = [
   '.ver-cell__link',
   '.ver-cell__link:hover',
   '.ver-cell__id',
+  '.ver-cell__latest',
   '.ver-tag',
   '.ver-fork',
   '.ver-fork > svg',
