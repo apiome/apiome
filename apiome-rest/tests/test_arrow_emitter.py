@@ -325,6 +325,19 @@ def _items(api: CanonicalApi, **match: Any) -> List[Any]:
     return [i for i in report.items if all(getattr(i, k) == v for k, v in match.items())]
 
 
+def test_a_runtime_without_pyarrow_reports_fidelity_instead_of_failing(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pre-flight ranks every target: an Arrow round trip that cannot run must not fail the ranking."""
+    from app import arrow_ipc
+    from app.arrow_ipc import ArrowIpcError
+
+    def _missing() -> Any:
+        raise ArrowIpcError("pyarrow is not available in this runtime", code="FORMAT_UNSUPPORTED")
+
+    monkeypatch.setattr(arrow_ipc, "_require_pyarrow", _missing)
+    report = compute_lossiness_for_emitter(_shop(), ArrowEmitter)
+    assert report.items is not None
+
+
 def test_an_operation_bearing_source_gets_the_critical_types_only_advisory() -> None:
     api = _imported("openapi", "openapi/30-openapi-3.0-petstore.yaml")
     [advisory] = _items(api, construct_key="", target_mapping="types-only")
