@@ -227,6 +227,43 @@ describe('VersionChangesPanel', () => {
     expect(failed).toHaveTextContent('reconstruction failed');
   });
 
+  it('calls the newest unchanged revision "Latest", and an older unchanged one "No changes"', async () => {
+    const REV_3 = '33333333-3333-4333-8333-333333333333';
+    const unchanged = (id: string, label: string, baseId: string, baseLabel: string) => ({
+      publishedRevisionId: id,
+      versionLabel: label,
+      publishedAt: '2026-08-01T00:00:00Z',
+      baselineRevisionId: baseId,
+      baselineVersionLabel: baseLabel,
+      status: 'ready',
+      maxSeverity: null,
+      counts: { breaking: 0, 'non-breaking': 0, 'docs-only': 0, unclassified: 0, total: 0 },
+    });
+    const summaries = summariesPayload();
+    summaries.changelogs = [
+      unchanged(REV_3, '3.0.0', REV_2, '2.0.0'),
+      unchanged(REV_2, '2.0.0', REV_1, '1.0.0'),
+      summaries.changelogs[1],
+    ] as typeof summaries.changelogs;
+    const detail = global.fetch as jest.Mock;
+    const fallback = detail.getMockImplementation()!;
+    detail.mockImplementation(async (url: string) =>
+      url.includes('/changelogs') ? jsonResponse(summaries) : fallback(url),
+    );
+    const versions: VersionChangesVersionRow[] = [
+      ...VERSIONS,
+      { id: REV_3, project_id: PROJECT_ID, version_id: '3.0.0', published: true, published_at: '2026-08-01T00:00:00Z' },
+    ];
+
+    render(<VersionChangesPanel projectId={PROJECT_ID} versions={versions} onOpenDiff={jest.fn()} />);
+
+    const newest = await screen.findByTestId(`changes-version-${REV_3}`);
+    await waitFor(() => expect(within(newest).getByText('Latest')).toBeInTheDocument());
+    expect(within(newest).queryByText('No changes')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId(`changes-version-${REV_2}`)).getByText('No changes')).toBeInTheDocument();
+    expect(screen.getAllByText('Latest')).toHaveLength(1);
+  });
+
   it('shows an empty state when the project has no published versions', () => {
     render(
       <VersionChangesPanel

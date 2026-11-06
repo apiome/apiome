@@ -212,9 +212,12 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
             />
           ) : null}
           <div className="vdlg-changes__list">
-            {published.map((v) => {
+            {published.map((v, index) => {
               const s = summaryByRevision.get(v.id);
               const active = v.id === revisionId;
+              // The list is newest first: an unchanged newest revision reads "Latest", not
+              // "No changes", so the head of the list says where the project stands.
+              const latest = index === 0;
               return (
                 <button
                   key={v.id}
@@ -237,7 +240,9 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
                   ) : s?.status === 'initial' ? (
                     <Badge variant="secondary">Initial</Badge>
                   ) : s?.status === 'ready' ? (
-                    <Badge variant="success">No changes</Badge>
+                    <Badge variant="success" data-testid={latest ? 'changes-badge-latest' : undefined}>
+                      {latest ? 'Latest' : 'No changes'}
+                    </Badge>
                   ) : s?.status === 'failed' ? (
                     <Badge variant="outline">Failed</Badge>
                   ) : (
