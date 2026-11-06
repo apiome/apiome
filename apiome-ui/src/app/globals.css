@@ -1173,11 +1173,12 @@ html[data-rail="collapsed"] {
 
 /* The rail paints over the page. Its menus (the workspace switcher, the user menu) and the
    collapse handle on its edge reach out over the content column, where a positioned card
-   would otherwise cover them. The rail sits at the page-chrome layer: above every card,
-   below the notices (40) and dialogs. `main` is deliberately not isolated, so a fixed
-   overlay a page renders inline still rises above the rail. */
+   or the sticky `.page-header` (20) would otherwise cover them — the header comes later in
+   the document, so it wins a tie. The rail sits one layer above the page chrome: above
+   every card and the header, below the notices (40) and dialogs. `main` is deliberately
+   not isolated, so a fixed overlay a page renders inline still rises above the rail. */
 .hive-shell > .rail {
-  z-index: 20;
+  z-index: 30;
 }
 
 /* Rail parts that answer to icon mode. Unlayered on purpose: `@layer utilities`
@@ -4216,7 +4217,7 @@ button.auth-link:disabled {
    corner instead of taking a row of the layout: the signed-in shell is a
    fixed-height box each route fills, so a banner inside it would shorten every
    page. The stack keeps two notices from landing on top of each other. Above
-   the rail and page chrome (`z-index: 20`), below dialogs. The close button is
+   the rail (`z-index: 30`) and page chrome (20), below dialogs. The close button is
    an element selector for the reason given at `button.auth-link`. */
 .tfa-notice-stack {
   position: fixed;
