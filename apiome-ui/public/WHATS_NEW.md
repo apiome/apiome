@@ -12,6 +12,7 @@ We continue to improve the platform based on your feedback with improvements and
   - **Home** — a ring beside **Published** shows the share of versions that are published and a sparkline under **Versions** draws the last twelve weeks of publishing
   - **Export** targets are compact tiles with a three-segment **fidelity meter** and the tier under each name; the **Changes** tab of a version with no classified changelog yet explains the three steps that fill it
   - **Mock scenarios** — the headers, body and match-rules fields are editor panes that name what they hold, and the advanced match rules fold away until an operation has some
+  - On a project's **Changes** tab, the newest published version reads **Latest** instead of **No changes** when nothing changed since the version before it
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
