@@ -13987,6 +13987,13 @@ button.tfa-reset-notice__close > svg {
   text-decoration: underline;
 }
 
+/* "(latest)" beside the highest version number: quiet, so it reads as part of the label. */
+.ver-cell__latest {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
 .ver-cell__id {
   font-size: var(--fs-2xs);
 }

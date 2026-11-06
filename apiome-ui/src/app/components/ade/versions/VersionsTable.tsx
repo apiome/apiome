@@ -92,6 +92,11 @@ export interface VersionsTableProps {
   projectSlug?: string | null;
   /** The head revision's id, from `projectHeadRevisionId`. */
   headRevisionId: string | null;
+  /**
+   * The id of the revision with the highest version number across the whole project, from
+   * `projectLatestRevisionId`; its version reads "(latest)".
+   */
+  latestRevisionId?: string | null;
   /** Tags by the revision they point at. */
   tagsByVersionId: ReadonlyMap<string, readonly VersionTagRow[]>;
   /** Which revisions already have frozen class schemas. */
@@ -148,6 +153,7 @@ export default function VersionsTable({
   projectId,
   projectSlug,
   headRevisionId,
+  latestRevisionId = null,
   tagsByVersionId,
   hasClassSchemaMap,
   reviewsByVersionId = null,
@@ -207,6 +213,7 @@ export default function VersionsTable({
             version={version}
             projectId={projectId}
             isHead={headRevisionId !== null && version.id === headRevisionId}
+            isLatest={latestRevisionId != null && version.id === latestRevisionId}
             tags={tagsByVersionId.get(version.id) ?? []}
             onView={() => onRowAction('view', version)}
           />
@@ -368,6 +375,7 @@ export default function VersionsTable({
     [
       contextFor,
       headRevisionId,
+      latestRevisionId,
       mockUsageByVersion,
       onMockChanged,
       onRowAction,
@@ -407,6 +415,8 @@ export interface VersionCellProps {
   version: Version;
   projectId: string;
   isHead: boolean;
+  /** Whether this revision has the project's highest version number; it reads "(latest)". */
+  isLatest?: boolean;
   tags: readonly VersionTagRow[];
   onView: () => void;
 }
@@ -417,7 +427,7 @@ export interface VersionCellProps {
  * @param props See {@link VersionCellProps}.
  * @returns The cell.
  */
-export function VersionCell({ version, projectId, isHead, tags, onView }: VersionCellProps) {
+export function VersionCell({ version, projectId, isHead, isLatest = false, tags, onView }: VersionCellProps) {
   const lifecycle = versionLifecycle(version);
   const label = versionLabel(version);
   return (
@@ -432,6 +442,15 @@ export function VersionCell({ version, projectId, isHead, tags, onView }: Versio
         >
           {label}
         </button>
+        {isLatest ? (
+          <span
+            className="ver-cell__latest"
+            title="The highest version number in this project"
+            data-testid={`versions-latest-${version.id}`}
+          >
+            (latest)
+          </span>
+        ) : null}
         <Badge status={lifecycle} title="Revision lifecycle (#739)">
           {VERSION_LIFECYCLE_LABEL[lifecycle]}
         </Badge>

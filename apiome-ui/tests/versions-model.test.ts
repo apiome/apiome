@@ -255,8 +255,8 @@ describe('the quick chips', () => {
 // ---------------------------------------------------------------------------------------
 
 describe('sort bridging', () => {
-  it('starts newest first, which is the API order', () => {
-    expect(DEFAULT_VERSIONS_SORT).toEqual({ column: 'created', direction: 'desc' });
+  it('starts by version number, highest first', () => {
+    expect(DEFAULT_VERSIONS_SORT).toEqual({ column: 'version', direction: 'desc' });
   });
 
   it('reads the primitive’s unsorted step as a flip, so a header only ever toggles', () => {
@@ -294,13 +294,13 @@ describe('sort bridging', () => {
   });
 
   it('says the sort and the foot the way the mockup does', () => {
-    expect(versionsSortLabel(DEFAULT_VERSIONS_SORT)).toBe('created ↓');
+    expect(versionsSortLabel(DEFAULT_VERSIONS_SORT)).toBe('version ↓');
     expect(versionsSortLabel({ column: 'revision', direction: 'asc' })).toBe('revision / changelog ↑');
     expect(versionsFootLabel(6, DEFAULT_VERSIONS_SORT, '')).toBe(
-      '6 revisions · sorted by created ↓ · lifecycle filter: all'
+      '6 revisions · sorted by version ↓ · lifecycle filter: all'
     );
     expect(versionsFootLabel(1, DEFAULT_VERSIONS_SORT, 'beta')).toBe(
-      '1 revision · sorted by created ↓ · lifecycle filter: beta'
+      '1 revision · sorted by version ↓ · lifecycle filter: beta'
     );
   });
 });

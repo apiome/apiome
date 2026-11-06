@@ -220,6 +220,7 @@ import { formatVersionWithPrefix } from '@/app/utils/version-display';
 import { isProjectPublishable } from '@/app/utils/catalog-publishable';
 import { suggestBranchNameFromRevision } from '../../../../../lib/version-branch-utils';
 import { projectHeadRevisionId } from '../../../utils/project-head-revision';
+import { projectLatestRevisionId } from '../../../utils/versions-dashboard-sort';
 import {
   normalizeMergeConflictRows,
   type MergeConflictResolutionChoice,
@@ -2037,6 +2038,8 @@ const Versions = () => {
 
   /** Latest revision by `created_at` in the loaded list — used as “current” for compare (#2580). */
   const headRevisionId = useMemo(() => projectHeadRevisionId(versions), [versions]);
+  /** The highest version number across the whole project — it reads "(latest)" in both views. */
+  const latestRevisionId = useMemo(() => projectLatestRevisionId(versions), [versions]);
 
   // ---- what the header and the banners say (HIVE-6.2) — derived, never fetched ----------------
   const headBadge = useMemo(() => headRevisionBadge(versions, headRevisionId), [versions, headRevisionId]);
@@ -4076,6 +4079,7 @@ const Versions = () => {
                     projectId={selectedProjectId}
                     projectSlug={selectedProject?.slug}
                     headRevisionId={headRevisionId}
+                    latestRevisionId={latestRevisionId}
                     tagsByVersionId={tagsByVersionId}
                     hasClassSchemaMap={hasClassSchemaMap}
                     reviewsByVersionId={reviewsByVersionId}
@@ -4109,6 +4113,7 @@ const Versions = () => {
                     projectId={selectedProjectId}
                     projectSlug={selectedProject?.slug}
                     headRevisionId={headRevisionId}
+                    latestRevisionId={latestRevisionId}
                     tagsByVersionId={tagsByVersionId}
                     hasClassSchemaMap={hasClassSchemaMap}
                     reviewsByVersionId={reviewsByVersionId}

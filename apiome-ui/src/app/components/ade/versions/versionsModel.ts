@@ -402,8 +402,11 @@ export const VERSION_SORT_OPTIONS: readonly VersionSortOption[] = [
   { id: 'created', label: 'Created' },
 ];
 
-/** The screen's own order: newest first, which is also the order the API returns rows in. */
-export const DEFAULT_VERSIONS_SORT: DataTableSortState = { column: 'created', direction: 'desc' };
+/**
+ * The screen's own order: by version number, highest first, so the top row is the revision
+ * marked "(latest)" (`projectLatestRevisionId`).
+ */
+export const DEFAULT_VERSIONS_SORT: DataTableSortState = { column: 'version', direction: 'desc' };
 
 /**
  * Whether a `DataTable` column id is one the timeline's comparator knows.
