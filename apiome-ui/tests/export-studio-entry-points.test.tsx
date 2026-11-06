@@ -36,15 +36,8 @@ describe('project facts card', () => {
     else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW;
   });
 
-  it('draws no Export studio button while the studio is unreleased', () => {
+  it('links Export studio to the project head revision (released in RC7)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    renderCard();
-    expect(screen.queryByTestId('versions-facts-export-studio')).toBeNull();
-    expect(screen.getByText('Published surface')).toBeInTheDocument();
-  });
-
-  it('links Export studio to the project head revision once previewed', () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
     renderCard();
     expect(screen.getByTestId('versions-facts-export-studio')).toHaveAttribute(
       'href',

@@ -61,15 +61,15 @@ A second test in the same workflow walks the export path from import to download
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is opened early |
+| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is released |
 | 2 | Catalog → **Import to catalog** | Three RAML specs, titled per run, are stored in the catalog |
 | 3 | Catalog item → **Export** | Exporting to Avro and clicking **Download all files (.zip)** gives an archive with every `.avsc` file and `manifest.json` |
 | 4 | Item **⋯** → **Export to another format…** | In the Export studio, Protobuf is chosen, verified, generated, and **Download .zip** gives a `.proto` file |
 | 5 | Catalog → tick three items → **Export 3…** | One GraphQL batch job downloads `export-batch.zip`; its manifest lists all three items as completed |
 
-It runs with the Export studio opened early (`NEXT_PUBLIC_APIOME_PREVIEW_FEATURES=export-studio`)
-while the studio is held back, and with no override once it ships. The value follows the release
-gate by itself, and a unit test fails if the workflow builds with a different one.
+It runs with no preview override (`NEXT_PUBLIC_APIOME_PREVIEW_FEATURES` empty): the Export studio
+is released in RC7, so the journey exercises it as users get it. The value follows the release gate
+by itself, and a unit test fails if the workflow builds with a different one.
 
 To run it locally, from `apiome-ui/`:
 

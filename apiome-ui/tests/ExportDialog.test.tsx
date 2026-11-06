@@ -792,10 +792,10 @@ describe('ExportDialog — version-scoped entry-point handoff (MFX-6.5)', () => 
 });
 
 describe('ExportDialog — Export Studio escalation (MFX-41.1)', () => {
-  // The escalation is offered only once the Studio is released (`lib/feature-release.ts`);
-  // these cases pin its behaviour for that day, with the build-time override set.
+  // The Studio is released (RC7), so the escalation is offered in the default build: no
+  // build-time override.
   beforeAll(() => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
   afterAll(() => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
@@ -966,38 +966,6 @@ describe('ExportDialog — a source with nothing captured (E1-6, #6221)', () => 
     expect(screen.queryByTestId('export-missing-source')).not.toBeInTheDocument();
   });
 });
-
-describe('ExportDialog — no path into the held-back Export studio (RC6-H4, #6211)', () => {
-  it('offers no studio link or navigation at any step while export-studio is unreleased', async () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    routerPush.mockClear();
-    global.fetch = mockFetch() as unknown as typeof fetch;
-    render(<ExportDialog open onClose={jest.fn()} artifact="proj-petstore" artifactLabel="Pet Store API" />);
-
-    /** No anchor, button or navigation reaches the studio route. */
-    const assertNoStudio = () => {
-      const links = Array.from(document.querySelectorAll('a[href]')).map((a) => a.getAttribute('href') ?? '');
-      expect(links.filter((href) => href.includes('/export/studio'))).toEqual([]);
-      expect(screen.queryByRole('button', { name: /export studio/i })).not.toBeInTheDocument();
-      expect(routerPush).not.toHaveBeenCalled();
-    };
-
-    const chooseTarget = await screen.findByTestId('export-dialog-choose-target');
-    await waitFor(() => expect(chooseTarget).toBeEnabled());
-    assertNoStudio();
-    fireEvent.click(chooseTarget);
-    fireEvent.click(await screen.findByTestId('export-target-proto'));
-    assertNoStudio();
-    fireEvent.click(screen.getByTestId('export-dialog-continue'));
-    await screen.findByTestId('export-ack');
-    assertNoStudio();
-    fireEvent.click(screen.getByTestId('export-ack'));
-    fireEvent.click(screen.getByTestId('export-dialog-export'));
-    await screen.findByTestId('export-dialog-emitted');
-    assertNoStudio();
-  });
-});
-
 
 describe('ExportDialog — API-client collection targets (MFX-31.5)', () => {
   it('renders the Postman, Insomnia and Bruno cards, each with its per-source tier', async () => {

@@ -476,7 +476,6 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       'consumers',
       'data-browser',
       'dependency-graph',
-      'export-studio',
       'mcp',
       'migrations',
       'primitives',
@@ -543,9 +542,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 10 released destinations in the rail, 20 with every feature previewed', () => {
+  it('leaves 11 released destinations in the rail (Export studio joined Ship in RC7), 20 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(10);
+    expect(releasedRailCount()).toBe(11);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(20);
   });

@@ -726,8 +726,8 @@ describe('the header', () => {
       '/ade/dashboard/versions/sunset-timeline'
     );
     expect(within(menu).getByTestId('page-header-overflow-published')).toHaveAttribute('href', '/ade/dashboard/published');
-    // Export studio waits for its release, exactly as the facts card's link does.
-    expect(within(menu).queryByTestId('page-header-overflow-export-studio')).not.toBeInTheDocument();
+    // Export studio is released (RC7), exactly as the facts card's link is.
+    expect(within(menu).getByTestId('page-header-overflow-export-studio')).toBeInTheDocument();
 
     const copy = within(menu).getByTestId('page-header-overflow-copy-link');
     expect(copy).toHaveAttribute('aria-keyshortcuts', 'Meta+Shift+C Control+Shift+C');
@@ -910,8 +910,8 @@ describe('the status strip and the overview', () => {
     expect(facts).toHaveTextContent('v2.3.1');
     expect(facts).toHaveTextContent('Yes (not a catalog item)');
     expect(within(facts).getByRole('link', { name: 'Published surface' })).toHaveAttribute('href', '/ade/dashboard/published');
-    // The Export studio link waits for the studio's release (`lib/feature-release.ts`).
-    expect(within(facts).queryByRole('link', { name: 'Export studio' })).not.toBeInTheDocument();
+    // The studio is released (RC7), so the facts card links to it.
+    expect(within(facts).getByRole('link', { name: 'Export studio' })).toBeInTheDocument();
   });
 });
 
@@ -1220,8 +1220,8 @@ describe('the row menu', () => {
     expect(within(dialog).getByRole('heading', { name: 'OpenAPI 3.1.0 specification' })).toBeInTheDocument();
     expect(dialog).toHaveTextContent('Payments API — v2.3.1');
     await within(dialog).findByTestId('mock-monaco');
-    // The export cards deep-link into the Export studio, so they wait for its release.
-    expect(within(dialog).queryByTestId('version-export-panel')).not.toBeInTheDocument();
+    // The export cards deep-link into the Export studio, released in RC7.
+    expect(within(dialog).getByTestId('version-export-panel')).toBeInTheDocument();
     expect(within(dialog).getByTestId('spec-viewer-download')).toHaveTextContent('payments-api-2-3-1-openapi.json');
     fireEvent.click(within(dialog).getByTestId('spec-format-tab-yaml'));
     await waitFor(() => expect(within(dialog).getByTestId('spec-viewer-download')).toHaveTextContent('payments-api-2-3-1-openapi.yaml'));
