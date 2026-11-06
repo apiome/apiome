@@ -16110,13 +16110,41 @@ button.tfa-reset-notice__close > svg {
   border-block-end: 1px solid var(--border);
 }
 
-/* Every tab body is one scroll region whose height is a viewport share less
-   the dialog's own chrome — never `calc(90vh - 280px)`, which assumed a
-   header height that changes with the font scale. */
+/* The dialog body between the header and the footer: it scrolls only when the
+   revision cards and a tab's floor together outgrow it. */
+.vdlg-compare__scroll {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-block-size: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* The compared pair: the cards and tabs take what they need, and the tab body
+   takes the rest of the dialog's height. */
+.vdlg-compare__results {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+/* Every tab body is one scroll region that fills the rest of the dialog, with a
+   floor so a short laptop screen still shows a useful slice — never
+   `calc(90vh - 280px)`, which assumed a header height that changes with the
+   font scale. */
 .vdlg-compare__tabpanel {
-  block-size: min(60vh, 40rem);
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-block-size: min(40vh, 20rem);
   overflow-y: auto;
   padding-inline: var(--space-1);
+}
+
+/* The Diff View scrolls inside its own panes, so its tab body does not. */
+.vdlg-compare__tabpanel--diff {
+  overflow-y: hidden;
 }
 
 /* ---- The two revision cards --------------------------------------------- */
@@ -16175,7 +16203,8 @@ button.tfa-reset-notice__close > svg {
 
 /* ---- The diff pane ------------------------------------------------------- */
 .vdlg-diff {
-  block-size: min(56vh, 36rem);
+  flex: 1 1 0;
+  min-block-size: min(32vh, 16rem);
   border-radius: var(--r-md);
   background: var(--bg-inset);
   box-shadow: inset 0 0 0 1px var(--border);
@@ -16222,6 +16251,16 @@ button.tfa-reset-notice__close > svg {
   padding-block: 0.0625rem;
   white-space: pre-wrap;
   color: var(--fg);
+}
+
+/* Stands in for a run of unchanged lines when the diff shows only changes. */
+.vdlg-diff__fold {
+  padding: var(--space-1) var(--space-3);
+  border-block: 1px dashed var(--border);
+  background: var(--bg-subtle);
+  font-style: italic;
+  color: var(--fg-muted);
+  user-select: none;
 }
 
 .vdlg-diff__ln {
@@ -16544,7 +16583,7 @@ button.tfa-reset-notice__close > svg {
 }
 
 .vdlg-doc__body {
-  flex: 1;
+  flex: 1 1 auto;
   min-block-size: min(45vh, 26rem);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);

@@ -30,7 +30,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { VERSION_DIALOG_COPY } from '@/app/components/ade/version-dialogs/versionDialogsModel';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
@@ -616,24 +615,20 @@ describe('a pending or failed read inside a Versions dialog (RC6-H3, #6210)', ()
     expect(mockAlert).not.toHaveBeenCalled();
     fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
     await waitFor(() => expect(screen.queryByTestId('compare-error')).toBeNull());
-    expect(await screen.findByRole('tab', { name: /canvas/i })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /diff view/i })).toBeInTheDocument();
   });
 
-  it('Compare › Canvas: a spinner while the layouts load, then an error with a retry — not a toast', async () => {
-    let release: () => void = () => {};
-    mockLoadLayout.mockImplementationOnce(
-      () => new Promise((_, reject) => { release = () => reject(new Error('Layout store unreachable')); })
-    );
+  it('Compare: the Canvas tab is not offered, and the Diff View shows only changes by default', async () => {
     // The deep link the canvas divergence chip uses (#2723); the row's compare verb is git-like.
     window.history.replaceState(null, '', `/ade/dashboard/versions?compareOpen=1&compareBase=${V231_ID}&compareHead=${HEAD_ID}`);
     await renderVersions();
-    fireEvent.click(await screen.findByRole('tab', { name: /canvas/i }));
-    expect(await screen.findByText(VERSION_DIALOG_COPY.canvasLoading)).toBeInTheDocument();
-    await act(async () => release());
-    const error = await screen.findByTestId('compare-canvas-error');
-    expect(error).toHaveTextContent("Couldn't load the canvas layouts");
-    fireEvent.click(within(error).getByRole('button', { name: /try again/i }));
-    expect(await screen.findByTestId('canvas-compare')).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /diff view/i })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /canvas/i })).toBeNull();
+    const toggle = screen.getByTestId('compare-changes-only');
+    expect(toggle).toHaveAttribute('data-state', 'checked');
+    expect(screen.getByTestId('compare-diff')).toHaveAttribute('data-changes-only', 'true');
+    fireEvent.click(toggle);
+    expect(screen.getByTestId('compare-diff')).toHaveAttribute('data-changes-only', 'false');
   });
 });
 

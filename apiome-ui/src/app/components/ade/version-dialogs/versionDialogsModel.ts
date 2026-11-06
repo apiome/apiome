@@ -149,6 +149,109 @@ export function diffLinePrefix(change: VersionChangeClass): string {
   return '';
 }
 
+/** A `jsdiff` part: its text and how it differs. */
+export interface VersionDiffPart extends VersionDiffPartFlags {
+  value: string;
+}
+
+/** Which rows a diff pane draws: both sides interleaved, or one side of a split view. */
+export type VersionDiffSide = 'unified' | 'left' | 'right';
+
+/** Unchanged lines kept on each side of a change when the diff shows only changes. */
+export const VERSION_DIFF_CONTEXT_LINES = 3;
+
+/** One row of a drawn diff: a line of the spec, or a fold standing in for unchanged lines. */
+export type VersionDiffRow =
+  | {
+      kind: 'line';
+      change: VersionChangeClass;
+      text: string;
+      /** 1-based line number on the side the row is drawn for (the base side when unified and removed or unchanged). */
+      lineNo: number;
+    }
+  | {
+      kind: 'fold';
+      /** How many unchanged lines the fold hides. */
+      hidden: number;
+    };
+
+/**
+ * The lines of one diff part, without the empty string `split` leaves after a final newline.
+ *
+ * @param value The part's text.
+ * @returns Its lines.
+ */
+function partLines(value: string): string[] {
+  const lines = value.split('\n');
+  if (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
+/**
+ * Turn a `jsdiff` line diff into the rows a diff pane draws.
+ *
+ * Specs can run to hundreds of thousands of lines, so with `changesOnly` each run of unchanged
+ * lines keeps only `context` lines next to a change and folds the rest into one row; a run
+ * at the start or end of the file keeps context on its inner side only.
+ *
+ * @param parts The diff, in order (`diffLines` output).
+ * @param side `unified` draws every part; `left` skips added parts, `right` skips removed ones.
+ * @param changesOnly Fold unchanged runs longer than the context around them.
+ * @param context Unchanged lines kept on each side of a change.
+ * @returns The rows, with line numbers counted on the drawn side.
+ */
+export function buildVersionDiffRows(
+  parts: readonly VersionDiffPart[],
+  side: VersionDiffSide,
+  changesOnly: boolean,
+  context: number = VERSION_DIFF_CONTEXT_LINES,
+): VersionDiffRow[] {
+  const rows: VersionDiffRow[] = [];
+  let leftNo = 0;
+  let rightNo = 0;
+  parts.forEach((part, index) => {
+    const change = diffPartChange(part);
+    if (side === 'left' && change === 'added') return;
+    if (side === 'right' && change === 'removed') return;
+    const lines = partLines(part.value);
+    const lineNoFor = (offset: number): number => {
+      if (change === 'added') return rightNo + offset + 1;
+      if (change === 'removed') return leftNo + offset + 1;
+      return (side === 'right' ? rightNo : leftNo) + offset + 1;
+    };
+    const push = (offset: number) =>
+      rows.push({ kind: 'line', change, text: lines[offset], lineNo: lineNoFor(offset) });
+
+    if (change === 'unchanged' && changesOnly) {
+      const head = index === 0 ? 0 : context;
+      const tail = index === parts.length - 1 ? 0 : context;
+      if (lines.length > head + tail) {
+        for (let i = 0; i < head; i += 1) push(i);
+        rows.push({ kind: 'fold', hidden: lines.length - head - tail });
+        for (let i = lines.length - tail; i < lines.length; i += 1) push(i);
+      } else {
+        lines.forEach((_, i) => push(i));
+      }
+    } else {
+      lines.forEach((_, i) => push(i));
+    }
+
+    if (change !== 'added') leftNo += lines.length;
+    if (change !== 'removed') rightNo += lines.length;
+  });
+  return rows;
+}
+
+/**
+ * What a fold row says.
+ *
+ * @param hidden How many unchanged lines it hides.
+ * @returns e.g. "⋯ 1,204 unchanged lines".
+ */
+export function versionDiffFoldLabel(hidden: number): string {
+  return `⋯ ${hidden.toLocaleString('en-US')} unchanged ${hidden === 1 ? 'line' : 'lines'}`;
+}
+
 /* ==========================================================================
    2 · History — lanes, and what a revision node is
    ========================================================================== */
