@@ -513,27 +513,8 @@ describe('CatalogItemDetailClient', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
   });
 
-  it('exports in place while the Export Studio is unreleased, without navigating or touching Convert', async () => {
-    mockFetchItem(RICH_ITEM);
-    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
-
-    fireEvent.click(await screen.findByTestId('catalog-detail-export'));
-
-    expect(mockPush).not.toHaveBeenCalled();
-    expect(await screen.findByTestId('export-dialog-body')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Open in Export Studio/ })).not.toBeInTheDocument();
-    expect(screen.getByTestId('catalog-detail-convert')).toHaveTextContent('Convert to OpenAPI Project');
-  });
-
-  it('keeps Export in place and offers no studio row while the Export Studio is unreleased (E1-1)', async () => {
-    mockFetchItem(RICH_ITEM);
-    render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
-    await screen.findByTestId('catalog-detail-export');
-    expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
-  });
-
   it('opens the Export Studio from Export to another format…, while Export stays in place (MFX-41.2, E1-1)', async () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    // Released in RC7: the default build, no preview override.
     mockFetchItem(RICH_ITEM);
     render(<CatalogItemDetailClient itemId={RICH_ITEM.id} />);
 

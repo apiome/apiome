@@ -30,7 +30,6 @@
 export const UNRELEASED_FEATURE_IDS = [
   'primitives',
   'mcp',
-  'export-studio',
   'sdk-settings',
   'style-guides',
   'audit',

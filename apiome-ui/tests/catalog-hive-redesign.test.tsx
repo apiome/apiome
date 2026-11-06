@@ -591,21 +591,9 @@ describe('the two export verbs (E1-1, #6217)', () => {
     else process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = PREVIEW;
   });
 
-  it('changes nothing from RC6 while Export studio is unreleased', async () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    await renderCatalog();
-    const card = (await screen.findAllByTestId('catalog-card'))[0];
-    openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));
-    // Exactly as in RC6: one row, reading "Export to another format…", opening the dialog.
-    expect(await screen.findByTestId('catalog-action-export')).toHaveTextContent('Export to another format…');
-    expect(screen.queryByTestId('catalog-action-export-studio')).toBeNull();
-    fireEvent.click(screen.getByTestId('catalog-action-export'));
-    expect(await screen.findByTestId('export-dialog-body')).toBeInTheDocument();
-    expect(mockPush).not.toHaveBeenCalled();
-  });
-
   it('adds Export to another format…, which opens the studio scoped to the item', async () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'export-studio';
+    // Released in RC7: no preview override needed.
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
     await renderCatalog();
     const card = (await screen.findAllByTestId('catalog-card'))[0];
     openMenu(within(card).getByTestId(`catalog-card-menu-${LEDGER.id}`));

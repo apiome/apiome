@@ -138,9 +138,9 @@ jobs:
 
   # The Catalog Exporter journey (X2, #6223): import → Export dialog (full bundle) → Export
   # studio (verify → job → download) → bulk export of three items. Same stack recipe as the job
-  # above, built with the studio opened early: NEXT_PUBLIC_APIOME_PREVIEW_FEATURES must equal
-  # CATALOG_EXPORTER_PREVIEW (e2e/journey/support/env.ts) — `export-studio` until the studio ships,
-  # then empty. tests/catalog-journey-config.test.ts fails when the two disagree.
+  # above. NEXT_PUBLIC_APIOME_PREVIEW_FEATURES must equal CATALOG_EXPORTER_PREVIEW
+  # (e2e/journey/support/env.ts): empty now that the studio is released in RC7, so the journey runs
+  # the studio exactly as users get it. tests/catalog-journey-config.test.ts fails when the two disagree.
   exporter:
     name: Catalog Exporter journey
     runs-on: self-hosted
@@ -151,8 +151,8 @@ jobs:
       # Throwaway value for an ephemeral CI stack, deliberately inline and obviously non-secret.
       BETTER_AUTH_SECRET: catalog-journey-ci-secret
       NEXT_TELEMETRY_DISABLED: "1"
-      # The studio only, until it is released. Inlined at build time, so the build sees it too.
-      NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: "export-studio"
+      # No preview: the studio is released (RC7). Inlined at build time, so the build sees it too.
+      NEXT_PUBLIC_APIOME_PREVIEW_FEATURES: ""
 
     steps:
       - name: Checkout code

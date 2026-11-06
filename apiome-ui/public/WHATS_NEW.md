@@ -68,6 +68,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Catalog:
   - Catalog cards — the ⋯ actions menu now sits beside the status pill in the card's header row, always visible, instead of appearing on hover on top of the **Active** pill
 - Export:
+  - Export studio is released — **Export studio** is back in the rail's **Ship** section for everyone. It opens from a catalog item's **⋯** → **Export to another format…**, the Catalog's bulk **Export…**, the Export dialog's **Open in Export Studio**, a version's export cards and the project facts card
   - Export several at once — the docs' new **Export several at once, and on every publish** page shows which to use: several formats in one job, several items or every version, presets, or auto-export on publish
   - Batch, presets and auto-export where you export — the **Export** dialog's **Target** step has **Several targets** (formats ticked with their fidelity badges, one archive), **Apply a preset** and **Save as preset**; a version's **Export** panel adds **Export all versions…** and an **Auto-export on publish** card next to **Recent exports**
   - Export to any format — a new docs page maps all of export: where to start one (Export dialog, Export studio, Browse, CLI, MCP, API), what survives a conversion, and the guide for every part
