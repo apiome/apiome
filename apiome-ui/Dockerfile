@@ -23,8 +23,15 @@ COPY package.json ./
 #
 # Retried as a whole: with no lockfile a just-published version can be listed in the registry before
 # its tarball reaches the CDN (a 404 npm itself does not retry), and a network blip fails it too.
-RUN for attempt in 1 2 3; do \
-      npm install --legacy-peer-deps && exit 0; \
+#
+# npm's cache is a BuildKit cache mount, kept by the self-hosted runner's builder between builds: only
+# versions not seen before are downloaded (`--prefer-offline`), so a slow or flaky registry link
+# (ETIMEDOUT) touches a handful of tarballs instead of the whole tree. Each request also retries
+# on its own (`--fetch-retries`) before the whole install is retried.
+RUN --mount=type=cache,target=/root/.npm \
+    for attempt in 1 2 3; do \
+      npm install --legacy-peer-deps --prefer-offline --fetch-retries=5 --fetch-retry-maxtimeout=120000 \
+        && exit 0; \
       echo "npm install failed (attempt $attempt), retrying" >&2; sleep 30; \
     done; exit 1
 
