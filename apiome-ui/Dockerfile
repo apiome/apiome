@@ -35,6 +35,15 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Build Next.js application
 RUN npm run build
 
+# Place static assets and public files next to server.js, so the runner copies one finished tree.
+# server.js sits in a package subdirectory of the standalone output (outputFileTracingRoot is the
+# monorepo root), so it is found rather than assumed.
+RUN SERVER="$(find /app/.next/standalone -maxdepth 3 -name server.js ! -path '*/node_modules/*' | head -1)" && \
+    APP_DIR="$(dirname "$SERVER")" && \
+    mkdir -p "$APP_DIR/.next" && \
+    cp -r /app/.next/static "$APP_DIR/.next/static" && \
+    cp -r /app/public "$APP_DIR/public"
+
 # Stage 3: Runner (Production)
 FROM node:alpine AS runner
 WORKDIR /app
@@ -46,23 +55,14 @@ ENV NEXT_TELEMETRY_DISABLED=1
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+# The working directory itself (not recursive: its contents arrive owned, below).
+RUN chown nextjs:nodejs /app
 
-# Copy standalone output, then place static assets and public files next to server.js
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static /tmp/_next_static
-COPY --from=builder /app/public /tmp/public
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-
-RUN SERVER="$(find /app -maxdepth 3 -name server.js ! -path '*/node_modules/*' | head -1)" && \
-    APP_DIR="$(dirname "$SERVER")" && \
-    mkdir -p "$APP_DIR/.next" && \
-    cp -r /tmp/_next_static "$APP_DIR/.next/static" && \
-    cp -r /tmp/public "$APP_DIR/public" && \
-    rm -rf /tmp/_next_static /tmp/public && \
-    chmod +x /docker-entrypoint.sh
-
-# Set ownership to non-root user
-RUN chown -R nextjs:nodejs /app /docker-entrypoint.sh
+# Copy the standalone output already owned by the non-root user. Owning it at COPY time, not with a
+# later `chown -R`, matters: a recursive chown rewrites every file into a new layer, which is slow
+# and stores the whole tree (node_modules included) a second time.
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --chown=nextjs:nodejs --chmod=755 docker-entrypoint.sh /docker-entrypoint.sh
 
 # Switch to non-root user
 USER nextjs
