@@ -8,8 +8,8 @@ tags: [content]
 The visual-parity harness checks every redesigned `apiome-ui` page against its mockup in
 `docs/mockups/`. It has two checks. The **parity score** measures whether the page uses the same
 design tokens in the same places. The **first-row budget** measures how far down the page the
-first row of data starts. HIVE-10.1 ([#5337](https://github.com/apiome/apiome/issues/5337))
-built the harness, and HIVE-13.3 ([#5616](https://github.com/apiome/apiome/issues/5616)) added
+first row of data starts. HIVE-10.1 (#5337)
+built the harness, and HIVE-13.3 (#5616) added
 the budget. Both run in the **Apiome UI Visual Parity** CI workflow, in the light and dark themes.
 
 ```bash
@@ -22,7 +22,7 @@ The harness starts its own app on port 3300. It needs no REST API and no databas
 
 ## The first-row budget
 
-[`PROPOSALS.md`](https://github.com/apiome/apiome/blob/main/docs/mockups/PROPOSALS.md) found that
+`PROPOSALS.md` found that
 stat strips, banners and extra toolbars were pushing data below the fold. At 1440 × 900 the first
 row of data started 600–870 px down the page. The quiet pass (Epic 11) removed that clutter, and the
 budget stops it from coming back. The harness mounts each page at 1440 × 900 (comfortable density,

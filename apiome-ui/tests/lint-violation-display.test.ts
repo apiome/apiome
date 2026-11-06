@@ -17,10 +17,10 @@ describe('lint-rule-catalog', () => {
   it('builds a docs-site href from page + anchor', () => {
     expect(
       buildLintRuleDocsHref('apiome-docs/docs/build/lint-rules.md', 'naming-schema-pascal-case'),
-    ).toBe('https://apiome.github.io/apiome/build/lint-rules#naming-schema-pascal-case');
+    ).toBe('https://docs.apiome.dev/build/lint-rules#naming-schema-pascal-case');
     // A page path stored before the guide moved still resolves to the site.
     expect(buildLintRuleDocsHref('docs/guide/lint-rules.md', 'naming-schema-pascal-case')).toBe(
-      'https://apiome.github.io/apiome/build/lint-rules#naming-schema-pascal-case',
+      'https://docs.apiome.dev/build/lint-rules#naming-schema-pascal-case',
     );
   });
 

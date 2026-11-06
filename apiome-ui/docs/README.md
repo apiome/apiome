@@ -4,7 +4,7 @@ This folder holds only the **contributor references** that apiome-ui's code, tes
 point at by path (sign-in provider setup, the auth error-code contract, accessibility budgets, the
 MCP UI primitives) and the package [changelog](CHANGELOG.md).
 
-- **Product documentation** lives on the documentation site, <https://apiome.github.io/apiome/>
+- **Product documentation** lives on the documentation site, <https://docs.apiome.dev/>
   (source: [`apiome-docs/`](../../apiome-docs/README.md)).
 - **Older implementation notes** were moved to [`docs/archive/apiome-ui/`](../../docs/archive/apiome-ui/)
   by DOCS-1.14 (#5631); [`docs/archive/INVENTORY.md`](../../docs/archive/INVENTORY.md) lists them.

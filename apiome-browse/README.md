@@ -244,7 +244,7 @@ See the archived [TROUBLESHOOTING.md](../docs/archive/apiome-browse/TROUBLESHOOT
 ## Documentation
 
 - **README.md**: This file - project overview
-- **User guide**: [Browse published specs](https://apiome.github.io/apiome/ship/browse-published-specs) on the documentation site
+- **User guide**: [Browse published specs](https://docs.apiome.dev/ship/browse-published-specs) on the documentation site
 - The package's older notes (setup, features, troubleshooting, deployment checklist) are archived
   in [`docs/archive/apiome-browse/`](../docs/archive/apiome-browse/) — history, not a description
   of the product as it is (DOCS-1.14)

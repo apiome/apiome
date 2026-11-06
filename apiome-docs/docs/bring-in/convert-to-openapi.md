@@ -283,5 +283,5 @@ tenant-scoped.
 - [Read a catalog item's format details](./catalog-format-details.md) — the payload analysis feeding the graph's `analysis` lane
 - [Understand export fidelity](../ship/export-fidelity.md) — the export-side projection map (shared status vocabulary)
 - [Import a specification](./import-a-spec.md) — getting the source into the catalog
-- [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `convert` flag reference
+- [`apiome convert`](../reference/cli/convert.md) — full `convert` flag reference
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html) — the conversion target

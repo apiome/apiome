@@ -24,7 +24,7 @@ The REST service listens on **`http://localhost:8000`** by default (the `rest` s
 | **OpenAPI document** | `http://localhost:8000/openapi.json` | The raw machine-readable schema |
 
 > In production, substitute your deployed host for `localhost:8000` (e.g.
-> `https://api.example.com/docs`). See [runbooks/PRODUCTION_DEPLOY.md](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md).
+> `https://api.example.com/docs`). See the production deployment runbook, `docs/runbooks/PRODUCTION_DEPLOY.md`.
 
 ---
 

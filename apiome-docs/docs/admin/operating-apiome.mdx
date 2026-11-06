@@ -25,8 +25,8 @@ beside it (`yarn dev` in development, its own image in production).
 | `mock` | `apiome-mock`, the mock runtime | `8775` (`APIOME_MOCK_HTTP_PORT`) |
 
 Production applies
-[`docker-compose.prod.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.prod.yml) on
-top of [`docker-compose.yml`](https://github.com/apiome/apiome/blob/main/docker-compose.yml): it adds
+`docker-compose.prod.yml` on
+top of `docker-compose.yml`: it adds
 `caddy` (TLS from Let's Encrypt, the only service with host ports — `80` and `443`), `backup`
 (encrypted scheduled backups) and the Studio image, and keeps `seed` out of `up`. The Studio image
 builds from `private-suite/designer/Dockerfile` with the `private-suite` repository checked out
@@ -42,14 +42,14 @@ Every service reads its settings from environment variables. Each workspace ship
 
 | File | Configures |
 | --- | --- |
-| [`docker-compose.env.example`](https://github.com/apiome/apiome/blob/main/docker-compose.env.example) | The Compose stack: database credentials, host ports, shared tokens |
-| [`docker-compose.prod.env.example`](https://github.com/apiome/apiome/blob/main/docker-compose.prod.env.example) | Production: domains, TLS, backup key, fail-closed secrets |
-| [`apiome-ui/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-ui/.env.example) | The web app: database, auth secret, sign-in providers, the admin console password |
-| [`apiome-rest/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-rest/.env.example) | The REST API |
-| [`apiome-mcp/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-mcp/.env.example) | The MCP server |
-| [`apiome-mock/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-mock/.env.example) | The mock runtime |
-| [`apiome-db/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-db/.env.example) | Migrations |
-| [`apiome-cli/.env.example`](https://github.com/apiome/apiome/blob/main/apiome-cli/.env.example) | The command-line client |
+| `docker-compose.env.example` | The Compose stack: database credentials, host ports, shared tokens |
+| `docker-compose.prod.env.example` | Production: domains, TLS, backup key, fail-closed secrets |
+| `apiome-ui/.env.example` | The web app: database, auth secret, sign-in providers, the admin console password |
+| `apiome-rest/.env.example` | The REST API |
+| `apiome-mcp/.env.example` | The MCP server |
+| `apiome-mock/.env.example` | The mock runtime |
+| `apiome-db/.env.example` | Migrations |
+| `apiome-cli/.env.example` | The command-line client |
 
 The admin console's own settings — `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` — are described on
 [The admin console](./admin-console.mdx).
@@ -200,7 +200,7 @@ python -m app.seal_linked_account_tokens
 ```
 
 The command prints counts only and is safe to run again. The
-[Production deployment](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md)
+Production deployment (`docs/runbooks/PRODUCTION_DEPLOY.md`)
 runbook has the Compose form of these steps.
 
 **Rotating the key.** Add a higher version to the map in both services —
@@ -212,9 +212,9 @@ token under the newest version. Remove the old version once the command reports
 
 | Runbook | Use it to |
 | --- | --- |
-| [Production deployment](https://github.com/apiome/apiome/blob/main/docs/runbooks/PRODUCTION_DEPLOY.md) | Promote the Compose stack to an HTTPS deployment with gated migrations and a rollback |
-| [Backup and disaster recovery](https://github.com/apiome/apiome/blob/main/docs/runbooks/BACKUP_AND_DR.md) | Take, verify and restore backups, and run DR drills |
-| [Private beta triage](https://github.com/apiome/apiome/blob/main/docs/runbooks/BETA_TRIAGE.md) | Triage feedback and incidents from beta and dogfood users |
+| Production deployment (`docs/runbooks/PRODUCTION_DEPLOY.md`) | Promote the Compose stack to an HTTPS deployment with gated migrations and a rollback |
+| Backup and disaster recovery (`docs/runbooks/BACKUP_AND_DR.md`) | Take, verify and restore backups, and run DR drills |
+| Private beta triage (`docs/runbooks/BETA_TRIAGE.md`) | Triage feedback and incidents from beta and dogfood users |
 
 ## Repair items with no captured source
 
@@ -294,7 +294,7 @@ When it fires, the **Export health** card names the targets that fail most, and
 - [Sign-in providers](./auth-providers.mdx) and [Property templates](./property-templates.mdx).
 
 These screens predate the Hive redesign; each page says so, and the redesign is tracked in
-[#5272](https://github.com/apiome/apiome/issues/5272).
+#5272.
 
 ## Where next
 

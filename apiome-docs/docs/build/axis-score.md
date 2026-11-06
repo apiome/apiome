@@ -156,11 +156,11 @@ findings are parity evidence, and scoring them as well would count one defect tw
 - Skipped rules (missing transcript, source, SBOM, or probe consent) never count as passes.
 - An OWASP API category none of whose rules evaluated reads *not assessed*, never 100.
 - Static trust-posture findings are **signals**, not proven exploits, until a consent-gated
-  probe demonstrates exploitability ([MCP probes](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/mcp_probes.md)).
+  probe demonstrates exploitability (MCP probes, `apiome-rest/docs/mcp_probes.md`).
 
 ## Related documentation
 
 - [Lint & quality](./lint-and-quality.md)
-- [Scanner evaluation corpus](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/scanner_evaluation.md) (CLX-4.3)
-- [MCP trust posture](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/mcp_trust_posture.md)
+- Scanner evaluation corpus, `apiome-rest/docs/scanner_evaluation.md` (CLX-4.3)
+- MCP trust posture, `apiome-rest/docs/mcp_trust_posture.md`
 - Built-in schema rules: [Built-in lint rules](./lint-rules.md)

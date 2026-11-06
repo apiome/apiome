@@ -9,7 +9,8 @@
  * - `apiome-docs/docs/<group>/<page>.md(x)` → the page on the site;
  * - `docs/guide/<page>.md`, the folder the guide moved out of, → the page it moved to, so a
  *   path stored before the move (an old lint result, a cached payload) still lands somewhere;
- * - anything else in the repository (`docs/runbooks/…`, a package README) → GitHub.
+ * - anything else in the repository (`docs/runbooks/…`, a package README) → the site's home page.
+ *   The docs never link to GitHub; a file the site does not carry has no page to open.
  *
  * The two callers that predate this module keep their own exported builders
  * (`buildLintRuleDocsHref`, `buildGovernanceDocsHref`), because each applies its own default
@@ -17,20 +18,16 @@
  */
 
 /** The published documentation site. Every guide link hangs off it. */
-export const DOCS_SITE_BASE = 'https://apiome.github.io/apiome/';
+export const DOCS_SITE_BASE = 'https://docs.apiome.dev/';
 
 /**
  * The site's release notes: one post per RC plus a rolling "Unreleased", generated from the
- * REST changelog and this app's What's new (DOCS-1.12, #5629). Linked from the What's new dialog,
- * on the site's own domain, docs.apiome.dev.
+ * REST changelog and this app's What's new (DOCS-1.12, #5629). Linked from the What's new dialog.
  */
-export const RELEASE_NOTES_URL = 'https://docs.apiome.dev/release-notes';
+export const RELEASE_NOTES_URL = `${DOCS_SITE_BASE}release-notes`;
 
 /** Repository directory holding the site's pages; a path under it is a page on the site. */
 export const DOCS_SITE_PAGES_ROOT = 'apiome-docs/docs/';
-
-/** Blob root of the default branch, for repository files that are not site pages. */
-export const GITHUB_DOCS_BASE = 'https://github.com/apiome/apiome/blob/main/';
 
 /**
  * Where each page of the old `docs/guide/` folder lives on the site, by file name.
@@ -105,8 +102,8 @@ function siteRoute(sitePage: string): string {
  *   `docs/guide/…` path from before the move resolves to the page's new home on the site.
  * @param docsAnchor Optional heading anchor within the page, without the `#`. Blank,
  *   whitespace-only and absent are all treated as "no anchor".
- * @returns The absolute URL — on the docs site for guide pages, on GitHub for any other
- *   repository file. Never relative: these open in a new tab, away from the app.
+ * @returns The absolute URL on the docs site: the page for a guide page, the site's home for any
+ *   other repository file. Never relative: these open in a new tab, away from the app.
  */
 export function buildDocsHref(docsPage: string, docsAnchor?: string | null): string {
   const page = docsPage.replace(/^\//, '');
@@ -122,5 +119,5 @@ export function buildDocsHref(docsPage: string, docsAnchor?: string | null): str
     return `${DOCS_SITE_BASE}${LEGACY_GUIDE_ROUTES[legacy[1]]}${suffix}`;
   }
 
-  return `${GITHUB_DOCS_BASE}${page}${suffix}`;
+  return DOCS_SITE_BASE;
 }

@@ -63,7 +63,7 @@ describe('LintAxisCoveragePanel', () => {
     const link = screen.getByTestId('lint-axis-algorithm-docs-link');
     expect(link).toHaveAttribute(
       'href',
-      'https://apiome.github.io/apiome/build/axis-score',
+      'https://docs.apiome.dev/build/axis-score',
     );
   });
 });

@@ -6,8 +6,8 @@ tags: [content]
 ---
 
 How every empty, loading, error and gated state in `apiome-ui` reads, and how that is kept
-true. The rule comes from [`DESIGN.md` §10](https://github.com/apiome/apiome/blob/main/docs/mockups/DESIGN.md#10-content--voice) (and the
-voice line in §2); HIVE-10.4 ([#5340](https://github.com/apiome/apiome/issues/5340)) brought
+true. The rule comes from `DESIGN.md` §10 (and the
+voice line in §2); HIVE-10.4 (#5340) brought
 every route into line with it.
 
 ## The rules
@@ -39,7 +39,7 @@ and handle the live regions, so a screen only has to supply the words.
 
 RC6 releases Catalog, Projects and Versions, so none of their reads may leave a blank area, a
 stale view, or an empty state that is really a failure (RC6-H3,
-[#6210](https://github.com/apiome/apiome/issues/6210)).
+#6210).
 
 | While the read is… | The screen shows |
 | --- | --- |
@@ -165,7 +165,7 @@ TypeScript compiler and fails when:
 The runtime behaviour is pinned in `tests/copy-voice-surfaces.test.tsx`.
 
 **The page gates**, `tests/page-header-gate.test.tsx` (HIVE-13.2,
-[#5615](https://github.com/apiome/apiome/issues/5615)), read every rendered page the test suites
+#5615), read every rendered page the test suites
 dump under `apiome-ui/e2e/fixtures/` and fail when:
 
 - a header breaks the limits in [Page headers and unavailable controls](#page-headers-and-unavailable-controls);

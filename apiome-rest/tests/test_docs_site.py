@@ -38,7 +38,7 @@ def test_site_url_drops_the_root_and_extension() -> None:
     page = guide_page("build", "lint-rules")
     assert site_url(page) == f"{DOCS_SITE_URL}build/lint-rules"
     assert site_url(page, "naming-schema-pascal-case") == (
-        "https://apiome.github.io/apiome/build/lint-rules#naming-schema-pascal-case"
+        "https://docs.apiome.dev/build/lint-rules#naming-schema-pascal-case"
     )
 
 

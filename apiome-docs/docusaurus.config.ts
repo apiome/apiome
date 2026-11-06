@@ -10,15 +10,13 @@ type PresetDocsOptions = Exclude<NonNullable<Preset.Options['docs']>, false>;
 /**
  * Where the site is served from.
  *
- * Defaults to the GitHub Pages project site (`https://apiome.github.io/apiome/`). Override
- * with `DOCS_URL` / `DOCS_BASE_URL` to serve it from a custom domain or a sub-path; the
- * base URL must start and end with `/`.
+ * Defaults to the published site, `https://docs.apiome.dev/`. Override with `DOCS_URL` /
+ * `DOCS_BASE_URL` to serve it from another host or a sub-path; the base URL must start and end
+ * with `/`. The site links nowhere but itself: no "Edit this page", no GitHub in the navbar or
+ * footer.
  */
-const SITE_URL = process.env.DOCS_URL ?? 'https://apiome.github.io';
-const BASE_URL = process.env.DOCS_BASE_URL ?? '/apiome/';
-
-/** The repository the "Edit this page" links and the navbar point at. */
-const REPO_URL = 'https://github.com/apiome/apiome';
+const SITE_URL = process.env.DOCS_URL ?? 'https://docs.apiome.dev';
+const BASE_URL = process.env.DOCS_BASE_URL ?? '/';
 
 /** The CLI's pages, which the CLI guide shows and Reference therefore leaves out. */
 const CLI_DOC_IDS = new Set(['reference/cli-quickstart', 'reference/cli/index']);
@@ -122,7 +120,6 @@ const config: Config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.ts',
           sidebarItemsGenerator: guideSidebarItems,
-          editUrl: `${REPO_URL}/tree/main/apiome-docs/`,
         },
         // The blog instance is the release notes (DOCS-1.12).
         blog: {
@@ -138,7 +135,6 @@ const config: Config = {
             type: ['rss', 'atom'],
             title: 'Apiome release notes',
           },
-          editUrl: `${REPO_URL}/tree/main/apiome-docs/`,
           onInlineTags: 'throw',
           onInlineAuthors: 'throw',
           onUntruncatedBlogPosts: 'ignore',
@@ -183,7 +179,6 @@ const config: Config = {
         {type: 'docSidebar', sidebarId: 'cli', position: 'left', label: 'CLI'},
         {type: 'docSidebar', sidebarId: 'reference', position: 'left', label: 'Reference'},
         {to: '/release-notes', label: 'Release notes', position: 'left'},
-        {href: REPO_URL, label: 'GitHub', position: 'right'},
       ],
     },
     footer: {
@@ -212,10 +207,6 @@ const config: Config = {
             {label: 'Reference', to: '/reference'},
             {label: 'Release notes', to: '/release-notes'},
           ],
-        },
-        {
-          title: 'Project',
-          items: [{label: 'GitHub', href: REPO_URL}],
         },
       ],
       copyright: `Copyright © 2021 - 2026 NobuData LLC`,

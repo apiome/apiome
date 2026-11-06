@@ -619,7 +619,7 @@ def render_index_page(
         "",
         f"The Apiome REST API, version **{version}** — {total} operations under {tag_count} tags"
         f"{untagged_note}, "
-        f"generated from [`{OPENAPI_PATH}`](https://github.com/apiome/apiome/blob/main/{OPENAPI_PATH}). "
+        f"generated from `{OPENAPI_PATH}`. "
         "Each tag has a page listing its endpoints with their parameters, request bodies, responses "
         "and the schemas they use. A running service also serves the same document interactively — "
         "see [API reference](../api-reference.md) for Swagger UI and ReDoc.",

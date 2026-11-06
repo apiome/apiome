@@ -16,7 +16,7 @@ import {
   collectSiteRoutes,
   compareVersions,
   demoteHeadings,
-  linkIssues,
+  prepareMarkdown,
   main,
   parseArgs,
   parseChangelog,
@@ -142,21 +142,11 @@ test('headings are demoted outside code fences only, and never past h6', () => {
   assert.equal(demoteHeadings(source, 1), '### A\n\n```\n## not a heading\n```\n\n###### Deep');
 });
 
-test('bare issue references become issue links; code, links and fragments are left alone', () => {
-  const source = [
-    '- Thing (#12, DOCS-1.1) and #13.',
-    '- Already [#14](https://example.com) linked; `#15` in code; see page#16.',
-    '```',
-    '#17 in a fence',
-    '```',
-  ].join('\n');
-  const linked = linkIssues(source, REPO);
-  assert.match(linked, /\(\[#12\]\(https:\/\/github\.com\/apiome\/apiome\/issues\/12\), DOCS-1\.1\)/);
-  assert.match(linked, / \[#13\]\(https:\/\/github\.com\/apiome\/apiome\/issues\/13\)\./);
-  assert.match(linked, /Already \[#14\]\(https:\/\/example\.com\)/);
-  assert.match(linked, /`#15`/);
-  assert.match(linked, /page#16/);
-  assert.match(linked, /\n#17 in a fence\n/);
+test('issue references stay plain text: the posts never link to GitHub', () => {
+  const source = '- Thing (#12, DOCS-1.1) and #13.';
+  const prepared = prepareMarkdown(source, changelogLinks, 0);
+  assert.equal(prepared, source);
+  assert.doesNotMatch(prepared, /github\.com/);
 });
 
 test('a site page links to its route, honouring an absolute slug', () => {
@@ -165,17 +155,17 @@ test('a site page links to its route, honouring an absolute slug', () => {
   assert.equal(siteRoute('getting-started/index.mdx', '---\nslug: /\n---\n'), '/');
 });
 
-test('relative links resolve to the site, the moved guide, or GitHub', () => {
+test('relative links resolve to the site or the moved guide, and nothing else resolves', () => {
   assert.equal(resolveLink('../apiome-docs/docs/build/axis-score.md', changelogLinks), '/build/axis-score');
   assert.equal(resolveLink('../docs/guide/axis-score.md#weights', changelogLinks), '/build/axis-score#weights');
-  assert.equal(resolveLink('./docs/contract_suite.md', changelogLinks), `${REPO}/blob/main/apiome-rest/docs/contract_suite.md`);
+  assert.equal(resolveLink('./docs/contract_suite.md', changelogLinks), null);
 });
 
-test('only relative links are rewritten', () => {
+test('only relative links are rewritten; one to a file off the site keeps its text and loses its link', () => {
   const source = '[a](./docs/x.md) [b](https://example.com) [c](/build) [d](#here) `[e](./code.md)`';
   assert.equal(
     rewriteRelativeLinks(source, changelogLinks),
-    `[a](${REPO}/blob/main/apiome-rest/docs/x.md) [b](https://example.com) [c](/build) [d](#here) \`[e](./code.md)\``,
+    `a [b](https://example.com) [c](/build) [d](#here) \`[e](./code.md)\``,
   );
 });
 
@@ -187,11 +177,12 @@ test("an RC's post carries its What's new and only its own REST versions", () =>
   });
   assert.match(post, /^---\nslug: rc4\ntitle: "Apiome RC4"\n/);
   assert.match(post, /\ndate: 2026-08-20\n/);
-  assert.match(post, /milestone\/1\?closed=1/);
+  assert.doesNotMatch(post, /github\.com/);
   assert.match(post, /<!-- truncate -->/);
   assert.match(post, /\n### Features\/Improvements\n/);
   assert.match(post, /\n### 1\.2\.1 — 2026-08-20\n\n#### Fixed\n/);
-  assert.match(post, /issues\/11\)/);
+  assert.match(post, /#11\b/);
+  assert.doesNotMatch(post, /issues\/11/);
   assert.doesNotMatch(post, /### 1\.3\.0|### 1\.2\.0/);
 });
 

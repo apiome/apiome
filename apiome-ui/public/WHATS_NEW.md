@@ -15,6 +15,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Versions** lists versions by version number, highest first, and the highest one reads **(latest)** beside its number; **Sorted by** still switches to created date or any other column
   - On a project's **Changes** tab, the newest published version reads **Latest** instead of **No changes** when nothing changed since the version before it
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
+- Documentation:
+  - Every docs link in the app — **Help & docs**, lint rule references, governance panels, What's new — opens **docs.apiome.dev** instead of GitHub
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
 - Tools:

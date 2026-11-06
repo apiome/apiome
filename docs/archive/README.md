@@ -7,12 +7,12 @@ write-ups, test journeys, demo scripts and planning notes from `apiome-ui/docs/`
 
 **They do not describe Apiome as it is.** Many describe screens, file names and behaviour that
 have since changed. For the product today, read the documentation site:
-**<https://apiome.github.io/apiome/>** (source: [`apiome-docs/`](../../apiome-docs/README.md)).
+**<https://docs.apiome.dev/>** (source: [`apiome-docs/`](../../apiome-docs/README.md)).
 
 - [`INVENTORY.md`](INVENTORY.md) lists every Markdown file that was triaged — kept, migrated or
   archived — with the site page that now covers each archived note's area.
 - Folders mirror where a file came from: `apiome-ui/`, `apiome-browse/`, `apiome-db/`, and
   `repository/` for the repository's own `docs/` folder.
 - Do not edit or add files here. Write new documentation on the site; see
-  [Contribute to the docs](https://apiome.github.io/apiome/admin/contribute-to-the-docs).
+  [Contribute to the docs](https://docs.apiome.dev/admin/contribute-to-the-docs).
   `scripts/check-loose-docs.sh` fails a pull request that adds a loose `.md` under `apiome-*/docs/`.

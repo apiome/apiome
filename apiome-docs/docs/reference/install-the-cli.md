@@ -58,7 +58,7 @@ If the installer says `~/.local/bin` is not on your `PATH`, **open a new termina
 `export PATH=…` line it prints.
 
 :::tip Read before you run
-The script is [`apiome-cli/install.sh`](https://github.com/apiome/apiome/blob/main/apiome-cli/install.sh)
+The script is `apiome-cli/install.sh`
 in the Apiome repository. Downloading it first, as at the top of this page, lets you read it before you
 run it:
 

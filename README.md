@@ -25,7 +25,7 @@ full list:
 
 ## Documentation
 
-The documentation site is **<https://apiome.github.io/apiome/>** — built with Docusaurus from
+The documentation site is **<https://docs.apiome.dev/>** — built with Docusaurus from
 [`apiome-docs/`](apiome-docs/README.md) and deployed from `main`. Run it locally with `yarn docs:dev`.
 The guides that used to live in `docs/guide/` are on the site now; [`docs/guide/README.md`](docs/guide/README.md)
 maps each old file to its new page.

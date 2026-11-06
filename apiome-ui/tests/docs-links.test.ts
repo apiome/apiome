@@ -15,8 +15,8 @@ import { join } from 'node:path';
 
 import {
   DOCS_SITE_BASE,
-  GITHUB_DOCS_BASE,
   LEGACY_GUIDE_ROUTES,
+  RELEASE_NOTES_URL,
   buildDocsHref,
 } from '@/app/utils/docsLinks';
 import { buildLintRuleDocsHref } from '@/app/utils/lint-rule-catalog';
@@ -70,17 +70,16 @@ describe('buildDocsHref', () => {
     expect(buildDocsHref('docs/guide/README.md')).toBe(DOCS_SITE_BASE);
   });
 
-  it('leaves other repository files, and unknown guide names, on GitHub', () => {
-    expect(buildDocsHref('docs/runbooks/PRODUCTION_DEPLOY.md')).toBe(
-      `${GITHUB_DOCS_BASE}docs/runbooks/PRODUCTION_DEPLOY.md`
-    );
-    expect(buildDocsHref('docs/guide/no-such-page.md')).toBe(
-      `${GITHUB_DOCS_BASE}docs/guide/no-such-page.md`
-    );
+  it('sends other repository files, and unknown guide names, to the site home — never GitHub', () => {
+    expect(buildDocsHref('docs/runbooks/PRODUCTION_DEPLOY.md')).toBe(DOCS_SITE_BASE);
+    expect(buildDocsHref('docs/guide/no-such-page.md', 'x')).toBe(DOCS_SITE_BASE);
     // An inherited object key is not a guide name.
-    expect(buildDocsHref('docs/guide/toString.md')).toBe(
-      `${GITHUB_DOCS_BASE}docs/guide/toString.md`
-    );
+    expect(buildDocsHref('docs/guide/toString.md')).toBe(DOCS_SITE_BASE);
+  });
+
+  it('lives on docs.apiome.dev', () => {
+    expect(DOCS_SITE_BASE).toBe('https://docs.apiome.dev/');
+    expect(RELEASE_NOTES_URL).toBe('https://docs.apiome.dev/release-notes');
   });
 
   it('is the base both older builders now resolve through', () => {

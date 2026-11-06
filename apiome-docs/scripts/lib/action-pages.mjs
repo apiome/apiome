@@ -4,14 +4,14 @@
  * `diff-action/README.md` and `mock-action/README.md` stay where GitHub expects an action's
  * README; the docs site shows the same text under Reference → CI. This module turns a README
  * into its page: front matter added, the `# Title` line moved into it, and every relative link
- * rewritten — to the docs page when it points into `apiome-docs/docs/`, otherwise to the file on
- * GitHub — so the page cannot link to a path the site does not serve. `scripts/sync-action-pages.mjs`
+ * rewritten — to the docs page when it points into `apiome-docs/docs/` or at a file the site
+ * carries (`repo-links.mjs`); any other file keeps its text and loses its link, because the docs
+ * never link to GitHub. `scripts/sync-action-pages.mjs`
  * writes the pages and, with `--check`, fails when a committed page no longer matches its README.
  */
 import path from 'node:path';
+import {sitePageForRepoPath} from './repo-links.mjs';
 
-/** Where repository files are browsed on GitHub. */
-export const REPO_BLOB_URL = 'https://github.com/apiome/apiome/blob/main';
 
 /** The pages' folder, relative to the repository root. */
 export const ACTION_PAGES_DIR = 'apiome-docs/docs/reference/ci';
@@ -51,9 +51,9 @@ const DOCS_ROOT = 'apiome-docs/docs/';
  *
  * @param {string} target - The link target as written, e.g. `../apiome-cli/README.md#diff`.
  * @param {string} readme - The README's path relative to the repository root.
- * @returns {string} The target to use on the page: unchanged for absolute URLs and same-page
- *   anchors; a relative docs-page link when it resolves into `apiome-docs/docs/`; otherwise the
- *   file's GitHub URL.
+ * @returns {string | null} The target to use on the page: unchanged for absolute URLs and
+ *   same-page anchors; a relative docs-page link when it resolves into `apiome-docs/docs/` or to a
+ *   file the site carries; otherwise `null` — the caller keeps the text and drops the link.
  */
 export function rewriteLink(target, readme) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#')) return target;
@@ -63,7 +63,9 @@ export function rewriteLink(target, readme) {
   if (resolved.startsWith(DOCS_ROOT)) {
     return `${path.posix.relative(ACTION_PAGES_DIR, resolved)}${suffix}`;
   }
-  return `${REPO_BLOB_URL}/${resolved}${suffix}`;
+  const page = sitePageForRepoPath(file.endsWith('/') ? `${resolved}/` : resolved, anchor ?? '');
+  if (page === null) return null;
+  return path.posix.relative(ACTION_PAGES_DIR, `${DOCS_ROOT}${page}`);
 }
 
 /**
@@ -78,7 +80,10 @@ export function renderActionPage(spec, source) {
     .replace(/^﻿/, '')
     // The first `# Title` line becomes the front-matter title.
     .replace(/^# [^\n]*\n+/, '')
-    .replace(/(\]\()([^)\s]+)(\))/g, (_match, open, target, close) => `${open}${rewriteLink(target, spec.readme)}${close}`)
+    .replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_match, label, target) => {
+      const rewritten = rewriteLink(target, spec.readme);
+      return rewritten === null ? label : `[${label}](${rewritten})`;
+    })
     .trimEnd();
   const frontMatter = [
     '---',
@@ -90,7 +95,7 @@ export function renderActionPage(spec, source) {
     '---',
   ].join('\n');
   const note =
-    `> This page is [\`${spec.readme}\`](${REPO_BLOB_URL}/${spec.readme}), copied by ` +
+    `> This page is \`${spec.readme}\`, copied by ` +
     '`yarn workspace apiome-docs sync:action-pages` — edit the README, not this page.';
   return `${frontMatter}\n\n${note}\n\n${body}\n`;
 }

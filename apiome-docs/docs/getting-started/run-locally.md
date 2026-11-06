@@ -28,7 +28,7 @@ thing, plus a short *verify* step.
 ## Where next
 
 [Sign in](./sign-in.mdx) with `ada@example.com` / `apiome-dev`, then follow the Getting started pages
-in order — they walk the spine from import to a published, browsable spec. The project
-[README](https://github.com/apiome/apiome/blob/main/README.md) and the
-[Golden Path](https://github.com/apiome/apiome/blob/main/docs/GOLDEN_PATH.md) cover the same path from
+in order — they walk the spine from import to a published, browsable spec. The repository's
+`README.md` and the
+[Golden Path](./index.mdx) cover the same path from
 the repository side.

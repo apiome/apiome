@@ -170,7 +170,7 @@ These links come from a versioned, reviewed server-side registry, not ad-hoc UI 
 The registry version and the emitter version that produced the evidence are shown in
 the drawer, so the evidence is attributable to an exact contract. (Governance of these
 links — review and version-update ownership — is documented for contributors in
-[`apiome-rest/docs/export_projection_author_guide.md`](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_projection_author_guide.md).)
+`apiome-rest/docs/export_projection_author_guide.md`.)
 
 ## Unavailable evidence
 
@@ -266,7 +266,7 @@ paging — the machine-readable twin of what the projection map shows. In CI, tr
 snapshot hash as the identity of what you approved: a job submitted with an
 acknowledged snapshot that no longer matches fails with `STALE_PREVIEW` (exit code 1)
 rather than silently exporting something different. See the
-[CLI README](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md#export-a-version-to-a-target-format) for the
+[`apiome export` reference](../reference/cli/export.md) for the
 full flag reference.
 
 ## Worked examples
@@ -295,7 +295,7 @@ Four situations you will actually meet, one per kind of outcome:
 Sticky notes and callouts drawn on the Studio schema canvas are part of the design
 record, so the Studio generators serialize them into exported specs as vendor
 extensions and restore them on import (Designer DUX-2.1,
-[apiome/private-suite#2394](https://github.com/apiome/private-suite/issues/2394)):
+apiome/private-suite#2394):
 
 - **`x-apiome-note`** — schema-level. An **array** of notes attached to that class;
   attachment is implicit from the location (no IDs), so it survives systems that assign
@@ -393,6 +393,6 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
 - [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity
 - [CLI quick-start](../reference/cli-quickstart.md) — CLI setup and command groups
-- [`apiome-cli/README.md`](https://github.com/apiome/apiome/blob/main/apiome-cli/README.md) — full `export` flag reference
-- [`apiome-rest/docs/export_projection_author_guide.md`](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_projection_author_guide.md)
+- [`apiome export`](../reference/cli/export.md) — full `export` flag reference
+- `apiome-rest/docs/export_projection_author_guide.md`
   — the contract emitter authors must satisfy for this evidence to stay truthful

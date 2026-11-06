@@ -4,7 +4,7 @@ import path from 'node:path';
 import {describe, it} from 'node:test';
 import {fileURLToPath} from 'node:url';
 
-import {ACTION_PAGES, ACTION_PAGES_DIR, REPO_BLOB_URL, renderActionPage, rewriteLink} from '../scripts/lib/action-pages.mjs';
+import {ACTION_PAGES, ACTION_PAGES_DIR, renderActionPage, rewriteLink} from '../scripts/lib/action-pages.mjs';
 
 const REPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -20,9 +20,14 @@ describe('rewriteLink', () => {
     );
     assert.equal(rewriteLink('../apiome-docs/docs/reference/ci/ci-diff-gate.md', 'diff-action/README.md'), 'ci-diff-gate.md');
   });
-  it('points any other repository file at GitHub', () => {
-    assert.equal(rewriteLink('recipes/.gitlab-ci.yml', 'diff-action/README.md'), `${REPO_BLOB_URL}/diff-action/recipes/.gitlab-ci.yml`);
-    assert.equal(rewriteLink('../apiome-cli/README.md', 'diff-action/README.md'), `${REPO_BLOB_URL}/apiome-cli/README.md`);
+  it('points a file the site carries at its page', () => {
+    assert.equal(rewriteLink('recipes/.gitlab-ci.yml', 'diff-action/README.md'), 'ci-gitlab-bitbucket.md');
+    assert.equal(rewriteLink('../apiome-cli/README.md', 'diff-action/README.md'), '../cli/index.mdx');
+    assert.equal(rewriteLink('../apiome-cli/README.md#classified-diff-ci-gate', 'diff-action/README.md'), '../cli/diff.md');
+  });
+  it('drops the link to any other repository file — the docs never link to GitHub', () => {
+    assert.equal(rewriteLink('../.github/workflows/diff-action.yml', 'diff-action/README.md'), null);
+    assert.equal(rewriteLink('../docs/runbooks/PRODUCTION_DEPLOY.md', 'mock-action/README.md'), null);
   });
 });
 
@@ -36,7 +41,8 @@ describe('renderActionPage', () => {
     assert.doesNotMatch(page, /^# apiome\/diff-action/m);
   });
   it('rewrites the links and keeps the rest', () => {
-    assert.match(page, new RegExp(`\\(${REPO_BLOB_URL.replace(/[/.]/g, '\\$&')}/apiome-cli/README\\.md\\)`));
+    assert.match(page, /\[`apiome diff`\]\(\.\.\/cli\/index\.mdx\)/);
+    assert.doesNotMatch(page, /github\.com/);
     assert.match(page, /\n## Usage\n$/);
   });
 });

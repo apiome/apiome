@@ -43,7 +43,7 @@ on every change to `apiome-ui/`. It needs no database and no session:
 ### Catalog, Projects and Versions
 
 RC6 releases Catalog, Projects and Versions, so the gate holds every one of their screens and
-dialogs with no exceptions (RC6-H2, [#6209](https://github.com/apiome/apiome/issues/6209)):
+dialogs with no exceptions (RC6-H2, #6209):
 
 | Surface | Ledger entry | Fixtures |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Every `ui/Dialog` does this, whether or not it has a Radix trigger; the unit tes
 ### Export studio
 
 The released export surfaces are held to the same bar, with no file exempt (X3,
-[#6224](https://github.com/apiome/apiome/issues/6224)):
+#6224):
 
 | Surface | Ledger entry | Fixtures |
 | --- | --- | --- |

@@ -21,10 +21,10 @@ docs — pages, screenshots, reference, release notes and the gate — and the
 | --- | --- |
 | How to use Apiome — every page of this site | `apiome-docs/docs/` |
 | Contributor references that code points at by path (SPI guides, wire contracts, the sign-in provider guide) | `apiome-rest/docs/`, `apiome-mcp/docs/` and a few files in `apiome-ui/docs/` and `apiome-db/docs/` |
-| Old implementation notes — fix summaries, feature write-ups, test journeys | [`docs/archive/`](https://github.com/apiome/apiome/tree/main/docs/archive), read-only |
+| Old implementation notes — fix summaries, feature write-ups, test journeys | `docs/archive/`, read-only |
 
 The archive is history: it does **not** describe the product as it is. Its
-[inventory](https://github.com/apiome/apiome/blob/main/docs/archive/INVENTORY.md) lists every
+inventory (`docs/archive/INVENTORY.md`) lists every
 triaged file and the page of this site that now covers its area.
 
 **Do not add Markdown notes beside the code.** `scripts/check-loose-docs.sh` runs on every pull
@@ -58,7 +58,7 @@ The site is four guides, each with its own sidebar: the **User guide** (`getting
 3. Write steps with bold UI nouns (“**click Import to catalog**”) and quote buttons as they read in
    the product.
 
-The workspace [README](https://github.com/apiome/apiome/blob/main/apiome-docs/README.md) covers the
+The workspace's `apiome-docs/README.md` covers the
 groups, the components and the generated pages in full.
 
 Some pages are **generated** and say so in their front matter (`generated:`): the REST, CLI and MCP

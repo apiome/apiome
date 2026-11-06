@@ -159,17 +159,17 @@ describe('the guide catalog', () => {
 describe('guideHref', () => {
   it('links out to the page on the documentation site', () => {
     expect(guideHref(entry('import-a-spec'))).toBe(
-      'https://apiome.github.io/apiome/bring-in/import-a-spec'
+      'https://docs.apiome.dev/bring-in/import-a-spec'
     );
   });
 
   it('links the guide index to the site home', () => {
-    expect(guideHref(entry('README'))).toBe('https://apiome.github.io/apiome/');
+    expect(guideHref(entry('README'))).toBe('https://docs.apiome.dev/');
   });
 
   it('builds an absolute docs-site URL for every entry', () => {
     for (const guide of GUIDE_ENTRIES) {
-      expect(guideHref(guide)).toMatch(/^https:\/\/apiome\.github\.io\/apiome\//);
+      expect(guideHref(guide)).toMatch(/^https:\/\/docs\.apiome\.dev\//);
     }
   });
 });

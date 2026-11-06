@@ -4235,7 +4235,7 @@ characters when you download it. Every download is sent as an attachment, and br
 ## Verify
 
 The exported document is valid OpenAPI and contains the classes and paths you edited. The
-[Golden Path](https://github.com/apiome/apiome/blob/main/docs/GOLDEN_PATH.md) does exactly this — it exports via the real CLI and re-validates the
+[Golden Path](../getting-started/index.mdx) does exactly this — it exports via the real CLI and re-validates the
 downloaded document with `openapi-spec-validator`.
 
 ## Test-drive it
@@ -4253,7 +4253,7 @@ POST /v1/export/{tenant_slug}/mock
 
 The mock expires by itself, and servers without the Mock Server deployed report the capability as
 unavailable rather than offering a button that cannot work. See
-[export_mock_test_drive.md](https://github.com/apiome/apiome/blob/main/apiome-rest/docs/export_mock_test_drive.md) for the endpoints,
+export_mock_test_drive.md (`apiome-rest/docs/export_mock_test_drive.md`) for the endpoints,
 the lifetime rules and the configuration, and [Mock try-out](./mock-try-out.mdx#test-drive-an-export) for the panel.
 
 ## Related

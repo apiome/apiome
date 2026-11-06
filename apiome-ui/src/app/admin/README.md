@@ -33,7 +33,7 @@ Internal administration portal for Apiome.
 
 ## Documentation
 
-See [Admin console](https://apiome.github.io/apiome/admin/admin-console) on the documentation site; the original portal guide is archived at `docs/archive/apiome-ui/SUPER_ADMIN_PORTAL_GUIDE.md`.
+See [Admin console](https://docs.apiome.dev/admin/admin-console) on the documentation site; the original portal guide is archived at `docs/archive/apiome-ui/SUPER_ADMIN_PORTAL_GUIDE.md`.
 
 ## For Internal Use Only
 
