@@ -6,7 +6,11 @@ FROM --platform=$BUILDPLATFORM node:alpine AS deps
 WORKDIR /app
 
 # Install dependencies for native modules (bcrypt, pg)
-RUN apk add --no-cache libc6-compat python3 make g++
+# Retried: a CDN or DNS blip fetching the package index otherwise fails the whole build.
+RUN for attempt in 1 2 3; do \
+      apk add --no-cache libc6-compat python3 make g++ && exit 0; \
+      echo "apk add failed (attempt $attempt), retrying" >&2; sleep 15; \
+    done; exit 1
 
 # Copy package files only
 COPY package.json ./
@@ -16,7 +20,13 @@ COPY package.json ./
 # on every build: `--legacy-peer-deps` keeps a newly published upstream peer range (e.g.
 # @better-auth/core 1.7.x against @better-auth/sso's exact @better-auth/utils pin) from failing the
 # build with ERESOLVE, and package.json `overrides` pins the versions the app is tested with.
-RUN npm install --legacy-peer-deps
+#
+# Retried as a whole: with no lockfile a just-published version can be listed in the registry before
+# its tarball reaches the CDN (a 404 npm itself does not retry), and a network blip fails it too.
+RUN for attempt in 1 2 3; do \
+      npm install --legacy-peer-deps && exit 0; \
+      echo "npm install failed (attempt $attempt), retrying" >&2; sleep 30; \
+    done; exit 1
 
 
 # Stage 2: Builder
