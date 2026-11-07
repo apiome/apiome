@@ -207,6 +207,11 @@ beforeEach(() => {
   clipboardFails = false;
   mockSessionUser = { user_id: 'u-ada', email: 'ada@acme.io', current_tenant_id: TENANT_ID };
   stubClipboard();
+  // The MCP tab reads its keys through `fetch`; this suite is about the REST tab, so the MCP
+  // list is empty. `api-keys-mcp-tab.test.tsx` covers the MCP tab.
+  global.fetch = jest.fn(async () => ({
+    json: async () => ({ success: true, data: { keys: [] } }),
+  })) as unknown as typeof fetch;
 });
 
 afterEach(() => {
@@ -267,7 +272,9 @@ describe('the API keys page', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'API keys' })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
     expect(
-      screen.getByText('Keys for external REST access. Prefer scoped CI tokens for pipelines.')
+      screen.getByText(
+        'Keys for the REST API and for agents calling the MCP server. Prefer scoped CI tokens for pipelines.'
+      )
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /API docs/ })).toHaveAttribute(
       'href',
@@ -841,6 +848,10 @@ describe('the docs fixtures', () => {
       scopes: ['diff:read'],
     });
     mockSessionUser = { user_id: 'u-priya', email: 'priya.raman@northwind.io', current_tenant_id: TENANT_ID };
+    // Two MCP keys, so the MCP server tab's count matches its own screenshot.
+    global.fetch = jest.fn(async () => ({
+      json: async () => ({ success: true, data: { keys: [{ id: 'm-1' }, { id: 'm-2' }] } }),
+    })) as unknown as typeof fetch;
     (loadTenantMembershipContext as jest.Mock).mockImplementation(async () => ({
       tenants: [{ id: TENANT_ID, name: 'Northwind', slug: 'northwind' }],
       adminTenantIds: [TENANT_ID],

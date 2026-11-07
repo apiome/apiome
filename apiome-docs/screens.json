@@ -1147,6 +1147,12 @@
       "data": "fixture:hive-a11y/api-keys.html"
     },
     {
+      "id": "api-keys-mcp",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"mcp-keys-table\"]",
+      "data": "fixture:hive-a11y/api-keys-mcp.html"
+    },
+    {
       "id": "api-keys-create-dialog",
       "route": "/ade/dashboard/api-keys",
       "waitFor": "[data-testid=\"api-key-create-dialog\"]",

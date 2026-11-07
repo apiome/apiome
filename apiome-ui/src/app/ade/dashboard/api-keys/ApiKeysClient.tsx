@@ -8,9 +8,16 @@ import { loadTenantMembershipContext } from '@lib/auth/tenant-membership-context
 import type { ShortcutBinding } from '@lib/shortcuts';
 import { useShortcuts } from '@/app/hooks/useShortcuts';
 
+import {
+  createMcpKey,
+  fetchMcpKeys,
+  revokeMcpKey,
+  type McpApiKeyMetadata,
+} from '@/app/ade/dashboard/tenants/mcpKeysApi';
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { OPEN_ACTIONS, useOpenAction } from '@/app/components/shell/openActions';
@@ -28,10 +35,17 @@ import {
   ApiKeySecretDialog,
   ApiKeysTable,
   CreateApiKeyDialog,
+  CreateMcpKeyDialog,
   DeleteApiKeyDialog,
   DisableApiKeyDialog,
+  McpKeyReferenceCard,
+  McpKeysTable,
+  RevokeMcpKeyDialog,
+  describeCreatedMcpKey,
+  mcpKeyExpiresAt,
   type ApiKeyDraft,
   type ApiKeyRecord,
+  type McpKeyDraft,
 } from '@/app/components/ade/apiKeys';
 
 /**
@@ -56,6 +70,16 @@ import {
  * cached copy in the table, no query parameter — which is what makes the ticket's first
  * acceptance criterion structural rather than a promise.
  *
+ * ### Two kinds of key, one page
+ *
+ * The **REST API** tab holds the keys that call the REST API (`api_keys`); the **MCP server**
+ * tab holds the MCP API keys that agents and MCP hosts call Apiome's MCP server with
+ * (`mcp_api_keys`). The server accepts neither in place of the other, so the tabs keep them
+ * apart while the page keeps them together — a reader looking for "the API key" finds both
+ * and is told which one each surface wants. The two lists load independently, so one failing
+ * read cannot empty the other tab. MCP keys are tenant-admin only on the server; a member
+ * sees the tab with a sentence saying so rather than a refused read.
+ *
  * ### Errors are the overlay's, the load's error is the table's
  *
  * Every write hands its failure back to the dialog that asked for it, so the message appears
@@ -74,6 +98,10 @@ const TENANTS_ROUTE = '/ade/dashboard/tenants';
 /** The REST reference, which the header's secondary action opens. */
 const API_DOCS_ROUTE = '/ade/dashboard/help';
 
+/** The header's one line, for both tabs. */
+const PAGE_DESCRIPTION =
+  'Keys for the REST API and for agents calling the MCP server. Prefer scoped CI tokens for pipelines.';
+
 /** What the workspace is called before its name is known. */
 const FALLBACK_TENANT_NAME = 'this workspace';
 
@@ -88,7 +116,18 @@ const FALLBACK_TENANT_NAME = 'this workspace';
 const CREATE_SHORTCUT_ID = 'api-keys-create';
 
 /** Which overlay, if any, is open over the page. */
-type ApiKeyOverlay = 'none' | 'create' | 'disable' | 'delete';
+type ApiKeyOverlay = 'none' | 'create' | 'disable' | 'delete' | 'mcp-create' | 'mcp-revoke';
+
+/** The page's two tabs. */
+type ApiKeyTab = 'rest' | 'mcp';
+
+/**
+ * Whether the reader may manage this workspace's MCP keys.
+ *
+ * `pending` until the membership context answers; `unverified` when it could not, in which
+ * case the list is read anyway and the server's answer decides.
+ */
+type McpKeyAccess = 'pending' | 'admin' | 'member' | 'unverified';
 
 /**
  * Turn a caught write failure into the sentence to show.
@@ -158,7 +197,22 @@ export default function ApiKeysClient() {
     value: string;
     summary: string;
     prefix: string;
+    title: string;
   } | null>(null);
+
+  const [tab, setTab] = React.useState<ApiKeyTab>('rest');
+
+  const [mcpKeys, setMcpKeys] = React.useState<McpApiKeyMetadata[]>([]);
+  const [mcpLoading, setMcpLoading] = React.useState(true);
+  const [mcpLoadError, setMcpLoadError] = React.useState<string | null>(null);
+  const [mcpAccess, setMcpAccess] = React.useState<McpKeyAccess>('pending');
+  const [mcpBusyKeyId, setMcpBusyKeyId] = React.useState<string | null>(null);
+  const [overlayMcpKeyId, setOverlayMcpKeyId] = React.useState<string | null>(null);
+
+  const overlayMcpKey = React.useMemo(
+    () => mcpKeys.find((key) => key.id === overlayMcpKeyId) ?? null,
+    [mcpKeys, overlayMcpKeyId]
+  );
 
   const overlayKey = React.useMemo(
     () => keys.find((key) => key.id === overlayKeyId) ?? null,
@@ -192,7 +246,8 @@ export default function ApiKeysClient() {
 
   // The workspace's name is context, not content: it appears in the breadcrumb and in one
   // sentence on the reference card, and neither is worth failing the page for. A refused
-  // read leaves the fallback wording in place.
+  // read leaves the fallback wording in place. The same context says whether the reader
+  // administers the workspace, which is what MCP keys need.
   React.useEffect(() => {
     if (!currentTenantId) return;
     let cancelled = false;
@@ -201,40 +256,77 @@ export default function ApiKeysClient() {
         if (cancelled) return;
         const match = context.tenants.find((tenant) => tenant.id === currentTenantId);
         if (match?.name) setTenantName(match.name);
+        setMcpAccess(context.adminTenantIds.includes(currentTenantId) ? 'admin' : 'member');
       })
       .catch(() => {
-        /* The fallback name is already in place. */
+        /* The fallback name is already in place; the MCP read decides access itself. */
+        if (!cancelled) setMcpAccess('unverified');
       });
     return () => {
       cancelled = true;
     };
   }, [currentTenantId]);
 
+  const loadMcpKeys = React.useCallback(async () => {
+    if (!currentTenantId || mcpAccess === 'pending') return;
+    if (mcpAccess === 'member') {
+      setMcpKeys([]);
+      setMcpLoading(false);
+      return;
+    }
+    setMcpLoading(true);
+    setMcpLoadError(null);
+    try {
+      const list = await fetchMcpKeys();
+      setMcpKeys(list.keys ?? []);
+      setNow(new Date());
+    } catch (error) {
+      setMcpKeys([]);
+      setMcpLoadError(describeFailure(error, 'Failed to load MCP keys'));
+    } finally {
+      setMcpLoading(false);
+    }
+  }, [currentTenantId, mcpAccess]);
+
+  React.useEffect(() => {
+    void loadMcpKeys();
+  }, [loadMcpKeys]);
+
   // ---- writes ---------------------------------------------------------------------------
 
   const openCreate = React.useCallback(() => setOverlay('create'), []);
+  const openMcpCreate = React.useCallback(() => setOverlay('mcp-create'), []);
+  const canCreateMcp = mcpAccess !== 'member';
+  /** What the header's button and `N` create: a key of the tab the reader is on. */
+  const openCreateForTab = tab === 'mcp' ? openMcpCreate : openCreate;
 
   /*
    * The command palette's "Create API key…" action (HIVE-3.6, #5292). The palette navigates
    * here with `?open=new-api-key`; this page opens the dialog it already owns, and
    * `useOpenAction` strips the parameter so a reload does not reopen it.
    */
-  useOpenAction(OPEN_ACTIONS.newApiKey, openCreate);
+  useOpenAction(
+    OPEN_ACTIONS.newApiKey,
+    React.useCallback(() => {
+      setTab('rest');
+      openCreate();
+    }, [openCreate])
+  );
 
   const createShortcuts = React.useMemo<readonly ShortcutBinding[]>(
     () =>
-      currentTenantId
+      currentTenantId && (tab === 'rest' || canCreateMcp)
         ? [
             {
               id: CREATE_SHORTCUT_ID,
               scope: 'list',
-              description: 'Create API key',
+              description: tab === 'mcp' ? 'Create MCP key' : 'Create API key',
               chord: { key: 'n' },
-              run: openCreate,
+              run: openCreateForTab,
             },
           ]
         : [],
-    [currentTenantId, openCreate]
+    [currentTenantId, tab, canCreateMcp, openCreateForTab]
   );
   useShortcuts(createShortcuts);
 
@@ -253,6 +345,7 @@ export default function ApiKeysClient() {
           value: created.secret,
           summary: describeCreatedApiKey(draft),
           prefix: displayApiKeyPrefix(created.keyPrefix),
+          title: 'API key created',
         });
         await loadKeys();
         return null;
@@ -330,6 +423,44 @@ export default function ApiKeysClient() {
     [runWrite]
   );
 
+  const handleMcpCreate = React.useCallback(
+    async (draft: McpKeyDraft): Promise<string | null> => {
+      try {
+        const created = await createMcpKey({
+          label: draft.label.trim(),
+          expires_at: mcpKeyExpiresAt(draft.expiresInDays),
+        });
+        setSecret({
+          value: created.secret,
+          summary: describeCreatedMcpKey(draft),
+          prefix: displayApiKeyPrefix(created.prefix),
+          title: 'MCP key created',
+        });
+        await loadMcpKeys();
+        return null;
+      } catch (error) {
+        return describeFailure(error, 'Failed to create MCP key');
+      }
+    },
+    [loadMcpKeys]
+  );
+
+  const handleMcpRevoke = React.useCallback(
+    async (key: McpApiKeyMetadata): Promise<string | null> => {
+      setMcpBusyKeyId(key.id);
+      try {
+        await revokeMcpKey(key.id);
+        await loadMcpKeys();
+        return null;
+      } catch (error) {
+        return describeFailure(error, 'Failed to revoke MCP key');
+      } finally {
+        setMcpBusyKeyId(null);
+      }
+    },
+    [loadMcpKeys]
+  );
+
   const closeOverlay = React.useCallback(() => setOverlay('none'), []);
 
   // ---- the no-tenant state ---------------------------------------------------------------
@@ -340,7 +471,7 @@ export default function ApiKeysClient() {
         <PageHeader
           breadcrumb={[{ label: 'Home', href: HOME_ROUTE }, { label: 'Workspace' }, { label: 'API keys' }]}
           title="API keys"
-          description="Keys for external REST access. Prefer scoped CI tokens for pipelines."
+          description={PAGE_DESCRIPTION}
         />
         <PageBody>
           <div className="akey-gate" data-testid="api-keys-no-tenant">
@@ -371,7 +502,7 @@ export default function ApiKeysClient() {
           { label: 'API keys' },
         ]}
         title="API keys"
-        description="Keys for external REST access. Prefer scoped CI tokens for pipelines."
+        description={PAGE_DESCRIPTION}
         actions={
           <>
             <Button variant="ghost" asChild>
@@ -380,10 +511,19 @@ export default function ApiKeysClient() {
                 API docs
               </a>
             </Button>
-            <Button kbd="N" data-testid="api-keys-create" onClick={openCreate}>
-              <Plus aria-hidden />
-              Create API key
-            </Button>
+            {tab === 'mcp' ? (
+              canCreateMcp && (
+                <Button kbd="N" data-testid="mcp-keys-create" onClick={openMcpCreate}>
+                  <Plus aria-hidden />
+                  Create MCP key
+                </Button>
+              )
+            ) : (
+              <Button kbd="N" data-testid="api-keys-create" onClick={openCreate}>
+                <Plus aria-hidden />
+                Create API key
+              </Button>
+            )}
           </>
         }
       />
@@ -404,39 +544,85 @@ export default function ApiKeysClient() {
           </Alert>
         )}
 
-        {notice && (
-          <Alert
-            variant={notice.tone}
-            data-testid="api-keys-expiry-banner"
-            actions={
-              <Button variant="outline" size="sm" onClick={openCreate}>
-                <KeyRound aria-hidden />
-                Create replacement
-              </Button>
-            }
-          >
-            <span>
-              <strong>{notice.title}</strong> {notice.body}
-            </span>
-          </Alert>
-        )}
+        <Tabs value={tab} onValueChange={(value) => setTab(value as ApiKeyTab)}>
+          <TabsList aria-label="Key type">
+            <TabsTrigger value="rest" data-testid="api-keys-tab-rest">
+              REST API
+              {!loading && !loadError && <TabsCount>{keys.length}</TabsCount>}
+            </TabsTrigger>
+            <TabsTrigger value="mcp" data-testid="api-keys-tab-mcp">
+              MCP server
+              {mcpAccess !== 'member' && !mcpLoading && !mcpLoadError && (
+                <TabsCount>{mcpKeys.length}</TabsCount>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        <ApiKeysTable
-          keys={keys}
-          loading={loading}
-          error={loadError}
-          onRetry={() => void loadKeys()}
-          busyKeyId={busyKeyId}
-          now={now}
-          onToggleEnabled={handleToggleEnabled}
-          onDelete={(key) => {
-            setOverlayKeyId(key.id);
-            setOverlay('delete');
-          }}
-          onCreate={openCreate}
-        />
+          <TabsContent value="rest" className="akey-tab-panel">
+            {notice && (
+              <Alert
+                variant={notice.tone}
+                data-testid="api-keys-expiry-banner"
+                actions={
+                  <Button variant="outline" size="sm" onClick={openCreate}>
+                    <KeyRound aria-hidden />
+                    Create replacement
+                  </Button>
+                }
+              >
+                <span>
+                  <strong>{notice.title}</strong> {notice.body}
+                </span>
+              </Alert>
+            )}
 
-        <ApiKeyReferenceCards keys={keys} tenantName={tenantName} />
+            <ApiKeysTable
+              keys={keys}
+              loading={loading}
+              error={loadError}
+              onRetry={() => void loadKeys()}
+              busyKeyId={busyKeyId}
+              now={now}
+              onToggleEnabled={handleToggleEnabled}
+              onDelete={(key) => {
+                setOverlayKeyId(key.id);
+                setOverlay('delete');
+              }}
+              onCreate={openCreate}
+            />
+
+            <ApiKeyReferenceCards keys={keys} tenantName={tenantName} />
+          </TabsContent>
+
+          <TabsContent value="mcp" className="akey-tab-panel">
+            {mcpAccess === 'member' ? (
+              <div className="akey-gate" data-testid="mcp-keys-admin-only">
+                <EmptyState
+                  icon={<Lock aria-hidden />}
+                  title="Only workspace administrators manage MCP keys"
+                  description="Ask a workspace administrator for an MCP key."
+                />
+              </div>
+            ) : (
+              <>
+                <McpKeysTable
+                  keys={mcpKeys}
+                  loading={mcpLoading}
+                  error={mcpLoadError}
+                  onRetry={() => void loadMcpKeys()}
+                  busyKeyId={mcpBusyKeyId}
+                  now={now}
+                  onRevoke={(key) => {
+                    setOverlayMcpKeyId(key.id);
+                    setOverlay('mcp-revoke');
+                  }}
+                  onCreate={openMcpCreate}
+                />
+                <McpKeyReferenceCard tenantName={tenantName} workspacesHref={TENANTS_ROUTE} />
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
       </PageBody>
 
       <CreateApiKeyDialog
@@ -453,6 +639,7 @@ export default function ApiKeysClient() {
         secret={secret?.value ?? ''}
         summary={secret?.summary ?? ''}
         prefix={secret?.prefix ?? ''}
+        title={secret?.title}
       />
 
       <DisableApiKeyDialog
@@ -467,6 +654,19 @@ export default function ApiKeysClient() {
         onOpenChange={(open) => !open && closeOverlay()}
         apiKey={overlayKey}
         onConfirm={handleDelete}
+      />
+
+      <CreateMcpKeyDialog
+        open={overlay === 'mcp-create'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        onSubmit={handleMcpCreate}
+      />
+
+      <RevokeMcpKeyDialog
+        open={overlay === 'mcp-revoke'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        mcpKey={overlayMcpKey}
+        onConfirm={handleMcpRevoke}
       />
     </Page>
   );

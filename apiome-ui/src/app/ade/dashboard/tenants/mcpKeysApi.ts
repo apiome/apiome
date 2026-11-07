@@ -1,6 +1,6 @@
 /**
  * Client helpers for tenant MCP API keys + capabilities (MTG-4.3 / #4782,
- * MTG-4.4 / #4783 create).
+ * MTG-4.4 / #4783 create; revoke for the API keys page's MCP tab).
  *
  * Talks to `/api/tenants/mcp-keys` proxies, which forward to MTG-3.2 / MTG-3.3
  * REST. Types mirror REST snake_case. List metadata uses `capability_mode`;
@@ -92,6 +92,14 @@ export async function createMcpKey(
     body: JSON.stringify(body),
   });
   return readProxyJson<McpApiKeyCreateResponse>(res);
+}
+
+/** Revoke an MCP API key (admin only). MCP auth refuses it from the next call. */
+export async function revokeMcpKey(keyId: string): Promise<void> {
+  const res = await fetch(`/api/tenants/mcp-keys/${encodeURIComponent(keyId)}`, {
+    method: 'DELETE',
+  });
+  await readProxyJson<null>(res);
 }
 
 /** Persist inherit/explicit capabilities for one MCP key. */

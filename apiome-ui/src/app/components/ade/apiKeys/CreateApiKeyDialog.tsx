@@ -256,7 +256,7 @@ export default function CreateApiKeyDialog({
 
         <DialogFooter>
           <span className="akey-dialog-note">
-            MCP presets live under MCP servers → Capabilities.
+            For an MCP host or agent, create an MCP key on the MCP server tab.
           </span>
           <Button variant="outline" disabled={busy} onClick={() => onOpenChange(false)}>
             Cancel
