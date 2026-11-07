@@ -1,6 +1,6 @@
 ---
 title: "MCP keys"
-description: "REST endpoints tagged mcp-keys: 7 operations."
+description: "REST endpoints tagged mcp-keys: 8 operations."
 sidebar_position: 52
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.530.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.531.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-keys` · 7 operations
+Tag: `mcp-keys` · 8 operations
 
 ## `GET /v1/tenants/{tenant_slug}/mcp-keys` {#list-mcp-api-keys-v1-tenants-tenant-slug-mcp-keys-get}
 
@@ -201,6 +201,30 @@ Request body for preview mcp api key effective capabilities.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for preview mcp api key effective capabilities. | `application/json` [`McpKeyCapabilitiesPreviewResponse`](#schema-mcpkeycapabilitiespreviewresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/regenerate` {#regenerate-mcp-api-key-v1-tenants-tenant-slug-mcp-keys-key-id-regenerate-post}
+
+**Regenerate MCP API key**
+
+Replace an active MCP API key's secret in place. The old secret is refused from its next call; id, label, scope, capability grants and expiry are kept, and last_used_at is cleared. Returns the new plaintext ``secret`` once. Revoked or expired keys are 409. Tenant administrators only.
+
+Operation id: `regenerate_mcp_api_key_v1_tenants__tenant_slug__mcp_keys__key_id__regenerate_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `key_id` | path | string (uuid) | yes | Path parameter identifying the key id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for regenerate mcp api key. | `application/json` [`McpApiKeyCreateResponse`](#schema-mcpapikeycreateresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}

@@ -4,10 +4,11 @@ Exposes tenant-admin CRUD over ``apiome.mcp_api_keys``:
 
 * ``GET`` / ``POST /v1/tenants/{tenant_slug}/mcp-keys``
 * ``GET`` / ``PATCH`` / ``DELETE /v1/tenants/{tenant_slug}/mcp-keys/{key_id}``
+* ``POST /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/regenerate``
 * ``PUT /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities``
 * ``POST /v1/tenants/{tenant_slug}/mcp-keys/{key_id}/capabilities/preview``
 
-Create returns the plaintext secret **once**. List/get/patch never include
+Create and regenerate return the plaintext secret **once**. List/get/patch never include
 ``secret`` or ``key_hash``. Capability PUT enforces enable-set ⊆ tenant
 ceiling; preview uses the shared MTG-1.4 resolver.
 
@@ -461,6 +462,38 @@ async def revoke_mcp_api_key(
     if row is None:
         raise HTTPException(status_code=404, detail="MCP API key not found")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{tenant_slug}/mcp-keys/{key_id}/regenerate",
+    response_model=McpApiKeyCreateResponse,
+    summary="Regenerate MCP API key",
+    description=(
+        "Replace an active MCP API key's secret in place. The old secret is refused from its "
+        "next call; id, label, scope, capability grants and expiry are kept, and last_used_at "
+        "is cleared. Returns the new plaintext ``secret`` once. Revoked or expired keys are 409. "
+        "Tenant administrators only."
+    ),
+)
+async def regenerate_mcp_api_key(
+    tenant_slug: str,
+    key_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpApiKeyCreateResponse:
+    """Roll one MCP API key's secret and return metadata plus the new one-time secret."""
+    _ = tenant_slug
+    tenant_id = _require_tenant_admin(auth_data)
+    result = db.regenerate_mcp_api_key(tenant_id, str(key_id))
+    if result is None:
+        if db.get_mcp_api_key(tenant_id, str(key_id)) is None:
+            raise HTTPException(status_code=404, detail="MCP API key not found")
+        raise HTTPException(
+            status_code=409,
+            detail="Only an active MCP API key can be regenerated; this one is revoked or expired",
+        )
+    row, secret = result
+    meta = _to_metadata(row)
+    return McpApiKeyCreateResponse(**meta.model_dump(), secret=secret)
 
 
 @router.put(

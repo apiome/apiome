@@ -69,6 +69,7 @@ jest.mock('../lib/db/helper', () => {
     'getApiKeysForTenant',
     'createApiKey',
     'deleteApiKey',
+    'regenerateApiKey',
     'toggleApiKeyStatus',
     'getVersionById',
   ];
@@ -112,6 +113,7 @@ const CASES: Case[] = [
   ['getApiKeysForTenant', ['tenant-1'], 'requireTenantPermission', ['tenant-1', 'api_keys:view']],
   ['createApiKey', ['tenant-1', 'CI', '', null], 'requireTenantPermission', ['tenant-1', 'api_keys:create']],
   ['deleteApiKey', ['key-1'], 'requireTenantPermission', ['tenant-of-key', 'api_keys:delete']],
+  ['regenerateApiKey', ['key-1'], 'requireTenantPermission', ['tenant-of-key', 'api_keys:create']],
   ['toggleApiKeyStatus', ['key-1', false], 'requireTenantPermission', ['tenant-of-key', 'api_keys:edit']],
   ['getDefaultCanvasLayout', ['ver-1', 'user-1'], 'requireSelfOrNobody', ['user-1']],
   ['getEffectiveDefaultLayoutName', ['ver-1', 'user-1', undefined], 'requireSelfOrNobody', ['user-1']],

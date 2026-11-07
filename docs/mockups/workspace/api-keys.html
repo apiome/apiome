@@ -28,10 +28,11 @@
         <div>
           <div class="crumbs"><a href="../home/overview.html">Acme Corp</a><i data-lucide="chevron-right"></i><span>Workspace</span><i data-lucide="chevron-right"></i><span>API keys</span></div>
           <h1 class="page-title">API keys</h1>
-          <p class="page-desc">Keys for external REST access. Prefer scoped CI tokens for pipelines.</p>
+          <p class="page-desc">Keys for the REST API and for agents calling the MCP server. Prefer scoped CI tokens for pipelines.</p>
         </div>
         <div class="page-actions">
           <a class="btn btn--ghost" href="../foundations/help.html" data-tip="REST API reference"><i data-lucide="book-open"></i>API docs</a>
+          <button class="btn" data-action="open" data-target="create-key-dialog"><i data-lucide="plus"></i>Create MCP key</button>
           <button class="btn btn--primary" data-action="open" data-target="create-key-dialog"><i data-lucide="plus"></i>Create API key<span class="kbd">N</span></button>
         </div>
       </div>
@@ -46,18 +47,21 @@
     <section class="table-wrap">
       <div class="table-toolbar">
         <div class="input-wrap"><i data-lucide="search"></i><input class="input" placeholder="Filter by name or prefix…" aria-label="Filter API keys" /></div>
-        <span class="chip is-active" data-action="chip">All <span class="t-faint">4</span></span>
-        <span class="chip" data-action="chip">Active <span class="t-faint">2</span></span>
+        <div class="segmented" role="radiogroup" aria-label="Key type"><button class="is-active" role="radio" aria-checked="true">All types</button><button role="radio" aria-checked="false">REST API</button><button role="radio" aria-checked="false">MCP server</button></div>
+        <span class="chip is-active" data-action="chip">All <span class="t-faint">6</span></span>
+        <span class="chip" data-action="chip">Active <span class="t-faint">3</span></span>
         <span class="chip" data-action="chip">Disabled <span class="t-faint">1</span></span>
         <span class="chip" data-action="chip">Expired <span class="t-faint">1</span></span>
+        <span class="chip" data-action="chip">Revoked <span class="t-faint">1</span></span>
         <span class="spacer"></span>
         <span class="t-xs t-subtle">Tenant-scoped · session <span class="mono">current_tenant_id</span></span>
       </div>
       <table class="table">
         <thead><tr>
           <th>Name</th>
+          <th>Type</th>
           <th>Prefix</th>
-          <th>Scopes</th>
+          <th>Access</th>
           <th>Status</th>
           <th>Last used</th>
           <th>Created</th>
@@ -69,6 +73,7 @@
           <!-- active, scoped -->
           <tr>
             <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">CI contract gate</div><div class="cell-sub clamp-2" style="max-width:280px;white-space:normal">GitHub Actions job that blocks merges on breaking classified diffs.</div></div></div></td>
+            <td><span class="badge" data-tone="neutral">REST API</span></td>
             <td><span class="row gap-1"><span class="tag">key_9f31c2…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
             <td><span class="row gap-1 wrap"><span class="badge badge--mono badge--accent">diff:read</span></span></td>
             <td><span class="badge badge--dot" data-status="active">Active</span></td>
@@ -76,11 +81,12 @@
             <td class="t-num t-muted">07/02/26 10:14 AM</td>
             <td class="t-num t-muted">01/02/27</td>
             <td><label class="row gap-2 t-xs t-muted"><button class="switch switch--sm is-on" role="switch" aria-checked="true" aria-label="Enabled: CI contract gate" data-action="open" data-target="disable-dialog"></button>On</label></td>
-            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Regenerate secret" aria-label="Regenerate secret" data-action="open" data-target="regenerate-dialog"><i data-lucide="refresh-cw"></i></button><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
           </tr>
           <!-- disabled -->
           <tr class="is-disabled">
             <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">Nightly lint</div><div class="cell-sub clamp-2" style="max-width:280px;white-space:normal">Cron reads catalog + MCP lint gates every night at 02:00 UTC.</div></div></div></td>
+            <td><span class="badge" data-tone="neutral">REST API</span></td>
             <td><span class="row gap-1"><span class="tag">key_2ab7e0…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
             <td><span class="row gap-1 wrap"><span class="badge badge--mono badge--accent">lint:read</span></span></td>
             <td><span class="badge badge--dot" data-status="disabled">Disabled</span></td>
@@ -88,11 +94,12 @@
             <td class="t-num t-muted">06/18/26 03:41 PM</td>
             <td class="t-num t-muted">Never</td>
             <td><label class="row gap-2 t-xs t-muted"><button class="switch switch--sm" role="switch" aria-checked="false" aria-label="Enabled: Nightly lint" data-action="switch"></button>Off</label></td>
-            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Regenerate secret" aria-label="Regenerate secret" data-action="open" data-target="regenerate-dialog"><i data-lucide="refresh-cw"></i></button><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
           </tr>
           <!-- expired, full access -->
           <tr class="is-expired">
             <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--danger"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">Partner sync</div><div class="cell-sub clamp-2" style="max-width:280px;white-space:normal">Legacy integration used by Globex to mirror published specs. Superseded by the catalog webhook.</div></div></div></td>
+            <td><span class="badge" data-tone="neutral">REST API</span></td>
             <td><span class="row gap-1"><span class="tag">key_c41d88…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
             <td><span class="t-sm">Full access</span></td>
             <td><span class="badge" data-status="error"><i data-lucide="circle-alert"></i>Expired</span></td>
@@ -105,6 +112,7 @@
           <!-- active, two scopes -->
           <tr>
             <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">Terraform</div><div class="cell-sub clamp-2" style="max-width:280px;white-space:normal">Plan-time contract + lint checks in the platform IaC pipeline.</div></div></div></td>
+            <td><span class="badge" data-tone="neutral">REST API</span></td>
             <td><span class="row gap-1"><span class="tag">key_77e0a1…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
             <td><span class="row gap-1 wrap"><span class="badge badge--mono badge--accent">diff:read</span><span class="badge badge--mono badge--accent">lint:read</span></span></td>
             <td><span class="badge badge--dot" data-status="active">Active</span></td>
@@ -112,11 +120,37 @@
             <td class="t-num t-muted">08/14/26 04:22 PM</td>
             <td class="t-num t-muted">11/12/26</td>
             <td><label class="row gap-2 t-xs t-muted"><button class="switch switch--sm is-on" role="switch" aria-checked="true" aria-label="Enabled: Terraform" data-action="open" data-target="disable-dialog"></button>On</label></td>
-            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Regenerate secret" aria-label="Regenerate secret" data-action="open" data-target="regenerate-dialog"><i data-lucide="refresh-cw"></i></button><button class="btn btn--ghost btn--sm btn--icon" data-tip="Delete API key" aria-label="Delete API key" data-action="open" data-target="delete-key-dialog"><i data-lucide="trash-2"></i></button></div></td>
+          </tr>
+          <!-- MCP server key, workspace default tools -->
+          <tr>
+            <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--honey"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">Claude Desktop</div></div></div></td>
+            <td><span class="badge" data-tone="violet">MCP server</span></td>
+            <td><span class="row gap-1"><span class="tag">aB3dE5gH7jK9…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
+            <td class="t-sm t-muted">Workspace defaults</td>
+            <td><span class="badge badge--dot" data-status="active">Active</span></td>
+            <td class="t-num t-muted">08/16/26 06:55 PM</td>
+            <td class="t-num t-muted">08/01/26 10:00 AM</td>
+            <td class="t-num t-muted">Never</td>
+            <td></td>
+            <td><div class="cell-actions"><button class="btn btn--ghost btn--sm btn--icon" data-tip="Regenerate secret" aria-label="Regenerate secret" data-action="open" data-target="regenerate-dialog"><i data-lucide="refresh-cw"></i></button><button class="btn btn--ghost btn--sm btn--icon" data-tip="Revoke MCP key" aria-label="Revoke MCP key"><i data-lucide="ban"></i></button></div></td>
+          </tr>
+          <!-- MCP server key, revoked: kept for audit, nothing to press -->
+          <tr class="is-disabled">
+            <td><div class="row-start gap-3"><span class="icon-tile icon-tile--sm icon-tile--danger"><i data-lucide="key-round"></i></span><div class="min-w-0"><div class="cell-primary">Cursor</div></div></div></td>
+            <td><span class="badge" data-tone="violet">MCP server</span></td>
+            <td><span class="row gap-1"><span class="tag">zZ9yY8xX7wW6…</span><button class="btn btn--ghost btn--sm btn--icon" data-tip="Copy prefix" aria-label="Copy prefix"><i data-lucide="copy"></i></button></span></td>
+            <td class="t-sm t-muted">Custom · 2 tools</td>
+            <td><span class="badge" data-status="revoked">Revoked</span></td>
+            <td class="t-num t-muted">08/09/26 05:00 PM</td>
+            <td class="t-num t-muted">03/01/26 08:00 AM</td>
+            <td class="t-num t-muted">Never</td>
+            <td></td>
+            <td></td>
           </tr>
         </tbody>
       </table>
-      <div class="table-foot"><span>4 keys · 2 active · 1 disabled · 1 expired</span><span class="row gap-2"><i data-lucide="info" style="width:12px;height:12px"></i>Scopes: <span class="mono">*</span> (full), <span class="mono">diff:read</span>, <span class="mono">lint:read</span> — <span class="mono">*</span> must stand alone.</span></div>
+      <div class="table-foot"><span>6 keys · 4 REST API · 2 MCP server · 3 active · 1 disabled · 1 expired · 1 revoked</span><span class="row gap-2"><i data-lucide="refresh-cw" style="width:12px;height:12px"></i>↻ regenerates a key's secret and keeps its name, access and expiry.</span></div>
     </section>
 
 
@@ -152,7 +186,7 @@ curl -X POST \
       <div data-tab-panel="none" hidden></div>
       <div data-tab-panel="empty" hidden class="card"><div class="empty"><div class="empty__art"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="key-round"></i></div><div class="empty__title">No API keys yet</div><div class="empty__desc">Create your first API key to access your tenant data via REST API. Scoped CI tokens can only read diffs and lint gates.</div><div class="empty__actions"><button class="btn btn--primary" data-action="open" data-target="create-key-dialog"><i data-lucide="plus"></i>Create API key</button><a class="btn" href="../foundations/help.html">Read the REST docs</a></div></div></div>
       <div data-tab-panel="gated" hidden class="card"><div class="empty"><div class="empty__art"><span class="hex"></span><span class="hex hex--2"></span><i data-lucide="lock"></i></div><div class="empty__title">No tenant selected</div><div class="empty__desc">Please select a tenant before managing API keys.</div><div class="empty__actions"><a class="btn btn--primary" href="tenants.html">Go to Tenants <i data-lucide="arrow-right"></i></a></div></div></div>
-      <div data-tab-panel="loading" hidden class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Prefix</th><th>Scopes</th><th>Status</th><th>Last used</th><th>Created</th><th>Expires</th><th>Enabled</th><th></th></tr></thead><tbody>
+      <div data-tab-panel="loading" hidden class="table-wrap"><table class="table"><thead><tr><th>Name</th><th>Type</th><th>Prefix</th><th>Access</th><th>Status</th><th>Last used</th><th>Created</th><th>Expires</th><th>Enabled</th><th></th></tr></thead><tbody>
         <tr><td><span class="skeleton" style="display:inline-block;width:160px">x</span></td><td><span class="skeleton" style="display:inline-block;width:90px">x</span></td><td><span class="skeleton" style="display:inline-block;width:70px">x</span></td><td><span class="skeleton" style="display:inline-block;width:60px">x</span></td><td><span class="skeleton" style="display:inline-block;width:110px">x</span></td><td><span class="skeleton" style="display:inline-block;width:110px">x</span></td><td><span class="skeleton" style="display:inline-block;width:60px">x</span></td><td><span class="skeleton" style="display:inline-block;width:40px">x</span></td><td></td></tr>
         <tr><td><span class="skeleton" style="display:inline-block;width:120px">x</span></td><td><span class="skeleton" style="display:inline-block;width:90px">x</span></td><td><span class="skeleton" style="display:inline-block;width:110px">x</span></td><td><span class="skeleton" style="display:inline-block;width:60px">x</span></td><td><span class="skeleton" style="display:inline-block;width:110px">x</span></td><td><span class="skeleton" style="display:inline-block;width:110px">x</span></td><td><span class="skeleton" style="display:inline-block;width:60px">x</span></td><td><span class="skeleton" style="display:inline-block;width:40px">x</span></td><td></td></tr>
       </tbody></table></div>
@@ -180,7 +214,7 @@ curl -X POST \
       </div>
       <div class="field" style="max-width:240px"><label>Expires in (days)</label><input class="input" type="number" min="1" placeholder="Leave empty for no expiration" /><div class="hint">Leave empty for no expiration.</div></div>
     </div>
-    <div class="dialog__footer"><span class="left t-xs t-subtle">For an MCP host or agent, create an MCP key on the MCP server tab.</span><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="open" data-target="key-created-dialog"><i data-lucide="key-round"></i>Create API key</button></div>
+    <div class="dialog__footer"><span class="left t-xs t-subtle">For an MCP host or agent, use Create MCP key instead.</span><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="open" data-target="key-created-dialog"><i data-lucide="key-round"></i>Create API key</button></div>
   </div>
 </div>
 
@@ -203,6 +237,15 @@ curl -X POST \
   <div class="dialog dialog--sm" role="alertdialog" aria-labelledby="disable-title">
     <div class="dialog__header"><span class="icon-tile icon-tile--warn"><i data-lucide="power-off"></i></span><div><div class="dialog__title" id="disable-title">Disable API key</div><div class="dialog__desc">Are you sure you want to disable “CI contract gate”? This will immediately block all requests using this key.</div></div></div>
     <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" style="--_bg:var(--warn);--_fg:#fff" data-action="close">Disable</button></div>
+  </div>
+</div>
+
+<!-- Regenerate confirm (both kinds) -->
+<div class="overlay" id="regenerate-dialog" data-overlay>
+  <div class="dialog dialog--sm" role="alertdialog" aria-labelledby="regenerate-title">
+    <div class="dialog__header"><span class="icon-tile icon-tile--warn"><i data-lucide="refresh-cw"></i></span><div><div class="dialog__title" id="regenerate-title">Regenerate REST API key</div><div class="dialog__desc">Replace the secret of “CI contract gate”? Its name, scopes and expiry stay the same.</div></div></div>
+    <div class="dialog__body"><div class="banner banner--warn"><i data-lucide="triangle-alert"></i><div>The current secret stops working immediately: every caller using it is refused from its next request. You'll see the new secret once — put it wherever the old one is stored.</div></div></div>
+    <div class="dialog__footer"><button class="btn" data-action="close">Cancel</button><button class="btn btn--primary" data-action="open" data-target="key-created-dialog"><i data-lucide="refresh-cw"></i>Regenerate</button></div>
   </div>
 </div>
 
@@ -229,7 +272,11 @@ curl -X POST \
     <li>No-tenant callout → gated <code>.empty</code> with lock and “Go to Tenants”.</li>
   </ul>
   <h4>Adds</h4>
-  <ul><li>Filter by name/prefix + status chips, copy-prefix button, expiry heads-up banner, footer scope legend, keyboard <code>N</code>, skeleton loading rows (today the table simply populates).</li></ul>
+  <ul>
+    <li>Filter by name/prefix + status chips, copy-prefix button, expiry heads-up banner, keyboard <code>N</code>, skeleton loading rows (today the table simply populates).</li>
+    <li>MCP server keys in the same list: a Type column (REST API / MCP server), an All types / REST API / MCP server segmented filter, a Revoked chip, Access = scopes or MCP tools, revoke instead of delete, no Enabled switch. Create MCP key beside Create API key. Members see REST keys and a foot note that administrators manage MCP keys.</li>
+    <li>Regenerate (↻) on every live key, both kinds: confirm, then the secret is replaced in place (same id, name, scopes/tools, switch and expiry) and the new one goes through the reveal-once dialog. Not offered on expired keys or revoked MCP keys.</li>
+  </ul>
   <h4>States</h4>
   <ul><li>Empty: “No API keys yet” / “Create your first API key to access your tenant data via REST API”. Gated: “No tenant selected” / “Please select a tenant before managing API keys.” Loading: skeleton rows. Preview via the “Preview state” segmented (mock-only).</li></ul>
 </template>

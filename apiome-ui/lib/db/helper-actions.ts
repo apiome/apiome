@@ -286,6 +286,17 @@ export async function deleteApiKey(...args: Parameters<typeof helper.deleteApiKe
   );
 }
 
+/**
+ * Regenerating hands the caller a working secret with the key's authority, exactly as creating
+ * one does, so it needs `api_keys:create` rather than `api_keys:edit`.
+ */
+export async function regenerateApiKey(...args: Parameters<typeof helper.regenerateApiKey>) {
+  return guarded(
+    tenantOfApiKey(args[0]).then((tenant) => requireTenantPermission(tenant, 'api_keys:create')),
+    () => helper.regenerateApiKey(...args)
+  );
+}
+
 export async function toggleApiKeyStatus(...args: Parameters<typeof helper.toggleApiKeyStatus>) {
   return guarded(
     tenantOfApiKey(args[0]).then((tenant) => requireTenantPermission(tenant, 'api_keys:edit')),

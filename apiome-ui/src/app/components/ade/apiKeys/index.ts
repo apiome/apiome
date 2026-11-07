@@ -8,8 +8,11 @@
  * make are in {@link ./apiKeysApi}.
  */
 
-export { default as ApiKeysTable } from './ApiKeysTable';
-export type { ApiKeysTableProps } from './ApiKeysTable';
+export { default as WorkspaceKeysTable } from './WorkspaceKeysTable';
+export type { WorkspaceKeysTableProps } from './WorkspaceKeysTable';
+
+export { default as RegenerateKeyDialog } from './RegenerateKeyDialog';
+export type { RegenerateKeyDialogProps, RegenerateKeyTarget } from './RegenerateKeyDialog';
 
 export { default as CreateApiKeyDialog } from './CreateApiKeyDialog';
 export type { CreateApiKeyDialogProps } from './CreateApiKeyDialog';
@@ -26,9 +29,6 @@ export type {
 export { default as ApiKeyReferenceCards } from './ApiKeyReferenceCards';
 export type { ApiKeyReferenceCardsProps } from './ApiKeyReferenceCards';
 
-export { default as McpKeysTable } from './McpKeysTable';
-export type { McpKeysTableProps } from './McpKeysTable';
-
 export { CreateMcpKeyDialog, RevokeMcpKeyDialog } from './McpKeyDialogs';
 export type { CreateMcpKeyDialogProps, RevokeMcpKeyDialogProps } from './McpKeyDialogs';
 
@@ -37,4 +37,5 @@ export type { McpKeyReferenceCardProps } from './McpKeyReferenceCard';
 
 export * from './apiKeysModel';
 export * from './mcpKeysModel';
+export * from './workspaceKeysModel';
 export * from './apiKeysApi';

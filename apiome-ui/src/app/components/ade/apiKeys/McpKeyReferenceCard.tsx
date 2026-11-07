@@ -9,7 +9,7 @@ import { useClipboardCopy } from '@/app/hooks/useClipboardCopy';
 /**
  * The two reference cards under the MCP keys table.
  *
- * The MCP tab's counterpart of {@link ./ApiKeyReferenceCards}: *how do I point a host at the
+ * The MCP keys' counterpart of {@link ./ApiKeyReferenceCards}: *how do I point a host at the
  * server with this key*, and *what may the key call* — the second answered with where the
  * workspace's MCP settings and per-key capabilities are edited, because that editor needs the
  * workspace's tool ceiling and lives with it.

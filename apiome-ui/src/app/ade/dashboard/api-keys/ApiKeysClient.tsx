@@ -11,13 +11,13 @@ import { useShortcuts } from '@/app/hooks/useShortcuts';
 import {
   createMcpKey,
   fetchMcpKeys,
+  regenerateMcpKey,
   revokeMcpKey,
   type McpApiKeyMetadata,
 } from '@/app/ade/dashboard/tenants/mcpKeysApi';
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
-import { Tabs, TabsContent, TabsCount, TabsList, TabsTrigger } from '@/app/components/ui/Tabs';
 import PageHeader from '@/app/components/shell/PageHeader';
 import { Page, PageBody } from '@/app/components/shell/pageChrome';
 import { OPEN_ACTIONS, useOpenAction } from '@/app/components/shell/openActions';
@@ -28,24 +28,32 @@ import {
   displayApiKeyPrefix,
   fetchApiKeys,
   parseApiKeyExpiry,
+  regenerateApiKeySecret,
   removeApiKey,
   scopesForApiKeyPreset,
   setApiKeyEnabled,
   ApiKeyReferenceCards,
   ApiKeySecretDialog,
-  ApiKeysTable,
   CreateApiKeyDialog,
   CreateMcpKeyDialog,
   DeleteApiKeyDialog,
   DisableApiKeyDialog,
   McpKeyReferenceCard,
-  McpKeysTable,
+  RegenerateKeyDialog,
   RevokeMcpKeyDialog,
+  WorkspaceKeysTable,
   describeCreatedMcpKey,
+  describeRegeneratedKey,
   mcpKeyExpiresAt,
+  toWorkspaceKeyRows,
+  workspaceKeyName,
+  workspaceKeyPrefix,
+  workspaceKeyRowId,
+  WORKSPACE_KEY_KIND_LABEL,
   type ApiKeyDraft,
   type ApiKeyRecord,
   type McpKeyDraft,
+  type WorkspaceKeyRow,
 } from '@/app/components/ade/apiKeys';
 
 /**
@@ -56,29 +64,37 @@ import {
  *
  * ### What this page owns
  *
- * The keys, the four writes, and which overlay is open. How a key is *drawn* is
- * `ApiKeysTable`, the create form is `CreateApiKeyDialog`, the two decisions are
- * `DisableApiKeyDialog` and `DeleteApiKeyDialog`, and the one-time reveal is
- * `ApiKeySecretDialog` — which is the only component in the app that ever holds a plaintext
- * key, and holds it for exactly as long as its dialog is open.
+ * The keys, the writes, and which overlay is open. How a key is *drawn* is
+ * `WorkspaceKeysTable`, the create forms are `CreateApiKeyDialog` and `CreateMcpKeyDialog`,
+ * the decisions are `DisableApiKeyDialog`, `DeleteApiKeyDialog`, `RevokeMcpKeyDialog` and
+ * `RegenerateKeyDialog`, and the one-time reveal is `ApiKeySecretDialog` — which is the only
+ * component on this page that ever holds a plaintext key, and holds it for exactly as long as
+ * its dialog is open.
  *
  * ### The secret's life, stated in one place
  *
- * `createApiKeyForTenant` resolves with the plaintext key; it goes into {@link secret},
+ * A create or a regenerate resolves with the plaintext key; it goes into {@link secret},
  * which the reveal dialog renders. Closing that dialog is the *only* transition out, and it
  * clears the value. There is no code path that puts a secret back — no re-reveal button, no
  * cached copy in the table, no query parameter — which is what makes the ticket's first
  * acceptance criterion structural rather than a promise.
  *
- * ### Two kinds of key, one page
+ * ### Two kinds of key, one list
  *
- * The **REST API** tab holds the keys that call the REST API (`api_keys`); the **MCP server**
- * tab holds the MCP API keys that agents and MCP hosts call Apiome's MCP server with
- * (`mcp_api_keys`). The server accepts neither in place of the other, so the tabs keep them
- * apart while the page keeps them together — a reader looking for "the API key" finds both
- * and is told which one each surface wants. The two lists load independently, so one failing
- * read cannot empty the other tab. MCP keys are tenant-admin only on the server; a member
- * sees the tab with a sentence saying so rather than a refused read.
+ * **REST API** keys call the REST API (`api_keys`); **MCP server** keys are what agents and MCP
+ * hosts call Apiome's MCP server with (`mcp_api_keys`). The server accepts neither in place of
+ * the other, but both are the workspace's API keys, so they share one table with a Type column
+ * and a Type filter — a reader looking for "the API key" finds both in one place and is told
+ * which kind each row is. The two lists load independently, so one failing read cannot empty
+ * the other's rows. MCP keys are tenant-admin only on the server; a member sees the REST keys
+ * and a sentence saying where MCP keys come from, rather than a refused read. The manage
+ * drawer's MCP section still lists, creates and regenerates MCP keys too.
+ *
+ * ### Regenerate rather than delete and re-create
+ *
+ * Every live key can be **regenerated**: its secret is replaced in place and the id, name,
+ * scopes or tools, switch and expiry carry over. The old secret is refused from its next
+ * request, and the new one goes through the same reveal-once dialog as a new key's.
  *
  * ### Errors are the overlay's, the load's error is the table's
  *
@@ -116,10 +132,14 @@ const FALLBACK_TENANT_NAME = 'this workspace';
 const CREATE_SHORTCUT_ID = 'api-keys-create';
 
 /** Which overlay, if any, is open over the page. */
-type ApiKeyOverlay = 'none' | 'create' | 'disable' | 'delete' | 'mcp-create' | 'mcp-revoke';
-
-/** The page's two tabs. */
-type ApiKeyTab = 'rest' | 'mcp';
+type ApiKeyOverlay =
+  | 'none'
+  | 'create'
+  | 'disable'
+  | 'delete'
+  | 'mcp-create'
+  | 'mcp-revoke'
+  | 'regenerate';
 
 /**
  * Whether the reader may manage this workspace's MCP keys.
@@ -181,8 +201,8 @@ export default function ApiKeysClient() {
    */
   const [now, setNow] = React.useState(() => new Date());
 
-  /** The key a write is running against, so only that row's controls go inert. */
-  const [busyKeyId, setBusyKeyId] = React.useState<string | null>(null);
+  /** The row a write is running against (by `workspaceKeyRowId`), so only its controls go inert. */
+  const [busyRowId, setBusyRowId] = React.useState<string | null>(null);
   const [overlay, setOverlay] = React.useState<ApiKeyOverlay>('none');
   /** Which key the open confirm is about. An id, so a reload refreshes what it shows. */
   const [overlayKeyId, setOverlayKeyId] = React.useState<string | null>(null);
@@ -200,14 +220,13 @@ export default function ApiKeysClient() {
     title: string;
   } | null>(null);
 
-  const [tab, setTab] = React.useState<ApiKeyTab>('rest');
-
   const [mcpKeys, setMcpKeys] = React.useState<McpApiKeyMetadata[]>([]);
   const [mcpLoading, setMcpLoading] = React.useState(true);
   const [mcpLoadError, setMcpLoadError] = React.useState<string | null>(null);
   const [mcpAccess, setMcpAccess] = React.useState<McpKeyAccess>('pending');
-  const [mcpBusyKeyId, setMcpBusyKeyId] = React.useState<string | null>(null);
   const [overlayMcpKeyId, setOverlayMcpKeyId] = React.useState<string | null>(null);
+  /** Which row the regenerate confirm is about, by `workspaceKeyRowId`. */
+  const [regenerateRowId, setRegenerateRowId] = React.useState<string | null>(null);
 
   const overlayMcpKey = React.useMemo(
     () => mcpKeys.find((key) => key.id === overlayMcpKeyId) ?? null,
@@ -217,6 +236,13 @@ export default function ApiKeysClient() {
   const overlayKey = React.useMemo(
     () => keys.find((key) => key.id === overlayKeyId) ?? null,
     [keys, overlayKeyId]
+  );
+
+  const rows = React.useMemo(() => toWorkspaceKeyRows(keys, mcpKeys), [keys, mcpKeys]);
+
+  const regenerateRow = React.useMemo(
+    () => rows.find((row) => workspaceKeyRowId(row) === regenerateRowId) ?? null,
+    [rows, regenerateRowId]
   );
 
   // ---- load -----------------------------------------------------------------------------
@@ -297,36 +323,28 @@ export default function ApiKeysClient() {
   const openCreate = React.useCallback(() => setOverlay('create'), []);
   const openMcpCreate = React.useCallback(() => setOverlay('mcp-create'), []);
   const canCreateMcp = mcpAccess !== 'member';
-  /** What the header's button and `N` create: a key of the tab the reader is on. */
-  const openCreateForTab = tab === 'mcp' ? openMcpCreate : openCreate;
 
   /*
    * The command palette's "Create API key…" action (HIVE-3.6, #5292). The palette navigates
    * here with `?open=new-api-key`; this page opens the dialog it already owns, and
    * `useOpenAction` strips the parameter so a reload does not reopen it.
    */
-  useOpenAction(
-    OPEN_ACTIONS.newApiKey,
-    React.useCallback(() => {
-      setTab('rest');
-      openCreate();
-    }, [openCreate])
-  );
+  useOpenAction(OPEN_ACTIONS.newApiKey, openCreate);
 
   const createShortcuts = React.useMemo<readonly ShortcutBinding[]>(
     () =>
-      currentTenantId && (tab === 'rest' || canCreateMcp)
+      currentTenantId
         ? [
             {
               id: CREATE_SHORTCUT_ID,
               scope: 'list',
-              description: tab === 'mcp' ? 'Create MCP key' : 'Create API key',
+              description: 'Create API key',
               chord: { key: 'n' },
-              run: openCreateForTab,
+              run: openCreate,
             },
           ]
         : [],
-    [currentTenantId, tab, canCreateMcp, openCreateForTab]
+    [currentTenantId, openCreate]
   );
   useShortcuts(createShortcuts);
 
@@ -370,7 +388,7 @@ export default function ApiKeysClient() {
       fallback: string,
       write: () => Promise<void>
     ): Promise<string | null> => {
-      setBusyKeyId(key.id);
+      setBusyRowId(workspaceKeyRowId({ kind: 'rest', key }));
       try {
         await write();
         await loadKeys();
@@ -378,7 +396,7 @@ export default function ApiKeysClient() {
       } catch (error) {
         return describeFailure(error, fallback);
       } finally {
-        setBusyKeyId(null);
+        setBusyRowId(null);
       }
     },
     [loadKeys]
@@ -447,7 +465,7 @@ export default function ApiKeysClient() {
 
   const handleMcpRevoke = React.useCallback(
     async (key: McpApiKeyMetadata): Promise<string | null> => {
-      setMcpBusyKeyId(key.id);
+      setBusyRowId(workspaceKeyRowId({ kind: 'mcp', key }));
       try {
         await revokeMcpKey(key.id);
         await loadMcpKeys();
@@ -455,11 +473,49 @@ export default function ApiKeysClient() {
       } catch (error) {
         return describeFailure(error, 'Failed to revoke MCP key');
       } finally {
-        setMcpBusyKeyId(null);
+        setBusyRowId(null);
       }
     },
     [loadMcpKeys]
   );
+
+  const openRegenerate = React.useCallback((row: WorkspaceKeyRow) => {
+    setRegenerateRowId(workspaceKeyRowId(row));
+    setOverlay('regenerate');
+  }, []);
+
+  /**
+   * Replace the confirmed row's secret, then reveal the new one.
+   *
+   * @returns `null` on success, or the sentence the confirm shows.
+   */
+  const handleRegenerate = React.useCallback(async (): Promise<string | null> => {
+    const row = regenerateRow;
+    if (!row) return 'This key is no longer in the list.';
+    const kindLabel = WORKSPACE_KEY_KIND_LABEL[row.kind];
+    setBusyRowId(workspaceKeyRowId(row));
+    try {
+      const next =
+        row.kind === 'rest'
+          ? await regenerateApiKeySecret(row.key.id)
+          : await regenerateMcpKey(row.key.id).then((created) => ({
+              secret: created.secret,
+              keyPrefix: created.prefix,
+            }));
+      setSecret({
+        value: next.secret,
+        summary: describeRegeneratedKey(row),
+        prefix: displayApiKeyPrefix(next.keyPrefix),
+        title: row.kind === 'rest' ? 'API key regenerated' : 'MCP key regenerated',
+      });
+      await (row.kind === 'rest' ? loadKeys() : loadMcpKeys());
+      return null;
+    } catch (error) {
+      return describeFailure(error, `Failed to regenerate ${kindLabel} key`);
+    } finally {
+      setBusyRowId(null);
+    }
+  }, [regenerateRow, loadKeys, loadMcpKeys]);
 
   const closeOverlay = React.useCallback(() => setOverlay('none'), []);
 
@@ -511,19 +567,16 @@ export default function ApiKeysClient() {
                 API docs
               </a>
             </Button>
-            {tab === 'mcp' ? (
-              canCreateMcp && (
-                <Button kbd="N" data-testid="mcp-keys-create" onClick={openMcpCreate}>
-                  <Plus aria-hidden />
-                  Create MCP key
-                </Button>
-              )
-            ) : (
-              <Button kbd="N" data-testid="api-keys-create" onClick={openCreate}>
+            {canCreateMcp && (
+              <Button variant="outline" data-testid="mcp-keys-create" onClick={openMcpCreate}>
                 <Plus aria-hidden />
-                Create API key
+                Create MCP key
               </Button>
             )}
+            <Button kbd="N" data-testid="api-keys-create" onClick={openCreate}>
+              <Plus aria-hidden />
+              Create API key
+            </Button>
           </>
         }
       />
@@ -544,85 +597,56 @@ export default function ApiKeysClient() {
           </Alert>
         )}
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as ApiKeyTab)}>
-          <TabsList aria-label="Key type">
-            <TabsTrigger value="rest" data-testid="api-keys-tab-rest">
-              REST API
-              {!loading && !loadError && <TabsCount>{keys.length}</TabsCount>}
-            </TabsTrigger>
-            <TabsTrigger value="mcp" data-testid="api-keys-tab-mcp">
-              MCP server
-              {mcpAccess !== 'member' && !mcpLoading && !mcpLoadError && (
-                <TabsCount>{mcpKeys.length}</TabsCount>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        {notice && (
+          <Alert
+            variant={notice.tone}
+            data-testid="api-keys-expiry-banner"
+            actions={
+              <Button variant="outline" size="sm" onClick={openCreate}>
+                <KeyRound aria-hidden />
+                Create replacement
+              </Button>
+            }
+          >
+            <span>
+              <strong>{notice.title}</strong> {notice.body}
+            </span>
+          </Alert>
+        )}
 
-          <TabsContent value="rest" className="akey-tab-panel">
-            {notice && (
-              <Alert
-                variant={notice.tone}
-                data-testid="api-keys-expiry-banner"
-                actions={
-                  <Button variant="outline" size="sm" onClick={openCreate}>
-                    <KeyRound aria-hidden />
-                    Create replacement
-                  </Button>
-                }
-              >
-                <span>
-                  <strong>{notice.title}</strong> {notice.body}
-                </span>
-              </Alert>
-            )}
+        <WorkspaceKeysTable
+          rows={rows}
+          // Both lists draw together, so MCP rows do not appear under a reader mid-scan.
+          loading={loading || (mcpAccess !== 'member' && mcpLoading)}
+          error={loadError}
+          onRetry={() => void loadKeys()}
+          mcpError={mcpAccess === 'member' ? null : mcpLoadError}
+          onRetryMcp={() => void loadMcpKeys()}
+          mcpNotice={
+            mcpAccess === 'member'
+              ? 'MCP server keys are managed by workspace administrators — ask one for a key.'
+              : null
+          }
+          busyRowId={busyRowId}
+          now={now}
+          onToggleEnabled={handleToggleEnabled}
+          onDelete={(key) => {
+            setOverlayKeyId(key.id);
+            setOverlay('delete');
+          }}
+          onRevoke={(key) => {
+            setOverlayMcpKeyId(key.id);
+            setOverlay('mcp-revoke');
+          }}
+          onRegenerate={openRegenerate}
+          onCreate={openCreate}
+          onCreateMcp={canCreateMcp ? openMcpCreate : undefined}
+        />
 
-            <ApiKeysTable
-              keys={keys}
-              loading={loading}
-              error={loadError}
-              onRetry={() => void loadKeys()}
-              busyKeyId={busyKeyId}
-              now={now}
-              onToggleEnabled={handleToggleEnabled}
-              onDelete={(key) => {
-                setOverlayKeyId(key.id);
-                setOverlay('delete');
-              }}
-              onCreate={openCreate}
-            />
-
-            <ApiKeyReferenceCards keys={keys} tenantName={tenantName} />
-          </TabsContent>
-
-          <TabsContent value="mcp" className="akey-tab-panel">
-            {mcpAccess === 'member' ? (
-              <div className="akey-gate" data-testid="mcp-keys-admin-only">
-                <EmptyState
-                  icon={<Lock aria-hidden />}
-                  title="Only workspace administrators manage MCP keys"
-                  description="Ask a workspace administrator for an MCP key."
-                />
-              </div>
-            ) : (
-              <>
-                <McpKeysTable
-                  keys={mcpKeys}
-                  loading={mcpLoading}
-                  error={mcpLoadError}
-                  onRetry={() => void loadMcpKeys()}
-                  busyKeyId={mcpBusyKeyId}
-                  now={now}
-                  onRevoke={(key) => {
-                    setOverlayMcpKeyId(key.id);
-                    setOverlay('mcp-revoke');
-                  }}
-                  onCreate={openMcpCreate}
-                />
-                <McpKeyReferenceCard tenantName={tenantName} workspacesHref={TENANTS_ROUTE} />
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+        <ApiKeyReferenceCards keys={keys} tenantName={tenantName} />
+        {mcpAccess !== 'member' && (
+          <McpKeyReferenceCard tenantName={tenantName} workspacesHref={TENANTS_ROUTE} />
+        )}
       </PageBody>
 
       <CreateApiKeyDialog
@@ -667,6 +691,21 @@ export default function ApiKeysClient() {
         onOpenChange={(open) => !open && closeOverlay()}
         mcpKey={overlayMcpKey}
         onConfirm={handleMcpRevoke}
+      />
+
+      <RegenerateKeyDialog
+        open={overlay === 'regenerate'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        target={
+          regenerateRow
+            ? {
+                kind: regenerateRow.kind,
+                name: workspaceKeyName(regenerateRow),
+                prefix: workspaceKeyPrefix(regenerateRow),
+              }
+            : null
+        }
+        onConfirm={handleRegenerate}
       />
     </Page>
   );

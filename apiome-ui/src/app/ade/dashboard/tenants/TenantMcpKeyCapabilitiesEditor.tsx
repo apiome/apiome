@@ -6,11 +6,13 @@
  * Lists MCP API keys, lets admins choose Inherit vs Custom, and when Custom
  * exposes toolset toggles constrained by the saved tenant ceiling. Effective
  * summary comes from MTG-3.3 capabilities/preview. Zero keys shows EmptyState
- * with an admin-only create CTA.
+ * with an admin-only create CTA. Admins can regenerate the selected key's secret
+ * in place — the same action the API keys page offers on each row — keeping its
+ * label, scope and tool grants.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CircleAlert, Check, Copy, KeyRound, Lock, Plus } from 'lucide-react';
+import { CircleAlert, Check, Copy, KeyRound, Lock, Plus, RefreshCw } from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
@@ -35,11 +37,15 @@ import {
   SelectValue,
 } from '@/app/components/ui/Select';
 import { Switch } from '@/app/components/ui/Switch';
+// Direct imports, not the `apiKeys` barrel: that re-exports the REST key server actions.
+import RegenerateKeyDialog from '@/app/components/ade/apiKeys/RegenerateKeyDialog';
+import { mcpKeyStatus } from '@/app/components/ade/apiKeys/mcpKeysModel';
 import type { McpToolCatalogItem } from './mcpPolicyApi';
 import {
   createMcpKey,
   fetchMcpKeys,
   previewMcpKeyCapabilities,
+  regenerateMcpKey,
   putMcpKeyCapabilities,
   type McpApiKeyMetadata,
   type McpKeyCapabilityMode,
@@ -106,6 +112,9 @@ export default function TenantMcpKeyCapabilitiesEditor({
   const [creating, setCreating] = useState(false);
   const [generatedSecret, setGeneratedSecret] = useState('');
   const [copiedSecret, setCopiedSecret] = useState(false);
+  /** Whether the secret modal reveals a new key or a regenerated one. */
+  const [secretOrigin, setSecretOrigin] = useState<'created' | 'regenerated'>('created');
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
   const loadKeys = useCallback(async () => {
     setKeysLoading(true);
@@ -215,6 +224,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
       setShowCreateModal(false);
       setGeneratedSecret(created.secret);
       setCopiedSecret(false);
+      setSecretOrigin('created');
       setShowSecretModal(true);
       await loadKeys();
       setSelectedKeyId(created.id);
@@ -225,6 +235,27 @@ export default function TenantMcpKeyCapabilitiesEditor({
       toast.error(message);
     } finally {
       setCreating(false);
+    }
+  };
+
+  /**
+   * Replace the selected key's secret in place, then reveal the new one.
+   *
+   * @returns `null` on success, or the sentence the confirm shows.
+   */
+  const handleRegenerate = async (): Promise<string | null> => {
+    if (!selectedKey) return 'Select a key first.';
+    try {
+      const regenerated = await regenerateMcpKey(selectedKey.id);
+      setGeneratedSecret(regenerated.secret);
+      setCopiedSecret(false);
+      setSecretOrigin('regenerated');
+      setShowSecretModal(true);
+      await loadKeys();
+      toast.success('MCP API key regenerated');
+      return null;
+    } catch (err) {
+      return err instanceof Error ? err.message : 'Failed to regenerate MCP key';
     }
   };
 
@@ -359,7 +390,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
               <span className="tnt-icon-tile" data-tone="ok">
                 <Check aria-hidden />
               </span>
-              MCP API key created
+              {secretOrigin === 'regenerated' ? 'MCP API key regenerated' : 'MCP API key created'}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -405,6 +436,17 @@ export default function TenantMcpKeyCapabilitiesEditor({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <RegenerateKeyDialog
+        open={showRegenerateModal}
+        onOpenChange={setShowRegenerateModal}
+        target={
+          selectedKey
+            ? { kind: 'mcp', name: selectedKey.label, prefix: selectedKey.prefix }
+            : null
+        }
+        onConfirm={handleRegenerate}
+      />
     </>
   );
 
@@ -481,6 +523,19 @@ export default function TenantMcpKeyCapabilitiesEditor({
             ))}
           </SelectContent>
         </Select>
+        {isAdmin && selectedKey && mcpKeyStatus(selectedKey) === 'active' && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={saving}
+            data-testid="mcp-key-drawer-regenerate"
+            title="Replace this key's secret; its label and tools stay the same"
+            onClick={() => setShowRegenerateModal(true)}
+          >
+            <RefreshCw aria-hidden />
+            Regenerate secret
+          </Button>
+        )}
       </div>
 
       {form && (

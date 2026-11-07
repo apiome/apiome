@@ -17,7 +17,8 @@ We continue to improve the platform based on your feedback with improvements and
   - On a project's **Changes** tab, the newest published version reads **Latest** instead of **No changes** when nothing changed since the version before it
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
 - API keys:
-  - **API keys** now manages MCP keys too: a **REST API** tab for REST keys and an **MCP server** tab that lists the workspace's MCP keys with their tools and status, creates one (shown once, like a REST key) and revokes one. A **Connect a host** card has the MCP URL and bearer header with **Copy**. MCP keys are for workspace administrators
+  - **API keys** now manages MCP keys too, in the same list as REST keys: each row shows its **Type** (**REST API** or **MCP server**), its access (scopes or tools) and status, and **All types** / **REST API** / **MCP server** above the table shows one kind or both. **Create MCP key** sits beside **Create API key**, shows the key once and revokes from the row; a **Connect a host** card has the MCP URL and bearer header with **Copy**. MCP keys are for workspace administrators
+  - **Regenerate** a key instead of deleting it and creating another: the ↻ on any live REST or MCP key replaces its secret and keeps its name, scopes or tools and expiry, then shows the new secret once. The old secret is refused from its next request. The manage drawer's **Per-key capabilities** has **Regenerate secret** for MCP keys too
 - Documentation:
   - Every docs link in the app — **Help & docs**, lint rule references, governance panels, What's new — opens **docs.apiome.dev** instead of GitHub
 - Suite Access:
