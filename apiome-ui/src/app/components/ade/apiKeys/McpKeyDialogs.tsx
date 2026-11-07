@@ -22,12 +22,12 @@ import { displayApiKeyPrefix } from './apiKeysModel';
 import { EMPTY_MCP_KEY_DRAFT, validateMcpKeyDraft, type McpKeyDraft } from './mcpKeysModel';
 
 /**
- * The MCP tab's create form and revoke confirm.
+ * The MCP key create form and revoke confirm.
  *
- * Both follow the REST tab's dialogs ({@link ./CreateApiKeyDialog},
+ * Both follow the REST key dialogs ({@link ./CreateApiKeyDialog},
  * {@link ./ApiKeyLifecycleDialogs}): a failed write is shown inline beside the button that
  * caused it, and the dialog cannot be dismissed while the write runs. The one-time reveal is
- * the REST tab's own {@link ./ApiKeySecretDialog}, retitled — the secret has the same life.
+ * the REST keys' own {@link ./ApiKeySecretDialog}, retitled — the secret has the same life.
  */
 
 /** The id prefix the create form's fields hang their labels from. */

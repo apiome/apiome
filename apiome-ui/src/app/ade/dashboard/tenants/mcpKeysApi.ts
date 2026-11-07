@@ -94,6 +94,17 @@ export async function createMcpKey(
   return readProxyJson<McpApiKeyCreateResponse>(res);
 }
 
+/**
+ * Replace an active MCP key's secret in place (admin only). The id, label, scope and tools carry
+ * over; the old secret is refused from its next call. Returns the new plaintext secret once.
+ */
+export async function regenerateMcpKey(keyId: string): Promise<McpApiKeyCreateResponse> {
+  const res = await fetch(`/api/tenants/mcp-keys/${encodeURIComponent(keyId)}/regenerate`, {
+    method: 'POST',
+  });
+  return readProxyJson<McpApiKeyCreateResponse>(res);
+}
+
 /** Revoke an MCP API key (admin only). MCP auth refuses it from the next call. */
 export async function revokeMcpKey(keyId: string): Promise<void> {
   const res = await fetch(`/api/tenants/mcp-keys/${encodeURIComponent(keyId)}`, {

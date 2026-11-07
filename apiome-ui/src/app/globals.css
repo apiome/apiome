@@ -9341,11 +9341,19 @@ button.tfa-reset-notice__close > svg {
   padding: var(--space-6);
 }
 
-/* A key-type tab's panel stacks its banner, table and reference cards with the page body's gap. */
-.akey-tab-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
+/* A key row's trailing buttons — Regenerate, then Delete or Revoke — sit side by side. */
+.akey-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* The empty list offers both kinds of key, side by side, wrapping on a phone. */
+.akey-empty-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
 /* ==========================================================================

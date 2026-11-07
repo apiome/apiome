@@ -103,6 +103,12 @@ function mockFetch() {
         },
       });
     }
+    if (url.endsWith('/regenerate') && method === 'POST') {
+      return jsonResponse({
+        success: true,
+        data: { ...KEYS.keys[0], prefix: 'mcp_r', secret: 'mcp_regenerated_secret' },
+      });
+    }
     return jsonResponse({ success: false, error: `Unhandled ${method} ${url}` });
   });
   // @ts-expect-error test double
@@ -275,5 +281,41 @@ describe('TenantMcpKeyCapabilitiesEditor', () => {
 
     expect(await screen.findByText(/No MCP API keys yet/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Create MCP key/i })).not.toBeInTheDocument();
+  });
+
+  it('regenerates the selected key in place after a confirm, and reveals the new secret', async () => {
+    render(
+      <TenantMcpKeyCapabilitiesEditor
+        catalog={CATALOG}
+        ceilingToolIds={CEILING}
+        policyRevision={0}
+      />,
+    );
+
+    fireEvent.click(await screen.findByTestId('mcp-key-drawer-regenerate'));
+    const dialog = await screen.findByTestId('key-regenerate-dialog');
+    expect(dialog).toHaveTextContent('Inherit key');
+    expect(calls.some((c) => c.url.endsWith('/regenerate'))).toBe(false);
+
+    fireEvent.click(within(dialog).getByTestId('key-regenerate-confirm'));
+    expect(await screen.findByText(/MCP API key regenerated/i)).toBeInTheDocument();
+    expect(screen.getByText('mcp_regenerated_secret')).toBeInTheDocument();
+    const post = calls.find((c) => c.url.endsWith('/regenerate'));
+    expect(post).toMatchObject({ method: 'POST', url: '/api/tenants/mcp-keys/key-inherit/regenerate' });
+    expect(calls.some((c) => c.url === '/api/tenants/mcp-keys' && c.method === 'POST')).toBe(false);
+  });
+
+  it('offers no regenerate to a non-admin', async () => {
+    render(
+      <TenantMcpKeyCapabilitiesEditor
+        catalog={CATALOG}
+        ceilingToolIds={CEILING}
+        policyRevision={0}
+        isAdmin={false}
+      />,
+    );
+
+    expect(await screen.findByLabelText(/Select MCP API key/i)).toBeInTheDocument();
+    expect(screen.queryByTestId('mcp-key-drawer-regenerate')).not.toBeInTheDocument();
   });
 });

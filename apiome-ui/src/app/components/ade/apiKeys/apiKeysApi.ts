@@ -23,6 +23,7 @@ import {
   createApiKey,
   deleteApiKey,
   getApiKeysForTenant,
+  regenerateApiKey,
   toggleApiKeyStatus,
 } from '../../../../../lib/db/helper-actions';
 
@@ -130,6 +131,29 @@ export async function createApiKeyForTenant(input: {
     keyPrefix: body.keyPrefix ?? '',
     scopes: body.scopes ?? [...input.scopes],
   };
+}
+
+/**
+ * Replace a key's secret in place, and hand back the new one.
+ *
+ * The key keeps its id, name, scopes, switch and expiry; the old secret is refused from its next
+ * request. Expired and deleted keys are refused by the server.
+ *
+ * @param apiKeyId The key.
+ * @returns The new secret and prefix.
+ * @throws Error carrying the server's message.
+ */
+export async function regenerateApiKeySecret(
+  apiKeyId: string
+): Promise<{ secret: string; keyPrefix: string }> {
+  const body = unwrap<{
+    success?: boolean;
+    error?: string;
+    apiKey?: string;
+    keyPrefix?: string;
+  }>(await regenerateApiKey(apiKeyId), 'Failed to regenerate API key');
+  if (!body.apiKey) throw new Error('The server regenerated the key but returned no secret');
+  return { secret: body.apiKey, keyPrefix: body.keyPrefix ?? '' };
 }
 
 /**

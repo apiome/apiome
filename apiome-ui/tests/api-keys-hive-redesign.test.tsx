@@ -310,13 +310,14 @@ describe('the API keys page', () => {
    ------------------------------------------------------------------------- */
 
 describe('the keys table', () => {
-  it('draws the nine columns the mockup keeps', async () => {
+  it('draws the columns the mockup keeps, plus Type', async () => {
     await renderApiKeys();
     const table = screen.getByTestId('api-keys-table');
     for (const header of [
       'Name',
+      'Type',
       'Prefix',
-      'Scopes',
+      'Access',
       'Status',
       'Last used',
       'Created',
@@ -827,6 +828,34 @@ describe('the docs fixtures', () => {
     updated_at: created,
   }));
 
+  /** The workspace's MCP keys: Claude Desktop on workspace defaults, Cursor on a custom set. */
+  const DOCS_MCP_KEYS = [
+    {
+      id: 'm-claude',
+      prefix: 'aB3dE5gH7jK9...',
+      label: 'Claude Desktop',
+      scope_json: { tenants: [], projects: [] },
+      capability_mode: 'inherit',
+      enabled_tools: [],
+      created_at: '2026-09-21T10:00:00Z',
+      expires_at: '2027-03-21T10:00:00Z',
+      revoked_at: null,
+      last_used_at: '2026-10-07T08:55:00Z',
+    },
+    {
+      id: 'm-cursor',
+      prefix: 'zZ9yY8xX7wW6...',
+      label: 'Cursor',
+      scope_json: { tenants: [], projects: [] },
+      capability_mode: 'explicit',
+      enabled_tools: ['spec_list', 'spec_describe', 'spec_search'],
+      created_at: '2026-08-12T08:00:00Z',
+      expires_at: null,
+      revoked_at: null,
+      last_used_at: '2026-10-06T17:00:00Z',
+    },
+  ];
+
   /** Everything rendered — the page, and any dialog portalled over it — without the `<body>`. */
   const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
 
@@ -848,9 +877,9 @@ describe('the docs fixtures', () => {
       scopes: ['diff:read'],
     });
     mockSessionUser = { user_id: 'u-priya', email: 'priya.raman@northwind.io', current_tenant_id: TENANT_ID };
-    // Two MCP keys, so the MCP server tab's count matches its own screenshot.
+    // Two MCP keys, so the one list shows both kinds — the same two the MCP screenshots use.
     global.fetch = jest.fn(async () => ({
-      json: async () => ({ success: true, data: { keys: [{ id: 'm-1' }, { id: 'm-2' }] } }),
+      json: async () => ({ success: true, data: { keys: DOCS_MCP_KEYS } }),
     })) as unknown as typeof fetch;
     (loadTenantMembershipContext as jest.Mock).mockImplementation(async () => ({
       tenants: [{ id: TENANT_ID, name: 'Northwind', slug: 'northwind' }],
@@ -868,7 +897,8 @@ describe('the docs fixtures', () => {
     stubClipboard();
     render(<ApiKeysClient />);
     await screen.findByText('CI contract gate');
-    await screen.findByText('Northwind', { selector: 'strong' });
+    await screen.findByText('Claude Desktop');
+    await screen.findAllByText('Northwind', { selector: 'strong' });
     expect(screen.getByTestId('api-keys-expiry-banner')).toHaveTextContent('Terraform plan checks');
     writeA11yFixture('api-keys', liveMarkup(document.querySelector('.page') as HTMLElement));
 

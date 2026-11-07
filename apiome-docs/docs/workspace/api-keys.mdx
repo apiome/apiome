@@ -1,6 +1,6 @@
 ---
 title: API keys & agent keys
-description: Create REST and MCP keys, rotate them before they expire, and revoke them.
+description: Create, regenerate and revoke REST and MCP keys from one list.
 sidebar_position: 3
 tags: [workspace, api-keys, security]
 ---
@@ -12,33 +12,41 @@ without a person signing in. Keys belong to the workspace, not to you: every cal
 tenant. **Go to Workspace → API keys** (the command palette's **Create API key…** opens the create
 dialog directly).
 
-The page has two tabs, each with its count:
+Both kinds of the workspace's API keys are in one list, each row badged with its **Type**:
 
-- **REST API** — keys for the REST API, the CLI and CI pipelines. Everything from [The keys
-  table](#the-keys-table) to [Disable, enable and delete](#disable-enable-and-delete) is about these.
+- **REST API** — keys for the REST API, the CLI and CI pipelines. Everything from [Scopes](#scopes)
+  to [Disable, enable and delete](#disable-enable-and-delete) is about these.
 - **MCP server** — keys for MCP hosts and agents calling Apiome's MCP server. See [MCP
   keys](#mcp-keys).
 
 The two kinds are not interchangeable: the MCP server answers *Invalid or unknown MCP API key* to a
-REST key, and the REST API refuses an MCP key.
+REST key, and the REST API refuses an MCP key. Either kind can be [regenerated](#regenerate-a-key)
+— its secret replaced, everything else kept — instead of deleted and created again.
 
-<Screenshot id="api-keys" alt="API keys: four keys with prefix, scopes, status and expiry, a banner warning that one expires on October 15, and the scope reference" />
+<Screenshot id="api-keys" alt="API keys: four REST API keys and two MCP server keys in one list with type, prefix, access, status and expiry, a banner warning that one expires on October 15, and the scope reference" />
 
 Reading keys needs the `api_keys:view` permission and changing them needs `api_keys:create`,
 `api_keys:edit` or `api_keys:delete` — see [Roles](./roles.mdx).
 
 ## The keys table
 
-Each row shows the key's **Name** and description, its **Prefix** (the first characters, in
-monospace, with a copy button — use it to match a key to a log line), **Scopes**, **Status**
-(**Active**, **Disabled** or **Expired**), **Last used**, **Created**, **Expires** (or *Never*) and an
-**Enabled** switch. Every column sorts.
+Each row shows the key's **Name** (and a REST key's description), its **Type** — **REST API** or
+**MCP server** — its **Prefix** (the first characters, in monospace, with a copy button — use it to
+match a key to a log line), **Access** (a REST key's scopes, or an MCP key's tools), **Status**
+(**Active**, **Disabled**, **Expired** or **Revoked**), **Last used**, **Created**, **Expires** (or
+*Never*) and, for a REST key, an **Enabled** switch. Every column sorts; the newest key comes first.
 
-- **Filter by name or prefix…** narrows the rows; the chips **All**, **Active**, **Disabled** and
-  **Expired** carry their counts.
-- The foot counts the keys by status and repeats the scope rule: `*` must stand alone.
-- Under the table, **Use a key** has an example `curl` request with **Copy**, and **Scope
-  reference** lists what each scope allows and how many of this workspace's keys hold it.
+- **Filter by name or prefix…** narrows the rows, across both kinds.
+- **All types**, **REST API** and **MCP server** show one kind or both.
+- The status chips — **All**, **Active**, and **Disabled**, **Expired** or **Revoked** when a key is
+  in that state — carry their counts.
+- The foot counts the keys by type and by status.
+- Under the table, **Use a key** has an example `curl` request with **Copy**, **Scope reference**
+  lists what each REST scope allows and how many of this workspace's keys hold it, and **Connect a
+  host** has the MCP server's settings.
+
+**Create API key** (or <Kbd keys="N"/>) creates a REST key; **Create MCP key** beside it creates an
+MCP key.
 
 ## Scopes
 
@@ -124,11 +132,32 @@ receives appears in this list as **CLI login · apiome-cli on &lt;machine&gt; ·
 with a 14-day expiry. Disable or delete it here like any other key; `apiome logout` deletes it from
 the CLI side.
 
-## Rotate a key before it expires
+## Regenerate a key
+
+If a key's secret has leaked, been lost, or is simply due for rotation, regenerate it rather than
+deleting the key and creating another. The key keeps its id, name, scopes or tools, Enabled switch
+and expiry; only the secret changes.
+
+1. **Click the regenerate icon** (↻) on the key's row.
+2. **Regenerate REST API key** (or **Regenerate MCP server key**) names the key and the prefix about
+   to stop working, and warns that every caller using the current secret is refused from its next
+   request. **Click “Regenerate”.**
+3. **API key regenerated** (or **MCP key regenerated**) shows the new secret once, exactly like a new
+   key's: **click “Copy”**, put it wherever the old one was stored, and **click “I've saved my key”**.
+
+<Screenshot id="api-keys-regenerate" alt="Regenerate REST API key: the CI contract gate key and its prefix, the warning that the current secret stops working immediately, and Regenerate" />
+
+The row's prefix changes to the new secret's and **Last used** goes back to *Never*. A disabled
+REST key can be regenerated and stays disabled. An expired key cannot be regenerated — the new
+secret would expire with it — and a revoked MCP key is gone for good; create a new key instead.
+Regenerating needs `api_keys:create`, the same permission as creating a key, because it hands you a
+working secret.
+
+## Replace a key that is about to expire
 
 When a key expires within 14 days, a banner names it — *“Terraform plan checks” expires on October
 15, 2026.* — and once a key has expired, requests with it are refused and the banner says so. An
-expired key cannot be re-enabled. To rotate:
+expired key cannot be re-enabled or regenerated. To replace it:
 
 1. **Click “Create replacement”** in the banner (or **Create API key**) and create a key with the
    same scopes.
@@ -147,20 +176,22 @@ expired key cannot be re-enabled. To rotate:
 ## MCP keys
 
 An **MCP key** lets an MCP host — Claude Desktop, Claude Code, an IDE — or an agent call Apiome's MCP
-server as your workspace, including its private published specs. **Click the “MCP server” tab.**
-Only workspace administrators manage MCP keys; anyone else sees *Only workspace administrators
-manage MCP keys* on the tab.
+server as your workspace, including its private published specs. MCP keys are rows of the same list,
+with **MCP server** in the **Type** column; choose **MCP server** above the table to see only them.
+Only workspace administrators manage MCP keys; anyone else sees the REST keys and, in the table's
+foot, *MCP server keys are managed by workspace administrators*.
 
-<Screenshot id="api-keys-mcp" alt="The MCP server tab: an active Claude Desktop key on workspace default tools and a revoked Cursor key with a custom set of two tools, and the Connect a host card with the MCP URL and bearer header" />
+<Screenshot id="api-keys-mcp" alt="The list narrowed to MCP server keys: Claude Desktop on workspace default tools and Cursor with a custom set of three tools, and the Connect a host card with the MCP URL and bearer header" />
 
-Each row shows the key's **Label**, **Prefix** (with a copy button), **Tools** — *Workspace defaults*,
-or *Custom · N tools* for a key with its own set — **Status** (**Active**, **Revoked** or
-**Expired**), **Last used**, **Created** and **Expires**. **Filter by label or prefix…** and the
-chips **All**, **Active**, **Revoked** and **Expired** narrow the rows.
+An MCP key's **Access** is *Workspace defaults*, or *Custom · N tools* for a key with its own set. Its
+status is **Active**, **Revoked** or **Expired** — an MCP key has no Enabled switch.
+
+The workspace's manage drawer lists MCP keys too, under **Per-key capabilities**, and can create
+and [regenerate](#regenerate-a-key) them there.
 
 ### Create an MCP key
 
-1. On the **MCP server** tab, **click “Create MCP key”** (or press <Kbd keys="N"/>).
+1. **Click “Create MCP key”** beside **Create API key**.
 2. Enter a **Label** — required, for example `Claude Desktop`.
 3. In **Expires in (days)**, enter a whole number of days, or leave it empty for a key that never
    expires.
@@ -189,7 +220,8 @@ settings](./tenants.mdx#mcp-settings) and [Per-key capabilities](./tenants.mdx#p
 
 **Click the revoke icon** on a row. **Revoke MCP key** names the key and its prefix and warns that
 every host or agent using it is refused from its next call; **click “Revoke”**. Revoking cannot be
-undone. The key stays in the list as **Revoked**, with nothing left to press.
+undone. The key stays in the list as **Revoked**, with nothing left to press. To replace a key's
+secret but keep the key, [regenerate](#regenerate-a-key) it instead.
 
 ## Agent keys
 
@@ -204,7 +236,8 @@ APIs its keys can call — register them in the catalog: see the [catalog agents
 
 REST API keys are created and managed in the app; there is no REST endpoint or CLI command for
 them. MCP keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/mcp-keys`, `GET` / `PATCH` /
-`DELETE …/mcp-keys/{key}`) — see the [MCP keys reference](../reference/rest/mcp-keys.md). Agent keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET` / `DELETE
+`DELETE …/mcp-keys/{key}`, and `POST …/mcp-keys/{key}/regenerate`, which returns the new secret once)
+— see the [MCP keys reference](../reference/rest/mcp-keys.md). Agent keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET` / `DELETE
 …/agent-keys/{key}`) — see the [API reference](../reference/api-reference.md).
 
 ## Where next

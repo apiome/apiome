@@ -250,3 +250,61 @@ def test_list_includes_revoked_for_audit():
         r = client.get(BASE)
     assert r.status_code == 200
     assert r.json()["keys"][0]["revoked_at"] == "2026-07-13T18:00:00Z"
+
+
+def test_regenerate_returns_new_secret_and_keeps_metadata():
+    row = _key_row(prefix="zyxwvutsrqpo...")
+    secret = "regenerated-plaintext-secret-value"
+    with patch(
+        "app.mcp_key_routes.db.regenerate_mcp_api_key", return_value=(row, secret)
+    ) as regenerate:
+        r = client.post(f"{BASE}/{_KEY_ID}/regenerate")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["secret"] == secret
+    assert body["id"] == _KEY_ID
+    assert body["label"] == "CI key"
+    assert body["prefix"] == "zyxwvutsrqpo..."
+    assert "key_hash" not in body
+    regenerate.assert_called_once_with(_TENANT, _KEY_ID)
+
+
+def test_regenerate_404_when_unknown():
+    with patch(
+        "app.mcp_key_routes.db.regenerate_mcp_api_key", return_value=None
+    ), patch("app.mcp_key_routes.db.get_mcp_api_key", return_value=None):
+        r = client.post(f"{BASE}/{_KEY_ID}/regenerate")
+    assert r.status_code == 404
+
+
+def test_regenerate_409_when_revoked_or_expired():
+    with patch(
+        "app.mcp_key_routes.db.regenerate_mcp_api_key", return_value=None
+    ), patch(
+        "app.mcp_key_routes.db.get_mcp_api_key",
+        return_value=_key_row(revoked_at=NOW),
+    ):
+        r = client.post(f"{BASE}/{_KEY_ID}/regenerate")
+    assert r.status_code == 409
+    assert "revoked or expired" in r.json()["detail"]
+
+
+def test_regenerate_forbidden_for_non_admin():
+    with patch("app.mcp_key_routes.db.is_user_tenant_admin", return_value=False), patch(
+        "app.mcp_key_routes.db.regenerate_mcp_api_key"
+    ) as regenerate:
+        r = client.post(f"{BASE}/{_KEY_ID}/regenerate")
+    assert r.status_code == 403
+    regenerate.assert_not_called()
+
+
+def test_regenerate_refuses_api_key_auth():
+    """An API key cannot mint itself a fresh MCP secret (MTG-3.4)."""
+    app.dependency_overrides[validate_authentication] = lambda: {
+        **_MOCK_AUTH,
+        "auth_method": "api_key",
+    }
+    with patch("app.mcp_key_routes.db.regenerate_mcp_api_key") as regenerate:
+        r = client.post(f"{BASE}/{_KEY_ID}/regenerate")
+    assert r.status_code == 403
+    regenerate.assert_not_called()

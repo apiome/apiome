@@ -21,13 +21,11 @@
 
 import {
   apiKeyExpiryNotice,
-  apiKeyFacetCounts,
   apiKeyRowActions,
   apiKeyScopeList,
   apiKeyScopeUsage,
   apiKeyStatus,
   copyableApiKeyPrefix,
-  describeApiKeyBreakdown,
   describeApiKeyScopePreset,
   describeCreatedApiKey,
   displayApiKeyPrefix,
@@ -36,15 +34,10 @@ import {
   formatApiKeyTimestamp,
   isApiKeyExpired,
   isFullAccessKey,
-  matchesApiKeyFacet,
   parseApiKeyExpiry,
   scopesForApiKeyPreset,
-  searchApiKeys,
-  sortApiKeys,
-  summariseApiKeys,
   validateApiKeyDraft,
   API_KEY_EXPIRY_WARNING_DAYS,
-  API_KEY_FACETS,
   API_KEY_SCOPE_PRESET_OPTIONS,
   API_KEY_SCOPE_REFERENCE,
   API_KEY_STATUS_LABEL,
@@ -275,126 +268,6 @@ describe('the seven presets', () => {
     expect(describeApiKeyScopePreset('usage')).toBe('usage:ingest');
     expect(describeApiKeyScopePreset('registry_read')).toBe('registry:read');
     expect(describeApiKeyScopePreset('registry_client')).toBe('registry:read + registry:write');
-  });
-});
-
-describe('searching', () => {
-  it('matches a name', () => {
-    expect(searchApiKeys(KEYS, 'terraform').map((k) => k.id)).toEqual(['k-both']);
-  });
-
-  it('matches a prefix pasted out of a log, without its ellipsis', () => {
-    expect(searchApiKeys(KEYS, 'sk_c41d88').map((k) => k.id)).toEqual(['k-expired']);
-  });
-
-  it('matches a description', () => {
-    expect(searchApiKeys(KEYS, 'classified diffs')).toHaveLength(4);
-  });
-
-  it('returns everything for a blank query, without aliasing the input', () => {
-    const all = searchApiKeys(KEYS, '   ');
-    expect(all).toHaveLength(KEYS.length);
-    expect(all).not.toBe(KEYS);
-  });
-});
-
-describe('facets', () => {
-  it('counts every chip, with All as the total', () => {
-    expect(apiKeyFacetCounts(KEYS, NOW)).toEqual({
-      all: 4,
-      active: 2,
-      disabled: 1,
-      expired: 1,
-    });
-  });
-
-  it('narrows to the chip that was pressed', () => {
-    expect(KEYS.filter((k) => matchesApiKeyFacet(k, 'expired', NOW)).map((k) => k.id)).toEqual([
-      'k-expired',
-    ]);
-    expect(KEYS.filter((k) => matchesApiKeyFacet(k, 'all', NOW))).toHaveLength(4);
-  });
-
-  it('offers the four chips the mockup draws', () => {
-    expect(API_KEY_FACETS).toEqual(['all', 'active', 'disabled', 'expired']);
-  });
-});
-
-describe('sorting', () => {
-  it('leaves the server order alone when nothing is sorted', () => {
-    expect(sortApiKeys(KEYS, null, NOW).map((k) => k.id)).toEqual(KEYS.map((k) => k.id));
-  });
-
-  it('sorts names case-insensitively', () => {
-    const sorted = sortApiKeys(KEYS, { column: 'name', direction: 'asc' }, NOW);
-    expect(sorted.map((k) => k.name)).toEqual([
-      'CI contract gate',
-      'Nightly lint',
-      'Partner sync',
-      'Terraform',
-    ]);
-  });
-
-  it('sorts timestamps as instants and not as the strings the cells print', () => {
-    // `08/15/26` sorts before `09/02/25` alphabetically, which is the bug this avoids.
-    const rows = [
-      key({ id: 'sep-25', last_used_at: '2025-09-02T00:00:00Z' }),
-      key({ id: 'aug-26', last_used_at: '2026-08-15T00:00:00Z' }),
-    ];
-    expect(sortApiKeys(rows, { column: 'lastUsed', direction: 'asc' }, NOW).map((k) => k.id)).toEqual(
-      ['sep-25', 'aug-26']
-    );
-  });
-
-  it('sorts a key that never expires last, not first', () => {
-    const sorted = sortApiKeys(KEYS, { column: 'expires', direction: 'asc' }, NOW);
-    expect(sorted[sorted.length - 1].id).toBe('k-disabled');
-    expect(sorted[0].id).toBe('k-expired');
-  });
-
-  it('reverses on the second click', () => {
-    const asc = sortApiKeys(KEYS, { column: 'name', direction: 'asc' }, NOW).map((k) => k.id);
-    const desc = sortApiKeys(KEYS, { column: 'name', direction: 'desc' }, NOW).map((k) => k.id);
-    expect(desc).toEqual([...asc].reverse());
-  });
-
-  it('breaks ties by name, so a re-sort is stable', () => {
-    const rows = [key({ id: 'b', name: 'Beta' }), key({ id: 'a', name: 'Alpha' })];
-    expect(sortApiKeys(rows, { column: 'status', direction: 'asc' }, NOW).map((k) => k.id)).toEqual(
-      ['a', 'b']
-    );
-  });
-
-  it('does not mutate what it was given', () => {
-    const before = KEYS.map((k) => k.id);
-    sortApiKeys(KEYS, { column: 'name', direction: 'desc' }, NOW);
-    expect(KEYS.map((k) => k.id)).toEqual(before);
-  });
-});
-
-describe('the foot', () => {
-  it('counts by status', () => {
-    expect(summariseApiKeys(KEYS, NOW)).toEqual({
-      total: 4,
-      active: 2,
-      disabled: 1,
-      expired: 1,
-    });
-  });
-
-  it('prints the mockup sentence', () => {
-    expect(describeApiKeyBreakdown(summariseApiKeys(KEYS, NOW))).toBe(
-      '4 keys · 2 active · 1 disabled · 1 expired'
-    );
-  });
-
-  it('leaves out the states nothing is in', () => {
-    expect(describeApiKeyBreakdown({ total: 1, active: 1, disabled: 0, expired: 0 })).toBe(
-      '1 key · 1 active'
-    );
-    expect(describeApiKeyBreakdown({ total: 0, active: 0, disabled: 0, expired: 0 })).toBe(
-      '0 keys'
-    );
   });
 });
 

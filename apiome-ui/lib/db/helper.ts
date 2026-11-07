@@ -2747,6 +2747,53 @@ export async function deleteApiKey(apiKeyId: string) {
   }
 }
 
+/**
+ * Replace a key's secret in place, and hand back the new one.
+ *
+ * The row keeps its id, name, description, scopes, switch and expiry; only `key_hash` and
+ * `key_prefix` change, so every caller holding the old secret is refused from its next request
+ * while nothing else about the key has to be set up again. `last_used_at` is cleared because the
+ * new secret has not been used. Deleted and expired keys are refused: an expired key would come
+ * back with a secret that is already dead.
+ *
+ * @param apiKeyId The key.
+ * @returns A JSON envelope with the plaintext `apiKey` (the only time it is visible) and the new
+ *   `keyPrefix`, or `{ success: false, error }`.
+ */
+export async function regenerateApiKey(apiKeyId: string) {
+  try {
+    const apiKey = 'sk_' + crypto.randomBytes(32).toString('hex');
+    const keyPrefix = apiKey.substring(0, 12) + '...';
+    const keyHash = await bcrypt.hash(apiKey, 10);
+
+    const result = await connectionPool.query(
+      `UPDATE apiome.api_keys
+       SET key_hash = $1, key_prefix = $2, last_used_at = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+         AND deleted_at IS NULL
+         AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+       RETURNING id, key_prefix, scopes`,
+      [keyHash, keyPrefix, apiKeyId]
+    );
+    if (result.rows.length === 0) {
+      return JSON.stringify({
+        success: false,
+        error: 'Only a key that has not expired or been deleted can be regenerated',
+      });
+    }
+
+    return JSON.stringify({
+      success: true,
+      apiKey,
+      id: result.rows[0].id,
+      keyPrefix: result.rows[0].key_prefix,
+      scopes: result.rows[0].scopes,
+    });
+  } catch (error: any) {
+    return JSON.stringify({ success: false, error: error.message });
+  }
+}
+
 export async function toggleApiKeyStatus(apiKeyId: string, enabled: boolean) {
   try {
     await connectionPool.query(

@@ -1149,8 +1149,14 @@
     {
       "id": "api-keys-mcp",
       "route": "/ade/dashboard/api-keys",
-      "waitFor": "[data-testid=\"mcp-keys-table\"]",
+      "waitFor": "[data-testid=\"api-keys-table\"]",
       "data": "fixture:hive-a11y/api-keys-mcp.html"
+    },
+    {
+      "id": "api-keys-regenerate",
+      "route": "/ade/dashboard/api-keys",
+      "waitFor": "[data-testid=\"key-regenerate-dialog\"]",
+      "data": "fixture:hive-a11y/api-keys-regenerate.html"
     },
     {
       "id": "api-keys-create-dialog",

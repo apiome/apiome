@@ -1,17 +1,13 @@
 /**
- * The MCP tab's derivations — `components/ade/apiKeys/mcpKeysModel`.
+ * The MCP key derivations — `components/ade/apiKeys/mcpKeysModel`.
  */
 
 import type { McpApiKeyMetadata } from '../src/app/ade/dashboard/tenants/mcpKeysApi';
 import {
   describeCreatedMcpKey,
-  describeMcpKeyBreakdown,
   describeMcpKeyCapabilities,
   mcpKeyExpiresAt,
-  mcpKeyFacetCounts,
   mcpKeyStatus,
-  searchMcpKeys,
-  sortMcpKeys,
   validateMcpKeyDraft,
 } from '../src/app/components/ade/apiKeys/mcpKeysModel';
 
@@ -68,39 +64,6 @@ describe('describeMcpKeyCapabilities', () => {
         key({ capability_mode: 'explicit', enabled_tools: ['spec.list', 'version.export'] })
       )
     ).toBe('Custom · 2 tools');
-  });
-});
-
-describe('search, counts and order', () => {
-  const keys = [
-    key({ id: 'a', label: 'Claude Desktop', prefix: 'aB3dE5gH7jK9...' }),
-    key({ id: 'b', label: 'Cursor', prefix: 'zZ9yY8xX7wW6...', revoked_at: '2026-10-02T00:00:00Z' }),
-    key({ id: 'c', label: 'Nightly agent', prefix: 'qQ1rR2sS3tT4...', expires_at: '2026-11-01T00:00:00Z' }),
-  ];
-
-  it('matches a label or a prefix pasted with its ellipsis', () => {
-    expect(searchMcpKeys(keys, 'cursor').map((k) => k.id)).toEqual(['b']);
-    expect(searchMcpKeys(keys, 'qQ1rR2…').map((k) => k.id)).toEqual(['c']);
-    expect(searchMcpKeys(keys, '  ')).toHaveLength(3);
-  });
-
-  it('counts each status', () => {
-    expect(mcpKeyFacetCounts(keys, NOW)).toEqual({ all: 3, active: 1, revoked: 1, expired: 1 });
-    expect(describeMcpKeyBreakdown(keys, NOW)).toBe('3 keys · 1 active · 1 revoked · 1 expired');
-    expect(describeMcpKeyBreakdown([keys[0]], NOW)).toBe('1 key · 1 active');
-  });
-
-  it('sorts by label and leaves the server order alone without a sort', () => {
-    expect(sortMcpKeys(keys, null, NOW).map((k) => k.id)).toEqual(['a', 'b', 'c']);
-    expect(
-      sortMcpKeys(keys, { column: 'label', direction: 'desc' }, NOW).map((k) => k.id)
-    ).toEqual(['c', 'b', 'a']);
-  });
-
-  it('sorts a key that never expires last, ascending', () => {
-    expect(
-      sortMcpKeys(keys, { column: 'expires', direction: 'asc' }, NOW).map((k) => k.id)[0]
-    ).toBe('c');
   });
 });
 

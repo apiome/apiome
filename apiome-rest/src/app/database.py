@@ -26932,6 +26932,53 @@ class Database:
             return self.get_mcp_api_key(tenant_id, key_id)
         return self._normalize_mcp_api_key_row(rows[0])
 
+    def regenerate_mcp_api_key(
+        self, tenant_id: str, key_id: str
+    ) -> Optional[Tuple[Dict[str, Any], str]]:
+        """Replace a live MCP API key's secret in place; return ``(public_metadata, plaintext_secret)``.
+
+        The row keeps its id, label, scope, capability grants and expiry; only ``key_hash`` and
+        ``prefix`` change, so the old secret stops authenticating on its next call while every
+        setting attached to the key carries over. ``last_used_at`` is cleared because the new
+        secret has not been used yet.
+
+        Args:
+            tenant_id: Owning tenant UUID.
+            key_id: Key row UUID.
+
+        Returns:
+            Updated metadata and the one-time plaintext secret, or ``None`` when the key is
+            missing, revoked, expired, or not in this tenant.
+        """
+        if (
+            not tenant_id
+            or not is_uuid_string(str(tenant_id))
+            or not key_id
+            or not is_uuid_string(str(key_id))
+        ):
+            return None
+        plain = secrets.token_urlsafe(32)
+        rows = self.execute_query(
+            f"""
+            UPDATE apiome.mcp_api_keys
+            SET key_hash = %s, prefix = %s, last_used_at = NULL
+            WHERE tenant_id = %s::uuid
+              AND id = %s::uuid
+              AND revoked_at IS NULL
+              AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)
+            RETURNING {self._MCP_API_KEY_METADATA_SELECT}
+            """,
+            (
+                self.hash_mcp_api_key_secret(plain),
+                self.mcp_api_key_prefix(plain),
+                tenant_id,
+                key_id,
+            ),
+        )
+        if not rows:
+            return None
+        return self._normalize_mcp_api_key_row(rows[0]), plain
+
     def update_mcp_api_key_capabilities(
         self,
         tenant_id: str,

@@ -131,7 +131,8 @@ const API_KEY_PRELUDES = [
   '.akey-scope-table__allows',
   '.akey-scope-table__count',
   '.akey-gate',
-  '.akey-tab-panel',
+  '.akey-row-actions',
+  '.akey-empty-actions',
 ] as const;
 
 /**

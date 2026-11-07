@@ -155,8 +155,12 @@ enable-set**, capped by the tenant ceiling.
 
 To issue a key, **click “Create MCP key”**, enter a **Label** (for example `Prod agent`) and create
 it; **MCP API key created** shows the secret once — copy it and **click “I've saved my key”**. A new
-key inherits the tenant policy. Revoked keys are listed but cannot be edited. MCP keys are also
-listed, created and revoked on **Workspace → API keys**, on the **MCP server** tab — see [MCP
+key inherits the tenant policy. Revoked keys are listed but cannot be edited.
+
+To replace the chosen key's secret without losing its label or tools, **click “Regenerate secret”**
+beside **MCP API key**, confirm with **Regenerate**, and copy the new secret from **MCP API key
+regenerated** — the old secret is refused from its next call. MCP keys are also listed, created,
+regenerated and revoked on **Workspace → API keys**, beside the REST keys — see [MCP
 keys](./api-keys.mdx#mcp-keys).
 
 ### Policy history

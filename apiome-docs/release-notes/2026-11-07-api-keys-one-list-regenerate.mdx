@@ -1,0 +1,26 @@
+---
+slug: api-keys-one-list-regenerate
+title: One list of API keys, and regenerate instead of re-create
+description: "REST and MCP keys share one list on API keys, and any live key's secret can be regenerated in place."
+authors: [apiome]
+---
+
+**API keys** had a tab for each kind of key. REST API keys and MCP server keys are now rows of one
+list, and either kind can be **regenerated** — its secret replaced, the key kept — so a leaked or lost
+secret no longer costs a new key and its set-up.
+
+{/* truncate */}
+
+- **One list.** Each row says its **Type** — **REST API** or **MCP server** — with its access (a REST
+  key's scopes, an MCP key's tools), status, last use and expiry. **All types**, **REST API** and
+  **MCP server** above the table show one kind or both; the status chips add **Revoked** for MCP
+  keys. **Create MCP key** sits beside **Create API key**.
+- **Regenerate.** The ↻ on any live key asks first, then replaces the secret and shows the new one
+  once. The key keeps its id, name, scopes or tools, Enabled switch and expiry; the old secret is
+  refused from its next request. Expired keys and revoked MCP keys cannot be regenerated.
+- **In the manage drawer too.** **Per-key capabilities** keeps its MCP keys and gains **Regenerate
+  secret** for the chosen key.
+- **REST API.** `POST /v1/tenants/{tenant}/mcp-keys/{key}/regenerate` regenerates an MCP key and
+  returns the new secret once (tenant administrators, user session only).
+
+See [Regenerate a key](/workspace/api-keys#regenerate-a-key).
