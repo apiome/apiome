@@ -354,9 +354,7 @@ def test_require_mcp_auth_resolves_as_a_dependency_with_a_key() -> None:
             patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch"),
         ):
             async with Client(_probe_server()) as client:
-                result = await client.call_tool(
-                    "probe", {}, meta={"apiome_api_key": _SECRET}
-                )
+                result = await client.call_tool("probe", {}, meta={"apiome_api_key": _SECRET})
         assert result.data == "resolved"
 
     asyncio.run(run())
