@@ -1,6 +1,6 @@
 ---
 title: API keys & agent keys
-description: Create scoped keys for REST access, rotate them before they expire, and revoke them.
+description: Create REST and MCP keys, rotate them before they expire, and revoke them.
 sidebar_position: 3
 tags: [workspace, api-keys, security]
 ---
@@ -11,6 +11,16 @@ An **API key** lets a pipeline, script or integration call the Apiome REST API a
 without a person signing in. Keys belong to the workspace, not to you: every call runs as that
 tenant. **Go to Workspace → API keys** (the command palette's **Create API key…** opens the create
 dialog directly).
+
+The page has two tabs, each with its count:
+
+- **REST API** — keys for the REST API, the CLI and CI pipelines. Everything from [The keys
+  table](#the-keys-table) to [Disable, enable and delete](#disable-enable-and-delete) is about these.
+- **MCP server** — keys for MCP hosts and agents calling Apiome's MCP server. See [MCP
+  keys](#mcp-keys).
+
+The two kinds are not interchangeable: the MCP server answers *Invalid or unknown MCP API key* to a
+REST key, and the REST API refuses an MCP key.
 
 <Screenshot id="api-keys" alt="API keys: four keys with prefix, scopes, status and expiry, a banner warning that one expires on October 15, and the scope reference" />
 
@@ -134,26 +144,72 @@ expired key cannot be re-enabled. To rotate:
   using it starts getting 401s; **click “Delete”**. Deleting cannot be undone — rotate first if
   something in production depends on the key.
 
+## MCP keys
+
+An **MCP key** lets an MCP host — Claude Desktop, Claude Code, an IDE — or an agent call Apiome's MCP
+server as your workspace, including its private published specs. **Click the “MCP server” tab.**
+Only workspace administrators manage MCP keys; anyone else sees *Only workspace administrators
+manage MCP keys* on the tab.
+
+<Screenshot id="api-keys-mcp" alt="The MCP server tab: an active Claude Desktop key on workspace default tools and a revoked Cursor key with a custom set of two tools, and the Connect a host card with the MCP URL and bearer header" />
+
+Each row shows the key's **Label**, **Prefix** (with a copy button), **Tools** — *Workspace defaults*,
+or *Custom · N tools* for a key with its own set — **Status** (**Active**, **Revoked** or
+**Expired**), **Last used**, **Created** and **Expires**. **Filter by label or prefix…** and the
+chips **All**, **Active**, **Revoked** and **Expired** narrow the rows.
+
+### Create an MCP key
+
+1. On the **MCP server** tab, **click “Create MCP key”** (or press <Kbd keys="N"/>).
+2. Enter a **Label** — required, for example `Claude Desktop`.
+3. In **Expires in (days)**, enter a whole number of days, or leave it empty for a key that never
+   expires.
+4. **Click “Create MCP key”.**
+5. **MCP key created** shows the key once, as for a REST key: **click “Copy”**, store it, and
+   **click “I've saved my key”**.
+
+Point the host at the MCP server with the key as a bearer token — the **Connect a host** card under
+the table has the settings with **Copy**:
+
+```
+URL:     https://mcp.apiome.dev/mcp
+Header:  Authorization: Bearer <your-mcp-key>
+```
+
+See [Connect an MCP host](../getting-started/connect-an-mcp-host.mdx) for the whole setup.
+
+### What an MCP key may call
+
+A new key calls the workspace's default MCP tools. Change the defaults under **MCP settings**, or give
+one key its own set under **Per-key capabilities** — both in the workspace's manage drawer
+(**Workspaces → Manage**; the **What a key may call** card links there). See [MCP
+settings](./tenants.mdx#mcp-settings) and [Per-key capabilities](./tenants.mdx#per-key-capabilities).
+
+### Revoke an MCP key
+
+**Click the revoke icon** on a row. **Revoke MCP key** names the key and its prefix and warns that
+every host or agent using it is refused from its next call; **click “Revoke”**. Revoking cannot be
+undone. The key stays in the list as **Revoked**, with nothing left to press.
+
 ## Agent keys
 
-API keys are for REST. Keys for AI agents calling Apiome's MCP server are separate:
-
-- **Agent keys** are issued per toolset, limited to the tools you choose, with their own expiry and
-  revocation. The Agent access screen is not yet available, so issue them over the REST API (below).
-- **MCP API keys** and what each may call are managed per workspace in the tenant's manage drawer —
-  see [Per-key capabilities](./tenants.mdx#per-key-capabilities).
+**Agent keys** are a third kind, issued per toolset and limited to the tools you choose, with their
+own expiry and revocation. The Agent access screen is not yet available, so issue them over the REST
+API (below).
 
 To give the agents behind those keys a name, an owner and a page — and make each a consumer of the
 APIs its keys can call — register them in the catalog: see the [catalog agents API](../reference/rest/catalog-agents.md).
 
 ## With the API
 
-API keys are created and managed in the app; there is no REST endpoint or CLI command for them.
-Agent keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET` / `DELETE
+REST API keys are created and managed in the app; there is no REST endpoint or CLI command for
+them. MCP keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/mcp-keys`, `GET` / `PATCH` /
+`DELETE …/mcp-keys/{key}`) — see the [MCP keys reference](../reference/rest/mcp-keys.md). Agent keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/agent-keys`, `GET` / `DELETE
 …/agent-keys/{key}`) — see the [API reference](../reference/api-reference.md).
 
 ## Where next
 
 - [Roles](./roles.mdx) — who may create and delete keys
 - [Tenants](./tenants.mdx) — MCP policy and per-key capabilities
+- [Connect an MCP host](../getting-started/connect-an-mcp-host.mdx)
 - [CLI quick-start](../reference/cli-quickstart.md)

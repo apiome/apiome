@@ -16,6 +16,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Compare version schemas** opens its **Diff View** with **Show only changes** ticked, so only the changed lines and three lines around each show, with the rest folded; every tab's body, including the **Schema Changes** class list, now fills the dialog. The **Canvas** tab is switched off while it is fixed
   - On a project's **Changes** tab, the newest published version reads **Latest** instead of **No changes** when nothing changed since the version before it
   - **Dark** is now Apiome's own dark theme — navy-black surfaces, a honey primary button, azure links — and **Preferences** shows **Follow system**, **Light**, **Dark** and **High contrast** first, with the other five under **More themes**
+- API keys:
+  - **API keys** now manages MCP keys too: a **REST API** tab for REST keys and an **MCP server** tab that lists the workspace's MCP keys with their tools and status, creates one (shown once, like a REST key) and revokes one. A **Connect a host** card has the MCP URL and bearer header with **Copy**. MCP keys are for workspace administrators
 - Documentation:
   - Every docs link in the app — **Help & docs**, lint rule references, governance panels, What's new — opens **docs.apiome.dev** instead of GitHub
 - Suite Access:

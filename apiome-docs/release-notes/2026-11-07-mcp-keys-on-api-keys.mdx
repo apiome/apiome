@@ -1,0 +1,24 @@
+---
+slug: mcp-keys-on-api-keys
+title: MCP keys live on the API keys page
+description: "API keys has an MCP server tab: list, create and revoke the keys MCP hosts and agents use."
+authors: [apiome]
+---
+
+MCP keys used to be created only in the workspace's manage drawer, so the obvious place to look —
+**API keys** — offered only REST keys, and a REST key sent to the MCP server is refused with
+*Invalid or unknown MCP API key*. Both kinds now live on **API keys**, each in its own tab.
+
+{/* truncate */}
+
+- **Two tabs, two kinds of key.** **REST API** is the keys table you know; **MCP server** lists the
+  workspace's MCP keys with their prefix, the tools they may call (*Workspace defaults* or *Custom ·
+  N tools*), status, last use and expiry. Each tab carries its count.
+- **Create and revoke.** **Create MCP key** takes a label and an optional expiry and shows the key
+  once, like a REST key. **Revoke** asks first; a revoked key stays in the list as **Revoked**.
+- **Connect a host.** A card under the table has the MCP URL and the bearer header, with **Copy**.
+- **What a key may call** is still edited under **MCP settings** and **Per-key capabilities** in the
+  workspace's manage drawer, which still creates keys too.
+- **The REST create dialog** now points MCP hosts and agents at the **MCP server** tab.
+
+MCP keys are for workspace administrators. See [MCP keys](/workspace/api-keys#mcp-keys).

@@ -9341,6 +9341,13 @@ button.tfa-reset-notice__close > svg {
   padding: var(--space-6);
 }
 
+/* A key-type tab's panel stacks its banner, table and reference cards with the page body's gap. */
+.akey-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
 /* ==========================================================================
    ACCESS AUDIT  (HIVE-5.5, #5308)
    --------------------------------------------------------------------------

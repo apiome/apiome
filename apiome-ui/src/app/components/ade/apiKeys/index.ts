@@ -1,8 +1,9 @@
 /**
  * The API keys surface — HIVE-5.4 (#5307).
  *
- * `/ade/dashboard/api-keys`: the keys that reach this tenant's data over the REST API, and
- * the one-time reveal of a new key's secret. The page composes these; the derivations they
+ * `/ade/dashboard/api-keys`: the keys that reach this tenant's data over the REST API, the
+ * MCP API keys that agents call Apiome's MCP server with, and the one-time reveal of a new
+ * key's secret. The page composes these; the derivations they
  * share are in {@link ./apiKeysModel}, which is pure and unit-tested, and the calls they
  * make are in {@link ./apiKeysApi}.
  */
@@ -25,5 +26,15 @@ export type {
 export { default as ApiKeyReferenceCards } from './ApiKeyReferenceCards';
 export type { ApiKeyReferenceCardsProps } from './ApiKeyReferenceCards';
 
+export { default as McpKeysTable } from './McpKeysTable';
+export type { McpKeysTableProps } from './McpKeysTable';
+
+export { CreateMcpKeyDialog, RevokeMcpKeyDialog } from './McpKeyDialogs';
+export type { CreateMcpKeyDialogProps, RevokeMcpKeyDialogProps } from './McpKeyDialogs';
+
+export { default as McpKeyReferenceCard } from './McpKeyReferenceCard';
+export type { McpKeyReferenceCardProps } from './McpKeyReferenceCard';
+
 export * from './apiKeysModel';
+export * from './mcpKeysModel';
 export * from './apiKeysApi';
