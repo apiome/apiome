@@ -1,0 +1,19 @@
+---
+slug: mcp-keyed-tools-fixed
+title: MCP tools that need a key work again
+description: "Every MCP tool that requires an API key failed with “Failed to resolve dependency 'auth'”."
+authors: [apiome]
+---
+
+Every MCP tool that requires an API key — **version.export**, **export.targets**,
+**spec.list_my_specs** and the rest — answered *Failed to resolve dependency 'auth'* whether or
+not the call carried a key. The server now checks the key as it should.
+
+{/* truncate */}
+
+- **A missing key says so.** A call without one answers *MCP authentication required* and names
+  the ways to send it.
+- **A wrong key says so.** An unknown, revoked or expired key answers with that reason.
+- **Tools that don't need a key** were never affected.
+
+See [Connect an MCP host](/getting-started/connect-an-mcp-host).

@@ -297,3 +297,66 @@ def test_schedule_mcp_key_last_used_touch_uses_event_loop() -> None:
         await captured[0]  # type: ignore[misc]
 
     asyncio.run(run())
+
+
+def _probe_server():
+    """A one-tool server that takes ``require_mcp_auth`` the way the real tools do."""
+    from fastmcp import FastMCP
+    from fastmcp.dependencies import Depends
+
+    server = FastMCP("auth-probe")
+
+    @server.tool
+    async def probe(auth: McpAuthContext = Depends(require_mcp_auth)) -> str:
+        return auth.label
+
+    return server
+
+
+def test_require_mcp_auth_resolves_as_a_dependency_without_a_key() -> None:
+    """Resolved by FastMCP, the dependency must answer with the auth error, not a TypeError.
+
+    A bare ``ctx: Context`` parameter is not injected into a dependency, so every keyed tool
+    used to fail with "Failed to resolve dependency 'auth'" before the key was even read.
+    """
+    from fastmcp import Client
+    from fastmcp.exceptions import ToolError
+
+    async def run() -> None:
+        async with Client(_probe_server()) as client:
+            with pytest.raises(ToolError) as excinfo:
+                await client.call_tool("probe", {})
+        message = str(excinfo.value)
+        assert "Failed to resolve dependency" not in message
+        assert "MCP authentication required" in message
+
+    asyncio.run(run())
+
+
+def test_require_mcp_auth_resolves_as_a_dependency_with_a_key() -> None:
+    from fastmcp import Client
+
+    stored_hash = hash_mcp_api_key_secret(_SECRET).decode("ascii")
+    row = {
+        "id": str(uuid.uuid4()),
+        "tenant_id": str(uuid.uuid4()),
+        "label": "resolved",
+        "scope_json": {},
+        "key_hash": stored_hash,
+        "expires_at": None,
+        "revoked_at": None,
+    }
+    pool = _pool_mock([row])
+
+    async def run() -> None:
+        with (
+            patch("apiome_mcp.mcp_auth.get_db_pool", return_value=pool),
+            patch("apiome_mcp.mcp_auth.schedule_mcp_key_last_used_touch"),
+        ):
+            async with Client(_probe_server()) as client:
+                result = await client.call_tool(
+                    "probe", {}, meta={"apiome_api_key": _SECRET}
+                )
+        assert result.data == "resolved"
+
+    asyncio.run(run())

@@ -40,7 +40,7 @@ from typing import Any, Literal
 import bcrypt
 import structlog
 from fastmcp import Context
-from fastmcp.dependencies import CurrentHeaders, Depends
+from fastmcp.dependencies import CurrentContext, CurrentHeaders, Depends
 from fastmcp.exceptions import AuthorizationError
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
@@ -276,10 +276,14 @@ async def resolve_optional_mcp_auth(
 
 
 async def require_mcp_auth(
-    ctx: Context,
+    ctx: Context = CurrentContext(),
     headers: dict[str, str] = CurrentHeaders(),
 ) -> McpAuthContext:
     """FastMCP dependency: bearer / meta credential → ``McpAuthContext``.
+
+    ``ctx`` needs its ``CurrentContext()`` default: FastMCP resolves a dependency's own
+    parameters only from their dependency defaults, so a bare ``ctx: Context`` arrives
+    missing and every keyed tool fails with "Failed to resolve dependency 'auth'".
 
     Like :func:`resolve_optional_mcp_auth`, falls back to the HTTP Bearer stash when headers
     and meta omit the secret (#3011).
