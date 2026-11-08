@@ -444,7 +444,6 @@ describe('the tab strip', () => {
       'Insight',
       'Versions',
       'Lint & score',
-      'Dependencies',
       'Settings',
       'Trust posture',
     ]);
@@ -452,6 +451,29 @@ describe('the tab strip', () => {
     // The proposal is marked as one, on the screen rather than in a roadmap.
     const trust = within(strip).getByTestId('mcp-endpoint-tab-trust');
     expect(within(trust).getByText(MCP_ENDPOINT_PROPOSED_LABEL)).toBeInTheDocument();
+  });
+
+  it('draws Dependencies only once the dependency graph is released', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'dependency-graph';
+    try {
+      await renderScreen();
+      const strip = within(screen.getByTestId('page-header')).getByTestId('mcp-endpoint-tabs');
+      expect(
+        within(strip)
+          .getAllByRole('tab')
+          .map((tab) => (tab.textContent ?? '').replace(MCP_ENDPOINT_PROPOSED_LABEL, '').trim()),
+      ).toEqual([
+        'Capabilities4',
+        'Insight',
+        'Versions',
+        'Lint & score',
+        'Dependencies',
+        'Settings',
+        'Trust posture',
+      ]);
+    } finally {
+      delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+    }
   });
 
   it('mounts one panel at a time, and points each at its own tab', async () => {

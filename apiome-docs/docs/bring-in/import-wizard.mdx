@@ -11,6 +11,9 @@ Apiome has two import wizards, and which one you get depends on where you start:
 | --- | --- | --- | --- |
 | **Import specification** | **Import** on Projects or Versions, **Import a spec** on Home (<Kbd keys="I"/>) | File Upload, URL Import, Clipboard Paste, Git Repository, SwaggerHub, Design with AI | A new [project](../build/projects.mdx) |
 | **Import to catalog** | **Import to catalog** on the [Catalog](./catalog.mdx) | File, URL, clipboard, Git repository | A catalog item, in its original format |
+| **Add MCP server** | **Add MCP server** on [MCP servers](./mcp-servers.mdx) | Every source, with MCP Server selected | A cataloged MCP endpoint |
+
+**Postman Collection** and **MCP Server** are offered only in the **Add MCP server** dialog.
 
 The sample files below are in the Apiome repository under `apiome-ui/examples/`. Avoid the
 `negative/` and `adversarial/` folders — those files are broken on purpose.
@@ -21,7 +24,7 @@ Steps: **Source → Analyze → Preview → Import → Done** — with a **Chang
 Import when the spec is a new version of a project you already have
 ([below](#import-a-new-version-of-an-existing-project)).
 
-<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step: the source cards, then the three most recent imports with their state" caption="The Source step. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
+<Screenshot id="import-wizard-source" alt="The Import specification wizard on its Source step: the source cards, then the three most recent imports with their state" caption="As Add MCP server opens it, with every source. From Projects the wizard offers File Upload, URL Import, Clipboard Paste, Git Repository and SwaggerHub." />
 
 1. **Source** — choose a card, or press its number: **`1`** – **`5`** choose the first five
    (each card shows its key). Then fill in its intake (below). The forward button is **“Analyze →”**
@@ -308,6 +311,17 @@ Avro logical types become: `date` → a date, `time-millis` / `time-micros` → 
 `timestamp-*` and `local-timestamp-*` → a date and time, `uuid` → a UUID, `duration` → a duration, and
 `decimal` → a number that keeps its `x-avro-precision` and `x-avro-scale`. A logical type Apiome does
 not know keeps its underlying type (a `long` stays a 64-bit integer) and its name.
+
+### Postman Collection
+
+In **Add MCP server**, **click “Postman Collection”**, choose a collection file (`.json`) — try
+`apiome-ui/examples/postman/01-tasks-collection.postman_collection.json` — or paste its JSON, and
+**click “Convert to OpenAPI & Continue”**. Apiome converts it to OpenAPI 3.1 (**Converted to OpenAPI
+3.1**) and carries on as a file import.
+
+### MCP Server
+
+See [Add an MCP server](./mcp-servers.mdx#add-an-mcp-server).
 
 ## Import to catalog
 

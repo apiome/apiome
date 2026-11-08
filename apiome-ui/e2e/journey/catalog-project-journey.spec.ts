@@ -139,8 +139,9 @@ test.afterAll(async () => {
 test.describe('RC6-H1 — Catalog → Project journey', () => {
   test('runs on released surfaces only (no preview override)', async ({ page }) => {
     await login(page);
-    // Export studio is held back in RC6. With no override its route draws the gate.
-    await page.goto('/ade/dashboard/export/studio');
+    // Access audit is still held back (Export studio shipped in RC7, MCP servers in RC8). With no
+    // override its route draws the gate.
+    await page.goto('/ade/dashboard/audit');
     await expect(page.getByTestId('unreleased-feature-gate')).toBeVisible({ timeout: 60_000 });
   });
 

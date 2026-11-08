@@ -669,8 +669,8 @@ describe('quickActionsFor', () => {
     expect(quickActionsFor(true)).toEqual(released);
   });
 
-  it('withholds an action whose feature is unreleased', () => {
-    expect(quickActionsFor(true).map((action) => action.id)).not.toContain('register-mcp');
+  it('offers Register an MCP server now that MCP servers is released (RC8)', () => {
+    expect(quickActionsFor(true).map((action) => action.id)).toContain('register-mcp');
   });
 
   it('withholds what the role cannot do: a Viewer gets no Import a spec or Create an API key (RC6-H8)', () => {

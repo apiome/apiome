@@ -65,7 +65,7 @@ workspace's [registry endpoint](../ship/mcp-registry.mdx).
 
 <Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked" />
 
-Apiome registers an [MCP registry connector](./connectors.mdx#mcp-registry) for the registry and runs
+Apiome registers an [MCP registry connector](../reference/rest/connectors.md) for the registry and runs
 its first sync. Each server with a reachable `streamable-http` or `sse` remote is added here,
 discovered, linted and graded. The dialog then shows:
 - how many servers the registry listed;
@@ -96,7 +96,6 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 | **Insight** | How the server is used |
 | **Versions** | Each discovery; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** |
 | **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
-| **Dependencies** | What the server is built from and what depends on it — see [Dependency graph](../govern/dependency-graph.mdx#the-dependencies-tab) |
 | **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
 | **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
 
@@ -138,9 +137,12 @@ latency. Pick the servers and **click “Compare”**.
 
 ## Servers from a registry
 
-An [MCP registry connector](./connectors.mdx#mcp-registry) keeps servers from an upstream
+An [MCP registry connector](../reference/rest/connectors.md) keeps servers from an upstream
 registry — the official registry, Azure API Center, a Kong registry or another Apiome workspace — in
-your catalog. **Go to Bring in → Connectors**, click **Add connector** and choose **MCP registry**.
+your catalog. [Import from a registry](#import-from-a-registry) creates one for you; the Connectors
+screen is not yet available, so manage it over the
+[REST API](../reference/rest/connectors.md#create-connector-v1-tenants-tenant-slug-connectors-post)
+with the `mcp-registry` kind.
 
 Each server the registry lists with a reachable `streamable-http` or `sse` remote is added here,
 private and unpublished, and discovered, linted and graded like a server you added by hand. You can
@@ -156,7 +158,7 @@ tell it apart by its source:
 - **Registry metadata** (`registry_metadata` on the server in the API) records the entry's server
   name, version, website, the registry's status (`active` or `deprecated`) and dates, and the
   remote Apiome calls with the headers it declares. Secret header values are never stored. See
-  [What an MCP registry sync does](./connectors.mdx#what-an-mcp-registry-sync-does).
+  the [connector items API](../reference/rest/connectors.md#list-connector-items-v1-tenants-tenant-slug-connectors-connector-id-items-get).
 
 Each sync refreshes the server's name, URL, transport, description and registry metadata from the
 registry, and retires a source link the registry no longer lists. Links you added yourself stay. A server that only ships

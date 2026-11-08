@@ -192,7 +192,7 @@ export const CATALOG_EXPORTER_PREVIEW: string = (UNRELEASED_FEATURE_IDS as reado
  *
  * {@link journeyServerEnv} with the preview override set to exactly {@link CATALOG_EXPORTER_PREVIEW}:
  * only the studio is opened early, and every other held-back feature (`connectors`, `sdk-settings`,
- * `schema-registry`, `mcp`, …) stays hidden — the journey's first step proves it.
+ * `schema-registry`, `audit`, …) stays hidden — the journey's first step proves it.
  *
  * @returns The app-under-test environment.
  */

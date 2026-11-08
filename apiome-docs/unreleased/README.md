@@ -27,8 +27,6 @@ do not point any of them at `unreleased/`.
 | Page | Feature | Original path | Rail item id |
 | --- | --- | --- | --- |
 | Primitives and types | Primitives & types | `docs/build/primitives-and-types.mdx` | `primitives` |
-| MCP servers | MCP servers | `docs/bring-in/mcp-servers.mdx` | `mcp` |
-| Agent access | MCP servers (Agent access, `/ade/dashboard/mcp/agents`) | `docs/bring-in/agent-access.mdx` | `mcp` |
 | Style guides | Style guides | `docs/govern/style-guides.mdx` | `style-guides` |
 | Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
@@ -57,7 +55,7 @@ goes back:
 
 | Fragment | Goes back into | Rail item id |
 | --- | --- | --- |
-| `fragments/bring-in/import-wizard.add-mcp-server.mdx` | `docs/bring-in/import-wizard.mdx` — the **Add MCP server** row and note, the screenshot caption, and the **Postman Collection** and **MCP Server** sections | `mcp` |
+| `fragments/bring-in/mcp-servers.dependencies.mdx` | `docs/bring-in/mcp-servers.mdx` — the **Dependencies** row of the endpoint tabs table | `dependency-graph` |
 | `fragments/build/projects.consumers.mdx` | `docs/build/projects.mdx` — the **Consumers** menu row and section, the **Owner** section, and the `projects-table` alt text | `consumers`, `teams` |
 | `fragments/build/versions.dependencies.mdx` | `docs/build/versions.mdx` — the **Dependencies** section, before **Conversion** | `dependency-graph` |
 | `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams`, `connectors` |
@@ -72,7 +70,6 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 | Rail item id | Screenshot ids |
 | --- | --- |
 | `primitives` | `primitives`, `primitives-how-resolution-works`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing` |
-| `mcp` | `mcp-servers`, `mcp-servers-grid`, `mcp-endpoint-versions`, `mcp-endpoint-capabilities`, `mcp-endpoint-lint`, `mcp-endpoint-settings`, `mcp-analytics`, `mcp-capabilities`, `mcp-compare`, `import-wizard-mcp`, `mcp-servers-import-registry`, `agent-access`, `agent-access-keys`, `agent-access-usage` |
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
 | `sdk-settings` | `sdk-settings` |
@@ -91,6 +88,10 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 returned as `docs_page` by the REST rule endpoints), `getting-started/connect-an-mcp-host.mdx`,
 `reference/mcp-quickstart.md`, `ship/export-fidelity.md` (it explains the Export dialog's fidelity
 step too) and everything under `docs/reference/` — the REST, CLI and MCP surfaces still exist.
+
+**MCP servers** (`mcp`, with Agent access) is restored in RC8: its two pages, the import-wizard
+fragment, its 14 screenshots and its help entries are back on the site, the route gate is gone, and
+the legacy-docs `MCP` rule points at `bring-in/mcp-servers` again.
 
 ## Restore a feature
 
@@ -134,9 +135,9 @@ Do all of it in the pull request that releases the feature. `<id>` is its rail i
    `workspace/roles.mdx` and the 2026-10-17 … 2026-10-20 release-notes posts. Point them back at the
    guide page (and its anchor) that the restored feature brings back. `git log -p --follow` on any of them shows what changed;
    `grep -rn "not yet available" apiome-docs/docs` finds the placeholders.
-   For `primitives` and `mcp`, also point the legacy-docs area rules back at the restored page:
-   the `PRIMITIVE|…` and `MCP` entries of `AREA_PAGES` in `scripts/legacy_docs_inventory.py` (now
-   `build/edit-classes-and-properties` and `getting-started/connect-an-mcp-host`), and the matching
+   For `primitives`, also point the legacy-docs area rule back at the restored page:
+   the `PRIMITIVE|…` entry of `AREA_PAGES` in `scripts/legacy_docs_inventory.py` (now
+   `build/edit-classes-and-properties`), and the matching
    links in `docs/archive/INVENTORY.md`; `python3 -m unittest scripts/tests/test_loose_docs.py`
    fails if a rule names a page that is not on the site.
 7. **Recapture its screenshots** — the route is gated, so re-open it for the run:
