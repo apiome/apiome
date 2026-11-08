@@ -286,6 +286,54 @@ When it fires, the **Export health** card names the targets that fail most, and
 `GET /v1/ops/import-export` gives each one's failure codes. The codes are explained in
 [Export a spec](../ship/export-a-spec.md).
 
+## Watch MCP re-discovery
+
+The REST API re-discovers cataloged [MCP servers](../bring-in/mcp-servers.mdx) on a schedule: every
+tick it picks the servers whose discovery cadence has passed and discovers them again, a few at a
+time. To see how that is going, sign in as a platform administrator and call:
+
+```sh
+curl -H "Authorization: Bearer $TOKEN" \
+  "$APIOME_API/v1/ops/mcp-discovery-sweep?tenant_slug=$TENANT&limit=20"
+```
+
+The answer has four parts:
+
+| Part | Holds |
+| --- | --- |
+| `config` | Whether the sweep is on, its tick, the default cadence, how many servers it discovers at once, the per-server timeout, and how many days runs are kept |
+| `last_run` | The most recent tick; `null` before the first one |
+| `runs` | The last `limit` ticks (default 20, at most 200), newest first |
+| `totals` | The counters below, summed over those ticks, plus how many were `halted` or `failed` |
+
+Each tick reports:
+
+| Field | Means |
+| --- | --- |
+| `status` | `completed`; `halted` when `APIOME_MCP_DISCOVERY_ENABLED` is off; `failed` when the tick itself stopped with an error; `running` while it is still working |
+| `started_at`, `finished_at`, `duration_ms` | When the tick ran and how long it took |
+| `due` | Servers whose cadence had passed |
+| `dispatched` | Discoveries the tick started |
+| `coalesced` | Due servers that were already being discovered, so the tick left them alone |
+| `enqueue_failed` | Due servers the tick could not start a discovery for |
+| `checked` | The tick's discoveries, and of those: `changed` (a new version), `unchanged`, `failed` — including servers that ran past the timeout — and `in_flight` (still running) |
+| `avg_job_ms`, `max_job_ms` | How long the tick's discoveries took |
+
+The counts come straight from the discovery jobs each tick created, so they always match the job
+history: `checked` is `changed` + `unchanged` + `failed` + `in_flight`, and it equals `dispatched`
+unless a server has been deleted since.
+
+Ticks are kept for 30 days. With several REST API replicas, each runs its own sweep and every tick
+is listed. Change the sweep on the REST API:
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_DISCOVERY_ENABLED` | `true` | `false` stops every scheduled re-discovery. Each tick is still listed, as `halted`. Discovering a server by hand still works. |
+| `APIOME_MCP_DISCOVERY_MIN_INTERVAL` | `60` | Seconds between ticks |
+| `APIOME_MCP_DISCOVERY_DEFAULT_CADENCE` | `3600` | Seconds between discoveries of a server with no cadence of its own |
+| `APIOME_MCP_DISCOVERY_MAX_CONCURRENCY` | `4` | Servers discovered at once |
+| `APIOME_MCP_DISCOVERY_ENDPOINT_TIMEOUT` | `150` | Seconds one server's discovery may take before it is counted as `failed` |
+
 ## The operator screens
 
 - [The admin console](./admin-console.mdx) — signing in, and the overview.

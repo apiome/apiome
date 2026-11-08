@@ -43,11 +43,15 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .mcp_discovery_engine import enqueue_discovery_job, run_discovery_job
 
 _logger = logging.getLogger(__name__)
+
+#: How long sweep run rows are kept (#3676). At the default 60s tick this is about 43,000 rows;
+#: older runs are pruned as each new one is recorded. Their jobs are kept (the link is SET NULL).
+SWEEP_RUN_RETENTION_DAYS = 30
 
 
 async def process_mcp_discovery_sweep(db: Any) -> int:
@@ -67,6 +71,14 @@ async def process_mcp_discovery_sweep(db: Any) -> int:
     The global ``mcp_discovery_enabled`` kill switch halts the tick entirely (returns 0 without
     selecting, enqueuing, or running anything).
 
+    **Observability (MCAT-5.4, #3676).** Every tick — including a halted one and one with nothing
+    due — is recorded as an ``mcp_discovery_sweep_runs`` row with its timing, bounds and tick
+    counters (due, dispatched, coalesced, enqueue failures), and each job it creates is linked to
+    that row, so the run's outcome counts (changed / unchanged / failed / in flight) are read from
+    the jobs themselves (:meth:`Database.list_mcp_discovery_sweep_runs`). Recording is best-effort:
+    a failure to write the run row is logged and never stops discovery. A tick that raises is
+    recorded as ``failed`` before the error propagates.
+
     Args:
         db: Database handle for this tick. The blocking due-selection query is pushed to a worker
             thread (psycopg2 is synchronous); the discovery runs themselves are async (the MCP
@@ -83,12 +95,59 @@ async def process_mcp_discovery_sweep(db: Any) -> int:
         _logger.info(
             "mcp discovery sweep halted: APIOME_MCP_DISCOVERY_ENABLED is disabled"
         )
+        run_id = await _start_run(db, max_concurrency=None, timeout_seconds=None)
+        await _finish_run(db, run_id, status="halted")
         return 0
 
+    max_concurrency = max(1, int(settings.mcp_discovery_max_concurrency))
+    timeout_seconds = float(settings.mcp_discovery_endpoint_timeout_seconds)
+    run_id = await _start_run(
+        db, max_concurrency=max_concurrency, timeout_seconds=int(timeout_seconds)
+    )
+    tally = _TickTally()
+    try:
+        await _run_tick(db, run_id, tally, settings, max_concurrency, timeout_seconds)
+    except BaseException:
+        await _finish_run(db, run_id, status="failed", tally=tally)
+        raise
+    await _finish_run(db, run_id, status="completed", tally=tally)
+    return tally.dispatched
+
+
+class _TickTally:
+    """The counters one tick accumulates and records on its run row."""
+
+    def __init__(self) -> None:
+        self.due = 0
+        self.dispatched = 0
+        self.deduplicated = 0
+        self.enqueue_failed = 0
+
+
+async def _run_tick(
+    db: Any,
+    run_id: Optional[str],
+    tally: _TickTally,
+    settings: Any,
+    max_concurrency: int,
+    timeout_seconds: float,
+) -> None:
+    """Select, enqueue and drive one tick's due endpoints, counting into ``tally``.
+
+    Args:
+        db: Database handle for the due-selection read.
+        run_id: The tick's run row, linked onto every job it creates (``None`` when the run row
+            could not be written; the jobs are then simply unlinked).
+        tally: Receives the tick counters.
+        settings: The application settings.
+        max_concurrency: The concurrency cap.
+        timeout_seconds: The per-endpoint timeout.
+    """
     default_cadence = int(settings.mcp_discovery_default_cadence_seconds)
     due = await asyncio.to_thread(
         db.list_due_mcp_endpoints, default_cadence_seconds=default_cadence
     )
+    tally.due = len(due)
 
     # Enqueue every due endpoint first (de-dup aware) and collect only the freshly-created jobs to
     # drive. Doing this up front means the dedup decision is settled before any run starts, and the
@@ -99,23 +158,26 @@ async def process_mcp_discovery_sweep(db: Any) -> int:
         tenant_id = str(endpoint["tenant_id"])
         try:
             job, deduplicated = await enqueue_discovery_job(
-                tenant_id, endpoint, trigger="sweep"
+                tenant_id, endpoint, trigger="sweep", sweep_run_id=run_id
             )
         except Exception:
             # A single endpoint's enqueue failure (e.g. transient DB error) must not abort the
             # sweep for the remaining due endpoints.
+            tally.enqueue_failed += 1
             _logger.exception(
                 "mcp discovery sweep enqueue failed endpoint_id=%s", endpoint_id
             )
             continue
-        if not deduplicated:
+        if deduplicated:
+            tally.deduplicated += 1
+        else:
             pending.append((str(job["id"]), endpoint))
 
     if not pending:
-        return 0
+        return
+    # Counted before the runs start, so a tick cancelled while draining still records what it began.
+    tally.dispatched = len(pending)
 
-    max_concurrency = max(1, int(settings.mcp_discovery_max_concurrency))
-    timeout_seconds = float(settings.mcp_discovery_endpoint_timeout_seconds)
     semaphore = asyncio.Semaphore(max_concurrency)
 
     async def _bounded_run(job_id: str, endpoint: Dict[str, Any]) -> None:
@@ -132,13 +194,69 @@ async def process_mcp_discovery_sweep(db: Any) -> int:
         return_exceptions=True,
     )
 
-    dispatched = len(pending)
     _logger.info(
         "mcp discovery sweep ran %d discovery run(s) over %d due endpoint(s) "
         "(max_concurrency=%d, per_endpoint_timeout=%.0fs)",
-        dispatched,
-        len(due),
+        tally.dispatched,
+        tally.due,
         max_concurrency,
         timeout_seconds,
     )
-    return dispatched
+
+
+async def _start_run(
+    db: Any, *, max_concurrency: Optional[int], timeout_seconds: Optional[int]
+) -> Optional[str]:
+    """Record a tick's start (best-effort) and return its run id, or ``None`` if it failed.
+
+    Args:
+        db: Database handle for the write.
+        max_concurrency: The tick's concurrency cap (``None`` when halted).
+        timeout_seconds: The tick's per-endpoint timeout (``None`` when halted).
+
+    Returns:
+        The new run's id, or ``None`` when the row could not be written.
+    """
+    try:
+        row = await asyncio.to_thread(
+            db.start_mcp_discovery_sweep_run,
+            max_concurrency=max_concurrency,
+            endpoint_timeout_seconds=timeout_seconds,
+            retention_days=SWEEP_RUN_RETENTION_DAYS,
+        )
+        return str(row["id"])
+    except Exception:
+        _logger.exception("mcp discovery sweep could not record its run")
+        return None
+
+
+async def _finish_run(
+    db: Any,
+    run_id: Optional[str],
+    *,
+    status: str,
+    tally: Optional[_TickTally] = None,
+) -> None:
+    """Record how a tick ended (best-effort; a no-op when its start was not recorded).
+
+    Args:
+        db: Database handle for the write.
+        run_id: The run from :func:`_start_run`, or ``None``.
+        status: ``completed``, ``halted`` or ``failed``.
+        tally: The tick counters; ``None`` records zeros (a halted tick).
+    """
+    if run_id is None:
+        return
+    tally = tally or _TickTally()
+    try:
+        await asyncio.to_thread(
+            db.finish_mcp_discovery_sweep_run,
+            run_id,
+            status=status,
+            due_count=tally.due,
+            dispatched_count=tally.dispatched,
+            deduplicated_count=tally.deduplicated,
+            enqueue_failed_count=tally.enqueue_failed,
+        )
+    except Exception:
+        _logger.exception("mcp discovery sweep could not record the end of run %s", run_id)

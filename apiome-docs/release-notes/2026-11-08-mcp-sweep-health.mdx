@@ -1,0 +1,22 @@
+---
+slug: mcp-sweep-health
+title: See how MCP re-discovery is doing
+description: "A platform-admin endpoint reports each MCP re-discovery tick: what was checked, changed and failed."
+authors: [apiome]
+---
+
+Operators can now see how scheduled MCP re-discovery is doing. `GET /v1/ops/mcp-discovery-sweep`
+lists recent ticks of the sweep that re-discovers cataloged MCP servers, with how many servers each
+checked, changed and failed, and how long it took.
+
+{/* truncate */}
+
+- **Every tick is listed**, including ticks with nothing due and ticks halted by
+  `APIOME_MCP_DISCOVERY_ENABLED`, so you can tell the sweep is alive and when it last ran.
+- **The counts match the job history.** They are read from the discovery jobs each tick created:
+  `checked` is always `changed` + `unchanged` + `failed` + `in_flight`.
+- **Totals and settings in one call** — the sweep's settings and the counters summed over the ticks
+  you asked for.
+- Ticks are kept for 30 days. Platform administrators only.
+
+See [Watch MCP re-discovery](/admin/operating-apiome#watch-mcp-re-discovery).

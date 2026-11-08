@@ -24067,6 +24067,8 @@ class Database:
         endpoint_id: str,
         tenant_id: str,
         trigger: str = "manual",
+        *,
+        sweep_run_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Create a queued discovery job for an endpoint, de-duplicating concurrent runs.
 
@@ -24081,6 +24083,10 @@ class Database:
             tenant_id: Owning tenant, stamped on the job for scoped reads.
             trigger: How the run was initiated — one of ``manual`` / ``sweep`` /
                 ``registry`` (this REST path always passes ``manual``).
+            sweep_run_id: The sweep tick creating the job (``mcp_discovery_sweep_runs.id``,
+                #3676), so the tick's outcome counts can be aggregated from its jobs; ``None``
+                for manual and registry jobs. A coalesced (deduplicated) enqueue keeps the
+                existing job's link unchanged.
 
         Returns:
             ``{"job": <row>, "deduplicated": bool}`` — ``deduplicated`` is ``True`` when an
@@ -24094,8 +24100,8 @@ class Database:
             LIMIT 1
         """
         insert_job = f"""
-            INSERT INTO apiome.mcp_discovery_jobs (endpoint_id, tenant_id, trigger)
-            VALUES (%s::uuid, %s::uuid, %s)
+            INSERT INTO apiome.mcp_discovery_jobs (endpoint_id, tenant_id, trigger, sweep_run_id)
+            VALUES (%s::uuid, %s::uuid, %s, %s::uuid)
             RETURNING {self._MCP_DISCOVERY_JOB_COLUMNS}
         """
         conn = self.connect()
@@ -24115,7 +24121,7 @@ class Database:
                 if existing is not None:
                     conn.commit()
                     return {"job": dict(existing), "deduplicated": True}
-                cursor.execute(insert_job, (endpoint_id, tenant_id, trigger))
+                cursor.execute(insert_job, (endpoint_id, tenant_id, trigger, sweep_run_id))
                 row = cursor.fetchone()
                 conn.commit()
                 return {"job": dict(row), "deduplicated": False}
@@ -24147,6 +24153,152 @@ class Database:
             ORDER BY created_at DESC
         """
         return self.execute_query(q, (endpoint_id, tenant_id))
+
+    # --- Discovery sweep runs (V2-MCP-19.4 / MCAT-5.4, #3676) -----------------------------------
+    _MCP_SWEEP_RUN_COLUMNS = (
+        "id, started_at, finished_at, status, max_concurrency, endpoint_timeout_seconds, "
+        "due_count, dispatched_count, deduplicated_count, enqueue_failed_count"
+    )
+    # The same columns qualified with the ``r`` alias the listing query joins under.
+    _MCP_SWEEP_RUN_COLUMNS_R = ", ".join(
+        "r." + column.strip() for column in _MCP_SWEEP_RUN_COLUMNS.split(",")
+    )
+
+    def start_mcp_discovery_sweep_run(
+        self,
+        *,
+        max_concurrency: Optional[int],
+        endpoint_timeout_seconds: Optional[int],
+        retention_days: int,
+    ) -> Dict[str, Any]:
+        """Record the start of one sweep tick and prune runs older than the retention window.
+
+        Start and finish times are wall-clock (``clock_timestamp()``), not the transaction's start
+        time, so a tick's duration is real and consecutive runs order correctly. Pruning here keeps the table bounded at about one row per tick for ``retention_days``
+        without a separate job. A pruned run's jobs keep their history: the job link is
+        ``ON DELETE SET NULL`` (V363).
+
+        Args:
+            max_concurrency: The concurrency cap the tick runs under (``None`` when halted).
+            endpoint_timeout_seconds: The per-endpoint timeout the tick runs under (``None``
+                when halted).
+            retention_days: Runs that started longer ago than this are deleted; must be >= 1.
+
+        Returns:
+            The new run row (``status = 'running'``).
+        """
+        if retention_days < 1:
+            raise ValueError("retention_days must be at least 1")
+        self._execute_write(
+            "DELETE FROM apiome.mcp_discovery_sweep_runs "
+            "WHERE started_at < CURRENT_TIMESTAMP - make_interval(days => %s)",
+            (retention_days,),
+        )
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.mcp_discovery_sweep_runs
+                (started_at, max_concurrency, endpoint_timeout_seconds)
+            VALUES (clock_timestamp(), %s, %s)
+            RETURNING {self._MCP_SWEEP_RUN_COLUMNS}
+            """,
+            (max_concurrency, endpoint_timeout_seconds),
+        )
+        return dict(rows[0])
+
+    def finish_mcp_discovery_sweep_run(
+        self,
+        run_id: str,
+        *,
+        status: str,
+        due_count: int = 0,
+        dispatched_count: int = 0,
+        deduplicated_count: int = 0,
+        enqueue_failed_count: int = 0,
+    ) -> None:
+        """Record how a sweep tick ended: its status, finish time and tick counters.
+
+        Args:
+            run_id: The run from :meth:`start_mcp_discovery_sweep_run`.
+            status: ``completed``, ``halted`` (kill switch) or ``failed`` (the tick raised).
+            due_count: Endpoints selected as due.
+            dispatched_count: Discovery runs created and driven (each a linked job).
+            deduplicated_count: Due endpoints whose job coalesced onto an active one.
+            enqueue_failed_count: Due endpoints whose enqueue raised.
+        """
+        if status not in ("completed", "halted", "failed"):
+            raise ValueError(f"unknown sweep run status {status!r}")
+        self._execute_write(
+            """
+            UPDATE apiome.mcp_discovery_sweep_runs
+            SET finished_at = clock_timestamp(), status = %s, due_count = %s,
+                dispatched_count = %s, deduplicated_count = %s, enqueue_failed_count = %s
+            WHERE id = %s::uuid
+            """,
+            (
+                status,
+                due_count,
+                dispatched_count,
+                deduplicated_count,
+                enqueue_failed_count,
+                run_id,
+            ),
+        )
+
+    def list_mcp_discovery_sweep_runs(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """The most recent sweep runs, newest first, each with outcome counts from its jobs.
+
+        The outcome counts are aggregated from the jobs linked by ``sweep_run_id`` rather than
+        stored on the run, so they always reconcile with the job log:
+
+        * ``jobs`` — linked jobs still in the log (equals ``dispatched_count`` unless an
+          endpoint, and with it its jobs, has since been deleted);
+        * ``changed`` / ``unchanged`` — completed jobs whose result did / did not create a version;
+        * ``failed`` — failed jobs (including per-endpoint timeouts);
+        * ``in_flight`` — jobs still queued or running;
+
+        so ``jobs = changed + unchanged + failed + in_flight``. Durations are milliseconds:
+        ``duration_ms`` for the tick (``None`` while it drains) and ``avg_job_ms`` /
+        ``max_job_ms`` over its finished jobs (``None`` when there are none).
+
+        Args:
+            limit: How many runs to return (the caller bounds it).
+
+        Returns:
+            The run rows with their aggregates.
+        """
+        return self.execute_query(
+            f"""
+            SELECT {self._MCP_SWEEP_RUN_COLUMNS_R},
+                   (EXTRACT(EPOCH FROM (r.finished_at - r.started_at)) * 1000)::bigint
+                       AS duration_ms,
+                   j.jobs, j.changed, j.unchanged, j.failed, j.in_flight,
+                   j.avg_job_ms, j.max_job_ms
+            FROM apiome.mcp_discovery_sweep_runs r
+            LEFT JOIN LATERAL (
+                SELECT
+                    count(*) AS jobs,
+                    count(*) FILTER (
+                        WHERE state = 'completed' AND (result ->> 'changed') = 'true'
+                    ) AS changed,
+                    count(*) FILTER (
+                        WHERE state = 'completed' AND (result ->> 'changed') IS DISTINCT FROM 'true'
+                    ) AS unchanged,
+                    count(*) FILTER (WHERE state = 'failed') AS failed,
+                    count(*) FILTER (WHERE state IN ('queued', 'running')) AS in_flight,
+                    (avg(EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000)
+                        FILTER (WHERE finished_at IS NOT NULL AND started_at IS NOT NULL))::bigint
+                        AS avg_job_ms,
+                    (max(EXTRACT(EPOCH FROM (finished_at - started_at)) * 1000)
+                        FILTER (WHERE finished_at IS NOT NULL AND started_at IS NOT NULL))::bigint
+                        AS max_job_ms
+                FROM apiome.mcp_discovery_jobs
+                WHERE sweep_run_id = r.id
+            ) j ON TRUE
+            ORDER BY r.started_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
 
     def mark_mcp_discovery_job_running(self, job_id: str) -> Optional[Dict[str, Any]]:
         """Transition a queued job to ``running`` and stamp ``started_at``.

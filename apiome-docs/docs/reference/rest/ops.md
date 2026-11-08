@@ -1,6 +1,6 @@
 ---
 title: "Ops"
-description: "REST endpoints tagged ops: 9 operations."
+description: "REST endpoints tagged ops: 10 operations."
 sidebar_position: 63
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.533.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.534.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `ops` · 9 operations
+Tag: `ops` · 10 operations
 
 ## `GET /health` {#health-check-health-get}
 
@@ -145,6 +145,36 @@ Operation id: `ops_import_export_v1_ops_import_export_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for ops import export. | `application/json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/ops/mcp-discovery-sweep` {#ops-mcp-discovery-sweep-v1-ops-mcp-discovery-sweep-get}
+
+**Ops Mcp Discovery Sweep**
+
+MCP re-discovery sweep health (MCAT-5.4, #3676). Platform-admin only.
+
+Reports the sweep's settings (enabled, tick, cadence, concurrency cap, per-endpoint timeout),
+the most recent run, the recent runs newest first, and their totals. Each run carries its timing
+and tick counters (due, dispatched, coalesced, enqueue failures) and outcome counts — checked,
+changed, unchanged, failed, in flight — aggregated from the discovery jobs that run created, so
+they reconcile with the job log by construction. See :mod:`app.mcp_sweep_status`.
+
+Operation id: `ops_mcp_discovery_sweep_v1_ops_mcp_discovery_sweep_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `limit` | query | integer | no | How many recent sweep runs to return, newest first. |
+| `tenant_slug` | query | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for ops mcp discovery sweep. | `application/json` any |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/ops/metrics` {#ops-metrics-v1-ops-metrics-get}

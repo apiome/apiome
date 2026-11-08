@@ -663,7 +663,11 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
 
 async def enqueue_discovery_job(
-    tenant_id: str, endpoint: Dict[str, Any], *, trigger: str = "manual"
+    tenant_id: str,
+    endpoint: Dict[str, Any],
+    *,
+    trigger: str = "manual",
+    sweep_run_id: Optional[str] = None,
 ) -> Tuple[Dict[str, Any], bool]:
     """Create (or coalesce onto) a discovery job for an endpoint *without* starting the run.
 
@@ -681,15 +685,26 @@ async def enqueue_discovery_job(
         endpoint: The already tenant-validated ``mcp_endpoints`` row to discover.
         trigger: How the run was initiated — ``manual`` (default) or ``sweep``. Recorded on
             the job row so its provenance is auditable.
+        sweep_run_id: The sweep tick enqueuing the job (#3676), linked on the job so the tick's
+            outcome counts are aggregated from its jobs; ``None`` outside the sweep.
 
     Returns:
         ``(job_row, deduplicated)`` — when ``deduplicated`` is ``True`` an already-active job
         was returned; otherwise a fresh ``queued`` job was created (and is the caller's to run).
     """
     endpoint_id = str(endpoint["id"])
-    enqueued = await asyncio.to_thread(
-        db.enqueue_mcp_discovery_job, endpoint_id, tenant_id, trigger
-    )
+    if sweep_run_id is None:
+        enqueued = await asyncio.to_thread(
+            db.enqueue_mcp_discovery_job, endpoint_id, tenant_id, trigger
+        )
+    else:
+        enqueued = await asyncio.to_thread(
+            db.enqueue_mcp_discovery_job,
+            endpoint_id,
+            tenant_id,
+            trigger,
+            sweep_run_id=sweep_run_id,
+        )
     return enqueued["job"], bool(enqueued["deduplicated"])
 
 
