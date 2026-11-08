@@ -957,6 +957,75 @@ async def _drive_job_inner(job_id: str, payload: Dict[str, Any]) -> None:
         await asyncio.to_thread(
             _record_worker_declared_dependencies, str(payload["tenant_id"]), str(project_id), payload
         )
+    # DCW-2.4 (private-suite#2365): keep what the import looked like, so the studio can say what is
+    # still as imported and quote the original. Best-effort, off the event loop, like the hooks above.
+    if status.state == "completed" and version_record_id and payload.get("tenant_id"):
+        await asyncio.to_thread(
+            _record_worker_import_snapshot,
+            str(payload["tenant_id"]),
+            tenant_slug,
+            str(version_record_id),
+            payload,
+        )
+
+
+def _record_worker_import_snapshot(
+    tenant_id: str, tenant_slug: str, version_record_id: str, payload: Dict[str, Any]
+) -> None:
+    """Store a worker-imported OpenAPI document's import snapshot (DCW-2.4, #2365), never raising.
+
+    OpenAPI and Swagger imports are decomposed into classes and paths by the apiome-ui worker and
+    keep no ``sourceContent``. This keeps, once per revision, the submitted text — scrubbed under
+    the tenant's intake policy exactly as catalog intake scrubs it — its file name and digest, and
+    the canonical document generated for the revision now that the import has committed. A document
+    that is not OpenAPI/Swagger, or cannot be read, parsed or regenerated, records nothing.
+
+    Args:
+        tenant_id: The importing tenant.
+        tenant_slug: Its slug, for regenerating the canonical document.
+        version_record_id: The revision the worker wrote.
+        payload: The job payload.
+    """
+    import hashlib
+
+    import yaml
+
+    from .compatibility_engine import openapi_for_revision
+    from .database import db
+    from .import_source_pipeline import _decode_document_bytes
+    from .intake_scrub_policy import load_tenant_scrub_policy, resolve_scrub_mode
+    from .intake_secret_scrub import scrub_document_text
+
+    try:
+        raw = _decode_document_bytes(payload)
+        text = raw.decode("utf-8", errors="replace")
+        parsed = yaml.safe_load(text)
+        if not isinstance(parsed, dict) or not ({"openapi", "swagger"} & set(parsed)):
+            return
+        version_row = db.get_version_by_id(version_record_id, tenant_id)
+        if not version_row:
+            return
+        canonical = openapi_for_revision(version_row, tenant_slug, tenant_id)
+        resolution = resolve_scrub_mode(load_tenant_scrub_policy(tenant_id), format_key="openapi")
+        outcome = scrub_document_text(text, entropy_detection=resolution.entropy_detection)
+        report = outcome.report()
+        report.update(resolution.as_report_fields())
+        metadata = payload.get("metadata") or {}
+        db.record_import_snapshot(
+            tenant_id=tenant_id,
+            version_id=version_record_id,
+            source_file=str(payload.get("filename") or metadata.get("filename") or "") or None,
+            source_format="json" if text.lstrip().startswith("{") else "yaml",
+            source_digest="sha256:" + hashlib.sha256(raw).hexdigest(),
+            source_text=outcome.text if resolution.enforced else text,
+            canonical_document=canonical,
+            scrub_report=report,
+            created_by=str(payload.get("user_id") or "") or None,
+        )
+    except Exception as exc:  # noqa: BLE001 - provenance must not fail a finished import
+        logger.info(
+            "import snapshot skipped version_record_id=%s: %s", version_record_id, f"{type(exc).__name__}"[:100]
+        )
 
 
 def _record_worker_declared_dependencies(tenant_id: str, project_id: str, payload: Dict[str, Any]) -> None:

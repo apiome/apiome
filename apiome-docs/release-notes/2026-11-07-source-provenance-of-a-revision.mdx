@@ -1,0 +1,24 @@
+---
+slug: source-provenance-of-a-revision
+title: Where every path, operation and component came from
+description: "A new read says whether each element is as imported, edited in Apiome, or source-edited."
+authors: [apiome]
+---
+
+A new REST read reports the **source provenance** of a revision: for every path, operation and component,
+whether it is still as imported, was edited in Apiome, or was edited through the source workspace — and
+the original file, location and digest behind it.
+
+{/* truncate */}
+
+- **Three states.** `imported` (unchanged since the import), `source-edited` (changed through a source
+  apply since) and `local` (changed or created in Apiome). A draft is measured against the import of the
+  version it was created from.
+- **Stable ids.** Each element is keyed by its JSON Pointer, with the class or path id where it has one.
+- **The original text.** Asking for one element quotes the lines it came from in the imported file.
+- **Imports keep their source.** An OpenAPI or Swagger import now keeps a snapshot of what it imported —
+  secret-scrubbed under your intake policy, exactly as other imports' stored sources are.
+- **REST API.** `GET /v1/versions/{tenant}/{project}/{version}/provenance` (`projects:view`); `?pointer=`
+  adds the excerpt. The Apiome Suite studio shows it on its contract inspector.
+
+See the [source provenance REST reference](/reference/rest/source-provenance).

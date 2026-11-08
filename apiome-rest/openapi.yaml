@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.532.0
+  version: 1.533.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29282,7 +29282,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-08T05:23:26Z'
+                        example: '2026-11-08T06:13:18Z'
                       method:
                         type: string
                         example: GET
@@ -50452,6 +50452,102 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for apply source changesresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/provenance:
+    get:
+      tags:
+      - source-provenance
+      summary: Get the source provenance of a revision's paths, operations and components
+      description: 'For every path, operation and component: `imported` (unchanged
+        since the import), `source-edited` (changed through a source apply since)
+        or `local` (changed or created in Apiome), keyed by JSON Pointer with the
+        class or path id where one exists, plus the imported file and its digest.
+        A draft is measured against its nearest ancestor''s import.
+
+
+        `?pointer=` returns only the element that owns that pointer, with an excerpt
+        of the original import text (at most 40 lines).
+
+
+        Requires `projects:view`.'
+      operationId: get_source_provenance_v1_versions__tenant_slug___project_id___version_record_id__provenance_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: pointer
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getthesourceprovenanceofarevisionspathsopointer schema.
+          - type: 'null'
+            description: Getthesourceprovenanceofarevisionspathsopointer schema.
+          description: Narrow to the element owning this JSON Pointer.
+          title: Pointer
+        description: Narrow to the element owning this JSON Pointer.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getthesourceprovenanceofarevisionspathsoauthorization schema.
+          - type: 'null'
+            description: Getthesourceprovenanceofarevisionspathsoauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Getthesourceprovenanceofarevisionspathso Xapikey schema.
+          - type: 'null'
+            description: Getthesourceprovenanceofarevisionspathso Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get the source provenance of a revision's
+            paths, operations and components.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceProvenanceResponse'
+                description: Response payload for getthesourceprovenanceofarevisionspathsoresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for getthesourceprovenanceofarevisionspathsoresponse422.
   /v1/slate/sites:
     get:
       tags:
@@ -93253,7 +93349,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         completed_at:
           anyOf:
           - type: string
@@ -94471,7 +94567,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
       type: object
       required:
       - api_key
@@ -94514,7 +94610,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -94975,7 +95071,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -95148,7 +95244,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -95753,13 +95849,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -98374,7 +98470,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: fa9d544f-3393-4691-aa3a-e7e3f58f2eeb
+          example: e9f2e3c0-7d8d-4d03-82ff-7da49a254c3d
         method:
           type: string
           title: Method
@@ -100545,7 +100641,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         envelope:
           additionalProperties: true
           type: object
@@ -102129,7 +102225,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         browse_url:
           anyOf:
           - type: string
@@ -102533,6 +102629,86 @@ components:
       - policyVersion
       title: EgressRuleResponse
       description: The outcome of an egress allowlist write.
+    ElementProvenanceOut:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: The element's JSON Pointer in the generated document — its
+            stable id.
+          example: example
+        kind:
+          type: string
+          enum:
+          - path
+          - operation
+          - component
+          title: Kind
+          description: What the element is.
+          example: path
+        entityId:
+          anyOf:
+          - type: string
+            description: Response payload for element provenance.
+          - type: 'null'
+            description: Response payload for element provenance.
+          title: Entityid
+          description: The class or path id, where the element has one.
+        status:
+          type: string
+          enum:
+          - imported
+          - local
+          - source-edited
+          title: Status
+          description: As imported; edited in Apiome; or edited through the source
+            workspace.
+          example: imported
+        sourceFile:
+          anyOf:
+          - type: string
+            description: Response payload for element provenance.
+          - type: 'null'
+            description: Response payload for element provenance.
+          title: Sourcefile
+          description: The file the import came from, for an imported element.
+        sourcePointer:
+          anyOf:
+          - type: string
+            description: Response payload for element provenance.
+          - type: 'null'
+            description: Response payload for element provenance.
+          title: Sourcepointer
+          description: Where the element sat in that file, when it was there.
+        sourceDigest:
+          anyOf:
+          - type: string
+            description: Response payload for element provenance.
+          - type: 'null'
+            description: Response payload for element provenance.
+          title: Sourcedigest
+          description: sha256 digest of the imported file.
+        lastSourceEditAt:
+          anyOf:
+          - type: string
+            description: Response payload for element provenance.
+          - type: 'null'
+            description: Response payload for element provenance.
+          title: Lastsourceeditat
+          description: When a source apply last changed it.
+        excerpt:
+          anyOf:
+          - $ref: '#/components/schemas/SourceExcerpt'
+          - type: 'null'
+            description: Response payload for element provenance.
+          description: The original text — only with `?pointer=`.
+      type: object
+      required:
+      - pointer
+      - kind
+      - status
+      title: ElementProvenanceOut
+      description: One element's provenance.
     EmittedArtifactLint:
       properties:
         applicable:
@@ -108294,7 +108470,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         reports:
           items:
             $ref: '#/components/schemas/ExportRunTargetReport'
@@ -108502,7 +108678,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
       additionalProperties: false
       type: object
       required:
@@ -114302,6 +114478,52 @@ components:
         the
 
         commit would create an empty revision, so it can offer to skip it.'
+    ImportSnapshotOut:
+      properties:
+        versionRecordId:
+          type: string
+          title: Versionrecordid
+          description: The revision that was imported (this one or an ancestor).
+          example: 1.0.0
+        sourceFile:
+          anyOf:
+          - type: string
+            description: Response payload for import snapshot.
+          - type: 'null'
+            description: Response payload for import snapshot.
+          title: Sourcefile
+          description: Source File.
+        sourceFormat:
+          type: string
+          title: Sourceformat
+          description: Source Format.
+          example: openapi
+        sourceDigest:
+          type: string
+          title: Sourcedigest
+          description: Source Digest.
+          example: example
+        importedAt:
+          anyOf:
+          - type: string
+            description: Response payload for import snapshot.
+          - type: 'null'
+            description: Response payload for import snapshot.
+          title: Importedat
+          description: Imported At.
+        textAvailable:
+          type: boolean
+          title: Textavailable
+          description: False when the import's text was withheld, so no excerpt exists.
+          example: false
+      type: object
+      required:
+      - versionRecordId
+      - sourceFormat
+      - sourceDigest
+      - textAvailable
+      title: ImportSnapshotOut
+      description: The import the statuses are measured against.
     ImportSourceAlternateIntake:
       properties:
         kind:
@@ -132534,6 +132756,34 @@ components:
       - fingerprint
       title: PreservationEnvelopeResponse
       description: A revision's live preservation envelope plus its semantic fingerprint.
+    PreservedProvenanceOut:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: Pointer.
+          example: example
+        sourceFile:
+          anyOf:
+          - type: string
+            description: Response payload for preserved provenance.
+          - type: 'null'
+            description: Response payload for preserved provenance.
+          title: Sourcefile
+          description: Source File.
+        sourceDigest:
+          anyOf:
+          - type: string
+            description: Response payload for preserved provenance.
+          - type: 'null'
+            description: Response payload for preserved provenance.
+          title: Sourcedigest
+          description: Source Digest.
+      type: object
+      required:
+      - pointer
+      title: PreservedProvenanceOut
+      description: A DCW-2.1 preserved field and the source it was claimed from.
     PresetBody:
       properties:
         key:
@@ -143061,7 +143311,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
       additionalProperties: false
       type: object
       required:
@@ -149056,6 +149306,36 @@ components:
       - blockers
       title: SourceChangeSetBody
       description: The classified diff in the review response.
+    SourceExcerpt:
+      properties:
+        startLine:
+          type: integer
+          title: Startline
+          description: First quoted line (1-based).
+          example: 1
+        endLine:
+          type: integer
+          title: Endline
+          description: Last quoted line (1-based).
+          example: 1
+        text:
+          type: string
+          title: Text
+          description: The quoted lines, as the import stored them (secret-scrubbed).
+          example: example
+        truncated:
+          type: boolean
+          title: Truncated
+          description: True when the value runs past the 40-line limit.
+          example: false
+      type: object
+      required:
+      - startLine
+      - endLine
+      - text
+      - truncated
+      title: SourceExcerpt
+      description: Lines of the original import text behind an element.
     SourceLocation:
       properties:
         file:
@@ -149169,6 +149449,48 @@ components:
       title: SourceLocationSupport
       description: The best source pointer this format's analyzer can attach to a
         node.
+    SourceProvenanceResponse:
+      properties:
+        versionRecordId:
+          type: string
+          title: Versionrecordid
+          description: Version Record ID.
+          example: 1.0.0
+        snapshot:
+          anyOf:
+          - $ref: '#/components/schemas/ImportSnapshotOut'
+          - type: 'null'
+            description: Response payload for source provenance.
+          description: 'Null when no import in the revision''s lineage was recorded:
+            every element then reads `local`, except those a source apply changed.'
+        elements:
+          items:
+            $ref: '#/components/schemas/ElementProvenanceOut'
+          type: array
+          title: Elements
+          description: Elements.
+          maxItems: 1000
+        preserved:
+          items:
+            $ref: '#/components/schemas/PreservedProvenanceOut'
+          type: array
+          title: Preserved
+          description: Preserved.
+          maxItems: 1000
+        counts:
+          additionalProperties:
+            type: integer
+          type: object
+          title: Counts
+          description: Elements per status.
+      type: object
+      required:
+      - versionRecordId
+      - elements
+      - preserved
+      - counts
+      title: SourceProvenanceResponse
+      description: A revision's source provenance.
     SourceReviewRequest:
       properties:
         sourceText:
@@ -153013,12 +153335,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
       additionalProperties: false
       type: object
       required:
@@ -154147,7 +154469,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         detected_by:
           anyOf:
           - type: string
@@ -160875,13 +161197,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-08T05:23:26Z'
+          example: '2026-11-08T06:13:18Z'
         outcome:
           anyOf:
           - type: string

@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.670.0] - 2026-11-07
+
+### Added
+- **Source provenance of a revision (DCW-2.4, private-suite #2365).** `GET /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/provenance`
+  reports, for every path, operation and component, whether it is `imported` (unchanged since the import),
+  `source-edited` (changed through a source apply since) or `local` (changed or created in Apiome), keyed by
+  JSON Pointer with the class or path id where one exists, plus the imported file and its digest; `?pointer=`
+  narrows to one element and quotes a bounded excerpt of the original import. A draft is measured against its
+  nearest ancestor's import. Requires `projects:view`.
+- **Import snapshots.** A committed OpenAPI/Swagger worker import now keeps its source text (secret-scrubbed
+  under the tenant's intake policy, as catalog `sourceContent` is), file name, digest and the canonical document
+  generated at import (`apiome.version_import_snapshots`, apiome-db V362). Best-effort: a snapshot that cannot
+  be taken never fails the import.
+
+### Changed
+- **Source applies record their changed pointers.** `POST …/source-apply` writes one
+  `apiome.version_source_edits` row per changed pointer, linked to its `source_change_audit` row, in the same
+  transaction.
+  - OpenAPI 1.533.0.
+
 ## [1.669.0] - 2026-11-07
 
 ### Added

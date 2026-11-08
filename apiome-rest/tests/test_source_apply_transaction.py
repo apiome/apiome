@@ -334,3 +334,37 @@ class TestApplyAndReplay:
         assert result["applied"] is False
         assert result.get("noChanges") is True
         assert conn.writes == [] and conn.commits == 0
+
+
+class TestSourceEditProvenance:
+    """DCW-2.4 (private-suite#2365): an apply records which pointers it changed, in its own transaction."""
+
+    def _digests(self):
+        return TestApplyAndReplay._digests(self)
+
+    def test_success_records_one_edit_per_changed_pointer_linked_to_the_audit(self, monkeypatch):
+        base, cs = self._digests()
+        conn = FakeConn(_routes())
+        result = _apply(conn, base_digest=base, cs_digest=cs, monkeypatch=monkeypatch)
+        edits = [
+            (sql, params)
+            for sql, params in conn.writes
+            if sql.startswith("INSERT INTO apiome.version_source_edits")
+        ]
+        assert edits, "an applied change set records its changed pointers"
+        for _sql, params in edits:
+            tenant_id, version_id, pointer, change_kind, audit_id, _actor = params
+            assert pointer == "" or pointer.startswith("/")
+            assert change_kind in {"addition", "update", "deletion", "unsupported-preserved"}
+            assert audit_id == result["auditId"]
+        # The edits are written after the audit row and before the single commit.
+        order = [sql for sql, _ in conn.writes]
+        audit_at = next(i for i, sql in enumerate(order) if sql.startswith("INSERT INTO apiome.source_change_audit"))
+        assert all(order.index(sql) > audit_at for sql, _ in edits)
+        assert conn.commits == 1 and conn.rollbacks == 0
+
+    def test_a_refused_apply_records_no_edits(self, monkeypatch):
+        conn = FakeConn(_routes())
+        with pytest.raises(SourceApplyConflictError):
+            _apply(conn, base_digest="sha256:stale", cs_digest="y", monkeypatch=monkeypatch)
+        assert not any(sql.startswith("INSERT INTO apiome.version_source_edits") for sql, _ in conn.writes)
