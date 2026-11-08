@@ -1,0 +1,24 @@
+---
+slug: add-mcp-server-dialog
+title: Add MCP server has its own dialog
+description: "Adding an MCP server no longer opens the spec import wizard."
+authors: [apiome]
+---
+
+**Add MCP server** on [MCP servers](/bring-in/mcp-servers#add-an-mcp-server) now opens a dialog
+of its own, with three steps: **Connect → Discover → Done**. It used to open the Import
+specification wizard on its MCP tab. That wizard's spec steps, a tab for every spec source, and the
+import-jobs list don't apply to an MCP server.
+
+{/* truncate */}
+
+- **Connect.** Add one server (endpoint URL, display name, transport and auth type) or every
+  server a registry lists.
+- **Discover.** Apiome connects, lists the server's tools, resources and prompts, then lints and
+  grades them. If the scan fails, **Discard** removes the server, and **Add this server anyway**
+  keeps it.
+- **Done.** Shows what was cataloged, with a link to the server.
+- **The import wizard no longer lists MCP Server.** The **Postman Collection** card went with it: it
+  only appeared in the wizard Add MCP server opened. Import a collection with
+  [Import to catalog](/bring-in/postman-import). To make it a project, convert it to OpenAPI 3.1
+  over the REST API first.

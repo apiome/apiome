@@ -123,7 +123,11 @@
       "id": "import-wizard-source",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#imp-source-heading",
-      "data": "fixture:hive-import-wizard/source.html"
+      "data": "fixture:hive-import-wizard/source.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/ImportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/importSourceCatalog.ts"
+      ]
     },
     {
       "id": "publish-dialog",
@@ -585,7 +589,11 @@
       "id": "import-wizard-intake",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/intake.html"
+      "data": "fixture:hive-import-wizard/intake.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/ImportDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/importSourceCatalog.ts"
+      ]
     },
     {
       "id": "import-wizard-changes",
@@ -1839,13 +1847,22 @@
       "id": "import-wizard-mcp",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/mcp.html"
+      "data": "fixture:hive-import-wizard/mcp.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/mcp/AddMcpServerDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/McpImportPanel.tsx"
+      ]
     },
     {
       "id": "mcp-servers-import-registry",
       "route": "/ade/dashboard/catalog",
       "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/mcp-registry.html"
+      "data": "fixture:hive-import-wizard/mcp-registry.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/mcp/AddMcpServerDialog.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/McpImportPanel.tsx",
+        "apiome-ui/src/app/components/ade/dashboard/McpRegistryImportFields.tsx"
+      ]
     },
     {
       "id": "mcp-servers-grid",

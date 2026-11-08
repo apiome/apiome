@@ -57,7 +57,7 @@ const GRPC_DESCRIPTOR: ImportSourceDescriptor = {
   formats: ['protobuf'],
 };
 
-const BUILTIN_KEYS = ['file', 'url', 'clipboard', 'git', 'swaggerhub', 'postman', 'mcp'];
+const BUILTIN_KEYS = ['file', 'url', 'clipboard', 'git', 'swaggerhub', 'postman'];
 
 function descriptor(overrides: Partial<ImportSourceDescriptor>): ImportSourceDescriptor {
   return {
@@ -122,6 +122,12 @@ describe('mergeImportSourceCards', () => {
     expect(cards.map((c) => c.key)).toEqual(BUILTIN_KEYS);
     expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('openapi')).toBe(true);
     expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('sample')).toBe(true);
+  });
+
+  it('offers no MCP card: MCP servers are added from MCP servers, not imported as a spec', () => {
+    const cards = mergeImportSourceCards([descriptor({ key: 'mcp', label: 'MCP', input_kinds: ['discovery'] })]);
+    expect(cards.map((c) => c.key)).toEqual(BUILTIN_KEYS);
+    expect(REGISTRY_KEYS_COVERED_BY_BUILTINS.has('mcp')).toBe(true);
   });
 
   it('does not let a registry descriptor override a built-in card with the same key', () => {
@@ -326,11 +332,10 @@ describe('card scopes (MFI-23.12)', () => {
     }
   });
 
-  it('keeps SwaggerHub native and Postman/MCP alternative', () => {
+  it('keeps SwaggerHub native and Postman alternative', () => {
     const cards = baseImportSourceCards();
     expect(cards.find((c) => c.key === 'swaggerhub')?.scope).toBe('native');
     expect(cards.find((c) => c.key === 'postman')?.scope).toBe('alternative');
-    expect(cards.find((c) => c.key === 'mcp')?.scope).toBe('alternative');
   });
 
   it('marks every registry-contributed adapter as an alternative-format card', () => {
@@ -358,7 +363,7 @@ describe('filterCardsForVariant (MFI-23.12)', () => {
 
   it('catalog variant keeps the alternative formats plus the generic intake, minus SwaggerHub', () => {
     const keys = filterCardsForVariant(merged(), 'catalog').map((c) => c.key);
-    expect(keys).toEqual(['file', 'url', 'clipboard', 'git', 'postman', 'mcp', 'asyncapi', 'grpc']);
+    expect(keys).toEqual(['file', 'url', 'clipboard', 'git', 'postman', 'asyncapi', 'grpc']);
     expect(keys).not.toContain('swaggerhub');
   });
 
