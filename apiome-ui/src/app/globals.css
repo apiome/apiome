@@ -29989,6 +29989,76 @@ button.cid-entity__head {
   grid-column: 1 / -1;
 }
 
+/* ---- Test tab (V2-MCP-22.4 / 24.5) ---------------------------------------
+   A tick box beside its label; the result card's meta line, content blocks
+   and the request-level error line. */
+.mcp-test-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mcp-test-check__help {
+  flex-basis: 100%;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.mcp-test-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.mcp-test-result__meta {
+  margin-inline-start: auto;
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.mcp-test-result__target {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.mcp-test-result__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.mcp-test-result__text {
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--bg-inset);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--fg);
+}
+
+.mcp-test-result__label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--fg-muted);
+}
+
+.mcp-test-result__empty {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.mcp-test-request-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--fg);
+}
+
 .mcp-settings-actions {
   display: flex;
   flex-wrap: wrap;

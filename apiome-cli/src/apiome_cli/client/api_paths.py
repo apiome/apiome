@@ -367,6 +367,11 @@ def mcp_endpoint_discover(tenant_slug: str, endpoint_id: str | UUID) -> str:
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/discover"
 
 
+def mcp_endpoint_test(tenant_slug: str, endpoint_id: str | UUID) -> str:
+    """Invoke one cataloged capability against the live MCP server (test harness, POST)."""
+    return f"{mcp_endpoint(tenant_slug, endpoint_id)}/test"
+
+
 def mcp_endpoint_job(
     tenant_slug: str,
     endpoint_id: str | UUID,

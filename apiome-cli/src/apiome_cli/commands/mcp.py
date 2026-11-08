@@ -1,6 +1,6 @@
 """MCP catalog and governance commands.
 
-Catalog subcommands (``register`` / ``list`` / ``show`` / ``discover`` / ``lint``)
+Catalog subcommands (``register`` / ``list`` / ``show`` / ``discover`` / ``test`` / ``lint``)
 use Tier 2 API key auth against ``/v1/mcp/{tenant_slug}/endpoints``. Governance
 subcommands (``policy``, ``key capabilities``) use a tenant-admin session bearer
 against ``/v1/tenants/{tenant_slug}/mcp-policy`` and ``…/mcp-keys/…`` (MTG-5.3).
@@ -25,16 +25,25 @@ from apiome_cli.cli_context import (
     timeout_from_context,
 )
 from apiome_cli.client import api_paths
+from apiome_cli.client.errors import exit_on_api_error
 from apiome_cli.client.http import RestClient
 from apiome_cli.client.mcp_discovery import (
     emit_discovery_completed,
     emit_discovery_enqueue_result,
     wait_for_discovery_job,
 )
+from apiome_cli.client.mcp_test import (
+    CONFIRM_REQUIRED_STATUS,
+    OUTCOME_OK,
+    build_test_request,
+    emit_test_result,
+    parse_tool_arguments,
+    classify_test_outcome,
+)
 from apiome_cli.client.tenant_scope import require_tenant_slug
 from apiome_cli.commands.mcp_governance import key_app, policy_app
 from apiome_cli.config import require_api_key
-from apiome_cli.exit_codes import EXIT_ERROR
+from apiome_cli.exit_codes import EXIT_ERROR, EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.import_.jobs import DEFAULT_POLL_INTERVAL
 from apiome_cli.output import (
@@ -507,6 +516,77 @@ def discover_endpoint(
         lint=lint,
         json_mode=json_mode,
     )
+
+
+@app.command("test")
+def test_endpoint_tool(
+    ctx: typer.Context,
+    endpoint_id: UUID = typer.Argument(..., help="MCP endpoint UUID."),
+    tool: str = typer.Option(
+        ...,
+        "--tool",
+        help="Name of the discovered tool to invoke.",
+    ),
+    arg: list[str] | None = typer.Option(
+        None,
+        "--arg",
+        help=(
+            "Tool argument as key=value (repeatable). The value is parsed as JSON when it "
+            "can be (5, true, {\"a\":1}), otherwise sent as text."
+        ),
+    ),
+    args_json: str | None = typer.Option(
+        None,
+        "--args",
+        help="All tool arguments as one JSON object; --arg values override its keys.",
+    ),
+    confirm: bool = typer.Option(
+        False,
+        "--confirm",
+        help="Acknowledge a tool flagged destructive or open-world so the call is allowed.",
+    ),
+    call_timeout: float | None = typer.Option(
+        None,
+        "--call-timeout",
+        help="Seconds the server waits for the MCP server on each request (1-120, default 30).",
+    ),
+    output: str | None = typer.Option(
+        None,
+        "--output",
+        help="Output format: table (default) or json.",
+    ),
+) -> None:
+    """Invoke one discovered tool against the live server (POST .../endpoints/{id}/test).
+
+    Calls the tool on the endpoint's current surface with its stored credential, validates the
+    arguments against the tool's inputSchema first, and prints the outcome, latency, isError and
+    the tool's content. A tool flagged destructive or open-world is refused until you pass
+    ``--confirm``. Exits non-zero when the tool reports an error or the call fails.
+    """
+    arguments = parse_tool_arguments(args_json, arg)
+    body = build_test_request(tool, arguments, confirm=confirm, call_timeout=call_timeout)
+    json_mode = _json_output(ctx, output)
+    # The HTTP read must outlast the server's own per-request budget (connect + handshake + call).
+    http_timeout = max(timeout_from_context(ctx), body.get("timeout_seconds", 30.0) * 3 + 5)
+    client, tenant_slug = _scoped_client(ctx, timeout=http_timeout)
+
+    response = client.post_raw(api_paths.mcp_endpoint_test(tenant_slug, endpoint_id), json=body)
+    if response.status_code == CONFIRM_REQUIRED_STATUS:
+        typer.echo(
+            f"Tool {body['item_name']!r} is flagged destructive or open-world; "
+            "re-run with --confirm to invoke it.",
+            err=True,
+        )
+        raise typer.Exit(EXIT_USAGE)
+    exit_on_api_error(response)
+
+    result = response.json()
+    if not isinstance(result, dict):
+        emit_json(result)
+        return
+    emit_test_result(result, json_mode=json_mode)
+    if classify_test_outcome(result) != OUTCOME_OK:
+        raise typer.Exit(EXIT_ERROR)
 
 
 def _resolve_lint_version_id(

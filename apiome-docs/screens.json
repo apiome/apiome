@@ -1872,6 +1872,13 @@
       "data": "fixture:hive-mcp-endpoint/lint.html"
     },
     {
+      "id": "mcp-endpoint-test",
+      "route": "/ade/dashboard/mcp/[endpointId]",
+      "waitFor": "#a11y-mount > *",
+      "scrollTo": "[data-testid=\"mcp-test-panel\"]",
+      "data": "fixture:hive-mcp-endpoint/test.html"
+    },
+    {
       "id": "mcp-endpoint-settings",
       "route": "/ade/dashboard/mcp/[endpointId]",
       "waitFor": "#a11y-mount > *",
