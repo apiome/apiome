@@ -33,6 +33,10 @@ scanned or by name, and switch between **Grid** and **List**. A row's menu has *
 
 <Screenshot id="repositories-cards" alt="Repositories in Grid view, one card per repository with its health and scan state" />
 
+**Recent runs**, below the list, shows the latest Git refreshes and [connector](./connectors.mdx)
+runs together, newest first. A **Git** or **Connector** badge says which each one is, and a
+connector run links to its connector.
+
 ## Add a repository
 
 <Route path="/ade/dashboard/repositories/new" />
@@ -72,7 +76,9 @@ as cards. Five tabs follow:
   **Filters (2)**. The filters are kept in the page address, so a filtered list survives a reload
   and can be shared. A file's menu has **View details**, **Import…**, **Open on provider** and
   **Copy path**.
-- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them.
+- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
+  repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
+  are refreshed by the same engine on the same cadence vocabulary.
 - **Imports** — the import history, and the repository's **Sync history**: every merge, conflict
   and replacement its files took part in (see [Merge history and conflicts](#merge-history-and-conflicts)).
 - **Settings** — the source, **Scan cadence** (**Auto-refresh**, the **Cadence**, and whether each
@@ -406,7 +412,8 @@ refreshes on its next scheduled check. Without webhooks, **Scan cadence** works 
 
 Repositories are polled within an hourly quota. **Quota & rate limits** shows how much of it this
 workspace uses — polls, repositories and files deferred, and content scanned — over **7d**, **30d**
-or **90d**.
+or **90d**. [Connectors](./connectors.mdx) share the same quota: every document a connector
+fetches counts as a poll, and connector syncs deferred by the quota count as deferrals.
 
 <Screenshot id="repositories-telemetry" alt="Quota & rate limits: polling quota, polls, deferrals and bytes scanned" />
 
@@ -451,3 +458,4 @@ change it.
 - [Keep imports up to date](./keep-imports-fresh.mdx) — how every import source stays current
 - [Import wizard](./import-wizard.mdx)
 - [Versions](../build/versions.mdx)
+- [Connectors](./connectors.mdx)

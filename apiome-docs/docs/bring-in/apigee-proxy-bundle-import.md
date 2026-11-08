@@ -78,6 +78,6 @@ verbatim) and steps whose policy file is missing are all listed in the import's 
 ## Related
 
 - [Supported formats](./supported-formats.md): the versions this importer reads.
-- [Connectors API](../reference/rest/connectors.md): sync every deployed proxy of an Apigee organization automatically.
+- [Connectors](./connectors.mdx#apigee): sync every deployed proxy of an Apigee organization automatically.
 - [Import an AWS API Gateway export](./aws-api-gateway-import.md) and
   [Import an Azure API Management API](./azure-api-management-import.md): the same idea for the other gateways.

@@ -389,6 +389,7 @@ All routes are tenant-scoped and require an in-scope API key (`X-API-Key`).
 ## Related
 
 - [Export a spec](./export-a-spec.md) — downloading the reconstructed document
+- [Push a catalog item back to the gateway](../bring-in/connectors.mdx#push-a-catalog-item-back-to-the-gateway) — the same report, before exporting to a gateway's own format
 - [Export studio](./export-studio.mdx) — the same evidence, step by step in the UI
 - [Export catalog items](./export-catalog-items.mdx) — every target's fidelity tier for typical sources
 - [Export from the CLI](./export-from-the-cli.md) — export to any format and gate CI on fidelity

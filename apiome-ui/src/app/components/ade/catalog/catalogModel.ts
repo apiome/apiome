@@ -478,16 +478,14 @@ const ALL_CATALOG_SOURCE_OPTIONS: readonly CatalogFilterOption[] = [
 ] as const;
 
 /**
- * The Source select's options. **Catalog connector** is offered only while connectors are released
- * (`lib/feature-release.ts`): until then nothing can sync an item in, so the option would filter to
- * an empty list (RC6-H8, #6215).
+ * The Source select's options, **Catalog connector** included now that connectors are released
+ * (RC8). Kept as a function so a source can be held back again without touching its callers
+ * (RC6-H8, #6215).
  *
  * @returns The options, in order.
  */
 export function catalogSourceOptions(): readonly CatalogFilterOption[] {
-  return isFeatureReleased('connectors')
-    ? ALL_CATALOG_SOURCE_OPTIONS
-    : ALL_CATALOG_SOURCE_OPTIONS.filter((option) => option.value !== 'connector');
+  return ALL_CATALOG_SOURCE_OPTIONS;
 }
 
 /** The value the Grade select uses for "has no score at all". */

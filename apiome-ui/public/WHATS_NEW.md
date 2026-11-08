@@ -1,4 +1,4 @@
-# Apiome 10-2026 RC7
+# Apiome 11-2026 RC8
 
 We continue to improve the platform based on your feedback with improvements and new features!
 
@@ -20,6 +20,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **API keys** now manages MCP keys too, in the same list as REST keys: each row shows its **Type** (**REST API** or **MCP server**), its access (scopes or tools) and status, and **All types** / **REST API** / **MCP server** above the table shows one kind or both. **Create MCP key** sits beside **Create API key**, shows the key once and revokes from the row; a **Connect a host** card has the MCP URL and bearer header with **Copy**. MCP keys are for workspace administrators
   - The **MCP server** now needs an MCP key on every request — there is no anonymous access. HTTP hosts send it as a bearer token; stdio hosts set `APIOME_MCP_API_KEY`. **MCP settings** no longer has **Allow anonymous MCP calls** or the per-tool **Anonymous** flags
   - **Regenerate** a key instead of deleting it and creating another: the ↻ on any live REST or MCP key replaces its secret and keeps its name, scopes or tools and expiry, then shows the new secret once. The old secret is refused from its next request. The manage drawer's **Per-key capabilities** has **Regenerate secret** for MCP keys too
+- Connectors:
+  - **Connectors** is back under **Bring in**: register an API gateway (Kong, AWS API Gateway, Azure API Management, Apigee), a schema registry, an MCP registry, a specification URL or a registry crawl, and its APIs sync into the catalog on a schedule. A connector's page shows its items, runs, environments and settings; **Repositories** lists **Recent runs** of Git refreshes and connector syncs together, the catalog's **Source** filter offers **Catalog connector**, and an MCP registry import links to the connector it registered
 - MCP servers:
   - A server's page has a **Test** tab: pick one of its tools, fill the argument form built from the tool's input schema and **Run test** to call it on the live server with the stored credential. The result shows **Succeeded**, **Tool error** or **Call failed**, the latency and `isError`, and what the tool returned. A destructive or open-world tool waits for you to tick a confirmation, and a server with no stored credential says the call runs anonymously. `apiome mcp test` does the same from the CLI
 - Repositories:
@@ -31,7 +33,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Tools:
   - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:
-  - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC7`)
+  - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC8`)
 - Import:
   - URL catalog items refresh — a catalog item imported with **URL Import** in **Import to catalog** now follows its **Document URL**: Apiome asks the URL whether the document changed on the connector cadence and adds a revision, with a change report, only when it did. Existing URL items are covered by a new **Catalog URLs** connector, and URL items you import later join it automatically
   - Refresh defaults — **Repositories** has a **Refresh defaults** tab where workspace administrators set the cadence, refresh-conflict behaviour and auto-refresh switch every new repository starts from, optionally applying them to existing repositories that follow them. On a repository's **Settings** tab, **Scan cadence** now has a **Cadence** choice and marks each refresh setting **Workspace default** or **Custom**, with **Use workspace default** to follow the default again
