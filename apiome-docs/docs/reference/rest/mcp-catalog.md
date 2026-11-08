@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.534.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.535.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mcp-catalog` · 80 operations
 
@@ -2782,7 +2782,9 @@ The plaintext ``payload`` is sealed server-side (MCAT-6.2) before it is stored a
 echoed back by any response. ``auth_type`` must be a secret-bearing scheme
 (:data:`MCP_CREDENTIAL_AUTH_TYPES`) — to remove a credential entirely (the anonymous ``none``
 state) DELETE the resource instead. ``oauth_metadata`` is non-secret OAuth2 discovery metadata
-persisted as cleartext. Accepts both camelCase and snake_case keys so UI and CLI can share it.
+persisted as cleartext; omit it to keep what is stored (e.g. what OAuth discovery found after a
+``401``, MCAT-6.3), or send it to replace that. Accepts both camelCase and snake_case keys so UI
+and CLI can share it.
 
 Expected ``payload`` shape per ``auth_type`` (validated against the auth-type model at the route):
 

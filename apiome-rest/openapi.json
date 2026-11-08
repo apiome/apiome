@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.534.0",
+    "version": "1.535.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -39803,7 +39803,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-08T17:49:13Z"
+                          "example": "2026-11-08T23:29:29Z"
                         },
                         "method": {
                           "type": "string",
@@ -126437,7 +126437,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "completed_at": {
             "anyOf": [
@@ -128033,7 +128033,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           }
         },
         "type": "object",
@@ -128089,7 +128089,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "workspaces": {
             "items": {
@@ -128693,7 +128693,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "comment_count": {
             "type": "integer",
@@ -128921,7 +128921,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "comment_count": {
             "type": "integer",
@@ -129688,14 +129688,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -133089,7 +133089,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "d2ebe79f-426d-4aeb-9c2e-73d419ee6e46"
+            "example": "7cd9ed2e-c91b-4a54-a747-dbcc87043668"
           },
           "method": {
             "type": "string",
@@ -135652,7 +135652,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -137699,7 +137699,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "browse_url": {
             "anyOf": [
@@ -145622,7 +145622,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "reports": {
             "items": {
@@ -145922,7 +145922,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           }
         },
         "additionalProperties": false,
@@ -160437,7 +160437,7 @@
           "authType"
         ],
         "title": "McpCredentialUpsert",
-        "description": "Set or replace an endpoint's outbound credential (MCAT-6.5).\n\nThe plaintext ``payload`` is sealed server-side (MCAT-6.2) before it is stored and is NEVER\nechoed back by any response. ``auth_type`` must be a secret-bearing scheme\n(:data:`MCP_CREDENTIAL_AUTH_TYPES`) \u2014 to remove a credential entirely (the anonymous ``none``\nstate) DELETE the resource instead. ``oauth_metadata`` is non-secret OAuth2 discovery metadata\npersisted as cleartext. Accepts both camelCase and snake_case keys so UI and CLI can share it.\n\nExpected ``payload`` shape per ``auth_type`` (validated against the auth-type model at the route):\n\n* ``bearer`` \u2014 ``{\"token\": \"<secret>\"}``\n* ``header`` \u2014 ``{\"name\": \"<Header-Name>\", \"value\": \"<secret>\"}``\n* ``oauth2`` \u2014 ``{\"access_token\": \"<token>\", \"token_type\": \"Bearer\"?}``\n* ``env``    \u2014 ``{\"vars\": {\"NAME\": \"value\", ...}}``"
+        "description": "Set or replace an endpoint's outbound credential (MCAT-6.5).\n\nThe plaintext ``payload`` is sealed server-side (MCAT-6.2) before it is stored and is NEVER\nechoed back by any response. ``auth_type`` must be a secret-bearing scheme\n(:data:`MCP_CREDENTIAL_AUTH_TYPES`) \u2014 to remove a credential entirely (the anonymous ``none``\nstate) DELETE the resource instead. ``oauth_metadata`` is non-secret OAuth2 discovery metadata\npersisted as cleartext; omit it to keep what is stored (e.g. what OAuth discovery found after a\n``401``, MCAT-6.3), or send it to replace that. Accepts both camelCase and snake_case keys so UI\nand CLI can share it.\n\nExpected ``payload`` shape per ``auth_type`` (validated against the auth-type model at the route):\n\n* ``bearer`` \u2014 ``{\"token\": \"<secret>\"}``\n* ``header`` \u2014 ``{\"name\": \"<Header-Name>\", \"value\": \"<secret>\"}``\n* ``oauth2`` \u2014 ``{\"access_token\": \"<token>\", \"token_type\": \"Bearer\"?}``\n* ``env``    \u2014 ``{\"vars\": {\"NAME\": \"value\", ...}}``"
       },
       "McpCrossServerCapabilityHit": {
         "properties": {
@@ -190595,7 +190595,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           }
         },
         "additionalProperties": false,
@@ -203606,13 +203606,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           }
         },
         "additionalProperties": false,
@@ -205116,7 +205116,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "detected_by": {
             "anyOf": [
@@ -213940,14 +213940,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T17:49:13Z"
+            "example": "2026-11-08T23:29:29Z"
           },
           "outcome": {
             "anyOf": [

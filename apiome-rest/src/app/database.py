@@ -26174,8 +26174,9 @@ class Database:
             auth_type: The secret-bearing scheme (``bearer``/``header``/``oauth2``/``env``).
             encrypted_payload: The sealed secret bytes (ciphertext only).
             key_version: The master-key version that sealed ``encrypted_payload``.
-            oauth_metadata: Non-secret OAuth2 metadata to store as cleartext JSONB (defaults to
-                ``{}``).
+            oauth_metadata: Non-secret OAuth2 metadata to store as cleartext JSONB. ``None`` keeps
+                the row's existing metadata (e.g. what OAuth discovery stored, MCAT-6.3); a new
+                row then starts with ``{}``.
 
         Returns:
             The stored credential row (including the ciphertext column the caller must redact
@@ -26192,7 +26193,9 @@ class Database:
                 auth_type = EXCLUDED.auth_type,
                 encrypted_payload = EXCLUDED.encrypted_payload,
                 key_version = EXCLUDED.key_version,
-                oauth_metadata = EXCLUDED.oauth_metadata,
+                oauth_metadata = CASE WHEN %s
+                    THEN EXCLUDED.oauth_metadata
+                    ELSE apiome.mcp_endpoint_credentials.oauth_metadata END,
                 last_refreshed_at = CURRENT_TIMESTAMP
             RETURNING id, endpoint_id, auth_type, encrypted_payload, key_version,
                       oauth_metadata, last_refreshed_at, created_at, updated_at
@@ -26208,8 +26211,48 @@ class Database:
                         psycopg2.Binary(encrypted_payload),
                         key_version,
                         Json(oauth_metadata or {}),
+                        oauth_metadata is not None,
                     ),
                 )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row)
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def merge_mcp_endpoint_oauth_metadata(
+        self, endpoint_id: str, oauth_metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Store discovered OAuth metadata on an endpoint's credential row (MCAT-6.3).
+
+        The keys in ``oauth_metadata`` are merged over the row's existing ``oauth_metadata``
+        (JSONB ``||``), so keys this discovery does not produce survive. The ``auth_type``,
+        ciphertext and ``key_version`` are never touched. An endpoint with no credential row gets
+        one with ``auth_type = 'none'`` and no secret, which still runs anonymously until a token is
+        stored. The caller is responsible for scoping ``endpoint_id`` to the tenant.
+
+        Args:
+            endpoint_id: The endpoint the metadata belongs to.
+            oauth_metadata: Non-secret metadata from :mod:`app.mcp_oauth_discovery`.
+
+        Returns:
+            The stored credential row (including the ciphertext column the caller must redact
+            before it leaves the service).
+        """
+        q = """
+            INSERT INTO apiome.mcp_endpoint_credentials (endpoint_id, auth_type, oauth_metadata)
+            VALUES (%s::uuid, 'none', %s)
+            ON CONFLICT (endpoint_id) DO UPDATE SET
+                oauth_metadata = apiome.mcp_endpoint_credentials.oauth_metadata
+                                 || EXCLUDED.oauth_metadata
+            RETURNING id, endpoint_id, auth_type, encrypted_payload, key_version,
+                      oauth_metadata, last_refreshed_at, created_at, updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (endpoint_id, Json(oauth_metadata)))
                 row = cursor.fetchone()
                 conn.commit()
                 return dict(row)
