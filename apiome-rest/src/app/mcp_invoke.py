@@ -61,7 +61,7 @@ from .mcp_client import (
     DiscoveryErrorCode,
     StreamableHttpTransport,
     classify_exception,
-    initialize_session,
+    open_session,
 )
 from .mcp_client.normalize import (
     ITEM_TYPE_PROMPT,
@@ -385,15 +385,16 @@ async def _invoke(
     start = perf_counter()
     transport: Optional[StreamableHttpTransport] = None
     try:
-        transport = StreamableHttpTransport(
+        # Streamable HTTP, falling back to the legacy HTTP+SSE transport when the server
+        # answers with its signature (V2-MCP-16.5, #3661).
+        transport, _initialize = await open_session(
             url,
-            headers=dict(headers) if headers else {},
+            headers=headers,
             client=client,
             timeout=timeout,
             allow_insecure_http=allow_insecure_http,
             allow_private_network=allow_private_network,
         )
-        await initialize_session(transport)
         response = await transport.request(spec.method, params)
         latency_ms = _elapsed_ms(start)
         if response.is_error:

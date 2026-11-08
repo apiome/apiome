@@ -1,0 +1,22 @@
+---
+slug: mcp-legacy-sse-transport
+title: MCP servers on the older SSE transport
+description: "Apiome discovers and tests MCP servers that still use the 2024-11-05 SSE transport."
+authors: [apiome]
+---
+
+Apiome now reaches MCP servers that still use the older transport from the 2024-11-05 MCP revision,
+where the server streams events from one URL and takes requests at another. Before, discovery of
+those servers failed.
+
+{/* truncate */}
+
+- **Choose it, or let Apiome find it.** Set the server's **Transport** to **Server-Sent Events
+  (SSE)** to use the older transport straight away. Leave it on **Streamable HTTP** and Apiome tries
+  that first, then switches to the older transport when the server answers that it does not take
+  Streamable HTTP requests at that URL.
+- **Credentials stay on the server's host.** Apiome only sends requests to a URL on the same host,
+  scheme and port as the event stream.
+- **Discovery and capability tests both work this way**, including scheduled re-discovery.
+
+See [Servers on the older SSE transport](/bring-in/mcp-servers#servers-on-the-older-sse-transport).

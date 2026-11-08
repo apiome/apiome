@@ -32,7 +32,10 @@ Apiome's own MCP server.
 2. Enter the **Endpoint URL** — `http://localhost:8765/mcp` on the local stack — and, optionally, a
    **Display name** (`Apiome specs`).
 3. Choose the **Transport**: **Streamable HTTP** (the default; right for the example),
-   **Server-Sent Events (SSE)** or **Standard I/O (stdio)**.
+   **Server-Sent Events (SSE)** or **Standard I/O (stdio)**. Choose **Server-Sent Events (SSE)**
+   for a server that still speaks the older 2024-11-05 MCP transport, usually at a URL ending in
+   `/sse`. You can leave **Streamable HTTP** if you are not sure — see
+   [Servers on the older SSE transport](#servers-on-the-older-sse-transport).
 4. Choose the **Auth type**: **None (anonymous)**, **Bearer token**, **Custom header** or **OAuth
    2.1 access token**. Secrets are stored encrypted and never shown again.
 5. **Click “Discover →”.** When it finishes, the dialog says the server is cataloged — **click “View
@@ -41,6 +44,32 @@ Apiome's own MCP server.
 If discovery fails, read the reason, then **“Discard”** or **“Add this server anyway”**.
 
 <Screenshot id="import-wizard-mcp" alt="Add an MCP server: endpoint URL, display name, transport and authentication" />
+
+### Servers on the older SSE transport
+
+Some MCP servers still use the transport from the 2024-11-05 MCP revision. Apiome opens an event
+stream to the server's URL, and the server answers with a second URL that Apiome sends its requests
+to. Apiome reaches these servers in two ways:
+
+- **Transport set to Server-Sent Events (SSE).** Apiome uses the older transport straight away.
+- **Transport left on Streamable HTTP.** Apiome tries Streamable HTTP first. If the server answers
+  that it does not take Streamable HTTP requests at that URL — **400**, **404**, **405**, **406** or
+  **415** — Apiome tries the older transport on the same URL. Discovery, re-discovery and
+  capability tests ([`POST …/endpoints/{endpoint_id}/test`](../reference/rest/mcp-catalog.md#test-mcp-endpoint-capability-v1-mcp-tenant-slug-endpoints-endpoint-id-test-post))
+  all do this.
+
+Apiome does not switch transports when a server asks for credentials (**401**), refuses (**403**)
+or rate-limits (**429**): those answers come from a server that understood the request, so discovery
+reports them as they are. If the server answers neither transport, discovery reports the first
+answer.
+
+Apiome sends requests only to a second URL on the same host, scheme and port as the event stream.
+A server that points elsewhere is refused, so your server's credentials are never sent to another
+host.
+
+Over the older transport, a server may negotiate the **2024-11-05** protocol version. The
+**Lint & score** tab flags that version as unsupported, because it is not one of the current
+revisions.
 
 ## Import from a registry
 
