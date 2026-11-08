@@ -218,6 +218,42 @@ reason instead, such as a timeout.
 From the CLI, `apiome mcp test <endpoint-id> --tool <name> --arg key=value` does the same. See
 [apiome mcp test](../reference/cli/mcp.md#mcp-test).
 
+#### Test over the API
+
+The Test tab and the CLI both call
+[`POST …/endpoints/{endpoint_id}/test`](../reference/rest/mcp-catalog.md#test-mcp-endpoint-capability-v1-mcp-tenant-slug-endpoints-endpoint-id-test-post).
+Over the API you can also read one of the server's resources or fetch one of its prompts:
+
+```json
+{
+  "item_type": "tool",
+  "item_name": "get_forecast",
+  "arguments": { "city": "Paris" },
+  "timeout_seconds": 30,
+  "confirm": false
+}
+```
+
+- **`item_type`** is `tool`, `resource` or `prompt`; **`item_name`** must be on the server's
+  current version, so run discovery again after the server changes.
+- **`auth_override`** (optional) uses a credential for this one call instead of the stored one, in
+  the same shape as a stored credential — for example
+  `{"auth_type": "bearer", "payload": {"token": "…"}}`. It is never saved or logged.
+- **`timeout_seconds`** is 1–120 (default 30).
+
+A tool error or a server that cannot be reached is still a `200` response: `completed` says whether
+the server answered, `isError` whether the tool reported an error, and `error` gives the reason for
+a failed call. Each response carries `latencyMs` and the `invocationId` of its log entry. The API
+returns an error status only when the call is not sent:
+
+| Status | Why |
+|---|---|
+| `404` | The endpoint is not in your tenant, or the tool, resource or prompt is not on its current version |
+| `409` | The endpoint has not been discovered yet |
+| `422` | The arguments do not match the tool's schema, or the override is malformed |
+| `428` | The tool is destructive or open-world and `confirm` is not `true` |
+| `429` | The endpoint's test-call limit for this minute is used up |
+
 ## Analytics
 
 <Route path="/ade/dashboard/mcp/analytics" />

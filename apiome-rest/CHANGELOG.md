@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.672.2] - 2026-11-08
+
+### Added
+- **The MCP query & test harness is proven end to end (V2-MCP-EPIC-22, #3645).**
+  `tests/test_mcp_test_harness_pipeline_db.py` (`requires_db`) drives `POST …/endpoints/{id}/test`
+  over HTTP against a database migrated from empty by apiome-db, on snapshots persisted by
+  `record_mcp_discovery_version`, calling a stub MCP server on a loopback socket. A stored tool is
+  invoked live and its content, latency and `invocationId` returned, with the matching
+  `mcp_test_invocations` row (version, tool, outcome, latency, acting user). The harness follows the
+  endpoint's current version. A tool error and a JSON-RPC failure are reported in-band and told apart
+  by `completed`; an unreachable server is a failed call, not a 5xx; all three are logged as errors. A
+  destructive tool is refused with 428 until `confirm`; schema-invalid arguments are refused with
+  422; neither reaches the server or the log. Secret arguments reach the server but are masked in the
+  log; an `auth_override` bearer token reaches the server but is never stored or logged. Calls over
+  the per-endpoint budget get 429. An undiscovered endpoint is 409, and another tenant or an unknown
+  tool gets 404, with nothing called or logged. No runtime change. apiome-rest 1.672.1 → 1.672.2.
+
 ## [1.672.1] - 2026-11-08
 
 ### Added

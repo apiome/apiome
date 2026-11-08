@@ -1,0 +1,24 @@
+---
+slug: mcp-test-harness
+title: The MCP test harness, end to end
+description: "Test MCP tools, resources and prompts over the API; harness verified end to end."
+authors: [apiome]
+---
+
+The **MCP servers** guide now covers the whole test harness: testing a tool from its **Test** tab
+or `apiome mcp test`, and testing a tool, resource or prompt over the API.
+
+{/* truncate */}
+
+- **One call, three outcomes.** A response says whether the tool **succeeded**, reported a **tool
+  error**, or the call **failed** before the server answered. Each one is a `200` with its
+  latency and the id of its log entry.
+- **Refused before it leaves Apiome:** a destructive tool without `confirm` (`428`), arguments
+  that do not match the schema (`422`), and calls over the endpoint's limit for the minute (`429`).
+- **One-off credentials.** `auth_override` uses a credential for one call only. It is never saved
+  or logged.
+- **Checked against a real database.** A new end-to-end test runs the harness against a freshly
+  migrated database and a live stub server. It covers the call, the log entry with secrets masked,
+  each safety check, and tenant isolation.
+
+See [Test over the API](/bring-in/mcp-servers#test-over-the-api).
