@@ -170,7 +170,7 @@ export interface ImportFooterState {
   step: ImportWizardStep;
   /** The chosen source, or `null` on the card grid. */
   source: string | null;
-  /** The job (or MCP scan) has reached a terminal state. */
+  /** The job has reached a terminal state. */
   importComplete: boolean;
   /** That terminal state was a success. */
   importSucceeded: boolean;
@@ -184,12 +184,6 @@ export interface ImportFooterState {
   hasSelection?: boolean;
   /** Preview is asking whether the import is a new version of an existing Project (IXH-3.7). */
   checkingChanges?: boolean;
-  /** The MCP form validates. */
-  mcpReady?: boolean;
-  /** An MCP endpoint registration is in flight. */
-  mcpSubmitting?: boolean;
-  /** The MCP source imports a whole registry rather than one server (AAU-5.4). */
-  mcpRegistry?: boolean;
 }
 
 /** One footer button. */
@@ -209,8 +203,8 @@ export interface ImportFooter {
   /** The one forward action, or `null` where the step has none. */
   primary: ImportFooterAction | null;
   /**
-   * The MCP escape hatch: keep a server whose scan failed. Only ever set on a failed MCP
-   * import, where *Discard* is the default and this is the deliberate opposite.
+   * The MCP escape hatch: keep a server whose scan failed. Only the Add MCP server dialog
+   * (`addMcpServerFooterFor`) sets it, on a failed scan where *Discard* is the default.
    */
   keepAnyway: ImportFooterAction | null;
 }
@@ -220,22 +214,10 @@ export interface ImportFooter {
  *
  * URL is the one source with two forward actions — *Test URL* proves the address before
  * *Continue* fetches from it — so its primary reads *Continue* while every other intake reads
- * *Analyze →*. MCP has no analyze or preview step at all: its forward verb starts a scan.
+ * *Analyze →*.
  */
 function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
   const { source, analyzing = false, intakeReady = false } = state;
-  if (source === 'mcp') {
-    if (state.mcpRegistry) {
-      return {
-        label: state.mcpSubmitting ? 'Importing servers…' : 'Import servers →',
-        disabled: Boolean(state.mcpSubmitting) || !state.mcpReady,
-      };
-    }
-    return {
-      label: state.mcpSubmitting ? 'Starting…' : 'Discover →',
-      disabled: Boolean(state.mcpSubmitting) || !state.mcpReady,
-    };
-  }
   if (source === 'url') {
     return { label: analyzing ? 'Analyzing...' : 'Continue', disabled: !intakeReady || analyzing };
   }
@@ -252,14 +234,13 @@ function intakePrimary(state: ImportFooterState): ImportFooterAction | null {
  *     back off it would leave them with nothing watching. It re-enables the moment the job
  *     reaches a terminal state.
  *   - **Closing costs something, and the verb says so.** *Cancel* on a step that has written
- *     nothing, *Close* once the job has landed, *Discard* on a failed MCP import where closing
- *     also deletes the endpoint that was created.
+ *     nothing, *Close* once the job has landed.
  *
  * @param state Where the wizard is and what it holds — see {@link ImportFooterState}.
  * @returns The four slots; `null` for a slot this step does not fill.
  */
 export function importFooterFor(state: ImportFooterState): ImportFooter {
-  const { step, source, importComplete, importSucceeded } = state;
+  const { step, importComplete, importSucceeded } = state;
 
   if (step === 'source') {
     return {
@@ -274,14 +255,6 @@ export function importFooterFor(state: ImportFooterState): ImportFooter {
 
   if (step === 'import') {
     const failed = importComplete && !importSucceeded;
-    if (failed && source === 'mcp') {
-      return {
-        back: { label: '← Back', disabled: false },
-        cancel: { label: 'Discard', disabled: false },
-        primary: null,
-        keepAnyway: { label: 'Add this server anyway', disabled: false },
-      };
-    }
     return {
       back: { label: '← Back', disabled: !importComplete },
       cancel: { label: failed ? 'Cancel' : importComplete ? 'Close' : 'Cancel', disabled: false },

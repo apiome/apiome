@@ -3,18 +3,16 @@
 /**
  * MCP import source form (V2-MCP-24.1 / MCAT-10.1).
  *
- * Rendered inside the existing Import dialog when the "MCP Server" source is selected. Collects the
+ * The Connect step of the Add MCP server dialog (`mcp/AddMcpServerDialog`). Collects the
  * endpoint URL, transport, an optional display name, and an auth scheme with its secret fields. The
  * dialog owns the form state (so its footer "Discover" button can read it) — this panel is a
  * controlled view that reports edits through `onChange`.
  *
- * Re-skinned by HIVE-6.4 (#5315). The hero's indigo→white→violet gradient is gone — DESIGN.md §2
- * keeps a brand wash for brand moments, and registering a server is not one — and its three
- * stages now share `.imp-stage` with the discovery panel they predict, so the reader meets the
- * same three marks twice rather than two different drawings of the same three steps.
+ * Re-skinned by HIVE-6.4 (#5315). Its hero (title and three stages) is gone: the dialog's head
+ * now carries the title and description, and its stepper the stages.
  */
 
-import { CheckCircle2, GaugeCircle, Network, Plug, ScanSearch, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import { Card, cardVariants } from '../../../components/ui/Card';
 import { Segmented, SegmentedItem } from '../../../components/ui/Segmented';
 import McpRegistryImportFields from './McpRegistryImportFields';
@@ -41,13 +39,6 @@ export interface McpImportPanelProps {
   form: McpImportForm;
   onChange: (form: McpImportForm) => void;
 }
-
-/** What happens after "Discover" — shown in the hero so the flow is predictable up front. */
-const IMPORT_STEPS: ReadonlyArray<{ icon: typeof Plug; label: string }> = [
-  { icon: Plug, label: 'Connect' },
-  { icon: ScanSearch, label: 'Discover capabilities' },
-  { icon: GaugeCircle, label: 'Lint & grade' },
-];
 
 /** A one-line description per transport, shown on its selector card. */
 const TRANSPORT_DESCRIPTIONS: Record<McpTransport, string> = {
@@ -97,34 +88,6 @@ export default function McpImportPanel({ form, onChange }: McpImportPanelProps) 
   return (
     <div className="flex flex-col gap-6">
       {modeSwitch}
-      {/* Hero: what this source does, and the three stages the import runs through. */}
-      <Card variant="flat" className="overflow-hidden">
-        <div className="flex items-start gap-3 p-4">
-          <span className="tnt-icon-tile" data-tone="accent" aria-hidden>
-            <Network />
-          </span>
-          <div>
-            <h3 className="font-semibold text-fg">Add an MCP server</h3>
-            <p className="mt-0.5 text-sm text-fg-muted">
-              Point us at a Model Context Protocol endpoint. We&apos;ll connect, discover its tools,
-              resources, and prompts, lint the surface for quality, and catalog it as
-              version&nbsp;1 with an A–F grade.
-            </p>
-          </div>
-        </div>
-        <ol className="imp-stages">
-          {IMPORT_STEPS.map((step, index) => (
-            <li key={step.label} className="imp-stage">
-              <span className="imp-stage__num" aria-hidden>
-                {index + 1}
-              </span>
-              <step.icon className="size-3.5 text-accent" aria-hidden />
-              {step.label}
-            </li>
-          ))}
-        </ol>
-      </Card>
-
       {/* Connection ------------------------------------------------------------------------ */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
@@ -196,7 +159,7 @@ export default function McpImportPanel({ form, onChange }: McpImportPanelProps) 
       <Card variant="flat" className="overflow-hidden">
         <div className="flex items-center gap-2 border-b border-border bg-subtle px-4 py-2.5">
           <ShieldCheck className="size-[var(--icon-dense)] text-accent" aria-hidden />
-          <h4 className="text-sm font-semibold text-fg">Authentication</h4>
+          <h3 className="text-sm font-semibold text-fg">Authentication</h3>
         </div>
 
         <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-2">

@@ -19,7 +19,7 @@ import {
 } from '@/app/components/ade/dashboard/mcp/mcpRegistryImport';
 import { emptyMcpImportForm, validateMcpImportForm } from '@/app/components/ade/dashboard/mcp/mcpImportFlow';
 import { registryImportHeadline } from '@/app/components/ade/import/McpRegistryImportDonePanel';
-import { importFooterFor } from '@/app/components/ade/import/importWizardModel';
+import { addMcpServerFooterFor } from '@/app/components/ade/dashboard/mcp/addMcpServerModel';
 
 const form = (overrides: Partial<McpRegistryForm> = {}): McpRegistryForm => ({
   ...emptyMcpRegistryForm(),
@@ -155,7 +155,14 @@ describe('the MCP form in registry mode', () => {
 
   it("names the footer's verb for a registry import", () => {
     const footer = (mcpSubmitting: boolean) =>
-      importFooterFor({ step: 'file-upload', source: 'mcp', importComplete: false, importSucceeded: false, mcpReady: true, mcpSubmitting, mcpRegistry: true }).primary;
+      addMcpServerFooterFor({
+        step: 'connect',
+        ready: true,
+        submitting: mcpSubmitting,
+        registry: true,
+        scanComplete: false,
+        scanSucceeded: false,
+      }).primary;
     expect(footer(false)).toEqual({ label: 'Import servers →', disabled: false });
     expect(footer(true)).toEqual({ label: 'Importing servers…', disabled: true });
   });

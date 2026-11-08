@@ -6,18 +6,17 @@
  * Authority: `docs/mockups/build/import-wizard.html`, design language `docs/mockups/DESIGN.md`.
  *
  * This file keeps every piece of state and every write it had before the redesign — the intake
- * buffers, the analysis, the async job, the MCP endpoint lifecycle, the quality snapshot. What
+ * buffers, the analysis, the async job, the quality snapshot. What
  * moved out is the skin and the decisions:
  *
  *   - the stepper, the head and the footer are `components/ade/import/ImportWizardChrome`;
  *   - which verb the footer carries, whether Back is allowed, how a job state reads and what the
  *     quality gate says are `importWizardModel`, so `import-wizard-model.test.ts` can assert the
  *     whole table without starting an import;
- *   - the source grid, the intake tab bar, the File intake and the MCP summary are their own
- *     components.
+ *   - the source grid, the intake tab bar and the File intake are their own components.
  *
- * The flow: Source → Analyze → Preview → [Changes] → Import → Done, with MCP short-circuiting
- * Analyze and Preview because a discovery scan has neither. *Changes* (IXH-3.7, #6321) is asked
+ * The flow: Source → Analyze → Preview → [Changes] → Import → Done. Adding an MCP server is not a
+ * spec import and has its own dialog (`mcp/AddMcpServerDialog`). *Changes* (IXH-3.7, #6321) is asked
  * for when Preview's **Import →** is pressed: if the slug resolves to an existing Project the
  * wizard stops there to compare the spec with that project's latest version; otherwise (and for
  * the Catalog) it goes straight to Import.
@@ -43,24 +42,6 @@ import ClipboardImportPanel from './ClipboardImportPanel';
 import GitImportPanel from './GitImportPanel';
 import SwaggerHubImportPanel from './SwaggerHubImportPanel';
 import PostmanImportPanel from './PostmanImportPanel';
-import McpImportPanel from './McpImportPanel';
-import McpDiscoveryPanel from './McpDiscoveryPanel';
-import {
-  buildCreateEndpointBody,
-  buildCredentialBody,
-  emptyMcpImportForm,
-  validateMcpImportForm,
-  type McpImportForm,
-} from './mcp/mcpImportFlow';
-import {
-  buildRegistryConnectorDraft,
-  buildRegistryCredentials,
-  registryRunFailed,
-  summarizeRegistryRun,
-  type RegistryImportSummary,
-} from './mcp/mcpRegistryImport';
-import { createConnector, deleteConnector, syncConnector } from '@lib/connectors-api';
-import { McpRegistryImportDonePanel } from '../import/McpRegistryImportDonePanel';
 import { startImport, getImportStatus, rollbackImport } from '../../../../../lib/db/import-actions';
 import { fetchProjectDelta, type ProjectDeltaState } from '../../../utils/import-project-delta';
 import { planImportVersion } from '../../../utils/import-version-label';
@@ -76,7 +57,6 @@ import {
   ImportWizardFooter,
   ImportWizardHead,
   ImportWizardSteps,
-  McpImportDonePanel,
   RecentImportJobsDrawer,
   RecentImportsList,
   importFooterFor,
@@ -107,7 +87,7 @@ interface ImportDialogProps {
   openedFromNewProjectAI?: boolean;
   /** When openedFromNewProjectAI is true, called instead of onClose when user goes Back to "source" or clicks Cancel, so parent can reopen New Project on AI tab. */
   onReturnToNewProjectAI?: () => void;
-  /** When set, the dialog opens straight onto this import source (e.g. 'mcp' from MCP Servers). */
+  /** When set, the dialog opens straight onto this import source (e.g. 'git'). */
   initialSource?: string | null;
   /** Called once initialSource has been applied so the parent can clear it. */
   onConsumeInitialSource?: () => void;
@@ -178,21 +158,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [arrayChoice, setArrayChoice] = useState<ImportArrayChoice>('replace');
   /** The mockup's *Recent import jobs* side-sheet (HIVE-6.4). */
   const [jobsDrawerOpen, setJobsDrawerOpen] = useState(false);
-
-  // MCP Server import source (V2-MCP-24.1): collect endpoint config, then create → discover → poll.
-  const [mcpForm, setMcpForm] = useState<McpImportForm>(emptyMcpImportForm);
-  const [mcpEndpointId, setMcpEndpointId] = useState<string | null>(null);
-  const [mcpEndpointName, setMcpEndpointName] = useState<string>('');
-  const [mcpJobId, setMcpJobId] = useState<string | null>(null);
-  const [mcpSubmitting, setMcpSubmitting] = useState(false);
-  /** A finished "From a registry" import: its connector and what the first sync did (AAU-5.4). */
-  const [registryImport, setRegistryImport] = useState<{ connectorId: string; summary: RegistryImportSummary } | null>(
-    null
-  );
-  // A created endpoint is "committed" only once discovery succeeds, or the user explicitly keeps a
-  // failed one ("Add this server anyway"). An uncommitted endpoint is discarded (deleted) on
-  // back/cancel/close so a failed auth/scan never lingers in the catalog.
-  const [mcpEndpointCommitted, setMcpEndpointCommitted] = useState(false);
 
   const urlImportRef = useRef<UrlImportPanelHandle>(null);
   const dryRunRef = useRef(false);
@@ -276,7 +241,7 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       .finally(() => setIsAnalyzing(false));
   }, [open, initialLLMSpec, onConsumeInitialLLMSpec]);
 
-  // When opened with a pre-selected source (e.g. 'mcp' from MCP Servers), jump straight to it.
+  // When opened with a pre-selected source, jump straight to it.
   useEffect(() => {
     if (!open || !initialSource) return;
     onConsumeInitialSource?.();
@@ -291,47 +256,10 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setCurrentStep('file-upload');
   };
 
-  /** Discard a catalog endpoint (best-effort) — used to clean up a failed/abandoned MCP import. */
-  const deleteMcpEndpoint = async (id: string) => {
-    try {
-      await fetch(`/api/mcp/endpoints/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-    } catch {
-      // Best-effort cleanup — ignore failures (the row is soft-deleted server-side when reached).
-    }
-  };
-
-  /** Explicitly discard a failed MCP import: delete the endpoint and close the dialog. */
-  const discardMcpAndClose = async () => {
-    if (mcpEndpointId) {
-      await deleteMcpEndpoint(mcpEndpointId);
-    }
-    resetDialogState();
-    onClose();
-  };
-
   const handleBack = () => {
     setErrorMessage(null);
-    if (currentStep === 'done' && registryImport) {
-      // A registry import has no scan step: Back returns to the form (its connector stays).
-      setRegistryImport(null);
-      setCurrentStep('file-upload');
-    } else if (currentStep === 'done') {
+    if (currentStep === 'done') {
       setCurrentStep('import');
-    } else if (currentStep === 'import' && selectedSource === 'mcp') {
-      // MCP has no analyze/preview steps — Back returns to the endpoint config form. An uncommitted
-      // endpoint (failed/in-progress scan the user didn't keep) is discarded on the way out.
-      if (mcpEndpointId && !mcpEndpointCommitted) {
-        void deleteMcpEndpoint(mcpEndpointId);
-        setMcpEndpointId(null);
-        setMcpEndpointName('');
-      }
-      setCurrentStep('file-upload');
-      setMcpJobId(null);
-      setImportComplete(false);
-      setImportSucceeded(false);
     } else if (currentStep === 'import') {
       setCurrentStep(showsChangesStep(projectDelta) ? 'changes' : 'preview');
       setJobId(null);
@@ -384,10 +312,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       setPostmanContent(null);
       setPostmanFilename(null);
       setPostmanMetadata(null);
-      setMcpForm(emptyMcpImportForm());
-      setMcpEndpointId(null);
-      setMcpEndpointName('');
-      setMcpJobId(null);
     }
   };
 
@@ -417,13 +341,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     setPostmanContent(null);
     setPostmanFilename(null);
     setPostmanMetadata(null);
-    setMcpForm(emptyMcpImportForm());
-    setMcpEndpointId(null);
-    setMcpEndpointName('');
-    setMcpJobId(null);
-    setMcpSubmitting(false);
-    setMcpEndpointCommitted(false);
-    setRegistryImport(null);
     setErrorMessage(null);
     setJobsDrawerOpen(false);
     deltaRequestRef.current += 1;
@@ -434,12 +351,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   };
 
   const handleClose = async () => {
-    // Discard a created-but-uncommitted MCP endpoint: auth/scan failed (or was still running) and the
-    // user did not choose "Add this server anyway", so it must not linger in the catalog.
-    if (selectedSource === 'mcp' && mcpEndpointId && !mcpEndpointCommitted) {
-      await deleteMcpEndpoint(mcpEndpointId);
-    }
-
     // If opened from New Project AI, return to that conversation instead of closing to projects list
     if (openedFromNewProjectAI && onReturnToNewProjectAI) {
       if (jobId && currentStep === 'import') {
@@ -463,9 +374,8 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       }
     }
 
-    // Call onSuccess callback if an import landed (a spec import succeeded, or an MCP endpoint was
-    // committed — discovered, or explicitly kept via "Add this server anyway") so the list refreshes.
-    if ((importSucceeded || mcpEndpointCommitted) && onSuccess) {
+    // Call onSuccess callback if an import landed so the list refreshes.
+    if (importSucceeded && onSuccess) {
       onSuccess();
     }
 
@@ -719,135 +629,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   };
 
   /**
-   * MCP source: create the catalog endpoint, store any credential, then kick off a discovery run
-   * and advance to the live-status step. The discovery commits catalog version 1 on success.
-   *
-   * If anything before the scan fails (registration, credential storage, or starting discovery), the
-   * just-created endpoint is discarded so a half-wired entry never shows up in the catalog.
-   */
-  const beginMcpImport = async () => {
-    const validationError = validateMcpImportForm(mcpForm);
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-
-    setErrorMessage(null);
-    setMcpSubmitting(true);
-    // Tracks the endpoint created in this attempt so a pre-scan failure can discard it.
-    let createdId: string | null = null;
-    try {
-      // 1. Create the endpoint.
-      const createBody = buildCreateEndpointBody(mcpForm);
-      const createRes = await fetch('/api/mcp/endpoints', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(createBody),
-      });
-      const createData = await createRes.json().catch(() => ({}));
-      if (!createRes.ok) {
-        throw new Error(typeof createData.error === 'string' ? createData.error : 'Could not register the MCP server.');
-      }
-      const endpoint = createData.endpoint as { id?: string; name?: string } | undefined;
-      const endpointId = endpoint?.id;
-      if (!endpointId) {
-        throw new Error('The MCP server was created but no id was returned.');
-      }
-      createdId = endpointId;
-      setMcpEndpointId(endpointId);
-      setMcpEndpointName(endpoint?.name || createBody.name);
-      setMcpEndpointCommitted(false);
-
-      // 2. Store the credential, when an auth type was chosen.
-      const credentialBody = buildCredentialBody(mcpForm);
-      if (credentialBody) {
-        const credRes = await fetch(`/api/mcp/endpoints/${encodeURIComponent(endpointId)}/credentials`, {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(credentialBody),
-        });
-        if (!credRes.ok) {
-          const credData = await credRes.json().catch(() => ({}));
-          throw new Error(typeof credData.error === 'string' ? credData.error : 'Could not store the credential.');
-        }
-      }
-
-      // 3. Kick off discovery.
-      const discoverRes = await fetch(`/api/mcp/endpoints/${encodeURIComponent(endpointId)}/discover`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      const discoverData = await discoverRes.json().catch(() => ({}));
-      if (!discoverRes.ok) {
-        throw new Error(typeof discoverData.error === 'string' ? discoverData.error : 'Could not start discovery.');
-      }
-      const startedJob = discoverData.job as { id?: string } | undefined;
-      if (!startedJob?.id) {
-        throw new Error('Discovery did not start.');
-      }
-
-      setMcpJobId(startedJob.id);
-      setImportComplete(false);
-      setImportSucceeded(false);
-      setCurrentStep('import');
-    } catch (error) {
-      // Registration / credential / discovery-trigger failed before the scan could run — discard the
-      // half-wired endpoint so it never appears in the catalog, and let the user fix the form.
-      if (createdId) {
-        await deleteMcpEndpoint(createdId);
-        setMcpEndpointId(null);
-        setMcpEndpointName('');
-      }
-      setErrorMessage(error instanceof Error ? error.message : 'Could not import the MCP server.');
-    } finally {
-      setMcpSubmitting(false);
-    }
-  };
-
-  /**
-   * MCP source, "From a registry" (AAU-5.4, #5725): register an `mcp-registry` connector for the
-   * registry, store its credential, and run its first sync — which pages the registry and adds,
-   * discovers and grades every server with a reachable remote — then land on the Done step with
-   * the counts. A run that failed outright (the registry refused or did not answer, or its URL is a
-   * private address) imported nothing, so its connector is deleted and the reason shown on the form.
-   */
-  const beginMcpRegistryImport = async () => {
-    const validationError = validateMcpImportForm(mcpForm);
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-    setErrorMessage(null);
-    setMcpSubmitting(true);
-    let connectorId: string | null = null;
-    try {
-      const connector = await createConnector(
-        buildRegistryConnectorDraft(mcpForm.registry),
-        buildRegistryCredentials(mcpForm.registry)
-      );
-      connectorId = connector.id;
-      const run = await syncConnector(connector.id);
-      if (registryRunFailed(run)) {
-        await deleteConnector(connector.id).catch(() => undefined);
-        connectorId = null;
-        setErrorMessage(run.errorMessage || 'The registry could not be read.');
-        return;
-      }
-      setRegistryImport({ connectorId: connector.id, summary: summarizeRegistryRun(run) });
-      setImportSucceeded(true);
-      setImportComplete(true);
-      setCurrentStep('done');
-    } catch (error) {
-      if (connectorId) await deleteConnector(connectorId).catch(() => undefined);
-      setErrorMessage(error instanceof Error ? error.message : 'Could not import from the registry.');
-    } finally {
-      setMcpSubmitting(false);
-    }
-  };
-
-  /**
    * Whether the chosen intake has produced something Analyze can read.
    *
    * One expression rather than the six `disabled={…}` clauses the old footer carried, so the
@@ -897,9 +678,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     analysisImportable: Boolean(analysisResult?.isValid && analysisResult?.formatSupported),
     hasSelection: Boolean(importOptions && importOptions.selectedSchemas.length > 0),
     checkingChanges: currentStep === 'preview' && projectDelta.status === 'checking',
-    mcpReady: validateMcpImportForm(mcpForm) === null,
-    mcpSubmitting,
-    mcpRegistry: mcpForm.mode === 'registry',
   });
 
   const qualityGate = currentStep === 'analysis' ? importQualityGate(analysisResult) : null;
@@ -927,18 +705,11 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       return;
     }
     if (currentStep === 'file-upload') {
-      if (selectedSource === 'mcp' && mcpForm.mode === 'registry') void beginMcpRegistryImport();
-      else if (selectedSource === 'mcp') void beginMcpImport();
-      else void handleAnalyze();
+      void handleAnalyze();
     }
   };
 
-  /** The dismiss verb — *Discard* on a failed MCP import also deletes the endpoint. */
   const handleCancel = () => {
-    if (footer.keepAnyway) {
-      void discardMcpAndClose();
-      return;
-    }
     void handleClose();
   };
 
@@ -993,23 +764,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
       );
     }
 
-    if (currentStep === 'import' && selectedSource === 'mcp' && mcpEndpointId && mcpJobId) {
-      return (
-        <McpDiscoveryPanel
-          endpointId={mcpEndpointId}
-          jobId={mcpJobId}
-          endpointName={mcpEndpointName}
-          onComplete={(succeeded) => {
-            setImportSucceeded(succeeded);
-            setImportComplete(true);
-            // A successful scan commits the endpoint; a failed scan leaves it uncommitted so
-            // it is discarded unless the user picks "Add this server anyway".
-            if (succeeded) setMcpEndpointCommitted(true);
-          }}
-        />
-      );
-    }
-
     if (currentStep === 'import' && jobId) {
       return (
         <ImportExecutionPanel
@@ -1029,25 +783,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
     }
 
     if (currentStep === 'done') {
-      if (selectedSource === 'mcp' && registryImport) {
-        return (
-          <McpRegistryImportDonePanel
-            connectorId={registryImport.connectorId}
-            summary={registryImport.summary}
-            onNavigate={() => void handleClose()}
-          />
-        );
-      }
-      if (selectedSource === 'mcp') {
-        return (
-          <McpImportDonePanel
-            endpointId={mcpEndpointId}
-            endpointName={mcpEndpointName}
-            succeeded={importSucceeded}
-            onNavigate={() => void handleClose()}
-          />
-        );
-      }
       return jobId ? <ImportCompletePanel jobId={jobId} /> : null;
     }
 
@@ -1091,8 +826,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
           return <SwaggerHubImportPanel onSpecificationFetched={handleSwaggerHubSpecificationFetched} />;
         case 'postman':
           return <PostmanImportPanel onSpecificationFetched={handlePostmanSpecificationFetched} />;
-        case 'mcp':
-          return <McpImportPanel form={mcpForm} onChange={setMcpForm} />;
         default:
           return null;
       }
@@ -1158,10 +891,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
             onBack={handleBack}
             onCancel={handleCancel}
             onPrimary={handlePrimary}
-            onKeepAnyway={() => {
-              setMcpEndpointCommitted(true);
-              setCurrentStep('done');
-            }}
             extra={
               showUrlTest ? (
                 <Button

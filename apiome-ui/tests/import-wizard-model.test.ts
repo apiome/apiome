@@ -153,7 +153,7 @@ describe('the footer', () => {
     expect(footer.primary).toEqual({ label: 'Continue', disabled: true });
   });
 
-  it('says Analyze → on every intake but URL and MCP', () => {
+  it('says Analyze → on every intake but URL', () => {
     for (const source of ['file', 'clipboard', 'git', 'swaggerhub', 'postman']) {
       const footer = importFooterFor(footerState({ source, intakeReady: true }));
       expect(footer.primary).toEqual({ label: 'Analyze →', disabled: false });
@@ -165,18 +165,9 @@ describe('the footer', () => {
     expect(footer.primary).toEqual({ label: 'Continue', disabled: false });
   });
 
-  it('says Discover → on MCP, which has no analyze or preview step', () => {
-    const footer = importFooterFor(footerState({ source: 'mcp', mcpReady: true }));
-    expect(footer.primary).toEqual({ label: 'Discover →', disabled: false });
-  });
-
   it('disables the forward verb until the intake has produced content', () => {
     expect(importFooterFor(footerState({ source: 'file', intakeReady: false })).primary).toEqual({
       label: 'Analyze →',
-      disabled: true,
-    });
-    expect(importFooterFor(footerState({ source: 'mcp', mcpReady: false })).primary).toEqual({
-      label: 'Discover →',
       disabled: true,
     });
   });
@@ -185,9 +176,6 @@ describe('the footer', () => {
     expect(
       importFooterFor(footerState({ source: 'file', intakeReady: true, analyzing: true })).primary
     ).toEqual({ label: 'Analyzing...', disabled: true });
-    expect(
-      importFooterFor(footerState({ source: 'mcp', mcpReady: true, mcpSubmitting: true })).primary
-    ).toEqual({ label: 'Starting…', disabled: true });
   });
 
   it('gates Analyze’s forward verb on the document being importable', () => {
@@ -246,27 +234,15 @@ describe('the footer', () => {
     ).toBe('Close');
   });
 
-  it('turns a failed MCP import’s dismiss verb into Discard, with a deliberate way to keep it', () => {
-    // Closing also deletes the endpoint that was created, so the verb says so — and keeping a
-    // server whose scan failed has to be the explicit choice, not the default.
-    const footer = importFooterFor(
-      footerState({ step: 'import', source: 'mcp', importComplete: true, importSucceeded: false })
-    );
-    expect(footer.cancel.label).toBe('Discard');
-    expect(footer.keepAnyway).toEqual({ label: 'Add this server anyway', disabled: false });
-    expect(footer.primary).toBeNull();
-    expect(footer.back).toEqual({ label: '← Back', disabled: false });
-  });
-
-  it('offers keepAnyway on no other step or source', () => {
+  it('never offers keepAnyway — only the Add MCP server dialog does', () => {
     const states: Partial<ImportFooterState>[] = [
       { step: 'source', source: null },
-      { step: 'file-upload', source: 'mcp' },
+      { step: 'file-upload', source: 'file' },
       { step: 'analysis' },
       { step: 'preview' },
       { step: 'import', importComplete: true, importSucceeded: false },
-      { step: 'import', source: 'mcp', importComplete: true, importSucceeded: true },
-      { step: 'done', source: 'mcp' },
+      { step: 'import', importComplete: true, importSucceeded: true },
+      { step: 'done' },
     ];
     for (const overrides of states) {
       expect(importFooterFor(footerState(overrides)).keepAnyway).toBeNull();

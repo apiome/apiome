@@ -17,7 +17,6 @@ import {
   Github,
   Cloud,
   FileJson,
-  Network,
   FileCode,
   Compass,
   type LucideIcon,
@@ -35,7 +34,6 @@ export type ImportPanelId =
   | 'git'
   | 'swaggerhub'
   | 'postman'
-  | 'mcp'
   // CDG-5.5: the catalog importer's Compass export intake (never a Projects card).
   | 'compass'
   // MFI-26.5: a format's own alternate intake, by capability kind (see {@link alternateIntakeTiles}).
@@ -132,9 +130,9 @@ const BASE_CARDS: ReadonlyArray<ImportSourceCard> = [
   { key: 'git', label: 'Git Repository', description: 'Import from GitHub/GitLab', icon: Github, panel: 'git', builtin: true, scope: 'both' },
   // SwaggerHub only serves OpenAPI/Swagger, so it stays on the Projects importer.
   { key: 'swaggerhub', label: 'SwaggerHub', description: 'Import from SwaggerHub', icon: Cloud, panel: 'swaggerhub', builtin: true, scope: 'native' },
-  // Postman collections and MCP discovery are alternative (non-OpenAPI) formats → Catalog importer.
+  // Postman collections are an alternative (non-OpenAPI) format → Catalog importer. MCP servers are
+  // not a spec import at all: they are added from MCP servers (`mcp/AddMcpServerDialog`).
   { key: 'postman', label: 'Postman Collection', description: 'Import from Postman v2.1', icon: FileJson, panel: 'postman', builtin: true, scope: 'alternative' },
-  { key: 'mcp', label: 'MCP Server', description: 'Discover an MCP endpoint', icon: Network, panel: 'mcp', builtin: true, scope: 'alternative' },
 ];
 
 /**
@@ -142,8 +140,9 @@ const BASE_CARDS: ReadonlyArray<ImportSourceCard> = [
  * second (duplicate) card:
  *  - `openapi` is consumed through the generic File / URL / Clipboard intake (auto-detected).
  *  - `sample` is the internal no-op acceptance adapter, never a user-facing source.
+ *  - `mcp` servers are added from MCP servers (`mcp/AddMcpServerDialog`), not imported as a spec.
  */
-export const REGISTRY_KEYS_COVERED_BY_BUILTINS: ReadonlySet<string> = new Set(['openapi', 'sample']);
+export const REGISTRY_KEYS_COVERED_BY_BUILTINS: ReadonlySet<string> = new Set(['openapi', 'sample', 'mcp']);
 
 /**
  * Resolve a Lucide icon name (kebab-case, e.g. `"file-json"`) to its component, falling back to a

@@ -25,8 +25,10 @@ last discovered, capabilities or health, and switch between **Grid** and **Dense
 
 ## Add an MCP server
 
-The steps are **Connect → Discover capabilities → Lint & grade**. To try it on the local stack, use
-Apiome's own MCP server.
+**Add MCP server** opens a dialog of its own, with three steps: **Connect → Discover → Done**. It
+asks only for the server; spec imports are in the [import wizard](./import-wizard.mdx). Discovery
+connects, lists the server's tools, resources and prompts, then lints and grades them. To try it on
+the local stack, use Apiome's own MCP server.
 
 1. **Click “Add MCP server”.** **One server** is selected at the top of the form.
 2. Enter the **Endpoint URL** — `http://localhost:8765/mcp` on the local stack — and, optionally, a
@@ -41,7 +43,8 @@ Apiome's own MCP server.
 5. **Click “Discover →”.** When it finishes, the dialog says the server is cataloged — **click “View
    endpoint”**.
 
-If discovery fails, read the reason, then **“Discard”** or **“Add this server anyway”**.
+If discovery fails, read the reason, then **“Discard”** (which removes the server) or **“Add this
+server anyway”**. **“← Back”** returns to the form and removes a server you did not keep.
 
 <Screenshot id="import-wizard-mcp" alt="Add an MCP server: endpoint URL, display name, transport and authentication" />
 

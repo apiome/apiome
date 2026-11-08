@@ -43,6 +43,8 @@ export interface ImportWizardHeadProps {
   title?: React.ReactNode;
   /** The sentence under the title. Defaults to the Projects importer's. */
   description?: React.ReactNode;
+  /** The glyph in the head's tile. Defaults to the importers' upload arrow. */
+  icon?: React.ReactNode;
 }
 
 /**
@@ -55,11 +57,12 @@ export function ImportWizardHead({
   actions,
   title = IMPORT_WIZARD_COPY.title,
   description = IMPORT_WIZARD_COPY.description,
+  icon = <Upload />,
 }: ImportWizardHeadProps) {
   return (
     <DialogHeader className="imp-wizard__head">
       <span className="tnt-icon-tile" data-tone="accent" aria-hidden>
-        <Upload />
+        {icon}
       </span>
       <div className="imp-wizard__heading">
         <DialogTitle>{title}</DialogTitle>

@@ -44,9 +44,8 @@
  * 5. **The no-tenant case fell through to the empty state**, telling a reader with no workspace
  *    to register an MCP server they could not register. It is `GatedState`.
  *
- * The Add-MCP-server flow itself is unchanged: `ImportDialog`'s `mcp` source already carries the
- * mockup's register → discover → done/failed overlay, re-skinned by HIVE-6.4 (#5315). This screen
- * opens it and reloads the catalog when it lands.
+ * **Add MCP server** opens `AddMcpServerDialog` — its own Connect → Discover → Done dialog, not the
+ * Import specification wizard — and reloads the catalog when a server lands.
  */
 
 import * as React from 'react';
@@ -63,7 +62,7 @@ import { Button } from '@/app/components/ui/Button';
 import { Card } from '@/app/components/ui/Card';
 import { EmptyState, GatedState } from '@/app/components/ui/EmptyState';
 import { ErrorState } from '@/app/components/ui/ErrorState';
-import ImportDialog from '@/app/components/ade/dashboard/ImportDialog';
+import AddMcpServerDialog from '@/app/components/ade/dashboard/mcp/AddMcpServerDialog';
 import {
   mcpBrowseGroupsFromPayload,
   type McpBrowseHostGroup,
@@ -117,10 +116,9 @@ const SKELETON_CARDS = 3;
 export default function McpCatalogClient() {
   const { data: session } = useAuthSession();
   const sessionUser = session?.user as
-    | { user_id?: string; current_tenant_id?: string }
+    | { current_tenant_id?: string }
     | undefined;
   const currentTenantId = sessionUser?.current_tenant_id;
-  const currentUserId = sessionUser?.user_id;
 
   // CDG-2.4: the owner filter lives in the URL (`?team=`) and is applied by apiome-rest's SQL.
   const router = useRouter();
@@ -445,15 +443,8 @@ export default function McpCatalogClient() {
         )}
       </PageBody>
 
-      {currentTenantId && currentUserId ? (
-        <ImportDialog
-          open={importOpen}
-          onClose={() => setImportOpen(false)}
-          onSuccess={() => void load()}
-          tenantId={currentTenantId}
-          userId={currentUserId}
-          initialSource={importOpen ? 'mcp' : null}
-        />
+      {currentTenantId ? (
+        <AddMcpServerDialog open={importOpen} onClose={() => setImportOpen(false)} onSuccess={() => void load()} />
       ) : null}
     </Page>
   );

@@ -34,12 +34,11 @@ v2.1**. Collection v1 is not supported: export it again as v2.1.
   the collection and its environments. Add `--dry-run` to preview without saving.
 - **Through the REST API:** see [Import a specification](./import-a-spec.md).
 
-**As a project instead.** Where the import dialog offers a **Postman Collection** card, it converts a collection to
-OpenAPI 3.1 and continues into the [import wizard](./import-wizard.mdx), so it becomes a publishable
-project rather than a catalog item. The conversion runs through the same importer, so the project gets
-the inferred schemas, the credentials are removed, and the card lists what the conversion left out. Fill
-in **Base URL** to set the OpenAPI server. The REST API exposes the same conversion as
-`POST /v1/import/{tenant}/postman/openapi` (see [Import sources](../reference/rest/import-sources.md)).
+**As a project instead.** `POST /v1/import/{tenant}/postman/openapi` (see
+[Import sources](../reference/rest/import-sources.md)) converts a collection to OpenAPI 3.1, which you
+can then import with the [import wizard](./import-wizard.mdx) as a publishable project rather than a
+catalog item. The conversion runs through the same importer, so the project gets the inferred schemas
+and the credentials are removed; set a base URL to fill in the OpenAPI server.
 
 ## What each part becomes
 
