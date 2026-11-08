@@ -162,7 +162,7 @@ RC8_PLAN §4".
 | --- | --- |
 | [#5594](https://github.com/apiome/apiome/issues/5594), [#5595](https://github.com/apiome/apiome/issues/5595), [#5596](https://github.com/apiome/apiome/issues/5596) | HIVE epics |
 | [#5610](https://github.com/apiome/apiome/issues/5610), [#5611](https://github.com/apiome/apiome/issues/5611), [#5613](https://github.com/apiome/apiome/issues/5613), [#5614](https://github.com/apiome/apiome/issues/5614), [#5617](https://github.com/apiome/apiome/issues/5617) | HIVE-12 / HIVE-13 tickets |
-| [#6317](https://github.com/apiome/apiome/issues/6317) | HIVE-14 |
+| ~~[#6317](https://github.com/apiome/apiome/issues/6317)~~ | HIVE-14 — closed 2026-11-08 as superseded by the round-3 facelift ([#6551](https://github.com/apiome/apiome/pull/6551)) |
 | [#6263](https://github.com/apiome/apiome/issues/6263) | First-row allowances |
 
 [#6274](https://github.com/apiome/apiome/issues/6274) (Monaco theme contrast) stays in RC7 as R7-RG5.
