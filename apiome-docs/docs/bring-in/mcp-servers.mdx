@@ -71,6 +71,75 @@ Over the older transport, a server may negotiate the **2024-11-05** protocol ver
 **Lint & score** tab flags that version as unsupported, because it is not one of the current
 revisions.
 
+### Servers protected by OAuth
+
+A server protected by OAuth 2.1 answers discovery with **401** and a `WWW-Authenticate` header that
+says where its authorization server is. Discovery still fails with `auth_required`, but Apiome
+follows that pointer and records how to get a token. It does this on every discovery and
+re-discovery that gets a **401**, following the
+[MCP authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization):
+
+1. It reads the `resource_metadata` URL from the `Bearer` challenge. If there is none, it tries the
+   server's `/.well-known/oauth-protected-resource` URL, first with the endpoint's path and then
+   at the root (RFC 9728).
+2. That document names the server's **resource** and its **authorization servers**. Apiome then
+   fetches each authorization server's `/.well-known/oauth-authorization-server` metadata in turn,
+   until one works (RFC 8414).
+3. It stores the result with the endpoint's credential: the authorization, token and registration
+   endpoints, the scopes, the resource indicator, and whether the server supports PKCE (`S256`).
+
+Apiome does not sign in or fetch a token yet. Until you store a token as an **OAuth 2.1 access
+token**, discovery keeps running anonymously.
+
+The metadata is read from
+[`GET …/endpoints/{endpoint_id}/credentials`](../reference/rest/mcp-catalog.md#get-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-get)
+as `oauth_metadata`, and nothing in it is secret:
+
+```json
+{
+  "auth_type": "none",
+  "configured": false,
+  "oauth_metadata": {
+    "source": "oauth_discovery",
+    "resource": "https://mcp.acme.example/mcp",
+    "issuer": "https://auth.acme.example",
+    "authorization_endpoint": "https://auth.acme.example/authorize",
+    "token_endpoint": "https://auth.acme.example/token",
+    "registration_endpoint": "https://auth.acme.example/register",
+    "scopes_supported": ["tools:read", "tools:call"],
+    "challenge_scopes": ["tools:read"],
+    "pkce_s256_supported": true
+  }
+}
+```
+
+The discovery job's `result.oauth_discovery` reports what happened, polled with
+[`GET …/discover/{job_id}`](../reference/rest/mcp-catalog.md#get-mcp-discovery-job-v1-mcp-tenant-slug-endpoints-endpoint-id-discover-job-id-get):
+
+- `"status": "resolved"` with the issuer, resource, and authorization and token endpoints.
+- `"status": "failed"` with an error `code`:
+  - `not_found` — the server publishes no metadata.
+  - `resource_mismatch` — the metadata describes another server.
+  - `issuer_mismatch` — the authorization server's metadata names a different issuer.
+  - `invalid_metadata` — a required field is missing, such as the token endpoint.
+  - `invalid_url` — a URL is unsafe.
+  - `fetch_failed` — the fetch failed, or the reply was not JSON.
+
+When a fetch fails, nothing is stored.
+
+Safety rules for these fetches:
+
+- **HTTPS only.** Apiome fetches metadata only over `https://` (plain `http://` only to
+  `localhost`). It refuses private and link-local addresses, does not follow redirects, and
+  refuses documents over 256 KB. Every endpoint the metadata names must follow the same rules.
+- **No secrets sent.** The fetches carry no credential.
+- **Merged, not replaced.** New discovery results are merged into what is stored. Anything else
+  stored under `oauth_metadata` is kept.
+- **Kept on token updates.** A
+  [`PUT …/credentials`](../reference/rest/mcp-catalog.md#set-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-put)
+  without `oauth_metadata` keeps the stored metadata; one that includes it replaces the metadata.
+  `DELETE …/credentials` removes it along with the credential.
+
 ## Import from a registry
 
 If your team already keeps its MCP servers in a registry, bring them all in at once instead of one at

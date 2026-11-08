@@ -44,6 +44,7 @@ from .mcp_client import (
     DiscoveryError,
     DiscoveryErrorCode,
     DiscoverySurface,
+    McpAuthRequiredError,
     ServerInfo,
     classify_exception,
     diff_surfaces,
@@ -54,6 +55,7 @@ from .mcp_client.diff import ITEM_TYPE_SERVER, SurfaceDiff
 from .mcp_client.resilience import BudgetExceededError, TimeBudget
 from .mcp_client.transport_meta import TransportMetadata
 from .mcp_credentials import load_endpoint_auth_headers
+from .mcp_oauth_discovery import OAuthDiscoveryError, discover_oauth_metadata
 from .mcp_protocol_transcript import ProtocolTranscript, TranscriptRecorder
 
 logger = logging.getLogger(__name__)
@@ -531,6 +533,7 @@ def _persist_failure(
     endpoint: Dict[str, Any],
     error: DiscoveryError,
     discovered_at: datetime,
+    oauth_discovery: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Record a failed run on the job and accumulate the endpoint's failure state (synchronous).
 
@@ -540,6 +543,9 @@ def _persist_failure(
     threshold. ``last_discovery_status`` is stamped with the *specific* error code (e.g.
     ``connect_error``, ``rate_limited``) so the failure mode is visible via the status API, not just
     a generic "failed". A quarantine transition emits a one-shot event.
+
+    ``oauth_discovery`` (MCAT-6.3) is the outcome of the OAuth metadata lookup a ``401`` triggers;
+    when given it is stored on the job result next to ``error``.
     """
     from .config import settings
 
@@ -554,10 +560,13 @@ def _persist_failure(
         quarantine_reason=f"{error.code.value}: {error.message}"[:500],
         retry_after_seconds=_retry_after_from_error(error),
     )
+    result: Dict[str, Any] = {"error": error.as_dict()}
+    if oauth_discovery is not None:
+        result["oauth_discovery"] = oauth_discovery
     db.finish_mcp_discovery_job(
         job_id,
         "failed",
-        result={"error": error.as_dict()},
+        result=result,
         error=f"{error.code}: {error.message}"[:2000],
     )
     _log_failure_outcome(endpoint, error, outcome)
@@ -603,6 +612,52 @@ def _log_failure_outcome(
         )
 
 
+async def _resolve_oauth_metadata(
+    endpoint: Dict[str, Any], www_authenticate: Optional[str]
+) -> Dict[str, Any]:
+    """Discover and store a protected endpoint's OAuth metadata after a ``401`` (MCAT-6.3).
+
+    Runs RFC 9728 → RFC 8414 discovery (:func:`app.mcp_oauth_discovery.discover_oauth_metadata`)
+    and merges the result into the endpoint's ``mcp_endpoint_credentials.oauth_metadata``. Never
+    raises: a lookup or storage failure is reported in the returned summary instead.
+
+    Args:
+        endpoint: The ``mcp_endpoints`` row whose discovery answered ``401``.
+        www_authenticate: The challenge header from that response (may be ``None``).
+
+    Returns:
+        A summary for the job result: ``{"status": "resolved", "issuer", "resource",
+        "authorization_endpoint", "token_endpoint"}`` when stored, or ``{"status": "failed",
+        "error": {"code", "message"}}`` when it was not.
+    """
+    endpoint_id = str(endpoint["id"])
+    try:
+        metadata = await discover_oauth_metadata(
+            str(endpoint["endpoint_url"]), www_authenticate, now=_utcnow()
+        )
+    except OAuthDiscoveryError as exc:
+        logger.info("oauth discovery endpoint=%s failed: %s", endpoint_id, exc)
+        return {"status": "failed", "error": exc.as_dict()}
+    except Exception as exc:  # noqa: BLE001 - discovery must never break the failure record
+        logger.warning("oauth discovery endpoint=%s crashed", endpoint_id, exc_info=True)
+        return {"status": "failed", "error": {"code": "fetch_failed", "message": type(exc).__name__}}
+    try:
+        await asyncio.to_thread(db.merge_mcp_endpoint_oauth_metadata, endpoint_id, metadata)
+    except Exception:  # noqa: BLE001
+        logger.exception("failed to store oauth metadata endpoint=%s", endpoint_id)
+        return {
+            "status": "failed",
+            "error": {"code": "store_failed", "message": "could not store oauth metadata"},
+        }
+    return {
+        "status": "resolved",
+        "issuer": metadata["issuer"],
+        "resource": metadata["resource"],
+        "authorization_endpoint": metadata["authorization_endpoint"],
+        "token_endpoint": metadata["token_endpoint"],
+    }
+
+
 async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
     """Run one discovery job end-to-end: running → (client+persist) → completed/failed.
 
@@ -624,9 +679,13 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
         logger.warning(
             "discovery job=%s endpoint=%s failed: %s", job_id, endpoint_id, error.to_record()
         )
+        # A 401 names how to authenticate: resolve and store the OAuth metadata (MCAT-6.3).
+        oauth_discovery = None
+        if isinstance(exc, McpAuthRequiredError):
+            oauth_discovery = await _resolve_oauth_metadata(endpoint, exc.www_authenticate)
         try:
             await asyncio.to_thread(
-                _persist_failure, job_id, endpoint, error, _utcnow()
+                _persist_failure, job_id, endpoint, error, _utcnow(), oauth_discovery
             )
         except Exception:  # noqa: BLE001 - last-resort guard so the task never crashes
             logger.exception("failed to record discovery failure job=%s", job_id)

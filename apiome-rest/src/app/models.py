@@ -13205,7 +13205,9 @@ class McpCredentialUpsert(BaseModel):
     echoed back by any response. ``auth_type`` must be a secret-bearing scheme
     (:data:`MCP_CREDENTIAL_AUTH_TYPES`) — to remove a credential entirely (the anonymous ``none``
     state) DELETE the resource instead. ``oauth_metadata`` is non-secret OAuth2 discovery metadata
-    persisted as cleartext. Accepts both camelCase and snake_case keys so UI and CLI can share it.
+    persisted as cleartext; omit it to keep what is stored (e.g. what OAuth discovery found after a
+    ``401``, MCAT-6.3), or send it to replace that. Accepts both camelCase and snake_case keys so UI
+    and CLI can share it.
 
     Expected ``payload`` shape per ``auth_type`` (validated against the auth-type model at the route):
 

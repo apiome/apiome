@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.673.0] - 2026-11-08
+
+### Added
+- **OAuth 2.1 discovery for protected MCP servers (V2-MCP-20.3 / MCAT-6.3, #3679).** When a
+  discovery run gets `401`, the new `app/mcp_oauth_discovery.py` parses the `WWW-Authenticate`
+  challenge (RFC 9110). It fetches the Protected Resource Metadata from the `Bearer` challenge's
+  `resource_metadata` URL, or from the well-known `/.well-known/oauth-protected-resource` URL with
+  the endpoint's path, then at the root (RFC 9728). It then fetches each listed authorization
+  server's `/.well-known/oauth-authorization-server` metadata until one validates (RFC 8414).
+  - **Checks:**
+    - The PRM `resource` must share the endpoint's origin and be a path prefix of it.
+    - The AS `issuer` must equal the issuer it was fetched for.
+    - `authorization_endpoint` and `token_endpoint` are required.
+    - Every URL must be `https://` (`http://` only to loopback) and not a private IP literal.
+    - Redirects are not followed, each fetch times out after 10 s, and bodies over 256 KB are refused.
+  - **Storage:** the result is merged into `mcp_endpoint_credentials.oauth_metadata` by the new
+    `Database.merge_mcp_endpoint_oauth_metadata`. If the endpoint has no credential, it creates an
+    `auth_type='none'` row with no secret, so the endpoint still runs anonymously. It never touches
+    a stored secret.
+  - **Stored keys:** issuer, authorization / token / registration / revocation endpoints, resource
+    indicator, scopes, the challenge's scopes, grant / response / auth-method lists, and
+    `pkce_s256_supported`.
+  - **Job result:** the failed discovery job's `result.oauth_discovery` reports `resolved` or
+    `failed` with a code (`not_found`, `resource_mismatch`, `issuer_mismatch`, `invalid_metadata`,
+    `invalid_url`, `fetch_failed`, `store_failed`).
+
+### Changed
+- `PUT …/endpoints/{id}/credentials` without `oauth_metadata` now keeps the stored metadata instead
+  of clearing it; sending `oauth_metadata` still replaces it.
+- OpenAPI 1.534.0 → 1.535.0; apiome-rest 1.672.2 → 1.673.0.
+
 ## [1.672.2] - 2026-11-08
 
 ### Added
