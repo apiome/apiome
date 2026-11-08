@@ -391,3 +391,18 @@ def _allow_permissions_by_default(monkeypatch):
     monkeypatch.setattr(module.db, "user_has_permission", allow)
     monkeypatch.setattr(module.db, "get_fallback_creator_user_id_for_tenant", no_fallback_actor)
     yield
+
+
+@pytest.fixture(autouse=True)
+def _no_repository_manifest_by_default(monkeypatch):
+    """
+    Keep whole-scan tests off the network: the scanner reads ``.apiome/repo.yaml`` (REPO-2.2)
+    at the start of every pass. Default that read to "no manifest" so tests that drive
+    ``scan_repository_branch_into_index`` without stubbing GitHub run on the default ignore
+    rules; the REPO-2.2 tests pass their own ``manifest_fetch``.
+    """
+
+    def _missing(*_args, **_kwargs):
+        raise ValueError("GitHub file not found (path or ref may be stale)")
+
+    monkeypatch.setattr("app.repository_file_scan.read_scan_manifest_text", _missing)

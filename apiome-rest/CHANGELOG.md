@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [1.668.0] - 2026-11-07
+## [1.669.0] - 2026-11-07
 
 ### Added
 - **Consumer usage of a version (DCW-0.5, private-suite #2422).** `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-usage?version=`
@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `undeclared_consumer_count`. Requires `projects:view`; consumer names are included only with
   `consumer_contracts:view` (the CTG-4.5 rule) — anyone else gets the same counts with `consumers: null`.
   - OpenAPI 1.532.0.
+
+## [1.668.0] - 2026-11-07
+
+### Added
+- **Repository scans skip vendored and build trees (REPO-2.2, #2763).** The scanner no longer indexes
+  `**/.git/**`, `**/node_modules/**`, `**/vendor/**`, `**/dist/**`, `**/build/**`, `**/coverage/**` or
+  `**/__pycache__/**` (`app/repository_scan_ignore.py`, `DEFAULT_SCAN_IGNORE_PATTERNS`). A repository's
+  optional `.apiome/repo.yaml` adds patterns with `ignore:`; its `specs:` entries are always indexed, even
+  inside an ignored tree. A sparse walk never lists a directory an ignore rule covers, which saves provider
+  calls on large monorepos. Each scan logs and returns `files_skipped_by_ignore` and
+  `directories_skipped_by_ignore`; both survive a budget pause in the resume cursor. A missing, invalid or
+  unreadable manifest falls back to the defaults and never fails a scan. OpenAPI document 1.531.1 (no
+  schema change).
 
 ## [1.666.1] - 2026-11-06
 

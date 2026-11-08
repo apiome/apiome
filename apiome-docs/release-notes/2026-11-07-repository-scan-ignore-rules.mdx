@@ -1,0 +1,23 @@
+---
+slug: repository-scan-ignore-rules
+title: Repository scans skip vendored and build folders
+description: "Scans skip node_modules, vendor, dist and build; .apiome/repo.yaml adds or keeps files."
+authors: [apiome]
+---
+
+A repository scan no longer indexes the folders that are noise for spec discovery, so large
+repositories scan faster and use less of your provider quota.
+
+{/* truncate */}
+
+- **Skipped by default.** `.git`, `node_modules`, `vendor`, `dist`, `build`, `coverage` and
+  `__pycache__` are skipped at any depth. On a very large repository the scanner does not even list
+  them.
+- **Your own rules.** An `ignore:` list in `.apiome/repo.yaml` at the repository root adds patterns to
+  the defaults.
+- **Specs always win.** A file listed under `specs:` in the same file is scanned even inside a skipped
+  folder — for example `dist/openapi.yaml`.
+- **Safe by default.** A missing, invalid or unreadable `.apiome/repo.yaml` means the defaults alone;
+  it never stops a scan. Each scan logs how many files and folders it skipped.
+
+See [Folders a scan skips](/bring-in/repositories#folders-a-scan-skips).
