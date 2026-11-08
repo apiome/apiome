@@ -7,6 +7,8 @@ lifecycle handshake (``initialize`` + version negotiation) sits on top of it.
 
 Modules:
     transport_http: JSON-RPC 2.0 over the MCP "Streamable HTTP" transport.
+    transport_sse: JSON-RPC 2.0 over the legacy 2024-11-05 HTTP+SSE transport.
+    connect: Open an initialized session, falling back to the legacy transport.
     handshake: The ``initialize`` opening handshake and protocol-version negotiation.
     discovery: Paginated ``*/list`` discovery of the declared capability surface.
     normalize: Canonical, version-tolerant ``DiscoverySurface`` + DB row mapping.
@@ -21,6 +23,7 @@ from .branding import (
     extract_server_branding,
     safe_branding_url,
 )
+from .connect import FALLBACK_STATUS_CODES, open_session
 from .diff import (
     CHANGE_ADDED,
     CHANGE_MODIFIED,
@@ -50,6 +53,7 @@ from .handshake import (
     DEFAULT_CLIENT_CAPABILITIES,
     DEFAULT_CLIENT_INFO,
     INVALID_PARAMS_CODE,
+    LEGACY_SSE_PROTOCOL_VERSIONS,
     SUPPORTED_PROTOCOL_VERSIONS,
     InitializeResult,
     McpVersionNegotiationError,
@@ -93,6 +97,7 @@ from .transport_meta import (
     capture_transport_metadata,
     summarize_peer_cert,
 )
+from .transport_sse import LEGACY_PROTOCOL_VERSION, LegacySseTransport, McpLegacySseError
 
 __all__ = [
     "CHANGE_ADDED",
@@ -104,6 +109,7 @@ __all__ = [
     "DEFAULT_PER_CALL_TIMEOUT",
     "DEFAULT_PROTOCOL_VERSION",
     "DEFAULT_TOTAL_BUDGET",
+    "FALLBACK_STATUS_CODES",
     "INVALID_PARAMS_CODE",
     "ITEM_TYPES",
     "ITEM_TYPE_PROMPT",
@@ -111,6 +117,8 @@ __all__ = [
     "ITEM_TYPE_RESOURCE_TEMPLATE",
     "ITEM_TYPE_SERVER",
     "ITEM_TYPE_TOOL",
+    "LEGACY_PROTOCOL_VERSION",
+    "LEGACY_SSE_PROTOCOL_VERSIONS",
     "LIST_METHODS",
     "MAX_BRANDING_URL_LENGTH",
     "NOTABLE_RESPONSE_HEADERS",
@@ -126,10 +134,12 @@ __all__ = [
     "ItemChange",
     "JsonRpcError",
     "JsonRpcResponse",
+    "LegacySseTransport",
     "ListMethod",
     "McpAuthRequiredError",
     "McpDiscoveryError",
     "McpHttpStatusError",
+    "McpLegacySseError",
     "McpPaginationError",
     "McpProtocolError",
     "McpRateLimitedError",
@@ -150,6 +160,7 @@ __all__ = [
     "discover_listings",
     "extract_server_branding",
     "initialize_session",
+    "open_session",
     "safe_branding_url",
     "paginate",
     "parse_retry_after_seconds",

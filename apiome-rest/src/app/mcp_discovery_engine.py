@@ -45,11 +45,10 @@ from .mcp_client import (
     DiscoveryErrorCode,
     DiscoverySurface,
     ServerInfo,
-    StreamableHttpTransport,
     classify_exception,
     diff_surfaces,
     discover_listings,
-    initialize_session,
+    open_session,
 )
 from .mcp_client.diff import ITEM_TYPE_SERVER, SurfaceDiff
 from .mcp_client.resilience import BudgetExceededError, TimeBudget
@@ -93,10 +92,15 @@ async def _run_mcp_client(
 ) -> DiscoveryOutcome:
     """Connect to the endpoint, run the handshake + discovery, and normalize the surface.
 
+    The endpoint's stored ``transport`` picks the wire protocol (V2-MCP-16.5, #3661): ``sse``
+    uses the legacy 2024-11-05 HTTP+SSE transport directly; anything else tries Streamable HTTP
+    and falls back to the legacy transport when the server answers with its signature (see
+    :func:`app.mcp_client.connect.open_session`).
+
     Alongside the capability surface, the host/transport facts the handshake connection reveals —
     host, TLS certificate summary, notable response headers, connect timing — are read off the
-    transport (:attr:`StreamableHttpTransport.observed_transport`, V2-MCP-34.1) without any extra
-    network call, and returned for the caller to persist on the endpoint.
+    transport (``observed_transport``, V2-MCP-34.1) without any extra network call, and returned
+    for the caller to persist on the endpoint.
 
     A :class:`~app.mcp_protocol_transcript.TranscriptRecorder` is attached to the transport so the
     JSON-RPC exchanges this discovery *already performs* are reduced to redacted conformance
@@ -106,7 +110,8 @@ async def _run_mcp_client(
     tool.
 
     Args:
-        endpoint: The ``mcp_endpoints`` row (``endpoint_url`` is used as the target).
+        endpoint: The ``mcp_endpoints`` row (``endpoint_url`` is the target; ``transport``
+            selects the wire protocol).
         headers: Auth headers to attach to every request (empty when the endpoint has
             no usable credentials).
 
@@ -118,9 +123,13 @@ async def _run_mcp_client(
     url = str(endpoint["endpoint_url"])
     budget = TimeBudget(total_seconds=_DISCOVERY_BUDGET_SECONDS)
     recorder = TranscriptRecorder()
-    transport = StreamableHttpTransport(url, headers=dict(headers), transcript=recorder)
+    transport, initialize = await open_session(
+        url,
+        transport=endpoint.get("transport"),
+        headers=headers,
+        transcript=recorder,
+    )
     try:
-        initialize = await initialize_session(transport)
         listings = await discover_listings(transport, initialize.capabilities, budget=budget)
         transport_meta = transport.observed_transport
     finally:

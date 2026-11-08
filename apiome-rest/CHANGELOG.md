@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.671.0] - 2026-11-08
+
+### Added
+- **Legacy HTTP+SSE MCP transport, with automatic fallback (V2-MCP-16.5 / MCAT-2.5, #3661).**
+  Apiome now reaches MCP servers that still speak the 2024-11-05 HTTP+SSE transport. The new
+  `app.mcp_client.transport_sse.LegacySseTransport` opens the `GET` event stream, waits for the
+  server's `endpoint` event, POSTs every JSON-RPC message to that URL and reads the responses off
+  the stream. It reuses the Streamable HTTP transport's security rules (no plaintext `http://` to a
+  non-loopback host, the SSRF guard), status taxonomy and protocol-transcript recording, and it only
+  POSTs to an endpoint on the same scheme, host and port as the stream, so a server cannot redirect
+  the endpoint's auth headers elsewhere.
+  `app.mcp_client.connect.open_session` picks the transport: an endpoint stored with
+  `transport='sse'` uses the legacy transport directly; any other endpoint tries Streamable HTTP and
+  falls back when the `initialize` POST is answered `400`, `404`, `405`, `406` or `415`. A `401`,
+  `403` or `429` never triggers the fallback, and when the server speaks neither transport the
+  original Streamable HTTP error is reported. Discovery jobs (`POST …/endpoints/{id}/discover` and
+  the sweep) and capability tests (`POST …/endpoints/{id}/test`) both connect this way. The
+  handshake accepts protocol `2024-11-05` over the legacy transport only; Streamable HTTP still
+  refuses it. No request or response shape changes.
+
 ## [1.670.1] - 2026-11-08
 
 ### Added

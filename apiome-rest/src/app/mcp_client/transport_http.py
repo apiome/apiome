@@ -47,7 +47,7 @@ import time
 from dataclasses import dataclass, field
 from ipaddress import ip_address
 from itertools import count
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, Optional, Union
+from typing import Any, AsyncIterator, Awaitable, Callable, Dict, Optional, Tuple, Union
 
 import httpx
 
@@ -776,24 +776,40 @@ def _is_loopback_host(host: str) -> bool:
         return False
 
 
-async def _iter_sse_data(response: httpx.Response) -> AsyncIterator[str]:
-    """Yield the ``data`` payload of each SSE ``message`` event in ``response``.
+#: The SSE event type of an event that names none (``event:`` absent), per the SSE spec.
+SSE_DEFAULT_EVENT = "message"
 
-    A minimal Server-Sent-Events parser sufficient for MCP: events are separated
-    by a blank line; ``data:`` lines within an event are concatenated with ``\\n``
-    (per the SSE spec); ``event:``/``id:``/``retry:`` and comment (``:``) lines are
-    recognized but, for MCP, only the default ``message`` event type carries
-    JSON-RPC, so we yield whenever a non-empty data buffer is flushed. A trailing
-    event without a final blank line is flushed at end-of-stream.
+
+async def iter_sse_events(response: httpx.Response) -> AsyncIterator[Tuple[str, str]]:
+    """Yield ``(event_type, data)`` for each Server-Sent Event in ``response``.
+
+    A minimal SSE parser sufficient for MCP: events are separated by a blank line;
+    ``data:`` lines within an event are concatenated with ``\\n`` (per the SSE spec);
+    ``event:`` names the event's type, defaulting to :data:`SSE_DEFAULT_EVENT`;
+    ``id:``/``retry:`` and comment (``:``) lines are skipped. An event is yielded
+    only when it carried data. A trailing event without a final blank line is
+    flushed at end-of-stream.
+
+    Streamable HTTP only ever sends ``message`` events, but the legacy HTTP+SSE
+    transport (2024-11-05) opens its stream with an ``endpoint`` event, so the type
+    is reported rather than dropped.
+
+    Args:
+        response: An open streaming response whose body is ``text/event-stream``.
+
+    Yields:
+        ``(event_type, data)`` for every event that carried a ``data`` field.
     """
     data_lines: list[str] = []
+    event_type = SSE_DEFAULT_EVENT
     async for raw_line in response.aiter_lines():
         # ``aiter_lines`` strips the newline; an SSE event ends on an empty line.
         line = raw_line.rstrip("\r")
         if line == "":
             if data_lines:
-                yield "\n".join(data_lines)
-                data_lines = []
+                yield event_type, "\n".join(data_lines)
+            data_lines = []
+            event_type = SSE_DEFAULT_EVENT
             continue
         if line.startswith(":"):
             continue  # comment / keep-alive
@@ -802,6 +818,17 @@ async def _iter_sse_data(response: httpx.Response) -> AsyncIterator[str]:
             value = value[1:]  # one optional leading space after the colon
         if field_name == "data":
             data_lines.append(value)
-        # Other fields (event/id/retry) are not needed to extract MCP payloads.
+        elif field_name == "event":
+            event_type = value or SSE_DEFAULT_EVENT
+        # Other fields (id/retry) are not needed to extract MCP payloads.
     if data_lines:
-        yield "\n".join(data_lines)
+        yield event_type, "\n".join(data_lines)
+
+
+async def _iter_sse_data(response: httpx.Response) -> AsyncIterator[str]:
+    """Yield the ``data`` payload of each SSE event in ``response`` (see :func:`iter_sse_events`).
+
+    Streamable HTTP carries one JSON-RPC message per event, so only the data is needed.
+    """
+    async for _event_type, data in iter_sse_events(response):
+        yield data

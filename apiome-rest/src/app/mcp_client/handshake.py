@@ -43,12 +43,19 @@ from .transport_http import (
     McpProtocolError,
     StreamableHttpTransport,
 )
+from .transport_sse import LEGACY_PROTOCOL_VERSION, LegacySseTransport
 
-# MCP protocol revisions this client can speak, newest first. The order is also
-# the *preference* order used when several versions are mutually supported.
-# 2024-11-05 is intentionally excluded: that revision uses the deprecated
-# HTTP+SSE two-endpoint transport, which is a separate work item (MCAT-2.5).
+# MCP protocol revisions this client can speak over Streamable HTTP, newest first. The
+# order is also the *preference* order used when several versions are mutually
+# supported. 2024-11-05 is excluded here: that revision uses the deprecated HTTP+SSE
+# two-endpoint transport, so a server negotiating it over Streamable HTTP is refused.
 SUPPORTED_PROTOCOL_VERSIONS: Tuple[str, ...] = ("2025-06-18", "2025-03-26")
+
+# The revisions accepted over the legacy HTTP+SSE transport (V2-MCP-16.5, #3661): the
+# current ones — some servers still serve them over SSE — plus 2024-11-05 itself.
+LEGACY_SSE_PROTOCOL_VERSIONS: Tuple[str, ...] = SUPPORTED_PROTOCOL_VERSIONS + (
+    LEGACY_PROTOCOL_VERSION,
+)
 
 # JSON-RPC reserved code a server returns when it cannot agree on the requested
 # protocol version (it carries the versions it *does* support in ``data``).
@@ -187,7 +194,7 @@ async def initialize_session(
     client_info: Optional[Mapping[str, Any]] = None,
     capabilities: Optional[Mapping[str, Any]] = None,
     preferred_version: Optional[str] = None,
-    supported_versions: Sequence[str] = SUPPORTED_PROTOCOL_VERSIONS,
+    supported_versions: Optional[Sequence[str]] = None,
 ) -> InitializeResult:
     """Run the MCP opening handshake over ``transport`` and return the result.
 
@@ -196,7 +203,8 @@ async def initialize_session(
     transport, and sends ``notifications/initialized``.
 
     Args:
-        transport: An (unopened-handshake) Streamable HTTP transport to drive.
+        transport: An (unopened-handshake) transport to drive: Streamable HTTP or
+            the legacy HTTP+SSE transport.
         client_info: Override the advertised ``clientInfo``; defaults to
             :data:`DEFAULT_CLIENT_INFO`.
         capabilities: Override the advertised client ``capabilities``; defaults to
@@ -204,7 +212,10 @@ async def initialize_session(
         preferred_version: The version to request first; defaults to the newest in
             ``supported_versions``. Must itself be a supported version.
         supported_versions: The versions this client will accept, newest/most
-            preferred first. Defaults to :data:`SUPPORTED_PROTOCOL_VERSIONS`.
+            preferred first. Defaults to the transport's set:
+            :data:`LEGACY_SSE_PROTOCOL_VERSIONS` over a
+            :class:`~app.mcp_client.transport_sse.LegacySseTransport`, otherwise
+            :data:`SUPPORTED_PROTOCOL_VERSIONS`.
 
     Returns:
         The :class:`InitializeResult` with the negotiated version, server info,
@@ -217,6 +228,8 @@ async def initialize_session(
         McpProtocolError: if ``initialize`` fails for a non-version reason or the
             result is malformed (e.g. missing ``protocolVersion``).
     """
+    if supported_versions is None:
+        supported_versions = default_protocol_versions(transport)
     supported = tuple(supported_versions)
     if not supported:
         raise ValueError("supported_versions must contain at least one version")
@@ -262,6 +275,22 @@ async def initialize_session(
     await transport.notify("notifications/initialized")
 
     return _build_result(negotiated, result_obj)
+
+
+def default_protocol_versions(transport: StreamableHttpTransport) -> Tuple[str, ...]:
+    """The protocol revisions a handshake over ``transport`` accepts by default.
+
+    Args:
+        transport: The transport the handshake runs over.
+
+    Returns:
+        :data:`LEGACY_SSE_PROTOCOL_VERSIONS` for the legacy HTTP+SSE transport (which
+        is the only one that may negotiate 2024-11-05), otherwise
+        :data:`SUPPORTED_PROTOCOL_VERSIONS`.
+    """
+    if isinstance(transport, LegacySseTransport):
+        return LEGACY_SSE_PROTOCOL_VERSIONS
+    return SUPPORTED_PROTOCOL_VERSIONS
 
 
 async def _negotiate_initialize(
