@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.670.1] - 2026-11-08
+
+### Added
+- **The MCP public-endpoints view is proven against a live database (V2-MCP-15.6 / MCAT-1.6, #3656).**
+  `tests/test_mcp_public_endpoints_view_db.py` applies V126–V130 and V134 verbatim inside a
+  rolled-back transaction and checks `apiome.mcp_v_public_endpoints` on a real server: only
+  enabled, published, public-visible, non-deleted endpoints come back (unpublishing or hiding one
+  removes it); the current version's score, grade and `scored_at` are joined, and an unscored
+  endpoint keeps NULLs; the view exposes an allow-listed set of columns, reads only `mcp_endpoints`
+  and `mcp_version_scores` (never the credential vault), and a password embedded in an endpoint URL
+  never appears in a row; and with 5,000 private endpoints around three public ones, the planner
+  answers the view from `idx_mcp_endpoints_published_visibility` rather than a sequential scan.
+  Marked `requires_db`; skipped without `DATABASE_URL`. No schema or API change. apiome-rest
+  1.670.0 → 1.670.1.
+
 ## [1.670.0] - 2026-11-07
 
 ### Added
