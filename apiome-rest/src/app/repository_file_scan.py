@@ -40,6 +40,7 @@ from .repository_scan_budget import (
     resolve_scan_budget_seconds,
     should_abandon_cursor,
 )
+from .repository_scan_ignore import ScanIgnoreRules, load_scan_ignore_rules
 from .repository_validation import parse_github_owner_repo_from_url, parse_owner_repo_slash
 
 _logger = logging.getLogger(__name__)
@@ -304,11 +305,17 @@ class WalkOutcome(NamedTuple):
             the walk finished.
         truncated_prefixes: Directories GitHub itself reported as truncated, so a
             necessarily incomplete index is visible rather than silent.
+        files_skipped_by_ignore: Blobs skipped on an ignore rule so far in this walk,
+            across every pass (REPO-2.2).
+        directories_skipped_by_ignore: Sub-trees the sparse walk never listed because an
+            ignore rule covers them, across every pass (REPO-2.2).
     """
 
     completed: bool
     cursor: Optional[ScanCursor]
     truncated_prefixes: List[str]
+    files_skipped_by_ignore: int = 0
+    directories_skipped_by_ignore: int = 0
 
 
 def walk_github_tree_in_chunks(
@@ -321,6 +328,7 @@ def walk_github_tree_in_chunks(
     cursor: Optional[ScanCursor] = None,
     budget: Optional[ScanBudget] = None,
     chunk_size: int = 0,
+    ignore: Optional[ScanIgnoreRules] = None,
 ) -> WalkOutcome:
     """Walk a branch's Git tree, streaming entries to ``on_chunk`` (REPO-2.5).
 
@@ -342,6 +350,11 @@ def walk_github_tree_in_chunks(
     recursive mode, a directory boundary in sparse mode — so a paused pass never
     loses entries it has already read but not written.
 
+    Ignore rules (REPO-2.2) drop files before they reach ``on_chunk`` and are counted in
+    ``files_skipped_by_ignore``. In sparse mode a directory an ignore rule fully covers is
+    never listed at all — that is where the provider calls are saved — and is counted in
+    ``directories_skipped_by_ignore``; its files are not counted, since they were never read.
+
     Args:
         owner: GitHub repository owner.
         repo: GitHub repository name.
@@ -356,6 +369,7 @@ def walk_github_tree_in_chunks(
             walks to completion.
         chunk_size: Requested entries per chunk; clamped to at most 1000 by
             :func:`repository_scan_budget.resolve_chunk_size`.
+        ignore: Include / exclude rules; None indexes every blob.
 
     Returns:
         A :class:`WalkOutcome`.
@@ -386,10 +400,20 @@ def walk_github_tree_in_chunks(
             state.emitted += len(buffer)
             buffer = []
 
+        def outcome(completed: bool) -> WalkOutcome:
+            """Report the walk's result with its ignore counters."""
+            return WalkOutcome(
+                completed=completed,
+                cursor=None if completed else state,
+                truncated_prefixes=state.truncated_prefixes,
+                files_skipped_by_ignore=state.files_skipped_by_ignore,
+                directories_skipped_by_ignore=state.directories_skipped_by_ignore,
+            )
+
         def paused() -> WalkOutcome:
             """Flush what is buffered and report a resumable stop."""
             flush()
-            return WalkOutcome(completed=False, cursor=state, truncated_prefixes=state.truncated_prefixes)
+            return outcome(False)
 
         try:
             if state.mode == WALK_MODE_RECURSIVE:
@@ -412,8 +436,12 @@ def walk_github_tree_in_chunks(
                     state.mode = WALK_MODE_SPARSE
                     state.pending = [{"sha": state.tree_sha, "prefix": ""}]
                     state.emitted = 0
+                    state.files_skipped_by_ignore = 0
+                    state.directories_skipped_by_ignore = 0
                 else:
-                    skip = state.emitted
+                    # Every blob seen so far was either emitted or skipped on an ignore
+                    # rule, so together they are the resume offset.
+                    skip = state.emitted + state.files_skipped_by_ignore
                     seen = 0
                     for raw in payload.get("tree") or []:
                         if not isinstance(raw, dict) or raw.get("type") != "blob":
@@ -424,13 +452,16 @@ def walk_github_tree_in_chunks(
                         seen += 1
                         if seen <= skip:
                             continue
+                        if ignore is not None and ignore.ignores_file(path):
+                            state.files_skipped_by_ignore += 1
+                            continue
                         buffer.append(_blob_entry(raw, path, state))
                         if len(buffer) >= limit:
                             flush()
                             if budget is not None and budget.exhausted():
                                 return paused()
                     flush()
-                    return WalkOutcome(True, None, state.truncated_prefixes)
+                    return outcome(True)
 
             # Sparse mode: breadth-first descent, one directory per request.
             while state.pending:
@@ -470,15 +501,22 @@ def walk_github_tree_in_chunks(
                     kind = raw.get("type")
                     if kind == "tree":
                         sha = str(raw.get("sha") or "")
-                        if sha:
-                            state.pending.append({"sha": sha, "prefix": full})
+                        if not sha:
+                            continue
+                        if ignore is not None and ignore.prunes_directory(full):
+                            state.directories_skipped_by_ignore += 1
+                            continue
+                        state.pending.append({"sha": sha, "prefix": full})
                     elif kind == "blob":
+                        if ignore is not None and ignore.ignores_file(full):
+                            state.files_skipped_by_ignore += 1
+                            continue
                         buffer.append(_blob_entry(raw, full, state))
                         if len(buffer) >= limit:
                             flush()
 
             flush()
-            return WalkOutcome(True, None, state.truncated_prefixes)
+            return outcome(True)
         except TransientScanError as exc:
             # Persist whatever was read before the failure so the resume cursor and
             # the written rows agree, then hand the position to the caller.
@@ -571,6 +609,28 @@ def fetch_github_repository_file_text(
     raw = b"".join(chunks)
     text = raw.decode("utf-8", errors="replace")
     return text, truncated
+
+
+def read_scan_manifest_text(
+    owner: str, repo: str, path: str, ref: str, access_token: Optional[str], *, max_bytes: int
+) -> Tuple[str, bool]:
+    """Read the scanner's ``.apiome/repo.yaml`` manifest (REPO-2.2).
+
+    A thin seam over :func:`fetch_github_repository_file_text`, so tests that drive a whole
+    scan can stub the manifest read without touching the generic file fetch.
+
+    Args:
+        owner: GitHub owner.
+        repo: GitHub repository name.
+        path: The manifest path.
+        ref: Branch or commit SHA.
+        access_token: Access token, if any.
+        max_bytes: Read cap.
+
+    Returns:
+        ``(text, truncated)`` as :func:`fetch_github_repository_file_text` returns.
+    """
+    return fetch_github_repository_file_text(owner, repo, path, ref, access_token, max_bytes=max_bytes)
 
 
 def _resolve_scan_token(db: Database, repo_row: Dict[str, Any]) -> Optional[str]:
@@ -683,6 +743,10 @@ class ScanPass(NamedTuple):
             Counted per pass, not per branch, so a resumed walk does not re-report
             the volume its earlier passes already recorded. Entries whose provider
             reports no size (sub-trees, submodules) contribute 0.
+        files_skipped_by_ignore: Files the walk skipped on an ignore rule — the defaults,
+            the manifest's ``ignore:`` — across every pass of this scan so far (REPO-2.2).
+        directories_skipped_by_ignore: Directories the walk did not list because an ignore
+            rule covers them (sparse walks only), across every pass so far (REPO-2.2).
     """
 
     total_files: int
@@ -690,6 +754,8 @@ class ScanPass(NamedTuple):
     completed: bool
     resumed: bool
     bytes_scanned: int = 0
+    files_skipped_by_ignore: int = 0
+    directories_skipped_by_ignore: int = 0
 
 
 def _record_scan_volume(db: Database, tenant_id: str, bytes_scanned: int) -> None:
@@ -869,6 +935,7 @@ def scan_repository_branch_into_index(
     *,
     budget_seconds: Optional[int] = None,
     chunk_size: Optional[int] = None,
+    manifest_fetch: Optional[Callable[..., Tuple[str, bool]]] = None,
 ) -> ScanPass:
     """Rescan one branch's Git tree into its indexed file rows (REPO-2 / REPO-2.5).
 
@@ -899,6 +966,12 @@ def scan_repository_branch_into_index(
     calls, but reporting it as scan volume would make a failing repository look like a busy
     one on the dashboard.
 
+    REPO-2.2 skips noise before it is indexed: the default ignore patterns plus the
+    ``ignore:`` array of the repository's ``.apiome/repo.yaml``, with its ``specs:`` entries
+    always indexed (:mod:`app.repository_scan_ignore`). The manifest is read at the pinned
+    tip commit on a resumed pass, so every pass of one scan applies the same rules; a fresh
+    pass reads it at the branch. The skip counts are logged and returned on the ScanPass.
+
     Unlike the job path this raises on any error rather than recording job/repo
     failure state; the caller owns failure bookkeeping.
 
@@ -911,6 +984,7 @@ def scan_repository_branch_into_index(
         budget_seconds: Overrides the tenant's configured wall-clock budget for
             this pass. None reads ``tenants.repository_scan_budget_seconds``.
         chunk_size: Overrides the streaming chunk size; always capped at 1000.
+        manifest_fetch: Replaces :func:`read_scan_manifest_text` (tests).
 
     Returns:
         A :class:`ScanPass` describing this pass.
@@ -946,6 +1020,11 @@ def scan_repository_branch_into_index(
         db.delete_tenant_repository_files(repository_id, branch)
         entries = 0
         importable = 0
+
+    manifest_ref = (cursor.tip_commit_sha if cursor is not None else None) or branch
+    ignore_rules = load_scan_ignore_rules(
+        manifest_fetch or read_scan_manifest_text, owner, repo, manifest_ref, token
+    )
 
     configured = budget_seconds
     if configured is None:
@@ -1010,6 +1089,7 @@ def scan_repository_branch_into_index(
             cursor=cursor,
             budget=budget,
             chunk_size=limit,
+            ignore=ignore_rules,
         )
     except TransientScanError as exc:
         _store_cursor(exc.cursor, str(exc)[:2000])
@@ -1019,15 +1099,22 @@ def scan_repository_branch_into_index(
         _store_cursor(outcome.cursor, None)
         _logger.info(
             "repository scan paused on its wall-clock budget repository_id=%s branch=%s "
-            "budget_seconds=%s entries=%s",
+            "budget_seconds=%s entries=%s files_skipped_by_ignore=%s",
             repository_id,
             branch,
             budget.seconds,
             counts["entries"],
+            outcome.files_skipped_by_ignore,
         )
         _record_scan_volume(db, tenant_id, counts["bytes"])
         return ScanPass(
-            counts["entries"], counts["importable"], False, resumed, counts["bytes"]
+            counts["entries"],
+            counts["importable"],
+            False,
+            resumed,
+            counts["bytes"],
+            outcome.files_skipped_by_ignore,
+            outcome.directories_skipped_by_ignore,
         )
 
     db.clear_repository_scan_cursor(repository_id, branch)
@@ -1043,7 +1130,24 @@ def scan_repository_branch_into_index(
         touch_last_scanned_at=True,
     )
     _record_scan_volume(db, tenant_id, counts["bytes"])
-    return ScanPass(total_files, importable_count, True, resumed, counts["bytes"])
+    _logger.info(
+        "repository scan completed repository_id=%s branch=%s files=%s "
+        "files_skipped_by_ignore=%s directories_skipped_by_ignore=%s",
+        repository_id,
+        branch,
+        total_files,
+        outcome.files_skipped_by_ignore,
+        outcome.directories_skipped_by_ignore,
+    )
+    return ScanPass(
+        total_files,
+        importable_count,
+        True,
+        resumed,
+        counts["bytes"],
+        outcome.files_skipped_by_ignore,
+        outcome.directories_skipped_by_ignore,
+    )
 
 
 def _branch_owns_repository_status(repo_row: Optional[Dict[str, Any]], branch: str) -> bool:
