@@ -21,29 +21,28 @@ def clear_settings_cache() -> None:
     get_settings.cache_clear()
 
 
-def test_settings_anonymous_policy_tenant_id(monkeypatch: pytest.MonkeyPatch) -> None:
-    tid = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+def test_settings_api_key_for_stdio(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("APIOME_MCP_DATABASE_URL", "postgresql://localhost/db")
     monkeypatch.setenv("APIOME_MCP_INTERNAL_SECRET", "x" * 16)
-    monkeypatch.setenv("APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID", tid)
-
-    from uuid import UUID
+    monkeypatch.setenv("APIOME_MCP_API_KEY", "mcp_live_secret_value")
 
     from apiome_mcp.settings import Settings
 
     s = Settings(_env_file=None)
-    assert s.anonymous_policy_tenant_id == UUID(tid)
+    assert s.api_key is not None
+    assert s.api_key.get_secret_value() == "mcp_live_secret_value"
+    assert "mcp_live_secret_value" not in repr(s)
 
 
-def test_settings_anonymous_policy_tenant_id_optional(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_settings_api_key_optional(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("APIOME_MCP_DATABASE_URL", "postgresql://localhost/db")
     monkeypatch.setenv("APIOME_MCP_INTERNAL_SECRET", "x" * 16)
-    monkeypatch.delenv("APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID", raising=False)
+    monkeypatch.delenv("APIOME_MCP_API_KEY", raising=False)
 
     from apiome_mcp.settings import Settings
 
     s = Settings(_env_file=None)
-    assert s.anonymous_policy_tenant_id is None
+    assert s.api_key is None
 
 
 def test_settings_database_pool_overrides(monkeypatch: pytest.MonkeyPatch) -> None:

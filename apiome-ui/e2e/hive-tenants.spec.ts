@@ -13,7 +13,7 @@ import { WCAG_TAGS } from './support/a11y';
  *
  *   • **"No horizontal document scroll at ≥1280 px"**, held across all nine themes, both
  *     densities and all six font scales — and the drawer is the hardest case on the page,
- *     because it puts a fixed tab rail beside a four-column tool grid inside an 860 px sheet.
+ *     because it puts a fixed tab rail beside a three-column tool grid inside an 860 px sheet.
  *   • **The tool row's three flag columns stay put** while the tool id, which can be long and
  *     has no break opportunity of its own, is the column that gives.
  *   • **The sticky unsaved bar is actually sticky** — visible at the bottom of a long toolset
@@ -111,7 +111,6 @@ function toolRow(id: string, inCeiling: boolean): string {
       </span>
       ${sw(inCeiling, `${id} in ceiling`)}
       ${sw(inCeiling, `${id} default enabled`)}
-      ${sw(false, `${id} anonymous enabled`)}
     </div>`;
 }
 
@@ -245,17 +244,9 @@ const DRAWER_MARKUP = `
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div class="min-w-0">
               <h3 id="tnt-mcp-heading" class="tnt-section-title">MCP settings</h3>
-              <p class="tnt-section-desc">tools/list always returns the full catalog; ceiling, defaults, and anonymous flags only gate tools/call.</p>
+              <p class="tnt-section-desc">Every MCP request needs a key. tools/list returns the full catalog; ceiling and defaults gate tools/call.</p>
             </div>
             <span class="${BADGE} bg-surface text-fg-muted">Admins can edit</span>
-          </div>
-
-          <div class="tnt-switch-row">
-            <div class="min-w-0">
-              <label class="text-sm font-medium text-fg" for="anon">Allow anonymous MCP calls</label>
-              <p class="text-xs text-fg-muted">Unauthenticated agents may call tools flagged “Anonymous” below.</p>
-            </div>
-            <button type="button" id="anon" role="switch" aria-checked="false" aria-label="Allow anonymous MCP calls" class="hive-control inline-flex h-5 w-9 shrink-0 items-center rounded-full"></button>
           </div>
 
           <div class="space-y-3" id="tnt-toolsets">
@@ -268,7 +259,7 @@ const DRAWER_MARKUP = `
                 <span class="${BADGE} bg-ok-soft text-ok-fg">All in ceiling</span>
               </div>
               <div class="tnt-toolset-tools">
-                <div class="tnt-tool-row tnt-tool-row--head" aria-hidden="true"><span>Tool</span><span>In ceiling</span><span>Default</span><span>Anonymous</span></div>
+                <div class="tnt-tool-row tnt-tool-row--head" aria-hidden="true"><span>Tool</span><span>In ceiling</span><span>Default</span></div>
                 ${toolRow('catalog.search', true)}
                 ${toolRow('catalog.get_item', true)}
                 ${toolRow('catalog.list_versions', true)}
@@ -285,7 +276,7 @@ const DRAWER_MARKUP = `
                 <span class="${BADGE} bg-warn-soft text-warn-fg">Mixed</span>
               </div>
               <div class="tnt-toolset-tools">
-                <div class="tnt-tool-row tnt-tool-row--head" aria-hidden="true"><span>Tool</span><span>In ceiling</span><span>Default</span><span>Anonymous</span></div>
+                <div class="tnt-tool-row tnt-tool-row--head" aria-hidden="true"><span>Tool</span><span>In ceiling</span><span>Default</span></div>
                 ${toolRow('lint.run', true)}
                 ${toolRow('lint.gate', true)}
                 ${toolRow(LONG_TOOL_ID, false)}
@@ -306,7 +297,7 @@ const DRAWER_MARKUP = `
           <div role="status" class="tnt-dirty-bar" id="tnt-dirty">
             <svg viewBox="0 0 24 24" aria-hidden="true" class="size-[var(--icon-dense)] shrink-0"><circle cx="12" cy="12" r="10"/></svg>
             <span class="shrink-0 font-semibold">Unsaved MCP settings changes</span>
-            <span class="tnt-dirty-bar__sub" id="tnt-dirty-sub">${LONG_TOOL_ID} removed from ceiling · anonymous calls off</span>
+            <span class="tnt-dirty-bar__sub" id="tnt-dirty-sub">${LONG_TOOL_ID} removed from ceiling</span>
             <div class="ml-auto flex shrink-0 gap-2">
               <button type="button" class="${BUTTON_SM}">Discard</button>
               <button type="button" class="${BUTTON_SM}">Save changes</button>

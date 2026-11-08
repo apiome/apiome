@@ -22,7 +22,7 @@ The **Apiome** catalog server registers **16** tools. Call them with `tools/call
 | [`spec.get_openapi`](#spec-get-openapi) | Return the generated OpenAPI 3.1 document (JSON object) for a published spec revision by id (UUID). |
 | [`spec.list`](#spec-list) | List published OpenAPI specs with cursor pagination. |
 | [`spec.list_components`](#spec-list-components) | Return OpenAPI component names for a published spec revision by id (UUID), grouped by kind: schemas, parameters, responses, securitySchemes. |
-| [`spec.list_my_specs`](#spec-list-my-specs) | List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same rules as spec.list when authenticated). |
+| [`spec.list_my_specs`](#spec-list-my-specs) | List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same rules as spec.list). |
 | [`spec.list_operations`](#spec-list-operations) | Return a compact index of HTTP operations for a published spec revision by id (UUID): each item has path, method, operation_id, summary, and tags. |
 | [`spec.list_tags`](#spec-list-tags) | Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag (via apiome.mcp_v_public_specs). |
 | [`spec.search`](#spec-search) | Search published public OpenAPI specs with Postgres full-text search (english config) over project title, revision description, version label, and tag names (maintained in apiome.versions.mcp_public_doc_tsv). |
@@ -44,7 +44,7 @@ List every registered export target for an artifact version (MFX-40.1): each tar
 
 ## `ping` {#ping}
 
-Smoke-test: service name, package version, Postgres reachability, UTC timestamp.
+Smoke-test: service name, package version, Postgres reachability, UTC timestamp. Requires an MCP API key.
 
 **Arguments:**
 
@@ -54,7 +54,7 @@ Takes no arguments.
 
 ## `project.list` {#project-list}
 
-List distinct projects (tenant + project) that have at least one published spec revision the caller can see. Anonymous: derived from the public catalog (apiome.mcp_v_public_specs). With Authorization: Bearer &lt;MCP API key&gt;, merges in-scope public rows plus in-scope private published revisions for the key's tenant (same scope rules as spec.list). Each item: tenant_id, project_id, title, updated_at (UTC Z; latest revision activity in scope). Optional filters: tenant_id, project_id (UUID strings). limit defaults to 50, capped at 100. Pass next_cursor from the previous response for the next page.
+List distinct projects (tenant + project) that have at least one published spec revision the caller can see. Requires an MCP API key: merges in-scope public rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same scope rules as spec.list). Each item: tenant_id, project_id, title, updated_at (UTC Z; latest revision activity in scope). Optional filters: tenant_id, project_id (UUID strings). limit defaults to 50, capped at 100. Pass next_cursor from the previous response for the next page.
 
 **Arguments:**
 
@@ -69,7 +69,7 @@ List distinct projects (tenant + project) that have at least one published spec 
 
 ## `spec.describe` {#spec-describe}
 
-Return metadata for a single published OpenAPI spec revision by id (UUID). Fields: id, title, version, description, owner (tenant slug), tags, updated_at (UTC Z). Anonymous callers see public revisions only (apiome.mcp_v_public_specs). With Authorization: Bearer &lt;MCP API key&gt; (or stdio meta credentials), in-scope private published revisions for the key's tenant are included (#3012). Raises not-found when the revision is missing, out of scope, or not accessible.
+Return metadata for a single published OpenAPI spec revision by id (UUID). Fields: id, title, version, description, owner (tenant slug), tags, updated_at (UTC Z). Requires an MCP API key: in-scope public revisions (apiome.mcp_v_public_specs) and in-scope private published revisions for the key's tenant (#3012). Raises not-found when the revision is missing, out of scope, or not accessible.
 
 **Arguments:**
 
@@ -109,7 +109,7 @@ Return OpenAPI fragments for one HTTP operation on a published spec revision: ``
 
 ## `spec.export_yaml` {#spec-export-yaml}
 
-Return the generated OpenAPI 3.1 document as YAML text for a published spec revision by id (UUID). Same semantics as spec.get_openapi: anonymous callers see public revisions only; with Authorization: Bearer &lt;MCP API key&gt;, in-scope private published revisions are included (#3017). Response field openapi_yaml round-trips with YAML loaders to the same structure as the JSON tool. If UTF-8 YAML exceeds APIOME_MCP_OPENAPI_MAX_JSON_BYTES (default 2 MiB), returns an error analogous to HTTP 413.
+Return the generated OpenAPI 3.1 document as YAML text for a published spec revision by id (UUID). Same semantics as spec.get_openapi: requires an MCP API key; in-scope public and private published revisions are included (#3017). Response field openapi_yaml round-trips with YAML loaders to the same structure as the JSON tool. If UTF-8 YAML exceeds APIOME_MCP_OPENAPI_MAX_JSON_BYTES (default 2 MiB), returns an error analogous to HTTP 413.
 
 **Arguments:**
 
@@ -121,7 +121,7 @@ Return the generated OpenAPI 3.1 document as YAML text for a published spec revi
 
 ## `spec.get_openapi` {#spec-get-openapi}
 
-Return the generated OpenAPI 3.1 document (JSON object) for a published spec revision by id (UUID). Matches the REST schema export shape (paths, components.schemas, servers, securitySchemes). Anonymous callers: public revisions only. With Authorization: Bearer &lt;MCP API key&gt;, in-scope private published revisions for the tenant are included (#3016). Raises not-found when inaccessible. If the serialized document exceeds the configured byte cap (APIOME_MCP_OPENAPI_MAX_JSON_BYTES), returns an error analogous to HTTP 413.
+Return the generated OpenAPI 3.1 document (JSON object) for a published spec revision by id (UUID). Matches the REST schema export shape (paths, components.schemas, servers, securitySchemes). Requires an MCP API key: in-scope public and private published revisions for the key's tenant (#3016). Raises not-found when inaccessible. If the serialized document exceeds the configured byte cap (APIOME_MCP_OPENAPI_MAX_JSON_BYTES), returns an error analogous to HTTP 413.
 
 **Arguments:**
 
@@ -133,7 +133,7 @@ Return the generated OpenAPI 3.1 document (JSON object) for a published spec rev
 
 ## `spec.list` {#spec-list}
 
-List published OpenAPI specs with cursor pagination. Anonymous callers see the public catalog (apiome.mcp_v_public_specs). With Authorization: Bearer &lt;MCP API key&gt; (or stdio meta credentials), results merge in-scope public rows plus in-scope private revisions for the key's tenant (#3011). Optional filters: tenant_id, project_id (UUID strings). limit defaults to 50, capped at 100. Pass next_cursor from the previous response for the next page.
+List published OpenAPI specs with cursor pagination. Requires an MCP API key: results merge in-scope public rows (apiome.mcp_v_public_specs) plus in-scope private revisions for the key's tenant (#3011). Optional filters: tenant_id, project_id (UUID strings). limit defaults to 50, capped at 100. Pass next_cursor from the previous response for the next page.
 
 **Arguments:**
 
@@ -160,7 +160,7 @@ Return OpenAPI component names for a published spec revision by id (UUID), group
 
 ## `spec.list_my_specs` {#spec-list-my-specs}
 
-List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same rules as spec.list when authenticated). Requires API key — anonymous calls are rejected. Response shape matches spec.list: items, has_more, next_cursor. Optional tenant_id / project_id (UUID strings). limit defaults to 50, capped at 100 (#3014).
+List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows (apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant (same rules as spec.list). Requires an MCP API key. Response shape matches spec.list: items, has_more, next_cursor. Optional tenant_id / project_id (UUID strings). limit defaults to 50, capped at 100 (#3014).
 
 **Arguments:**
 
@@ -175,7 +175,7 @@ List OpenAPI spec revisions this MCP API key can read: in-scope public catalog r
 
 ## `spec.list_operations` {#spec-list-operations}
 
-Return a compact index of HTTP operations for a published spec revision by id (UUID): each item has path, method, operation_id, summary, and tags. Sorted by path then method. Same visibility and auth rules as spec.get_openapi: anonymous callers see public revisions only; with Authorization: Bearer &lt;MCP API key&gt;, in-scope private published revisions are included (#3018). Does not return the full OpenAPI document.
+Return a compact index of HTTP operations for a published spec revision by id (UUID): each item has path, method, operation_id, summary, and tags. Sorted by path then method. Same visibility and auth rules as spec.get_openapi: requires an MCP API key; in-scope public and private published revisions are included (#3018). Does not return the full OpenAPI document.
 
 **Arguments:**
 
@@ -187,7 +187,7 @@ Return a compact index of HTTP operations for a published spec revision by id (U
 
 ## `spec.list_tags` {#spec-list-tags}
 
-Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag (via apiome.mcp_v_public_specs). Sorted by count descending, then tag name ascending. Cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page.
+Distinct version-tag names across published public OpenAPI specs with counts of specs that expose each tag (via apiome.mcp_v_public_specs). Sorted by count descending, then tag name ascending. Cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page. Requires an MCP API key.
 
 **Arguments:**
 
@@ -200,7 +200,7 @@ Distinct version-tag names across published public OpenAPI specs with counts of 
 
 ## `spec.search` {#spec-search}
 
-Search published public OpenAPI specs with Postgres full-text search (english config) over project title, revision description, version label, and tag names (maintained in apiome.versions.mcp_public_doc_tsv). Required q must be non-empty after trimming and is passed to plainto_tsquery. Results use ts_rank_cd with cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page.
+Search published public OpenAPI specs with Postgres full-text search (english config) over project title, revision description, version label, and tag names (maintained in apiome.versions.mcp_public_doc_tsv). Required q must be non-empty after trimming and is passed to plainto_tsquery. Results use ts_rank_cd with cursor pagination: limit defaults to 50, capped at 100; pass next_cursor from the previous response for the next page. Requires an MCP API key.
 
 **Arguments:**
 
@@ -214,7 +214,7 @@ Search published public OpenAPI specs with Postgres full-text search (english co
 
 ## `spec.search_semantic` {#spec-search-semantic}
 
-Semantic search over published **public** specs that have **mcp_public_embedding** populated (pgvector cosine distance vs OpenAI-compatible query embeddings). Requires APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, next_cursor). Rows without embeddings are omitted until backfilled.
+Semantic search over published **public** specs that have **mcp_public_embedding** populated (pgvector cosine distance vs OpenAI-compatible query embeddings). Requires APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, next_cursor). Rows without embeddings are omitted until backfilled. Requires an MCP API key.
 
 **Arguments:**
 

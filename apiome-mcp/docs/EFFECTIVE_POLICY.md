@@ -37,13 +37,15 @@ with `default_mode=all`; missing-policy handling remains for safety.
 
 ```mermaid
 flowchart TD
-  REQ[tools/call tool=T] --> AUTH{MCP API key?}
-  AUTH -->|no| ANON[MTG-2.3 anonymous policy]
+  REQ[tools/call tool=T] --> AUTH{Valid MCP API key?}
+  AUTH -->|no| REFUSE[Key gate refuses: JSON-RPC -32001]
   AUTH -->|yes| LOAD[Load tenant policy + key grants from DB]
   LOAD --> RES[MTG-1.4 effective resolver]
   RES -->|T enabled| RUN[Execute tool handler]
   RES -->|T disabled| DENY[MCP ToolError capability_disabled + MTG-2.4 audit]
-  LIST[tools/list] --> FULL[Return full registry — MTG-2.1]
+  LIST[tools/list] --> LAUTH{Valid MCP API key?}
+  LAUTH -->|no| REFUSE
+  LAUTH -->|yes| FULL[Return full registry — MTG-2.1]
 ```
 
 `LOAD` is **per call** (MTG-2.5): lag budget `0` — no process cache. See
@@ -51,9 +53,9 @@ flowchart TD
 
 `tools/list` stays unfiltered (MTG-2.1) — see **[LIST_ALWAYS.md](LIST_ALWAYS.md)**.
 Do not reuse AGX-3.1 list-filtering on this path — **[AGX_COORDINATION.md](AGX_COORDINATION.md)**.
-Anonymous callers use **[ANONYMOUS_CALL_POLICY.md](ANONYMOUS_CALL_POLICY.md)**
-(MTG-2.3 / #4772): optional host-tenant `allow_anonymous_mcp` + anonymous
-enable-set via `APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`.
+There are no anonymous callers: the key gate (`catalog_key_gate.py`) refuses a
+request without a valid key before this resolver runs. The MTG-2.3 anonymous
+policy is superseded — **[ANONYMOUS_CALL_POLICY.md](ANONYMOUS_CALL_POLICY.md)**.
 Authenticated denials use stable message token `capability_disabled` (tool name +
 tenant-admin guidance; no secret key material). Each authenticated denial also
 schedules an append-only row in `apiome.mcp_capability_denials` (MTG-2.4 / #4773:
@@ -64,7 +66,7 @@ key_id, tenant_id, tool_id, at, transport, DenyReason — never tool arguments).
 | Helper | Use |
 |--------|-----|
 | `is_tool_effectively_enabled` | MCP call gate (authenticated) |
-| `resolve_tool_anonymous` / `is_tool_anonymously_allowed` | MCP call gate (anonymous, MTG-2.3) |
+| `resolve_tool_anonymous` / `is_tool_anonymously_allowed` | Not used by the MCP server since the key gate (kept for REST parity) |
 | `preview_effective_tools` | REST/admin effective table |
 | `resolve_tool_effective` | Same decision + first `DenyReason` |
 | `tool_in_ceiling` / `tool_in_default_enable_set` / `tool_in_anonymous_enable_set` | Building / debugging sets |

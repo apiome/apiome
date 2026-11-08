@@ -191,7 +191,7 @@ def test_require_mcp_auth_missing_credential() -> None:
             "apiome_mcp.mcp_auth.get_http_bearer_from_context",
             new=AsyncMock(return_value=None),
         ):
-            with pytest.raises(AuthorizationError, match="MCP authentication required"):
+            with pytest.raises(AuthorizationError, match="MCP API key required"):
                 await require_mcp_auth(ctx, {})
 
     asyncio.run(run())
@@ -328,7 +328,7 @@ def test_require_mcp_auth_resolves_as_a_dependency_without_a_key() -> None:
                 await client.call_tool("probe", {})
         message = str(excinfo.value)
         assert "Failed to resolve dependency" not in message
-        assert "MCP authentication required" in message
+        assert "MCP API key required" in message
 
     asyncio.run(run())
 

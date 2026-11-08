@@ -64,7 +64,7 @@ export default function McpKeyReferenceCard({ tenantName, workspacesHref }: McpK
           </div>
           <p className="akey-ref-card__desc">
             Calls run as <strong>{tenantName}</strong> and can read its private published specs.
-            Leave the header out to read public specs only. REST keys are not accepted here.
+            Every request needs the header — the server refuses calls without a key. REST keys are not accepted here.
           </p>
         </div>
       </article>

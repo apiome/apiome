@@ -7,20 +7,23 @@ tags: [mcp]
 
 The Apiome **MCP server** exposes your **published OpenAPI specs** to MCP hosts (Claude Desktop,
 IDEs, automation). It is **read-only**: it lists, searches, and returns published documents and
-fragments. Anonymous callers see **public** specs; a valid **MCP API key** additionally unlocks
-**in-scope private** specs for its tenant.
+fragments. **Every request needs an MCP API key** — there is no anonymous access. A key reads the
+**public** specs and the **in-scope private** specs of its tenant.
 
 Full reference: the [MCP tools](./mcp/tools.md), [resources](./mcp/resources.md) and
 [prompts](./mcp/prompts.md) pages.
 
 ---
 
-## 1. Get an MCP API key (optional, for private specs)
+## 1. Get an MCP API key (required)
 
-A tenant administrator creates MCP keys under **Tenants** (`/ade/dashboard/tenants`): **click
-“Manage”** on the tenant, open **Per-key capabilities**, and **click “Create MCP key”**. Give it a
-**Label** and copy the key when it is shown — it is stored hashed and shown only once. (The **API
-keys** page creates REST keys, not MCP keys.) You can skip this if you only need public specs.
+A tenant administrator creates MCP keys on **API keys** (`/ade/dashboard/api-keys`): **click
+“Create MCP key”**, give it a **Label**, and copy the key when it is shown — it is stored hashed and
+shown only once. The same keys are also listed under **Tenants → Manage → Per-key capabilities**.
+See [API keys](../workspace/api-keys.mdx).
+
+Without a key the server answers only the connection handshake: listing tools and calling them are
+refused with *MCP API key required*.
 
 Tenant admins also govern **which tools that key may call** (ceiling, defaults, and per-key
 capabilities). Listing the catalog is never filtered by those settings — see
@@ -34,7 +37,7 @@ HTTP** is the simplest.
 ### Streamable HTTP (recommended)
 
 The server's MCP endpoint is `http://<host>:8765/mcp` (default port **8765**). Point your host at
-that URL and pass the key as a bearer token:
+that URL and send the key as a bearer token on every request:
 
 ```
 URL:     http://localhost:8765/mcp
@@ -46,7 +49,8 @@ Liveness check (no auth, no DB): `GET http://localhost:8765/health`.
 ### stdio (local / self-hosted)
 
 For hosts that launch the server as a subprocess. The server connects **directly to Postgres**, so
-it needs the database URL and an internal secret:
+it needs the database URL and an internal secret — and, because a stdio host cannot attach a key to
+each request, the MCP key in `APIOME_MCP_API_KEY`:
 
 ```jsonc
 // Claude Desktop — claude_desktop_config.json
@@ -57,15 +61,16 @@ it needs the database URL and an internal secret:
       "args": ["run", "apiome-mcp", "serve", "--transport", "stdio"],
       "env": {
         "APIOME_MCP_DATABASE_URL": "postgresql://user:pass@localhost:5432/apiome",
-        "APIOME_MCP_INTERNAL_SECRET": "<16+ character secret>"
+        "APIOME_MCP_INTERNAL_SECRET": "<16+ character secret>",
+        "APIOME_MCP_API_KEY": "<your-mcp-api-key>"
       }
     }
   }
 }
 ```
 
-With stdio, the API key (if any) is passed per call in the JSON-RPC `_meta` (e.g. `api_key`), not as
-an HTTP header.
+`APIOME_MCP_API_KEY` is read on stdio only — over HTTP every caller sends its own key. A host that
+can set per-request metadata may instead pass the key in the JSON-RPC `_meta` (e.g. `api_key`).
 
 ## 3. Run the server yourself (for HTTP transport)
 
@@ -93,8 +98,8 @@ Catalog MCP separates **discovery** from **invocation**:
 
 | Operation | Behavior |
 |---|---|
-| `tools/list` | **Always** returns the full live registry. Tenant ceiling, defaults, anonymous flags, and per-key enable-sets **never** hide tools from the list. |
-| `tools/call` | Allowed only when the tool is enabled for the caller. For an authenticated MCP key that means: tool ∈ tenant ceiling **and** (key inherits tenant defaults **or** tool ∈ the key’s explicit enable-set). |
+| `tools/list` | Needs a valid key, then **always** returns the full live registry. Tenant ceiling, defaults, and per-key enable-sets **never** hide tools from the list. |
+| `tools/call` | Needs a valid key, and is allowed only when the tool is enabled for it. That means: tool ∈ tenant ceiling **and** (key inherits tenant defaults **or** tool ∈ the key’s explicit enable-set). |
 
 Seeing a tool in the host’s tool picker does **not** mean the key can invoke it. A denied call returns a
 stable `capability_disabled` error (for example: *Tool 'spec.search' is disabled for this API key.

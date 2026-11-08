@@ -26,8 +26,8 @@ MCP hosts talk to a single async Python process. That process keeps one shared *
 ```
 
 - **Datastore:** Postgres only (Apiome migrations applied). Pool opens at startup; failed `SELECT 1` probe logs a warning but the server still runs.
-- **Public catalog:** Anonymous callers use SQL views over **published, public** revisions (e.g. `apiome.mcp_v_public_specs`).
-- **Private revisions:** Valid **MCP API keys** (hashed in `apiome.mcp_api_keys`) unlock **in-scope** private published revisions for the key’s tenant; see [Authentication](#authentication).
+- **A key on every request:** Every catalog request except the `initialize` handshake and protocol `ping` needs a valid **MCP API key** (hashed in `apiome.mcp_api_keys`) — `tools/list` and every `tools/call`, on HTTP and stdio. There is no anonymous access; see [Authentication](#authentication).
+- **What a key reads:** In-scope **public** published revisions (SQL views such as `apiome.mcp_v_public_specs`) plus in-scope **private** published revisions for the key’s tenant.
 - **Observability:** Structured JSON logs on stderr (`structlog`). HTTP exposes **`GET /health`** (liveness, no DB).
 
 Canonical planning doc: [**Planned Roadmap — MCP Server**](../docs/PLANNED_ROADMAP_MCP.md).
@@ -38,7 +38,7 @@ Canonical planning doc: [**Planned Roadmap — MCP Server**](../docs/PLANNED_ROA
 
 | Transport | Entry | Notes |
 |-----------|--------|--------|
-| **stdio** | `uv run apiome-mcp serve --transport stdio` | For local hosts (Claude Desktop, MCP Inspector). Credentials for tools can be passed via `tools/call` **`_meta`** (see [Authentication](#authentication)). |
+| **stdio** | `uv run apiome-mcp serve --transport stdio` | For local hosts (Claude Desktop, MCP Inspector). Set **`APIOME_MCP_API_KEY`** to the host's MCP key — stdio hosts cannot send one per request (see [Authentication](#authentication)). |
 | **Streamable HTTP** | `uv run apiome-mcp serve --transport http` | Catalog MCP at **`http://<host>:<port>/mcp`** and the AGX-2.1 agent runtime at **`http://<host>:<port>/agent/mcp`** (bind with **`APIOME_MCP_HTTP_HOST`** / **`APIOME_MCP_HTTP_PORT`** or **`--host`** / **`--port`**). Bearer tokens are read from **`Authorization`** per request. |
 
 Running **`uv run apiome-mcp serve`** without **`--transport`** loads settings and exits—useful to validate **`.env`**.
@@ -50,10 +50,10 @@ Running **`uv run apiome-mcp serve`** without **`--transport`** loads settings a
 | Tool | Summary |
 |------|---------|
 | **`ping`** | Service id, package version, UTC timestamp, Postgres reachability (`db_ok` / `db_error`). |
-| **`spec.list`** | Cursor-paginated list of published specs. Anonymous: public catalog only. With **`Authorization: Bearer`**, merges in-scope public rows and in-scope **private** revisions for the key’s tenant. Optional **`tenant_id`** / **`project_id`**, **`limit`** (default 50, max 100), **`cursor`** / **`next_cursor`**. |
-| **`project.list`** | Cursor-paginated distinct projects (**`tenant_id`**, **`project_id`**, **`title`**, latest **`updated_at`**) visible to the caller; anonymous uses the public catalog only; with Bearer, same merge rules as **`spec.list`**. Optional filters and pagination match **`spec.list`**. |
-| **`spec.list_my_specs`** | Same response shape as **`spec.list`**, but **requires** a valid API key; rejects anonymous callers. Optional audit logging for private reads. |
-| **`spec.describe`** | Metadata for one revision UUID (`id`, `title`, `version`, `description`, `owner`, `tags`, `updated_at`). Anonymous: public only; with Bearer, includes in-scope private revisions. |
+| **`spec.list`** | Cursor-paginated list of published specs. Merges in-scope public rows and in-scope **private** revisions for the key’s tenant. Optional **`tenant_id`** / **`project_id`**, **`limit`** (default 50, max 100), **`cursor`** / **`next_cursor`**. |
+| **`project.list`** | Cursor-paginated distinct projects (**`tenant_id`**, **`project_id`**, **`title`**, latest **`updated_at`**) visible to the key; same merge rules as **`spec.list`**. Optional filters and pagination match **`spec.list`**. |
+| **`spec.list_my_specs`** | Same response shape as **`spec.list`**. Optional audit logging for private reads. |
+| **`spec.describe`** | Metadata for one revision UUID (`id`, `title`, `version`, `description`, `owner`, `tags`, `updated_at`). Includes in-scope private revisions for the key’s tenant. |
 | **`spec.search`** | Postgres **full-text** search (`plainto_tsquery`) over **public** specs (title, description, version label, tags via `mcp_public_doc_tsv`). Requires non-empty **`q`**; ranked via `ts_rank_cd`; cursor pagination. |
 | **`spec.search_semantic`** | Cosine similarity (`pgvector`) over **public** specs with **`mcp_public_embedding`** set. Embeds **`q`** via OpenAI-compatible **`APIOME_MCP_OPENAI_API_KEY`**; same pagination shape as **`spec.search`**. Rows without embeddings are skipped until backfilled. |
 | **`spec.list_tags`** | Distinct public tag names with spec counts; sorted by count then tag; cursor pagination (**`limit`** default 50, max 100, **`next_cursor`**). |
@@ -82,10 +82,10 @@ stable code ``capability_disabled`` (tool name + tenant-admin enable guidance; n
 secrets). Every authenticated denial also appends a row to ``mcp_capability_denials``
 (MTG-2.4 / #4773; no tool arguments).
 
-**Anonymous call policy (MTG-2.3):** When ``APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`` is
-set, anonymous ``tools/call`` is gated by that host tenant's ``allow_anonymous_mcp`` +
-anonymous enable-set (defaults preserve today's public behavior). When unset, anonymous
-callers passthrough. ``tools/list`` stays full. See
+**Key required (supersedes MTG-2.3's anonymous policy):** ``McpKeyRequiredMiddleware``
+(``catalog_key_gate.py``) refuses every request but ``initialize`` / ``ping`` without a valid
+MCP API key, as JSON-RPC error ``-32001``. ``APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID`` and the
+tenant's anonymous flags are no longer read. See
 **[docs/ANONYMOUS_CALL_POLICY.md](docs/ANONYMOUS_CALL_POLICY.md)**.
 
 **Policy freshness (MTG-2.5):** Tenant policy and key grants are loaded from Postgres
@@ -151,9 +151,12 @@ Tool implementations live in `src/apiome_mcp/server.py` and sibling `*_tool.py` 
 
 ## Authentication
 
-- **HTTP:** **`Authorization: Bearer <secret>`** is parsed by ASGI middleware and attached to tool context. Missing or non-Bearer → **anonymous** for optional-auth tools.
-- **stdio:** Hosts may supply secrets via **`tools/call`** **`params._meta`** (`authorization`, `apiome_authorization`, `apiome_api_key`, or `api_key`) as documented in `mcp_auth.py`.
-- **Storage:** Keys live in **`apiome.mcp_api_keys`**; secrets are verified with **SHA-256 then bcrypt**. Scope is JSON (`tenants`, `projects` UUID lists) parsed into **`Scope`**; **`spec.list_my_specs`** uses **`Depends(require_mcp_auth)`**.
+Every request but `initialize` and protocol `ping` must carry a valid MCP API key; the rest are refused with JSON-RPC error **`-32001`** (or **`-32603`** when the key cannot be verified, e.g. Postgres is down — the gate fails closed).
+
+- **HTTP:** **`Authorization: Bearer <secret>`** on every request (parsed by ASGI middleware). A missing or non-Bearer header is refused.
+- **stdio:** Set **`APIOME_MCP_API_KEY`** in the host's server config — stdio hosts such as Claude Desktop cannot attach a key to each request. It is read on stdio only, never over HTTP.
+- **Per request (either transport):** a request's **`params._meta`** may carry the secret instead (`authorization`, `apiome_authorization`, `apiome_api_key`, or `api_key`), as documented in `mcp_auth.py`.
+- **Storage:** Keys live in **`apiome.mcp_api_keys`**; secrets are verified with **SHA-256 then bcrypt**, once per request by the gate, then reused by every tool's **`Depends(require_mcp_auth)`**. Scope is JSON (`tenants`, `projects` UUID lists) parsed into **`Scope`**.
 - **Scopes:** **`Scope.allows(tenant_id, project_id)`** combines with revision visibility (`authorize_spec` / SQL predicates). Details: [API key read scope](#api-key-read-scope) below and [**CONFIGURATION.md**](docs/CONFIGURATION.md).
 
 ---

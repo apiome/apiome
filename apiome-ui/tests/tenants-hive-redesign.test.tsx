@@ -1136,7 +1136,6 @@ describe('the docs fixtures', () => {
     writeA11yFixture('tenants-drawer-license', bodyMarkup());
 
     selectTab(drawer, /MCP settings/);
-    await within(drawer).findByLabelText('Allow anonymous MCP calls');
     await within(drawer).findByLabelText('structure toolset');
     writeA11yFixture('tenants-drawer-mcp', bodyMarkup());
 

@@ -192,7 +192,7 @@ describe('TenantMcpSettingsPanel', () => {
     ).toBeInTheDocument();
     const health = await screen.findByRole('switch', { name: /Enable health toolset/i });
     expect(health).toBeDisabled();
-    expect(screen.getByRole('switch', { name: /Allow anonymous MCP calls/i })).toBeDisabled();
+    expect(screen.queryByRole('switch', { name: /anonymous/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Per-key capabilities/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/No MCP API keys yet/i)).not.toBeInTheDocument();
 
@@ -206,7 +206,7 @@ describe('TenantMcpSettingsPanel', () => {
 
 
     expect(
-      await screen.findByText(/tools\/list always returns the full catalog/i),
+      await screen.findByText(/tools\/list returns the full catalog/i),
     ).toBeInTheDocument();
     expect(await screen.findByRole('switch', { name: /Enable health toolset/i })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: /Enable catalog toolset/i })).toBeInTheDocument();
@@ -380,8 +380,10 @@ describe('TenantMcpSettingsPanel', () => {
   it('shows dirty-state save bar and discards changes', async () => {
     render(<TenantMcpSettingsPanel isCurrentTenant isAdmin />);
 
-    const anon = await screen.findByRole('switch', { name: /Allow anonymous MCP calls/i });
-    fireEvent.click(anon);
+    fireEvent.click(await screen.findByLabelText(/Advanced: individual tools/i));
+    const pingDefault = await screen.findByRole('switch', { name: /ping default enabled/i });
+    const before = (pingDefault as HTMLInputElement).checked;
+    fireEvent.click(pingDefault);
 
     expect(await screen.findByText(/Unsaved MCP settings changes/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Discard$/i }));
@@ -389,6 +391,18 @@ describe('TenantMcpSettingsPanel', () => {
     await waitFor(() => {
       expect(screen.queryByText(/Unsaved MCP settings changes/i)).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('switch', { name: /Allow anonymous MCP calls/i })).toBeChecked();
+    expect(
+      (screen.getByRole('switch', { name: /ping default enabled/i }) as HTMLInputElement).checked,
+    ).toBe(before);
+  });
+
+  it('has no anonymous-access controls: every MCP request needs a key', async () => {
+    render(<TenantMcpSettingsPanel isCurrentTenant isAdmin />);
+
+    fireEvent.click(await screen.findByLabelText(/Advanced: individual tools/i));
+    await screen.findByRole('switch', { name: /ping in ceiling/i });
+    expect(screen.queryByText(/Allow anonymous MCP calls/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /anonymous/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/Every MCP request needs a key/i)).toBeInTheDocument();
   });
 });

@@ -1,5 +1,13 @@
 # ADR — Anonymous / unauthenticated call policy (MTG-2.3)
 
+> **Superseded (apiome-mcp 0.13.0).** The catalog server no longer accepts anonymous
+> callers. `McpKeyRequiredMiddleware` (`src/apiome_mcp/catalog_key_gate.py`) refuses every
+> request except `initialize` and protocol `ping` without a valid MCP API key — `tools/list`
+> included — with JSON-RPC error `-32001`. `APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID` is no
+> longer read, and a tenant's `allow_anonymous_mcp` / `anonymous_enabled` flags have no
+> effect on the MCP server. stdio hosts set `APIOME_MCP_API_KEY` instead. The rest of this
+> page records the earlier design.
+
 Anonymous MCP clients can still discover the full catalog via **`tools/list`**
 (MTG-2.1). Whether they may **`tools/call`** is controlled by the **host
 tenant’s** policy when the server is bound to that tenant via environment.

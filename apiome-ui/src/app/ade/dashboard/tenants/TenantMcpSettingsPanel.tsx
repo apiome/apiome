@@ -101,7 +101,7 @@ export interface TenantMcpSettingsPanelProps {
 }
 
 const LIST_VS_CALL_HELP =
-  'tools/list always returns the full catalog; ceiling, defaults, and anonymous flags only gate tools/call.';
+  'Every MCP request needs a key. tools/list returns the full catalog; ceiling and defaults gate tools/call.';
 
 const ADMIN_ONLY_COPY = 'Only tenant administrators can change MCP options.';
 
@@ -374,29 +374,6 @@ export default function TenantMcpSettingsPanel({
                 )}
               </div>
 
-              <div className="tnt-switch-row">
-                <div className="min-w-0">
-                  <Label
-                    htmlFor="mcp-allow-anonymous"
-                    className={readOnly ? undefined : 'cursor-pointer'}
-                  >
-                    Allow anonymous MCP calls
-                  </Label>
-                  <p className="text-xs text-fg-muted">
-                    Unauthenticated agents may call tools flagged “Anonymous” below.
-                  </p>
-                </div>
-                <Switch
-                  id="mcp-allow-anonymous"
-                  aria-label="Allow anonymous MCP calls"
-                  checked={form.allow_anonymous_mcp}
-                  onCheckedChange={(checked) =>
-                    setForm((prev) => (prev ? { ...prev, allow_anonymous_mcp: checked } : prev))
-                  }
-                  disabled={controlsDisabled}
-                />
-              </div>
-
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h4 className="text-sm font-semibold text-fg">Toolsets</h4>
                 <div className="flex items-center gap-2">
@@ -460,7 +437,6 @@ export default function TenantMcpSettingsPanel({
                               <span>Tool</span>
                               <span>In ceiling</span>
                               <span>Default</span>
-                              <span>Anonymous</span>
                             </div>
                             {group.tools.map((tool) => (
                               <div key={tool.tool_id} className="tnt-tool-row">
@@ -503,25 +479,6 @@ export default function TenantMcpSettingsPanel({
                                       )
                                     }
                                     disabled={controlsDisabled || !tool.in_ceiling}
-                                  />
-                                </span>
-                                <span>
-                                  <Switch
-                                    aria-label={`${tool.tool_id} anonymous enabled`}
-                                    checked={tool.anonymous_enabled}
-                                    onCheckedChange={(checked) =>
-                                      setForm((prev) =>
-                                        prev
-                                          ? patchToolFlag(
-                                              prev,
-                                              tool.tool_id,
-                                              'anonymous_enabled',
-                                              checked,
-                                            )
-                                          : prev,
-                                      )
-                                    }
-                                    disabled={controlsDisabled}
                                   />
                                 </span>
                               </div>
