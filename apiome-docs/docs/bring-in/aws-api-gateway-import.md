@@ -80,4 +80,4 @@ and listed in the ledger with where it appeared. Nothing is dropped silently.
 
 - [Supported formats](./supported-formats.md): the versions this importer reads.
 - [Import an Azure API Management API](./azure-api-management-import.md): the same idea for Azure.
-- [Connectors API](../reference/rest/connectors.md): sync every deployed stage of an AWS account automatically.
+- [Connectors](./connectors.mdx#aws-api-gateway): sync every deployed stage of an AWS account automatically.

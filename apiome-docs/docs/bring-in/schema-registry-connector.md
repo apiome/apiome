@@ -96,7 +96,7 @@ Each sync's summary carries a `crawl` block (`apiome connectors runs <id> --form
 
 ## Other registry crawls
 
-[Registry crawl](../reference/rest/connectors.md) connectors (xRegistry, A2A agent registries, FHIR
+[Registry crawl](./connectors.mdx#registry-crawl) connectors (xRegistry, A2A agent registries, FHIR
 `/metadata`) accept `requestsPerSecond`, `maxRequests`, `maxPages` and `maxBytes` too. They read
 the whole registry on each sync, without a checkpoint.
 

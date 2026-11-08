@@ -31,7 +31,6 @@ do not point any of them at `unreleased/`.
 | Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
 | SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
-| Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
 | Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
 | Dependency graph | Dependency graph (and the Dependencies tabs) | `docs/govern/dependency-graph.mdx` | `dependency-graph` |
 | Teams | Teams and ownership | `docs/workspace/teams.mdx` | `teams` |
@@ -58,9 +57,9 @@ goes back:
 | `fragments/bring-in/mcp-servers.dependencies.mdx` | `docs/bring-in/mcp-servers.mdx` — the **Dependencies** row of the endpoint tabs table | `dependency-graph` |
 | `fragments/build/projects.consumers.mdx` | `docs/build/projects.mdx` — the **Consumers** menu row and section, the **Owner** section, and the `projects-table` alt text | `consumers`, `teams` |
 | `fragments/build/versions.dependencies.mdx` | `docs/build/versions.mdx` — the **Dependencies** section, before **Conversion** | `dependency-graph` |
-| `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams`, `connectors` |
+| `fragments/bring-in/catalog.entity-kinds-and-ownership.mdx` | `docs/bring-in/catalog.mdx` — **Kinds**, the **Registry** bullet, the **Dependencies** and **Subjects** tab rows and tab ids, the **Owner** section, **Assign owner** in the bulk bar, the **Facts** subsection, and two links | `catalog-entities`, `schema-registry`, `dependency-graph`, `teams` |
 | `fragments/bring-in/import-wizard.compass-export.mdx` | `docs/bring-in/import-wizard.mdx` — the Compass source in the table and step 1, and the **Compass export** section | `catalog-entities` |
-| `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — **Recent runs**, the connector sentences, the **Backstage files** section and the `repositories` alt text | `connectors`, `dependency-graph`, `catalog-entities` |
+| `fragments/bring-in/repositories.connectors-and-backstage.mdx` | `docs/bring-in/repositories.mdx` — the **Backstage files** section | `dependency-graph`, `catalog-entities` |
 | `fragments/ship/published.owner.mdx` | `docs/ship/published.mdx` — the **Owner** column row and the owner filter sentence | `teams` |
 | `fragments/workspace/tenants.ownership.mdx` | `docs/workspace/tenants.mdx` — the manage drawer's **Ownership** section and its mentions in the drawer intro | `teams` |
 
@@ -73,7 +72,6 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
 | `sdk-settings` | `sdk-settings` |
-| `connectors` | `connectors`, `connector-add`, `connector-detail`, `connector-runs`, `gateway-config-entity`, `export-studio-gateway`, `connector-add-schema-registry`, `connector-add-mcp-registry`, `connector-add-registry` |
 | `shadow-apis` | `shadow-apis`, `shadow-apis-link` |
 | `dependency-graph` | `dependency-graph`, `dependencies-tab`, `dependencies-runtime`, `blast-radius` |
 | `teams` | `teams`, `team-detail`, `ownership-drift`, `catalog-owner-filter`, `tenant-ownership-policy` |
@@ -92,6 +90,12 @@ step too) and everything under `docs/reference/` — the REST, CLI and MCP surfa
 **MCP servers** (`mcp`, with Agent access) is restored in RC8: its two pages, the import-wizard
 fragment, its 14 screenshots and its help entries are back on the site, the route gate is gone, and
 the legacy-docs `MCP` rule points at `bring-in/mcp-servers` again.
+
+**Connectors** (`connectors`, with gateway environments) is restored in RC8 too: its page, its nine
+screenshots and its help entry are back, the route gate is gone, and the Connectors pieces of the
+Repositories and Catalog fragments are back in place. Its links into still-withdrawn pages (Shadow
+APIs, Dependency graph, Teams, Schema registry, catalog kinds) point at their REST reference. Shadow
+APIs keeps its own id and gate under `/connectors/shadow`.
 
 ## Restore a feature
 

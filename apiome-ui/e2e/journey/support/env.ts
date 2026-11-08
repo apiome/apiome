@@ -191,7 +191,7 @@ export const CATALOG_EXPORTER_PREVIEW: string = (UNRELEASED_FEATURE_IDS as reado
  * The environment the Catalog Exporter journey's server boots with (X2, #6223).
  *
  * {@link journeyServerEnv} with the preview override set to exactly {@link CATALOG_EXPORTER_PREVIEW}:
- * only the studio is opened early, and every other held-back feature (`connectors`, `sdk-settings`,
+ * only the studio is opened early, and every other held-back feature (`sdk-settings`,
  * `schema-registry`, `audit`, …) stays hidden — the journey's first step proves it.
  *
  * @returns The app-under-test environment.

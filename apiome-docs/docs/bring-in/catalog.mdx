@@ -42,7 +42,7 @@ list on [Supported formats](./supported-formats.md).
 - **Search** by name, slug, format or protocol in the search box (press <Kbd keys="/"/> to jump to
   it; it also matches the description and tags), then narrow by **Formats**, protocol
   (**REST**, **RPC**, **Event**, **Graph**, **Data Schema**, **Agent**), source (**Uploaded
-  file**, **Source URL**, **Pasted content**, **Live discovery**), grade, **domain** and
+  file**, **Source URL**, **Pasted content**, **Live discovery**, **Catalog connector**), grade, **domain** and
   **tag**. The domain and tag menus list only what your catalog uses, plus **No domain** /
   **No tags** for the items without one — see [Categorize an item](#categorize-an-item).
   Once an item declares a REST hypermedia convention, a **convention** menu joins them — see
@@ -131,6 +131,11 @@ same with placeholder cards and table rows.
 On **Provenance**, an item imported before the import recorded its fingerprint and routing reason
 shows **Fingerprint: Not recorded**, and a **Routing** sentence worked out from the item's format,
 marked *Derived from the format*.
+
+An item synced by a [connector](./connectors.mdx) shows **Synced by a connector** on the
+**Source intake** step. Below it are the **Connector** that synced it (name and kind), the
+**Remote API** it came from, and the **Remote revision** imported. Its **Routing** note says that
+connector syncs always land in the catalog, even OpenAPI; convert the item to make a Project.
 
 <Screenshot id="catalog-item-source" alt="The Source & code tab: the raw X12 source, read-only, with download and source URL buttons" />
 

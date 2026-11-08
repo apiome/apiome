@@ -1,18 +1,6 @@
-{/* Withdrawn from docs/bring-in/repositories.mdx for RC6 with Connectors (`connectors`), the dependency
-     graph (`dependency-graph`) and the catalog entity kinds (`catalog-entities`). Restore each piece to
-     where its comment says. */}
-
-{/* 1. The paragraph after the "repositories-cards" screenshot (`connectors`): */}
-
-**Recent runs**, below the list, shows the latest Git refreshes and [connector](./connectors.mdx)
-runs together, newest first. A **Git** or **Connector** badge says which each one is, and a
-connector run links to its connector.
-
-{/* 2. The Specs tab bullet ended (`connectors`): */}
-
-- **Specs** — the specs imported from this repository; **“Refresh now”** re-reads them. A
-  repository is one kind of refresh source; [connectors](./connectors.mdx) are the other, and both
-  are refreshed by the same engine on the same cadence vocabulary.
+{/* Withdrawn from docs/bring-in/repositories.mdx for RC6 with the dependency graph
+     (`dependency-graph`) and the catalog entity kinds (`catalog-entities`). The Connectors pieces
+     went back in RC8. Restore this section to where its comment says. */}
 
 {/* 3. This section, the last under "A repository's page", right before "Discovered specs" (`dependency-graph`, `catalog-entities`): */}
 
@@ -40,12 +28,3 @@ The same files also feed a migration from Backstage:
 
 Every field Apiome cannot map is listed there. See
 [Migrate from Backstage or Compass](./migrate-from-backstage-or-compass.mdx).
-
-{/* 4. The Quota paragraph ended (`connectors`): */}
-
-or **90d**. [Connectors](./connectors.mdx) share the same quota: every document a connector
-fetches counts as a poll, and connector syncs deferred by the quota count as deferrals.
-
-{/* 5. The last link of "Where next" (`connectors`): */}
-
-- [Connectors](./connectors.mdx)
