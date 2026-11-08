@@ -237,6 +237,17 @@
       ]
     },
     {
+      "id": "gateway-config-entity",
+      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
+      "waitFor": "[data-testid=\"gateway-config-detail\"]",
+      "data": "fixture:hive-a11y/gateway-config-entity.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/connectors/environments",
+        "apiome-ui/src/app/components/ade/catalogAgents/EntityOwnerSection.tsx",
+        "apiome-ui/lib/gateway-configs.ts"
+      ]
+    },
+    {
       "id": "backstage-import-report",
       "route": "/ade/dashboard/catalog/imports/11111111-1111-4111-8111-111111111111",
       "waitFor": "[data-testid=\"migration-report\"]",
@@ -245,6 +256,15 @@
         "apiome-ui/src/app/ade/dashboard/catalog/imports",
         "apiome-ui/src/app/components/ade/catalogMigrations",
         "apiome-ui/lib/catalog-migrations.ts"
+      ]
+    },
+    {
+      "id": "export-studio-gateway",
+      "route": "/ade/dashboard/connectors/environments/kong-konnect-prod",
+      "waitFor": "[data-testid=\"export-preserved-percent\"]",
+      "data": "fixture:hive-a11y/export-studio-gateway.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/export/ExportDialog.tsx"
       ]
     },
     {
@@ -299,6 +319,48 @@
       "route": "/ade/dashboard/connectors/shadow",
       "waitFor": "[data-testid=\"shadow-link-dialog\"]",
       "data": "fixture:hive-a11y/shadow-apis-link.html"
+    },
+    {
+      "id": "connectors",
+      "route": "/ade/dashboard/connectors",
+      "waitFor": "[data-testid=\"connectors-table\"]",
+      "data": "fixture:hive-a11y/connectors.html"
+    },
+    {
+      "id": "connector-add",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-dry-run-result\"]",
+      "data": "fixture:hive-a11y/connector-add.html"
+    },
+    {
+      "id": "connector-add-mcp-registry",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-step-scope\"]",
+      "data": "fixture:hive-a11y/connector-add-mcp-registry.html"
+    },
+    {
+      "id": "connector-add-registry",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-step-scope\"]",
+      "data": "fixture:hive-a11y/connector-add-registry.html"
+    },
+    {
+      "id": "connector-add-schema-registry",
+      "route": "/ade/dashboard/connectors/new",
+      "waitFor": "[data-testid=\"connector-step-credentials\"]",
+      "data": "fixture:hive-a11y/connector-add-schema-registry.html"
+    },
+    {
+      "id": "connector-detail",
+      "route": "/ade/dashboard/connectors/c1",
+      "waitFor": "[data-testid=\"connector-items\"]",
+      "data": "fixture:hive-a11y/connector-detail.html"
+    },
+    {
+      "id": "connector-runs",
+      "route": "/ade/dashboard/connectors/c1",
+      "waitFor": "[data-testid=\"refresh-runs-ledger\"]",
+      "data": "fixture:hive-a11y/connector-runs.html"
     },
     {
       "id": "project-consumers-bindings",

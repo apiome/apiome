@@ -33,7 +33,8 @@ export const UNRELEASED_FEATURE_IDS = [
   'style-guides',
   'audit',
   // RC6 scope (docs/RC6_OOE.md): Catalog Discovery Graph and contract-testing
-  // surfaces wait for the next release. Connectors is released in RC8.
+  // surfaces wait for the next release.
+  'connectors',
   'shadow-apis',
   'dependency-graph',
   'teams',

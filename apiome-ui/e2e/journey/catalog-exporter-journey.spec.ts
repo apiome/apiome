@@ -106,8 +106,8 @@ test.describe('X2 — Catalog Exporter journey', () => {
     await page.goto('/ade/dashboard/export/studio');
     await expect(page.getByTestId('export-studio-unscoped')).toBeVisible({ timeout: 60_000 });
     await expect(page.getByTestId('unreleased-feature-gate')).toBeHidden();
-    // Access audit stays held back (Connectors shipped in RC8): only released surfaces open.
-    await page.goto('/ade/dashboard/audit');
+    // Connectors stays held back: only the studio is released.
+    await page.goto('/ade/dashboard/connectors');
     await expect(page.getByTestId('unreleased-feature-gate')).toBeVisible({ timeout: 60_000 });
   });
 

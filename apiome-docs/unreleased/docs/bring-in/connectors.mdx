@@ -18,8 +18,8 @@ one quota, one audit trail. **Go to Bring in → Connectors** to see them.
 
 The list shows each connector's **kind**, **Health** (**active**, **failing** or **paused**), **Last
 run** and **Schedule**. Switch between **List** and **Grid**. **Sync now** runs one sync and reports
-what it imported. The [shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get)
-in the REST API lists what your connectors found that the catalog does not describe.
+what it imported. **Govern → [Shadow APIs](../govern/shadow-apis.mdx)** shows what your connectors
+found that the catalog does not describe.
 
 :::note
 Each kind needs a source before it can sync. The two [Kong](#kong) kinds, [AWS API Gateway](#aws-api-gateway),
@@ -38,7 +38,7 @@ deployment cannot sync yet is shown as **Not available on this deployment** when
 | `azure-apim` | Azure API Management, by resource group |
 | `apigee` | Apigee, by organization and environment |
 | `url` | A specification published at a URL, or — with no base URL — every catalog item imported from a URL. See [Specification URL](#specification-url) |
-| `schema-registry` | A Confluent, Karapace or Apicurio schema registry. Its subjects become [schema subjects](../reference/rest/schema-registry.md) with their version history |
+| `schema-registry` | A Confluent, Karapace or Apicurio schema registry. Its subjects become [schema subjects](../ship/schema-registry.mdx) with their version history |
 | `mcp-registry` | An MCP registry: the official registry, Azure API Center, a Kong registry or another Apiome workspace. Its servers become MCP servers, not catalog items |
 | `registry` | A registry of artifacts, crawled by protocol: an A2A agent registry, a CNCF xRegistry, or a FHIR server's `/metadata`. Every artifact becomes its own catalog item. See [Registry crawl](#registry-crawl) |
 
@@ -191,7 +191,7 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 | --- | --- |
 | **discovered** | Seen in the inventory, not imported yet (or, like a non-current Azure API revision, not imported by design). An MCP registry server Apiome cannot reach, or a schema registry subject Apiome cannot mirror, stays here with its `discoveredReason` |
 | **imported** | Imported; `catalogItemId` is its catalog item (`mcpEndpointId`, its MCP server, for an MCP registry) |
-| **ignored** | Never fetched. Ignored from [the shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get), with a reason |
+| **ignored** | Never fetched. Ignored from [Shadow APIs](../govern/shadow-apis.mdx), with a reason |
 | **missing** | No longer in the inventory |
 
 ## Environments (gateway configs)
@@ -200,7 +200,7 @@ attached to any service, are listed as **findings** in the run's `summary.findin
 
 Every sync turns each environment the connector reports — a Kong control plane, an AWS stage, an
 Azure APIM instance, an Apigee environment — into a **gateway config**: an entity of its own in the
-[catalog](../reference/rest/catalog-entities.md) and the [dependency graph](../reference/rest/graph.md). **Open a
+[catalog](./catalog.mdx#kinds) and the [dependency graph](../govern/dependency-graph.mdx). **Open a
 connector**, **click “Environments”** and **click an environment** to see its page.
 
 <Screenshot id="gateway-config-entity" alt="A Kong environment's page: two APIs served with Push back buttons, the auth and rate-limit posture, the declared loss notice and the owner team" />
@@ -213,11 +213,11 @@ connector**, **click “Environments”** and **click an environment** to see it
 - **Declared loss** — *Gateway configs carry no request/response schemas*: a gateway configuration
   says where a request goes, not what it carries, so its APIs are operations only. Supply schemas and
   [convert](./convert-to-openapi.md) the catalog item to promote it.
-- **Owner** — the [owner team](../reference/rest/teams.md); **choose a team** and **click “Assign owner”**.
+- **Owner** — the [owner team](../workspace/teams.mdx); **choose a team** and **click “Assign owner”**.
 - **Graph** — the APIs `deployed_on` this environment.
 
 An environment the connector no longer reports disappears on the next sync. A gateway config's
-`deployed_on` edges come from its APIs, so the [blast radius](../reference/rest/graph.md) and the
+`deployed_on` edges come from its APIs, so the [blast radius](../govern/dependency-graph.mdx) and the
 graph show where each API runs.
 
 ### Push a catalog item back to the gateway
@@ -321,7 +321,7 @@ listens inside your network, an operator has to allow its range (see
   workspace), the service's tags and **enabled** flag, and the protocols, hosts and paths its routes
   declare.
 - **Suggested owners.** A service tag of the form `owner:<team-slug>`, such as `owner:payments`,
-  makes that team a [suggested owner](../reference/rest/owners.md) of the catalog item (it is
+  makes that team a [suggested owner](../workspace/teams.mdx#ownership) of the catalog item (it is
   also kept under `deployment.suggestedOwners`). A suggestion never makes the team the owner until
   someone confirms it. A tag naming a team that does not exist is a finding, *unknown team `x` in
   tag*; a malformed owner tag is a finding too.
@@ -433,7 +433,7 @@ change the scope.
 - **Deployment details.** Each item's **`deployment`** records the region, account, API id and type
   (`rest` or `http`), stage, `deploymentId`, invoke URL and the API's tags.
 - **Suggested owners.** An API tagged `apiome:owner` with a team slug, such as `payments`, gets that
-  team as a [suggested owner](../reference/rest/owners.md) of its catalog item; a team that
+  team as a [suggested owner](../workspace/teams.mdx#ownership) of its catalog item; a team that
   does not exist is an *unknown team* finding. A suggestion never makes the team the owner until
   someone confirms it. A malformed value is a finding.
 - **Findings.** A region with no APIs is a successful run with no candidates and a `region-empty`
@@ -602,7 +602,7 @@ Apiome asks for an access token with the `https://www.googleapis.com/auth/cloud-
 
 The `schema-registry` kind crawls a registry that speaks the Confluent Schema Registry REST API:
 Confluent Platform or Confluent Cloud, Karapace, or Apicurio Registry's compatibility API. **Each
-subject becomes a [schema subject](../reference/rest/schema-registry.md)** of your workspace, with its
+subject becomes a [schema subject](../ship/schema-registry.mdx)** of your workspace, with its
 versions, schema ids and compatibility level, and every version becomes a revision of a catalog
 item. The connector only reads: nothing is ever written to the upstream registry.
 
@@ -673,7 +673,7 @@ shows why under its status:
 
 Any other schema the importer refuses fails that subject for this run. The versions mirrored before
 it stay, and the next sync carries on from there. Schema registry connectors are left out of
-[the shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get): schema subjects are not APIs a gateway serves.
+[Shadow APIs](../govern/shadow-apis.mdx): schema subjects are not APIs a gateway serves.
 
 ## Specification URL
 
@@ -804,8 +804,9 @@ status. The reason starts with a stable code:
 | `remote-unreachable` | Discovery could not connect (`connect_error`, `tls_error`, `timeout`, …). The server was added; Apiome tries again on the next sync | Check the server is up |
 
 On the **Items** tab, the column **MCP server** says **Added to the MCP servers** for every server
-the connector added (**Open the MCP server**). MCP registry
-connectors are left out of [the shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get): MCP servers are not APIs a
+the connector added (**Open the MCP server** on deployments where the MCP servers screen is turned
+on). MCP registry
+connectors are left out of [Shadow APIs](../govern/shadow-apis.mdx): MCP servers are not APIs a
 gateway serves.
 
 ## Registry crawl
@@ -934,7 +935,7 @@ The crawl reads `GET <base>/metadata` and imports the CapabilityStatement. With 
 profiles**, every `profile` and `supportedProfile` of its resources is read from the same server
 with `GET <base>/StructureDefinition?url=<canonical>`. Requests ask for `application/fhir+json`.
 
-Registry connectors are left out of [the shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get): a registry's artifacts
+Registry connectors are left out of [Shadow APIs](../govern/shadow-apis.mdx): a registry's artifacts
 are published, not found on a gateway.
 
 ## Quota and audit
@@ -960,7 +961,7 @@ repository audit export lists connector runs next to Git refreshes.
 | `GET …/connectors/{id}/runs` | The runs, newest first |
 | `GET /v1/tenants/{tenant}/refresh-runs` | Connector runs and Git refreshes together (`?connector=`, `?source=git\|connector`) |
 | `PUT …/connectors/{id}/credentials` | Store or replace the credential |
-| `POST …/connectors/{id}/items/{itemId}/link` · `ignore` · `unignore` · `import` | Act on one inventory item (see [the shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get)) |
+| `POST …/connectors/{id}/items/{itemId}/link` · `ignore` · `unignore` · `import` | Act on one inventory item (see [Shadow APIs](../govern/shadow-apis.mdx)) |
 
 See the [API reference](../reference/api-reference.md) for the request and response shapes.
 
@@ -969,4 +970,4 @@ See the [API reference](../reference/api-reference.md) for the request and respo
 - [Catalog](./catalog.mdx): where synced APIs land, and the **Provenance** tab that names their
   connector.
 - [Repositories](./repositories.mdx): the Git side of the same refresh engine.
-- [Shadow-API report](../reference/rest/connectors.md#get-shadow-report-v1-tenants-tenant-slug-shadow-report-get): what your connectors serve that the catalog does not describe.
+- [Shadow APIs](../govern/shadow-apis.mdx): what your connectors serve that the catalog does not describe.

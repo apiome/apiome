@@ -94,7 +94,7 @@ workspace's [registry endpoint](../ship/mcp-registry.mdx).
 
 <Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked" />
 
-Apiome registers an [MCP registry connector](./connectors.mdx#mcp-registry) for the registry and runs
+Apiome registers an [MCP registry connector](../reference/rest/connectors.md) for the registry and runs
 its first sync. Each server with a reachable `streamable-http` or `sse` remote is added here,
 discovered, linted and graded. The dialog then shows:
 - how many servers the registry listed;
@@ -284,7 +284,7 @@ latency. Pick the servers and **click “Compare”**.
 
 ## Servers from a registry
 
-An [MCP registry connector](./connectors.mdx#mcp-registry) keeps servers from an upstream
+An [MCP registry connector](../reference/rest/connectors.md) keeps servers from an upstream
 registry — the official registry, Azure API Center, a Kong registry or another Apiome workspace — in
 your catalog. [Import from a registry](#import-from-a-registry) creates one for you; the Connectors
 screen is not yet available, so manage it over the
