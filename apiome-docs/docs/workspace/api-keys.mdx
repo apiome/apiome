@@ -226,9 +226,9 @@ secret but keep the key, [regenerate](#regenerate-a-key) it instead.
 
 ## Agent keys
 
-**Agent keys** are a third kind, issued per toolset and limited to the tools you choose, with their
-own expiry and revocation. The Agent access screen is not yet available, so issue them over the REST
-API (below).
+**Agent keys** are a third kind, issued per toolset under **MCP servers → Agent access**, limited to
+the tools you tick, with their own expiry, revocation and usage charts — see [Agent
+access](../bring-in/agent-access.mdx).
 
 To give the agents behind those keys a name, an owner and a page — and make each a consumer of the
 APIs its keys can call — register them in the catalog: see the [catalog agents API](../reference/rest/catalog-agents.md).
@@ -245,5 +245,6 @@ them. MCP keys have REST endpoints (`GET` / `POST /v1/tenants/{tenant}/mcp-keys`
 
 - [Roles](./roles.mdx) — who may create and delete keys
 - [Tenants](./tenants.mdx) — MCP policy and per-key capabilities
+- [Agent access](../bring-in/agent-access.mdx)
 - [Connect an MCP host](../getting-started/connect-an-mcp-host.mdx)
 - [CLI quick-start](../reference/cli-quickstart.md)

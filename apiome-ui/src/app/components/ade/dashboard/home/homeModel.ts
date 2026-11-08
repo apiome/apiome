@@ -389,7 +389,6 @@ export const QUICK_ACTIONS: readonly QuickAction[] = [
     icon: Network,
     href: '/ade/dashboard/mcp',
     requiresTenant: true,
-    feature: 'mcp',
   },
 ];
 

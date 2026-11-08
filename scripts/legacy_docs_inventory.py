@@ -113,7 +113,7 @@ AREA_PAGES: tuple[tuple[str, str], ...] = (
     (r"DATABASE|SQL_EDITOR|DATA_BROWSER|UTF8|MIGRATION_2025", "admin/operating-apiome"),
     (r"DOCKER|DEPLOY|BUILD_SCRIPT|UV_SETUP|ENVIRONMENT|BACKUP", "getting-started/run-locally"),
     (r"MOCK", "reference/mock-runtime/one-mock-engine"),
-    (r"MCP", "getting-started/connect-an-mcp-host"),
+    (r"MCP", "bring-in/mcp-servers"),
     (r"REPOSITOR|GITLAB|GITHUB|WEBHOOK", "bring-in/repositories"),
     (r"PRIMITIVE|NAMESPACE|SYSTEM_TYPE", "build/edit-classes-and-properties"),
     (r"LINT|STYLE_GUIDE|SPECTRAL|RULESET|QUALITY|SCORE", "build/lint-and-quality"),

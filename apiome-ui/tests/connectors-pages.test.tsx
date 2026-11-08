@@ -497,23 +497,14 @@ describe('MCP registry connector (CDG-4.4)', () => {
       }
       return undefined;
     });
-    const preview = process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'mcp';
-    const view = render(<ConnectorDetailClient connectorId="c1" />);
+    // MCP servers is released (RC8): the entry links to its server in the default build.
+    render(<ConnectorDetailClient connectorId="c1" />);
     const link = await screen.findByTestId('connector-item-link-m1');
     expect(link).toHaveAttribute('href', '/ade/dashboard/mcp/e1');
     expect(link).toHaveTextContent('Open the MCP server');
     expect(screen.getByRole('columnheader', { name: 'MCP server' })).toBeInTheDocument();
     expect(screen.queryByTestId('connector-item-link-m2')).not.toBeInTheDocument();
     expect(screen.getByTestId('connector-item-reason-m2')).toHaveTextContent('no-remote');
-    view.unmount();
-
-    // While the MCP servers screen is unreleased, the entry names its server without a dead link.
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    render(<ConnectorDetailClient connectorId="c1" />);
-    expect(await screen.findByTestId('connector-item-mcp-m1')).toHaveTextContent('Added to the MCP servers');
-    expect(screen.queryByTestId('connector-item-link-m1')).not.toBeInTheDocument();
-    if (preview !== undefined) process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = preview;
   });
 });
 

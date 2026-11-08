@@ -38,7 +38,6 @@ import {
   scopeToValues,
   type FieldValues,
 } from '@lib/connector-kinds';
-import { isFeatureReleased } from '@lib/feature-release';
 import {
   deleteConnector,
   getConnector,
@@ -244,11 +243,6 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                             >
                               Open in the catalog
                             </Link>
-                          ) : item.mcpEndpointId && !isFeatureReleased('mcp') ? (
-                            // The MCP servers screen is not released yet: name the server, link nowhere.
-                            <span className="cnx-meta" data-testid={`connector-item-mcp-${item.id}`}>
-                              Added to the MCP servers
-                            </span>
                           ) : item.mcpEndpointId ? (
                             <Link
                               href={`/ade/dashboard/mcp/${encodeURIComponent(item.mcpEndpointId)}`}

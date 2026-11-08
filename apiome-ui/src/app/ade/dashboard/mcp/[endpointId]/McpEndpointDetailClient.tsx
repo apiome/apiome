@@ -97,6 +97,7 @@ import { McpSurfaceProvenancePanel } from '@/app/components/ade/dashboard/mcp/Mc
 import { McpTrustPosturePanel } from '@/app/components/ade/dashboard/mcp/McpTrustPosturePanel';
 import {
   MCP_ENDPOINT_DEFAULT_TAB,
+  MCP_ENDPOINT_TABS,
   McpEndpointTabList,
   McpEndpointTabPanel,
 } from '@/app/components/ade/dashboard/mcp/McpEndpointTabs';
@@ -133,6 +134,7 @@ import {
   type McpEndpointDetail,
   type McpVersionDetail,
 } from '@/app/components/ade/dashboard/mcp/mcpBrowseUi';
+import { isFeatureReleased } from '@lib/feature-release';
 import { scrollBehavior } from '@lib/motion';
 
 interface Props {
@@ -343,6 +345,15 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
   const [lintError, setLintError] = React.useState<string | null>(null);
   /** Controlled tab, so a lint finding can switch to "capabilities" and scroll to its item. */
   const [activeTab, setActiveTab] = React.useState(MCP_ENDPOINT_DEFAULT_TAB);
+  // Dependencies (CDG-3.4) waits for the dependency graph's release (lib/feature-release.ts).
+  const hasDependencies = isFeatureReleased('dependency-graph');
+  const endpointTabs = React.useMemo(
+    () =>
+      hasDependencies
+        ? MCP_ENDPOINT_TABS
+        : MCP_ENDPOINT_TABS.filter((tab) => tab.value !== 'dependencies'),
+    [hasDependencies]
+  );
   /** Anchor a pending deep-link wants to scroll to once the Capabilities tab has mounted. */
   const [pendingAnchor, setPendingAnchor] = React.useState<string | null>(null);
   /** A churn-timeline deep-link: the version whose diff the Versions tab should open. */
@@ -694,6 +705,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
             <McpEndpointTabList
               value={activeTab}
               onValueChange={setActiveTab}
+              tabs={endpointTabs}
               counts={{ capabilities: capabilityCount }}
             />
           ) : undefined
@@ -874,16 +886,18 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
               />
             </McpEndpointTabPanel>
 
-            <McpEndpointTabPanel value="dependencies" active={activeTab}>
-              <DependenciesPanel
-                kind="mcp_endpoint"
-                id={endpointId}
-                active={activeTab === 'dependencies'}
-                label={{ name: endpoint.name ?? null, slug: endpoint.slug ?? null, owner: null }}
-              />
-              {/* CDG-5.4: the server's scorecard facts, beside its edges. */}
-              <CatalogFactsPanel kind="mcp_server" id={endpointId} active={activeTab === 'dependencies'} />
-            </McpEndpointTabPanel>
+            {hasDependencies ? (
+              <McpEndpointTabPanel value="dependencies" active={activeTab}>
+                <DependenciesPanel
+                  kind="mcp_endpoint"
+                  id={endpointId}
+                  active={activeTab === 'dependencies'}
+                  label={{ name: endpoint.name ?? null, slug: endpoint.slug ?? null, owner: null }}
+                />
+                {/* CDG-5.4: the server's scorecard facts, beside its edges. */}
+                <CatalogFactsPanel kind="mcp_server" id={endpointId} active={activeTab === 'dependencies'} />
+              </McpEndpointTabPanel>
+            ) : null}
 
             <McpEndpointTabPanel value="settings" active={activeTab}>
               <McpEndpointSettings

@@ -29,7 +29,6 @@
 /** Destinations that exist in the code but are not released (rail item ids). */
 export const UNRELEASED_FEATURE_IDS = [
   'primitives',
-  'mcp',
   'sdk-settings',
   'style-guides',
   'audit',

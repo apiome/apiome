@@ -476,7 +476,6 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       'consumers',
       'data-browser',
       'dependency-graph',
-      'mcp',
       'migrations',
       'primitives',
       'schema-registry',
@@ -505,15 +504,15 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       const ids = getPlatformNavGroups({ currentTenantId: tenant })
         .flatMap((group) => group.items)
         .map((navItem) => navItem.id);
-      expect(ids).not.toContain('mcp');
+      expect(ids).not.toContain('audit');
     }
   });
 
   it('re-opens listed features, or all of them, through the preview override', () => {
-    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' mcp , audit ';
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = ' primitives , audit ';
     expect(hiddenWithTenant().sort()).toEqual(
       unreleasedDestinations()
-        .filter((id) => id !== 'mcp' && id !== 'audit')
+        .filter((id) => id !== 'primitives' && id !== 'audit')
         .sort()
     );
 
@@ -542,9 +541,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 11 released destinations in the rail (Export studio joined Ship in RC7), 20 with every feature previewed', () => {
+  it('leaves 12 released destinations in the rail (MCP servers joined Bring in in RC8), 20 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(11);
+    expect(releasedRailCount()).toBe(12);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(20);
   });

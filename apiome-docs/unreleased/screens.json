@@ -20,16 +20,6 @@
       ]
     },
     {
-      "id": "mcp-servers",
-      "route": "/ade/dashboard/mcp",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-catalog/catalog-list.html"
-    },
-    {
       "id": "primitives-namespaces",
       "route": "/ade/dashboard/primitives",
       "waitFor": "#a11y-mount > *",
@@ -70,100 +60,6 @@
       "route": "/ade/dashboard/primitives/[id]",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-primitive-detail/detail-testing.html"
-    },
-    {
-      "id": "import-wizard-mcp",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/mcp.html"
-    },
-    {
-      "id": "mcp-servers-import-registry",
-      "route": "/ade/dashboard/catalog",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-import-wizard/mcp-registry.html"
-    },
-    {
-      "id": "mcp-servers-grid",
-      "route": "/ade/dashboard/mcp",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-catalog/catalog-grid.html"
-    },
-    {
-      "id": "mcp-endpoint-versions",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/versions.html"
-    },
-    {
-      "id": "mcp-endpoint-capabilities",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/capabilities.html"
-    },
-    {
-      "id": "mcp-endpoint-lint",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/lint.html"
-    },
-    {
-      "id": "mcp-endpoint-settings",
-      "route": "/ade/dashboard/mcp/[endpointId]",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-mcp-endpoint/settings.html"
-    },
-    {
-      "id": "mcp-analytics",
-      "route": "/ade/dashboard/mcp/analytics",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/dashboard.html"
-    },
-    {
-      "id": "mcp-capabilities",
-      "route": "/ade/dashboard/mcp/capabilities",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/capabilities.html"
-    },
-    {
-      "id": "mcp-compare",
-      "route": "/ade/dashboard/mcp/compare",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-mcp-analytics/compare.html"
-    },
-    {
-      "id": "agent-access",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "[data-testid=\"page-header\"]",
-      "mask": [
-        "time"
-      ],
-      "data": "golden-path",
-      "fallback": "fixture:hive-a11y/agent-access-toolsets.html"
-    },
-    {
-      "id": "agent-access-keys",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/agent-access-keys.html"
-    },
-    {
-      "id": "agent-access-usage",
-      "route": "/ade/dashboard/mcp/agents",
-      "waitFor": "#a11y-mount > *",
-      "data": "fixture:hive-a11y/agent-access-usage.html"
     },
     {
       "id": "sdk-settings",
