@@ -1,0 +1,22 @@
+---
+slug: mcp-server-grades
+title: How MCP servers are graded
+description: "The MCP servers guide now explains scores, grade bands and re-linting a version."
+authors: [apiome]
+---
+
+The **MCP servers** guide now explains how a server gets its grade: every discovered version is
+linted and scored from 0 to 100, and the score sets an A–F grade using the same bands as API
+specifications.
+
+{/* truncate */}
+
+- **Grade bands:** **A** 90 and above, **B** 80–89, **C** 70–79, **D** 60–69, **F** below 60.
+- **A grade per version.** Each version keeps the score it was given, and the grade you see is the
+  current version's.
+- **Re-lint a version** with `POST …/versions/{version}/lint` — for example after the lint rules
+  change. `GET` on the same URL returns the stored report without changing it.
+- **Checked against a real database.** Scoring, storing, serving and evidence for a version now have
+  an end-to-end test on a freshly migrated database.
+
+See [How servers are graded](/bring-in/mcp-servers#how-servers-are-graded).

@@ -153,7 +153,35 @@ snapshots, so it shows the same changes as the newer version recorded.
 
 A discovery that fails creates no version, and the server keeps its current one.
 
+### How servers are graded
+
+Every version is linted against the [MCP surface lint rules](../govern/mcp-surface-lint-rules.md)
+when it is discovered, and given a score from 0 to 100. Each finding lowers the score, and a more
+serious finding lowers it more. The score sets the grade:
+
+| Grade | Score |
+| --- | --- |
+| **A** | 90 and above |
+| **B** | 80–89 |
+| **C** | 70–79 |
+| **D** | 60–69 |
+| **F** | Below 60 |
+
+These are the same bands Apiome uses to grade an API specification, so an **A** means the same thing
+on both. The **Lint & score** tab shows the current version's grade and its findings. The grade on
+the list and on the server's page is the current version's.
+
+The same surface always gets the same score, grade and findings, and the report carries a
+fingerprint that changes only when they do. A version's score is kept with it, so an older version
+keeps the grade it was given.
+
 <Screenshot id="mcp-endpoint-lint" alt="An MCP endpoint's Lint & score tab: the grade and must, should and advisory findings" />
+
+To score a version again — for example after the lint rules change — send
+`POST /v1/mcp/{tenant}/endpoints/{endpoint}/versions/{version}/lint`. It re-lints the stored
+version, replaces its score and returns the new report. `GET` on the same URL returns the stored
+report without changing it, and `GET …/lint/evidence` lists the lint runs recorded for the version.
+Re-linting a version whose report has not changed records no new run.
 
 <Screenshot id="mcp-endpoint-settings" alt="An MCP endpoint's Settings tab: identity and connection, transport, visibility and discovery cadence" />
 
@@ -221,7 +249,8 @@ answer is added, but its row on the connector stays **discovered** until it does
 - CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp
   list|show|discover|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
-  `GET …/endpoints/{endpoint}/versions`, `GET /v1/mcp/{tenant}/browse`,
+  `GET …/endpoints/{endpoint}/versions`, `GET` / `POST …/versions/{version}/lint`,
+  `GET …/versions/{version}/lint/evidence`, `GET /v1/mcp/{tenant}/browse`,
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API
   reference](../reference/api-reference.md).
 
