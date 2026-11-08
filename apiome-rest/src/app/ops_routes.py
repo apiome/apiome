@@ -20,6 +20,9 @@ Two planes of endpoints:
     - ``GET /v1/ops/toolchain``— bundled tool packaging/availability (MFI-5.2, #3751) plus the
       active sandbox posture every tool runs under (MFI-5.3, #3752) and, per gated tool, the
       formats it gates and whether it is a hard dependency (FMT-1.3, #5414).
+    - ``GET /v1/ops/mcp-discovery-sweep`` — MCP re-discovery sweep health (MCAT-5.4, #3676): the
+      sweep's settings, the last run and recent runs with checked / changed / failed counts
+      (aggregated from the jobs each run created) and durations.
 """
 
 from __future__ import annotations
@@ -36,6 +39,8 @@ from .config import settings
 from .database import db
 from .export_job_health import export_job_health
 from .import_export_metrics import import_export_metrics
+from .mcp_discovery_sweep import SWEEP_RUN_RETENTION_DAYS
+from .mcp_sweep_status import DEFAULT_RUN_LIMIT, MAX_RUN_LIMIT, sweep_status_payload
 from .observability import metrics
 from .permissions import enforce_platform_admin
 from .toolchain_packaging import probe_all, verify_tool
@@ -190,6 +195,31 @@ async def ops_status(auth_data: Dict[str, Any] = Depends(validate_authentication
     """Combined metrics + backup status — one call backing the dashboard. Platform-admin only."""
     enforce_platform_admin(db, auth_data)
     return JSONResponse(content={"metrics": _metrics_payload(), "backups": _backup_payload()})
+
+
+@ops_router.get("/mcp-discovery-sweep")
+async def ops_mcp_discovery_sweep(
+    limit: int = Query(
+        default=DEFAULT_RUN_LIMIT,
+        ge=1,
+        le=MAX_RUN_LIMIT,
+        description="How many recent sweep runs to return, newest first.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> JSONResponse:
+    """MCP re-discovery sweep health (MCAT-5.4, #3676). Platform-admin only.
+
+    Reports the sweep's settings (enabled, tick, cadence, concurrency cap, per-endpoint timeout),
+    the most recent run, the recent runs newest first, and their totals. Each run carries its timing
+    and tick counters (due, dispatched, coalesced, enqueue failures) and outcome counts — checked,
+    changed, unchanged, failed, in flight — aggregated from the discovery jobs that run created, so
+    they reconcile with the job log by construction. See :mod:`app.mcp_sweep_status`.
+    """
+    enforce_platform_admin(db, auth_data)
+    rows = db.list_mcp_discovery_sweep_runs(limit)
+    return JSONResponse(
+        content=sweep_status_payload(rows, settings, retention_days=SWEEP_RUN_RETENTION_DAYS)
+    )
 
 
 @ops_router.get("/toolchain")

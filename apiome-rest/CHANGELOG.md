@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.672.0] - 2026-11-08
+
+### Added
+- **MCP discovery sweep health: `GET /v1/ops/mcp-discovery-sweep` (V2-MCP-19.4 / MCAT-5.4, #3676).**
+  Platform-admin only, beside the other `/v1/ops` routes. Returns the sweep's `config` (enabled,
+  tick, default cadence, concurrency cap, per-endpoint timeout, run retention), the `last_run`, the
+  recent `runs` newest first (`?limit=`, default 20, 1–200) and their `totals`. Each run carries
+  `status` (`running` / `completed` / `halted` / `failed`), `started_at` / `finished_at` /
+  `duration_ms`, the tick counters `due` / `dispatched` / `coalesced` / `enqueue_failed`, the outcome
+  counts `checked` / `changed` / `unchanged` / `failed` / `in_flight`, and `avg_job_ms` /
+  `max_job_ms`. The outcome counts are aggregated from the jobs the run created
+  (`mcp_discovery_jobs.sweep_run_id`, V363), so they reconcile with the job log by construction.
+  The sweep records every tick — including ticks with nothing due and kill-switch halts — and a
+  tick that raises is recorded as `failed`; recording is best-effort and never stops discovery.
+  Runs are kept 30 days (pruned as new ones are recorded; their jobs are kept). Proven on a migrated
+  database by `tests/test_mcp_sweep_runs_db.py`. OpenAPI 1.533.0 → 1.534.0; apiome-rest 1.671.1 →
+  1.672.0.
+
 ## [1.671.1] - 2026-11-08
 
 ### Added

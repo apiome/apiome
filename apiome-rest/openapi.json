@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.533.0",
+    "version": "1.534.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -39803,7 +39803,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-08T06:13:18Z"
+                          "example": "2026-11-08T17:49:13Z"
                         },
                         "method": {
                           "type": "string",
@@ -110433,6 +110433,106 @@
         }
       }
     },
+    "/v1/ops/mcp-discovery-sweep": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Ops Mcp Discovery Sweep",
+        "description": "MCP re-discovery sweep health (MCAT-5.4, #3676). Platform-admin only.\n\nReports the sweep's settings (enabled, tick, cadence, concurrency cap, per-endpoint timeout),\nthe most recent run, the recent runs newest first, and their totals. Each run carries its timing\nand tick counters (due, dispatched, coalesced, enqueue failures) and outcome counts \u2014 checked,\nchanged, unchanged, failed, in flight \u2014 aggregated from the discovery jobs that run created, so\nthey reconcile with the job log by construction. See :mod:`app.mcp_sweep_status`.",
+        "operationId": "ops_mcp_discovery_sweep_v1_ops_mcp_discovery_sweep_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "How many recent sweep runs to return, newest first.",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "How many recent sweep runs to return, newest first."
+          },
+          {
+            "name": "tenant_slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Ops MCP Discovery Sweepauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Ops MCP Discovery Sweepauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Ops MCP Discovery Sweep Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Ops MCP Discovery Sweep Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for ops mcp discovery sweep.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Response payload for ops mcp discovery sweepresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for ops mcp discovery sweepresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/ops/toolchain": {
       "get": {
         "tags": [
@@ -126337,7 +126437,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "completed_at": {
             "anyOf": [
@@ -127933,7 +128033,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           }
         },
         "type": "object",
@@ -127989,7 +128089,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "workspaces": {
             "items": {
@@ -128593,7 +128693,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "comment_count": {
             "type": "integer",
@@ -128821,7 +128921,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "comment_count": {
             "type": "integer",
@@ -129588,14 +129688,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -132989,7 +133089,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "e9f2e3c0-7d8d-4d03-82ff-7da49a254c3d"
+            "example": "d2ebe79f-426d-4aeb-9c2e-73d419ee6e46"
           },
           "method": {
             "type": "string",
@@ -135552,7 +135652,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -137599,7 +137699,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "browse_url": {
             "anyOf": [
@@ -145522,7 +145622,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "reports": {
             "items": {
@@ -145822,7 +145922,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           }
         },
         "additionalProperties": false,
@@ -190495,7 +190595,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           }
         },
         "additionalProperties": false,
@@ -203506,13 +203606,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           }
         },
         "additionalProperties": false,
@@ -205016,7 +205116,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "detected_by": {
             "anyOf": [
@@ -213840,14 +213940,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T06:13:18Z"
+            "example": "2026-11-08T17:49:13Z"
           },
           "outcome": {
             "anyOf": [

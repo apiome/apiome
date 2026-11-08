@@ -129,7 +129,7 @@ async def test_sweep_enqueues_and_runs_discovery_per_due_endpoint(monkeypatch):
 
     enqueued = []
 
-    async def _fake_enqueue(tenant_id, endpoint, *, trigger="manual"):
+    async def _fake_enqueue(tenant_id, endpoint, *, trigger="manual", sweep_run_id=None):
         enqueued.append((tenant_id, endpoint["id"], trigger))
         return {"id": f"job-{endpoint['id']}"}, False
 
@@ -177,7 +177,7 @@ async def test_sweep_does_not_drive_deduplicated_runs(monkeypatch):
     # EP1 creates a fresh job; EP2 coalesces onto an already-active job.
     outcomes = {_EP1: ({"id": "job1"}, False), _EP2: ({"id": "job2"}, True)}
 
-    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual"):
+    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual", sweep_run_id=None):
         return outcomes[endpoint["id"]]
 
     runs = []
@@ -202,7 +202,7 @@ async def test_sweep_isolates_single_endpoint_enqueue_failure(monkeypatch):
 
     seen = []
 
-    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual"):
+    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual", sweep_run_id=None):
         seen.append(endpoint["id"])
         if endpoint["id"] == _EP1:
             raise RuntimeError("enqueue boom")
@@ -229,7 +229,7 @@ async def test_sweep_run_crash_does_not_abort_tick(monkeypatch):
     db = MagicMock()
     db.list_due_mcp_endpoints.return_value = [_endpoint(_EP1), _endpoint(_EP2)]
 
-    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual"):
+    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual", sweep_run_id=None):
         return {"id": f"job-{endpoint['id']}"}, False
 
     ran = []
@@ -255,7 +255,7 @@ async def test_sweep_bounds_concurrency(monkeypatch):
     ids = [f"endpoint-{i}" for i in range(6)]
     db.list_due_mcp_endpoints.return_value = [_endpoint(i) for i in ids]
 
-    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual"):
+    async def _fake_enqueue(_tenant_id, endpoint, *, trigger="manual", sweep_run_id=None):
         return {"id": f"job-{endpoint['id']}"}, False
 
     active = 0
