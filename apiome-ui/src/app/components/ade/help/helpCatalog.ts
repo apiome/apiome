@@ -928,14 +928,6 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['github', 'gitlab', 'bitbucket', 'discovered specs', 'webhook', 'quota', 'bulk import'],
   },
   {
-    id: 'connectors',
-    title: 'Connectors',
-    summary: 'Register API gateways and registries whose APIs sync into the catalog.',
-    page: 'apiome-docs/docs/bring-in/connectors.mdx',
-    section: 'reference',
-    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials', 'environment', 'gateway config', 'push back'],
-  },
-  {
     id: 'mcp-servers',
     title: 'MCP servers',
     summary: 'Catalog MCP servers, discover their tools, grade them, and compare them.',
@@ -1837,6 +1829,14 @@ export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
     page: 'apiome-docs/unreleased/docs/govern/access-audit.mdx',
     section: 'reference',
     keywords: ['ledger', 'hash chain', 'csv', 'role changes', 'permissions', 'soc 2'],
+  },
+  {
+    id: 'connectors',
+    title: 'Connectors',
+    summary: 'Register API gateways and registries whose APIs sync into the catalog.',
+    page: 'apiome-docs/unreleased/docs/bring-in/connectors.mdx',
+    section: 'reference',
+    keywords: ['kong', 'aws', 'azure', 'api management', 'sync', 'inventory', 'credentials', 'environment', 'gateway config', 'push back'],
   },
   {
     id: 'shadow-apis',

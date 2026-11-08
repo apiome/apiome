@@ -61,7 +61,7 @@ A second test in the same workflow walks the export path from import to download
 
 | Step | Screen | What must happen |
 | --- | --- | --- |
-| 1 | Export studio, Access audit | The studio opens; **Access audit** still shows **Not available yet**, so only released screens open |
+| 1 | Export studio, Connectors | The studio opens; **Connectors** still shows **Not available yet**, so only the studio is released |
 | 2 | Catalog → **Import to catalog** | Three RAML specs, titled per run, are stored in the catalog |
 | 3 | Catalog item → **Export** | Exporting to Avro and clicking **Download all files (.zip)** gives an archive with every `.avsc` file and `manifest.json` |
 | 4 | Item **⋯** → **Export to another format…** | In the Export studio, Protobuf is chosen, verified, generated, and **Download .zip** gives a `.proto` file |

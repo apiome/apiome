@@ -472,6 +472,7 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
     expect([...UNRELEASED_FEATURE_IDS].sort()).toEqual([
       'audit',
       'catalog-entities',
+      'connectors',
       'consumers',
       'data-browser',
       'dependency-graph',
@@ -489,15 +490,6 @@ describe('platform-nav model — release gate (MVP focus on Catalog and Projects
       expect(UNRELEASED_FEATURE_IDS).toContain(id);
     }
     expect(hiddenWithTenant().sort()).toEqual(unreleasedDestinations().sort());
-  });
-
-  it('shows Connectors in Bring in with no preview override (released in RC8)', () => {
-    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    const bringIn = getPlatformNavGroups({ currentTenantId: TENANT }).find((group) => group.id === 'bring-in');
-    expect(bringIn?.items.map((navItem) => navItem.id)).toEqual(['catalog', 'repositories', 'connectors', 'mcp']);
-    expect(isFeatureReleased('connectors')).toBe(true);
-    // Shadow APIs lives under /connectors/shadow but stays held back on its own id.
-    expect(isFeatureReleased('shadow-apis')).toBe(false);
   });
 
   it('keeps Catalog and Projects open', () => {
@@ -549,9 +541,9 @@ describe('platform-nav model — off-rail destinations (HIVE-12.2)', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
   });
 
-  it('leaves 13 released destinations in the rail (MCP servers and Connectors joined Bring in in RC8), 20 with every feature previewed', () => {
+  it('leaves 12 released destinations in the rail (MCP servers joined Bring in in RC8), 20 with every feature previewed', () => {
     delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
-    expect(releasedRailCount()).toBe(13);
+    expect(releasedRailCount()).toBe(12);
     process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'all';
     expect(releasedRailCount()).toBe(20);
   });

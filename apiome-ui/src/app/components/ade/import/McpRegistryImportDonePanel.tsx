@@ -6,7 +6,7 @@
  * Shows what the connector's first sync did: how many servers the registry listed, how many were
  * added and graded, and each server left "discovered" with the reason (it only ships packages, its
  * remote needs a `{variable}`, resolves to a private address, or did not answer). Links go to the MCP
- * catalog and to the connector that keeps them in sync.
+ * catalog and, when the Connectors page is released, to the connector that keeps them in sync.
  */
 
 import * as React from 'react';
@@ -15,6 +15,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
 
 import { Button } from '@/app/components/ui/Button';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { isFeatureReleased } from '@lib/feature-release';
 import {
   splitDiscoveredReason,
   type RegistryImportSummary,
@@ -62,6 +63,7 @@ export function registryImportHeadline(summary: RegistryImportSummary): { title:
 
 export function McpRegistryImportDonePanel({ connectorId, summary, onNavigate }: McpRegistryImportDonePanelProps) {
   const { title, description } = registryImportHeadline(summary);
+  const connectorsReleased = isFeatureReleased('connectors');
   return (
     <div className="flex flex-col gap-4" data-testid="mcp-registry-done">
       <EmptyState
@@ -77,12 +79,14 @@ export function McpRegistryImportDonePanel({ connectorId, summary, onNavigate }:
                 <ArrowRight className="size-[var(--icon-dense)]" aria-hidden />
               </Link>
             </Button>
-            <Button asChild variant="link" size="sm">
-              <Link href={`/ade/dashboard/connectors/${encodeURIComponent(connectorId)}`} onClick={onNavigate}>
-                Open the connector
-                <ArrowRight className="size-[var(--icon-dense)]" aria-hidden />
-              </Link>
-            </Button>
+            {connectorsReleased ? (
+              <Button asChild variant="link" size="sm">
+                <Link href={`/ade/dashboard/connectors/${encodeURIComponent(connectorId)}`} onClick={onNavigate}>
+                  Open the connector
+                  <ArrowRight className="size-[var(--icon-dense)]" aria-hidden />
+                </Link>
+              </Button>
+            ) : null}
           </div>
         }
       />

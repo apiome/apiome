@@ -493,7 +493,19 @@ describe('the refresh activity panel', () => {
 });
 
 describe('the refresh ledger (CDG-1.7)', () => {
-  it('interleaves every Git refresh and connector run behind a source badge (Connectors released in RC8)', async () => {
+  afterEach(() => {
+    delete process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES;
+  });
+
+  it('is left out, and not read, while Connectors are held back (RC6)', async () => {
+    const { fetchMock } = await renderRepositories();
+    await screen.findByText('payments-specs');
+    expect(screen.queryByTestId('refresh-run-run-git')).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/refresh-runs'))).toBe(false);
+  });
+
+  it('interleaves every Git refresh and connector run behind a source badge', async () => {
+    process.env.NEXT_PUBLIC_APIOME_PREVIEW_FEATURES = 'connectors';
     const { fetchMock } = await renderRepositories();
     const connector = await screen.findByTestId('refresh-run-run-connector');
     const git = screen.getByTestId('refresh-run-run-git');
