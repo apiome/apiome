@@ -92,6 +92,7 @@ import McpVersionHistory from './McpVersionHistory';
 import McpEndpointInsight from './McpEndpointInsight';
 import McpLintReport from './McpLintReport';
 import McpEndpointSettings from './McpEndpointSettings';
+import McpToolTestPanel from './McpToolTestPanel';
 import { McpEndpointNotesPanel } from '@/app/components/ade/dashboard/mcp/McpEndpointNotesPanel';
 import { McpSurfaceProvenancePanel } from '@/app/components/ade/dashboard/mcp/McpSurfaceProvenancePanel';
 import { McpTrustPosturePanel } from '@/app/components/ade/dashboard/mcp/McpTrustPosturePanel';
@@ -884,6 +885,10 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
                 error={lintError}
                 onNavigateToItem={navigateToItem}
               />
+            </McpEndpointTabPanel>
+
+            <McpEndpointTabPanel value="test" active={activeTab}>
+              <McpToolTestPanel endpointId={endpointId} items={version?.items ?? null} />
             </McpEndpointTabPanel>
 
             {hasDependencies ? (

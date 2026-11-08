@@ -18,7 +18,7 @@ MCP catalog endpoints and tenant governance (policy / key capabilities).
 apiome mcp [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
+Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`test`](#mcp-test), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
 
 ## apiome mcp conformance {#mcp-conformance}
 
@@ -504,6 +504,33 @@ apiome mcp source retire [OPTIONS] ENDPOINT_ID SOURCE_ID
 | Option | Type | Default | Required | Description |
 | --- | --- | --- | --- | --- |
 | `--output` | text |  |  | Output: table (default) or json. |
+
+## apiome mcp test {#mcp-test}
+
+Invoke one discovered tool against the live server (POST .../endpoints/{id}/test).
+
+Calls the tool on the endpoint's current surface with its stored credential, validates the arguments against the tool's inputSchema first, and prints the outcome, latency, isError and the tool's content. A tool flagged destructive or open-world is refused until you pass ``--confirm``. Exits non-zero when the tool reports an error or the call fails.
+
+```text
+apiome mcp test [OPTIONS] ENDPOINT_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `ENDPOINT_ID` | uuid | yes | MCP endpoint UUID. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--tool` | text |  | yes | Name of the discovered tool to invoke. |
+| `--arg` | text (repeatable) |  |  | Tool argument as key=value (repeatable). The value is parsed as JSON when it can be (5, true, {"a":1}), otherwise sent as text. |
+| `--args` | text |  |  | All tool arguments as one JSON object; --arg values override its keys. |
+| `--confirm` | flag |  |  | Acknowledge a tool flagged destructive or open-world so the call is allowed. |
+| `--call-timeout` | float |  |  | Seconds the server waits for the MCP server on each request (1-120, default 30). |
+| `--output` | text |  |  | Output format: table (default) or json. |
 
 ## apiome mcp trust-baseline-approve {#mcp-trust-baseline-approve}
 

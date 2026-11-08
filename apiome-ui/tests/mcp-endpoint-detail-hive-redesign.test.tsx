@@ -127,7 +127,15 @@ function versionPayload() {
           description: 'Find payments by customer, status, or date range.',
           uri: null,
           uri_template: null,
-          input_schema: { type: 'object' },
+          input_schema: {
+            type: 'object',
+            required: ['customer'],
+            properties: {
+              customer: { type: 'string', title: 'Customer', description: 'Customer id' },
+              status: { enum: ['succeeded', 'refunded', 'failed'], title: 'Status' },
+              limit: { type: 'integer', title: 'Limit', default: 10 },
+            },
+          },
           output_schema: null,
           annotations: { readOnlyHint: true, idempotentHint: true },
           ordinal: 0,
@@ -250,6 +258,26 @@ function notesPayload(bodies: string[] = ['Prefer the staging endpoint for QA.']
   };
 }
 
+/** A test-harness result for `payments.search` (V2-MCP-22.4). */
+function testResultPayload() {
+  return {
+    success: true,
+    endpointId: ENDPOINT_ID,
+    itemType: 'tool',
+    itemName: 'payments.search',
+    method: 'tools/call',
+    target: 'payments.search',
+    completed: true,
+    isError: false,
+    content: [{ type: 'text', text: '3 payments for cus_42: pay_1 (succeeded), pay_2 (refunded), pay_3 (succeeded)' }],
+    structuredContent: null,
+    latencyMs: 142,
+    error: null,
+    authOverrideApplied: false,
+    invocationId: 'inv-1',
+  };
+}
+
 function jsonResponse(body: unknown, ok = true, status = 200) {
   return { ok, status, statusText: ok ? 'OK' : 'Error', json: async () => body } as Response;
 }
@@ -264,6 +292,7 @@ function routeFetch(overrides: Partial<Record<string, () => Response>> = {}) {
     if (method !== 'GET') {
       writes.push({ url, method, body: init?.body ? JSON.parse(String(init.body)) : null });
       if (url.includes('/notes')) return jsonResponse({ success: true });
+      if (url.endsWith('/test')) return jsonResponse(testResultPayload());
       if (method === 'DELETE') {
         return jsonResponse({ success: true, removed_versions: 5, removed_jobs: 72, purged_credentials: true });
       }
@@ -274,6 +303,9 @@ function routeFetch(overrides: Partial<Record<string, () => Response>> = {}) {
     if (url.includes('/lint')) return (overrides.lint ?? (() => jsonResponse(lintPayload())))();
     if (/\/versions\/[^/?]+$/.test(url)) return (overrides.version ?? (() => jsonResponse(versionPayload())))();
     if (url.includes('/versions')) return (overrides.versions ?? (() => jsonResponse(versionsPayload())))();
+    if (url.endsWith('/credentials')) {
+      return jsonResponse({ success: true, credential: { auth_type: 'bearer', configured: true } });
+    }
     if (url.includes('/trust-posture')) return (overrides.posture ?? (() => jsonResponse({ success: false })))();
     if (/\/api\/mcp\/endpoints\/[^/?]+$/.test(url)) {
       return (overrides.endpoint ?? (() => jsonResponse(endpointPayload())))();
@@ -444,6 +476,7 @@ describe('the tab strip', () => {
       'Insight',
       'Versions',
       'Lint & score',
+      'Test',
       'Settings',
       'Trust posture',
     ]);
@@ -467,6 +500,7 @@ describe('the tab strip', () => {
         'Insight',
         'Versions',
         'Lint & score',
+        'Test',
         'Dependencies',
         'Settings',
         'Trust posture',
@@ -722,6 +756,42 @@ describe('the proposed Trust posture tab', () => {
 });
 
 // ---------------------------------------------------------------------------------------
+// 7b. Test — invoke a tool end to end through the screen (V2-MCP-22.4 / 24.5)
+// ---------------------------------------------------------------------------------------
+
+describe('the Test tab', () => {
+  it('runs the first tool against the harness and shows its result', async () => {
+    await renderScreen();
+    await openTab(/^Test$/);
+
+    await userEvent.type(await screen.findByTestId('mcp-test-arg-customer'), 'cus_42');
+    await userEvent.click(screen.getByTestId('mcp-test-run'));
+
+    expect(await screen.findByTestId('mcp-test-summary')).toHaveTextContent('142 ms · isError: false');
+    expect(screen.getByTestId('mcp-test-content')).toHaveTextContent('3 payments');
+    expect(writes).toEqual([
+      {
+        url: `/api/mcp/endpoints/${ENDPOINT_ID}/test`,
+        method: 'POST',
+        body: {
+          item_type: 'tool',
+          item_name: 'payments.search',
+          arguments: { customer: 'cus_42', limit: 10 },
+          confirm: false,
+        },
+      },
+    ]);
+  });
+
+  it('explains itself when the endpoint has never been discovered', async () => {
+    routeFetch({ endpoint: () => jsonResponse(endpointPayload({ current_version_id: null })) });
+    await renderScreen();
+    await openTab(/^Test$/);
+    expect(await screen.findByTestId('mcp-test-undiscovered')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------------------
 // 8. The fourth acceptance criterion: the two tab groups are independent
 // ---------------------------------------------------------------------------------------
 
@@ -866,6 +936,15 @@ describe('the browser fixtures', () => {
     await openTab(/Lint & score/);
     await screen.findByTestId('mcp-lint-findings');
     write('lint', pageColumn());
+  });
+
+  test('renders the test surface (and writes its fixture)', async () => {
+    await renderScreen();
+    await openTab(/^Test$/);
+    await userEvent.type(await screen.findByTestId('mcp-test-arg-customer'), 'cus_42');
+    await userEvent.click(screen.getByTestId('mcp-test-run'));
+    await screen.findByTestId('mcp-test-result');
+    write('test', pageColumn());
   });
 
   test('renders the settings surface (and writes its fixture)', async () => {

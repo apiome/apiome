@@ -125,6 +125,7 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 | **Insight** | How the server is used |
 | **Versions** | Every version of the server, newest first; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** — see [How versions work](#how-versions-work) |
 | **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
+| **Test** | Run one of the server's tools and see what it returns — see [Test a tool](#test-a-tool) |
 | **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
 | **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
 
@@ -184,6 +185,38 @@ report without changing it, and `GET …/lint/evidence` lists the lint runs reco
 Re-linting a version whose report has not changed records no new run.
 
 <Screenshot id="mcp-endpoint-settings" alt="An MCP endpoint's Settings tab: identity and connection, transport, visibility and discovery cadence" />
+
+### Test a tool
+
+The **Test** tab calls one of the server's tools on the live server, with the endpoint's stored
+credential, and shows what came back.
+
+1. **Open the Test tab.**
+2. **Pick a tool** under **Tool**. The form below it has one field for each of the tool's arguments,
+   taken from its input schema. Required fields are marked; an object or array argument takes JSON.
+3. **Fill in the arguments.**
+4. **Click “Run test”.**
+
+The **Result** card shows whether the tool **Succeeded**, reported a **Tool error**, or the
+**Call failed** before it answered, with the time the call took and its `isError` flag — for
+example `142 ms · isError: false`. Below that is what the tool returned. A failed call shows the
+reason instead, such as a timeout.
+
+- **Destructive and open-world tools.** A tool marked destructive or open-world can change data or
+  reach other systems. The tab shows a warning, and **“Run test”** stays off until you tick
+  **I understand this call runs against the live server and may change data.**
+- **No stored credential.** If the endpoint has no credential, the tab says so and the call runs
+  anonymously. Add one with `apiome mcp register --bearer` or `--header`, or through the
+  [API](../reference/api-reference.md), if the server needs it.
+- **Arguments are checked first.** A missing required argument is flagged in the form, and
+  arguments that do not match the tool's schema are rejected before the call leaves Apiome.
+- **Calls are recorded and limited.** Each test call is logged with secret values masked, and each
+  endpoint accepts a limited number of test calls a minute.
+
+<Screenshot id="mcp-endpoint-test" alt="An MCP endpoint's Test tab: a tool picked, its argument form, and the result with latency and isError" />
+
+From the CLI, `apiome mcp test <endpoint-id> --tool <name> --arg key=value` does the same. See
+[apiome mcp test](../reference/cli/mcp.md#mcp-test).
 
 ## Analytics
 
@@ -247,8 +280,9 @@ answer is added, but its row on the connector stays **discovered** until it does
 ## With the CLI or the API
 
 - CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp
-  list|show|discover|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
+  list|show|discover|test|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
+  `POST …/endpoints/{endpoint}/test`,
   `GET …/endpoints/{endpoint}/versions`, `GET` / `POST …/versions/{version}/lint`,
   `GET …/versions/{version}/lint/evidence`, `GET /v1/mcp/{tenant}/browse`,
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API

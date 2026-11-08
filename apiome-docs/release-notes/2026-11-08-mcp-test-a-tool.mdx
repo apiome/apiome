@@ -1,0 +1,26 @@
+---
+slug: mcp-test-a-tool
+title: Test an MCP server's tools
+description: "Run a cataloged MCP tool from its Test tab or apiome mcp test."
+authors: [apiome]
+---
+
+An MCP server's page now has a **Test** tab, and the CLI has `apiome mcp test`. Both call one of
+the server's tools on the live server, with the endpoint's stored credential, and show what came
+back.
+
+{/* truncate */}
+
+- **A form from the schema.** Pick a tool and the tab builds one field per argument from its input
+  schema. Required fields are checked before the call is sent.
+- **The result, classified.** **Succeeded**, **Tool error** or **Call failed**, with the latency and
+  `isError` — `142 ms · isError: false` — and the tool's content.
+- **Destructive tools wait for you.** A tool marked destructive or open-world runs only after you
+  tick the confirmation, or pass `--confirm` on the CLI.
+- **No credential, no surprise.** A server with no stored credential says the call runs
+  anonymously.
+- **From the CLI:** `apiome mcp test <endpoint-id> --tool get_forecast --arg city=Paris`. It exits
+  non-zero when the tool reports an error or the call fails.
+
+See [Test a tool](/bring-in/mcp-servers#test-a-tool) and
+[apiome mcp test](/reference/cli/mcp#mcp-test).
