@@ -170,6 +170,7 @@ from .slate_security_routes import router as slate_security_router
 from .snippet_routes import browse_router as snippet_browse_router
 from .snippet_routes import versions_router as snippet_versions_router
 from .source_review_routes import router as source_review_router
+from .source_provenance_routes import router as source_provenance_router
 from .spec_import_routes import router as spec_import_router
 from .spec_snapshot import build_live_spec
 from .spec_sync_routes import router as spec_sync_router
@@ -213,7 +214,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.532.0",
+    version="1.533.0",
 )
 
 
@@ -508,6 +509,7 @@ app.include_router(version_tags_router)
 app.include_router(draft_lock_router)
 app.include_router(preservation_router)
 app.include_router(source_review_router)
+app.include_router(source_provenance_router)
 app.include_router(slate_router)
 # Registered after slate_router so the existing surface's precedence stays unambiguous:
 # /environments/{id}/cache* sits alongside /environments/{id} (UXE-3.1, private-suite#2473).

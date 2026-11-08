@@ -30174,6 +30174,117 @@ class Database:
                 ),
             )
 
+    # ─── DCW-2.4 source provenance (private-suite#2365) ─────────────────────────────────────────
+
+    def record_import_snapshot(
+        self,
+        *,
+        tenant_id: str,
+        version_id: str,
+        source_file: Optional[str],
+        source_format: str,
+        source_digest: str,
+        source_text: Optional[str],
+        canonical_document: Dict[str, Any],
+        scrub_report: Dict[str, Any],
+        created_by: Optional[str],
+    ) -> None:
+        """Store what an OpenAPI import looked like, once per revision (re-imports keep the first).
+
+        Args:
+            tenant_id: The importing tenant.
+            version_id: The revision the import created.
+            source_file: The file the import named, if any.
+            source_format: ``yaml`` or ``json``.
+            source_digest: ``sha256:<hex>`` of the uploaded bytes.
+            source_text: The source scrubbed under the tenant policy, or ``None`` when withheld.
+            canonical_document: The canonical document generated right after the import committed.
+            scrub_report: The scrub report (types and lines, never values).
+            created_by: The importing user.
+        """
+        self._execute_write(
+            """
+            INSERT INTO apiome.version_import_snapshots
+              (tenant_id, version_id, source_file, source_format, source_digest, source_text,
+               canonical_document, scrub_report, created_by)
+            VALUES (%s, %s::uuid, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (version_id) DO NOTHING
+            """,
+            (
+                tenant_id,
+                version_id,
+                source_file,
+                source_format,
+                source_digest,
+                source_text,
+                Json(canonical_document),
+                Json(scrub_report),
+                created_by,
+            ),
+        )
+
+    def get_import_snapshot_lineage(
+        self, version_id: str, tenant_id: str, *, max_depth: int = 50
+    ) -> Tuple[Optional[Dict[str, Any]], List[str]]:
+        """Find the import snapshot that governs a revision, walking its ``parent_version_id`` chain.
+
+        A draft created from an imported version has no snapshot of its own; its provenance is
+        measured against its nearest ancestor's import.
+
+        Args:
+            version_id: The revision to start from.
+            tenant_id: The tenant every lookup is scoped to.
+            max_depth: The longest chain followed (guards a malformed cycle).
+
+        Returns:
+            ``(snapshot_row_or_None, chain)`` — ``chain`` is the revision ids from ``version_id`` up
+            to and including the snapshot's revision (or the whole walked chain when none was found);
+            source edits on any of them postdate the import.
+        """
+        chain: List[str] = []
+        current: Optional[str] = version_id
+        while current and current not in chain and len(chain) < max_depth:
+            chain.append(current)
+            rows = self.execute_query(
+                """
+                SELECT s.version_id, s.source_file, s.source_format, s.source_digest, s.source_text,
+                       s.canonical_document, s.created_at
+                FROM apiome.version_import_snapshots s
+                WHERE s.version_id = %s::uuid AND s.tenant_id = %s
+                """,
+                (current, tenant_id),
+            )
+            if rows:
+                return rows[0], chain
+            parent = self.execute_query(
+                "SELECT parent_version_id FROM apiome.versions WHERE id = %s::uuid AND tenant_id = %s",
+                (current, tenant_id),
+            )
+            current = str(parent[0]["parent_version_id"]) if parent and parent[0].get("parent_version_id") else None
+        return None, chain
+
+    def list_source_edits(self, version_ids: List[str], tenant_id: str) -> List[Dict[str, Any]]:
+        """List the pointers source applies changed on the given revisions, newest first.
+
+        Args:
+            version_ids: Revision ids (a lineage chain).
+            tenant_id: The tenant.
+
+        Returns:
+            Rows of ``pointer``, ``change_kind``, ``version_id`` and ``created_at``.
+        """
+        if not version_ids:
+            return []
+        return self.execute_query(
+            """
+            SELECT pointer, change_kind, version_id, created_at
+            FROM apiome.version_source_edits
+            WHERE tenant_id = %s AND version_id = ANY(%s::uuid[])
+            ORDER BY created_at DESC
+            """,
+            (tenant_id, version_ids),
+        )
+
     def apply_source_change_set(
         self,
         tenant_id: str,
@@ -30428,6 +30539,18 @@ class Database:
                     ),
                 )
                 audit_id = str(cursor.fetchone()["id"])
+                # DCW-2.4 (private-suite#2365): which pointers this apply changed, so provenance
+                # can tell a source edit from an edit in Apiome's editors. Same transaction as the
+                # apply and its audit row — all three commit or roll back together.
+                for change in change_set.changes:
+                    cursor.execute(
+                        """
+                        INSERT INTO apiome.version_source_edits
+                          (tenant_id, version_id, pointer, change_kind, audit_id, actor_id)
+                        VALUES (%s, %s::uuid, %s, %s, %s::uuid, %s)
+                        """,
+                        (tenant_id, str(vrow["id"]), change.pointer, change.kind, audit_id, actor_id),
+                    )
                 conn.commit()
                 return {
                     "applied": True,
