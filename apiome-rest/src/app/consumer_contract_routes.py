@@ -68,9 +68,10 @@ from .consumer_contract_store import (
     update_consumer,
 )
 from .consumer_surface import SpecIndex, resolve_selection
+from .consumer_usage import ConsumerUsageResponse, project_consumer_usage
 from .database import db
 from .pact_contract_import import import_pact, pact_consumer_name, parse_pact_document
-from .permissions import Action, Resource, enforce_permission
+from .permissions import Action, Resource, enforce_permission, has_permission
 
 __all__ = ["router"]
 
@@ -834,6 +835,79 @@ async def read_available_surface(
         operations=operations,
         count=len(operations),
         truncated=available.truncated,
+    )
+
+
+def _consumers_visible(auth_data: Dict[str, Any]) -> bool:
+    """Whether the caller may read consumer names — never raises.
+
+    Args:
+        auth_data: The authenticated principal.
+
+    Returns:
+        True when the caller holds ``consumer_contracts:view``.
+    """
+    try:
+        return bool(has_permission(db, auth_data, Resource.CONSUMER_CONTRACTS, Action.VIEW))
+    except Exception:  # noqa: BLE001 - an unreadable grant hides the names; it never fails a read
+        return False
+
+
+@router.get(
+    "/{tenant_slug}/projects/{project_ref}/consumer-usage",
+    response_model=ConsumerUsageResponse,
+    summary="Count the consumers using each operation, field and schema of a version",
+    description=(
+        "The registry's current contracts, projected onto one stored version's pointers: how "
+        "many consumers declared each operation and field, and how many reach each component "
+        "schema through those fields. This is what an authoring overlay draws next to the "
+        "contract (DCW-0.5).\n\n"
+        "Only contracts resolved against **this** version are projected; consumers whose "
+        "current contract names another version are counted in "
+        "`other_version_consumer_count`, and consumers with no contract yet in "
+        "`undeclared_consumer_count`.\n\n"
+        "Requires `projects:view`. Consumer names are included only for a caller holding "
+        "`consumer_contracts:view` — anyone else gets the same counts with `consumers: null` "
+        "and `consumers_visible: false`."
+    ),
+)
+async def read_consumer_usage(
+    tenant_slug: str,
+    project_ref: str,
+    version: Optional[str] = Query(
+        default=None,
+        description="Version label, revision id, or `latest`. Defaults to the latest revision.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ConsumerUsageResponse:
+    """Project consumer usage onto one stored version.
+
+    Args:
+        tenant_slug: The tenant in the URL (the authenticated tenant is what actually scopes it).
+        project_ref: Project slug or id.
+        version: Which stored revision to project onto.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The usage — counts for every reader, names only with ``consumer_contracts:view``.
+
+    Raises:
+        HTTPException: 404 for an unknown project or version, 403 without ``projects:view``.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    try:
+        project = resolve_project(tenant_id, project_ref)
+        version_row = resolve_version(tenant_id, str(project["id"]), version)
+        summaries = list_consumer_summaries(tenant_id, str(project["id"]))
+    except ConsumerValidationError as exc:
+        raise _http_error(exc) from exc
+    return project_consumer_usage(
+        summaries,
+        version_record_id=str(version_row["id"]),
+        version_label=str(version_row.get("version_id") or "") or None,
+        consumers_visible=_consumers_visible(auth_data),
     )
 
 

@@ -1,0 +1,23 @@
+---
+slug: consumer-usage-of-a-version
+title: Consumer usage of a version, for every reader
+description: "A new read counts the consumers using each operation, field and schema of a version."
+authors: [apiome]
+---
+
+A new REST read answers the question an authoring tool asks next to a contract: **how many registered
+consumers use this operation, this field, this schema?** It projects the consumer registry's current
+contracts onto one stored version, so nothing new is stored or ingested.
+
+{/* truncate */}
+
+- **Bound to one version.** Only contracts resolved against the requested version are counted on its
+  operations, fields and schemas. Consumers whose contract names another version, and consumers that
+  have not declared a contract yet, are counted separately and never projected.
+- **Counts for every reader, names for some.** Anyone who can view the project gets the counts. Consumer
+  names come back only for a caller holding `consumer_contracts:view`; everyone else sees the same
+  numbers with the names withheld — the rule the API change check suite already applies.
+- **REST API.** `GET /v1/tenants/{tenant}/projects/{project}/consumer-usage?version=` (`projects:view`).
+  The Apiome Suite Designer uses it for its consumer and verification evidence overlay.
+
+See the [consumer contracts REST reference](/reference/rest/consumer-contracts).

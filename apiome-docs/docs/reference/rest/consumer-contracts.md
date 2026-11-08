@@ -1,6 +1,6 @@
 ---
 title: "Consumer contracts"
-description: "REST endpoints tagged consumer-contracts: 16 operations."
+description: "REST endpoints tagged consumer-contracts: 17 operations."
 sidebar_position: 25
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.531.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.532.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `consumer-contracts` · 16 operations
+Tag: `consumer-contracts` · 17 operations
 
 ## `POST /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports` {#import-pact-contract-v1-tenants-tenant-slug-projects-project-ref-consumer-pact-imports-post}
 
@@ -141,6 +141,35 @@ Operation id: `read_available_surface_v1_tenants__tenant_slug__projects__project
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list the operations and fields a consumer could declare. | `application/json` [`AvailableSurfaceResponse`](#schema-availablesurfaceresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-usage` {#read-consumer-usage-v1-tenants-tenant-slug-projects-project-ref-consumer-usage-get}
+
+**Count the consumers using each operation, field and schema of a version**
+
+The registry's current contracts, projected onto one stored version's pointers: how many consumers declared each operation and field, and how many reach each component schema through those fields. This is what an authoring overlay draws next to the contract (DCW-0.5).
+
+Only contracts resolved against **this** version are projected; consumers whose current contract names another version are counted in `other_version_consumer_count`, and consumers with no contract yet in `undeclared_consumer_count`.
+
+Requires `projects:view`. Consumer names are included only for a caller holding `consumer_contracts:view` — anyone else gets the same counts with `consumers: null` and `consumers_visible: false`.
+
+Operation id: `read_consumer_usage_v1_tenants__tenant_slug__projects__project_ref__consumer_usage_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project_ref` | path | string | yes | Path parameter identifying the project ref segment. |
+| `version` | query | string or null | no | Version label, revision id, or `latest`. Defaults to the latest revision. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for count the consumers using each operation, field and schema of a version. | `application/json` [`ConsumerUsageResponse`](#schema-consumerusageresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumers` {#list-project-consumers-v1-tenants-tenant-slug-projects-project-ref-consumers-get}
@@ -737,6 +766,31 @@ Declared versus observed for one consumer.
 | `declared_and_used` | array of `RuntimeOperation` | no | Declared And Used. |
 | `declared_unused` | array of `RuntimeOperation` | no | Declared Unused. |
 | `used_undeclared` | array of `RuntimeOperation` | no | Used Undeclared. |
+
+### `ConsumerUsageResponse` {#schema-consumerusageresponse}
+
+Consumer usage of one stored version.
+
+Attributes:
+    version_record_id: The revision the usage is bound to.
+    version_label: That revision's label.
+    consumers_visible: Whether consumer names are included for this reader.
+    consumer_count: Consumers whose current contract was resolved against this revision.
+    other_version_consumer_count: Consumers whose current contract names another revision.
+    undeclared_consumer_count: Consumers registered but with no contract yet.
+    operations: Per-operation usage, ordered by pointer.
+    schemas: Per-component-schema usage, ordered by pointer.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `version_record_id` | string | yes | Revision the usage is bound to. |
+| `version_label` | string or null | no | That revision's label. |
+| `consumers_visible` | boolean | yes | Whether consumer names are included — requires `consumer_contracts:view`. |
+| `consumer_count` | integer | yes | Consumers whose current contract was resolved against this revision. |
+| `other_version_consumer_count` | integer | yes | Consumers whose current contract names another revision; not projected. |
+| `undeclared_consumer_count` | integer | yes | Registered consumers that have declared no contract yet. |
+| `operations` | array of `OperationUsage` | no | Per-operation usage. |
+| `schemas` | array of `SchemaUsage` | no | Per-schema usage. |
 
 ### `ContractResponse` {#schema-contractresponse}
 

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.668.0] - 2026-11-07
+
+### Added
+- **Consumer usage of a version (DCW-0.5, private-suite #2422).** `GET /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-usage?version=`
+  projects the consumer registry's current contracts onto one stored version: how many consumers declared each
+  operation and field, and how many reach each component schema through those fields. Only contracts resolved
+  against that version are projected; the rest are counted in `other_version_consumer_count` and
+  `undeclared_consumer_count`. Requires `projects:view`; consumer names are included only with
+  `consumer_contracts:view` (the CTG-4.5 rule) — anyone else gets the same counts with `consumers: null`.
+  - OpenAPI 1.532.0.
+
 ## [1.666.1] - 2026-11-06
 
 ### Changed
