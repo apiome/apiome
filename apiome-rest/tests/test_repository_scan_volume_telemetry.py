@@ -101,7 +101,7 @@ def _stub_provider(monkeypatch):
 def _walk(chunks: List[List[Dict[str, Any]]], *, completed: bool = True, raises: bool = False):
     """Build a stub walker that feeds ``chunks`` to the sink, then reports an outcome."""
 
-    def _fake_walk(owner, repo, branch, token, *, on_chunk, cursor, budget, chunk_size):
+    def _fake_walk(owner, repo, branch, token, *, on_chunk, cursor, budget, chunk_size, ignore=None):
         for chunk in chunks:
             on_chunk(chunk)
         if raises:

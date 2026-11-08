@@ -250,6 +250,39 @@ Any other `.json` or `.yaml` file is read by its content, so an OpenAPI document
 still found. The [import wizard](./import-wizard.mdx) explains how a GraphQL, Protocol Buffers or Avro
 file maps onto classes when it is imported into a project.
 
+### Folders a scan skips
+
+Vendored, build and cache folders are noise for spec discovery, so a scan skips them at any depth
+and never indexes their files:
+
+| Skipped by default |
+| --- |
+| `.git`, `node_modules`, `vendor`, `dist`, `build`, `coverage`, `__pycache__` |
+
+To skip more, or to keep one file a default would skip, add `.apiome/repo.yaml` at the root of the
+repository:
+
+```yaml
+# .apiome/repo.yaml
+version: 1
+
+ignore:                       # added to the defaults above
+  - "**/testdata/**"
+  - "legacy/*.yaml"
+
+specs:                        # always scanned, even inside a skipped folder
+  - path: dist/openapi.yaml
+```
+
+- **`ignore:`** — patterns added to the defaults; the defaults always apply. Patterns are paths from
+  the repository root: `*` matches within one folder, `**` across any number of folders.
+- **`specs:`** — files that are always scanned. An entry wins over every `ignore:` pattern, so
+  `dist/openapi.yaml` above is found although `dist` is skipped.
+
+The file is read at the start of every scan. If it is missing, not valid YAML or cannot be read, the
+scan uses the defaults alone — the file can never stop a scan. Each scan records how many files and
+folders it skipped (`files_skipped_by_ignore`, `directories_skipped_by_ignore`) in the scanner's log.
+
 ### References to schemas outside the repository
 
 A spec may point at a schema hosted somewhere else, such as

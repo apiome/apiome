@@ -251,6 +251,11 @@ class ScanCursor:
         tip_committed_at: Branch tip commit timestamp captured on the first pass.
         truncated_prefixes: Directories the provider itself truncated; recorded so
             an incomplete index is visible rather than silent.
+        files_skipped_by_ignore: Blobs the walk skipped on an ignore rule (REPO-2.2). In
+            ``recursive`` mode it is part of the resume offset: a resumed pass skips
+            ``emitted + files_skipped_by_ignore`` blobs.
+        directories_skipped_by_ignore: Sub-trees the ``sparse`` walk never listed because an
+            ignore rule covers everything in them (REPO-2.2).
     """
 
     __slots__ = (
@@ -261,6 +266,8 @@ class ScanCursor:
         "tip_commit_sha",
         "tip_committed_at",
         "truncated_prefixes",
+        "files_skipped_by_ignore",
+        "directories_skipped_by_ignore",
     )
 
     def __init__(
@@ -273,6 +280,8 @@ class ScanCursor:
         tip_commit_sha: Optional[str] = None,
         tip_committed_at: Optional[str] = None,
         truncated_prefixes: Optional[Sequence[str]] = None,
+        files_skipped_by_ignore: int = 0,
+        directories_skipped_by_ignore: int = 0,
     ) -> None:
         self.tree_sha = str(tree_sha)
         self.mode = mode if mode in _WALK_MODES else WALK_MODE_RECURSIVE
@@ -281,6 +290,8 @@ class ScanCursor:
         self.tip_commit_sha = tip_commit_sha
         self.tip_committed_at = tip_committed_at
         self.truncated_prefixes: List[str] = [str(p) for p in (truncated_prefixes or [])]
+        self.files_skipped_by_ignore = max(0, int(files_skipped_by_ignore))
+        self.directories_skipped_by_ignore = max(0, int(directories_skipped_by_ignore))
 
     def to_json(self) -> Dict[str, Any]:
         """Serialize to the JSONB shape stored in ``cursor_json``."""
@@ -293,6 +304,8 @@ class ScanCursor:
             "tip_commit_sha": self.tip_commit_sha,
             "tip_committed_at": self.tip_committed_at,
             "truncated_prefixes": self.truncated_prefixes,
+            "files_skipped_by_ignore": self.files_skipped_by_ignore,
+            "directories_skipped_by_ignore": self.directories_skipped_by_ignore,
         }
 
     @classmethod
@@ -342,6 +355,8 @@ class ScanCursor:
             tip_commit_sha=payload.get("tip_commit_sha") or None,
             tip_committed_at=payload.get("tip_committed_at") or None,
             truncated_prefixes=truncated,
+            files_skipped_by_ignore=int(payload.get("files_skipped_by_ignore") or 0),
+            directories_skipped_by_ignore=int(payload.get("directories_skipped_by_ignore") or 0),
         )
 
 
