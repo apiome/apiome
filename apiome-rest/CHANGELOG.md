@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.672.1] - 2026-11-08
+
+### Added
+- **MCP linting, grading and scoring are proven end to end on a migrated database (V2-MCP-EPIC-21,
+  #3644).** `tests/test_mcp_lint_pipeline_db.py` (`requires_db`) drives the real lint routes over HTTP
+  against a database migrated from empty by apiome-db, on snapshots persisted by
+  `record_mcp_discovery_version`: before a re-lint `GET …/lint` computes the report live and writes
+  nothing; `POST …/lint` upserts the score row and `GET` then serves it from storage with the same
+  score, grade and fingerprint; the re-lint is mirrored into the `apiome.mcp-lint` evidence log once
+  per distinct report and `GET …/lint/evidence` lists it; re-linting twice keeps one score row with a
+  stable fingerprint; an empty snapshot still scores; a poorly described tool scores below a well
+  described one; another tenant gets 404 and writes nothing; an unknown or mis-addressed version is
+  404. No runtime change. apiome-rest 1.672.0 → 1.672.1.
+
 ## [1.672.0] - 2026-11-08
 
 ### Added
