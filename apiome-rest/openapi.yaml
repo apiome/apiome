@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.531.1
+  version: 1.532.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -25512,6 +25512,98 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for listtheoperationsandfieldsaconsumercouldresponse422.
+  /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-usage:
+    get:
+      tags:
+      - consumer-contracts
+      summary: Count the consumers using each operation, field and schema of a version
+      description: 'The registry''s current contracts, projected onto one stored version''s
+        pointers: how many consumers declared each operation and field, and how many
+        reach each component schema through those fields. This is what an authoring
+        overlay draws next to the contract (DCW-0.5).
+
+
+        Only contracts resolved against **this** version are projected; consumers
+        whose current contract names another version are counted in `other_version_consumer_count`,
+        and consumers with no contract yet in `undeclared_consumer_count`.
+
+
+        Requires `projects:view`. Consumer names are included only for a caller holding
+        `consumer_contracts:view` — anyone else gets the same counts with `consumers:
+        null` and `consumers_visible: false`.'
+      operationId: read_consumer_usage_v1_tenants__tenant_slug__projects__project_ref__consumer_usage_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Ref
+          description: Project Ref schema.
+        description: Path parameter identifying the project ref segment.
+      - name: version
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Counttheconsumersusingeachoperationfieldversion schema.
+          - type: 'null'
+            description: Counttheconsumersusingeachoperationfieldversion schema.
+          description: Version label, revision id, or `latest`. Defaults to the latest
+            revision.
+          title: Version
+        description: Version label, revision id, or `latest`. Defaults to the latest
+          revision.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Counttheconsumersusingeachoperationfieldauthorization schema.
+          - type: 'null'
+            description: Counttheconsumersusingeachoperationfieldauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Counttheconsumersusingeachoperationfield Xapikey schema.
+          - type: 'null'
+            description: Counttheconsumersusingeachoperationfield Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for count the consumers using each operation,
+            field and schema of a version.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerUsageResponse'
+                description: Response payload for counttheconsumersusingeachoperationfieldresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for counttheconsumersusingeachoperationfieldresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_ref}/consumer-pact-imports:
     post:
       tags:
@@ -29190,7 +29282,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-08T02:47:25Z'
+                        example: '2026-11-08T05:23:26Z'
                       method:
                         type: string
                         example: GET
@@ -93161,7 +93253,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         completed_at:
           anyOf:
           - type: string
@@ -94379,7 +94471,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
       type: object
       required:
       - api_key
@@ -94422,7 +94514,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -94883,7 +94975,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -95056,7 +95148,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -95661,13 +95753,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -97885,6 +97977,33 @@ components:
         \ it was registered.\n    updated_at: When it was last changed.\n    deleted_at:\
         \ Retirement stamp, when retired.\n    runtime_last_seen_at: When usage traffic\
         \ last attributed to it through a binding (RDG-1.8)."
+    ConsumerRef:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Consumer id.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        slug:
+          type: string
+          title: Slug
+          description: Consumer handle.
+          example: pet-store
+        name:
+          type: string
+          title: Name
+          description: Consumer display name.
+          example: Pet
+      additionalProperties: false
+      type: object
+      required:
+      - id
+      - slug
+      - name
+      title: ConsumerRef
+      description: "A consumer named in the projection — present only for a reader\
+        \ allowed to see names.\n\nAttributes:\n    id: The consumer's row id.\n \
+        \   slug: Its stable handle.\n    name: Its display name."
     ConsumerRuntime:
       properties:
         consumer_id:
@@ -98022,6 +98141,75 @@ components:
         \nAttributes:\n    warn_above_affected: Warn when more than this many consumers\
         \ are touched at all.\n    fail_above_breaking: Fail when more than this many\
         \ consumers are broken."
+    ConsumerUsageResponse:
+      properties:
+        version_record_id:
+          type: string
+          title: Version Record Id
+          description: Revision the usage is bound to.
+          example: version_01h2xcejqtf3fz5y5j0v8k9m2p
+        version_label:
+          anyOf:
+          - type: string
+            description: Response payload for consumer usage.
+          - type: 'null'
+            description: Response payload for consumer usage.
+          title: Version Label
+          description: That revision's label.
+        consumers_visible:
+          type: boolean
+          title: Consumers Visible
+          description: Whether consumer names are included — requires `consumer_contracts:view`.
+          example: false
+        consumer_count:
+          type: integer
+          title: Consumer Count
+          description: Consumers whose current contract was resolved against this
+            revision.
+          example: 1
+        other_version_consumer_count:
+          type: integer
+          title: Other Version Consumer Count
+          description: Consumers whose current contract names another revision; not
+            projected.
+          example: 1
+        undeclared_consumer_count:
+          type: integer
+          title: Undeclared Consumer Count
+          description: Registered consumers that have declared no contract yet.
+          example: 1
+        operations:
+          items:
+            $ref: '#/components/schemas/OperationUsage'
+          type: array
+          title: Operations
+          description: Per-operation usage.
+          maxItems: 1000
+        schemas:
+          items:
+            $ref: '#/components/schemas/SchemaUsage'
+          type: array
+          title: Schemas
+          description: Per-schema usage.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - version_record_id
+      - consumers_visible
+      - consumer_count
+      - other_version_consumer_count
+      - undeclared_consumer_count
+      title: ConsumerUsageResponse
+      description: "Consumer usage of one stored version.\n\nAttributes:\n    version_record_id:\
+        \ The revision the usage is bound to.\n    version_label: That revision's\
+        \ label.\n    consumers_visible: Whether consumer names are included for this\
+        \ reader.\n    consumer_count: Consumers whose current contract was resolved\
+        \ against this revision.\n    other_version_consumer_count: Consumers whose\
+        \ current contract names another revision.\n    undeclared_consumer_count:\
+        \ Consumers registered but with no contract yet.\n    operations: Per-operation\
+        \ usage, ordered by pointer.\n    schemas: Per-component-schema usage, ordered\
+        \ by pointer."
     ConsumerVerdict:
       properties:
         consumerId:
@@ -98186,7 +98374,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: 8ca57ecd-5218-41d0-9b23-1b28e5302fea
+          example: fa9d544f-3393-4691-aa3a-e7e3f58f2eeb
         method:
           type: string
           title: Method
@@ -100357,7 +100545,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         envelope:
           additionalProperties: true
           type: object
@@ -101941,7 +102129,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         browse_url:
           anyOf:
           - type: string
@@ -108106,7 +108294,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         reports:
           items:
             $ref: '#/components/schemas/ExportRunTargetReport'
@@ -108314,7 +108502,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
       additionalProperties: false
       type: object
       required:
@@ -109648,6 +109836,52 @@ components:
       title: FidelityMeasurement
       description: The empirical loss list and its corroboration of the predicted
         report (MFX-2.6).
+    FieldUsage:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: Operation-anchored JSON Pointer to the field.
+          example: example
+        schema_pointer:
+          type: string
+          title: Schema Pointer
+          description: Where the node lives (a $ref target, or the same pointer).
+          example: example
+        location:
+          type: string
+          title: Location
+          description: response | request | parameter.
+          example: example
+        consumer_count:
+          type: integer
+          title: Consumer Count
+          description: Consumers that declared this field.
+          example: 1
+        consumers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConsumerRef'
+            type: array
+            description: Field Usage schema.
+          - type: 'null'
+            description: Field Usage schema.
+          title: Consumers
+          description: The consumers; null when the reader may not see names.
+      additionalProperties: false
+      type: object
+      required:
+      - pointer
+      - schema_pointer
+      - location
+      - consumer_count
+      title: FieldUsage
+      description: "How many consumers use one field of an operation.\n\nAttributes:\n\
+        \    pointer: Operation-anchored JSON Pointer to the field.\n    schema_pointer:\
+        \ Where the node lives (a ``$ref`` target, or the same pointer).\n    location:\
+        \ ``response``, ``request`` or ``parameter``.\n    consumer_count: Consumers\
+        \ that declared this field.\n    consumers: Those consumers, or ``None`` when\
+        \ the reader may not see names."
     FirstTenantProvisionRequest:
       properties:
         name:
@@ -130551,6 +130785,68 @@ components:
       type: object
       title: OperationUpdateRequest
       description: Partial update payload for an operation.
+    OperationUsage:
+      properties:
+        pointer:
+          type: string
+          title: Pointer
+          description: /paths/<escaped path>/<method>.
+          example: example
+        method:
+          type: string
+          title: Method
+          description: Lowercase HTTP method.
+          example: example
+        path:
+          type: string
+          title: Path
+          description: Specification path template.
+          example: /resources/{id}
+        operation_id:
+          anyOf:
+          - type: string
+            description: Operation Usage schema.
+          - type: 'null'
+            description: Operation Usage schema.
+          title: Operation Id
+          description: Declared operationId.
+        consumer_count:
+          type: integer
+          title: Consumer Count
+          description: Consumers that declared this operation.
+          example: 1
+        consumers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConsumerRef'
+            type: array
+            description: Operation Usage schema.
+          - type: 'null'
+            description: Operation Usage schema.
+          title: Consumers
+          description: The consumers; null when the reader may not see names.
+        fields:
+          items:
+            $ref: '#/components/schemas/FieldUsage'
+          type: array
+          title: Fields
+          description: Per-field usage.
+          maxItems: 1000
+      additionalProperties: false
+      type: object
+      required:
+      - pointer
+      - method
+      - path
+      - consumer_count
+      title: OperationUsage
+      description: "How many consumers call one operation, and which of its fields\
+        \ they use.\n\nAttributes:\n    pointer: ``/paths/<escaped path>/<method>``.\n\
+        \    method: Lowercase HTTP method.\n    path: The specification's path template.\n\
+        \    operation_id: Declared ``operationId``, when there is one.\n    consumer_count:\
+        \ Consumers that declared this operation.\n    consumers: Those consumers,\
+        \ or ``None`` when the reader may not see names.\n    fields: Per-field usage,\
+        \ ordered by pointer."
     OverlayLintFindingOut:
       properties:
         rule:
@@ -142765,7 +143061,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
       additionalProperties: false
       type: object
       required:
@@ -144561,6 +144857,39 @@ components:
       title: SchemaTestSuiteUpdateRequest
       description: 'A metadata patch: rename and/or re-describe. Payload edits use
         the payloads route.'
+    SchemaUsage:
+      properties:
+        schema_pointer:
+          type: string
+          title: Schema Pointer
+          description: /components/schemas/<Name>.
+          example: example
+        consumer_count:
+          type: integer
+          title: Consumer Count
+          description: Consumers using a field inside this schema.
+          example: 1
+        consumers:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConsumerRef'
+            type: array
+            description: Schema Usage schema.
+          - type: 'null'
+            description: Schema Usage schema.
+          title: Consumers
+          description: The consumers; null when the reader may not see names.
+      additionalProperties: false
+      type: object
+      required:
+      - schema_pointer
+      - consumer_count
+      title: SchemaUsage
+      description: "How many consumers reach one component schema through the fields\
+        \ they use.\n\nAttributes:\n    schema_pointer: The ``/components/schemas/<Name>``\
+        \ pointer.\n    consumer_count: Consumers with at least one declared field\
+        \ inside that schema.\n    consumers: Those consumers, or ``None`` when the\
+        \ reader may not see names."
     SchemasChangeSection:
       properties:
         added:
@@ -152684,12 +153013,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
       additionalProperties: false
       type: object
       required:
@@ -153818,7 +154147,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         detected_by:
           anyOf:
           - type: string
@@ -160546,13 +160875,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-08T02:47:25Z'
+          example: '2026-11-08T05:23:26Z'
         outcome:
           anyOf:
           - type: string
