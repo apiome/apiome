@@ -123,7 +123,7 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 | --- | --- |
 | **Capabilities** | Every tool, resource and prompt, with its schema and annotations |
 | **Insight** | How the server is used |
-| **Versions** | Each discovery; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** |
+| **Versions** | Every version of the server, newest first; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** — see [How versions work](#how-versions-work) |
 | **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
 | **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
 | **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
@@ -131,6 +131,27 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 <Screenshot id="mcp-endpoint-capabilities" alt="An MCP endpoint's Capabilities tab: grade, current version, server and its tools" />
 
 <Screenshot id="mcp-endpoint-versions" alt="An MCP endpoint's Versions tab: the version timeline and a diff between two discoveries" />
+
+### How versions work
+
+A version is a snapshot of everything the server declares: its tools, resources, prompts and server
+details. Apiome creates one only when that changes.
+
+- **The first discovery** creates **v1**. Every capability it finds is listed as **Added**.
+- **A discovery that finds the same surface** creates no version. The server's last-discovered time
+  moves on, and it stays on its current version.
+- **A discovery that finds a change** creates the next version, **v2**, **v3** and so on, and the
+  server moves to it. The version records each capability that was **Added**, **Removed** or
+  **Modified**, and any change to the server's own details, such as its version number.
+
+Each version is also tagged with the date and time of the discovery that produced it, in UTC to the
+minute — `2026-11-08T14:03Z`. Two versions discovered in the same minute get `…Z` and `…Z-2`. The
+timeline shows each version's tag and its **+** / **−** / **~** counts.
+
+Comparing any two versions on the **Versions** tab recomputes the difference from the two
+snapshots, so it shows the same changes as the newer version recorded.
+
+A discovery that fails creates no version, and the server keeps its current one.
 
 <Screenshot id="mcp-endpoint-lint" alt="An MCP endpoint's Lint & score tab: the grade and must, should and advisory findings" />
 

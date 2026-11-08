@@ -144,6 +144,14 @@ def catalog() -> Iterator[Any]:
     from psycopg2.extras import RealDictCursor
 
     conn = psycopg2.connect(_db_url, cursor_factory=RealDictCursor)
+    with conn.cursor() as probe:
+        probe.execute("SELECT to_regclass('apiome.mcp_endpoints') IS NOT NULL AS migrated")
+        migrated = probe.fetchone()["migrated"]
+    if migrated:
+        # This module builds its own minimal schema; on an already-migrated database those
+        # CREATEs collide. test_mcp_versioning_pipeline_db.py covers the migrated case.
+        conn.close()
+        pytest.skip("needs an empty database; this one already has the MCP catalog schema")
     try:
         with conn.cursor() as cursor:
             cursor.execute(_PREREQUISITE_SCHEMA)

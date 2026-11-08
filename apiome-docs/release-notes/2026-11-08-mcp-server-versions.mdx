@@ -1,0 +1,24 @@
+---
+slug: mcp-server-versions
+title: How MCP server versions work
+description: "A server gets a new version only when what it declares changes, tagged by date and time."
+authors: [apiome]
+---
+
+The **Versions** tab of an MCP server now has its guide: Apiome keeps a version of a server only
+when what the server declares changes, and tags each version with the date and time it was
+discovered.
+
+{/* truncate */}
+
+- **A version per change, not per run.** The first discovery creates **v1**. Re-discovering a server
+  that has not changed creates nothing new; a change creates the next version and records each tool,
+  resource or prompt that was **Added**, **Removed** or **Modified**.
+- **Tags you can read.** Each version carries its discovery time in UTC — `2026-11-08T14:03Z` — with
+  `-2`, `-3` … when two land in the same minute.
+- **Compare any two.** Picking a **Base version** and a **Target version** recomputes the difference
+  from the two snapshots.
+- **Checked against a real database.** The whole path — discovery job, version, change record, tag,
+  score and conformance evidence — now has an end-to-end test on a freshly migrated database.
+
+See [How versions work](/bring-in/mcp-servers#how-versions-work).

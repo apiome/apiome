@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.671.1] - 2026-11-08
+
+### Added
+- **The MCP versioning pipeline is proven end to end on a migrated database (V2-MCP-EPIC-18, #3641).**
+  `tests/test_mcp_versioning_pipeline_db.py` (`requires_db`) drives the real discovery job
+  (`_drive_discovery_job`, network replaced by canned surfaces) through the real `Database` against
+  a database migrated from empty by apiome-db: version 1 with its date/time tag, `added` rows, score
+  and conformance evidence; an unchanged re-run creates no version; a changed run creates version 2
+  with exactly its `added` / `removed` / `modified` rows and the compare API agrees; an empty server
+  still gets a version; a failing run records the failure and no version, and a later success clears
+  it; a second enqueue coalesces onto the active job; two snapshots in one minute get distinct tags
+  (`…Z`, `…Z-2`) and sequences. Skipped without a reachable migrated database.
+  `tests/test_mcp_public_endpoints_view_db.py` now skips on an already-migrated database (it builds
+  its own schema) instead of erroring. No runtime change. apiome-rest 1.671.0 → 1.671.1.
+
 ## [1.671.0] - 2026-11-08
 
 ### Added
