@@ -7769,18 +7769,6 @@ button.tfa-reset-notice__close > svg {
 }
 
 /* ---- MCP settings -------------------------------------------------------- */
-/* A labelled switch on its own line, with the explanation under the label. */
-.tnt-switch-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--r-md);
-  background: var(--bg-surface);
-  box-shadow: inset 0 0 0 1px var(--border);
-}
-
 .tnt-toolset-card {
   padding: var(--space-4);
   border-radius: var(--r-md);
@@ -7808,11 +7796,11 @@ button.tfa-reset-notice__close > svg {
   border-top: 1px solid var(--border);
 }
 
-/* The mockup's four fixed columns, in `rem` so a font-scale bump widens the
+/* The mockup's three fixed columns, in `rem` so a font-scale bump widens the
    flag columns with the switches inside them. */
 .tnt-tool-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5.75rem 5.25rem 6rem;
+  grid-template-columns: minmax(0, 1fr) 5.75rem 5.25rem;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) 0;
@@ -7832,11 +7820,11 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg-muted);
 }
 
-/* Below the four-column width the flags close up under their tool rather than
+/* Below the three-column width the flags close up under their tool rather than
    crushing the tool id — the drawer is full-width on a phone. */
 @media (max-width: 48rem) {
   .tnt-tool-row {
-    grid-template-columns: minmax(0, 1fr) repeat(3, auto);
+    grid-template-columns: minmax(0, 1fr) repeat(2, auto);
     gap: var(--space-3);
   }
 

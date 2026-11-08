@@ -5,7 +5,7 @@ columns on ``mcp_api_keys``). Tenant ceiling / defaults / anonymous flags come
 from ``tenant_mcp_policies`` + ``tenant_mcp_policy_tools`` (MTG-1.2 + MTG-2.3).
 
 **Policy freshness (MTG-2.5 / #4774):** MVP resolves policy from Postgres on
-**every** authenticated ``tools/call`` (and every gated anonymous call). There
+**every** authenticated ``tools/call`` (every call is authenticated). There
 is no in-process policy cache. Callers may rely on
 :data:`POLICY_FRESHNESS_LAG_BUDGET_SECONDS` (``0``): any call that starts after
 a policy row's commit must see the new value without redeploying or restarting
@@ -39,15 +39,6 @@ def capability_disabled_message(tool_name: str) -> str:
     return (
         f"{CAPABILITY_DISABLED_CODE}: Tool '{tool_name}' is disabled for this API key. "
         "A tenant admin must enable it before it can be called."
-    )
-
-
-def capability_disabled_anonymous_message(tool_name: str) -> str:
-    """Denial for anonymous callers (MTG-2.3); never says \"API key\"."""
-    return (
-        f"{CAPABILITY_DISABLED_CODE}: Tool '{tool_name}' is disabled for anonymous callers. "
-        "A tenant admin must allow anonymous MCP access for this tool, "
-        "or call with a valid API key."
     )
 
 

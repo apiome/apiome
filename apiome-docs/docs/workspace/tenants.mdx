@@ -121,21 +121,20 @@ Plans, licences and overrides are set by an operator in the admin console.
 
 ### MCP settings
 
-The tenant's MCP policy decides which tools agents may *call*. `tools/list` always returns the full
-catalog; the ceiling, defaults and anonymous flags only gate `tools/call`.
+The tenant's MCP policy decides which tools agents may *call*. Every MCP request needs an MCP API
+key; with one, `tools/list` returns the full catalog and the ceiling and defaults gate `tools/call`.
+There is no anonymous access to switch on.
 
-<Screenshot id="tenants-drawer-mcp" alt="MCP settings: default mode, capability profile, the anonymous-calls switch and five toolsets with their ceiling badges" />
+<Screenshot id="tenants-drawer-mcp" alt="MCP settings: default mode, capability profile and five toolsets with their ceiling badges" />
 
 1. Choose a **Default mode** — **All registry tools**, **Inherit registry defaults** or **Explicit
    per-tool flags**.
 2. Optionally pick a **Capability profile** — **Catalog only**, **Search + catalog** or **Full
    read** set the toolset ceilings in one click; **Custom** stays editable afterwards.
-3. Turn **Allow anonymous MCP calls** on or off. When on, unauthenticated agents may call the tools
-   flagged **Anonymous**.
-4. Under **Toolsets**, switch whole toolsets into or out of the ceiling. A card's badge reads **All
-   in ceiling**, **Mixed** or **Off**. Tick **Advanced: individual tools** to set **In ceiling**,
-   **Default** and **Anonymous** per tool.
-5. **Click “Save changes”** in the **Unsaved MCP settings changes** bar (or **Discard**).
+3. Under **Toolsets**, switch whole toolsets into or out of the ceiling. A card's badge reads **All
+   in ceiling**, **Mixed** or **Off**. Tick **Advanced: individual tools** to set **In ceiling** and
+   **Default** per tool.
+4. **Click “Save changes”** in the **Unsaved MCP settings changes** bar (or **Discard**).
 
 Disabling a toolset that active MCP keys use asks first — those agents lose access on their next
 call. Only tenant administrators can change MCP options; others see them read-only.

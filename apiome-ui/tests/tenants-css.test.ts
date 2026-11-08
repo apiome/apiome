@@ -12,7 +12,7 @@
  *      for the status chips, and a `from-indigo-500 to-purple-600` gradient for the "Current"
  *      pill. Each of those froze the surface on one palette.
  *   2. **Nothing is frozen in pixels.** The mockup's page-local block set the tab rail at
- *      196 px, the tool row's three flag columns at 92/84/96 px and the diff indent at
+ *      196 px, the tool row's two flag columns at 92/84 px and the diff indent at
  *      148 px. All of them are `rem` here, so the drawer follows both densities and all six
  *      font scales.
  *   3. **Nothing can scroll the document sideways.** Every grid track that holds content is
@@ -91,7 +91,6 @@ const TENANT_PRELUDES = [
   '.tnt-card__body > * + *',
   '.tnt-limit-row',
   '.tnt-feature-row',
-  '.tnt-switch-row',
   '.tnt-toolset-card',
   '.tnt-toolset-card[data-ceiling="none"]',
   '.tnt-toolset-tools',
@@ -252,9 +251,9 @@ describe('density and font-scale independence', () => {
     );
   });
 
-  it('sizes the tool row’s three flag columns in rem, not 92/84/96px', () => {
+  it('sizes the tool row’s two flag columns in rem, not 92/84px', () => {
     expect(declaration('.tnt-tool-row', 'grid-template-columns')).toBe(
-      'minmax(0, 1fr) 5.75rem 5.25rem 6rem'
+      'minmax(0, 1fr) 5.75rem 5.25rem'
     );
   });
 
@@ -349,7 +348,7 @@ describe('the responsive fallbacks', () => {
     const block = TENANT_SECTION.match(/@media \(max-width: 48rem\) \{[\s\S]*?\n\}/)?.[0];
     expect(block).toBeDefined();
     expect(block).toContain('.tnt-tool-row');
-    expect(block).toContain('minmax(0, 1fr) repeat(3, auto)');
+    expect(block).toContain('minmax(0, 1fr) repeat(2, auto)');
     // The caps header cannot survive the reflow — its labels no longer sit over anything.
     expect(block).toContain('.tnt-tool-row--head');
     expect(block).toContain('display: none;');

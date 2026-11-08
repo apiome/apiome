@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal, Self
-from uuid import UUID
 
 from pydantic import Field, PostgresDsn, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -86,11 +85,11 @@ class Settings(BaseSettings):
             "apiome-rest's APIOME_MOCK_PUBLIC_BASE_URL so agents and the Control Panel agree."
         ),
     )
-    anonymous_policy_tenant_id: UUID | None = Field(
+    api_key: SecretStr | None = Field(
         default=None,
         description=(
-            "Host tenant whose MCP policy governs anonymous tools/call (MTG-2.3). "
-            "When unset, anonymous callers are not gated (legacy passthrough)."
+            "MCP API key for stdio hosts (Claude Desktop, Cursor), which cannot send a key per "
+            "request. Read on stdio only — over HTTP every caller presents its own key."
         ),
     )
 

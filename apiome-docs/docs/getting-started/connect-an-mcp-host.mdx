@@ -6,8 +6,8 @@ tags: [mcp]
 ---
 
 Apiome's **MCP server** gives MCP hosts — Claude Desktop, IDEs, agents — read-only access to your
-published specs. Anyone can read public specs; an **MCP API key** also unlocks the private specs
-of its tenant.
+published specs. Every request needs an **MCP API key**: it reads the public specs and the private
+specs of its tenant. Without one the server refuses to list or call its tools.
 
 ## Create an MCP API key
 
@@ -25,17 +25,18 @@ it — the host needs only the new secret; the key's tools stay the same. See [M
 ## Point your host at Apiome
 
 The local stack serves MCP at `http://localhost:8765/mcp`. In your host's MCP settings, add a
-**Streamable HTTP** server with that URL and the key as a bearer token:
+**Streamable HTTP** server with that URL and the key as a bearer token, sent on every request:
 
 ```
 URL:     http://localhost:8765/mcp
 Header:  Authorization: Bearer <your-mcp-api-key>
 ```
 
-Leave the header out to read public specs only.
+Without the header the host connects but cannot list tools: the server answers *MCP API key
+required*.
 
-Hosts that only speak stdio, and the full set of options, are covered in the [MCP
-quick-start](../reference/mcp-quickstart.md).
+Hosts that only speak stdio set the key in `APIOME_MCP_API_KEY` instead — see the [MCP
+quick-start](../reference/mcp-quickstart.md) for that and the full set of options.
 
 ## Check it works
 

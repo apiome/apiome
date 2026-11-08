@@ -1,0 +1,25 @@
+---
+slug: mcp-requires-api-key
+title: The MCP server needs an API key on every request
+description: "Apiome's MCP server refuses requests without a valid MCP API key; anonymous access is gone."
+authors: [apiome]
+---
+
+Apiome's **MCP server** no longer answers anonymous callers. Every request — listing tools and
+calling them — must carry a valid **MCP API key**, over HTTP and stdio alike.
+
+{/* truncate */}
+
+- **A key, always.** Without a key a host can still connect, but listing or calling tools is refused
+  with *MCP API key required*. A revoked, expired or unknown key is refused with its reason. Public
+  specs are still readable — with a key.
+- **HTTP hosts** send `Authorization: Bearer <your-mcp-api-key>` on every request, as before.
+- **stdio hosts** (Claude Desktop launching the server) set the key in the new
+  `APIOME_MCP_API_KEY` setting, since they cannot attach one to each request. It is read on stdio
+  only.
+- **No anonymous switch.** The tenant's **MCP settings** drop **Allow anonymous MCP calls** and the
+  per-tool **Anonymous** flags; `APIOME_MCP_ANONYMOUS_POLICY_TENANT_ID` is no longer read. The
+  `allow_anonymous_mcp` field of the MCP policy API is still accepted but has no effect.
+
+Create a key under **API keys → Create MCP key**. See [Connect an MCP host](/getting-started/connect-an-mcp-host)
+and the [MCP quick-start](/reference/mcp-quickstart).

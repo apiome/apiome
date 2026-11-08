@@ -1,10 +1,15 @@
 """MCP API key extraction and validation (#2999).
 
-Credentials may arrive on streamable HTTP via ``Authorization: Bearer <secret>`` or,
-for stdio (no HTTP request), via ``tools/call`` JSON-RPC ``params._meta``:
+Every catalog request needs a key (:mod:`apiome_mcp.catalog_key_gate`). Credentials may
+arrive on streamable HTTP via ``Authorization: Bearer <secret>``, in a request's JSON-RPC
+``params._meta``:
 
 - ``authorization`` / ``apiome_authorization``: optional Bearer prefix
 - ``apiome_api_key`` / ``api_key``: raw secret
+
+or, on stdio only, from ``APIOME_MCP_API_KEY`` — stdio hosts such as Claude Desktop cannot
+attach a credential to each request. Over HTTP that setting is never read, so a server-side
+key cannot stand in for the caller's.
 
 Stored secrets use **SHA-256 of the UTF-8 secret, then bcrypt**, matching the planned
 ``mcp keys issue`` workflow (long secrets safe for bcrypt's 72-byte limit).
@@ -23,8 +28,8 @@ Scoped reads combine :meth:`apiome_mcp.scope.Scope.allows` with revision
 visibility via :func:`apiome_mcp.spec_authorization.authorize_spec` (and
 parameterized SQL via
 :func:`apiome_mcp.spec_authorization.build_authorized_spec_sql_predicate`).
-Tools that accept anonymous callers but upgrade when a secret is present use
-:func:`resolve_optional_mcp_auth`.
+The gate verifies the key once per request and :func:`require_mcp_auth` /
+:func:`resolve_optional_mcp_auth` reuse that verification (:func:`current_mcp_auth`).
 See :class:`apiome_mcp.scope.Scope` for ``scope_json``.
 """
 
@@ -34,6 +39,7 @@ import asyncio
 import hashlib
 import json
 import re
+from contextvars import ContextVar, Token
 from datetime import datetime, timezone
 from typing import Any, Literal
 
@@ -42,6 +48,7 @@ import structlog
 from fastmcp import Context
 from fastmcp.dependencies import CurrentContext, CurrentHeaders, Depends
 from fastmcp.exceptions import AuthorizationError
+from fastmcp.server.dependencies import get_http_request
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, ConfigDict, Field
@@ -50,6 +57,7 @@ from apiome_mcp.database_pool import get_db_pool
 from apiome_mcp.effective_policy import KeyCapabilitySnapshot
 from apiome_mcp.http_credential_middleware import get_http_bearer_from_context
 from apiome_mcp.scope import Scope, parse_scope_json
+from apiome_mcp.settings import get_settings
 
 _log = structlog.get_logger(__name__)
 
@@ -59,6 +67,13 @@ _PREFIX_CHARS = 12
 _BEARER_PREFIX = re.compile(r"(?i)^Bearer\s+")
 
 CapabilityMode = Literal["inherit", "explicit"]
+
+#: What a caller is told when it presents no key at all.
+MCP_KEY_REQUIRED_MESSAGE = (
+    "MCP API key required: send Authorization: Bearer <api_key> over HTTP, pass the secret in "
+    "params._meta (authorization, apiome_authorization, apiome_api_key, or api_key), or set "
+    "APIOME_MCP_API_KEY for stdio."
+)
 
 
 class McpAuthContext(BaseModel):
@@ -254,6 +269,67 @@ async def validate_mcp_api_key(pool: AsyncConnectionPool, raw_secret: str) -> Mc
     raise AuthorizationError("Invalid or unknown MCP API key.")
 
 
+#: The caller verified by the catalog key gate for the request in flight.
+_CURRENT_AUTH: ContextVar[McpAuthContext | None] = ContextVar("apiome_mcp_catalog_auth", default=None)
+
+
+def current_mcp_auth() -> McpAuthContext | None:
+    """Return the caller the catalog key gate verified for this request, if any."""
+    return _CURRENT_AUTH.get()
+
+
+def bind_current_mcp_auth(auth: McpAuthContext) -> Token[McpAuthContext | None]:
+    """Record ``auth`` as this request's caller; pass the token to :func:`reset_current_mcp_auth`."""
+    return _CURRENT_AUTH.set(auth)
+
+
+def reset_current_mcp_auth(token: Token[McpAuthContext | None]) -> None:
+    """Undo :func:`bind_current_mcp_auth`."""
+    _CURRENT_AUTH.reset(token)
+
+
+def on_http_request() -> bool:
+    """Whether an HTTP request is in flight (streamable HTTP), as opposed to stdio or in-process."""
+    try:
+        get_http_request()
+    except RuntimeError:
+        return False
+    return True
+
+
+def _configured_stdio_key() -> str | None:
+    """``APIOME_MCP_API_KEY``, or ``None`` when unset or settings are unavailable."""
+    try:
+        configured = get_settings().api_key
+    except Exception:
+        return None
+    if configured is None:
+        return None
+    secret = configured.get_secret_value().strip()
+    return secret or None
+
+
+async def presented_mcp_api_key(ctx: Context | None, *, headers: dict[str, str]) -> str | None:
+    """Return the MCP key presented with this request, or ``None``.
+
+    HTTP ``Authorization`` first, then ``params._meta``, then the Bearer stashed from
+    streamable HTTP middleware when headers omit it (#3011). On stdio only, falls back to
+    ``APIOME_MCP_API_KEY``.
+    """
+    rc = ctx.request_context if ctx is not None else None
+    meta = rc.meta if rc else None
+    raw = extract_raw_mcp_api_key(http_headers=headers, request_meta=meta)
+    if raw is None and ctx is not None:
+        try:
+            raw = await get_http_bearer_from_context(ctx)
+        except RuntimeError:
+            # No MCP session (a direct in-process call): there is no stash to read.
+            raw = None
+    if raw is None and not on_http_request():
+        raw = _configured_stdio_key()
+    return raw
+
+
 async def resolve_optional_mcp_auth(
     ctx: Context,
     pool: AsyncConnectionPool,
@@ -262,14 +338,12 @@ async def resolve_optional_mcp_auth(
 ) -> McpAuthContext | None:
     """Return validated :class:`McpAuthContext` when a credential is present, else ``None``.
 
-    Checks HTTP headers and JSON-RPC ``meta`` like :func:`require_mcp_auth`, then the
-    Bearer secret stashed from streamable HTTP middleware when headers omit it (#3011).
+    Reuses the catalog key gate's verification when it ran for this request.
     """
-    rc = ctx.request_context
-    meta = rc.meta if rc else None
-    raw = extract_raw_mcp_api_key(http_headers=headers, request_meta=meta)
-    if raw is None:
-        raw = await get_http_bearer_from_context(ctx)
+    verified = current_mcp_auth()
+    if verified is not None:
+        return verified
+    raw = await presented_mcp_api_key(ctx, headers=headers)
     if raw is None:
         return None
     return await validate_mcp_api_key(pool, raw)
@@ -279,26 +353,18 @@ async def require_mcp_auth(
     ctx: Context = CurrentContext(),
     headers: dict[str, str] = CurrentHeaders(),
 ) -> McpAuthContext:
-    """FastMCP dependency: bearer / meta credential → ``McpAuthContext``.
+    """FastMCP dependency: bearer / meta / stdio-setting credential → ``McpAuthContext``.
 
     ``ctx`` needs its ``CurrentContext()`` default: FastMCP resolves a dependency's own
     parameters only from their dependency defaults, so a bare ``ctx: Context`` arrives
     missing and every keyed tool fails with "Failed to resolve dependency 'auth'".
-
-    Like :func:`resolve_optional_mcp_auth`, falls back to the HTTP Bearer stash when headers
-    and meta omit the secret (#3011).
     """
-    rc = ctx.request_context
-    meta = rc.meta if rc else None
-    raw = extract_raw_mcp_api_key(http_headers=headers, request_meta=meta)
+    verified = current_mcp_auth()
+    if verified is not None:
+        return verified
+    raw = await presented_mcp_api_key(ctx, headers=headers)
     if raw is None:
-        raw = await get_http_bearer_from_context(ctx)
-    if raw is None:
-        raise AuthorizationError(
-            "MCP authentication required: send Authorization: Bearer <api_key> over HTTP, "
-            "or pass the same secret in tools/call params._meta "
-            "(authorization, apiome_authorization, apiome_api_key, or api_key)."
-        )
+        raise AuthorizationError(MCP_KEY_REQUIRED_MESSAGE)
     pool = get_db_pool(ctx)
     return await validate_mcp_api_key(pool, raw)
 

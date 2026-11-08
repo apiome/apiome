@@ -13,7 +13,7 @@ FastMCP middleware patterns.
 | | Catalog MCP (`apiome-mcp`) — **MTG** | Agent invocation tools — **AGX** |
 |---|---|---|
 | Purpose | Discover & read the published API catalog (search, describe, export) | Call tenant-selected operations as MCP tools (proxy to upstream / mock) |
-| Credential | MCP API keys (`mcp_api_keys`) + optional anonymous | Agent keys (`api_keys` kind=`agent`, allowlist, expiry) — AGX-3.1 |
+| Credential | MCP API keys (`mcp_api_keys`), required on every request | Agent keys (`api_keys` kind=`agent`, allowlist, expiry) — AGX-3.1 |
 | `tools/list` | **Always full** live registry (MTG-2.1) | **Filtered** to permitted tools (AGX-3.1: enabled ∩ allowlist) |
 | `tools/call` | Gated by tenant ceiling ∩ key enable-set (MTG-1.4 / 2.2) | Gated by the same permitted intersection as list |
 | Roadmap | `ROADMAP_MCP_CONFIGURABILITY_IN_TENANTS.md` (#4759) | `ROADMAP_AGENT_EXPERIENCE.md` (#4503) |

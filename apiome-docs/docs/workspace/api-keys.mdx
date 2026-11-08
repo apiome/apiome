@@ -176,7 +176,8 @@ expired key cannot be re-enabled or regenerated. To replace it:
 ## MCP keys
 
 An **MCP key** lets an MCP host — Claude Desktop, Claude Code, an IDE — or an agent call Apiome's MCP
-server as your workspace, including its private published specs. MCP keys are rows of the same list,
+server as your workspace, including its private published specs. The MCP server needs a key on every
+request: there is no anonymous access. MCP keys are rows of the same list,
 with **MCP server** in the **Type** column; choose **MCP server** above the table to see only them.
 Only workspace administrators manage MCP keys; anyone else sees the REST keys and, in the table's
 foot, *MCP server keys are managed by workspace administrators*.
@@ -199,8 +200,8 @@ and [regenerate](#regenerate-a-key) them there.
 5. **MCP key created** shows the key once, as for a REST key: **click “Copy”**, store it, and
    **click “I've saved my key”**.
 
-Point the host at the MCP server with the key as a bearer token — the **Connect a host** card under
-the table has the settings with **Copy**:
+Point the host at the MCP server with the key as a bearer token on every request — the **Connect a
+host** card under the table has the settings with **Copy**:
 
 ```
 URL:     https://mcp.apiome.dev/mcp

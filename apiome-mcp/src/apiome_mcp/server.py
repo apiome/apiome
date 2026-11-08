@@ -7,7 +7,7 @@ from typing import Any
 
 import structlog
 from fastmcp import Context, FastMCP
-from fastmcp.dependencies import CurrentHeaders, Depends
+from fastmcp.dependencies import Depends
 from fastmcp.server.lifespan import lifespan
 from starlette.requests import Request
 from starlette.responses import JSONResponse
@@ -15,11 +15,12 @@ from structlog.contextvars import bound_contextvars
 
 from apiome_mcp.agent_usage_sweep import start_agent_usage_sweep, stop_agent_usage_sweep
 from apiome_mcp.capability_middleware import CapabilityCallGateMiddleware
+from apiome_mcp.catalog_key_gate import McpKeyRequiredMiddleware
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
 from apiome_mcp.export_tools import build_export_targets_response, build_version_export_response
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
-from apiome_mcp.mcp_auth import McpAuthContext, require_mcp_auth, resolve_optional_mcp_auth
+from apiome_mcp.mcp_auth import McpAuthContext, require_mcp_auth
 from apiome_mcp.ping_tool import build_ping_response
 from apiome_mcp.project_list_tool import build_project_list_response
 from apiome_mcp.registry_middleware import RegistryFailClosedMiddleware
@@ -70,12 +71,14 @@ async def database_lifespan(server: Any) -> Any:
 
 mcp = FastMCP("Apiome", lifespan=database_lifespan)
 # Middleware run order is reversed on the way in (last added runs first).
-# Inbound: Stash Bearer → registry fail-closed → capability gate → tool.
+# Inbound: Stash Bearer → key gate → registry fail-closed → capability gate → tool.
+# The key gate refuses every request but initialize/ping without a valid MCP API key.
 # MTG-2.1 (#4770): never strip tools from tools/list by enable-set (contrast AGX-3.1).
 # MTG-5.5 (#4789): do not merge AGX list-filtering into catalog middleware — AGX_COORDINATION.md.
 # MTG-2.2 (#4771): call-time enable-set gate after auth resolve.
 mcp.add_middleware(CapabilityCallGateMiddleware())
 mcp.add_middleware(RegistryFailClosedMiddleware())
+mcp.add_middleware(McpKeyRequiredMiddleware())
 mcp.add_middleware(StashHttpBearerInToolContextMiddleware())
 
 
@@ -87,7 +90,7 @@ async def _http_health(_request: Request) -> JSONResponse:
 
 @mcp.tool
 async def ping(ctx: Context) -> dict[str, Any]:
-    """Smoke-test: service name, package version, Postgres reachability, UTC timestamp."""
+    """Smoke-test: service name, package version, Postgres reachability, UTC timestamp. Requires an MCP API key."""
     pool = get_db_pool(ctx)
     return await build_ping_response(pool)
 
@@ -95,9 +98,9 @@ async def ping(ctx: Context) -> dict[str, Any]:
 @mcp.tool(
     name="spec.list",
     description=(
-        "List published OpenAPI specs with cursor pagination. Anonymous callers see the public catalog "
-        "(apiome.mcp_v_public_specs). With Authorization: Bearer <MCP API key> (or stdio meta credentials), "
-        "results merge in-scope public rows plus in-scope private revisions for the key's tenant (#3011). "
+        "List published OpenAPI specs with cursor pagination. Requires an MCP API key: results merge "
+        "in-scope public rows (apiome.mcp_v_public_specs) plus in-scope private revisions for the key's "
+        "tenant (#3011). "
         "Optional filters: tenant_id, project_id (UUID strings). "
         "limit defaults to 50, capped at 100. Pass next_cursor from the previous response for the next page."
     ),
@@ -108,17 +111,16 @@ async def spec_list(
     project_id: str | None = None,
     limit: int | None = None,
     cursor: str | None = None,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
     return await build_spec_list_response(
         pool,
         tenant_id=tenant_id,
         project_id=project_id,
         limit=limit,
         cursor=cursor,
-        auth_ctx=auth_ctx,
+        auth_ctx=auth,
     )
 
 
@@ -126,9 +128,8 @@ async def spec_list(
     name="project.list",
     description=(
         "List distinct projects (tenant + project) that have at least one published spec revision the "
-        "caller can see. Anonymous: derived from the public catalog (apiome.mcp_v_public_specs). "
-        "With Authorization: Bearer <MCP API key>, merges in-scope public rows plus in-scope private "
-        "published revisions for the key's tenant (same scope rules as spec.list). "
+        "caller can see. Requires an MCP API key: merges in-scope public rows (apiome.mcp_v_public_specs) "
+        "plus in-scope private published revisions for the key's tenant (same scope rules as spec.list). "
         "Each item: tenant_id, project_id, title, updated_at (UTC Z; latest revision activity in scope). "
         "Optional filters: tenant_id, project_id (UUID strings). limit defaults to 50, capped at 100. "
         "Pass next_cursor from the previous response for the next page."
@@ -140,17 +141,16 @@ async def project_list(
     project_id: str | None = None,
     limit: int | None = None,
     cursor: str | None = None,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
     return await build_project_list_response(
         pool,
         tenant_id=tenant_id,
         project_id=project_id,
         limit=limit,
         cursor=cursor,
-        auth_ctx=auth_ctx,
+        auth_ctx=auth,
     )
 
 
@@ -214,7 +214,7 @@ async def version_export(
     description=(
         "List OpenAPI spec revisions this MCP API key can read: in-scope public catalog rows "
         "(apiome.mcp_v_public_specs) plus in-scope private published revisions for the key's tenant "
-        "(same rules as spec.list when authenticated). Requires API key — anonymous calls are rejected. "
+        "(same rules as spec.list). Requires an MCP API key. "
         "Response shape matches spec.list: items, has_more, next_cursor. "
         "Optional tenant_id / project_id (UUID strings). limit defaults to 50, capped at 100 (#3014)."
     ),
@@ -244,20 +244,18 @@ async def spec_list_my_specs(
     description=(
         "Return metadata for a single published OpenAPI spec revision by id (UUID). "
         "Fields: id, title, version, description, owner (tenant slug), tags, updated_at (UTC Z). "
-        "Anonymous callers see public revisions only (apiome.mcp_v_public_specs). "
-        "With Authorization: Bearer <MCP API key> (or stdio meta credentials), in-scope private "
-        "published revisions for the key's tenant are included (#3012). "
+        "Requires an MCP API key: in-scope public revisions (apiome.mcp_v_public_specs) and in-scope "
+        "private published revisions for the key's tenant (#3012). "
         "Raises not-found when the revision is missing, out of scope, or not accessible."
     ),
 )
 async def spec_describe(
     ctx: Context,
     spec_id: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
-    return await build_spec_describe_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+    return await build_spec_describe_response(pool, spec_id=spec_id, auth_ctx=auth)
 
 
 @mcp.tool(
@@ -265,8 +263,7 @@ async def spec_describe(
     description=(
         "Return the generated OpenAPI 3.1 document (JSON object) for a published spec revision by id (UUID). "
         "Matches the REST schema export shape (paths, components.schemas, servers, securitySchemes). "
-        "Anonymous callers: public revisions only. With Authorization: Bearer <MCP API key>, in-scope private "
-        "published revisions for the tenant are included (#3016). "
+        "Requires an MCP API key: in-scope public and private published revisions for the key's tenant (#3016). "
         "Raises not-found when inaccessible. If the serialized document exceeds the configured byte cap "
         "(APIOME_MCP_OPENAPI_MAX_JSON_BYTES), returns an error analogous to HTTP 413."
     ),
@@ -274,19 +271,18 @@ async def spec_describe(
 async def spec_get_openapi(
     ctx: Context,
     spec_id: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
-    return await build_spec_get_openapi_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+    return await build_spec_get_openapi_response(pool, spec_id=spec_id, auth_ctx=auth)
 
 
 @mcp.tool(
     name="spec.export_yaml",
     description=(
         "Return the generated OpenAPI 3.1 document as YAML text for a published spec revision by id (UUID). "
-        "Same semantics as spec.get_openapi: anonymous callers see public revisions only; with "
-        "Authorization: Bearer <MCP API key>, in-scope private published revisions are included (#3017). "
+        "Same semantics as spec.get_openapi: requires an MCP API key; in-scope public and private published "
+        "revisions are included (#3017). "
         "Response field openapi_yaml round-trips with YAML loaders to the same structure as the JSON tool. "
         "If UTF-8 YAML exceeds APIOME_MCP_OPENAPI_MAX_JSON_BYTES (default 2 MiB), returns an error "
         "analogous to HTTP 413."
@@ -295,11 +291,10 @@ async def spec_get_openapi(
 async def spec_export_yaml(
     ctx: Context,
     spec_id: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, str]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
-    return await build_spec_export_yaml_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+    return await build_spec_export_yaml_response(pool, spec_id=spec_id, auth_ctx=auth)
 
 
 @mcp.tool(
@@ -307,19 +302,18 @@ async def spec_export_yaml(
     description=(
         "Return a compact index of HTTP operations for a published spec revision by id (UUID): "
         "each item has path, method, operation_id, summary, and tags. Sorted by path then method. "
-        "Same visibility and auth rules as spec.get_openapi: anonymous callers see public revisions only; "
-        "with Authorization: Bearer <MCP API key>, in-scope private published revisions are included (#3018). "
+        "Same visibility and auth rules as spec.get_openapi: requires an MCP API key; in-scope public and "
+        "private published revisions are included (#3018). "
         "Does not return the full OpenAPI document."
     ),
 )
 async def spec_list_operations(
     ctx: Context,
     spec_id: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> list[dict[str, Any]]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
-    return await build_spec_list_operations_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+    return await build_spec_list_operations_response(pool, spec_id=spec_id, auth_ctx=auth)
 
 
 @mcp.tool(
@@ -334,11 +328,10 @@ async def spec_list_operations(
 async def spec_list_components(
     ctx: Context,
     spec_id: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, list[str]]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
-    return await build_spec_list_components_response(pool, spec_id=spec_id, auth_ctx=auth_ctx)
+    return await build_spec_list_components_response(pool, spec_id=spec_id, auth_ctx=auth)
 
 
 @mcp.tool(
@@ -356,16 +349,15 @@ async def spec_describe_component(
     spec_id: str,
     kind: str,
     name: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> Any:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
     return await build_spec_describe_component_response(
         pool,
         spec_id=spec_id,
         kind=kind,
         name=name,
-        auth_ctx=auth_ctx,
+        auth_ctx=auth,
     )
 
 
@@ -384,16 +376,15 @@ async def spec_describe_operation(
     spec_id: str,
     path: str,
     method: str,
-    headers: dict[str, str] = CurrentHeaders(),
+    auth: McpAuthContext = Depends(require_mcp_auth),
 ) -> dict[str, Any]:
     pool = get_db_pool(ctx)
-    auth_ctx = await resolve_optional_mcp_auth(ctx, pool, headers=headers)
     return await build_spec_describe_operation_response(
         pool,
         spec_id=spec_id,
         path=path,
         method=method,
-        auth_ctx=auth_ctx,
+        auth_ctx=auth,
     )
 
 
@@ -404,7 +395,8 @@ async def spec_describe_operation(
         "project title, revision description, version label, and tag names (maintained in "
         "apiome.versions.mcp_public_doc_tsv). Required q must be non-empty after trimming and is passed "
         "to plainto_tsquery. Results use ts_rank_cd with cursor pagination: limit defaults to 50, "
-        "capped at 100; pass next_cursor from the previous response for the next page."
+        "capped at 100; pass next_cursor from the previous response for the next page. "
+        "Requires an MCP API key."
     ),
 )
 async def spec_search(
@@ -423,7 +415,7 @@ async def spec_search(
         "Semantic search over published **public** specs that have **mcp_public_embedding** populated "
         "(pgvector cosine distance vs OpenAI-compatible query embeddings). Requires "
         "APIOME_MCP_OPENAI_API_KEY. Uses the same pagination shape as spec.search (items, has_more, "
-        "next_cursor). Rows without embeddings are omitted until backfilled."
+        "next_cursor). Rows without embeddings are omitted until backfilled. Requires an MCP API key."
     ),
 )
 async def spec_search_semantic(
@@ -449,7 +441,7 @@ async def spec_search_semantic(
         "Distinct version-tag names across published public OpenAPI specs with counts of specs "
         "that expose each tag (via apiome.mcp_v_public_specs). Sorted by count descending, "
         "then tag name ascending. Cursor pagination: limit defaults to 50, capped at 100; "
-        "pass next_cursor from the previous response for the next page."
+        "pass next_cursor from the previous response for the next page. Requires an MCP API key."
     ),
 )
 async def spec_list_tags(
