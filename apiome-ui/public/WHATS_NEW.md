@@ -280,6 +280,10 @@ We continue to improve the platform based on your feedback with improvements and
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
 - Code editors:
   - Code in Apiome's editors (the spec viewer under **Versions**, and others) is easier to read: keys, strings, numbers and line numbers now have enough contrast against the code background in every theme. Before, light-theme keys, strings and line numbers were too faint
+- Contrast and touch targets:
+  - The hexagon avatar of a catalog item, project or table row now draws its initials on a deeper shade of the format colour, so they are readable on every format (white on the brighter hues, such as cyan and orange, was too faint)
+  - In the export studio's coverage heatmap, the level line under the count in the two hottest cells is now full-strength text instead of muted, so it stays readable on the red wash
+  - The delivery-profile checkboxes in an export preset sit a little further apart, so each one is easier to hit, and the hidden **Add overlay files** input is named for screen readers
 - Admin console:
   - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged
   - A disabled or deleted account can no longer sign in with its password

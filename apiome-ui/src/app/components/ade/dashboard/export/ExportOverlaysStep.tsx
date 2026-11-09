@@ -145,6 +145,7 @@ export function ExportOverlaysStep({ overlays, onChange }: ExportOverlaysStepPro
           accept=".json,.yaml,.yml,application/json,application/yaml"
           multiple
           className="sr-only"
+          aria-label="Overlay files"
           data-testid="export-studio-overlay-input"
           onChange={(event) => void handleFiles(event)}
         />

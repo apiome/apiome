@@ -488,7 +488,7 @@ test.describe('the manage drawer keeps the document to one column', () => {
    ------------------------------------------------------------------------- */
 
 test.describe('the advanced tool row', () => {
-  test('gives its three flag columns fixed width and lets the tool id be the one that yields', async ({
+  test('gives its two flag columns fixed width and lets the tool id be the one that yields', async ({
     page,
   }) => {
     await page.setViewportSize({ width: DESKTOP_WIDTH, height: 900 });
@@ -501,11 +501,11 @@ test.describe('the advanced tool row', () => {
         Array.from(row.children).map((cell) => Math.round(cell.getBoundingClientRect().width))
       );
 
-    expect(widths).toHaveLength(4);
-    // 5.75rem / 5.25rem / 6rem at the default root size.
+    // In ceiling / Default — the per-tool anonymous column went with the MCP API key (c48b793a3).
+    expect(widths).toHaveLength(3);
+    // 5.75rem / 5.25rem at the default root size.
     expect(widths[1]).toBe(92);
     expect(widths[2]).toBe(84);
-    expect(widths[3]).toBe(96);
     // The id column takes what is left, and is narrower than the row.
     expect(widths[0]).toBeGreaterThan(0);
   });
