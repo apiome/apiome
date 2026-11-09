@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.542.0",
+    "version": "1.543.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -101519,6 +101519,205 @@
         }
       }
     },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/publish": {
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Publish Mcp Endpoint",
+        "description": "Publish an endpoint to the public catalog after the publish guards pass (MCAT-9.5).\n\nSets ``published=true`` and ``visibility='public'``. Three guards run first, all of them,\nso a refusal lists every reason:\n\n* ``credentials`` \u2014 no credential-like value in the fields the public view exposes (name,\n  slug, category, description, host, and the current snapshot's server identity,\n  instructions and capability names / titles / descriptions).\n* ``grade`` \u2014 the current snapshot's lint grade is at least ``APIOME_MCP_PUBLISH_MIN_GRADE``\n  (default ``C``; ``off`` disables this guard).\n* ``reachable`` \u2014 enabled, not quarantined, discovered, last discovery succeeded, and the\n  latest health probe of the last 24 hours (if any) is ``up``.\n\nPublishing an endpoint that is already public re-runs the guards (idempotent on success).\n\nReturns:\n    The updated endpoint and every guard's verdict.\n\nRaises:\n    HTTPException: ``404`` when not the caller's tenant's; ``422`` when a guard fails.",
+        "operationId": "publish_mcp_endpoint_v1_mcp__tenant_slug__endpoints__endpoint_id__publish_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish MCP Endpointauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish MCP Endpointauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish MCP Endpoint Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish MCP Endpoint Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for publish mcp endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointPublishResponse",
+                  "description": "Response payload for publish mcp endpointresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The endpoint is not the caller's tenant's."
+          },
+          "422": {
+            "description": "A publish guard failed. ``detail`` carries ``code`` (``publish_guards_failed``), ``message``, ``failed_guards`` and every guard's verdict in ``guards``."
+          },
+          "503": {
+            "description": "APIOME_MCP_PUBLISH_MIN_GRADE is misconfigured."
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/unpublish": {
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Unpublish Mcp Endpoint",
+        "description": "Take an endpoint out of the public catalog (MCAT-9.5).\n\nReverts to ``published=false`` and ``visibility='private'``, so it leaves the public view at\nonce. Idempotent: unpublishing a private endpoint returns it unchanged. No guards run.\n\nReturns:\n    The updated endpoint (``guards`` is empty).\n\nRaises:\n    HTTPException: ``404`` when not the caller's tenant's.",
+        "operationId": "unpublish_mcp_endpoint_v1_mcp__tenant_slug__endpoints__endpoint_id__unpublish_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unpublish MCP Endpointauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unpublish MCP Endpointauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Unpublish MCP Endpoint Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Unpublish MCP Endpoint Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for unpublish mcp endpoint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointPublishResponse",
+                  "description": "Response payload for unpublish mcp endpointresponse200."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The endpoint is not the caller's tenant's."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for unpublish mcp endpointresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/discover": {
       "post": {
         "tags": [
@@ -165112,6 +165311,36 @@
         "title": "McpEndpointOut",
         "description": "Wire representation of one catalog endpoint (snake_case keys for UI/CLI).\n\n``endpoint_url`` is credential-redacted: any ``user:password@`` userinfo embedded in the\nstored URL is masked to ``***`` before it leaves the service (see\n:func:`mcp_endpoint_out_from_row`)."
       },
+      "McpEndpointPublishResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "endpoint": {
+            "$ref": "#/components/schemas/McpEndpointOut",
+            "description": "Endpoint."
+          },
+          "guards": {
+            "items": {
+              "$ref": "#/components/schemas/McpPublishGuardOut"
+            },
+            "type": "array",
+            "title": "Guards",
+            "description": "Guards.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "title": "McpEndpointPublishResponse",
+        "description": "Result of publishing an endpoint to the public catalog, or unpublishing it (#3695).\n\nOn publish every guard passed; ``guards`` lists their verdicts. On unpublish ``guards`` is\nempty. ``endpoint`` is the updated, credential-redacted record."
+      },
       "McpEndpointResponse": {
         "properties": {
           "success": {
@@ -168944,6 +169173,46 @@
         ],
         "title": "McpPostureRulesResponse",
         "description": "The trust-posture rule catalog, profiles, and OWASP risk catalog (CLX-3.2, #4856)."
+      },
+      "McpPublishGuardOut": {
+        "properties": {
+          "guard": {
+            "type": "string",
+            "title": "Guard",
+            "examples": [
+              "grade"
+            ],
+            "description": "Guard."
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed",
+            "description": "Passed.",
+            "example": false
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "examples": [
+              "Lint grade B meets the minimum grade C."
+            ],
+            "description": "Reason."
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "description": "Details."
+          }
+        },
+        "type": "object",
+        "required": [
+          "guard",
+          "passed",
+          "reason"
+        ],
+        "title": "McpPublishGuardOut",
+        "description": "One public publish guard's verdict (V2-MCP-23.5 / MCAT-9.5, #3695).\n\n``guard`` is ``credentials`` / ``grade`` / ``reachable``; ``reason`` is the human-readable\nexplanation; ``details`` is machine-readable context (credential findings name the field and\nsecret type, never the value)."
       },
       "McpRegistrySearchHit": {
         "properties": {

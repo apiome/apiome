@@ -302,6 +302,39 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 
 <Screenshot id="mcp-endpoint-capabilities" alt="An MCP endpoint's Capabilities tab: grade, current version, server and its tools" />
 
+### Publish to the public catalog
+
+**Publish** makes a server published and **Public**. People outside your workspace can then find it
+in public browse, in the [Registry API](#registry-api) and through its badge and change feed. Before
+it does, Apiome runs three checks. If any check fails, nothing changes and the message names every
+check that failed:
+
+| Check | Passes when |
+| --- | --- |
+| **No credentials** | Nothing the public catalog shows looks like a credential. Apiome checks the name, slug, category, description and host, and the current version's server name, title, instructions and each tool, resource and prompt's name, title and description |
+| **Minimum grade** | The current version's [grade](#how-servers-are-graded) is **C** or better. A server that has not been graded yet fails |
+| **Reachable** | The server is enabled, has been discovered, its last discovery worked, it is not paused after repeated failures, and its latest [uptime check](#uptime-and-latency) in the last 24 hours (if any) answered |
+
+The public catalog never shows the server's URL, only its host, so a token in the URL is never
+published. A credential stored for the server is never shown either.
+
+To fix a failed check, edit the field it names on the **Settings** tab, or **“Re-discover”** the
+server, then **Publish** again. While a server is public, an edit to its name, description or
+category is checked for credentials too.
+
+**Unpublish** takes the server out of the public catalog straight away. It becomes unpublished and
+**Private**.
+
+Operators set the minimum grade with `APIOME_MCP_PUBLISH_MIN_GRADE` (`A`–`F`, default `C`). `off`
+turns the grade check off. The other two checks are always on.
+
+Over the REST API, `POST /v1/mcp/{tenant}/endpoints/{endpoint}/publish` runs the checks and returns
+the server and each check's result. A failed check returns `422` with `code`
+`publish_guards_failed`, the `failed_guards` (`credentials`, `grade`, `reachable`) and each check's
+`reason`. A credential finding names the field and the kind of secret, never the secret itself.
+`POST …/endpoints/{endpoint}/unpublish` reverts the server. A `PATCH` that makes a server published
+and public runs the same checks.
+
 <Screenshot id="mcp-endpoint-versions" alt="An MCP endpoint's Versions tab: the version timeline and a diff between two discoveries" />
 
 ### Uptime and latency
@@ -803,6 +836,8 @@ Add `--json` before `mcp` to print the REST response unchanged, for scripts. Exi
 | `2` | A usage error, such as a missing `--confirm` for a destructive tool or a bad `--min-grade`. |
 
 - REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
+  `POST …/endpoints/{endpoint}/publish` / `…/unpublish` (see
+  [Publish to the public catalog](#publish-to-the-public-catalog)),
   `POST …/endpoints/{endpoint}/test`, `POST …/endpoints/{endpoint}/oauth/authorize`,
   `POST /v1/mcp/{tenant}/oauth/callback`,
   `GET …/endpoints/{endpoint}/versions`, `GET …/endpoints/{endpoint}/uptime`,
@@ -826,8 +861,9 @@ https://<your-apiome-host>/registry/mcp/<tenant>/v0.1/servers
 
 The same routes also answer under `/v1/tenants/<tenant>/mcp-registry/v0.1/servers`.
 
-- **Publish lists it.** **Publish** a server and make it **Public** and it is listed in the registry
-  endpoint for anyone. Send an MCP API key (`Authorization: Bearer …`), a workspace API key
+- **Publish lists it.** **Publish** a server (it becomes **Public** too, once its
+  [checks](#publish-to-the-public-catalog) pass) and it is listed in the registry endpoint for
+  anyone. Send an MCP API key (`Authorization: Bearer …`), a workspace API key
   (`X-API-Key`) or a signed-in session of the same tenant to list private and unpublished servers
   too. A credential that is wrong or belongs to another tenant is refused (`401` / `403`). It never
   falls back to the public list.

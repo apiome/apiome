@@ -1045,6 +1045,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP public publish guards (V2-MCP-23.5 / MCAT-9.5, #3695). The lowest lint grade (A-F) an
+    # endpoint's current snapshot may have to be published to the public catalog; ``off`` turns the
+    # grade guard off. The credential and reachability guards are always on. See
+    # app.mcp_publish_guards.
+    mcp_publish_min_grade: str = Field(
+        default="C",
+        validation_alias=AliasChoices(
+            "APIOME_MCP_PUBLISH_MIN_GRADE",
+            "mcp_publish_min_grade",
+        ),
+    )
+
     # Public browse export guards (MFX-7.3, #3862). The anonymous
     # ``/v1/browse/.../export/*`` surface runs emitters without auth, so it gets a
     # dedicated per-IP rate limit (in addition to the global middleware) and a hard

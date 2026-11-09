@@ -117,6 +117,15 @@ from .mcp_oauth_service import complete_authorization, start_authorization
 from .mcp_owasp import catalog as owasp_catalog
 from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_provenance import build_endpoint_provenance
+from .mcp_publish_guards import (
+    HEALTH_PROBE_WINDOW_HOURS,
+    PublishGuardResult,
+    check_credentials,
+    evaluate_publish_guards,
+    failed_guards,
+    normalize_min_grade,
+    public_text_fields,
+)
 from .mcp_registry_client import McpRegistryClientError, normalize_registry_base
 from .mcp_report_card import (
     build_report_card,
@@ -166,6 +175,7 @@ from .models import (
     McpEndpointDeleteResponse,
     McpEndpointDigestResponse,
     McpEndpointListResponse,
+    McpEndpointPublishResponse,
     McpEndpointResponse,
     McpEndpointTestRequest,
     McpEndpointTestResponse,
@@ -196,6 +206,7 @@ from .models import (
     McpPostureProfileOut,
     McpPostureRuleOut,
     McpPostureRulesResponse,
+    McpPublishGuardOut,
     McpSbomAttachRequest,
     McpSbomOut,
     McpSearchResponse,
@@ -1020,6 +1031,12 @@ async def update_mcp_endpoint(
     if "discovery_cadence_seconds" in body.model_fields_set:
         fields["discovery_cadence_seconds"] = body.discovery_cadence_seconds
 
+    if fields.keys() & _PUBLIC_VIEW_PATCH_FIELDS:
+        existing = db.get_mcp_endpoint(tenant_id, eid)
+        if not existing:
+            raise HTTPException(status_code=404, detail="MCP endpoint not found")
+        _guard_public_patch(existing, fields)
+
     updated = db.update_mcp_endpoint(tenant_id, eid, fields)
     if not updated:
         raise HTTPException(status_code=404, detail="MCP endpoint not found")
@@ -1057,6 +1074,213 @@ async def delete_mcp_endpoint(
         versions_deleted=int(summary.get("versions_deleted", 0)),
         jobs_deleted=int(summary.get("jobs_deleted", 0)),
     )
+
+
+# ===========================================================================
+# Public publish workflow + guards (V2-MCP-23.5 / MCAT-9.5, #3695)
+# ===========================================================================
+#
+# Publishing sets ``published=true, visibility='public'``, which puts the endpoint in the
+# ``mcp_v_public_endpoints`` view the anonymous browse pages read. The guards in
+# :mod:`app.mcp_publish_guards` run first — credentials, minimum lint grade, reachability — and a
+# failure refuses with ``422`` listing every failed guard's reason. A PATCH that would make an
+# endpoint public and published runs the same guards, and a PATCH that edits the public text of an
+# endpoint that is already public runs the credentials guard, so neither path bypasses them.
+# Unpublishing reverts to ``published=false, visibility='private'``.
+
+#: PATCH fields that change what the public view shows, or whether the endpoint is in it.
+_PUBLIC_VIEW_PATCH_FIELDS = frozenset(
+    {"published", "visibility", "name", "description", "category", "endpoint_url"}
+)
+
+
+def _is_public(row: Mapping[str, Any]) -> bool:
+    """True when the row is published and public-visible (in the public view, if enabled)."""
+    return bool(row.get("published")) and str(row.get("visibility")) == "public"
+
+
+def _publish_min_grade() -> Optional[str]:
+    """Resolve the configured minimum publish grade, or ``None`` when the grade guard is off.
+
+    Raises:
+        HTTPException: ``503`` when ``APIOME_MCP_PUBLISH_MIN_GRADE`` is not a grade or ``off`` —
+            a misconfigured guard refuses rather than letting every endpoint through.
+    """
+    try:
+        return normalize_min_grade(settings.mcp_publish_min_grade)
+    except ValueError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+def _current_surface(
+    endpoint: Mapping[str, Any],
+) -> Tuple[Optional[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Load the endpoint's current snapshot (with score/grade) and its capability items.
+
+    Returns:
+        ``(version, items)``; ``(None, [])`` when the endpoint was never discovered.
+    """
+    version_id = endpoint.get("current_version_id")
+    if not version_id:
+        return None, []
+    version = db.get_mcp_endpoint_version(str(endpoint["id"]), str(version_id))
+    if version is None:
+        return None, []
+    return version, list(db.get_mcp_capability_items(str(version_id)))
+
+
+def _run_publish_guards(endpoint: Mapping[str, Any]) -> List[PublishGuardResult]:
+    """Load what the guards need for ``endpoint`` and run every publish guard."""
+    version, items = _current_surface(endpoint)
+    probes = db.list_mcp_health_checks(
+        str(endpoint["id"]), window_hours=HEALTH_PROBE_WINDOW_HOURS, limit=1
+    )
+    return evaluate_publish_guards(
+        endpoint=endpoint,
+        version=version,
+        capability_items=items,
+        latest_probe=probes[0] if probes else None,
+        min_grade=_publish_min_grade(),
+    )
+
+
+def _refuse_if_failed(results: List[PublishGuardResult]) -> None:
+    """Raise ``422`` listing every failed guard when any guard failed.
+
+    The ``detail`` is a typed refusal ``{"code": "publish_guards_failed", "message",
+    "failed_guards", "guards"}``: ``failed_guards`` holds the failed guard ids and ``guards``
+    every verdict, so a client can show each reason.
+    """
+    failed = failed_guards(results)
+    if not failed:
+        return
+    raise HTTPException(
+        status_code=422,
+        detail={
+            "code": "publish_guards_failed",
+            "message": "Publish blocked: "
+            + " ".join(r.reason for r in failed),
+            "failed_guards": [r.guard for r in failed],
+            "guards": [r.as_dict() for r in results],
+        },
+    )
+
+
+def _guard_public_patch(existing: Mapping[str, Any], fields: Mapping[str, Any]) -> None:
+    """Apply the publish guards to a PATCH that touches the public view.
+
+    * The patch would make the endpoint public and published → every guard runs on the patched row.
+    * The endpoint stays public and published, and the patch edits its public text → the
+      credentials guard runs on the patched row.
+    * Otherwise (private, unpublished, or being unpublished) → nothing to guard.
+
+    Raises:
+        HTTPException: ``422`` when a guard fails (see :func:`_refuse_if_failed`).
+    """
+    merged = {**existing, **fields}
+    if not _is_public(merged):
+        return
+    if not _is_public(existing):
+        _refuse_if_failed(_run_publish_guards(merged))
+        return
+    version, items = _current_surface(merged)
+    _refuse_if_failed([check_credentials(public_text_fields(merged, version, items))])
+
+
+def _publish_response(
+    row: Dict[str, Any], results: List[PublishGuardResult]
+) -> McpEndpointPublishResponse:
+    """Build the publish / unpublish response from the updated row and guard verdicts."""
+    return McpEndpointPublishResponse(
+        success=True,
+        endpoint=mcp_endpoint_out_from_row(row),
+        guards=[McpPublishGuardOut(**r.as_dict()) for r in results],
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/publish",
+    response_model=McpEndpointPublishResponse,
+    responses={
+        404: {"description": "The endpoint is not the caller's tenant's."},
+        422: {
+            "description": (
+                "A publish guard failed. ``detail`` carries ``code`` (``publish_guards_failed``), "
+                "``message``, ``failed_guards`` and every guard's verdict in ``guards``."
+            )
+        },
+        503: {"description": "APIOME_MCP_PUBLISH_MIN_GRADE is misconfigured."},
+    },
+)
+async def publish_mcp_endpoint(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointPublishResponse:
+    """Publish an endpoint to the public catalog after the publish guards pass (MCAT-9.5).
+
+    Sets ``published=true`` and ``visibility='public'``. Three guards run first, all of them,
+    so a refusal lists every reason:
+
+    * ``credentials`` — no credential-like value in the fields the public view exposes (name,
+      slug, category, description, host, and the current snapshot's server identity,
+      instructions and capability names / titles / descriptions).
+    * ``grade`` — the current snapshot's lint grade is at least ``APIOME_MCP_PUBLISH_MIN_GRADE``
+      (default ``C``; ``off`` disables this guard).
+    * ``reachable`` — enabled, not quarantined, discovered, last discovery succeeded, and the
+      latest health probe of the last 24 hours (if any) is ``up``.
+
+    Publishing an endpoint that is already public re-runs the guards (idempotent on success).
+
+    Returns:
+        The updated endpoint and every guard's verdict.
+
+    Raises:
+        HTTPException: ``404`` when not the caller's tenant's; ``422`` when a guard fails.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    endpoint = _require_tenant_endpoint(auth_data, endpoint_id)
+    results = _run_publish_guards(endpoint)
+    _refuse_if_failed(results)
+    updated = db.update_mcp_endpoint(
+        tenant_id, str(endpoint_id), {"published": True, "visibility": "public"}
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="MCP endpoint not found")
+    return _publish_response(updated, results)
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/unpublish",
+    response_model=McpEndpointPublishResponse,
+    responses={404: {"description": "The endpoint is not the caller's tenant's."}},
+)
+async def unpublish_mcp_endpoint(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointPublishResponse:
+    """Take an endpoint out of the public catalog (MCAT-9.5).
+
+    Reverts to ``published=false`` and ``visibility='private'``, so it leaves the public view at
+    once. Idempotent: unpublishing a private endpoint returns it unchanged. No guards run.
+
+    Returns:
+        The updated endpoint (``guards`` is empty).
+
+    Raises:
+        HTTPException: ``404`` when not the caller's tenant's.
+    """
+    _ = tenant_slug
+    tenant_id = str(auth_data["tenant_id"])
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    updated = db.update_mcp_endpoint(
+        tenant_id, str(endpoint_id), {"published": False, "visibility": "private"}
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="MCP endpoint not found")
+    return _publish_response(updated, [])
 
 
 # ===========================================================================

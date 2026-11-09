@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 95 operations."
+description: "REST endpoints tagged mcp-catalog: 97 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.542.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.543.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 95 operations
+Tag: `mcp-catalog` · 97 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -1864,6 +1864,51 @@ Request body for start mcp endpoint oauth.
 | 200 | Successful response for start mcp endpoint oauth. | `application/json` [`McpOAuthAuthorizeResponse`](#schema-mcpoauthauthorizeresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/publish` {#publish-mcp-endpoint-v1-mcp-tenant-slug-endpoints-endpoint-id-publish-post}
+
+**Publish Mcp Endpoint**
+
+Publish an endpoint to the public catalog after the publish guards pass (MCAT-9.5).
+
+Sets ``published=true`` and ``visibility='public'``. Three guards run first, all of them,
+so a refusal lists every reason:
+
+* ``credentials`` — no credential-like value in the fields the public view exposes (name,
+  slug, category, description, host, and the current snapshot's server identity,
+  instructions and capability names / titles / descriptions).
+* ``grade`` — the current snapshot's lint grade is at least ``APIOME_MCP_PUBLISH_MIN_GRADE``
+  (default ``C``; ``off`` disables this guard).
+* ``reachable`` — enabled, not quarantined, discovered, last discovery succeeded, and the
+  latest health probe of the last 24 hours (if any) is ``up``.
+
+Publishing an endpoint that is already public re-runs the guards (idempotent on success).
+
+Returns:
+    The updated endpoint and every guard's verdict.
+
+Raises:
+    HTTPException: ``404`` when not the caller's tenant's; ``422`` when a guard fails.
+
+Operation id: `publish_mcp_endpoint_v1_mcp__tenant_slug__endpoints__endpoint_id__publish_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for publish mcp endpoint. | `application/json` [`McpEndpointPublishResponse`](#schema-mcpendpointpublishresponse) |
+| 404 | The endpoint is not the caller's tenant's. | — |
+| 422 | A publish guard failed. ``detail`` carries ``code`` (``publish_guards_failed``), ``message``, ``failed_guards`` and every guard's verdict in ``guards``. | — |
+| 503 | APIOME_MCP_PUBLISH_MIN_GRADE is misconfigured. | — |
+
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/report` {#export-mcp-endpoint-report-v1-mcp-tenant-slug-endpoints-endpoint-id-report-get}
 
 **Export Mcp Endpoint Report**
@@ -2216,6 +2261,40 @@ Request body for test mcp endpoint capability.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for test mcp endpoint capability. | `application/json` [`McpEndpointTestResponse`](#schema-mcpendpointtestresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/unpublish` {#unpublish-mcp-endpoint-v1-mcp-tenant-slug-endpoints-endpoint-id-unpublish-post}
+
+**Unpublish Mcp Endpoint**
+
+Take an endpoint out of the public catalog (MCAT-9.5).
+
+Reverts to ``published=false`` and ``visibility='private'``, so it leaves the public view at
+once. Idempotent: unpublishing a private endpoint returns it unchanged. No guards run.
+
+Returns:
+    The updated endpoint (``guards`` is empty).
+
+Raises:
+    HTTPException: ``404`` when not the caller's tenant's.
+
+Operation id: `unpublish_mcp_endpoint_v1_mcp__tenant_slug__endpoints__endpoint_id__unpublish_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for unpublish mcp endpoint. | `application/json` [`McpEndpointPublishResponse`](#schema-mcpendpointpublishresponse) |
+| 404 | The endpoint is not the caller's tenant's. | — |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/uptime` {#get-mcp-endpoint-uptime-v1-mcp-tenant-slug-endpoints-endpoint-id-uptime-get}
@@ -3565,6 +3644,19 @@ Patch body for updating a cataloger note.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `body` | string or null | no | Body. |
+
+### `McpEndpointPublishResponse` {#schema-mcpendpointpublishresponse}
+
+Result of publishing an endpoint to the public catalog, or unpublishing it (#3695).
+
+On publish every guard passed; ``guards`` lists their verdicts. On unpublish ``guards`` is
+empty. ``endpoint`` is the updated, credential-redacted record.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint` | `McpEndpointOut` | yes | Endpoint. |
+| `guards` | array of `McpPublishGuardOut` | no | Guards. |
 
 ### `McpEndpointResponse` {#schema-mcpendpointresponse}
 

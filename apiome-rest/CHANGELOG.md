@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.683.0] - 2026-11-08
+
+### Added
+- **MCP public publish workflow + guards (V2-MCP-23.5 / MCAT-9.5, #3695).**
+  `POST /v1/mcp/{tenant}/endpoints/{id}/publish` sets `published=true, visibility='public'` only
+  after three guards pass; every guard runs, so a refusal lists every reason. A failure is `422`
+  with `detail: {code: "publish_guards_failed", message, failed_guards, guards}`; success returns
+  the endpoint and every guard's verdict. `POST …/unpublish` reverts to
+  `published=false, visibility='private'` (idempotent, no guards).
+  - `credentials` — the fields the public view and public pages show (name, slug, category,
+    description, host; the current snapshot's server name/title, instructions and capability
+    names/titles/descriptions) are scanned with the intake secret scrubber. Findings name the
+    field and secret type, never the value.
+  - `grade` — the current snapshot's stored grade must be at least `APIOME_MCP_PUBLISH_MIN_GRADE`
+    (new setting, `A`–`F`, default `C`; `off` disables it; any other value is `503`). An unscored
+    endpoint fails.
+  - `reachable` — enabled, not quarantined, discovered, no consecutive discovery failures, and the
+    latest health probe of the last 24 hours (if any) is `up`.
+  - New models `McpPublishGuardOut` and `McpEndpointPublishResponse`.
+
+### Changed
+- `PATCH /v1/mcp/{tenant}/endpoints/{id}` no longer bypasses the guards: a patch that makes an
+  endpoint published and public runs every publish guard, and a patch that edits the name,
+  description, category or URL of an endpoint that is already public runs the credentials guard.
+
 ## [1.682.0] - 2026-11-08
 
 ### Added

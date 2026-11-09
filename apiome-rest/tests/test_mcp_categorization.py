@@ -680,6 +680,8 @@ def test_create_endpoint_resolves_category_against_the_lookup():
 def test_patch_endpoint_resolves_category_leniently(category, stored):
     with patch("app.mcp_catalog_routes.db") as mdb:
         mdb.list_mcp_categories.return_value = _LOOKUP
+        # A private endpoint: the public publish guards (#3695) have nothing to check.
+        mdb.get_mcp_endpoint.return_value = {"id": _EP, "published": False, "visibility": "private"}
         mdb.update_mcp_endpoint.return_value = None
         client.patch(f"/v1/mcp/acme/endpoints/{_EP}", json={"category": category})
     assert mdb.update_mcp_endpoint.call_args.args[2] == {"category": stored}
