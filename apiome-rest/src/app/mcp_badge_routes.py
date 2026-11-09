@@ -7,9 +7,10 @@ never disclose anything about a non-public endpoint: an unpublished, private, or
 resolves to the same neutral ``unknown`` badge a nonexistent one would, so its very existence stays
 hidden (the public-gating lives in :meth:`Database.get_published_mcp_endpoint_badge`).
 
-All rendering is delegated to the pure :mod:`app.mcp_badge` layer. This route only reads one row,
-renders it, and adds HTTP caching: a content-addressed ``ETag`` (so a README image gets a ``304`` until
-the badge actually changes) and a ``public, max-age`` ``Cache-Control`` — a shorter window for the
+All rendering is delegated to the pure :mod:`app.mcp_badge` layer. This route only reads one row
+(plus, for ``metric=uptime``, the endpoint's last day of reachability probes), renders it, and adds
+HTTP caching: a content-addressed ``ETag`` (so a README image gets a ``304`` until the badge actually
+changes) and a ``public, max-age`` ``Cache-Control`` — a shorter window for the
 ``unknown`` badge so a freshly published endpoint's real badge appears promptly.
 """
 
@@ -23,12 +24,14 @@ from .database import db
 from .mcp_badge import (
     BADGE_METRICS,
     BADGE_THEMES,
+    METRIC_UPTIME,
     normalize_metric,
     normalize_theme,
     render_badge_svg,
     resolve_badge,
     svg_etag,
 )
+from .mcp_health import DEFAULT_WINDOW_HOURS, MAX_HEALTH_ROWS, summarize_health_checks
 
 router = APIRouter(prefix="/mcp/badge", tags=["mcp-catalog"])
 
@@ -69,8 +72,9 @@ async def get_mcp_status_badge(
     metric: str = Query(
         "grade",
         description=(
-            "Which signal to render: 'grade' (A–F lint grade), 'health' (operational label), or "
-            "'version' (server-reported version). Anything else falls back to 'grade'."
+            "Which signal to render: 'grade' (A–F lint grade), 'health' (operational label), "
+            "'version' (server-reported version), or 'uptime' (reachability over the last 24 hours). "
+            "Anything else falls back to 'grade'."
         ),
     ),
     theme: str = Query(
@@ -89,7 +93,8 @@ async def get_mcp_status_badge(
     Args:
         tenant: The owning tenant's URL slug.
         slug: The endpoint's tenant-unique catalog slug (the ``.svg`` suffix is part of the route).
-        metric: ``grade`` / ``health`` / ``version``; unrecognized values normalize to ``grade``.
+        metric: ``grade`` / ``health`` / ``version`` / ``uptime``; unrecognized values normalize
+            to ``grade``.
         theme: ``light`` / ``dark`` label variant; unrecognized values normalize to ``light``.
         if_none_match: Standard conditional-request header; a match yields ``304 Not Modified``.
 
@@ -101,6 +106,12 @@ async def get_mcp_status_badge(
     theme_key = normalize_theme(theme)
 
     row = db.get_published_mcp_endpoint_badge(tenant, slug)
+    if row is not None and metric_key == METRIC_UPTIME:
+        # The uptime badge reflects the last day of reachability probes (MCAT-13.3).
+        checks = db.list_mcp_health_checks(
+            str(row["id"]), window_hours=DEFAULT_WINDOW_HOURS, limit=MAX_HEALTH_ROWS
+        )
+        row["uptime"] = summarize_health_checks(checks).as_dict()
     label, message, color = resolve_badge(row, metric_key)
     svg = render_badge_svg(label, message, color, theme=theme_key)
 

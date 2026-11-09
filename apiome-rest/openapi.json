@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.539.0",
+    "version": "1.540.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -2318,7 +2318,7 @@
           "mcp-catalog"
         ],
         "summary": "Get Mcp Status Badge",
-        "description": "Render a published endpoint's status badge as a cacheable SVG (MCAT-19.3).\n\nResolves the endpoint by ``tenant`` + ``slug`` through the public gate, folds the requested\n``metric`` into a badge, and returns it as SVG with caching headers. A target that is not a\npublished, public endpoint (or does not exist) renders the neutral ``unknown`` badge with a\n``200`` \u2014 never a ``404`` \u2014 so the response never reveals whether such an endpoint exists.\n\nArgs:\n    tenant: The owning tenant's URL slug.\n    slug: The endpoint's tenant-unique catalog slug (the ``.svg`` suffix is part of the route).\n    metric: ``grade`` / ``health`` / ``version``; unrecognized values normalize to ``grade``.\n    theme: ``light`` / ``dark`` label variant; unrecognized values normalize to ``light``.\n    if_none_match: Standard conditional-request header; a match yields ``304 Not Modified``.\n\nReturns:\n    A ``Response`` carrying the SVG (``200``) \u2014 or an empty ``304`` \u2014 with ``ETag`` and\n    ``Cache-Control`` set.",
+        "description": "Render a published endpoint's status badge as a cacheable SVG (MCAT-19.3).\n\nResolves the endpoint by ``tenant`` + ``slug`` through the public gate, folds the requested\n``metric`` into a badge, and returns it as SVG with caching headers. A target that is not a\npublished, public endpoint (or does not exist) renders the neutral ``unknown`` badge with a\n``200`` \u2014 never a ``404`` \u2014 so the response never reveals whether such an endpoint exists.\n\nArgs:\n    tenant: The owning tenant's URL slug.\n    slug: The endpoint's tenant-unique catalog slug (the ``.svg`` suffix is part of the route).\n    metric: ``grade`` / ``health`` / ``version`` / ``uptime``; unrecognized values normalize\n        to ``grade``.\n    theme: ``light`` / ``dark`` label variant; unrecognized values normalize to ``light``.\n    if_none_match: Standard conditional-request header; a match yields ``304 Not Modified``.\n\nReturns:\n    A ``Response`` carrying the SVG (``200``) \u2014 or an empty ``304`` \u2014 with ``ETag`` and\n    ``Cache-Control`` set.",
         "operationId": "get_mcp_status_badge_mcp_badge__tenant___slug__svg_get",
         "parameters": [
           {
@@ -2349,11 +2349,11 @@
             "required": false,
             "schema": {
               "type": "string",
-              "description": "Which signal to render: 'grade' (A\u2013F lint grade), 'health' (operational label), or 'version' (server-reported version). Anything else falls back to 'grade'.",
+              "description": "Which signal to render: 'grade' (A\u2013F lint grade), 'health' (operational label), 'version' (server-reported version), or 'uptime' (reachability over the last 24 hours). Anything else falls back to 'grade'.",
               "default": "grade",
               "title": "Metric"
             },
-            "description": "Which signal to render: 'grade' (A\u2013F lint grade), 'health' (operational label), or 'version' (server-reported version). Anything else falls back to 'grade'."
+            "description": "Which signal to render: 'grade' (A\u2013F lint grade), 'health' (operational label), 'version' (server-reported version), or 'uptime' (reachability over the last 24 hours). Anything else falls back to 'grade'."
           },
           {
             "name": "theme",
@@ -105530,6 +105530,133 @@
         }
       }
     },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/uptime": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Endpoint Uptime",
+        "description": "Return the endpoint's reachability and latency history and its uptime summary (MCAT-13.3).\n\nThe health sweep probes each enabled, network-reachable endpoint with the MCP ``initialize``\nhandshake on a short cadence and records ``up`` / ``down`` and the latency of every probe.\n``summary`` folds every probe in the last ``window_hours`` into the status the health badge shows\n(``up`` / ``degraded`` / ``down`` / ``unknown``), the uptime percentage and the p50 / p95 latency\nof the successful probes; ``checks`` lists the newest ``limit`` probes. An endpoint with no probe\nin the window (never probed, a stdio server, or monitoring switched off) returns\n``status='unknown'`` and an empty list \u2014 a ``200``, never a ``500``. Returns ``404`` when the\nendpoint is not the caller's tenant's.",
+        "operationId": "get_mcp_endpoint_uptime_v1_mcp__tenant_slug__endpoints__endpoint_id__uptime_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "window_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "description": "How many hours of probe history to summarize (1-168).",
+              "default": 24,
+              "title": "Window Hours"
+            },
+            "description": "How many hours of probe history to summarize (1-168)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "The most recent probes to list in `checks` (the summary always covers the whole window).",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "The most recent probes to list in `checks` (the summary always covers the whole window)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Uptimeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Uptimeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Endpoint Uptime Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Endpoint Uptime Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp endpoint uptime.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointUptimeResponse",
+                  "description": "Response payload for get mcp endpoint uptimeresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp endpoint uptimeresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/insight/trust": {
       "get": {
         "tags": [
@@ -163445,6 +163572,50 @@
         "title": "McpEndpointUpdate",
         "description": "Patch mutable fields on a catalog endpoint (MCAT-3.1).\n\nEvery field is optional; only the keys present in the request body are\napplied. ``slug`` is intentionally not patchable here \u2014 it is derived on\ncreate and stable thereafter so existing references do not break."
       },
+      "McpEndpointUptimeResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "endpoint_id": {
+            "type": "string",
+            "title": "Endpoint Id",
+            "description": "Endpoint ID.",
+            "example": "endpoint_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/McpUptimeSummaryOut",
+            "description": "Short summary suitable for navigation and reference docs."
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/McpHealthCheckOut"
+            },
+            "type": "array",
+            "title": "Checks",
+            "description": "Checks.",
+            "maxItems": 1000
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false,
+            "description": "Truncated.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint_id",
+          "summary"
+        ],
+        "title": "McpEndpointUptimeResponse",
+        "description": "Response envelope for ``GET \u2026/endpoints/{endpoint_id}/uptime`` (#3713).\n\n``summary`` folds every probe in the window; ``checks`` lists the most recent of them,\nnewest first, capped at the request's ``limit`` (``truncated`` says the window held more)."
+      },
       "McpEndpointVersionDetail": {
         "properties": {
           "id": {
@@ -165001,6 +165172,58 @@
         ],
         "title": "McpGraphNodeOut",
         "description": "One capability rendered as a node in the relationship graph (V2-MCP-29.2)."
+      },
+      "McpHealthCheckOut": {
+        "properties": {
+          "checked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Checked At",
+            "description": "Checked At timestamp (ISO 8601).",
+            "example": "2026-11-09T02:33:58Z"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for mcp health check."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp health check."
+              }
+            ],
+            "title": "Latency Ms",
+            "description": "Latency Ms."
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp health check."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp health check."
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error Code."
+          }
+        },
+        "type": "object",
+        "required": [
+          "checked_at",
+          "status"
+        ],
+        "title": "McpHealthCheckOut",
+        "description": "One reachability probe of an endpoint (V2-MCP-27.3 / MCAT-13.3, #3713).\n\n``status`` is ``up`` when the MCP ``initialize`` handshake completed and ``down`` when it did not;\n``latency_ms`` is the probe's wall-clock time; ``error_code`` is the stable discovery error code\n(``connect_error`` / ``timeout`` / ``auth_required`` / \u2026) of a ``down`` probe."
       },
       "McpInsightCatalogResponse": {
         "properties": {
@@ -169338,6 +169561,135 @@
         "type": "object",
         "title": "McpTypeCountsOut",
         "description": "Per-kind capability item counts of a surface (tools/resources/templates/prompts + total)."
+      },
+      "McpUptimeSummaryOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Status.",
+            "example": "active"
+          },
+          "window_hours": {
+            "type": "integer",
+            "title": "Window Hours",
+            "description": "Window Hours.",
+            "example": 1
+          },
+          "checks": {
+            "type": "integer",
+            "title": "Checks",
+            "default": 0,
+            "description": "Checks.",
+            "example": 1
+          },
+          "up": {
+            "type": "integer",
+            "title": "Up",
+            "default": 0,
+            "description": "Up.",
+            "example": 1
+          },
+          "down": {
+            "type": "integer",
+            "title": "Down",
+            "default": 0,
+            "description": "Down.",
+            "example": 1
+          },
+          "uptime_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Uptime Pct",
+            "description": "Uptime Pct."
+          },
+          "latency_p50_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Latency P50 Ms",
+            "description": "Latency P50 Ms."
+          },
+          "latency_p95_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Latency P95 Ms",
+            "description": "Latency P95 Ms."
+          },
+          "last_checked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Last Checked At",
+            "description": "Last Checked At timestamp (ISO 8601)."
+          },
+          "last_status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Last Status",
+            "description": "Last Status."
+          },
+          "last_error_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp uptime summary."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp uptime summary."
+              }
+            ],
+            "title": "Last Error Code",
+            "description": "Last Error Code."
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "window_hours"
+        ],
+        "title": "McpUptimeSummaryOut",
+        "description": "An endpoint's reachability over a window of probes \u2014 what the health badge shows (#3713).\n\n``status`` is ``down`` when the latest probe failed, ``degraded`` when it succeeded but the\nwindow's uptime is under 99%, ``up`` otherwise, and ``unknown`` with no probe in the window.\n``uptime_pct`` is successful probes over all probes (``None`` with none); the latency\npercentiles cover the successful probes only."
       },
       "McpVersionChangeCounts": {
         "properties": {

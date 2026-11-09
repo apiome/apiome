@@ -1576,6 +1576,50 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP endpoint health / uptime monitoring (V2-MCP-27.3 / MCAT-13.3, #3713). A background loop
+    # probes each enabled, network-reachable endpoint with the MCP `initialize` handshake only (no
+    # capability listing) and records up/down + latency per probe; the uptime summary and the health
+    # badge read that history.
+    #
+    # mcp_health_enabled                 Kill switch. When False no endpoint is probed (history and
+    #                                    badges keep showing what was recorded, ageing to `unknown`).
+    # mcp_health_cadence_seconds         How often each endpoint is probed.
+    # mcp_health_min_interval_seconds    The loop's tick floor: how often it wakes to look for due
+    #                                    endpoints. The cadence decides which are actually probed.
+    # mcp_health_max_concurrency         The most probes in flight at once.
+    # mcp_health_timeout_seconds         Wall-clock ceiling for one probe; an overrun is a `down`
+    #                                    probe with the `timeout` code.
+    # mcp_health_max_per_tick            The most endpoints one tick probes (least recently probed
+    #                                    first), so a large catalog drains over several ticks.
+    mcp_health_enabled: bool = Field(
+        default=True,
+        validation_alias=AliasChoices("APIOME_MCP_HEALTH_ENABLED", "mcp_health_enabled"),
+    )
+    mcp_health_cadence_seconds: int = Field(
+        default=300,
+        validation_alias=AliasChoices("APIOME_MCP_HEALTH_CADENCE", "mcp_health_cadence_seconds"),
+    )
+    mcp_health_min_interval_seconds: int = Field(
+        default=60,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_HEALTH_MIN_INTERVAL", "mcp_health_min_interval_seconds"
+        ),
+    )
+    mcp_health_max_concurrency: int = Field(
+        default=4,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_HEALTH_MAX_CONCURRENCY", "mcp_health_max_concurrency"
+        ),
+    )
+    mcp_health_timeout_seconds: int = Field(
+        default=10,
+        validation_alias=AliasChoices("APIOME_MCP_HEALTH_TIMEOUT", "mcp_health_timeout_seconds"),
+    )
+    mcp_health_max_per_tick: int = Field(
+        default=200,
+        validation_alias=AliasChoices("APIOME_MCP_HEALTH_MAX_PER_TICK", "mcp_health_max_per_tick"),
+    )
+
     # MCP registry sync cadence (V2-MCP-26.3, #3709). How often the connector sweep re-syncs an
     # `mcp-registry` connector that has no cadence of its own (`refresh_interval_seconds`). Hourly by
     # default — the aggregator cadence the registry recommends — rather than the five-minute default

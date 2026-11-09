@@ -214,7 +214,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.539.0",
+    version="1.540.0",
 )
 
 
@@ -633,6 +633,7 @@ _repository_refresh_task: asyncio.Task | None = None
 _url_import_refresh_task: asyncio.Task | None = None
 _repository_quality_task: asyncio.Task | None = None
 _mcp_discovery_task: asyncio.Task | None = None
+_mcp_health_task: asyncio.Task | None = None
 _catalog_refresh_task: asyncio.Task | None = None
 _mcp_catalog_digest_task: asyncio.Task | None = None
 _catalog_graph_task: asyncio.Task | None = None
@@ -876,6 +877,34 @@ async def startup_event():
                 raise
             except Exception:
                 log.exception("mcp discovery sweep")
+
+    async def _mcp_health_sweep() -> None:
+        """Periodically probe MCP catalog endpoints' reachability and latency (MCAT-13.3, #3713).
+
+        Ticks on ``APIOME_MCP_HEALTH_MIN_INTERVAL`` (default 60s); due-selection in
+        ``list_due_mcp_health_endpoints`` lets the health cadence (``APIOME_MCP_HEALTH_CADENCE``,
+        default 300s) decide which endpoints are probed. Each probe is the ``initialize`` handshake
+        only, so it is far lighter than a discovery run. Like the discovery sweep the probes are
+        async and the blocking DB reads/writes go to worker threads, on a dedicated connection.
+        """
+        from .config import settings
+
+        log = logging.getLogger(__name__)
+        tick_seconds = max(1, int(settings.mcp_health_min_interval_seconds))
+        while True:
+            await asyncio.sleep(tick_seconds)
+            try:
+                from .mcp_health_sweep import process_mcp_health_sweep
+
+                thread_db = Database()
+                try:
+                    await process_mcp_health_sweep(thread_db)
+                finally:
+                    thread_db.close()
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                log.exception("mcp health sweep")
 
     async def _catalog_refresh_sweep(tick_seconds: int) -> None:
         """Periodically re-check catalog items whose refresh cadence has elapsed (MFI-31.1).
@@ -1229,6 +1258,8 @@ async def startup_event():
     _repository_quality_task = asyncio.create_task(_repository_quality_sweep())
     global _mcp_discovery_task
     _mcp_discovery_task = asyncio.create_task(_mcp_discovery_sweep())
+    global _mcp_health_task
+    _mcp_health_task = asyncio.create_task(_mcp_health_sweep())
     global _catalog_refresh_task
     if int(settings.catalog_refresh_tick_seconds) > 0:
         _catalog_refresh_task = asyncio.create_task(
@@ -1312,6 +1343,14 @@ async def shutdown_event():
         except asyncio.CancelledError:
             pass
         _mcp_discovery_task = None
+    global _mcp_health_task
+    if _mcp_health_task is not None:
+        _mcp_health_task.cancel()
+        try:
+            await _mcp_health_task
+        except asyncio.CancelledError:
+            pass
+        _mcp_health_task = None
     global _catalog_refresh_task
     if _catalog_refresh_task is not None:
         _catalog_refresh_task.cancel()

@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 82 operations."
+description: "REST endpoints tagged mcp-catalog: 83 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.539.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.540.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 82 operations
+Tag: `mcp-catalog` · 83 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -27,7 +27,8 @@ published, public endpoint (or does not exist) renders the neutral ``unknown`` b
 Args:
     tenant: The owning tenant's URL slug.
     slug: The endpoint's tenant-unique catalog slug (the ``.svg`` suffix is part of the route).
-    metric: ``grade`` / ``health`` / ``version``; unrecognized values normalize to ``grade``.
+    metric: ``grade`` / ``health`` / ``version`` / ``uptime``; unrecognized values normalize
+        to ``grade``.
     theme: ``light`` / ``dark`` label variant; unrecognized values normalize to ``light``.
     if_none_match: Standard conditional-request header; a match yields ``304 Not Modified``.
 
@@ -43,7 +44,7 @@ Operation id: `get_mcp_status_badge_mcp_badge__tenant___slug__svg_get`
 | --- | --- | --- | --- | --- |
 | `tenant` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `slug` | path | string | yes | URL-safe resource slug. |
-| `metric` | query | string | no | Which signal to render: 'grade' (A–F lint grade), 'health' (operational label), or 'version' (server-reported version). Anything else falls back to 'grade'. |
+| `metric` | query | string | no | Which signal to render: 'grade' (A–F lint grade), 'health' (operational label), 'version' (server-reported version), or 'uptime' (reachability over the last 24 hours). Anything else falls back to 'grade'. |
 | `theme` | query | string | no | Label variant: 'light' (default) or 'dark' — tones the label to suit the page. |
 | `If-None-Match` | header | string or null | no | ETag from a prior response; returns 304 when unchanged. |
 
@@ -1893,6 +1894,41 @@ Request body for test mcp endpoint capability.
 | 200 | Successful response for test mcp endpoint capability. | `application/json` [`McpEndpointTestResponse`](#schema-mcpendpointtestresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/uptime` {#get-mcp-endpoint-uptime-v1-mcp-tenant-slug-endpoints-endpoint-id-uptime-get}
+
+**Get Mcp Endpoint Uptime**
+
+Return the endpoint's reachability and latency history and its uptime summary (MCAT-13.3).
+
+The health sweep probes each enabled, network-reachable endpoint with the MCP ``initialize``
+handshake on a short cadence and records ``up`` / ``down`` and the latency of every probe.
+``summary`` folds every probe in the last ``window_hours`` into the status the health badge shows
+(``up`` / ``degraded`` / ``down`` / ``unknown``), the uptime percentage and the p50 / p95 latency
+of the successful probes; ``checks`` lists the newest ``limit`` probes. An endpoint with no probe
+in the window (never probed, a stdio server, or monitoring switched off) returns
+``status='unknown'`` and an empty list — a ``200``, never a ``500``. Returns ``404`` when the
+endpoint is not the caller's tenant's.
+
+Operation id: `get_mcp_endpoint_uptime_v1_mcp__tenant_slug__endpoints__endpoint_id__uptime_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `window_hours` | query | integer | no | How many hours of probe history to summarize (1-168). |
+| `limit` | query | integer | no | The most recent probes to list in `checks` (the summary always covers the whole window). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get mcp endpoint uptime. | `application/json` [`McpEndpointUptimeResponse`](#schema-mcpendpointuptimeresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/versions` {#list-mcp-endpoint-versions-v1-mcp-tenant-slug-endpoints-endpoint-id-versions-get}
 
 **List Mcp Endpoint Versions**
@@ -3185,6 +3221,21 @@ create and stable thereafter so existing references do not break.
 | `published` | boolean or null | no | Published. |
 | `enabled` | boolean or null | no | Whether the resource is active. |
 | `discoveryCadenceSeconds` | integer or null | no | Discovery Cadence Seconds. |
+
+### `McpEndpointUptimeResponse` {#schema-mcpendpointuptimeresponse}
+
+Response envelope for ``GET …/endpoints/{endpoint_id}/uptime`` (#3713).
+
+``summary`` folds every probe in the window; ``checks`` lists the most recent of them,
+newest first, capped at the request's ``limit`` (``truncated`` says the window held more).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint_id` | string | yes | Endpoint ID. |
+| `summary` | `McpUptimeSummaryOut` | yes | Short summary suitable for navigation and reference docs. |
+| `checks` | array of `McpHealthCheckOut` | no | Checks. |
+| `truncated` | boolean | no | Truncated. |
 
 ### `McpEndpointVersionListResponse` {#schema-mcpendpointversionlistresponse}
 

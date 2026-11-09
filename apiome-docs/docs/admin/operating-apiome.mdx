@@ -353,6 +353,27 @@ A subscription that cannot be queued is logged as `mcp-change-webhook fan-out: f
 A subscriber to that event that fails is logged as `mcp event handler … failed`; neither fails the
 discovery. The event's fields are on [How versions work](../bring-in/mcp-servers.mdx#the-change-event).
 
+### MCP uptime checks
+
+The REST API also checks every enabled, network-reachable MCP server for [uptime and
+latency](../bring-in/mcp-servers.mdx#uptime-and-latency). Each check is only the `initialize`
+handshake, so it is much cheaper than a discovery, and it never changes a server's discovery
+failures, backoff or quarantine. Checks older than 30 days are deleted as new ones run. Each tick logs
+one line from `app.mcp_health_sweep`:
+
+```text
+mcp health sweep: probed=12 recorded=12
+```
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_HEALTH_ENABLED` | `true` | `false` stops every check. Badges then read **Uptime unknown** once their last check is a day old. |
+| `APIOME_MCP_HEALTH_MIN_INTERVAL` | `60` | Seconds between ticks |
+| `APIOME_MCP_HEALTH_CADENCE` | `300` | Seconds between checks of one server |
+| `APIOME_MCP_HEALTH_MAX_CONCURRENCY` | `4` | Servers checked at once |
+| `APIOME_MCP_HEALTH_TIMEOUT` | `10` | Seconds one check may take before it is recorded as down, with `timeout` |
+| `APIOME_MCP_HEALTH_MAX_PER_TICK` | `200` | Most servers one tick checks; the least recently checked go first |
+
 ### MCP registry sync
 
 An [MCP registry connector](../bring-in/mcp-servers.mdx#servers-from-a-registry) re-syncs on the

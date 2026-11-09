@@ -87,6 +87,7 @@ import { McpJsonViewer } from '@/app/components/ui/mcp/McpJsonViewer';
 import { GradeGlyph } from '@/app/components/ui/mcp/GradeGlyph';
 import { HealthPill } from '@/app/components/ui/mcp/HealthPill';
 import { RecencyPill } from '@/app/components/ui/mcp/RecencyPill';
+import { UptimeBadge } from '@/app/components/ui/mcp/UptimeBadge';
 
 import McpVersionHistory from './McpVersionHistory';
 import McpEndpointInsight from './McpEndpointInsight';
@@ -626,6 +627,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
               {transport ? <McpBadge tone={transport.tone}>{transport.label}</McpBadge> : null}
               {visibility ? <McpBadge tone={visibility.tone}>{visibility.label}</McpBadge> : null}
               <RecencyPill timestamp={endpoint.last_discovered_at} />
+              <UptimeBadge endpointId={endpoint.id} />
               <Badge status={endpoint.enabled ? 'active' : 'disabled'} dot>
                 {endpoint.enabled ? 'Enabled' : 'Disabled'}
               </Badge>

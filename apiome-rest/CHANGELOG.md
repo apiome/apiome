@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.680.0] - 2026-11-08
+
+### Added
+- **MCP endpoint health / uptime monitoring (V2-MCP-27.3 / MCAT-13.3, #3713).** A lightweight
+  periodic reachability / latency probe, much lighter than discovery: the MCP `initialize`
+  handshake only (no `*/list` pagination, no diff, no version), with the endpoint's stored
+  credentials and the usual SSRF / plaintext-HTTP guards.
+  - **Storage** — apiome-db V364 adds `mcp_endpoint_health_checks` (one row per probe:
+    `checked_at`, `status` `up` / `down`, `latency_ms`, the discovery `error_code` of a failure;
+    cascades with the endpoint). Rows older than 30 days are pruned by the sweep.
+  - **Sweep** — new `app/mcp_health_sweep.py`, a background loop in `main.py`. Probes live,
+    enabled, non-`stdio` endpoints whose last probe is older than the cadence (quarantined ones
+    included), least recently probed first, under a concurrency cap and a per-probe timeout. A
+    probe failure is a `down` row, never an exception, and never touches discovery failure /
+    backoff / quarantine state. Settings: `APIOME_MCP_HEALTH_ENABLED` (true),
+    `APIOME_MCP_HEALTH_CADENCE` (300), `APIOME_MCP_HEALTH_MIN_INTERVAL` (60),
+    `APIOME_MCP_HEALTH_MAX_CONCURRENCY` (4), `APIOME_MCP_HEALTH_TIMEOUT` (10),
+    `APIOME_MCP_HEALTH_MAX_PER_TICK` (200).
+  - **Summary** — new pure `app/mcp_health.py`: `status` `down` when the latest probe failed,
+    `degraded` when it succeeded but the window's uptime is under 99%, `up` otherwise, `unknown`
+    with no probe; `uptime_pct`; nearest-rank p50 / p95 latency of the successful probes.
+  - **API** — `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/uptime?window_hours=&limit=`
+    (`McpEndpointUptimeResponse`: `summary`, `checks` newest first, `truncated`); tenant-scoped
+    `404`; `window_hours` 1–168 (default 24), `limit` 1–1000 (default 100).
+  - **Badge** — the public `GET /mcp/badge/{tenant}/{slug}.svg` gains `metric=uptime`
+    (`up · 99.9%` / `degraded · 97.2%` / `down` / `unknown`, over the last 24 hours).
+  - OpenAPI 1.539.0 → 1.540.0; REST reference regenerated.
+
 ## [1.679.0] - 2026-11-08
 
 ### Added

@@ -83,6 +83,12 @@ from .mcp_discovery_engine import (
 from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
 from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
 from .mcp_freshness_report import mcp_freshness_report_from_rows
+from .mcp_health import (
+    DEFAULT_WINDOW_HOURS,
+    MAX_HEALTH_ROWS,
+    MAX_WINDOW_HOURS,
+    summarize_health_checks,
+)
 from .mcp_insight_aggregation import (
     DISCOVERY_TIMELINE_WINDOW,
     TOOL_LATENCY_WINDOW_DAYS,
@@ -163,12 +169,14 @@ from .models import (
     McpEndpointTestRequest,
     McpEndpointTestResponse,
     McpEndpointUpdate,
+    McpEndpointUptimeResponse,
     McpEndpointVersionListResponse,
     McpEndpointVersionResponse,
     McpEndpointViewMarkRequest,
     McpEndpointViewResponse,
     McpFacetedSearchResponse,
     McpFreshnessReportResponse,
+    McpHealthCheckOut,
     McpInsightCatalogResponse,
     McpInsightEvolutionResponse,
     McpInsightGraphResponse,
@@ -207,6 +215,7 @@ from .models import (
     McpToolInvocationReliabilityOut,
     McpTrustProfileOut,
     McpTypeCountsOut,
+    McpUptimeSummaryOut,
     McpVersionChangesResponse,
     McpVersionCompareResponse,
     McpVersionRef,
@@ -3232,6 +3241,53 @@ async def get_mcp_endpoint_insight_reliability(
         invocation=McpInvocationReliabilityOut.model_validate(invocation.as_dict()),
         health=mcp_discovery_health_out(timeline.as_dict(), endpoint),
         tools=McpToolInvocationReliabilityOut.model_validate(tools.as_dict()),
+    )
+
+
+@mcp_endpoints_router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/uptime",
+    response_model=McpEndpointUptimeResponse,
+)
+async def get_mcp_endpoint_uptime(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    window_hours: int = Query(
+        DEFAULT_WINDOW_HOURS,
+        ge=1,
+        le=MAX_WINDOW_HOURS,
+        description="How many hours of probe history to summarize (1-168).",
+    ),
+    limit: int = Query(
+        100,
+        ge=1,
+        le=1000,
+        description="The most recent probes to list in `checks` (the summary always covers the whole window).",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointUptimeResponse:
+    """Return the endpoint's reachability and latency history and its uptime summary (MCAT-13.3).
+
+    The health sweep probes each enabled, network-reachable endpoint with the MCP ``initialize``
+    handshake on a short cadence and records ``up`` / ``down`` and the latency of every probe.
+    ``summary`` folds every probe in the last ``window_hours`` into the status the health badge shows
+    (``up`` / ``degraded`` / ``down`` / ``unknown``), the uptime percentage and the p50 / p95 latency
+    of the successful probes; ``checks`` lists the newest ``limit`` probes. An endpoint with no probe
+    in the window (never probed, a stdio server, or monitoring switched off) returns
+    ``status='unknown'`` and an empty list — a ``200``, never a ``500``. Returns ``404`` when the
+    endpoint is not the caller's tenant's.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+
+    rows = db.list_mcp_health_checks(
+        str(endpoint_id), window_hours=window_hours, limit=MAX_HEALTH_ROWS
+    )
+    summary = summarize_health_checks(rows, window_hours=window_hours)
+    return McpEndpointUptimeResponse(
+        endpoint_id=str(endpoint_id),
+        summary=McpUptimeSummaryOut.model_validate(summary.as_dict()),
+        checks=[McpHealthCheckOut.model_validate(dict(row)) for row in rows[:limit]],
+        truncated=len(rows) > limit,
     )
 
 
