@@ -1896,6 +1896,12 @@
       "data": "fixture:hive-mcp-endpoint/test.html"
     },
     {
+      "id": "mcp-endpoint-credentials",
+      "route": "/ade/dashboard/mcp/[endpointId]",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-mcp-endpoint/credentials.html"
+    },
+    {
       "id": "mcp-endpoint-settings",
       "route": "/ade/dashboard/mcp/[endpointId]",
       "waitFor": "#a11y-mount > *",
@@ -1906,7 +1912,7 @@
       "route": "/ade/dashboard/mcp/[endpointId]",
       "waitFor": "#a11y-mount > *",
       "scrollTo": "[data-testid=\"mcp-oauth-connection\"]",
-      "data": "fixture:hive-mcp-endpoint/settings-oauth.html"
+      "data": "fixture:hive-mcp-endpoint/credentials-oauth.html"
     },
     {
       "id": "mcp-analytics",

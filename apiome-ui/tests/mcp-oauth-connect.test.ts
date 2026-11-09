@@ -92,8 +92,8 @@ describe('request and redirect helpers', () => {
     expect(mcpOAuthCallbackParams('?code=c')).toBeNull();
   });
 
-  it('returns to the Settings tab', () => {
-    expect(mcpOAuthReturnPath('abc')).toBe('/ade/dashboard/mcp/abc?tab=settings');
+  it('returns to the Credentials tab', () => {
+    expect(mcpOAuthReturnPath('abc')).toBe('/ade/dashboard/mcp/abc?tab=credentials');
   });
 });
 

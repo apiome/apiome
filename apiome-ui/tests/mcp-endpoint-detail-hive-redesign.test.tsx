@@ -514,6 +514,7 @@ describe('the tab strip', () => {
       'Versions',
       'Lint & score',
       'Test',
+      'Credentials',
       'Settings',
       'Trust posture',
     ]);
@@ -538,6 +539,7 @@ describe('the tab strip', () => {
         'Versions',
         'Lint & score',
         'Test',
+        'Credentials',
         'Dependencies',
         'Settings',
         'Trust posture',
@@ -991,7 +993,32 @@ describe('the browser fixtures', () => {
     write('settings', pageColumn());
   });
 
-  test('renders the OAuth connection on settings (and writes its fixture)', async () => {
+  test('renders the credentials surface (and writes its fixture)', async () => {
+    // A server with a bearer token stored (MCAT-10.6, #3702): masked, with its key version.
+    routeFetch({
+      credentials: () =>
+        jsonResponse({
+          success: true,
+          credential: {
+            endpoint_id: ENDPOINT_ID,
+            auth_type: 'bearer',
+            configured: true,
+            masked_secret: '********',
+            key_version: 2,
+            oauth_metadata: {},
+            updated_at: '2026-11-08T12:00:00Z',
+          },
+        }),
+    });
+    await renderScreen();
+    await openTab('Credentials');
+    await screen.findByTestId('mcp-credentials-mask');
+    expect(screen.getByTestId('mcp-credentials-title')).toHaveTextContent('Bearer token stored');
+    expect(screen.getByTestId('mcp-credentials-encryption-note')).toBeInTheDocument();
+    write('credentials', pageColumn());
+  });
+
+  test('renders the OAuth connection on credentials (and writes its fixture)', async () => {
     // An OAuth-protected server that is connected and renews its token (MCAT-6.4, #3680).
     routeFetch({
       credentials: () =>
@@ -1018,9 +1045,9 @@ describe('the browser fixtures', () => {
         }),
     });
     await renderScreen();
-    await openTab('Settings');
+    await openTab('Credentials');
     await screen.findByTestId('mcp-oauth-connection');
     expect(screen.getByTestId('mcp-oauth-detail')).toHaveTextContent('renews automatically');
-    write('settings-oauth', pageColumn());
+    write('credentials-oauth', pageColumn());
   });
 });

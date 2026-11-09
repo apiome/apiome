@@ -2,7 +2,7 @@
  * Component tests for the MCP OAuth connection section and callback page
  * (V2-MCP-20.4 / MCAT-6.4, #3680): the section appears only for an OAuth-protected server, starts
  * the authorization and sends the browser to the authorization URL; the callback page posts the
- * redirect parameters and returns to the endpoint's Settings tab, or shows why it failed.
+ * redirect parameters and returns to the endpoint's Credentials tab, or shows why it failed.
  */
 
 import React from 'react';
@@ -138,11 +138,11 @@ describe('McpOAuthCallbackClient', () => {
     window.history.replaceState({}, '', `/ade/dashboard/mcp/oauth/callback${search}`);
   }
 
-  it('posts the redirect parameters and returns to Settings', async () => {
+  it('posts the redirect parameters and returns to Credentials', async () => {
     at('?code=c1&state=s1&iss=https%3A%2F%2Fauth.example.com');
     routeFetch({}, () => jsonResponse({ success: true, endpoint_id: ENDPOINT_ID }));
     render(<McpOAuthCallbackClient />);
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/ade/dashboard/mcp/${ENDPOINT_ID}?tab=settings`));
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith(`/ade/dashboard/mcp/${ENDPOINT_ID}?tab=credentials`));
     expect(posts).toHaveLength(1);
     expect(posts[0].url).toBe('/api/mcp/oauth/callback');
     expect(posts[0].body).toEqual({

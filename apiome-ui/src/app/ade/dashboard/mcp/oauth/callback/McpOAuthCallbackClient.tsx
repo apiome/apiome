@@ -6,7 +6,7 @@
  * The authorization server redirects here with `state` and `code` (or `error`). The page posts
  * them once to `/api/mcp/oauth/callback`; apiome-rest checks the sealed state, exchanges the code
  * with the PKCE verifier and stores the tokens sealed. On success the user is sent to the
- * endpoint's Settings tab; on failure the reason is shown with a way back to the catalog.
+ * endpoint's Credentials tab; on failure the reason is shown with a way back to the catalog.
  */
 
 import * as React from 'react';
