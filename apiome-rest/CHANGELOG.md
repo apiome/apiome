@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.676.0] - 2026-11-08
+
+### Added
+- **MCP registry sync and namespacing (V2-MCP-26.3 / MCAT-12.3, #3709).** The `mcp-registry`
+  connector keeps registry-sourced MCP servers fresh and uniquely named.
+  - **Cadence.** The connector sweep re-syncs an `mcp-registry` connector with no
+    `refresh_interval_seconds` of its own every `APIOME_MCP_REGISTRY_SYNC_INTERVAL` seconds
+    (`settings.mcp_registry_sync_interval_seconds`, default `3600`, at least `60`). Other kinds keep
+    `APIOME_REFRESH_DEFAULT_INTERVAL`. `catalog_connector_store.list_due_connectors` takes
+    `kind_intervals`, built by `catalog_connector_sync.connector_kind_intervals`.
+  - **Reverse-DNS names.** `split_server_name` requires `<namespace>/<server>` with a dotted
+    namespace (`io.github.acme/weather`). Any other name stays `discovered` with
+    `name-not-namespaced`. A new endpoint's slug is the whole namespaced name
+    (`io-github-acme-weather`) instead of the last segment.
+  - **No duplicate names.** Before creating an endpoint, the connector looks up the tenant's live
+    registry endpoint with the same `registry_metadata.serverName`
+    (`Database.find_registry_mcp_endpoint`, case-insensitive). One from the same registry is
+    adopted and refreshed. One from another registry keeps the name, and the entry stays
+    `discovered` with `duplicate-name`.
+  - **`_meta` status.** Listings now keep `deleted` entries (`McpRegistryClient.list_servers_page` /
+    `iter_servers` take `include_deleted`). A `deleted` entry creates nothing, and the sync does not run discovery for it.
+    Its endpoint, if any, is kept with `registry_metadata.status = "deleted"`, and the row stays
+    `discovered` with `registry-deleted`. Restoring it to `active` imports it again.
+    `deprecated` entries import as before. Each run's `summary.findings` lists
+    `mcp-registry-deprecated` / `mcp-registry-deleted` entries. A status change re-syncs the entry
+    even when the registry leaves `updatedAt` unchanged.
+
+### Changed
+- An entry the registry marks `deleted` no longer turns its inventory row `missing`. Only an entry
+  the registry stops listing does. apiome-rest 1.675.0 → 1.676.0 (no API change; the REST
+  reference is unchanged).
+
 ## [1.675.0] - 2026-11-08
 
 ### Added

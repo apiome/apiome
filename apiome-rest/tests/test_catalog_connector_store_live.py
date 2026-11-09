@@ -160,3 +160,54 @@ def test_due_selection_skips_paused_connectors_and_honours_the_cadence(live):
     assert str(due["id"]) not in ids  # just ran: not due until its cadence passes
     store.record_connector_outcome(database, str(paused["id"]), status="active")
     assert store.get_connector(database, tenant_id, str(paused["id"]))["status"] == "paused"
+
+
+def test_due_selection_uses_a_kind_default_cadence(live):
+    """V2-MCP-26.3: a kind default (mcp-registry: hourly) replaces the deployment default."""
+    database, tenant_id, created = live
+    registry = _connector(
+        database, tenant_id, created, kind="mcp-registry", base_url="https://registry.example.test", scope={}
+    )
+    other = _connector(database, tenant_id, created)
+    for row in (registry, other):
+        store.record_connector_outcome(database, str(row["id"]), status="active")
+    database._execute_write(
+        "UPDATE apiome.catalog_connectors SET last_run_at = now() - interval '10 minutes' WHERE id = ANY(%s::uuid[])",
+        ([str(registry["id"]), str(other["id"])],),
+    )
+    ids = {
+        str(r["id"])
+        for r in store.list_due_connectors(
+            database, default_interval_seconds=300, floor_seconds=60, kind_intervals={"mcp-registry": 3600}
+        )
+    }
+    assert str(other["id"]) in ids and str(registry["id"]) not in ids
+
+
+def test_a_registry_server_name_finds_its_endpoint(live):
+    """V2-MCP-26.3: the duplicate-name lookup matches serverName case-insensitively, registry rows only."""
+    database, tenant_id, _created = live
+    users = database.execute_query("SELECT id FROM apiome.users ORDER BY created_at LIMIT 1")
+    if not users:
+        pytest.skip("no user in the local database")
+    name = f"io.github.live-{uuid.uuid4().hex[:8]}/weather"
+    rows = []
+    try:
+        for added_via in ("manual", "registry"):
+            row = database.insert_mcp_endpoint(
+                tenant_id=tenant_id,
+                creator_id=str(users[0]["id"]),
+                name="Weather",
+                base_slug="io-github-live-weather",
+                endpoint_url="https://weather.example.test/mcp",
+                transport="streamable_http",
+                added_via=added_via,
+            )
+            rows.append(row)
+            database.set_mcp_endpoint_registry_metadata(tenant_id, str(row["id"]), {"serverName": name})
+        found = database.find_registry_mcp_endpoint(tenant_id, name.upper())
+        assert found is not None and str(found["id"]) == str(rows[1]["id"])
+        assert database.find_registry_mcp_endpoint(tenant_id, name + "-other") is None
+    finally:
+        for row in rows:
+            database._execute_write("DELETE FROM apiome.mcp_endpoints WHERE id = %s::uuid", (str(row["id"]),))

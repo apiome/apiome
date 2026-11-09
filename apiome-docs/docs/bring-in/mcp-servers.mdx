@@ -255,11 +255,12 @@ workspace's [registry endpoint](../ship/mcp-registry.mdx).
    - **Apiome workspace API key**, to read another Apiome workspace.
 
    The credential is stored encrypted and never shown again.
-5. Leave **Keep these servers in sync** ticked to re-sync daily. Only servers whose registry entry
-   changed are imported again.
+5. Leave **Keep these servers in sync** ticked to re-sync hourly. Only servers whose registry entry
+   changed are imported again. Untick it to sync only when you ask: the connector is registered
+   **paused**.
 6. **Click “Import servers →”.**
 
-<Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked" />
+<Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked to re-sync hourly" />
 
 Apiome registers an [MCP registry connector](../reference/rest/connectors.md) for the registry and runs
 its first sync. Each server with a reachable `streamable-http` or `sse` remote is added here,
@@ -274,6 +275,9 @@ discovered, linted and graded. The dialog then shows:
 | `remote-templated` | Its URL needs a value you fill in; add it with **One server** |
 | `remote-refused` | Its URL resolves to a private address |
 | `remote-unreachable` | Its remote did not answer; the next sync tries again |
+| `name-not-namespaced` | Its name has no reverse-DNS namespace, such as `io.github.acme/weather` |
+| `duplicate-name` | A server with this name is already in your catalog from another registry |
+| `registry-deleted` | The registry marks the server deleted; see [Registry status](#registry-status) |
 
 A registry URL that resolves to a private address, or a registry that refuses the request, imports
 nothing: the dialog shows the reason and creates no connector. Every sync is recorded with its counts on
@@ -470,7 +474,7 @@ tell it apart by its source:
   an exact version.
 
 - **Registry metadata** (`registry_metadata` on the server in the API) records the entry's server
-  name, version, website, the registry's status (`active` or `deprecated`) and dates, and the
+  name, version, website, the registry's status (`active`, `deprecated` or `deleted`) and dates, and the
   remote Apiome calls with the headers it declares. Secret header values are never stored. See
   the [connector items API](../reference/rest/connectors.md#list-connector-items-v1-tenants-tenant-slug-connectors-connector-id-items-get).
 
@@ -479,6 +483,43 @@ registry, and retires a source link the registry no longer lists. Links you adde
 packages, or whose remote resolves to a private address, is not added. A server whose remote does not
 answer is added, but its row on the connector stays **discovered** until it does. The connector's
 **Items** tab says why.
+
+### Sync cadence
+
+A registry connector re-syncs **hourly**. For another schedule, set the connector's
+`refreshIntervalSeconds`. To sync now, call `POST …/connectors/{id}/sync`. A **paused** connector
+syncs only when you ask. An operator can change the hourly default with `APIOME_MCP_REGISTRY_SYNC_INTERVAL`
+(see [Operating Apiome](../admin/operating-apiome.mdx#mcp-registry-sync)).
+
+### Server names
+
+A registry names each server with a reverse-DNS namespace: the owner's domain written backwards,
+a `/`, then the server — `io.github.acme/weather`, `com.example/orders`. That name is the server's
+identity in your workspace:
+
+- **One name, one server.** A name already in your catalog is never added twice. A second connector
+  on the same registry (another search, say) refreshes the server the first one added. The same name
+  from a different registry stays **discovered** with `duplicate-name`, and the reason names the
+  registry that has it.
+- **No namespace, no import.** A name like `weather` or `acme/weather` stays **discovered** with
+  `name-not-namespaced`.
+- **Slugs follow the name.** A new server's slug is the whole name, `io-github-acme-weather`, so
+  `io.github.acme/weather` and `com.example/weather` never compete for `weather`.
+
+### Registry status
+
+Each sync reads the status the registry gives an entry (`_meta`), records it in the server's
+**Registry metadata**, and lists every entry that is not active in the run's findings
+(`mcp-registry-deprecated`, `mcp-registry-deleted`) on the connector's **Runs** tab.
+
+| Status | What the sync does |
+| --- | --- |
+| `active` | Adds or refreshes the server, and discovers it |
+| `deprecated` | The same as `active`. The status shows the server is on its way out |
+| `deleted` | Keeps the server and marks it `deleted`, without discovering it. It adds nothing new. The row stays **discovered** with `registry-deleted` |
+
+An entry the registry makes `active` again is imported again on the next sync. An entry the registry
+stops listing at all turns **missing**, and its server stays.
 
 ### How Apiome reads a registry
 
@@ -495,8 +536,8 @@ the same API as the official registry (`https://registry.modelcontextprotocol.io
   the list.
 - **A changing schema.** The registry API is still a preview, so Apiome reads what it can.
   Unknown fields are kept. Entries in the older flat or snake_case shapes are read like current
-  ones. An entry with no server name is skipped, and a `deleted` entry is left out, so its row
-  turns **missing**.
+  ones. An entry with no server name is skipped. A `deleted` entry is read, so its server can be
+  marked (see [Registry status](#registry-status)).
 - **Registry URL.** A **Registry URL** that ends in `/v0.1` or `/v0.1/servers` still works. Apiome
   uses the root.
 

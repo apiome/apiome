@@ -1,0 +1,23 @@
+---
+slug: mcp-registry-sync
+title: Registry servers stay fresh, and one name is one server
+description: "MCP registry connectors re-sync hourly, honour the registry's status and never import duplicates."
+authors: [apiome]
+---
+
+MCP servers you [import from a registry](/bring-in/mcp-servers#import-from-a-registry) now re-sync
+**hourly**, and each sync follows what the registry says about them. See
+[Servers from a registry](/bring-in/mcp-servers#servers-from-a-registry).
+
+{/* truncate */}
+
+- **Hourly by default.** A registry connector with no cadence of its own re-syncs every hour. The
+  import dialog no longer pins a daily cadence. Untick **Keep these servers in sync** and the
+  connector is registered paused, so it syncs only when you ask. Operators change the default with
+  `APIOME_MCP_REGISTRY_SYNC_INTERVAL`.
+- **The registry's status.** Each server records `active`, `deprecated` or `deleted`. A server the
+  registry deletes is kept and marked **deleted**; the sync no longer discovers it. One the
+  registry restores imports again. Every run lists the deprecated and deleted entries in its findings.
+- **One name, one server.** Registry names are reverse-DNS namespaced (`io.github.acme/weather`).
+  A name already in your catalog is never added twice, and a name with no namespace is not imported.
+  New servers get the whole name as their slug (`io-github-acme-weather`).

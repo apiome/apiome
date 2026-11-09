@@ -150,7 +150,13 @@ export function dryRunConnector(draft: ConnectorDraft, credentials: Record<strin
 
 /** Register a connector, then store its credential when it has one. */
 export async function createConnector(
-  draft: ConnectorDraft & { name: string; refreshIntervalSeconds: number | null; conflictPolicy: string },
+  draft: ConnectorDraft & {
+    name: string;
+    refreshIntervalSeconds: number | null;
+    conflictPolicy: string;
+    /** `paused` registers a connector that syncs only when asked; omitted means `active`. */
+    status?: 'active' | 'paused';
+  },
   credentials: Record<string, string> | null
 ): Promise<Connector> {
   const created = await call<Connector>('/api/connectors', {
@@ -162,6 +168,7 @@ export async function createConnector(
       scope: draft.scope,
       refreshIntervalSeconds: draft.refreshIntervalSeconds ?? undefined,
       conflictPolicy: draft.conflictPolicy,
+      status: draft.status,
     },
   });
   if (credentials) await putCredentials(created.id, credentials);

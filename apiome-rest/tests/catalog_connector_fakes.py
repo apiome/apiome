@@ -127,7 +127,7 @@ class FakeConnectorStore:
         self.credentials.pop(connector_id, None)
         return {"id": connector_id, "name": row["name"], "kind": row["kind"]}
 
-    def list_due_connectors(self, db, *, default_interval_seconds, floor_seconds):
+    def list_due_connectors(self, db, *, default_interval_seconds, floor_seconds, kind_intervals=None):
         live = [r for r in self.connectors.values() if r["deleted_at"] is None]
         return [self._view(r) for r in live if r["status"] != STATUS_PAUSED]
 

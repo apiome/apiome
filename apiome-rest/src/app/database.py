@@ -25939,6 +25939,35 @@ class Database:
             conn.rollback()
             raise e
 
+    def find_registry_mcp_endpoint(self, tenant_id: str, server_name: str) -> Optional[Dict[str, Any]]:
+        """The tenant's live registry-imported endpoint for an MCP registry server name (V2-MCP-26.3, #3709).
+
+        A registry server name (``io.github.acme/weather``) names one MCP server per tenant: the
+        ``mcp-registry`` connector looks it up before creating an endpoint, so two connectors (or
+        two registries) never import the same name twice. Compared case-insensitively, since the
+        namespace is a reverse-DNS name.
+
+        Args:
+            tenant_id: The tenant.
+            server_name: The registry server name.
+
+        Returns:
+            The oldest matching endpoint (``added_via = 'registry'``, not deleted, its
+            ``registry_metadata.serverName`` equal to ``server_name``), or ``None``.
+        """
+        q = f"""
+            SELECT {self._MCP_ENDPOINT_COLUMNS}
+            FROM apiome.mcp_endpoints
+            WHERE tenant_id = %s::uuid
+              AND deleted_at IS NULL
+              AND added_via = 'registry'
+              AND lower(registry_metadata->>'serverName') = lower(%s)
+            ORDER BY created_at, id
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (tenant_id, server_name))
+        return dict(rows[0]) if rows else None
+
     def set_mcp_endpoint_registry_metadata(
         self,
         tenant_id: str,

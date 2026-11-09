@@ -347,6 +347,7 @@ class McpRegistryClient:
         search: Optional[str] = None,
         updated_since: Optional[Union[str, datetime]] = None,
         version: Optional[str] = LATEST,
+        include_deleted: bool = False,
     ) -> ServerPage:
         """Fetch one ``GET /v0.1/servers`` page.
 
@@ -357,6 +358,8 @@ class McpRegistryClient:
             updated_since: Only servers updated after this instant (RFC 3339 string or datetime).
             version: ``latest`` (default) for each server's latest version, an exact version, or
                 ``None`` to list every version.
+            include_deleted: Keep entries the registry marks ``deleted`` (the connector sync marks
+                their MCP servers deleted, V2-MCP-26.3); left out by default.
 
         Returns:
             The page.
@@ -380,7 +383,8 @@ class McpRegistryClient:
                 error_class=ERROR_CLASS_UNEXPECTED,
             )
         listed = body["servers"]
-        servers = [entry for entry in map(parse_server_entry, listed) if entry is not None]
+        parsed = (parse_server_entry(entry, include_deleted=include_deleted) for entry in listed)
+        servers = [entry for entry in parsed if entry is not None]
         return ServerPage(servers=servers, next_cursor=_next_cursor(body), listed=len(listed))
 
     def iter_servers(
@@ -390,6 +394,7 @@ class McpRegistryClient:
         search: Optional[str] = None,
         updated_since: Optional[Union[str, datetime]] = None,
         version: Optional[str] = LATEST,
+        include_deleted: bool = False,
         max_pages: int = DEFAULT_MAX_PAGES,
     ) -> Iterator[RegistryServer]:
         """Yield every listed server, following ``metadata.nextCursor`` page by page.
@@ -397,7 +402,7 @@ class McpRegistryClient:
         Paging stops when a page carries no cursor, or repeats one already followed.
 
         Args:
-            limit, search, updated_since, version: As :meth:`list_servers_page`.
+            limit, search, updated_since, version, include_deleted: As :meth:`list_servers_page`.
             max_pages: The most pages followed.
 
         Yields:
@@ -412,7 +417,12 @@ class McpRegistryClient:
         seen = set()
         for _ in range(max_pages):
             page = self.list_servers_page(
-                cursor=cursor, limit=limit, search=search, updated_since=updated_since, version=version
+                cursor=cursor,
+                limit=limit,
+                search=search,
+                updated_since=updated_since,
+                version=version,
+                include_deleted=include_deleted,
             )
             yield from page.servers
             cursor = page.next_cursor
