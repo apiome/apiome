@@ -13228,6 +13228,36 @@ class McpEndpointDeleteResponse(BaseModel):
     jobs_deleted: int = 0
 
 
+class McpPublishGuardOut(BaseModel):
+    """One public publish guard's verdict (V2-MCP-23.5 / MCAT-9.5, #3695).
+
+    ``guard`` is ``credentials`` / ``grade`` / ``reachable``; ``reason`` is the human-readable
+    explanation; ``details`` is machine-readable context (credential findings name the field and
+    secret type, never the value).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guard: str = Field(..., examples=["grade"])
+    passed: bool
+    reason: str = Field(..., examples=["Lint grade B meets the minimum grade C."])
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+
+class McpEndpointPublishResponse(BaseModel):
+    """Result of publishing an endpoint to the public catalog, or unpublishing it (#3695).
+
+    On publish every guard passed; ``guards`` lists their verdicts. On unpublish ``guards`` is
+    empty. ``endpoint`` is the updated, credential-redacted record.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint: McpEndpointOut
+    guards: List[McpPublishGuardOut] = Field(default_factory=list)
+
+
 def mcp_endpoint_out_from_row(row: Dict[str, Any]) -> McpEndpointOut:
     """Project an ``apiome.mcp_endpoints`` row onto the wire model.
 

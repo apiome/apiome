@@ -251,6 +251,7 @@ def test_create_endpoint_requires_authentication():
 def test_patch_endpoint_ok_applies_only_present_fields():
     updated = {**_ENDPOINT_ROW, "enabled": False, "name": "Renamed"}
     with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.update_mcp_endpoint.return_value = updated
         r = client.patch(
             "/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111",
@@ -266,6 +267,7 @@ def test_patch_endpoint_ok_applies_only_present_fields():
 
 def test_patch_endpoint_blank_description_becomes_null():
     with patch("app.mcp_catalog_routes.db") as mdb:
+        mdb.get_mcp_endpoint.return_value = _ENDPOINT_ROW
         mdb.update_mcp_endpoint.return_value = _ENDPOINT_ROW
         client.patch(
             "/v1/mcp/acme/endpoints/11111111-1111-1111-1111-111111111111",

@@ -1,0 +1,24 @@
+---
+slug: mcp-public-publish-guards
+title: Checks before an MCP server goes public
+description: "Publishing an MCP server first checks credentials, grade and reachability."
+authors: [apiome]
+---
+
+**Publish** on an MCP server's page now checks the server before it reaches the public catalog. If a
+check fails, the server stays private and the message names every check that failed.
+
+{/* truncate */}
+
+- **No credentials.** Nothing the public catalog shows may look like a credential: the name,
+  description, category and host, and the server's instructions and tool, resource and prompt
+  descriptions. The finding names the field, never the secret.
+- **Minimum grade.** The current version must be graded **C** or better. Operators change the
+  minimum with `APIOME_MCP_PUBLISH_MIN_GRADE`, or turn this check off with `off`.
+- **Reachable.** The server must be enabled and discovered, its last discovery must have worked, and
+  its latest uptime check must have answered.
+- **Unpublish** takes the server out of the public catalog at once and makes it **Private** again.
+- **Over the API.** `POST /v1/mcp/{tenant}/endpoints/{endpoint}/publish` and `…/unpublish`. A
+  `PATCH` that makes a server public runs the same checks.
+
+See [Publish to the public catalog](/bring-in/mcp-servers#publish-to-the-public-catalog).
