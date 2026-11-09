@@ -1,0 +1,24 @@
+---
+slug: mcp-outbound-auth
+title: Every way to sign Apiome in to an MCP server, in one place
+description: "Bearer, header and OAuth 2.1 credentials for MCP servers, encrypted and tested end-to-end."
+authors: [apiome]
+---
+
+Apiome can now reach any protected MCP server it catalogs. Store a bearer token or a custom header,
+or connect with OAuth 2.1 and let Apiome keep the token fresh. Each is encrypted at rest and sent
+on discovery, the scheduled sweep and **Test** calls. The new
+[Authentication](/bring-in/mcp-servers#authentication) section on the MCP servers page explains
+each auth type, where to set it and how it is kept.
+
+{/* truncate */}
+
+- **Four auth types.** None, **Bearer token**, **Custom header** and **OAuth 2.1**.
+- **Encrypted and masked.** Secrets are sealed with AES-256-GCM, travel only in headers and never
+  come back from the API.
+- **OAuth that renews itself.** Discovery finds the authorization server. **Connect with OAuth**
+  signs in with PKCE, and Apiome refreshes the token before it expires, or after the server rejects
+  it.
+- **Checked as a whole.** A new end-to-end test runs the full chain against a real database and a
+  protected server. It also fixed a timestamp bug that let two token refreshes in one transaction
+  both claim to win.

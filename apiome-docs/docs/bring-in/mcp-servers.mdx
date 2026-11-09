@@ -74,6 +74,39 @@ Over the older transport, a server may negotiate the **2024-11-05** protocol ver
 **Lint & score** tab flags that version as unsupported, because it is not one of the current
 revisions.
 
+### Authentication
+
+Most MCP servers outside your network need a credential. Apiome stores one credential per server
+and sends it on every request it makes to that server: discovery, re-discovery, the scheduled
+sweep and **Test** calls.
+
+| Auth type | What Apiome sends | Set it with |
+| --- | --- | --- |
+| **None (anonymous)** | Nothing | The default; clear a credential to return to it |
+| **Bearer token** | `Authorization: Bearer <token>` | **Add MCP server**, or `PUT …/credentials` with `{"token": "…"}` |
+| **Custom header** | One header you name, such as `X-Api-Key: <value>` | **Add MCP server**, or `PUT …/credentials` with `{"name": "…", "value": "…"}` |
+| **OAuth 2.1** | `Authorization: Bearer <access token>`, renewed by Apiome | **Settings → “Connect with OAuth”** (see [Connect with OAuth](#connect-with-oauth)), or paste an **OAuth 2.1 access token** in **Add MCP server** |
+
+How credentials are kept:
+
+- **Encrypted, never shown again.** Secrets are sealed with AES-256-GCM before they are stored,
+  under the key in `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS` (see
+  [Keys that encrypt stored secrets](../admin/operating-apiome.mdx#keys-that-encrypt-stored-secrets)).
+  Without that key, Apiome refuses to store a credential (`503`) instead of keeping it unprotected.
+- **Headers only.** A credential travels in a request header, never in the URL. Header names and
+  values carrying line breaks are refused when you save them.
+- **Masked when read.** [`GET …/endpoints/{endpoint_id}/credentials`](../reference/rest/mcp-catalog.md#get-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-get)
+  returns the auth type, whether a secret is stored (`configured`), a masked placeholder and the
+  non-secret `oauth_metadata`. It never returns the secret.
+- **Cleared in one call.** [`DELETE …/credentials`](../reference/rest/mcp-catalog.md#clear-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-delete)
+  removes it, and the server is reached anonymously again.
+- **An unreadable secret is not guessed at.** If a stored secret cannot be decrypted (for example,
+  its key was removed), Apiome sends no credential, and the server's **401** shows up as
+  `auth_required` on the run.
+
+A server that answers **401** without a credential tells Apiome how to sign in. The next two
+sections cover that.
+
 ### Servers protected by OAuth
 
 A server protected by OAuth 2.1 answers discovery with **401** and a `WWW-Authenticate` header that
