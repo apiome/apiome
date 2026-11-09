@@ -40,7 +40,8 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from .database import db
-from .mcp_change_events import build_version_created_event, emit_version_created
+from .mcp_change_events import build_version_created_event, emit_version_created, subscribe
+from .mcp_change_webhooks import deliver_version_created
 from .mcp_client import (
     DiscoveryError,
     DiscoveryErrorCode,
@@ -471,6 +472,22 @@ def _emit_version_created(
         )
         return
     emit_version_created(event)
+
+
+def _deliver_change_webhooks(event: Any) -> None:
+    """Send an ``mcp.version.created`` event to the tenant's webhooks (V2-MCP-27.2 / MCAT-13.2).
+
+    Subscribed to :mod:`app.mcp_change_events` below. Resolves this module's ``db`` at call time,
+    so the delivery rows go through the same handle that persisted the version.
+
+    Args:
+        event: The emitted :class:`app.mcp_change_events.McpVersionCreatedEvent`.
+    """
+    deliver_version_created(event, db)
+
+
+# Registered once at import; ``subscribe`` ignores a repeat, so a re-import never double-delivers.
+subscribe(_deliver_change_webhooks)
 
 
 def _persist_outcome(

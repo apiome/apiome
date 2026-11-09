@@ -342,7 +342,15 @@ id:
 mcp event mcp.version.created endpoint=<id> version_seq=3 changes=2 event_id=<id>
 ```
 
-A subscriber to that event that fails is logged as `mcp event handler … failed` and never fails the
+When the workspace has webhook subscriptions, `app.mcp_change_webhooks` then logs how many deliveries
+it queued:
+
+```text
+mcp-change-webhook: enqueued 2 deliveries of mcp.version.created endpoint=<id> event_id=<id>
+```
+
+A subscription that cannot be queued is logged as `mcp-change-webhook fan-out: failed to enqueue …`.
+A subscriber to that event that fails is logged as `mcp event handler … failed`; neither fails the
 discovery. The event's fields are on [How versions work](../bring-in/mcp-servers.mdx#the-change-event).
 
 ### MCP registry sync
