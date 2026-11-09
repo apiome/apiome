@@ -1,0 +1,66 @@
+---
+title: MCP Registry integration
+description: Bring servers in from the official MCP Registry, keep them current, search it.
+sidebar_position: 1.55
+tags: [mcp, registry]
+---
+
+<Route path="/ade/dashboard/mcp" />
+
+The [official MCP Registry](https://registry.modelcontextprotocol.io) lists public MCP servers, each
+described by a `server.json` entry. Apiome reads it as an upstream source: it imports the servers you
+choose into your catalog, keeps them in sync with the registry, and can search the registry next to
+your own servers. Apiome reads Azure API Center, a Kong MCP registry or another Apiome workspace the
+same way, because they all serve the same MCP Registry API (`v0.1`).
+
+<Screenshot id="mcp-servers-import-registry" alt="Add an MCP server, From a registry: the registry URL, a search of io.github.acme, no credential and Keep these servers in sync ticked to re-sync hourly" />
+
+## When to use it
+
+- **Your team's servers are already in a registry.** Import them all at once instead of adding them
+  one by one, and they stay up to date as the registry changes.
+- **You want to grade public servers before you use them.** Imported servers are discovered, linted
+  and graded like a server you added by hand, so you can compare them first.
+- **You want to see what exists before you build.** Search your catalog and the registry together,
+  and see which registry servers you already have.
+
+## Where you use it
+
+| Where | What you do there | Details |
+| --- | --- | --- |
+| **MCP servers → Add MCP server → From a registry** | Import a registry's servers, optionally only those matching a search | [Import from a registry](./mcp-servers.mdx#import-from-a-registry) |
+| A server's page (`/ade/dashboard/mcp/<id>`) | See it came from a registry: **Added via**, **Sources** and **Registry metadata** | [Servers from a registry](./mcp-servers.mdx#servers-from-a-registry) |
+| **Connectors** over the REST API (`mcp-registry` kind) | Change the sync cadence, sync now, read each sync's **Runs** and **Items** | [Connectors API](../reference/rest/connectors.md) |
+| **Browse**, the public portal (`/mcp/search`) | Tick **Include MCP Registry** to list registry servers after the catalog's | [Search MCP servers](../ship/browse-published-specs.md#search-mcp-servers) |
+| **REST API** (`GET /v1/mcp/{tenant}/search?include_registry=true`) | The same federated search from a script | [Search your catalog and the registry together](./mcp-servers.mdx#search-your-catalog-and-the-registry-together) |
+| Server settings | Point sync and search at another registry, change the hourly default | [Operating Apiome](../admin/operating-apiome.mdx#mcp-registry-sync) |
+
+## At a glance
+
+| You want to… | Read |
+| --- | --- |
+| Know how often servers re-sync, and how to change it | [Sync cadence](./mcp-servers.mdx#sync-cadence) |
+| Know why a server was not added (`no-remote`, `duplicate-name` …) | [Import from a registry](./mcp-servers.mdx#import-from-a-registry) |
+| Know how names like `io.github.acme/weather` keep servers unique | [Server names](./mcp-servers.mdx#server-names) |
+| Know what happens when the registry deprecates or deletes a server | [Registry status](./mcp-servers.mdx#registry-status) |
+| Know exactly how Apiome pages through a registry | [How Apiome reads a registry](./mcp-servers.mdx#how-apiome-reads-a-registry) |
+| Serve your own catalog as a registry, for a host or gateway | [MCP registry endpoint](../ship/mcp-registry.mdx) |
+
+## How the pieces fit
+
+- **One client, one API version.** Import, sync and search all read the registry through the same
+  client, pinned to `/v0.1/`. The API is still a preview, so unknown fields are kept and older entry
+  shapes are read like current ones.
+- **A connector per import.** **From a registry** registers an `mcp-registry` connector. It re-syncs
+  **hourly**, imports again only the entries that changed, and records every sync on its **Runs** tab.
+- **Only reachable remotes become servers.** An entry with a `streamable-http` or `sse` remote becomes
+  a private, unpublished server in your catalog. An entry that only ships packages, or whose remote
+  resolves to a private address, is listed with the reason instead.
+- **The registry name is the identity.** A server's reverse-DNS name is never added twice, and its
+  slug follows the whole name, so `io.github.acme/weather` and `com.example/weather` never collide.
+- **The registry's status is kept.** A `deprecated` server is refreshed as usual. A `deleted` one is
+  kept and marked deleted, not discovered again.
+- **Search never hides your results.** Registry matches come after your own, labelled, with the
+  servers you already have left out. A slow or failing registry still returns your results.
+- **Credentials stay out.** A registry credential is stored encrypted and never shown again. Secret
+  header values a registry declares are never stored, and search results carry no credentials.

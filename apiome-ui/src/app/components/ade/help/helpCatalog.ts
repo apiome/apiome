@@ -936,6 +936,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['model context protocol', 'add mcp server', 'endpoint', 'capability directory', 'analytics'],
   },
   {
+    id: 'mcp-registry-integration',
+    title: 'MCP Registry integration',
+    summary: 'Bring servers in from the official MCP Registry, keep them current, search it.',
+    page: 'apiome-docs/docs/bring-in/mcp-registry-integration.mdx',
+    section: 'spine',
+    keywords: ['server.json', 'upstream', 'sync', 'federated search', 'connector', 'overview'],
+  },
+  {
     id: 'agent-access',
     title: 'Agent access',
     summary: 'Expose published operations to AI agents as MCP tools, issue agent keys, and watch usage.',

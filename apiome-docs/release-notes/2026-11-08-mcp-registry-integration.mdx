@@ -1,0 +1,27 @@
+---
+slug: mcp-registry-integration
+title: MCP Registry integration
+description: "Import, sync and search servers from the official MCP Registry, mapped on one page."
+authors: [apiome]
+---
+
+Apiome now treats the official **MCP Registry** as an upstream source of MCP servers, and a new
+**MCP Registry integration** page maps everything it does with it.
+
+{/* truncate */}
+
+- **Import from a registry.** **Add MCP server → From a registry** brings in every server the
+  registry lists with a reachable `streamable-http` or `sse` remote — or only those matching a search
+  — and discovers, lints and grades each one.
+- **Kept in sync.** The registry connector re-syncs hourly, imports again only what changed, keeps
+  each server's `server.json` details as **Registry metadata**, and records the registry's status: a
+  deleted server is kept and marked **deleted**.
+- **One name, one server.** Reverse-DNS names such as `io.github.acme/weather` are never added twice,
+  and a new server's slug follows the whole name.
+- **Federated search.** Tick **Include MCP Registry** on the browse app's MCP search, or add
+  `include_registry=true` to the REST search, to list matching registry servers after your own,
+  labelled and without the ones you already have.
+- **Any v0.1 registry.** Azure API Center, a Kong MCP registry or another Apiome workspace work the
+  same way.
+
+See [MCP Registry integration](/bring-in/mcp-registry-integration).
