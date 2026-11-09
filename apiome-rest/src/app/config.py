@@ -133,6 +133,18 @@ class Settings(BaseSettings):
             "mcp_ai_digest_enabled",
         ),
     )
+    # Claude-assisted category suggestion (MCAT-9.4, #3694). An opt-in step on top of the keyword
+    # heuristic: when on (and an API key is set), ``…/category-suggestion?use_llm=true`` also asks the
+    # Claude API to pick a category from the tenant's lookup. OFF by default; the heuristic needs neither
+    # this flag nor a key. Suggest-only either way — a person confirms by patching the endpoint's
+    # category. See app.mcp_category_llm.
+    mcp_ai_categorization_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_AI_CATEGORIZATION_ENABLED",
+            "mcp_ai_categorization_enabled",
+        ),
+    )
     # Key used to sign Slate deployment artifacts (APX-3.1, private-suite#2456). Deliberately
     # separate from the JWT secret: see effective_slate_artifact_signing_key. Never logged.
     slate_artifact_signing_key: Optional[str] = Field(
@@ -193,7 +205,8 @@ class Settings(BaseSettings):
             "slate_domain_verification_secret",
         ),
     )
-    # Claude API key used only for the server-digest generation above. Read from the environment; never
+    # Claude API key used for the server-digest generation and the category suggestion above. Read from
+    # the environment; never
     # logged. When unset the feature stays a no-op even if the flag is on.
     anthropic_api_key: Optional[str] = Field(
         default=None,
@@ -211,6 +224,15 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices(
             "APIOME_MCP_AI_DIGEST_MODEL",
             "mcp_ai_digest_model",
+        ),
+    )
+    # Which Claude model picks a category when the Claude-assisted suggestion is on (MCAT-9.4). Defaults
+    # to the latest Opus; override to trade capability for cost. Returned with each suggestion.
+    mcp_ai_categorization_model: str = Field(
+        default="claude-opus-5-5",
+        validation_alias=AliasChoices(
+            "APIOME_MCP_AI_CATEGORIZATION_MODEL",
+            "mcp_ai_categorization_model",
         ),
     )
 

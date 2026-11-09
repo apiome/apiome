@@ -17002,6 +17002,94 @@ class McpTagVocabularyResponse(BaseModel):
     tags: List[McpTagUsageOut] = Field(default_factory=list)
 
 
+# ===========================================================================
+# MCP Catalog — auto-categorization suggestions (V2-MCP-23.4 / MCAT-9.4, #3694)
+# ===========================================================================
+#
+# Suggest-only: these envelopes describe a proposed category; nothing is applied until a person sets
+# the endpoint's ``category`` with ``PATCH /v1/mcp/{tenant}/endpoints/{endpoint_id}``.
+
+
+class McpCategorySuggestionOut(BaseModel):
+    """One ranked category suggestion from the keyword heuristic (MCAT-9.4).
+
+    ``score`` is the weighted keyword evidence; ``confidence`` (``0``–``1``) is the category's share
+    of all evidence, scaled down when the evidence is thin; ``matched_keywords`` explains the pick.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    slug: str
+    label: str
+    builtin: bool = False
+    score: int = 0
+    confidence: float = 0.0
+    matched_keywords: List[str] = Field(default_factory=list)
+
+
+class McpCategoryLlmSuggestionOut(BaseModel):
+    """The Claude-assisted pick, when it was requested and ran (MCAT-9.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    slug: str
+    label: str
+    rationale: str = ""
+    model: str
+
+
+class McpEndpointCategorySuggestionResponse(BaseModel):
+    """Category suggestion for one endpoint (MCAT-9.4). Never applied by this response.
+
+    ``suggested_category`` is the Claude pick when ``method`` is ``llm``, else the heuristic's top
+    suggestion, else ``null`` (no signal). ``applied`` is always ``false``: confirm a suggestion by
+    patching the endpoint's ``category``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    current_category: Optional[str] = None
+    version_id: Optional[str] = None
+    tool_count: int = 0
+    suggested_category: Optional[str] = None
+    method: str = "heuristic"
+    suggestions: List[McpCategorySuggestionOut] = Field(default_factory=list)
+    llm: Optional[McpCategoryLlmSuggestionOut] = None
+    ai_categorization_enabled: bool = False
+    applied: bool = False
+    detail: str = ""
+
+
+class McpCategorySuggestionQueueItemOut(BaseModel):
+    """One endpoint in the bulk suggestion queue (MCAT-9.4)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    endpoint_id: str
+    name: str
+    current_category: Optional[str] = None
+    tool_count: int = 0
+    suggested_category: Optional[str] = None
+    suggestions: List[McpCategorySuggestionOut] = Field(default_factory=list)
+
+
+class McpCategorySuggestionQueueResponse(BaseModel):
+    """Heuristic suggestions for many endpoints at once, uncategorized first (MCAT-9.4).
+
+    ``total`` counts every endpoint that matched the filter; ``items`` holds at most ``limit`` of them.
+    Nothing is applied.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    total: int = 0
+    items: List[McpCategorySuggestionQueueItemOut] = Field(default_factory=list)
+    applied: bool = False
+
+
 class McpCollectionMemberOut(BaseModel):
     """One endpoint membership row in a curated collection."""
 

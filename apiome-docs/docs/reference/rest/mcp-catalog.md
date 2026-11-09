@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 93 operations."
+description: "REST endpoints tagged mcp-catalog: 95 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.541.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.542.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 93 operations
+Tag: `mcp-catalog` · 95 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -483,6 +483,37 @@ Operation id: `delete_mcp_category_v1_mcp__tenant_slug__categories__slug__delete
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for delete mcp category. | `application/json` map of boolean |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/mcp/{tenant_slug}/category-suggestions` {#list-mcp-category-suggestions-v1-mcp-tenant-slug-category-suggestions-get}
+
+**List Mcp Category Suggestions**
+
+Heuristic category suggestions for many endpoints at once, for triage (MCAT-9.4).
+
+Lists the tenant's live endpoints without a category (all of them with
+``include_categorized=true``), newest first, each with its top suggestions. Keyword heuristic only —
+Claude is never called here. **Suggest-only:** nothing is applied; confirm each pick by patching
+the endpoint's ``category``. ``total`` counts every matching endpoint; ``items`` holds at most
+``limit`` (``1``–``50``).
+
+Operation id: `list_mcp_category_suggestions_v1_mcp__tenant_slug__category_suggestions_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `include_categorized` | query | boolean | no | Also suggest for endpoints that already have a category. |
+| `limit` | query | integer | no | Maximum number of rows to return. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mcp category suggestions. | `application/json` [`McpCategorySuggestionQueueResponse`](#schema-mcpcategorysuggestionqueueresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/mcp/{tenant_slug}/collections` {#list-mcp-collections-v1-mcp-tenant-slug-collections-get}
@@ -1009,6 +1040,42 @@ Operation id: `delete_mcp_endpoint_v1_mcp__tenant_slug__endpoints__endpoint_id__
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for delete mcp endpoint. | `application/json` [`McpEndpointDeleteResponse`](#schema-mcpendpointdeleteresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion` {#suggest-mcp-endpoint-category-v1-mcp-tenant-slug-endpoints-endpoint-id-category-suggestion-get}
+
+**Suggest Mcp Endpoint Category**
+
+Suggest a category for one endpoint from its tool names and descriptions (MCAT-9.4).
+
+**Suggest-only:** the response never changes the endpoint (``applied`` is always ``false``). A
+person confirms a suggestion by sending its slug as ``category`` to
+``PATCH /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}``.
+
+The keyword heuristic ranks the tenant's categories (built-in and its own) by weighted evidence in
+the current snapshot's tools and the server's identity, with the keywords that matched. With
+``use_llm=true`` and the Claude-assisted step configured, Claude also picks one category from the
+same lookup and that pick becomes ``suggested_category`` (``method`` = ``llm``); when the step is
+off or fails, the heuristic's top pick is used and ``detail`` says why. A never-discovered endpoint
+is scored on its name alone. ``404`` when the endpoint is not the caller's tenant's.
+
+Operation id: `suggest_mcp_endpoint_category_v1_mcp__tenant_slug__endpoints__endpoint_id__category_suggestion_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `use_llm` | query | boolean | no | Also ask Claude to pick a category (needs APIOME_MCP_AI_CATEGORIZATION_ENABLED and an API key; falls back to the heuristic otherwise). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for suggest mcp endpoint category. | `application/json` [`McpEndpointCategorySuggestionResponse`](#schema-mcpendpointcategorysuggestionresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/credentials` {#get-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-get}
@@ -3106,6 +3173,20 @@ Envelope for a single category (MCAT-9.3).
 | `success` | boolean | no | Success. |
 | `category` | `McpCategoryOut` | yes | Classification category for the primitive type. |
 
+### `McpCategorySuggestionQueueResponse` {#schema-mcpcategorysuggestionqueueresponse}
+
+Heuristic suggestions for many endpoints at once, uncategorized first (MCAT-9.4).
+
+``total`` counts every endpoint that matched the filter; ``items`` holds at most ``limit`` of them.
+Nothing is applied.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `total` | integer | no | Total. |
+| `items` | array of `McpCategorySuggestionQueueItemOut` | no | Items. |
+| `applied` | boolean | no | Applied. |
+
 ### `McpCategoryUpdate` {#schema-mcpcategoryupdate}
 
 Patch body for a tenant-defined category; only the keys present are applied (MCAT-9.3).
@@ -3334,6 +3415,29 @@ Advisory duplicate review list for the caller's catalog.
 | `flagged_endpoint_count` | integer | yes | Number of flagged endpoint. |
 | `groups` | array of `McpDuplicateGroup` | yes | Groups. |
 | `cross_tenant_hints` | array of `McpDuplicateCrossTenantHint` | no | Cross Tenant Hints. |
+
+### `McpEndpointCategorySuggestionResponse` {#schema-mcpendpointcategorysuggestionresponse}
+
+Category suggestion for one endpoint (MCAT-9.4). Never applied by this response.
+
+``suggested_category`` is the Claude pick when ``method`` is ``llm``, else the heuristic's top
+suggestion, else ``null`` (no signal). ``applied`` is always ``false``: confirm a suggestion by
+patching the endpoint's ``category``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint_id` | string | yes | Endpoint ID. |
+| `current_category` | string or null | no | Current Category. |
+| `version_id` | string or null | no | Project version identifier or semantic version label, depending on context. |
+| `tool_count` | integer | no | Number of tool. |
+| `suggested_category` | string or null | no | Suggested Category. |
+| `method` | string | no | Method. |
+| `suggestions` | array of `McpCategorySuggestionOut` | no | Suggestions. |
+| `llm` | `McpCategoryLlmSuggestionOut` or null | no | Llm. |
+| `ai_categorization_enabled` | boolean | no | Ai Categorization Enabled. |
+| `applied` | boolean | no | Applied. |
+| `detail` | string | no | Detail. |
 
 ### `McpEndpointCreate` {#schema-mcpendpointcreate}
 

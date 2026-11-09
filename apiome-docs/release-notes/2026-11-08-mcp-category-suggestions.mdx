@@ -1,0 +1,24 @@
+---
+slug: mcp-category-suggestions
+title: Suggested categories for MCP servers
+description: "Apiome suggests a category from each MCP server's tools; you confirm it."
+authors: [apiome]
+---
+
+Apiome can now suggest a category for a cataloged MCP server from its tool names and descriptions.
+Nothing changes until you accept a suggestion. For now you use it over the REST API.
+
+{/* truncate */}
+
+- **One server.** `GET /v1/mcp/{tenant}/endpoints/{endpoint}/category-suggestion` returns
+  `suggested_category` and up to three ranked `suggestions`, each with a `confidence` and the
+  `matched_keywords` behind it. A server with `run_query` and `list_tables` tools gets **Databases**.
+  Your own categories are suggested too, matched on the words in their slug and label.
+- **Many servers.** `GET /v1/mcp/{tenant}/category-suggestions` lists the servers with no category,
+  each with its suggestions, so you can work through the catalog in one pass.
+- **Confirm by setting it.** A suggestion is never applied for you. Accept it by setting the server's
+  `category` with `PATCH /v1/mcp/{tenant}/endpoints/{endpoint}`.
+- **Optional: ask Claude.** With `APIOME_MCP_AI_CATEGORIZATION_ENABLED` and a Claude API key set,
+  `use_llm=true` also has Claude choose from your categories and explain why.
+
+See [Suggested categories](/bring-in/mcp-servers#suggested-categories).

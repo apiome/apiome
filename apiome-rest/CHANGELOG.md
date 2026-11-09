@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.682.0] - 2026-11-08
+
+### Added
+- **MCP catalog auto-categorization suggestions (V2-MCP-23.4 / MCAT-9.4, #3694).** Apiome suggests a
+  category for a cataloged MCP server from its tool names and descriptions. Suggest-only: nothing is
+  applied until someone sets the endpoint's `category` with `PATCH /v1/mcp/{tenant_slug}/endpoints/{id}`.
+  - **Keyword heuristic** (`app/mcp_category_suggestion.py`) — a keyword list per built-in category;
+    tenant categories match on the words of their slug and label. A word counts 3 in a tool or server
+    name, 2 in a tool title and 1 in a description or the server's instructions, once per field. Up to
+    three suggestions with `score`, `confidence` (0–1) and `matched_keywords`; nothing below a score
+    of 3, and `other` is never suggested.
+  - **`GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion`** — suggestions for one
+    endpoint, plus `suggested_category`, `method`, `detail` and `applied` (always `false`).
+    `use_llm=true` also asks Claude (`app/mcp_category_llm.py`) to pick from the tenant's categories,
+    with the slugs as a structured-output enum and the answer checked again; it falls back to the
+    heuristic when off or unavailable. Off by default: `APIOME_MCP_AI_CATEGORIZATION_ENABLED` plus
+    `APIOME_ANTHROPIC_API_KEY`; `APIOME_MCP_AI_CATEGORIZATION_MODEL` defaults to `claude-opus-5-5`.
+  - **`GET /v1/mcp/{tenant_slug}/category-suggestions`** — heuristic suggestions for many endpoints,
+    uncategorized only unless `include_categorized=true`, newest first, `limit` 1–50 (default 25).
+  - OpenAPI 1.542.0.
+
 ## [1.681.0] - 2026-11-08
 
 ### Added

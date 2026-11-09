@@ -17,6 +17,13 @@ Manual tags on endpoints:
 * ``POST   /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags``      — add tags to an endpoint.
 * ``DELETE /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags/{tag}`` — remove one tag.
 
+Auto-categorization suggestions (V2-MCP-23.4 / MCAT-9.4, #3694) — suggest-only, never applied:
+
+* ``GET    /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion`` — rank categories for
+  one endpoint from its tool names and descriptions (``?use_llm=true`` adds the gated Claude pick).
+* ``GET    /v1/mcp/{tenant_slug}/category-suggestions`` — heuristic suggestions for many endpoints,
+  uncategorized ones by default.
+
 An endpoint's category itself is set with ``PATCH /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}``
 (see :func:`app.mcp_catalog_routes.update_mcp_endpoint`). Both dimensions are facets on browse and
 search. Like every catalog route, scoping comes from the token's ``tenant_id``, never the URL slug.
@@ -26,13 +33,20 @@ Built-in categories are read-only: changing or deleting one is a ``403``.
 from __future__ import annotations
 
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg2 import errors as pg_errors
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .config import settings
 from .database import db
+from .mcp_category_llm import ai_categorization_available, suggest_category_with_claude
+from .mcp_category_suggestion import (
+    CategorySuggestion,
+    suggest_categories,
+    tools_from_capability_items,
+)
 from .mcp_categorization import (
     CategorizationValidationError,
     canonical_tag,
@@ -43,6 +57,11 @@ from .mcp_categorization import (
 )
 from .models import (
     McpCategoryCreate,
+    McpCategoryLlmSuggestionOut,
+    McpCategorySuggestionOut,
+    McpCategorySuggestionQueueItemOut,
+    McpCategorySuggestionQueueResponse,
+    McpEndpointCategorySuggestionResponse,
     McpCategoryListResponse,
     McpCategoryResponse,
     McpCategoryUpdate,
@@ -343,6 +362,170 @@ async def remove_mcp_endpoint_tag(
         success=True,
         endpoint_id=str(endpoint_id),
         tags=db.list_mcp_endpoint_tags(str(endpoint_id)),
+    )
+
+
+# --- Auto-categorization suggestions ----------------------------------------------------------------
+
+#: Default and largest page of the bulk suggestion queue (each row reads one snapshot's tools).
+SUGGESTION_QUEUE_DEFAULT_LIMIT: int = 25
+SUGGESTION_QUEUE_MAX_LIMIT: int = 50
+
+
+def _endpoint_surface(
+    endpoint: Dict[str, Any]
+) -> Tuple[Optional[Dict[str, Any]], Dict[str, Any], List[Dict[str, Any]]]:
+    """Load what the suggestion reads for an endpoint: its current snapshot, identity and tools.
+
+    Returns ``(version, server, tools)``. ``server`` always carries the catalog entry's ``name``, plus
+    the snapshot's ``server_name`` / ``server_title`` / ``instructions`` when one exists. A
+    never-discovered endpoint yields ``(None, {"name": …}, [])``.
+    """
+    server: Dict[str, Any] = {"name": endpoint.get("name")}
+    version_id = endpoint.get("current_version_id")
+    if not version_id:
+        return None, server, []
+    version = db.get_mcp_endpoint_version(str(endpoint["id"]), str(version_id))
+    if version is None:
+        return None, server, []
+    for key in ("server_name", "server_title", "instructions"):
+        server[key] = version.get(key)
+    tools = tools_from_capability_items(db.get_mcp_capability_items(str(version["id"])))
+    return version, server, tools
+
+
+def _suggestion_out(suggestions: List[CategorySuggestion]) -> List[McpCategorySuggestionOut]:
+    """Project heuristic :class:`CategorySuggestion` values onto the wire model."""
+    return [McpCategorySuggestionOut.model_validate(s.as_dict()) for s in suggestions]
+
+
+@router.get(
+    "/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion",
+    response_model=McpEndpointCategorySuggestionResponse,
+)
+async def suggest_mcp_endpoint_category(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    use_llm: bool = Query(
+        False,
+        description=(
+            "Also ask Claude to pick a category (needs APIOME_MCP_AI_CATEGORIZATION_ENABLED and an API "
+            "key; falls back to the heuristic otherwise)."
+        ),
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpEndpointCategorySuggestionResponse:
+    """Suggest a category for one endpoint from its tool names and descriptions (MCAT-9.4).
+
+    **Suggest-only:** the response never changes the endpoint (``applied`` is always ``false``). A
+    person confirms a suggestion by sending its slug as ``category`` to
+    ``PATCH /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}``.
+
+    The keyword heuristic ranks the tenant's categories (built-in and its own) by weighted evidence in
+    the current snapshot's tools and the server's identity, with the keywords that matched. With
+    ``use_llm=true`` and the Claude-assisted step configured, Claude also picks one category from the
+    same lookup and that pick becomes ``suggested_category`` (``method`` = ``llm``); when the step is
+    off or fails, the heuristic's top pick is used and ``detail`` says why. A never-discovered endpoint
+    is scored on its name alone. ``404`` when the endpoint is not the caller's tenant's.
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    endpoint = _require_tenant_endpoint(tenant_id, endpoint_id)
+    categories = db.list_mcp_categories(tenant_id)
+    version, server, tools = _endpoint_surface(endpoint)
+
+    suggestions = suggest_categories(server, tools, categories)
+    suggested = suggestions[0].slug if suggestions else None
+    method = "heuristic"
+    llm_out: Optional[McpCategoryLlmSuggestionOut] = None
+
+    if version is None:
+        detail = "endpoint has no discovered surface yet; scored on its name only"
+    elif suggestions:
+        detail = "suggested from tool names and descriptions"
+    else:
+        detail = "no category matched the server's tools; choose one manually"
+
+    if use_llm:
+        if not ai_categorization_available():
+            detail += " (Claude-assisted suggestion is not enabled)"
+        else:
+            pick = suggest_category_with_claude(server, tools, categories)
+            if pick is None:
+                detail += " (Claude-assisted suggestion unavailable; using the heuristic)"
+            else:
+                labels = {str(c["slug"]): str(c.get("label") or c["slug"]) for c in categories}
+                llm_out = McpCategoryLlmSuggestionOut(
+                    slug=pick.slug,
+                    label=labels.get(pick.slug, pick.slug),
+                    rationale=pick.rationale,
+                    model=pick.model,
+                )
+                suggested = pick.slug
+                method = "llm"
+                detail = "suggested by Claude from the server's tools"
+
+    return McpEndpointCategorySuggestionResponse(
+        success=True,
+        endpoint_id=str(endpoint_id),
+        current_category=endpoint.get("category"),
+        version_id=str(version["id"]) if version else None,
+        tool_count=len(tools),
+        suggested_category=suggested,
+        method=method,
+        suggestions=_suggestion_out(suggestions),
+        llm=llm_out,
+        ai_categorization_enabled=bool(settings.mcp_ai_categorization_enabled),
+        applied=False,
+        detail=detail,
+    )
+
+
+@router.get(
+    "/{tenant_slug}/category-suggestions",
+    response_model=McpCategorySuggestionQueueResponse,
+)
+async def list_mcp_category_suggestions(
+    tenant_slug: str,
+    include_categorized: bool = Query(
+        False, description="Also suggest for endpoints that already have a category."
+    ),
+    limit: int = Query(SUGGESTION_QUEUE_DEFAULT_LIMIT, ge=1, le=SUGGESTION_QUEUE_MAX_LIMIT),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpCategorySuggestionQueueResponse:
+    """Heuristic category suggestions for many endpoints at once, for triage (MCAT-9.4).
+
+    Lists the tenant's live endpoints without a category (all of them with
+    ``include_categorized=true``), newest first, each with its top suggestions. Keyword heuristic only —
+    Claude is never called here. **Suggest-only:** nothing is applied; confirm each pick by patching
+    the endpoint's ``category``. ``total`` counts every matching endpoint; ``items`` holds at most
+    ``limit`` (``1``–``50``).
+    """
+    _ = tenant_slug
+    tenant_id = _tenant_id(auth_data)
+    categories = db.list_mcp_categories(tenant_id)
+    endpoints = [
+        e
+        for e in db.list_mcp_endpoints(tenant_id)
+        if include_categorized or not str(e.get("category") or "").strip()
+    ]
+
+    items: List[McpCategorySuggestionQueueItemOut] = []
+    for endpoint in endpoints[:limit]:
+        _, server, tools = _endpoint_surface(endpoint)
+        suggestions = suggest_categories(server, tools, categories)
+        items.append(
+            McpCategorySuggestionQueueItemOut(
+                endpoint_id=str(endpoint["id"]),
+                name=str(endpoint.get("name") or ""),
+                current_category=endpoint.get("category"),
+                tool_count=len(tools),
+                suggested_category=suggestions[0].slug if suggestions else None,
+                suggestions=_suggestion_out(suggestions),
+            )
+        )
+    return McpCategorySuggestionQueueResponse(
+        success=True, total=len(endpoints), items=items, applied=False
     )
 
 
