@@ -26311,7 +26311,8 @@ class Database:
 
         Sets ``auth_type = 'oauth2'``, the ciphertext and its ``key_version``, merges
         ``metadata_patch`` over ``oauth_metadata`` (JSONB ``||``, so discovery's keys survive) and
-        bumps ``last_refreshed_at``. The row must exist — discovery creates it.
+        bumps ``last_refreshed_at`` to the statement's own clock time, so every write gets a distinct
+        stamp. The row must exist — discovery creates it.
 
         With ``compare=True`` this is a compare-and-set for token refresh: the write happens only if
         ``last_refreshed_at`` still equals ``expected_last_refreshed_at``, so when two workers
@@ -26334,7 +26335,9 @@ class Database:
                 encrypted_payload = %s,
                 key_version = %s,
                 oauth_metadata = oauth_metadata || %s,
-                last_refreshed_at = CURRENT_TIMESTAMP
+                -- clock_timestamp(), not CURRENT_TIMESTAMP: the stamp is the compare-and-set token,
+                -- so two writes must never share one, even inside a single transaction.
+                last_refreshed_at = clock_timestamp()
             WHERE endpoint_id = %s::uuid
               AND (NOT %s OR last_refreshed_at IS NOT DISTINCT FROM %s)
             RETURNING id, endpoint_id, auth_type, encrypted_payload, key_version,

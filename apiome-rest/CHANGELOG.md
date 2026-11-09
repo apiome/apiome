@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.674.1] - 2026-11-08
+
+### Added
+- **Outbound MCP authentication is proven end to end (V2-MCP-EPIC-20, #3643).**
+  `tests/test_mcp_outbound_auth_pipeline_db.py` (`requires_db`) runs the epic's whole chain over HTTP
+  against a database migrated from empty and a loopback server. That server is both a protected MCP
+  server and its authorization server (RFC 7591 registration, PKCE-checked codes, `resource`
+  required, JWT access tokens with `aud`, rotating refresh tokens).
+  - **Static credentials:** a stored bearer or custom-header secret is sealed (no plaintext in the
+    row), masked on read, and sent in a header on discovery, never in the URL. Clearing it returns
+    the endpoint to `auth_required`.
+  - **OAuth:** discovery's `401` stores the metadata. `oauth/authorize` registers a client, the
+    consent redirect returns a code, and `oauth/callback` stores sealed tokens with no token in any
+    response. The next discovery sends the access token.
+  - **One-time callback:** a callback is accepted once, and only from the user who started it.
+  - **Refresh:** an expiring token is refreshed (and rotated) before a run. A token the server
+    rejects is refreshed and the run retried. A failed refresh keeps the token and records why.
+  - **Compare-and-set:** the token store's compare-and-set wins once and then loses against the
+    same expected stamp.
+
+### Fixed
+- `Database.store_mcp_endpoint_oauth_tokens` stamps `last_refreshed_at` with `clock_timestamp()`
+  instead of `CURRENT_TIMESTAMP`. The stamp is the refresh compare-and-set token and the "did a
+  forced refresh change anything" signal. `CURRENT_TIMESTAMP` is fixed for a transaction, so two
+  writes in one transaction shared a stamp: the second compare-and-set wrongly succeeded, and a
+  forced refresh looked like no change. apiome-rest 1.674.0 → 1.674.1 (no API change).
+
 ## [1.674.0] - 2026-11-08
 
 ### Added
