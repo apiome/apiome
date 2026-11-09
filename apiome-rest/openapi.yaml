@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.541.0
+  version: 1.542.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -81353,6 +81353,201 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for remove mcp endpoint tagresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/category-suggestion:
+    get:
+      tags:
+      - mcp-catalog
+      summary: Suggest Mcp Endpoint Category
+      description: 'Suggest a category for one endpoint from its tool names and descriptions
+        (MCAT-9.4).
+
+
+        **Suggest-only:** the response never changes the endpoint (``applied`` is
+        always ``false``). A
+
+        person confirms a suggestion by sending its slug as ``category`` to
+
+        ``PATCH /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}``.
+
+
+        The keyword heuristic ranks the tenant''s categories (built-in and its own)
+        by weighted evidence in
+
+        the current snapshot''s tools and the server''s identity, with the keywords
+        that matched. With
+
+        ``use_llm=true`` and the Claude-assisted step configured, Claude also picks
+        one category from the
+
+        same lookup and that pick becomes ``suggested_category`` (``method`` = ``llm``);
+        when the step is
+
+        off or fails, the heuristic''s top pick is used and ``detail`` says why. A
+        never-discovered endpoint
+
+        is scored on its name alone. ``404`` when the endpoint is not the caller''s
+        tenant''s.'
+      operationId: suggest_mcp_endpoint_category_v1_mcp__tenant_slug__endpoints__endpoint_id__category_suggestion_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: use_llm
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Also ask Claude to pick a category (needs APIOME_MCP_AI_CATEGORIZATION_ENABLED
+            and an API key; falls back to the heuristic otherwise).
+          default: false
+          title: Use Llm
+        description: Also ask Claude to pick a category (needs APIOME_MCP_AI_CATEGORIZATION_ENABLED
+          and an API key; falls back to the heuristic otherwise).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Suggest MCP Endpoint Categoryauthorization schema.
+          - type: 'null'
+            description: Suggest MCP Endpoint Categoryauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Suggest MCP Endpoint Category Xapikey schema.
+          - type: 'null'
+            description: Suggest MCP Endpoint Category Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for suggest mcp endpoint category.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpEndpointCategorySuggestionResponse'
+                description: Response payload for suggest mcp endpoint categoryresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for suggest mcp endpoint categoryresponse422.
+  /v1/mcp/{tenant_slug}/category-suggestions:
+    get:
+      tags:
+      - mcp-catalog
+      summary: List Mcp Category Suggestions
+      description: 'Heuristic category suggestions for many endpoints at once, for
+        triage (MCAT-9.4).
+
+
+        Lists the tenant''s live endpoints without a category (all of them with
+
+        ``include_categorized=true``), newest first, each with its top suggestions.
+        Keyword heuristic only —
+
+        Claude is never called here. **Suggest-only:** nothing is applied; confirm
+        each pick by patching
+
+        the endpoint''s ``category``. ``total`` counts every matching endpoint; ``items``
+        holds at most
+
+        ``limit`` (``1``–``50``).'
+      operationId: list_mcp_category_suggestions_v1_mcp__tenant_slug__category_suggestions_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: include_categorized
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Also suggest for endpoints that already have a category.
+          default: false
+          title: Include Categorized
+        description: Also suggest for endpoints that already have a category.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 25
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List MCP Category Suggestionsauthorization schema.
+          - type: 'null'
+            description: List MCP Category Suggestionsauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List MCP Category Suggestions Xapikey schema.
+          - type: 'null'
+            description: List MCP Category Suggestions Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list mcp category suggestions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpCategorySuggestionQueueResponse'
+                description: Response payload for list mcp category suggestionsresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list mcp category suggestionsresponse422.
   /v1/mcp/{tenant_slug}/collections:
     get:
       tags:
@@ -120658,6 +120853,36 @@ components:
       type: object
       title: McpCategoryListResponse
       description: Envelope for the category lookup list (MCAT-9.3).
+    McpCategoryLlmSuggestionOut:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        rationale:
+          type: string
+          title: Rationale
+          default: ''
+          description: Rationale.
+          example: example
+        model:
+          type: string
+          title: Model
+          description: Model.
+          example: example
+      type: object
+      required:
+      - slug
+      - label
+      - model
+      title: McpCategoryLlmSuggestionOut
+      description: The Claude-assisted pick, when it was requested and ran (MCAT-9.4).
     McpCategoryOut:
       properties:
         slug:
@@ -120743,6 +120968,140 @@ components:
       - category
       title: McpCategoryResponse
       description: Envelope for a single category (MCAT-9.3).
+    McpCategorySuggestionOut:
+      properties:
+        slug:
+          type: string
+          title: Slug
+          description: URL-safe identifier.
+          example: pet-store
+        label:
+          type: string
+          title: Label
+          description: Label.
+          example: example
+        builtin:
+          type: boolean
+          title: Builtin
+          default: false
+          description: Builtin.
+          example: false
+        score:
+          type: integer
+          title: Score
+          default: 0
+          description: Score.
+          example: 98
+        confidence:
+          type: number
+          title: Confidence
+          default: 0.0
+          description: Confidence.
+          example: 1.0
+        matched_keywords:
+          items:
+            type: string
+          type: array
+          title: Matched Keywords
+          description: Matched Keywords.
+          maxItems: 1000
+      type: object
+      required:
+      - slug
+      - label
+      title: McpCategorySuggestionOut
+      description: 'One ranked category suggestion from the keyword heuristic (MCAT-9.4).
+
+
+        ``score`` is the weighted keyword evidence; ``confidence`` (``0``–``1``) is
+        the category''s share
+
+        of all evidence, scaled down when the evidence is thin; ``matched_keywords``
+        explains the pick.'
+    McpCategorySuggestionQueueItemOut:
+      properties:
+        endpoint_id:
+          type: string
+          title: Endpoint Id
+          description: Endpoint ID.
+          example: endpoint_01h2xcejqtf3fz5y5j0v8k9m2p
+        name:
+          type: string
+          title: Name
+          description: Human-readable name.
+          example: Pet
+        current_category:
+          anyOf:
+          - type: string
+            description: Response payload for mcp category suggestion queue item.
+          - type: 'null'
+            description: Response payload for mcp category suggestion queue item.
+          title: Current Category
+          description: Current Category.
+        tool_count:
+          type: integer
+          title: Tool Count
+          default: 0
+          description: Number of tool.
+          example: 1
+        suggested_category:
+          anyOf:
+          - type: string
+            description: Response payload for mcp category suggestion queue item.
+          - type: 'null'
+            description: Response payload for mcp category suggestion queue item.
+          title: Suggested Category
+          description: Suggested Category.
+        suggestions:
+          items:
+            $ref: '#/components/schemas/McpCategorySuggestionOut'
+          type: array
+          title: Suggestions
+          description: Suggestions.
+          maxItems: 1000
+      type: object
+      required:
+      - endpoint_id
+      - name
+      title: McpCategorySuggestionQueueItemOut
+      description: One endpoint in the bulk suggestion queue (MCAT-9.4).
+    McpCategorySuggestionQueueResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        total:
+          type: integer
+          title: Total
+          default: 0
+          description: Total.
+          example: 1
+        items:
+          items:
+            $ref: '#/components/schemas/McpCategorySuggestionQueueItemOut'
+          type: array
+          title: Items
+          description: Items.
+          maxItems: 100
+        applied:
+          type: boolean
+          title: Applied
+          default: false
+          description: Applied.
+          example: false
+      type: object
+      title: McpCategorySuggestionQueueResponse
+      description: 'Heuristic suggestions for many endpoints at once, uncategorized
+        first (MCAT-9.4).
+
+
+        ``total`` counts every endpoint that matched the filter; ``items`` holds at
+        most ``limit`` of them.
+
+        Nothing is applied.'
     McpCategoryUpdate:
       properties:
         label:
@@ -122705,6 +123064,102 @@ components:
       - groups
       title: McpDuplicateReportResponse
       description: Advisory duplicate review list for the caller's catalog.
+    McpEndpointCategorySuggestionResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        endpoint_id:
+          type: string
+          title: Endpoint Id
+          description: Endpoint ID.
+          example: endpoint_01h2xcejqtf3fz5y5j0v8k9m2p
+        current_category:
+          anyOf:
+          - type: string
+            description: Response payload for mcp endpoint category suggestion.
+          - type: 'null'
+            description: Response payload for mcp endpoint category suggestion.
+          title: Current Category
+          description: Current Category.
+        version_id:
+          anyOf:
+          - type: string
+            description: Response payload for mcp endpoint category suggestion.
+          - type: 'null'
+            description: Response payload for mcp endpoint category suggestion.
+          title: Version Id
+          description: Project version identifier or semantic version label, depending
+            on context.
+        tool_count:
+          type: integer
+          title: Tool Count
+          default: 0
+          description: Number of tool.
+          example: 1
+        suggested_category:
+          anyOf:
+          - type: string
+            description: Response payload for mcp endpoint category suggestion.
+          - type: 'null'
+            description: Response payload for mcp endpoint category suggestion.
+          title: Suggested Category
+          description: Suggested Category.
+        method:
+          type: string
+          title: Method
+          default: heuristic
+          description: Method.
+          example: example
+        suggestions:
+          items:
+            $ref: '#/components/schemas/McpCategorySuggestionOut'
+          type: array
+          title: Suggestions
+          description: Suggestions.
+          maxItems: 1000
+        llm:
+          anyOf:
+          - $ref: '#/components/schemas/McpCategoryLlmSuggestionOut'
+          - type: 'null'
+            description: Response payload for mcp endpoint category suggestion.
+          description: Llm.
+        ai_categorization_enabled:
+          type: boolean
+          title: Ai Categorization Enabled
+          default: false
+          description: Ai Categorization Enabled.
+          example: false
+        applied:
+          type: boolean
+          title: Applied
+          default: false
+          description: Applied.
+          example: false
+        detail:
+          type: string
+          title: Detail
+          default: ''
+          description: Detail.
+          example: example
+      type: object
+      required:
+      - endpoint_id
+      title: McpEndpointCategorySuggestionResponse
+      description: 'Category suggestion for one endpoint (MCAT-9.4). Never applied
+        by this response.
+
+
+        ``suggested_category`` is the Claude pick when ``method`` is ``llm``, else
+        the heuristic''s top
+
+        suggestion, else ``null`` (no signal). ``applied`` is always ``false``: confirm
+        a suggestion by
+
+        patching the endpoint''s ``category``.'
     McpEndpointCreate:
       properties:
         name:

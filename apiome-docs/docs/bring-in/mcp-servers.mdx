@@ -680,6 +680,54 @@ servers filed under it keep its slug.
 `GET /v1/mcp/<tenant>/categories` lists every category with `builtin` and the number of servers filed
 under it (`endpoint_count`).
 
+### Suggested categories
+
+Apiome can suggest a category from a server's tool names and descriptions, so you don't have to
+read every server yourself. A suggestion is never applied for you: you confirm it by setting the
+server's `category`.
+
+1. **Ask for a suggestion.**
+
+   ```bash
+   curl "$APIOME_URL/v1/mcp/<tenant>/endpoints/<endpoint>/category-suggestion" \
+     -H "Authorization: Bearer $APIOME_API_KEY"
+   ```
+
+   `suggested_category` is the best fit, or `null` when no category matches. `suggestions` lists up
+   to three categories, best first, each with a `score`, a `confidence` from 0 to 1 and the
+   `matched_keywords` behind it. A server with tools such as `run_query` and `list_tables` gets
+   `databases`. Your own categories are matched on the words in their slug and label, so a
+   **Weather** category is suggested for a server with a `get_weather` tool. `other` is never
+   suggested.
+
+2. **Confirm it.** Send the slug you accept as `category`:
+
+   ```bash
+   curl -X PATCH "$APIOME_URL/v1/mcp/<tenant>/endpoints/<endpoint>" \
+     -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+     -d '{"category": "databases"}'
+   ```
+
+Every suggestion response has `"applied": false`, because asking for a suggestion never changes the
+server.
+
+To work through many servers at once, `GET /v1/mcp/<tenant>/category-suggestions` lists the servers
+with no category, newest first, each with its suggestions. Add `include_categorized=true` to include
+servers that already have one. `limit` sets how many to return (1–50, default 25), and `total` counts
+every matching server.
+
+#### Suggestions from Claude
+
+Add `use_llm=true` to the single-server request to have Claude choose from your categories as well.
+Its choice becomes `suggested_category`, `method` is `llm`, and `llm` holds Claude's `rationale` and
+the `model` that answered. Claude can only answer with one of your category slugs, and it is never
+asked to call a tool. The bulk list never uses Claude.
+
+An administrator turns this on with `APIOME_MCP_AI_CATEGORIZATION_ENABLED=true` and a Claude API key
+in `APIOME_ANTHROPIC_API_KEY`. `APIOME_MCP_AI_CATEGORIZATION_MODEL` picks the model (default
+`claude-opus-5-5`). When it is off, or Claude can't be reached, the response uses the keyword
+suggestion and `detail` says why. `ai_categorization_enabled` shows whether it is on.
+
 ### Tags
 
 Tags are free labels such as `prod`, `team-payments` or `tier:gold`. Apiome lowercases them and

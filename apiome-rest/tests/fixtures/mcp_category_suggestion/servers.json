@@ -1,0 +1,104 @@
+{
+  "_comment": "Fixture MCP servers for the auto-categorization heuristic (#3694). Each names the category a cataloger would file it under; test_mcp_category_suggestion.py asserts the heuristic's top pick matches.",
+  "servers": [
+    {
+      "expected": "developer-tools",
+      "server": {"name": "Code host", "server_name": "github-mcp", "instructions": "Work with repositories, issues and pull requests."},
+      "tools": [
+        {"name": "create_pull_request", "description": "Open a pull request from a branch."},
+        {"name": "list_commits", "description": "List commits on a branch of a repository."},
+        {"name": "get_file_contents", "description": "Read a file from a repository."},
+        {"name": "merge_branch", "description": "Merge one branch into another."}
+      ]
+    },
+    {
+      "expected": "databases",
+      "server": {"name": "Postgres", "server_name": "postgres-mcp"},
+      "tools": [
+        {"name": "run_query", "description": "Run a read-only SQL query against the database."},
+        {"name": "list_tables", "description": "List tables in a schema."},
+        {"name": "describe_table", "description": "Show the columns of a table."}
+      ]
+    },
+    {
+      "expected": "files-storage",
+      "server": {"name": "Filesystem", "server_name": "filesystem"},
+      "tools": [
+        {"name": "read_file", "description": "Read the complete contents of a file."},
+        {"name": "write_file", "description": "Create or overwrite a file."},
+        {"name": "list_directory", "description": "List the entries of a directory."},
+        {"name": "move_file", "description": "Move or rename files and folders."}
+      ]
+    },
+    {
+      "expected": "communication",
+      "server": {"name": "Team chat", "server_name": "slack"},
+      "tools": [
+        {"name": "post_message", "description": "Post a message to a channel."},
+        {"name": "list_channels", "description": "List public channels in the workspace."},
+        {"name": "reply_to_thread", "description": "Reply to a message thread."}
+      ]
+    },
+    {
+      "expected": "finance-commerce",
+      "server": {"name": "Payments", "server_name": "stripe-mcp"},
+      "tools": [
+        {"name": "create_invoice", "description": "Create an invoice for a customer."},
+        {"name": "create_refund", "description": "Refund a charge."},
+        {"name": "list_subscriptions", "description": "List active subscriptions."}
+      ]
+    },
+    {
+      "expected": "cloud-infrastructure",
+      "server": {"name": "Cluster ops", "server_name": "kubernetes-mcp"},
+      "tools": [
+        {"name": "list_pods", "description": "List pods in a namespace of the cluster."},
+        {"name": "scale_deployment", "description": "Scale a deployment to N replicas."},
+        {"name": "get_container_logs", "description": "Fetch logs from a container."}
+      ]
+    },
+    {
+      "expected": "search-web",
+      "server": {"name": "Web search", "server_name": "brave-search"},
+      "tools": [
+        {"name": "web_search", "description": "Search the web and return results."},
+        {"name": "fetch_url", "description": "Fetch a webpage and return its HTML as markdown."}
+      ]
+    },
+    {
+      "expected": "productivity",
+      "server": {"name": "Calendar", "server_name": "calendar-mcp"},
+      "tools": [
+        {"name": "list_events", "description": "List calendar events in a date range."},
+        {"name": "create_meeting", "description": "Schedule a meeting with attendees."},
+        {"name": "add_reminder", "description": "Add a reminder to a task."}
+      ]
+    },
+    {
+      "expected": "ai-ml",
+      "server": {"name": "Vector store", "server_name": "vector-memory"},
+      "tools": [
+        {"name": "create_embedding", "description": "Compute an embedding for a text."},
+        {"name": "upsert_vectors", "description": "Store vectors with metadata."},
+        {"name": "similarity_search", "description": "Find the nearest vectors to an embedding."}
+      ]
+    },
+    {
+      "expected": "security",
+      "server": {"name": "Secret scanner", "server_name": "secret-scan"},
+      "tools": [
+        {"name": "scan_for_secrets", "description": "Find leaked credentials and passwords."},
+        {"name": "list_vulnerabilities", "description": "List known CVE entries for a dependency."}
+      ]
+    },
+    {
+      "expected": "data-analytics",
+      "server": {"name": "Product analytics", "server_name": "analytics-mcp"},
+      "tools": [
+        {"name": "get_metric", "description": "Read a metric over a time range."},
+        {"name": "run_funnel_report", "description": "Build a funnel report."},
+        {"name": "list_dashboards", "description": "List saved dashboards."}
+      ]
+    }
+  ]
+}
