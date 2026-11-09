@@ -474,6 +474,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['upload', 'archive', 'zip', 'bulk', 'history', 'jobs', 'preview', 'commit', 'git', 'url'],
   },
   {
+    id: 'import-any-format',
+    title: 'Import and catalog any format',
+    summary: 'Bring in an API in any format and search, version, lint and convert it.',
+    page: 'apiome-docs/docs/bring-in/import-any-format.mdx',
+    section: 'spine',
+    keywords: ['overview', 'protocol', 'grpc', 'graphql', 'asyncapi', 'wsdl', 'avro', 'multi-format', 'protobuf'],
+  },
+  {
     id: 'keep-imports-fresh',
     title: 'Keep imports up to date',
     summary:
