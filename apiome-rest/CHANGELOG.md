@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.678.0] - 2026-11-08
+
+### Added
+- **MCP change-notification events (V2-MCP-27.1 / MCAT-13.1, #3711).** Every new MCP endpoint
+  version raises one in-process `mcp.version.created` event, emitted by
+  `mcp_discovery_engine._persist_outcome` on the changed path only (after
+  `record_mcp_discovery_version` commits). An unchanged or failed discovery raises none.
+  - **Payload** (`McpVersionCreatedEvent.to_payload()`, `schema_version` 1): `event_id` (uuid5 of
+    the version id, stable for consumer de-duplication), `endpoint` (`id`, `tenant_id`, `name`,
+    `slug` — never the URL), `version` (`id`, `seq`, `tag`), `previous_version` (`null` on v1),
+    `discovered_at`, `trigger`, and `change_summary` (`initial`, `total`, `by_change_type`,
+    `by_item_type`, `by_severity`, `max_severity`) folded from the persisted
+    `mcp_version_changes` rows with the MCAT-16.3 severity classifier.
+  - **Subscribing.** `mcp_change_events.subscribe(handler)` / `unsubscribe(handler)`;
+    `emit_version_created` runs handlers in order, isolates and logs failures, and never fails
+    the discovery job. Foundation for webhook subscriptions (MCAT-13.2, #3712).
+  - New module `app/mcp_change_events.py`. No API surface change. OpenAPI 1.537.0 → 1.538.0;
+    REST reference regenerated.
+
 ## [1.677.0] - 2026-11-08
 
 ### Added

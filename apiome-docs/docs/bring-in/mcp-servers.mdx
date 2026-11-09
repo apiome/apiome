@@ -325,6 +325,22 @@ snapshots, so it shows the same changes as the newer version recorded.
 
 A discovery that fails creates no version, and the server keeps its current one.
 
+#### The change event
+
+Every new version raises one `mcp.version.created` event inside the REST API, at the moment the
+version is saved. A discovery that finds the same surface, or fails, raises none. The event carries:
+
+| Field | Holds |
+| --- | --- |
+| `event_id` | An id that is the same every time for the same version, so a consumer can drop a repeat |
+| `endpoint` | The server's `id`, `tenant_id`, `name` and `slug` — never its URL or credential |
+| `version`, `previous_version` | The new version's `id`, `seq` and date/time `tag`, and the version it replaced (`null` for **v1**) |
+| `discovered_at`, `trigger` | When the discovery ran and what started it: `manual`, `sweep` or `registry` |
+| `change_summary` | `total` changes, counts `by_change_type` (`added` / `removed` / `modified`), `by_item_type` and `by_severity` (`additive` / `review` / `breaking`), the worst `max_severity`, and `initial` for **v1** |
+
+The event is not delivered outside Apiome yet; webhook subscriptions for it come next. Operators see
+it in the REST API log — see [Watch MCP re-discovery](../admin/operating-apiome.mdx#watch-mcp-re-discovery).
+
 ### How servers are graded
 
 Every version is linted against the [MCP surface lint rules](../govern/mcp-surface-lint-rules.md)

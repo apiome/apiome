@@ -334,6 +334,17 @@ is listed. Change the sweep on the REST API:
 | `APIOME_MCP_DISCOVERY_MAX_CONCURRENCY` | `4` | Servers discovered at once |
 | `APIOME_MCP_DISCOVERY_ENDPOINT_TIMEOUT` | `150` | Seconds one server's discovery may take before it is counted as `failed` |
 
+Each discovery that creates a new version also logs one `mcp.version.created` line from
+`app.mcp_change_events`, with the server, the new version number, the change count and the event
+id:
+
+```text
+mcp event mcp.version.created endpoint=<id> version_seq=3 changes=2 event_id=<id>
+```
+
+A subscriber to that event that fails is logged as `mcp event handler … failed` and never fails the
+discovery. The event's fields are on [How versions work](../bring-in/mcp-servers.mdx#the-change-event).
+
 ### MCP registry sync
 
 An [MCP registry connector](../bring-in/mcp-servers.mdx#servers-from-a-registry) re-syncs on the
