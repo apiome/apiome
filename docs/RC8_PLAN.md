@@ -81,7 +81,7 @@ These move from *Future* (or no milestone) to **RC8**.
 
 - Ranked in §2: [#4146](https://github.com/apiome/apiome/issues/4146), [#4183](https://github.com/apiome/apiome/issues/4183), [#4291](https://github.com/apiome/apiome/issues/4291), [#4295](https://github.com/apiome/apiome/issues/4295), [#4296](https://github.com/apiome/apiome/issues/4296), [#4311](https://github.com/apiome/apiome/issues/4311), [#4312](https://github.com/apiome/apiome/issues/4312), [#4317](https://github.com/apiome/apiome/issues/4317), [#4343](https://github.com/apiome/apiome/issues/4343), [#4344](https://github.com/apiome/apiome/issues/4344).
 - Agent interfaces, the rest of the epic: [#4297](https://github.com/apiome/apiome/issues/4297) (agents.json / llms.txt), [#4298](https://github.com/apiome/apiome/issues/4298), [#4299](https://github.com/apiome/apiome/issues/4299); epic [#4294](https://github.com/apiome/apiome/issues/4294).
-- Data, the rest of the epics: [#4313](https://github.com/apiome/apiome/issues/4313) (Liquibase / Flyway; [#795](https://github.com/apiome/apiome/issues/795) is a duplicate), [#4314](https://github.com/apiome/apiome/issues/4314), [#4315](https://github.com/apiome/apiome/issues/4315),
+- Data, the rest of the epics: ~~[#4313](https://github.com/apiome/apiome/issues/4313)~~ (Liquibase / Flyway — ✅ **shipped** in [#6637](https://github.com/apiome/apiome/pull/6637); [#795](https://github.com/apiome/apiome/issues/795), its duplicate, is closed by it), [#4314](https://github.com/apiome/apiome/issues/4314), [#4315](https://github.com/apiome/apiome/issues/4315),
   [#4318](https://github.com/apiome/apiome/issues/4318), [#4319](https://github.com/apiome/apiome/issues/4319), [#4320](https://github.com/apiome/apiome/issues/4320), [#4321](https://github.com/apiome/apiome/issues/4321); epics [#4310](https://github.com/apiome/apiome/issues/4310), [#4316](https://github.com/apiome/apiome/issues/4316).
 - Industry formats:
   - FIX Orchestra: [#4323](https://github.com/apiome/apiome/issues/4323)–[#4326](https://github.com/apiome/apiome/issues/4326); epic [#4322](https://github.com/apiome/apiome/issues/4322).
@@ -123,7 +123,7 @@ confirm over MCP — should carry the RC7 loss report categories), [#4341](https
 ### 3.6 Other export-adjacent
 
 [#1735](https://github.com/apiome/apiome/issues/1735) (score report PDF: the jsPDF helper exists, no UI entry point), [#1747](https://github.com/apiome/apiome/issues/1747) (rule-set export; import
-is done), [#3494](https://github.com/apiome/apiome/issues/3494) (legacy export epic, once [#795](https://github.com/apiome/apiome/issues/795) is resolved), [#6163](https://github.com/apiome/apiome/issues/6163) (connector push-back emits
+is done), [#3494](https://github.com/apiome/apiome/issues/3494) (legacy export epic; [#795](https://github.com/apiome/apiome/issues/795) is resolved by [#4313](https://github.com/apiome/apiome/issues/4313)), [#6163](https://github.com/apiome/apiome/issues/6163) (connector push-back emits
 references; gated by `connectors`).
 
 ---
@@ -146,7 +146,7 @@ RC8_PLAN §4".
 | OData CSDL JSON — ✅ **shipped in RC7** ([#6422](https://github.com/apiome/apiome/pull/6422)) | [#3897](https://github.com/apiome/apiome/issues/3897) (JSON part) | CSDL JSON 4.01 is now the default OData output; CSDL XML is `output: xml` |
 | RELAX NG / DTD output | [#4134](https://github.com/apiome/apiome/issues/4134) | XSD covers XML schema consumers |
 | PL/I include structures | [#4141](https://github.com/apiome/apiome/issues/4141) | Very small audience; copybooks cover mainframe layouts |
-| Liquibase / Flyway changelogs | [#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795) | Changelogs need a diff between database states, not a spec |
+| Liquibase / Flyway changelogs — ✅ **shipped** ([#6637](https://github.com/apiome/apiome/pull/6637)) | [#4313](https://github.com/apiome/apiome/issues/4313), [#795](https://github.com/apiome/apiome/issues/795) | Built after all: the SQL DDL export's `output: liquibase` / `flyway` writes changesets and diffs each export against a persisted baseline, so the "diff between database states" objection no longer holds |
 | Iceberg | [#4319](https://github.com/apiome/apiome/issues/4319) | Table metadata, not an API contract |
 | BigQuery / Spark schemas | [#4318](https://github.com/apiome/apiome/issues/4318) | Revisit after Parquet / Arrow (§2) |
 | xRegistry | [#4306](https://github.com/apiome/apiome/issues/4306)–[#4309](https://github.com/apiome/apiome/issues/4309) | Low adoption so far |
