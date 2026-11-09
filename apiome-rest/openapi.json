@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.536.0",
+    "version": "1.537.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -99851,7 +99851,7 @@
           "mcp-catalog"
         ],
         "summary": "Search Mcp Catalog",
-        "description": "Free-text search over the caller's MCP catalog, relevance-then-score ranked (V2-MCP-23.2 / MCAT-9.2).\n\nBacked by the V127 capability-item ``tsvector`` GIN index. ``scope`` selects what is searched: a\nsingle capability kind, every capability kind (the default), or the endpoints themselves\n(``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,\nscore/grade, visibility) so the result is renderable without a second read. The ``host`` /\n``category`` / ``grade`` / ``visibility`` filters compose (each supplied filter is ANDed in).\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so a\nsearch only ever returns the caller's own catalog (the public-directory variant waits on the\nMCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* private/public\nendpoints rather than exposing another tenant's. A query that reduces to nothing under full-text\nparsing (e.g. only stop-words) is a valid request that simply returns no hits.",
+        "description": "Free-text search over the caller's MCP catalog, relevance-then-score ranked (V2-MCP-23.2 / MCAT-9.2).\n\nBacked by the V127 capability-item ``tsvector`` GIN index. ``scope`` selects what is searched: a\nsingle capability kind, every capability kind (the default), or the endpoints themselves\n(``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,\nscore/grade, visibility) so the result is renderable without a second read. The ``host`` /\n``category`` / ``grade`` / ``visibility`` filters compose (each supplied filter is ANDed in).\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so a\nsearch only ever returns the caller's own catalog (the public-directory variant waits on the\nMCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* private/public\nendpoints rather than exposing another tenant's. A query that reduces to nothing under full-text\nparsing (e.g. only stop-words) is a valid request that simply returns no hits.\n\nFederated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also\ncarries the MCP registry's matches (:func:`_federate_with_registry`), each labeled\n``source = \"registry\"``; local hits stay ``source = \"local\"``.",
         "operationId": "search_mcp_catalog_v1_mcp__tenant_slug__search_get",
         "parameters": [
           {
@@ -100014,6 +100014,32 @@
               "title": "Offset"
             },
             "description": "Hits to skip (pagination)."
+          },
+          {
+            "name": "include_registry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names match, on the first page only (offset=0). Registry matches come back in registry_hits, after the local hits, minus any the caller already has (deduped by registry server name or remote URL).",
+              "default": false,
+              "title": "Include Registry"
+            },
+            "description": "Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names match, on the first page only (offset=0). Registry matches come back in registry_hits, after the local hits, minus any the caller already has (deduped by registry server name or remote URL)."
+          },
+          {
+            "name": "registry_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum registry entries to ask the registry for (include_registry=true).",
+              "default": 20,
+              "title": "Registry Limit"
+            },
+            "description": "Maximum registry entries to ask the registry for (include_registry=true)."
           },
           {
             "name": "authorization",
@@ -166757,6 +166783,167 @@
         "title": "McpPostureRulesResponse",
         "description": "The trust-posture rule catalog, profiles, and OWASP risk catalog (CLX-3.2, #4856)."
       },
+      "McpRegistrySearchHit": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Provenance of the hit: always 'registry'.",
+            "default": "registry",
+            "examples": [
+              "registry"
+            ]
+          },
+          "server_name": {
+            "type": "string",
+            "title": "Server Name",
+            "description": "Reverse-DNS MCP registry server name.",
+            "examples": [
+              "io.github.acme/weather"
+            ]
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Title",
+            "description": "Display title the entry declares.",
+            "examples": [
+              "Acme Weather"
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Description",
+            "description": "The entry's description."
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Version",
+            "description": "The entry's latest version.",
+            "examples": [
+              "1.2.0"
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Status",
+            "description": "Registry status ('active' or 'deprecated').",
+            "examples": [
+              "active"
+            ]
+          },
+          "website_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Website Url",
+            "description": "The entry's websiteUrl, credential-free.",
+            "examples": [
+              "https://acme.example/docs"
+            ]
+          },
+          "remote_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Remote Url",
+            "description": "First streamable-http / sse remote, credential-free; null for a package-only server.",
+            "examples": [
+              "https://mcp.acme.example/mcp"
+            ]
+          },
+          "transport": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Registry Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Registry Search Hit schema."
+              }
+            ],
+            "title": "Transport",
+            "description": "That remote's transport (streamable_http or sse).",
+            "examples": [
+              "streamable_http"
+            ]
+          },
+          "host": {
+            "type": "string",
+            "title": "Host",
+            "description": "The remote's host, or empty.",
+            "default": "",
+            "examples": [
+              "mcp.acme.example"
+            ]
+          },
+          "registry_url": {
+            "type": "string",
+            "title": "Registry Url",
+            "description": "Root of the MCP registry the entry came from.",
+            "examples": [
+              "https://registry.modelcontextprotocol.io"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "server_name",
+          "registry_url"
+        ],
+        "title": "McpRegistrySearchHit",
+        "description": "One MCP registry entry a federated catalog search found (V2-MCP-26.4 / MCAT-12.4).\n\nRegistry hits are not catalog endpoints: they come from the upstream registry's\n``GET /v0.1/servers?search=\u2026`` listing and have no endpoint id, snapshot or grade. ``source`` is\nalways ``registry``. An entry that matches one of the caller's own endpoints (same registry\nserver name, or the same remote URL) is never a registry hit \u2014 the local hit carries it instead.\n\nAttributes:\n    source: Always ``registry`` (the provenance badge).\n    server_name: The reverse-DNS registry name (``io.github.acme/weather``).\n    title: The entry's display title, when it declares one.\n    description: The entry's description.\n    version: The entry's latest version.\n    status: The registry status (``active`` / ``deprecated``), or ``None``.\n    website_url: The entry's ``websiteUrl``, credential-free.\n    remote_url: The first ``streamable-http`` / ``sse`` remote, credential-free; ``None`` for a\n        package-only (local, stdio) server.\n    transport: That remote's transport (``streamable_http`` / ``sse``), or ``None``.\n    host: The remote's host, or ``\"\"``.\n    registry_url: The registry the entry came from."
+      },
       "McpSavedSearchCreate": {
         "properties": {
           "name": {
@@ -167196,6 +167383,32 @@
             "description": "Kind.",
             "example": "example"
           },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "Provenance of the hit: always 'local' (one of the caller's own endpoints).",
+            "default": "local",
+            "examples": [
+              "local"
+            ]
+          },
+          "registry_server_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "MCP Search Hit schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Search Hit schema."
+              }
+            ],
+            "title": "Registry Server Name",
+            "description": "On a federated search, the MCP registry server name this endpoint is known by (imported from a registry, or matching a registry entry the search found).",
+            "examples": [
+              "io.github.acme/weather"
+            ]
+          },
           "endpoint_id": {
             "type": "string",
             "title": "Endpoint Id",
@@ -167363,7 +167576,7 @@
           "visibility"
         ],
         "title": "McpSearchHit",
-        "description": "One search result \u2014 a matched capability item, or a matched endpoint (MCAT-9.2).\n\nEvery hit carries its owning endpoint's browse context (``host``, ``category``, quality\n``score`` / ``grade``, ``visibility``) so a result can be rendered and ranked without a second\nlookup. ``kind`` discriminates the two shapes: for a capability hit it is the item type\n(``tool`` / ``resource`` / ``resource_template`` / ``prompt``) and the ``item_*`` fields plus\n``description`` describe the matched item; for an endpoint hit it is ``endpoint`` and the\n``item_*`` fields are ``None`` while ``description`` is the endpoint's own description.\n``endpoint_url`` is credential-redacted like every other catalog projection, and ``relevance``\nis the full-text rank the ordering used."
+        "description": "One search result \u2014 a matched capability item, or a matched endpoint (MCAT-9.2).\n\nEvery hit carries its owning endpoint's browse context (``host``, ``category``, quality\n``score`` / ``grade``, ``visibility``) so a result can be rendered and ranked without a second\nlookup. ``kind`` discriminates the two shapes: for a capability hit it is the item type\n(``tool`` / ``resource`` / ``resource_template`` / ``prompt``) and the ``item_*`` fields plus\n``description`` describe the matched item; for an endpoint hit it is ``endpoint`` and the\n``item_*`` fields are ``None`` while ``description`` is the endpoint's own description.\n``endpoint_url`` is credential-redacted like every other catalog projection, and ``relevance``\nis the full-text rank the ordering used.\n\nProvenance (V2-MCP-26.4 / MCAT-12.4): ``source`` is always ``local`` \u2014 the hit is one of the\ncaller's own endpoints. ``registry_server_name`` is set on a federated search\n(``include_registry=true``) when the endpoint was imported from an MCP registry or matches a\nregistry entry the search found; that entry is then left out of ``registry_hits`` (deduped)."
       },
       "McpSearchResponse": {
         "properties": {
@@ -167420,6 +167633,62 @@
             "title": "Hits",
             "description": "Hits.",
             "maxItems": 1000
+          },
+          "registry_included": {
+            "type": "boolean",
+            "title": "Registry Included",
+            "description": "Whether the MCP registry was searched and answered (include_registry=true).",
+            "default": false,
+            "example": false
+          },
+          "registry_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp search."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp search."
+              }
+            ],
+            "title": "Registry Url",
+            "description": "Root of the MCP registry searched, when federation ran.",
+            "examples": [
+              "https://registry.modelcontextprotocol.io"
+            ]
+          },
+          "registry_hits": {
+            "items": {
+              "$ref": "#/components/schemas/McpRegistrySearchHit"
+            },
+            "type": "array",
+            "title": "Registry Hits",
+            "description": "Registry entries the caller does not already have, after the local hits.",
+            "maxItems": 1000
+          },
+          "registry_duplicates": {
+            "type": "integer",
+            "title": "Registry Duplicates",
+            "description": "Registry entries left out because the caller already has them.",
+            "default": 0,
+            "examples": [
+              1
+            ]
+          },
+          "registry_error": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp search."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp search."
+              }
+            ],
+            "title": "Registry Error",
+            "description": "Why the registry was not searched (turned off, unreachable, refused)."
           }
         },
         "type": "object",
@@ -167431,7 +167700,7 @@
           "hits"
         ],
         "title": "McpSearchResponse",
-        "description": "Response envelope for a catalog search \u2014 ranked hits plus the echoed query/scope (MCAT-9.2)."
+        "description": "Response envelope for a catalog search \u2014 ranked hits plus the echoed query/scope (MCAT-9.2).\n\nA federated search (``include_registry=true``, V2-MCP-26.4) also carries the MCP registry's\nmatches: ``registry_hits`` blends after the local ``hits`` (local first), ``registry_duplicates``\ncounts the registry entries left out because the caller already has them, and\n``registry_error`` says why the registry was not searched (disabled, unreachable, refused) \u2014\nthe local hits are returned either way."
       },
       "McpServerBranding": {
         "properties": {

@@ -541,6 +541,31 @@ the same API as the official registry (`https://registry.modelcontextprotocol.io
 - **Registry URL.** A **Registry URL** that ends in `/v0.1` or `/v0.1/servers` still works. Apiome
   uses the root.
 
+### Search your catalog and the registry together
+
+`GET /v1/mcp/{tenant}/search?q=…&include_registry=true` searches your catalog as usual and also asks
+the MCP registry for servers whose names match. The registry is the official one unless an operator
+sets `APIOME_MCP_REGISTRY_SEARCH_URL` (see
+[Operating Apiome](../admin/operating-apiome.mdx#mcp-registry-search)).
+
+- **Labels.** Your own results stay in `hits`, each with `source: local`. The registry's matches come
+  after them in `registry_hits`, each with `source: registry`, the server name, version, status,
+  website and the remote Apiome would call (without credentials).
+- **No duplicates.** A registry server you already have is left out of `registry_hits`, and
+  `registry_duplicates` counts those servers. A server counts as yours when it was imported with that
+  registry name, or when its URL is one of the server's remotes (ignoring credentials, the query
+  string and a trailing `/`). Your matching hit gets the name in `registry_server_name`. A server you
+  imported from a registry carries its name there too.
+- **First page only.** The registry is searched when `offset` is `0`. `registry_limit` (1–100, default
+  20) caps how many registry servers are requested.
+- **Search words.** The registry matches names by substring, so Apiome sends your words without
+  quotes, `OR` or `-excluded` words.
+- **When the registry fails.** Your results still come back. `registry_included` is `false`, and
+  `registry_error` says why: search turned off, a timeout, or the registry's error.
+
+The public browse app has the same search with an **Include MCP Registry** toggle — see
+[Search MCP servers, including the MCP Registry](../ship/browse-published-specs.md#search-mcp-servers).
+
 ## With the CLI or the API
 
 The `apiome mcp` commands do everything on this page from a terminal or a CI job: register a
@@ -593,6 +618,8 @@ Add `--json` before `mcp` to print the REST response unchanged, for scripts. Exi
   `POST /v1/mcp/{tenant}/oauth/callback`,
   `GET …/endpoints/{endpoint}/versions`, `GET` / `POST …/versions/{version}/lint`,
   `GET …/versions/{version}/lint/evidence`, `GET /v1/mcp/{tenant}/browse`,
+  `GET /v1/mcp/{tenant}/search` (add `include_registry=true` to [search the registry
+  too](#search-your-catalog-and-the-registry-together)),
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API
   reference](../reference/api-reference.md).
 

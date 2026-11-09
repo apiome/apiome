@@ -30,6 +30,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
 from psycopg2 import errors as pg_errors
 
+from . import mcp_federated_search
 from .auth import (
     get_authenticated_user_id,
     validate_authentication,
@@ -109,6 +110,7 @@ from .mcp_oauth_service import complete_authorization, start_authorization
 from .mcp_owasp import catalog as owasp_catalog
 from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_provenance import build_endpoint_provenance
+from .mcp_registry_client import McpRegistryClientError, normalize_registry_base
 from .mcp_report_card import (
     build_report_card,
     render_report_html,
@@ -222,6 +224,7 @@ from .models import (
     mcp_discovery_job_out_from_row,
     mcp_discovery_job_status_from_row,
     mcp_endpoint_digest_response,
+    mcp_endpoint_host,
     mcp_endpoint_out_from_row,
     mcp_endpoint_test_response_from_result,
     mcp_endpoint_view_response,
@@ -387,6 +390,21 @@ async def search_mcp_catalog(
     ),
     limit: int = Query(50, ge=1, le=200, description="Maximum hits to return."),
     offset: int = Query(0, ge=0, description="Hits to skip (pagination)."),
+    include_registry: bool = Query(
+        False,
+        description=(
+            "Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names "
+            "match, on the first page only (offset=0). Registry matches come back in registry_hits, "
+            "after the local hits, minus any the caller already has (deduped by registry server "
+            "name or remote URL)."
+        ),
+    ),
+    registry_limit: int = Query(
+        20,
+        ge=1,
+        le=100,
+        description="Maximum registry entries to ask the registry for (include_registry=true).",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpSearchResponse:
     """Free-text search over the caller's MCP catalog, relevance-then-score ranked (V2-MCP-23.2 / MCAT-9.2).
@@ -402,6 +420,10 @@ async def search_mcp_catalog(
     MCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* private/public
     endpoints rather than exposing another tenant's. A query that reduces to nothing under full-text
     parsing (e.g. only stop-words) is a valid request that simply returns no hits.
+
+    Federated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also
+    carries the MCP registry's matches (:func:`_federate_with_registry`), each labeled
+    ``source = "registry"``; local hits stay ``source = "local"``.
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
@@ -442,7 +464,7 @@ async def search_mcp_catalog(
         )
 
     hits = [mcp_search_hit_from_row(r) for r in rows]
-    return McpSearchResponse(
+    response = McpSearchResponse(
         success=True,
         query=q,
         scope=scope,
@@ -451,6 +473,65 @@ async def search_mcp_catalog(
         count=len(hits),
         hits=hits,
     )
+    if include_registry and offset == 0:
+        await _federate_with_registry(response, tenant_id, query, registry_limit)
+    return response
+
+
+async def _federate_with_registry(
+    response: McpSearchResponse, tenant_id: str, query: str, registry_limit: int
+) -> None:
+    """Add the MCP registry's matches to a first-page search response (V2-MCP-26.4 / MCAT-12.4).
+
+    Searches ``settings.mcp_registry_search_url`` off the event loop with a bounded timeout,
+    dedupes the entries against the tenant's endpoints (:func:`mcp_federated_search.federate`) and
+    labels the local hits whose endpoints a registry knows. A blank registry URL, or a registry
+    that fails, sets ``registry_error`` and leaves the local hits untouched.
+
+    Args:
+        response: The local search response (changed in place).
+        tenant_id: The caller's tenant (scopes the dedupe lookup).
+        query: The stripped catalog query.
+        registry_limit: Entries to ask the registry for.
+    """
+    registry_url = normalize_registry_base(settings.mcp_registry_search_url or "")
+    if not registry_url:
+        response.registry_error = "Federated registry search is turned off on this deployment."
+        return
+    response.registry_url = registry_url
+    term = mcp_federated_search.registry_query(query)
+    try:
+        servers = await asyncio.to_thread(
+            mcp_federated_search.search_registry_servers,
+            term,
+            base_url=registry_url,
+            limit=registry_limit,
+            timeout=float(settings.mcp_registry_search_timeout_seconds),
+        )
+    except McpRegistryClientError as exc:
+        _logger.warning("Federated MCP registry search failed (%s): %s", registry_url, exc)
+        response.registry_error = str(exc)
+        return
+
+    hosts = sorted(
+        {
+            mcp_endpoint_host(key)
+            for server in servers
+            for key in mcp_federated_search.remote_url_keys(server.server)
+        }
+        - {""}
+    )
+    owned = db.find_mcp_endpoints_for_registry_dedupe(
+        tenant_id,
+        server_names=[server.name for server in servers],
+        hosts=hosts,
+        endpoint_ids=sorted({hit.endpoint_id for hit in response.hits}),
+    )
+    result = mcp_federated_search.federate(servers, owned, registry_url=registry_url)
+    mcp_federated_search.label_local_hits(response.hits, result.server_name_by_endpoint)
+    response.registry_included = True
+    response.registry_hits = result.hits
+    response.registry_duplicates = result.duplicates
 
 
 #: Raw capability hits to gather from each search channel before grouping. Large enough that

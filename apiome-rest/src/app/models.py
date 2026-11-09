@@ -13032,11 +13032,29 @@ class McpSearchHit(BaseModel):
     ``item_*`` fields are ``None`` while ``description`` is the endpoint's own description.
     ``endpoint_url`` is credential-redacted like every other catalog projection, and ``relevance``
     is the full-text rank the ordering used.
+
+    Provenance (V2-MCP-26.4 / MCAT-12.4): ``source`` is always ``local`` — the hit is one of the
+    caller's own endpoints. ``registry_server_name`` is set on a federated search
+    (``include_registry=true``) when the endpoint was imported from an MCP registry or matches a
+    registry entry the search found; that entry is then left out of ``registry_hits`` (deduped).
     """
 
     model_config = ConfigDict(populate_by_name=True)
 
     kind: str
+    source: str = Field(
+        "local",
+        description="Provenance of the hit: always 'local' (one of the caller's own endpoints).",
+        examples=["local"],
+    )
+    registry_server_name: Optional[str] = Field(
+        None,
+        description=(
+            "On a federated search, the MCP registry server name this endpoint is known by "
+            "(imported from a registry, or matching a registry entry the search found)."
+        ),
+        examples=["io.github.acme/weather"],
+    )
     endpoint_id: str
     endpoint_name: str
     endpoint_slug: str
@@ -13054,8 +13072,71 @@ class McpSearchHit(BaseModel):
     relevance: float = 0.0
 
 
+class McpRegistrySearchHit(BaseModel):
+    """One MCP registry entry a federated catalog search found (V2-MCP-26.4 / MCAT-12.4).
+
+    Registry hits are not catalog endpoints: they come from the upstream registry's
+    ``GET /v0.1/servers?search=…`` listing and have no endpoint id, snapshot or grade. ``source`` is
+    always ``registry``. An entry that matches one of the caller's own endpoints (same registry
+    server name, or the same remote URL) is never a registry hit — the local hit carries it instead.
+
+    Attributes:
+        source: Always ``registry`` (the provenance badge).
+        server_name: The reverse-DNS registry name (``io.github.acme/weather``).
+        title: The entry's display title, when it declares one.
+        description: The entry's description.
+        version: The entry's latest version.
+        status: The registry status (``active`` / ``deprecated``), or ``None``.
+        website_url: The entry's ``websiteUrl``, credential-free.
+        remote_url: The first ``streamable-http`` / ``sse`` remote, credential-free; ``None`` for a
+            package-only (local, stdio) server.
+        transport: That remote's transport (``streamable_http`` / ``sse``), or ``None``.
+        host: The remote's host, or ``""``.
+        registry_url: The registry the entry came from.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    source: str = Field(
+        "registry", description="Provenance of the hit: always 'registry'.", examples=["registry"]
+    )
+    server_name: str = Field(
+        ..., description="Reverse-DNS MCP registry server name.", examples=["io.github.acme/weather"]
+    )
+    title: Optional[str] = Field(None, description="Display title the entry declares.", examples=["Acme Weather"])
+    description: Optional[str] = Field(None, description="The entry's description.")
+    version: Optional[str] = Field(None, description="The entry's latest version.", examples=["1.2.0"])
+    status: Optional[str] = Field(
+        None, description="Registry status ('active' or 'deprecated').", examples=["active"]
+    )
+    website_url: Optional[str] = Field(
+        None, description="The entry's websiteUrl, credential-free.", examples=["https://acme.example/docs"]
+    )
+    remote_url: Optional[str] = Field(
+        None,
+        description="First streamable-http / sse remote, credential-free; null for a package-only server.",
+        examples=["https://mcp.acme.example/mcp"],
+    )
+    transport: Optional[str] = Field(
+        None, description="That remote's transport (streamable_http or sse).", examples=["streamable_http"]
+    )
+    host: str = Field("", description="The remote's host, or empty.", examples=["mcp.acme.example"])
+    registry_url: str = Field(
+        ...,
+        description="Root of the MCP registry the entry came from.",
+        examples=["https://registry.modelcontextprotocol.io"],
+    )
+
+
 class McpSearchResponse(BaseModel):
-    """Response envelope for a catalog search — ranked hits plus the echoed query/scope (MCAT-9.2)."""
+    """Response envelope for a catalog search — ranked hits plus the echoed query/scope (MCAT-9.2).
+
+    A federated search (``include_registry=true``, V2-MCP-26.4) also carries the MCP registry's
+    matches: ``registry_hits`` blends after the local ``hits`` (local first), ``registry_duplicates``
+    counts the registry entries left out because the caller already has them, and
+    ``registry_error`` says why the registry was not searched (disabled, unreachable, refused) —
+    the local hits are returned either way.
+    """
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -13066,6 +13147,24 @@ class McpSearchResponse(BaseModel):
     offset: int
     count: int
     hits: List[McpSearchHit]
+    registry_included: bool = Field(
+        False, description="Whether the MCP registry was searched and answered (include_registry=true)."
+    )
+    registry_url: Optional[str] = Field(
+        None,
+        description="Root of the MCP registry searched, when federation ran.",
+        examples=["https://registry.modelcontextprotocol.io"],
+    )
+    registry_hits: List[McpRegistrySearchHit] = Field(
+        default_factory=list,
+        description="Registry entries the caller does not already have, after the local hits.",
+    )
+    registry_duplicates: int = Field(
+        0, description="Registry entries left out because the caller already has them.", examples=[1]
+    )
+    registry_error: Optional[str] = Field(
+        None, description="Why the registry was not searched (turned off, unreachable, refused)."
+    )
 
 
 def mcp_search_hit_from_row(row: Dict[str, Any]) -> McpSearchHit:

@@ -211,3 +211,50 @@ def test_a_registry_server_name_finds_its_endpoint(live):
     finally:
         for row in rows:
             database._execute_write("DELETE FROM apiome.mcp_endpoints WHERE id = %s::uuid", (str(row["id"]),))
+
+
+def test_federated_search_dedupe_candidates(live):
+    """V2-MCP-26.4: dedupe candidates match by serverName, URL host or endpoint id — live rows only."""
+    database, tenant_id, _created = live
+    users = database.execute_query("SELECT id FROM apiome.users ORDER BY created_at LIMIT 1")
+    if not users:
+        pytest.skip("no user in the local database")
+    tag = uuid.uuid4().hex[:8]
+    name = f"io.github.fed-{tag}/weather"
+    rows = []
+    try:
+        for i, (added_via, url) in enumerate(
+            (
+                ("registry", f"https://named-{tag}.example.test/mcp"),
+                ("manual", f"https://user:pw@Host-{tag}.example.test/mcp"),
+                ("manual", f"https://by-id-{tag}.example.test/mcp"),
+                ("manual", f"https://unrelated-{tag}.example.test/mcp"),
+            )
+        ):
+            row = database.insert_mcp_endpoint(
+                tenant_id=tenant_id,
+                creator_id=str(users[0]["id"]),
+                name=f"Fed {i}",
+                base_slug=f"fed-{tag}-{i}",
+                endpoint_url=url,
+                transport="streamable_http",
+                added_via=added_via,
+            )
+            rows.append(row)
+        database.set_mcp_endpoint_registry_metadata(tenant_id, str(rows[0]["id"]), {"serverName": name})
+        found = database.find_mcp_endpoints_for_registry_dedupe(
+            tenant_id,
+            server_names=[name.upper()],
+            hosts=[f"host-{tag}.example.test"],
+            endpoint_ids=[str(rows[2]["id"])],
+        )
+        by_id = {str(r["id"]): r for r in found}
+        assert set(by_id) == {str(rows[0]["id"]), str(rows[1]["id"]), str(rows[2]["id"])}
+        assert by_id[str(rows[0]["id"])]["registry_server_name"] == name
+        assert by_id[str(rows[0]["id"])]["added_via"] == "registry"
+        assert database.find_mcp_endpoints_for_registry_dedupe(
+            tenant_id, server_names=[], hosts=[], endpoint_ids=[]
+        ) == []
+    finally:
+        for row in rows:
+            database._execute_write("DELETE FROM apiome.mcp_endpoints WHERE id = %s::uuid", (str(row["id"]),))

@@ -84,6 +84,35 @@ By default a search covers each project's most recently published version. Choos
 in the rail (or add `all=1` to the URL) to include older versions; the same item then appears once
 per version.
 
+### Search MCP servers, including the MCP Registry {#search-mcp-servers}
+
+**Browse to `/mcp/search`** in the browse app (the **MCP Catalog** link in the navbar, then the
+search box) to search the tools, resources and prompts of every published public MCP server. Results
+are sorted by relevance while you search; choose **Top graded** under **Sort** to lead with the
+best-graded servers.
+
+To add servers from the [MCP Registry](https://registry.modelcontextprotocol.io), **tick Include MCP
+Registry** next to **Sort**. The page then searches the registry for servers whose names match your
+words and lists them after the catalog results:
+
+- **Provenance badges.** Each result is labelled **Catalog** (a server published in Apiome) or
+  **MCP Registry** (a server listed only in the registry). A registry server that is no longer active
+  also shows its status, such as **deprecated**. Registry results show the server name
+  (`io.github.acme/weather`), its host, version and transport, and open the server's website when it
+  has one.
+- **No duplicates.** A registry server that is already published in the catalog is shown once, as the
+  catalog result, with an **In MCP Registry** badge. A server counts as the same when its registry
+  name matches the one it was imported with, or when one of its remote URLs is the published
+  server's URL (ignoring credentials, the query string and a trailing `/`). The note above the results
+  says how many registry servers there are and how many were already in the catalog.
+- **When the registry is down.** The catalog results still show. The note says the registry could
+  not be reached.
+- **Share.** The toggle is carried in the URL as `registry=1`.
+
+Operators point the browse app at another registry with `MCP_REGISTRY_SEARCH_URL`, or set it to an
+empty value to turn registry search off. Workspaces can run the same federated search over the REST
+API — see [Search MCP servers with the registry](../bring-in/mcp-servers.mdx#search-your-catalog-and-the-registry-together).
+
 ## Agent manifests: agents.json and llms.txt {#agent-manifests}
 
 Each organization's page in the browse app has two files for agents and crawlers, linked under the

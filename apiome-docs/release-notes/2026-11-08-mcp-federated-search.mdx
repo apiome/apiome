@@ -1,0 +1,26 @@
+---
+slug: mcp-federated-search
+title: Search MCP servers and the MCP Registry together
+description: "MCP search can add MCP Registry servers, labelled by source and never listed twice."
+authors: [apiome]
+---
+
+MCP server search can now include the [MCP Registry](https://registry.modelcontextprotocol.io). Its
+matching servers are listed after your own results, each labelled by where it came from, and a
+server you already have is shown only once.
+
+{/* truncate */}
+
+- **In the browse app.** On `/mcp/search`, **tick Include MCP Registry** next to **Sort**. Results are
+  badged **Catalog** or **MCP Registry**. A published server the registry also lists shows
+  **In MCP Registry** instead of a second card. See
+  [Search MCP servers, including the MCP Registry](/ship/browse-published-specs#search-mcp-servers).
+- **Over the REST API.** Add `include_registry=true` to `GET /v1/mcp/{tenant}/search`. Registry
+  matches come back in `registry_hits` (`source: registry`) after your `hits` (`source: local`),
+  without the servers you already have, which `registry_duplicates` counts. See
+  [Search your catalog and the registry together](/bring-in/mcp-servers#search-your-catalog-and-the-registry-together).
+- **Dedup.** A server counts as yours when it was imported with that registry name, or when its URL
+  is one of the registry server's remotes.
+- **Operators.** `APIOME_MCP_REGISTRY_SEARCH_URL` (REST) and `MCP_REGISTRY_SEARCH_URL` (browse) choose
+  the registry. An empty value turns registry search off. A registry that is down never blocks the
+  catalog results.
