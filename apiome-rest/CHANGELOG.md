@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.674.0] - 2026-11-08
+
+### Added
+- **OAuth 2.1 authorization code + PKCE + refresh for protected MCP servers (V2-MCP-20.4 / MCAT-6.4,
+  #3680).** Once discovery has stored a server's authorization-server metadata (MCAT-6.3), Apiome
+  can obtain and renew tokens for it.
+  - **Routes:**
+    - `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/oauth/authorize` takes `redirect_uri`
+      (plus optional `client_id`, `client_secret`, `scopes`) and returns the `authorization_url`.
+    - `POST /v1/mcp/{tenant_slug}/oauth/callback` takes the redirect's `state` with `code` (or
+      `error`, `error_description`) and `iss`. It exchanges the code and returns the endpoint id
+      and its redacted credential status. Neither route returns a token.
+  - **Protocol** (`app/mcp_oauth_flow.py`):
+    - PKCE `S256` on every authorization. A server that does not advertise it is refused
+      (`409 pkce_unsupported`).
+    - The RFC 8707 `resource` goes on the authorization request, the code exchange and every refresh.
+    - Dynamic Client Registration (RFC 7591) registers a public client when no `client_id` is
+      given, and is reused for the same redirect URI and issuer. A server without a registration
+      endpoint needs a `client_id` (`409 client_required`).
+    - The token endpoint is called with `none`, `client_secret_basic` or `client_secret_post`.
+    - An RFC 9207 `iss` on the callback must match the issuer.
+    - A JWT access token whose `aud` names another resource is refused (`audience_mismatch`).
+    - Requests follow the discovery URL rules: https only (http to loopback), no private IP
+      literals, no redirects, a 10 s timeout and a 256 KB body cap.
+  - **State** (`app/mcp_oauth_service.py`): the PKCE verifier and the client travel in a `state`
+    sealed with AES-256-GCM under the credential master key, with its own envelope magic (`OMOS`).
+    It is bound to the tenant and the user who started it and expires after 10 minutes. Only the
+    SHA-256 of its nonce is stored (`oauth_metadata.pending_authorization`), and
+    `Database.consume_mcp_endpoint_oauth_pending` accepts each state once.
+  - **Storage:** the tokens, the refresh token and any client secret are sealed as an `oauth2`
+    credential by the new `Database.store_mcp_endpoint_oauth_tokens`, which merges a non-secret
+    `oauth_metadata.token` summary (`client_id`, `client_registration`, `scope`, `expires_at`,
+    `refreshable`, `refreshed_at`, `last_refresh_error`).
+  - **Refresh:** `load_endpoint_auth_headers` (used by discovery, the sweep, the test harness,
+    provider verification and the contract runner) refreshes a token that expires within 60 s
+    before building headers. A process-local lock and a compare-and-set on `last_refreshed_at`
+    keep two refreshes from both being stored. When discovery still gets `401` with a stored OAuth
+    token, it forces one refresh (`refresh_endpoint_auth_headers`) and retries once. A failed
+    refresh keeps the old token and records `last_refresh_error`.
+
+### Changed
+- `POST …/endpoints/{id}/test` now loads the stored headers off the event loop, since loading them
+  may refresh a token.
+- OpenAPI 1.535.0 → 1.536.0; apiome-rest 1.673.0 → 1.674.0.
+
 ## [1.673.0] - 2026-11-08
 
 ### Added

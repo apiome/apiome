@@ -54,7 +54,7 @@ from .mcp_client import (
 from .mcp_client.diff import ITEM_TYPE_SERVER, SurfaceDiff
 from .mcp_client.resilience import BudgetExceededError, TimeBudget
 from .mcp_client.transport_meta import TransportMetadata
-from .mcp_credentials import load_endpoint_auth_headers
+from .mcp_credentials import load_endpoint_auth_headers, refresh_endpoint_auth_headers
 from .mcp_oauth_discovery import OAuthDiscoveryError, discover_oauth_metadata
 from .mcp_protocol_transcript import ProtocolTranscript, TranscriptRecorder
 
@@ -673,7 +673,15 @@ async def _drive_discovery_job(job_id: str, endpoint: Dict[str, Any]) -> None:
 
     try:
         headers = await asyncio.to_thread(load_endpoint_auth_headers, endpoint_id)
-        surface, transport_meta, transcript = await _invoke_discovery(endpoint, headers)
+        try:
+            surface, transport_meta, transcript = await _invoke_discovery(endpoint, headers)
+        except McpAuthRequiredError:
+            # A stored OAuth token the server no longer accepts: refresh it once and retry
+            # (MCAT-6.4). Without a refreshable token the 401 stands and falls through below.
+            refreshed = await asyncio.to_thread(refresh_endpoint_auth_headers, endpoint_id)
+            if refreshed is None:
+                raise
+            surface, transport_meta, transcript = await _invoke_discovery(endpoint, refreshed)
     except Exception as exc:  # noqa: BLE001 - mapped to the stable error taxonomy below
         error = classify_exception(exc)
         logger.warning(

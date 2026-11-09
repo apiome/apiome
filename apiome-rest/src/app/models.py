@@ -13264,6 +13264,77 @@ class McpCredentialStatusResponse(BaseModel):
     credential: McpCredentialStatusOut
 
 
+class McpOAuthAuthorizeRequest(BaseModel):
+    """Start an OAuth 2.1 authorization-code + PKCE connection to a protected endpoint (MCAT-6.4).
+
+    ``redirect_uri`` is the page the authorization server sends the user back to (the Apiome UI's
+    callback page); it must be ``https://`` (``http://`` only to loopback). Leave ``client_id`` out to
+    use Dynamic Client Registration (RFC 7591); supply it (and ``client_secret`` for a confidential
+    client) when the server needs a client registered out of band. ``scopes`` overrides the scopes
+    discovery found. Accepts camelCase and snake_case keys.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    redirect_uri: str = Field(..., validation_alias=AliasChoices("redirectUri", "redirect_uri"))
+    scopes: Optional[List[str]] = None
+    client_id: Optional[str] = Field(default=None, validation_alias=AliasChoices("clientId", "client_id"))
+    client_secret: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("clientSecret", "client_secret")
+    )
+
+
+class McpOAuthAuthorizeResponse(BaseModel):
+    """Where to send the user to consent (MCAT-6.4).
+
+    ``authorization_url`` carries the PKCE ``S256`` challenge, the RFC 8707 ``resource`` and an
+    opaque sealed ``state``; it is valid until ``expires_at``. ``client_registration`` is
+    ``dynamic`` (RFC 7591) or ``preregistered``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    authorization_url: str
+    expires_at: str
+    client_id: str
+    client_registration: str
+    scopes: List[str] = Field(default_factory=list)
+
+
+class McpOAuthCallbackRequest(BaseModel):
+    """The query parameters the authorization server redirected back with (MCAT-6.4).
+
+    Send ``state`` with either ``code`` (consent given) or ``error`` (and ``error_description``)
+    when the user declined. ``iss`` is checked against the discovered issuer when present (RFC 9207).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    state: str
+    code: Optional[str] = None
+    error: Optional[str] = None
+    error_description: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("errorDescription", "error_description")
+    )
+    iss: Optional[str] = None
+
+
+class McpOAuthCallbackResponse(BaseModel):
+    """The connected endpoint and its **redacted** credential status (MCAT-6.4).
+
+    The tokens are sealed server-side and never returned; ``credential.oauth_metadata.token``
+    describes them (client id, scope, expiry, whether they can be refreshed).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    credential: McpCredentialStatusOut
+
+
 class McpCredentialDeleteResponse(BaseModel):
     """Outcome of clearing an endpoint's credential (MCAT-6.5).
 

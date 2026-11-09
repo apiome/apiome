@@ -304,7 +304,8 @@ function routeFetch(overrides: Partial<Record<string, () => Response>> = {}) {
     if (/\/versions\/[^/?]+$/.test(url)) return (overrides.version ?? (() => jsonResponse(versionPayload())))();
     if (url.includes('/versions')) return (overrides.versions ?? (() => jsonResponse(versionsPayload())))();
     if (url.endsWith('/credentials')) {
-      return jsonResponse({ success: true, credential: { auth_type: 'bearer', configured: true } });
+      return (overrides.credentials ??
+        (() => jsonResponse({ success: true, credential: { auth_type: 'bearer', configured: true } })))();
     }
     if (url.includes('/trust-posture')) return (overrides.posture ?? (() => jsonResponse({ success: false })))();
     if (/\/api\/mcp\/endpoints\/[^/?]+$/.test(url)) {
@@ -952,5 +953,38 @@ describe('the browser fixtures', () => {
     await openTab('Settings');
     await screen.findByTestId('mcp-settings-danger');
     write('settings', pageColumn());
+  });
+
+  test('renders the OAuth connection on settings (and writes its fixture)', async () => {
+    // An OAuth-protected server that is connected and renews its token (MCAT-6.4, #3680).
+    routeFetch({
+      credentials: () =>
+        jsonResponse({
+          success: true,
+          credential: {
+            auth_type: 'oauth2',
+            configured: true,
+            oauth_metadata: {
+              issuer: 'https://auth.payments.example',
+              authorization_endpoint: 'https://auth.payments.example/authorize',
+              token_endpoint: 'https://auth.payments.example/token',
+              registration_endpoint: 'https://auth.payments.example/register',
+              pkce_s256_supported: true,
+              token: {
+                client_id: 'client-7f3a',
+                scope: 'tools:read tools:call',
+                expires_at: '2026-11-08T13:00:00Z',
+                refreshable: true,
+                last_refresh_error: null,
+              },
+            },
+          },
+        }),
+    });
+    await renderScreen();
+    await openTab('Settings');
+    await screen.findByTestId('mcp-oauth-connection');
+    expect(screen.getByTestId('mcp-oauth-detail')).toHaveTextContent('renews automatically');
+    write('settings-oauth', pageColumn());
   });
 });

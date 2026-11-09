@@ -1,0 +1,25 @@
+---
+slug: mcp-oauth-connect
+title: Connect MCP servers that sign in with OAuth
+description: "Sign Apiome in to an OAuth-protected MCP server once; it keeps the token fresh."
+authors: [apiome]
+---
+
+An MCP server protected by OAuth 2.1 can now be connected from its **Settings** tab. **Click
+“Connect with OAuth”**, approve the access at the server's authorization server, and Apiome stores
+the token. Discovery runs, the scheduled sweep and **Test** calls then send it, and Apiome renews it
+before it expires. See [Connect with OAuth](/bring-in/mcp-servers#connect-with-oauth).
+
+{/* truncate */}
+
+- **PKCE on every sign-in.** Apiome refuses an authorization server that does not support PKCE
+  `S256`, as the MCP specification requires.
+- **No client to set up, usually.** Apiome registers itself with Dynamic Client Registration
+  (RFC 7591). For a server that cannot do that, paste the **Client ID** you registered.
+- **Tokens for this server only.** The `resource` parameter (RFC 8707) goes on every request, and
+  a JWT access token for another audience is refused.
+- **Renewed without asking.** A token that is about to expire is refreshed before a run starts,
+  and discovery refreshes once more if the server still answers **401**. A failed renewal keeps
+  the old token and says why on **Settings**.
+- **Over the API.** `POST …/endpoints/{id}/oauth/authorize` returns the authorization URL, and
+  `POST /v1/mcp/{tenant}/oauth/callback` finishes the sign-in. Neither returns a token.

@@ -331,6 +331,7 @@ def _engine(monkeypatch, exc: Exception, discover=None) -> MagicMock:
 
     monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
     monkeypatch.setattr(mcp_discovery_engine, "load_endpoint_auth_headers", lambda _eid: {})
+    monkeypatch.setattr(mcp_discovery_engine, "refresh_endpoint_auth_headers", lambda _eid: None)
     if discover is not None:
         monkeypatch.setattr(mcp_discovery_engine, "discover_oauth_metadata", discover)
     mdb = MagicMock()
@@ -403,3 +404,45 @@ async def test_engine_skips_oauth_discovery_for_other_failures(monkeypatch):
 
     mdb.merge_mcp_endpoint_oauth_metadata.assert_not_called()
     assert "oauth_discovery" not in mdb.finish_mcp_discovery_job.call_args.kwargs["result"]
+
+
+async def test_engine_retries_once_with_a_refreshed_oauth_token(monkeypatch):
+    """MCAT-6.4: a 401 on a stored OAuth token refreshes it and retries before giving up."""
+    seen: List[Any] = []
+
+    async def _runner(_endpoint, headers):
+        seen.append(headers)
+        raise McpAuthRequiredError("", _CHALLENGE)
+
+    async def _discover(url, header, now=None):
+        return {"issuer": _ISSUER, "resource": _ENDPOINT, "authorization_endpoint": "a", "token_endpoint": "t"}
+
+    mdb = _engine(monkeypatch, McpAuthRequiredError("", _CHALLENGE), _discover)
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    monkeypatch.setattr(
+        mcp_discovery_engine, "load_endpoint_auth_headers", lambda _eid: {"Authorization": "Bearer old"}
+    )
+    monkeypatch.setattr(
+        mcp_discovery_engine, "refresh_endpoint_auth_headers", lambda _eid: {"Authorization": "Bearer new"}
+    )
+    await mcp_discovery_engine._drive_discovery_job(_JOB_UUID, _ENDPOINT_ROW)
+
+    assert seen == [{"Authorization": "Bearer old"}, {"Authorization": "Bearer new"}]
+    assert mdb.finish_mcp_discovery_job.call_args.kwargs["result"]["error"]["code"] == "auth_required"
+
+
+async def test_engine_does_not_retry_without_a_refreshable_token(monkeypatch):
+    seen: List[Any] = []
+
+    async def _runner(_endpoint, headers):
+        seen.append(headers)
+        raise McpAuthRequiredError("", _CHALLENGE)
+
+    async def _discover(url, header, now=None):
+        return {"issuer": _ISSUER, "resource": _ENDPOINT, "authorization_endpoint": "a", "token_endpoint": "t"}
+
+    _engine(monkeypatch, McpAuthRequiredError("", _CHALLENGE), _discover)
+    monkeypatch.setattr(mcp_discovery_engine, "_discovery_runner", _runner)
+    await mcp_discovery_engine._drive_discovery_job(_JOB_UUID, _ENDPOINT_ROW)
+
+    assert seen == [{}]

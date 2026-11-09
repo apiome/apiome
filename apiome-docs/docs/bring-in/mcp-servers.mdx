@@ -91,8 +91,8 @@ re-discovery that gets a **401**, following the
 3. It stores the result with the endpoint's credential: the authorization, token and registration
    endpoints, the scopes, the resource indicator, and whether the server supports PKCE (`S256`).
 
-Apiome does not sign in or fetch a token yet. Until you store a token as an **OAuth 2.1 access
-token**, discovery keeps running anonymously.
+Once the metadata is stored, connect the server from its **Settings** tab — see
+[Connect with OAuth](#connect-with-oauth). Until then, discovery keeps running anonymously.
 
 The metadata is read from
 [`GET …/endpoints/{endpoint_id}/credentials`](../reference/rest/mcp-catalog.md#get-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-get)
@@ -142,6 +142,68 @@ Safety rules for these fetches:
   [`PUT …/credentials`](../reference/rest/mcp-catalog.md#set-mcp-endpoint-credentials-v1-mcp-tenant-slug-endpoints-endpoint-id-credentials-put)
   without `oauth_metadata` keeps the stored metadata; one that includes it replaces the metadata.
   `DELETE …/credentials` removes it along with the credential.
+
+### Connect with OAuth
+
+After discovery has found the authorization server, sign Apiome in to the server once. Apiome then
+keeps the token up to date by itself.
+
+1. **Open the server's page** and **click the “Settings” tab**. The **OAuth connection** section
+   appears only for a server whose authorization server was discovered.
+2. If the section shows a **Client ID** field, the authorization server does not register clients
+   automatically. Register Apiome with it first, using the callback URL
+   `https://<your Apiome host>/ade/dashboard/mcp/oauth/callback`, and paste the client ID (for
+   example `apiome-prod`). Otherwise leave it out: Apiome registers itself.
+3. **Click “Connect with OAuth”.** Your browser goes to the authorization server.
+4. Sign in there and approve the access Apiome asks for.
+5. The browser comes back to Apiome, which stores the token and returns you to **Settings**. The
+   section now says **Connected**, when the token expires, and **renews automatically** when the
+   server issued a refresh token.
+
+<Screenshot id="mcp-endpoint-oauth" alt="An MCP endpoint's Settings tab: the OAuth connection section, connected, with the token's expiry, renews automatically and its scope" />
+
+From then on, discovery runs, the scheduled sweep and **Test** calls send the token. To connect
+again — for example with other scopes, or after the server revoked the token — **click
+“Reconnect”**.
+
+What Apiome does, following the
+[MCP authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization):
+
+- **PKCE is required.** Every sign-in uses a PKCE `S256` code challenge. If the authorization server
+  does not advertise `S256`, the section says **PKCE not supported** and Apiome will not connect.
+- **Client registration.** With no client ID, Apiome registers a public client with Dynamic Client
+  Registration (RFC 7591) and reuses it on later connects.
+- **Tokens for this server only.** The `resource` parameter (RFC 8707) names the server on the
+  sign-in, the code exchange and every refresh. If the access token is a JWT whose `aud` names
+  another server, Apiome refuses it.
+- **Scopes.** Apiome asks for the scopes in the server's `401` challenge, or else every scope it
+  lists in `scopes_supported`.
+- **Renewal.** A token that expires within 60 seconds is refreshed before a discovery run, a sweep
+  or a test call starts. If the server still answers **401**, discovery refreshes once and tries
+  again. If a refresh fails, Apiome keeps the old token, and the section shows **Automatic renewal
+  failed** with the reason. **Click “Reconnect”** to fix it.
+- **Stored encrypted.** The access token, the refresh token and any client secret are sealed like
+  every other credential and never returned. `oauth_metadata.token` describes them without the
+  secrets: `client_id`, `client_registration` (`dynamic` or `preregistered`), `scope`,
+  `expires_at`, `refreshable`, `refreshed_at` and `last_refresh_error`.
+- **One sign-in at a time.** A sign-in must be finished within ten minutes by the person who
+  started it. Starting another replaces it, and each callback is accepted once.
+
+With the API, a sign-in takes two calls:
+
+1. [`POST …/endpoints/{endpoint_id}/oauth/authorize`](../reference/rest/mcp-catalog.md#start-mcp-endpoint-oauth-v1-mcp-tenant-slug-endpoints-endpoint-id-oauth-authorize-post)
+   with `{"redirect_uri": "https://app.acme.example/ade/dashboard/mcp/oauth/callback"}` (plus
+   `client_id`, `client_secret` or `scopes` when needed) returns the `authorization_url` to open.
+2. After consent, send the parameters the authorization server added to the redirect URI —
+   `state`, plus `code`, or `error` if the user declined — to
+   [`POST /v1/mcp/{tenant}/oauth/callback`](../reference/rest/mcp-catalog.md#complete-mcp-endpoint-oauth-v1-mcp-tenant-slug-oauth-callback-post).
+   It returns the endpoint's redacted credential status.
+
+Errors name a `code` in the message: `409` for `not_discovered`, `pkce_unsupported` or
+`client_required`; `422` for `invalid_redirect_uri`; `400` for `invalid_state`, `state_expired`,
+`authorization_denied`, `issuer_mismatch`, `audience_mismatch` or `invalid_token_response`; `502`
+for `registration_failed` or `token_error` (the authorization server refused, or could not be
+reached); and `503` when credential encryption is not configured.
 
 ## Import from a registry
 
@@ -390,7 +452,8 @@ answer is added, but its row on the connector stays **discovered** until it does
 - CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp
   list|show|discover|test|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
-  `POST …/endpoints/{endpoint}/test`,
+  `POST …/endpoints/{endpoint}/test`, `POST …/endpoints/{endpoint}/oauth/authorize`,
+  `POST /v1/mcp/{tenant}/oauth/callback`,
   `GET …/endpoints/{endpoint}/versions`, `GET` / `POST …/versions/{version}/lint`,
   `GET …/versions/{version}/lint/evidence`, `GET /v1/mcp/{tenant}/browse`,
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API
