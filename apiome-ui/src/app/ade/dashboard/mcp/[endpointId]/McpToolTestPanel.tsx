@@ -378,7 +378,7 @@ export default function McpToolTestPanel({ endpointId, items }: McpToolTestPanel
 
           {requestError ? (
             <p role="alert" className="mcp-test-request-error" data-testid="mcp-test-request-error">
-              <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger" />
+              <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger-fg" />
               {requestError}
             </p>
           ) : null}

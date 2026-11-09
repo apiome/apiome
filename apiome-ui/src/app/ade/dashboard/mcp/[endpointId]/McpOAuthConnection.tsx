@@ -147,6 +147,13 @@ export default function McpOAuthConnection({ endpointId, navigate }: McpOAuthCon
               variant={status.connected ? 'outline' : 'primary'}
               onClick={() => void connect()}
               disabled={connecting || !status.pkceSupported}
+              title={
+                !status.pkceSupported
+                  ? 'The authorization server does not support PKCE, so Apiome will not connect to it'
+                  : connecting
+                    ? 'Opening the authorization server'
+                    : undefined
+              }
               data-testid="mcp-oauth-connect"
             >
               {connecting ? <Loader2 className="animate-spin" aria-hidden /> : <Link2 aria-hidden />}
@@ -188,7 +195,7 @@ export default function McpOAuthConnection({ endpointId, navigate }: McpOAuthCon
 
           {error ? (
             <p role="alert" className="flex items-center gap-1.5 text-sm text-fg" data-testid="mcp-oauth-error">
-              <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger" />
+              <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger-fg" />
               {error}
             </p>
           ) : null}

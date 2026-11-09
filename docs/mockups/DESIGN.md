@@ -468,3 +468,8 @@ Dark; four themes shown, five folded), §5.2 (the navy rail), §7 (forms: editor
 carry the amendments. Two things the mockups show stayed open: the console on the Hive shell
 (idea **admin**) is HIVE-EPIC-9's own ticket, and motion runs at `--dur-slow` (260 ms) rather
 than the mockups' 420 ms, because §3.4 caps every one-shot motion there.
+On 2026-11-09 the shared `assets/hive.css` took the two adopted ideas the parity harness
+measures, so every mockup draws the shipped look without the overlay: the page title in the
+display face at `--fs-4xl` / 800 with its line at `--fs-md` (idea **type**; `.page-header__title`
+ships 30 px where `facelift.css` drew 28 px, which is not a step of the ladder), and the
+signature Dark palette in `html[data-theme="dark"]` (idea **themes**).

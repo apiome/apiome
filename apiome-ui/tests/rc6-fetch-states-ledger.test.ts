@@ -12,6 +12,9 @@
  *   - **`PRIMARY_READS`** fill a screen, a tab or a dialog. Each names the source that makes the
  *     read and the Jest tests that hold it **pending** and make it **fail**. The suite fails if a
  *     source stops making the read (the ledger is stale) or a named test is renamed or deleted.
+ *   - **`HELD_BACK_READS`** are primary reads behind a surface that is switched off. The suite
+ *     holds the source to still making the read behind its gate, and names the test that pins
+ *     the surface as not offered; turning the gate on means moving the row back, with its tests.
  *   - **`ENRICHMENT_READS`** decorate content that is already on screen — tag filter options,
  *     review pills, sparklines, rule descriptions. They stay silent by design: a failure leaves
  *     the content without the decoration, never blank and never faked. Each says what the screen
@@ -47,6 +50,22 @@ interface PrimaryRead {
   pending: NamedTest;
   /** The test that makes it fail and checks the retry. */
   failed: NamedTest;
+}
+
+/**
+ * A primary read whose surface is switched off: the code that makes it is kept, but no reader
+ * can reach it, so it has no pending or failed test to name. When the gate is turned back on the
+ * row moves back into {@link PRIMARY_READS} with its tests.
+ */
+interface HeldBackRead {
+  id: string;
+  surface: string;
+  source: string;
+  needle: string;
+  /** The fragment of `source` that switches the surface off. */
+  gate: string;
+  /** The test that pins the surface as not offered. */
+  offTest: NamedTest;
 }
 
 /** A read that decorates content already on screen, and fails silently by design. */
@@ -371,14 +390,6 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
     failed: { file: 'versions-hive-redesign.test.tsx', title: 'Compare: a failed spec build is said in the dialog' },
   },
   {
-    id: 'D19',
-    surface: 'Compare dialog → Canvas',
-    source: 'src/app/ade/dashboard/versions/page.tsx',
-    needle: 'loadLayoutStateForVersionCompare(compareVersion1Id',
-    pending: { file: 'versions-hive-redesign.test.tsx', title: 'Compare › Canvas: a spinner while the layouts load' },
-    failed: { file: 'versions-hive-redesign.test.tsx', title: 'Compare › Canvas: a spinner while the layouts load, then an error with a retry' },
-  },
-  {
     id: 'D22',
     surface: 'Publish dialog → Style guide',
     source: 'src/app/components/ade/dashboard/PublishGuideViolationsPanel.tsx',
@@ -426,6 +437,17 @@ export const PRIMARY_READS: readonly PrimaryRead[] = [
     needle: '/api/versions/sunset-timeline',
     pending: { file: 'sunset-timeline-hive-redesign.test.tsx', title: 'holds the table with skeleton rows while the timeline read is pending' },
     failed: { file: 'sunset-timeline-hive-redesign.test.tsx', title: 'draws a failed read as a failure with a retry, not as an empty workspace' },
+  },
+];
+
+export const HELD_BACK_READS: readonly HeldBackRead[] = [
+  {
+    id: 'D19',
+    surface: 'Compare dialog → Canvas',
+    source: 'src/app/ade/dashboard/versions/page.tsx',
+    needle: 'loadLayoutStateForVersionCompare(compareVersion1Id',
+    gate: 'const COMPARE_CANVAS_ENABLED = false;',
+    offTest: { file: 'versions-hive-redesign.test.tsx', title: 'Compare: the Canvas tab is not offered' },
   },
 ];
 
@@ -558,7 +580,7 @@ function read(path: string): string {
 
 describe('primary reads: a skeleton while pending, an error with a retry when failed', () => {
   it('lists each audit row once', () => {
-    const ids = [...PRIMARY_READS, ...ENRICHMENT_READS].map((row) => row.id);
+    const ids = [...PRIMARY_READS, ...HELD_BACK_READS, ...ENRICHMENT_READS].map((row) => row.id);
     expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
   });
 
@@ -573,6 +595,22 @@ describe('primary reads: a skeleton while pending, an error with a retry when fa
       expect(existsSync(join(ROOT, path))).toBe(true);
       expect(read(path)).toContain(named.title);
     }
+  });
+});
+
+describe('held-back reads: switched off, so no reader meets them', () => {
+  it.each(HELD_BACK_READS.map((row) => [row.id, row] as const))('%s is still made, behind a gate that is off', (_id, row) => {
+    expect(existsSync(join(ROOT, row.source))).toBe(true);
+    const source = read(row.source);
+    expect(source).toContain(row.needle);
+    // Turned back on? Move the row into PRIMARY_READS and give it a pending and a failed test.
+    expect(source).toContain(row.gate);
+  });
+
+  it.each(HELD_BACK_READS.map((row) => [row.id, row] as const))('%s has a test that pins it as not offered', (_id, row) => {
+    const path = join('tests', row.offTest.file);
+    expect(existsSync(join(ROOT, path))).toBe(true);
+    expect(read(path)).toContain(row.offTest.title);
   });
 });
 

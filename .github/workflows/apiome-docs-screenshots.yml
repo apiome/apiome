@@ -49,8 +49,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # `playwright` is a bin of apiome-docs (its @playwright/test, which scripts/screenshots.ts
+      # drives), not of the root workspace, so `yarn playwright` only resolves from apiome-docs.
       - name: Install Playwright Chromium
         run: yarn playwright install chromium
+        working-directory: apiome-docs
 
       # The self-hosted runners do not all carry Chromium's system libraries (libatk and the
       # rest of Ubuntu 26.04's `t64` packages), and the browser download above does not add
@@ -70,6 +73,7 @@ jobs:
           fi
           yarn playwright install-deps chromium
           launches
+        working-directory: apiome-docs
 
       # Python comes from uv, as in golden-path.yml: run.sh drives the apiome CLI through it.
       - name: Install uv

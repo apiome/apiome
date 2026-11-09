@@ -12,7 +12,7 @@
     "dropped_edge_count": 0,
     "edges": [
       {
-        "count": 1,
+        "count": 5,
         "detail": "named types carried from the source into components.schemas",
         "evidence": [],
         "id": "checklist:components.schemas",
@@ -360,22 +360,70 @@
           {
             "kind": "source-construct",
             "location": null,
-            "ref": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE"
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY"
           },
           {
             "kind": "document-pointer",
             "location": null,
-            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT/properties/SNAP-WIDE"
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN/properties/SNAP-ORPHAN-KEY"
           }
         ],
-        "id": "construct:field:ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "id": "construct:field:ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
         "reason": null,
         "remediation": null,
         "scope": "construct",
         "severity": "info",
-        "source": "source:construct:ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
         "status": "retained",
-        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT/properties/SNAP-WIDE"
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN/properties/SNAP-ORPHAN-KEY"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-CODE"
+          }
+        ],
+        "id": "construct:field:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-CODE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-EXTRA"
+          }
+        ],
+        "id": "construct:field:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-EXTRA"
       },
       {
         "count": 1,
@@ -400,6 +448,102 @@
         "source": "source:construct:ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT",
         "status": "retained",
         "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-BODY"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY"
+          }
+        ],
+        "id": "construct:type:ACCOUNT-SNAPSHOT.SNAP-BODY",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-BODY",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY"
+          }
+        ],
+        "id": "construct:type:ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN"
+          }
+        ],
+        "id": "construct:type:ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "ACCOUNT-SNAPSHOT.SNAP-WIDE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE"
+          }
+        ],
+        "id": "construct:type:ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "status": "retained",
+        "target": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE"
       },
       {
         "count": 1,
@@ -860,14 +1004,92 @@
         "target": null
       },
       {
-        "construct_key": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
-        "id": "source:construct:ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-BODY",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-BODY",
         "kind": "source",
-        "label": "SNAP-WIDE",
+        "label": "SNAP-BODY",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "SNAP-BODY",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "kind": "source",
+        "label": "SNAP-BODY-OVERLAY",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "SNAP-BODY-OVERLAY",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "kind": "source",
+        "label": "SNAP-ORPHAN",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "SNAP-ORPHAN",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
+        "kind": "source",
+        "label": "SNAP-ORPHAN-KEY",
         "source": {
           "construct_kind": "field",
           "native_id": null,
+          "native_name": "SNAP-ORPHAN-KEY",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "kind": "source",
+        "label": "SNAP-WIDE",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
           "native_name": "SNAP-WIDE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+        "kind": "source",
+        "label": "SNAP-WIDE-CODE",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SNAP-WIDE-CODE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+        "id": "source:construct:ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+        "kind": "source",
+        "label": "SNAP-WIDE-EXTRA",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "SNAP-WIDE-EXTRA",
           "source_location": null
         },
         "target": null
@@ -928,13 +1150,79 @@
         }
       },
       {
-        "construct_key": "ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT.SNAP-WIDE",
-        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT/properties/SNAP-WIDE",
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-BODY",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY",
         "kind": "target",
-        "label": "/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT/properties/SNAP-WIDE",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY",
         "source": null,
         "target": {
-          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.ACCOUNT-SNAPSHOT/properties/SNAP-WIDE",
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-BODY-OVERLAY",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-ORPHAN.SNAP-ORPHAN-KEY",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN/properties/SNAP-ORPHAN-KEY",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN/properties/SNAP-ORPHAN-KEY",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-ORPHAN/properties/SNAP-ORPHAN-KEY",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-CODE",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-CODE",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-CODE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-CODE",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "ACCOUNT-SNAPSHOT.SNAP-WIDE.SNAP-WIDE-EXTRA",
+        "id": "target:/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-EXTRA",
+        "kind": "target",
+        "label": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-EXTRA",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/ACCOUNT-SNAPSHOT.SNAP-WIDE/properties/SNAP-WIDE-EXTRA",
           "native_path": null
         }
       },
@@ -975,7 +1263,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 6,
+      "construct": 12,
       "loss": 0
     },
     "source": {
@@ -1007,7 +1295,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 8,
+      "retained": 14,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1018,7 +1306,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 30,
+    "total_constructs": 36,
     "truncated": false
   },
   "snapshot_version": 1,
@@ -1026,10 +1314,10 @@
     "conversion_mode": "lossy",
     "defaults": {},
     "dropped_edge_count": 0,
-    "edge_count": 30,
+    "edge_count": 36,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 38,
+    "node_count": 50,
     "reason_counts": {
       "destination_unsupported": 0,
       "emitter_unsupported": 5,
@@ -1044,7 +1332,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 6,
+      "construct": 12,
       "loss": 0
     },
     "source": {
@@ -1076,7 +1364,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 8,
+      "retained": 14,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1087,7 +1375,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 30,
+    "total_constructs": 36,
     "truncated": false,
     "worst_severity": "warn"
   }

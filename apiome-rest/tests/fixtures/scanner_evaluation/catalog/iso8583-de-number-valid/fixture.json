@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/iso8583-de-number-valid",
+  "source_format": "iso8583",
+  "description": "ISO 8583 field map with exactly one blocking defect: data element 129 is outside 2-128.",
+  "document": "{\n  \"mti\": \"0800\",\n  \"dataElements\": {\n    \"7\": {\n      \"name\": \"Transmission Date and Time\",\n      \"type\": \"n\",\n      \"length\": \"10\",\n      \"value\": \"1116090000\"\n    },\n    \"11\": {\n      \"name\": \"System Trace Audit Number\",\n      \"type\": \"n\",\n      \"length\": \"6\",\n      \"value\": \"000001\"\n    },\n    \"70\": {\n      \"name\": \"Network Management Information Code\",\n      \"type\": \"n\",\n      \"length\": \"3\",\n      \"value\": \"301\"\n    },\n    \"129\": {\n      \"name\": \"Unassigned\",\n      \"type\": \"ans\",\n      \"length\": \"8\",\n      \"value\": \"EXTRA001\"\n    }\n  }\n}\n"
+}

@@ -45,7 +45,7 @@ from the record (``PAYMENT-RECORD.CARD-DETAIL``):
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 from .canonical_model import CanonicalApi
 from .cobolcopybook_fingerprint import record_tree
@@ -89,12 +89,26 @@ def _lower_first(reason: Optional[str]) -> str:
     return reason[0].lower() + reason[1:]
 
 
+#: The last :func:`_record` answer, keyed by the tree template it was built from (held, so its id stays
+#: unique). Every rule of one lint run asks for the same record; rebuilding the tree and its layout per
+#: rule cost seconds on a large copybook.
+_LAST_RECORD: Optional[Tuple[Any, Optional[Tuple[CobolField, Dict[int, FieldLayout]]]]] = None
+
+
 def _record(api: CanonicalApi) -> Optional[Tuple[CobolField, Dict[int, FieldLayout]]]:
-    """The record and its layout, or ``None`` when the model carries no copybook tree."""
+    """The record and its layout, or ``None`` when the model carries no copybook tree.
+
+    Rules only read the tree, so the answer for the same template object is reused.
+    """
+    global _LAST_RECORD
+    template = api.extras.get("cobolcopybook_tree")
+    cached = _LAST_RECORD
+    if cached is not None and template is not None and cached[0] is template:
+        return cached[1]
     root = record_tree(api)
-    if root is None:
-        return None
-    return root, compute_layout(root)
+    result = None if root is None else (root, compute_layout(root))
+    _LAST_RECORD = (template, result)
+    return result
 
 
 def _contains_odo(field: CobolField) -> bool:
@@ -149,38 +163,39 @@ def _check_redefines_fits(api: CanonicalApi) -> Iterable[Tuple[str, str]]:
             )
 
 
-def _discriminators_before(root: CobolField, stop: CobolField) -> List[CobolField]:
-    """Elementary items with 88-level conditions declared before ``stop``, in source order."""
-    found: List[CobolField] = []
-    for field, _parent, _path, _index in walk_record(root):
-        if field is stop:
-            break
-        if not field.children and field.conditions:
-            found.append(field)
-    return found
-
-
 def _check_redefines_discriminated(api: CanonicalApi) -> Iterable[Tuple[str, str]]:
-    """An overlay needs an earlier item whose 88-levels say which layout holds data."""
+    """An overlay needs an earlier item whose 88-levels say which layout holds data.
+
+    One pass in source order: the most 88-level conditions any elementary item declared so far is
+    enough to decide (an earlier item with at least as many conditions as the overlay has layouts),
+    and each group's ``REDEFINES`` targets are indexed once — the check was quadratic in the record.
+    """
     record = _record(api)
     if record is None:
         return
     root = record[0]
+    redefined_by: Dict[int, Dict[str, List[CobolField]]] = {}
+    most_conditions = 0
     for field, parent, path, _index in walk_record(root):
-        if parent is None or field.redefines:
-            continue
-        layouts = [c for c in parent.children if c.redefines == field.name]
-        if not layouts:
-            continue
-        candidates = _discriminators_before(root, field)
-        if not any(len(candidate.conditions) >= len(layouts) for candidate in candidates):
-            names = ", ".join(c.name for c in layouts)
-            yield (
-                path,
-                f"{field.name} is laid out {len(layouts) + 1} ways (redefined by {names}), but no item "
-                "declared before it has enough 88-level conditions to say which layout holds data. Add "
-                "a type code with one condition per layout.",
-            )
+        if parent is not None and not field.redefines:
+            by_target = redefined_by.get(id(parent))
+            if by_target is None:
+                by_target = {}
+                for child in parent.children:
+                    if child.redefines:
+                        by_target.setdefault(child.redefines, []).append(child)
+                redefined_by[id(parent)] = by_target
+            layouts = by_target.get(field.name)
+            if layouts and most_conditions < len(layouts):
+                names = ", ".join(c.name for c in layouts)
+                yield (
+                    path,
+                    f"{field.name} is laid out {len(layouts) + 1} ways (redefined by {names}), but no item "
+                    "declared before it has enough 88-level conditions to say which layout holds data. Add "
+                    "a type code with one condition per layout.",
+                )
+        if not field.children and field.conditions:
+            most_conditions = max(most_conditions, len(field.conditions))
 
 
 def _check_redefines_variable(api: CanonicalApi) -> Iterable[Tuple[str, str]]:

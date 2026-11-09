@@ -69,6 +69,7 @@ const GALLERY_EXEMPT: Readonly<Record<string, string>> = {
   // ---- self-fetching panels -------------------------------------------------------------
   ShadowedNamesPanel: 'Fetches the tenant shadowing report itself; needs a session and data.',
   TrustDriftAlertsPanel: 'Fetches an endpoint’s drift report itself; needs a session and data.',
+  UptimeBadge: 'Fetches an endpoint’s uptime summary itself; needs a session and data. It draws a Badge status pill.',
 };
 
 /**

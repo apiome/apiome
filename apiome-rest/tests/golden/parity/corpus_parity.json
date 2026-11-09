@@ -4847,11 +4847,7 @@
       "reason": "internal machinery, not a format a user can import"
     }
   ],
-  "export_only_destinations": [
-    "edifact-guide",
-    "hl7v2-guide",
-    "x12-guide"
-  ],
+  "export_only_destinations": [],
   "pending_corpus_directories": [
     "schematron"
   ]

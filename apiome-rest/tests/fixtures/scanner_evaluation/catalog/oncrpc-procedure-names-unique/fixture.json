@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/oncrpc-procedure-names-unique",
+  "source_format": "oncrpc",
+  "description": "ONC RPC program with exactly one blocking defect: two procedures of KV_VERS are both named KV_GET.",
+  "document": "/* ONC RPC scanner-evaluation fixture (MFI-21.6). */\nstruct kv_entry {\n    string key<256>;\n    opaque value<1024>;\n};\n\nprogram KV_PROG {\n    version KV_VERS {\n        void KV_NULL(void) = 0;\n        kv_entry KV_GET(string) = 1;\n        kv_entry KV_GET(int) = 2;\n    } = 1;\n} = 0x20000001;\n"
+}

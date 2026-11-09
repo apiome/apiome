@@ -25,6 +25,7 @@ import {
   supportDetails,
 } from '@/app/components/ade/help/helpModel';
 import { STATUS_TONES } from '@/app/components/ui/statusVocabulary';
+import { DOCS_SITE_BASE } from '@/app/utils/docsLinks';
 import type { ShortcutBinding } from '@lib/shortcuts';
 
 /**
@@ -82,9 +83,14 @@ describe('the help cards', () => {
   it('links the written guides out to the documentation site', () => {
     const guides = HELP_CARDS.filter((card) => card.id === 'user-guide' || card.id === 'api-cli');
     expect(guides).toHaveLength(2);
+    // The getting-started index is the site root; the reference card opens its own page.
     for (const card of guides) {
-      expect(card.href).toMatch(/^https:\/\/apiome\.github\.io\/apiome\//);
+      expect(card.href?.startsWith(DOCS_SITE_BASE)).toBe(true);
     }
+    expect(guides.map((card) => card.href)).toEqual([
+      DOCS_SITE_BASE,
+      `${DOCS_SITE_BASE}reference/api-reference`,
+    ]);
   });
 
   it('keeps the launcher’s YouTube destination, as one card among the guides', () => {

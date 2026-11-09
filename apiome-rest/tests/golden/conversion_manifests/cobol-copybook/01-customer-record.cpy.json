@@ -12,7 +12,7 @@
     "dropped_edge_count": 0,
     "edges": [
       {
-        "count": 1,
+        "count": 3,
         "detail": "named types carried from the source into components.schemas",
         "evidence": [],
         "id": "checklist:components.schemas",
@@ -264,6 +264,102 @@
           {
             "kind": "source-construct",
             "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-FIRST-NAME"
+          }
+        ],
+        "id": "construct:field:CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-FIRST-NAME"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-LAST-NAME"
+          }
+        ],
+        "id": "construct:field:CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-LAST-NAME"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-NUMBER"
+          }
+        ],
+        "id": "construct:field:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-NUMBER"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-TYPE"
+          }
+        ],
+        "id": "construct:field:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-TYPE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
             "ref": "CUSTOMER-RECORD.CUSTOMER-RECORD.CUST-BALANCE"
           },
           {
@@ -424,6 +520,54 @@
         "source": "source:construct:CUSTOMER-RECORD.CUSTOMER-RECORD.CUST-STATUS",
         "status": "retained",
         "target": "target:/components/schemas/CUSTOMER-RECORD.CUSTOMER-RECORD/properties/CUST-STATUS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-NAME"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-NAME"
+          }
+        ],
+        "id": "construct:type:CUSTOMER-RECORD.CUST-NAME",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-NAME",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "CUSTOMER-RECORD.CUST-PHONES"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES"
+          }
+        ],
+        "id": "construct:type:CUSTOMER-RECORD.CUST-PHONES",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:CUSTOMER-RECORD.CUST-PHONES",
+        "status": "retained",
+        "target": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES"
       },
       {
         "count": 1,
@@ -843,6 +987,84 @@
         "target": null
       },
       {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-NAME",
+        "kind": "source",
+        "label": "CUST-NAME",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "CUST-NAME",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+        "kind": "source",
+        "label": "CUST-FIRST-NAME",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CUST-FIRST-NAME",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+        "kind": "source",
+        "label": "CUST-LAST-NAME",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CUST-LAST-NAME",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-PHONES",
+        "kind": "source",
+        "label": "CUST-PHONES",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "CUST-PHONES",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+        "kind": "source",
+        "label": "CUST-PHONE-NUMBER",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CUST-PHONE-NUMBER",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+        "id": "source:construct:CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+        "kind": "source",
+        "label": "CUST-PHONE-TYPE",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CUST-PHONE-TYPE",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
         "construct_key": "CUSTOMER-RECORD.CUSTOMER-RECORD",
         "id": "source:construct:CUSTOMER-RECORD.CUSTOMER-RECORD",
         "kind": "source",
@@ -945,6 +1167,72 @@
           "source_location": null
         },
         "target": null
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-NAME",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-NAME",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME.CUST-FIRST-NAME",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-FIRST-NAME",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-FIRST-NAME",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-FIRST-NAME",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-NAME.CUST-LAST-NAME",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-LAST-NAME",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-LAST-NAME",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-NAME/properties/CUST-LAST-NAME",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-NUMBER",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-NUMBER",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-NUMBER",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-NUMBER",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "CUSTOMER-RECORD.CUST-PHONES.CUST-PHONE-TYPE",
+        "id": "target:/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-TYPE",
+        "kind": "target",
+        "label": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-TYPE",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/CUSTOMER-RECORD.CUST-PHONES/properties/CUST-PHONE-TYPE",
+          "native_path": null
+        }
       },
       {
         "construct_key": "CUSTOMER-RECORD.CUSTOMER-RECORD",
@@ -1071,7 +1359,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 8,
+      "construct": 14,
       "loss": 0
     },
     "source": {
@@ -1103,7 +1391,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 10,
+      "retained": 16,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1114,7 +1402,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 32,
+    "total_constructs": 38,
     "truncated": false
   },
   "snapshot_version": 1,
@@ -1122,10 +1410,10 @@
     "conversion_mode": "lossy",
     "defaults": {},
     "dropped_edge_count": 0,
-    "edge_count": 32,
+    "edge_count": 38,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 42,
+    "node_count": 54,
     "reason_counts": {
       "destination_unsupported": 0,
       "emitter_unsupported": 5,
@@ -1140,7 +1428,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 8,
+      "construct": 14,
       "loss": 0
     },
     "source": {
@@ -1172,7 +1460,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 10,
+      "retained": 16,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1183,7 +1471,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 32,
+    "total_constructs": 38,
     "truncated": false,
     "worst_severity": "warn"
   }

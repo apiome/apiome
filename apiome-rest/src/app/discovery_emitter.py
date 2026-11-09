@@ -283,6 +283,13 @@ class DiscoveryFidelityRulePack(CapabilityRulePack):
                 "its description",
                 target_mapping="union → type: any",
             )
+        elif type_.kind is TypeKind.ALIAS:
+            verdict = FidelityVerdict.approx(
+                message="Discovery has no type aliases; the alias is written as a schema of the type it names and "
+                "reads back as that type",
+                severity=LossinessSeverity.INFO,
+                target_mapping="alias → schema",
+            )
         else:
             verdict = super().type_verdict(type_)
         schema_id = self._schema_ids.get(type_.key)

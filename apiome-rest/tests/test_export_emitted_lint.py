@@ -54,7 +54,8 @@ def test_findings_carry_the_lens_shape():
 
 def test_a_format_without_its_own_pack_falls_back_to_its_paradigm_or_common():
     assert _lint("openapi").pack == "rest-conventions"
-    assert _lint("xmlrpc").pack == COMMON_PACK
+    # XML-RPC got its own pack in MFI-21.6 (#3996); WIT has none and no paradigm pack covers it.
+    assert _lint("wit").pack == COMMON_PACK
 
 
 def test_the_lint_is_deterministic():

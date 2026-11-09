@@ -55,8 +55,10 @@ A few reads only decorate content that is already there: tag filter options, rev
 sparklines, lint rule descriptions. They fail silently and leave the content as it was.
 `apiome-ui/tests/rc6-fetch-states-ledger.test.ts` lists every read on these screens. Each
 content read names the tests that hold it pending and make it fail; each decoration says what
-the screen shows without it. The suite fails if a read moves or a named test disappears, so a new
-read joins the ledger with its tests.
+the screen shows without it. A read behind a surface that is switched off (the Compare dialog's
+Canvas tab) is listed with its gate and the test that keeps the surface hidden; turning it back on
+means giving the read its pending and failed tests again. The suite fails if a read moves or a
+named test disappears, so a new read joins the ledger with its tests.
 
 ## Several statuses on one page
 

@@ -173,8 +173,13 @@
             "name": "audit",
             "type": {
               "extras": {},
-              "item": null,
-              "name": "[common.AuditEntry]",
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "common.AuditEntry",
+                "nullable": true
+              },
+              "name": null,
               "nullable": true
             }
           },
@@ -226,8 +231,13 @@
             "name": "tags",
             "type": {
               "extras": {},
-              "item": null,
-              "name": "[common.Tag]",
+              "item": {
+                "extras": {},
+                "item": null,
+                "name": "common.Tag",
+                "nullable": true
+              },
+              "name": null,
               "nullable": true
             }
           }
@@ -255,7 +265,7 @@
     "confidence": 0.96,
     "format": "flatbuffers"
   },
-  "fingerprint": "sha256:cb1cc927c4042bfb1ea73fb6e2574c3a9e9b1b8750be0ad02c3b56ecb9210d78",
+  "fingerprint": "sha256:7db82323b801163e310e6b1c11a5e1707782057b5eeb68e917f2ec7d865ce56e",
   "lint": {
     "findings": 12,
     "grade": "C",

@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.683.1] - 2026-11-09
+
+### Fixed
+- **COBOL copybooks:** the cb2xml layout check compares a multi-literal 88-level value
+  (`VALUE 'B' 'X'`, `THRU`/`THROUGH`) literal by literal and reads cb2xml's nested
+  `<condition>` values, so the verbatim value lists from MFI-21.1 no longer read as a mismatch.
+  The copybook target card writes `VALUE 'B' 'X'` (it had fused them to `'B'' ''X'`).
+- **COBOL lint performance:** the copybook lint pack builds the record layout once per run instead
+  of once per rule, and `redefines-discriminated` runs in one pass (2.5 s → 88 ms on the scale corpus).
+- **Round-trip fidelity:** the Thrift emitter reports another format's service metadata (such as
+  ONC RPC program/version numbers) as APPROX, and the Discovery emitter reports alias types as
+  APPROX, so their reconcile cells pass (843 pass, 0 fail).
+- **Scanner transparency:** the 10 blocking lint rules added with the FIX Orchestra, HL7 v2,
+  ISO 8583 and ONC RPC packs have transparency entries and evaluation fixtures.
+- Test suite brought back in line with intended behaviour (COBOL, FlatBuffers and parity goldens,
+  export-only guide emitters, XML-RPC's own lint pack, Postman inference, a metrics race and an
+  unstubbed audit write in the retention test).
+
 ## [1.683.0] - 2026-11-08
 
 ### Added

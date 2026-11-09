@@ -283,6 +283,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Contrast and touch targets:
   - The hexagon avatar of a catalog item, project or table row now draws its initials on a deeper shade of the format colour, so they are readable on every format (white on the brighter hues, such as cyan and orange, was too faint)
   - In the export studio's coverage heatmap, the level line under the count in the two hottest cells is now full-strength text instead of muted, so it stays readable on the red wash
+  - On an MCP server's **Credentials** tab, a greyed-out **Save**, **Clear credential** or **Connect with OAuth** now says why when you point at it, and the error icons there and on **Test** use the readable error colour
   - The delivery-profile checkboxes in an export preset sit a little further apart, so each one is easier to hit, and the hidden **Add overlay files** input is named for screen readers
 - Admin console:
   - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged

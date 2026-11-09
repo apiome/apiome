@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/fix-orchestra-message-msgtype-declared",
+  "source_format": "fix-orchestra",
+  "description": "FIX Orchestra repository with exactly one blocking defect: the NewOrderSingle message declares no msgType.",
+  "document": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<fixr:repository xmlns:fixr=\"http://fixprotocol.io/2020/orchestra/repository\" name=\"ScannerFixture\" version=\"FIX.4.4\">\n  <fixr:codeSets>\n    <fixr:codeSet name=\"SideCodeSet\" id=\"54\" type=\"char\">\n      <fixr:code name=\"Buy\" id=\"54001\" value=\"1\"/>\n      <fixr:code name=\"Sell\" id=\"54002\" value=\"2\"/>\n    </fixr:codeSet>\n  </fixr:codeSets>\n  <fixr:fields>\n    <fixr:field id=\"11\" name=\"ClOrdID\" type=\"String\"/>\n    <fixr:field id=\"54\" name=\"Side\" type=\"SideCodeSet\"/>\n  </fixr:fields>\n  <fixr:messages>\n    <fixr:message name=\"NewOrderSingle\" id=\"14\" category=\"SingleGeneralOrderHandling\">\n      <fixr:structure>\n        <fixr:fieldRef id=\"11\" presence=\"required\"/>\n        <fixr:fieldRef id=\"54\" presence=\"required\"/>\n      </fixr:structure>\n    </fixr:message>\n  </fixr:messages>\n</fixr:repository>\n"
+}

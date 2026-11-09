@@ -12,3 +12,7 @@ table fixture (`hive-catalog/table.html`) at two points in history, kept so
 They are mounted against today's `globals.css`, so a class whose styles have since been retired
 renders unstyled. Do not edit or re-dump them; if a stylesheet change ever moves either across the
 budget, the spec will say so and the history is the thing to reconsider, not the copy.
+
+`catalog-quiet-pass.html` was edited once by mistake (#4100 gave it the new search placeholder and
+the `.cat-search` width, which wraps the Cards / Table switch onto a second toolbar row, ≈ 382 px);
+on 2026-11-09 it was restored to its `6f709f0b3` content.

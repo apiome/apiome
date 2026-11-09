@@ -12,7 +12,7 @@
                10  BIN-ID PIC X(6).
                10  BIN-STATUS PIC X(1).
                    88  BIN-ACTIVE               VALUE 'A'.
-                   88  BIN-UNUSABLE             VALUE 'B'' ''X'.
+                   88  BIN-UNUSABLE             VALUE 'B' 'X'.
                10  BIN-MEASURES.
                    15  BIN-WEIGHT-KG PIC S9(5)V9(3) COMP-3.
                    15  BIN-VOLUME-M3 PIC S9(3)V9(3) COMP-3.

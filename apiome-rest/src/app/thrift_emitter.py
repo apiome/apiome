@@ -236,8 +236,20 @@ class ThriftFidelityRulePack(CapabilityRulePack):
         return verdicts
 
     def service_verdicts(self, service: Any) -> List[FidelityVerdict]:
+        """A renamed service's key, else the other format's service metadata the IDL has no place for."""
         rekeyed = self._rekeyed(service.key, self._service_key(service.key), "service")
-        return [rekeyed] if rekeyed else []
+        if rekeyed:
+            return [rekeyed]
+        foreign = sorted(key for key in (service.extras or {}) if not key.startswith("thrift_"))
+        if not self._thrift_source and foreign:
+            # e.g. an ONC RPC program's number and version numbers (oncrpc_program_number, oncrpc_versions).
+            return [FidelityVerdict.approx(
+                message=f"service {service.name!r} is written as a Thrift service; its source metadata "
+                f"({', '.join(foreign)}) has no Thrift form and is not written",
+                severity=LossinessSeverity.INFO,
+                target_mapping="service metadata → dropped",
+            )]
+        return []
 
     # -- operations ---------------------------------------------------------------
 
