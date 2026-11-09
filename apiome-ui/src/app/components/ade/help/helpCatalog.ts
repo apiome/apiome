@@ -944,6 +944,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['server.json', 'upstream', 'sync', 'federated search', 'connector', 'overview'],
   },
   {
+    id: 'mcp-notifications-and-monitoring',
+    title: 'MCP notifications and monitoring',
+    summary: 'Get told when an MCP server changes, and watch whether it stays up.',
+    page: 'apiome-docs/docs/bring-in/mcp-notifications-and-monitoring.mdx',
+    section: 'spine',
+    keywords: ['webhook', 'mcp.version.created', 'uptime', 'latency', 'health', 'overview'],
+  },
+  {
     id: 'agent-access',
     title: 'Agent access',
     summary: 'Expose published operations to AI agents as MCP tools, issue agent keys, and watch usage.',

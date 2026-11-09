@@ -1,0 +1,23 @@
+---
+slug: mcp-notifications-and-monitoring
+title: MCP notifications and monitoring
+description: "Change webhooks, uptime checks and catalog health for MCP servers, mapped on one page."
+authors: [apiome]
+---
+
+Apiome now keeps watching the MCP servers in your catalog after it discovers them, and a new **MCP
+notifications and monitoring** page maps everything it does.
+
+{/* truncate */}
+
+- **Change events.** Every new version of a server raises one `mcp.version.created` event with a
+  summary of what changed and its worst severity. Servers are named by id, name and slug, never URL.
+- **Webhooks.** Every active push-webhook subscription receives the event, HMAC-signed, retried with
+  backoff and dead-lettered if it keeps failing. Nothing extra to turn on.
+- **Uptime.** Each server is checked every five minutes with the MCP `initialize` handshake alone;
+  its page shows **Up · 99.6% · 118 ms**-style badges, the API keeps a week of history, and a public
+  server's README badge can show it with `?metric=uptime`.
+- **Catalog and sweep health.** **Analytics** breaks the catalog down by grade, health and change
+  frequency, and platform administrators can watch every scheduled re-discovery tick.
+
+See [MCP notifications and monitoring](/bring-in/mcp-notifications-and-monitoring).
