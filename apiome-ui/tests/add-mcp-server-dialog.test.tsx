@@ -290,10 +290,24 @@ describe('importing MCP servers from a registry', () => {
       name: 'MCP registry · apiome.example · io.github.acme',
       baseUrl: 'https://apiome.example/registry/mcp/acme',
       scope: { search: 'io.github.acme' },
-      refreshIntervalSeconds: 86400,
       conflictPolicy: 'hold-for-review',
     });
     expect(calls.some((c) => c.url.endsWith('/credentials'))).toBe(false);
+  });
+
+  it('registers a paused connector when the servers are not kept in sync', async () => {
+    const calls = stubRegistryImport(REGISTRY_RUN);
+    await openRegistryMode();
+    fireEvent.change(screen.getByLabelText(/Registry URL/), {
+      target: { value: 'https://registry.modelcontextprotocol.io' },
+    });
+    fireEvent.click(screen.getByRole('checkbox', { name: /Keep these servers in sync/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Import servers →' }));
+    expect(await screen.findByText('2 servers imported from the registry')).toBeInTheDocument();
+
+    const created = calls.find((c) => c.url === '/api/connectors' && c.method === 'POST');
+    expect(created?.body).toMatchObject({ kind: 'mcp-registry', status: 'paused' });
+    expect(created?.body).not.toHaveProperty('refreshIntervalSeconds');
   });
 
   it('deletes the connector of a run that failed outright and shows the reason on the form', async () => {

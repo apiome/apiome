@@ -1576,6 +1576,19 @@ class Settings(BaseSettings):
         ),
     )
 
+    # MCP registry sync cadence (V2-MCP-26.3, #3709). How often the connector sweep re-syncs an
+    # `mcp-registry` connector that has no cadence of its own (`refresh_interval_seconds`). Hourly by
+    # default — the aggregator cadence the registry recommends — rather than the five-minute default
+    # of the other connector kinds. The refresh floor (APIOME_REFRESH_MIN_INTERVAL) still applies.
+    mcp_registry_sync_interval_seconds: int = Field(
+        default=3600,
+        ge=60,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_REGISTRY_SYNC_INTERVAL",
+            "mcp_registry_sync_interval_seconds",
+        ),
+    )
+
     # Polyglot toolchain runner (MFI-5.1, #3750). The shared service that runs external
     # parser/linter/diff CLIs (buf, tsp, smithy, …) in a constrained subprocess.
     # toolchain_max_concurrency   Global cap on simultaneously-running tool subprocesses, so a

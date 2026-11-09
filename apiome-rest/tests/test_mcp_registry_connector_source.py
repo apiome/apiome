@@ -161,6 +161,17 @@ class McpDb(FakeDb):
         self.endpoints[row["id"]] = row
         return dict(row)
 
+    def find_registry_mcp_endpoint(self, tenant_id, server_name):
+        for row in self.endpoints.values():
+            metadata = row.get("registry_metadata") or {}
+            if (
+                row["tenant_id"] == tenant_id
+                and row["added_via"] == "registry"
+                and str(metadata.get("serverName") or "").lower() == server_name.lower()
+            ):
+                return dict(row)
+        return None
+
     def get_mcp_endpoint(self, tenant_id, endpoint_id):
         row = self.endpoints.get(endpoint_id)
         return dict(row) if row and row["tenant_id"] == tenant_id else None
@@ -258,12 +269,19 @@ def _use(fake: FakeRegistry, discovery: Discovery) -> None:
     )
 
 
-def _connector(store, *, scope=None, token: Optional[str] = "reg-token", created_by: Optional[str] = ACTOR):
+def _connector(
+    store,
+    *,
+    scope=None,
+    token: Optional[str] = "reg-token",
+    created_by: Optional[str] = ACTOR,
+    registry: str = REGISTRY,
+):
     connector = store.add_connector(
         TENANT,
         kind=reg.KIND,
         name="Official registry",
-        base_url=f"{REGISTRY}/v0.1/servers",
+        base_url=f"{registry}/v0.1/servers",
         scope=scope if scope is not None else {"search": "acme", "updatedSince": "2026-01-01T00:00:00Z"},
         created_by=created_by,
     )
@@ -301,7 +319,8 @@ def test_sync_turns_reachable_servers_into_mcp_servers_and_keeps_the_rest_discov
     endpoint = db.endpoints[weather["mcp_endpoint_id"]]
     assert endpoint["added_via"] == "registry" and endpoint["name"] == "Weather"
     assert endpoint["endpoint_url"] == "https://weather.acme.test/mcp" and endpoint["transport"] == "streamable_http"
-    assert endpoint["slug"] == "weather" and endpoint["creator_id"] == ACTOR and endpoint["visibility"] == "private"
+    assert endpoint["slug"] == "io-github-acme-weather"
+    assert endpoint["creator_id"] == ACTOR and endpoint["visibility"] == "private"
 
     local = items["io.github.acme/local-files"]
     assert local["status"] == "discovered" and local["mcp_endpoint_id"] is None
@@ -447,13 +466,13 @@ def test_links_an_operator_made_are_never_retired(store):
     assert "ghcr.io/acme/weather:1" in {s["locator"] for s in db.live_sources(endpoint_id)}
 
 
-def test_a_server_deleted_from_the_registry_turns_missing_and_keeps_its_server(store):
+def test_a_server_the_registry_stops_listing_turns_missing_and_keeps_its_server(store):
     servers = _fixture_servers()[:1]
     fake, db = FakeRegistry(servers), McpDb()
     _use(fake, Discovery())
     connector = _connector(store)
     _sync(store, db, connector)
-    servers[0] = _server("io.github.acme/weather", status="deleted")
+    servers.clear()
     result = _sync(store, db, connector)
     item = _items(store)["io.github.acme/weather"]
     assert item["status"] == "missing" and item["mcp_endpoint_id"] in db.endpoints
@@ -726,3 +745,173 @@ def test_entry_revision_carries_a_non_active_status_only() -> None:
     base = reg.entry_revision(server)
     assert reg.entry_revision(server, "active") == base
     assert reg.entry_revision(server, "Deprecated") == f"{base}.deprecated"
+
+
+# --- sync, namespacing and status (V2-MCP-26.3, #3709) ------------------------------------------
+
+
+def _set_status(servers: List[Dict[str, Any]], status: str, index: int = 0) -> None:
+    servers[index]["_meta"]["io.modelcontextprotocol.registry/official"]["status"] = status
+
+
+def test_a_deleted_entry_marks_its_server_deleted_without_discovering_it(store):
+    servers = _fixture_servers()[:1]
+    fake, discovery, db = FakeRegistry(servers), Discovery(), McpDb()
+    _use(fake, discovery)
+    connector = _connector(store)
+    _sync(store, db, connector)
+    endpoint_id = _items(store)["io.github.acme/weather"]["mcp_endpoint_id"]
+    _set_status(servers, "deleted")
+    discovery.calls.clear()
+
+    result = _sync(store, db, connector)
+
+    item = _items(store)["io.github.acme/weather"]
+    assert item["status"] == "discovered" and item["mcp_endpoint_id"] == endpoint_id
+    assert item["discovered_reason"].startswith(f"{reg.REASON_REGISTRY_DELETED}: ")
+    assert db.endpoints[endpoint_id]["registry_metadata"]["status"] == "deleted"
+    assert db.endpoints[endpoint_id]["endpoint_url"] == "https://weather.acme.test/mcp"
+    assert discovery.calls == [] and db.inserts == 1 and result.summary["missing"] == 0
+    assert result.summary["findings"] == [
+        {"code": reg.FINDING_DELETED, "remoteId": "io.github.acme/weather", "status": "deleted"}
+    ]
+
+
+def test_a_deleted_entry_never_imported_creates_nothing(store):
+    servers = _fixture_servers()[:1]
+    _set_status(servers, "deleted")
+    fake, discovery, db = FakeRegistry(servers), Discovery(), McpDb()
+    _use(fake, discovery)
+    _sync(store, db, _connector(store))
+    item = _items(store)["io.github.acme/weather"]
+    assert item["status"] == "discovered" and item["mcp_endpoint_id"] is None
+    assert item["discovered_reason"].endswith("nothing was imported.")
+    assert db.inserts == 0 and discovery.calls == []
+
+
+def test_a_restored_entry_imports_again(store):
+    servers = _fixture_servers()[:1]
+    fake, db = FakeRegistry(servers), McpDb()
+    _use(fake, Discovery())
+    connector = _connector(store)
+    _sync(store, db, connector)
+    _set_status(servers, "deleted")
+    _sync(store, db, connector)
+    _set_status(servers, "active")
+    _sync(store, db, connector)
+    item = _items(store)["io.github.acme/weather"]
+    assert item["status"] == "imported" and item["discovered_reason"] is None
+    assert db.endpoints[item["mcp_endpoint_id"]]["registry_metadata"]["status"] == "active"
+    assert db.inserts == 1
+
+
+def test_a_deprecated_entry_imports_and_is_listed_as_a_finding(store):
+    servers = _fixture_servers()[:1]
+    _set_status(servers, "deprecated")
+    fake, discovery, db = FakeRegistry(servers), Discovery(), McpDb()
+    _use(fake, discovery)
+    result = _sync(store, db, _connector(store))
+    assert _items(store)["io.github.acme/weather"]["status"] == "imported"
+    assert discovery.calls == ["https://weather.acme.test/mcp"]
+    assert result.summary["findings"] == [
+        {"code": reg.FINDING_DEPRECATED, "remoteId": "io.github.acme/weather", "status": "deprecated"}
+    ]
+
+
+def test_an_entry_without_a_namespace_stays_discovered(store):
+    remotes = [{"type": "streamable-http", "url": "https://plain.acme.test/mcp"}]
+    fake = FakeRegistry([_server("weather", remotes=remotes), _server("acme/weather", remotes=remotes)])
+    discovery, db = Discovery(), McpDb()
+    _use(fake, discovery)
+    _sync(store, db, _connector(store, scope={}))
+    items = _items(store)
+    for name in ("weather", "acme/weather"):
+        assert items[name]["status"] == "discovered"
+        assert items[name]["discovered_reason"].startswith(f"{reg.REASON_NAME_NOT_NAMESPACED}: ")
+    assert db.inserts == 0 and discovery.calls == []
+
+
+def test_servers_sharing_a_last_segment_get_distinct_namespaced_slugs(store):
+    fake = FakeRegistry(
+        [
+            _server("io.github.acme/weather", remotes=[{"type": "sse", "url": "https://a.test/sse"}]),
+            _server("com.example/weather", remotes=[{"type": "sse", "url": "https://b.test/sse"}]),
+        ]
+    )
+    db = McpDb()
+    _use(fake, Discovery())
+    _sync(store, db, _connector(store, scope={}))
+    assert sorted(e["slug"] for e in db.endpoints.values()) == ["com-example-weather", "io-github-acme-weather"]
+
+
+def test_a_name_another_registry_imported_is_not_imported_twice(store):
+    fake, db = FakeRegistry(_fixture_servers()[:1]), McpDb()
+    _use(fake, Discovery())
+    _sync(store, db, _connector(store))
+    other = _connector(store, registry="https://mirror.example.test")
+    _sync(store, db, other)
+    rows = [i for i in store.items.values() if i["connector_id"] == other["id"]]
+    assert len(rows) == 1 and rows[0]["status"] == "discovered" and rows[0]["mcp_endpoint_id"] is None
+    assert rows[0]["discovered_reason"].startswith(f"{reg.REASON_DUPLICATE_NAME}: io.github.acme/weather ")
+    assert REGISTRY in rows[0]["discovered_reason"] and db.inserts == 1
+
+
+def test_a_second_connector_on_the_same_registry_refreshes_the_same_server(store):
+    fake, db = FakeRegistry(_fixture_servers()[:1]), McpDb()
+    _use(fake, Discovery())
+    _sync(store, db, _connector(store))
+    first = next(iter(db.endpoints))
+    second = _connector(store, scope={"search": "weather"})
+    _sync(store, db, second)
+    rows = [i for i in store.items.values() if i["connector_id"] == second["id"]]
+    assert rows[0]["status"] == "imported" and rows[0]["mcp_endpoint_id"] == first
+    assert db.inserts == 1
+
+
+@pytest.mark.parametrize(
+    "name, parts",
+    [
+        ("io.github.acme/weather", ("io.github.acme", "weather")),
+        ("com.example/a_b.c-d", ("com.example", "a_b.c-d")),
+        ("apiome.acme/orders", ("apiome.acme", "orders")),
+        ("weather", None),
+        ("acme/weather", None),
+        ("io.github.acme/weather/v2", None),
+        ("io..acme/weather", None),
+        ("io.github.acme/", None),
+        ("io.github acme/weather", None),
+        ("io.github.acme/" + "x" * 200, None),
+        ("", None),
+    ],
+)
+def test_split_server_name(name, parts):
+    assert reg.split_server_name(name) == parts
+
+
+def test_status_findings_list_only_non_active_entries():
+    entries = [
+        reg.parse_server_entry(_server("io.a/x"), include_deleted=True),
+        reg.parse_server_entry(_server("io.a/y", status="Deprecated"), include_deleted=True),
+        reg.parse_server_entry(_server("io.a/z", status="deleted"), include_deleted=True),
+    ]
+    assert [(f["code"], f["remoteId"]) for f in reg.status_findings(entries)] == [
+        (reg.FINDING_DEPRECATED, "io.a/y"),
+        (reg.FINDING_DELETED, "io.a/z"),
+    ]
+
+
+def test_registry_connectors_sync_hourly_unless_configured(monkeypatch):
+    from app.catalog_connector_sync import connector_kind_intervals
+
+    assert settings.mcp_registry_sync_interval_seconds == 3600
+    assert connector_kind_intervals(settings) == {reg.KIND: 3600}
+    monkeypatch.setattr(settings, "mcp_registry_sync_interval_seconds", 900)
+    assert connector_kind_intervals(settings) == {reg.KIND: 900}
+
+
+def test_revision_status_reads_back_what_entry_revision_wrote():
+    server = {"name": "io.a/x", "version": "1.0.0"}
+    assert reg.revision_status(reg.entry_revision(server)) == ""
+    assert reg.revision_status(reg.entry_revision(server, "deleted")) == "deleted"
+    assert reg.revision_status(reg.entry_revision({"name": "io.a/x"}, "deprecated")) == "deprecated"
+    assert reg.revision_status(None) == "" and reg.revision_status("v1.2") == ""

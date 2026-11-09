@@ -247,12 +247,39 @@ def soft_delete_connector(db: Any, tenant_id: str, connector_id: str) -> Optiona
     return row
 
 
-def list_due_connectors(db: Any, *, default_interval_seconds: int, floor_seconds: int) -> List[Dict[str, Any]]:
+def list_due_connectors(
+    db: Any,
+    *,
+    default_interval_seconds: int,
+    floor_seconds: int,
+    kind_intervals: Optional[Mapping[str, int]] = None,
+) -> List[Dict[str, Any]]:
     """Live connectors due for a scheduled sync, oldest run first.
 
-    A connector is due when it is not paused and its last run is older than its cadence (the
-    deployment default when it has none), never less than the floor.
+    A connector is due when it is not paused and its last run is older than its cadence, never less
+    than the floor. The cadence is the connector's own ``refresh_interval_seconds``, else its kind's
+    default from ``kind_intervals`` (``mcp-registry`` syncs hourly, V2-MCP-26.3), else the
+    deployment default.
+
+    Args:
+        db: Database handle.
+        default_interval_seconds: The cadence of a connector with none of its own.
+        floor_seconds: The shortest cadence any connector runs at.
+        kind_intervals: Per-kind default cadences (``{kind: seconds}``) that replace
+            ``default_interval_seconds`` for connectors of that kind.
+
+    Returns:
+        The due connector rows.
     """
+    params: List[Any] = [STATUS_PAUSED]
+    default_sql = "%s"
+    if kind_intervals:
+        whens = []
+        for kind, seconds in sorted(kind_intervals.items()):
+            whens.append("WHEN %s THEN %s")
+            params.extend([kind, int(seconds)])
+        default_sql = f"CASE c.kind {' '.join(whens)} ELSE %s END"
+    params.extend([int(default_interval_seconds), int(floor_seconds)])
     return db.execute_query(
         f"""
         SELECT {_CONNECTOR_COLUMNS}
@@ -262,11 +289,11 @@ def list_due_connectors(db: Any, *, default_interval_seconds: int, floor_seconds
           AND (
             c.last_run_at IS NULL
             OR c.last_run_at <= now() - make_interval(
-                 secs => GREATEST(COALESCE(c.refresh_interval_seconds, %s), %s))
+                 secs => GREATEST(COALESCE(c.refresh_interval_seconds, {default_sql}), %s))
           )
         ORDER BY c.last_run_at NULLS FIRST, c.id
         """,
-        (STATUS_PAUSED, int(default_interval_seconds), int(floor_seconds)),
+        tuple(params),
     )
 
 

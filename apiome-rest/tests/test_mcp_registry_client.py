@@ -197,6 +197,13 @@ def test_unknown_fields_are_kept_and_deleted_entries_left_out_of_a_listing():
     assert [s.name for s in servers] == ["a/new"] and servers[0].server["futureField"] == {"x": 1}
 
 
+def test_include_deleted_keeps_deleted_entries_in_a_listing():
+    fake = FakeRegistry([_entry("a/new"), _entry("a/gone", status="deleted")], page_size=10)
+    with _client(fake) as client:
+        servers = client.list_servers(include_deleted=True)
+    assert [(s.name, s.status) for s in servers] == [("a/new", "active"), ("a/gone", "deleted")]
+
+
 def test_the_flat_shape_and_snake_case_drafts_are_read():
     flat = {
         "name": "a/flat",

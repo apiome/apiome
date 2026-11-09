@@ -1161,6 +1161,21 @@ def run_connector_sync(
     return result
 
 
+def connector_kind_intervals(settings: Any) -> Dict[str, int]:
+    """Default sync cadences by connector kind, for connectors with no cadence of their own.
+
+    ``mcp-registry`` connectors sync hourly by default (``APIOME_MCP_REGISTRY_SYNC_INTERVAL``,
+    V2-MCP-26.3); every other kind uses ``APIOME_REFRESH_DEFAULT_INTERVAL``.
+
+    Args:
+        settings: The application settings.
+
+    Returns:
+        ``{kind: seconds}``.
+    """
+    return {"mcp-registry": int(settings.mcp_registry_sync_interval_seconds)}
+
+
 def process_connector_refresh_sweep(db: Any) -> int:
     """Run the scheduled sync of every due, syncable connector (one sweep tick).
 
@@ -1184,6 +1199,7 @@ def process_connector_refresh_sweep(db: Any) -> int:
         db,
         default_interval_seconds=int(settings.refresh_default_interval_seconds),
         floor_seconds=int(settings.refresh_min_interval_seconds),
+        kind_intervals=connector_kind_intervals(settings),
     ):
         if str(connector.get("kind")) not in _SOURCES:
             continue

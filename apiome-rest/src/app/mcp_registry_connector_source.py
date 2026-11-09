@@ -12,32 +12,54 @@ items, so the source syncs each entry itself (the engine's ``sync_item`` hook).
 ``updatedSince`` (sent as ``updated_since``) filters, through the registry client
 (:class:`app.mcp_registry_client.McpRegistryClient`, V2-MCP-26.1). The base URL is the registry root; a
 trailing ``/v0.1`` or ``/v0.1/servers`` is accepted and dropped. Each server name is one inventory row
-(``remoteId``); a name listed in several versions keeps its ``isLatest`` entry, and an entry the
-registry marks ``deleted`` is left out, so its row turns ``missing``. ``updatedSince`` is a fixed
-filter, never advanced by a sync: an entry the filter hides is reported missing.
+(``remoteId``); a name listed in several versions keeps its ``isLatest`` entry. Entries the registry
+marks ``deleted`` are listed too, so the sync can mark their MCP servers (below); an entry the
+registry stops listing altogether turns ``missing``. ``updatedSince`` is a fixed filter, never
+advanced by a sync: an entry the filter hides is reported missing.
+
+**Cadence** (V2-MCP-26.3). The connector sweep syncs a connector on its own cadence
+(``refresh_interval_seconds``), or hourly when it has none (``APIOME_MCP_REGISTRY_SYNC_INTERVAL``).
+
+**Names** (V2-MCP-26.3). A registry server name is reverse-DNS namespaced:
+``<namespace>/<server>``, the namespace a dotted domain written backwards (``io.github.acme``,
+``com.example``). The name is the server's identity in the tenant: one name is one MCP server, however
+many connectors list it. An entry whose name has no such namespace, or whose name is already in the
+catalog from another registry, stays ``discovered`` with the reason and creates nothing; the same
+name from the same registry (a second connector with another search) refreshes the server the first
+one created. A new server's slug is the whole namespaced name (``io-github-acme-weather``), so two
+servers named ``weather`` in different namespaces never compete for one slug.
+
+**Status** (V2-MCP-26.3). The registry's ``_meta`` status is recorded on the endpoint
+(``registry_metadata.status``) and listed on the run summary as a finding
+(``mcp-registry-deprecated`` / ``mcp-registry-deleted``). A ``deprecated`` entry still imports and
+is discovered as usual. A ``deleted`` entry is not discovered and creates nothing: its server, when
+there is one, is kept and marked ``deleted``, and the row stays ``discovered``
+(``registry-deleted``). An entry the registry restores to ``active`` imports again.
 
 **Syncing one entry** (only entries whose content changed since the last import — the revision is
 the server version plus a digest of the whole ``server.json``):
 
-1. **Pick a remote.** The first ``remotes[]`` entry of type ``streamable-http`` or ``sse`` with a
+1. **Check the entry**: a namespaced name, not deleted, not a name another registry already
+   imported (above).
+2. **Pick a remote.** The first ``remotes[]`` entry of type ``streamable-http`` or ``sse`` with a
    concrete ``http(s)`` URL. No such remote (a package-only server runs locally over stdio, or its
    URL is a template with ``{variables}``), or a URL the connector address policy refuses
    (:func:`app.catalog_connectors.connector_base_url_from_settings`), leaves the row
    ``discovered`` with the reason and creates nothing.
-2. **Create or refresh the MCP server.** A new entry inserts an endpoint (private, unpublished,
+3. **Create or refresh the MCP server.** A new entry inserts an endpoint (private, unpublished,
    ``added_via = 'registry'``); a known one has its name, URL, transport and description refreshed
    from the registry. The endpoint also records the entry itself (``registry_metadata``,
    V2-MCP-26.2): server name, ``version``, ``websiteUrl``, the ``_meta`` status and dates, and the
    chosen remote with the headers it declares — never a secret header's value
    (:func:`app.mcp_server_json.registry_metadata`). An entry in an earlier snake_case draft of
    ``server.json`` is read as the current camelCase one.
-3. **Link sources** (``apiome.mcp_endpoint_sources``, provenance ``registry_published``): the
+4. **Link sources** (``apiome.mcp_endpoint_sources``, provenance ``registry_published``): the
    registry identity itself, ``repository.url`` as a git source and every ``packages[]`` entry of a
    known ecosystem (npm, PyPI, NuGet, Cargo as package sources; OCI as an image). Each link records
    the connector in its ``provenance_detail``, and a link this connector made that the registry no
    longer lists is retired. Nothing is invented: a package version is pinned only when the registry
    names an exact one.
-4. **Run discovery** (``trigger = 'registry'``), which also lints and scores the new snapshot. When
+5. **Run discovery** (``trigger = 'registry'``), which also lints and scores the new snapshot. When
    discovery cannot reach the remote (connect, TLS, timeout or address failure), the row stays
    ``discovered`` with the reason — still linked to the server, and tried again next sync. Any
    answer, even ``401``, means the server is there, and the row becomes ``imported``.
@@ -93,10 +115,15 @@ from .refresh_source import (
 _logger = logging.getLogger(__name__)
 
 __all__ = [
+    "FINDING_DELETED",
+    "FINDING_DEPRECATED",
     "KIND",
     "McpRegistrySource",
     "REASON_DISCOVERY_UNREACHABLE",
+    "REASON_DUPLICATE_NAME",
+    "REASON_NAME_NOT_NAMESPACED",
     "REASON_NO_REMOTE",
+    "REASON_REGISTRY_DELETED",
     "REASON_REMOTE_REFUSED",
     "REASON_REMOTE_TEMPLATED",
     "RegistryServer",
@@ -105,7 +132,10 @@ __all__ = [
     "normalize_registry_base",
     "parse_server_entry",
     "registry_source_links",
+    "revision_status",
     "select_remote",
+    "split_server_name",
+    "status_findings",
     "validate_mcp_registry_scope",
 ]
 
@@ -127,6 +157,19 @@ REASON_NO_REMOTE = "no-remote"
 REASON_REMOTE_TEMPLATED = "remote-templated"
 REASON_REMOTE_REFUSED = "remote-refused"
 REASON_DISCOVERY_UNREACHABLE = "remote-unreachable"
+REASON_NAME_NOT_NAMESPACED = "name-not-namespaced"
+REASON_DUPLICATE_NAME = "duplicate-name"
+REASON_REGISTRY_DELETED = "registry-deleted"
+
+#: Run-summary finding codes for entries the registry marks other than ``active`` (V2-MCP-26.3).
+FINDING_DEPRECATED = "mcp-registry-deprecated"
+FINDING_DELETED = "mcp-registry-deleted"
+_STATUS_FINDINGS = {"deprecated": FINDING_DEPRECATED, "deleted": FINDING_DELETED}
+
+#: A reverse-DNS namespaced server name: two or more dotted labels, ``/``, the server part (the
+#: registry schema's ``^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$``, with the namespace's dots required).
+_NAMESPACED_NAME = re.compile(r"^(?P<namespace>[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+)/(?P<server>[A-Za-z0-9._-]+)$")
+_NAME_MAX = 200
 
 #: Registry remote types → catalog transports.
 _TRANSPORTS = {"streamable-http": "streamable_http", "sse": "sse"}
@@ -196,6 +239,39 @@ def validate_mcp_registry_scope(scope: Mapping[str, Any], base_url: Optional[str
 # ---------------------------------------------------------------------------------------
 
 
+def split_server_name(name: str) -> Optional[Tuple[str, str]]:
+    """Split a reverse-DNS namespaced registry server name.
+
+    Args:
+        name: A registry server name (``io.github.acme/weather``).
+
+    Returns:
+        ``(namespace, server)`` (``("io.github.acme", "weather")``), or ``None`` when the name has no
+        dotted namespace (``weather``, ``acme/weather``), more than one ``/``, a character the
+        registry schema forbids, or more than 200 characters.
+    """
+    match = _NAMESPACED_NAME.match(name or "")
+    if match is None or len(name) > _NAME_MAX:
+        return None
+    return match.group("namespace"), match.group("server")
+
+
+def status_findings(entries: Sequence[RegistryServer]) -> List[Dict[str, Any]]:
+    """Run-summary findings for the entries the registry marks ``deprecated`` or ``deleted``.
+
+    Args:
+        entries: The entries the sync keeps (one per name).
+
+    Returns:
+        ``{code, remoteId, status}`` per such entry, in listed order (credential-free).
+    """
+    return [
+        {"code": _STATUS_FINDINGS[entry.status], "remoteId": entry.name, "status": entry.status}
+        for entry in entries
+        if entry.status in _STATUS_FINDINGS
+    ]
+
+
 def latest_servers(entries: Sequence[RegistryServer]) -> List[RegistryServer]:
     """Keep one entry per server name: the one marked ``isLatest``, else the last one listed.
 
@@ -226,6 +302,22 @@ def entry_revision(server: Mapping[str, Any], status: Optional[str] = None) -> s
     revision = f"{version}+sha256.{digest}" if version else f"sha256.{digest}"
     state = str(status or "").strip().lower()
     return f"{revision}.{state}" if state and state != "active" else revision
+
+
+_REVISION_STATUS = re.compile(r"sha256\.[0-9a-f]{12}(?:\.(?P<status>[a-z0-9_-]+))?$")
+
+
+def revision_status(revision: Optional[str]) -> str:
+    """The registry status an :func:`entry_revision` carries: ``""`` for active, else the status.
+
+    Args:
+        revision: An entry revision (``1.0.0+sha256.0123456789ab.deprecated``), or ``None``.
+
+    Returns:
+        The non-active status, or ``""`` (active, or a revision this module did not write).
+    """
+    match = _REVISION_STATUS.search(revision or "")
+    return (match.group("status") or "") if match else ""
 
 
 def _remotes(server: Mapping[str, Any]) -> List[Mapping[str, Any]]:
@@ -385,9 +477,12 @@ def registry_source_links(
 
 
 def _slug_for(name: str) -> str:
-    """A catalog slug for a registry server name (its last path segment, slugified)."""
-    tail = name.rsplit("/", 1)[-1]
-    return _SLUG_UNSAFE.sub("-", tail.lower()).strip("-")[:60] or "mcp-server"
+    """A catalog slug for a registry server name: the whole namespaced name, slugified.
+
+    ``io.github.acme/weather`` → ``io-github-acme-weather`` (V2-MCP-26.3), so servers that share a
+    last segment in different namespaces get distinct, stable slugs. Capped at 60 characters.
+    """
+    return _SLUG_UNSAFE.sub("-", name.lower()).strip("-")[:60].strip("-") or "mcp-server"
 
 
 # ---------------------------------------------------------------------------------------
@@ -468,6 +563,8 @@ class McpRegistrySource(ConnectorRefreshSource):
         self._discover = discover or _default_discover
         self._address_check = address_check or connector_base_url_from_settings
         self._entries: Dict[str, RegistryServer] = {}
+        #: Inventory-wide notes for the run summary (entries marked deprecated or deleted).
+        self.findings: List[Dict[str, Any]] = []
 
     @property
     def scope(self) -> Mapping[str, Any]:
@@ -509,19 +606,27 @@ class McpRegistrySource(ConnectorRefreshSource):
                 limit=PAGE_SIZE,
                 search=search if isinstance(search, str) else None,
                 updated_since=since.strip() if isinstance(since, str) and since.strip() else None,
+                include_deleted=True,
                 max_pages=MAX_PAGES,
             )
         self._entries = {entry.name: entry for entry in latest_servers(entries)}
+        self.findings = status_findings(list(self._entries.values()))
         return [build_candidate(entry, registry_url=self.registry_url) for entry in self._entries.values()]
 
     def freshness_key(self, candidate: RefreshCandidate) -> FreshnessKey:
         """The entry revision against the anchor of its last import.
 
         An entry that is not imported yet, or stayed ``discovered``, has no anchor, so every sync
-        tries it again.
+        tries it again. Neither does an entry whose registry status changed since its import
+        (V2-MCP-26.3): a registry that flips the status without moving ``updatedAt`` must still have
+        the change recorded, and the newer-than rule would otherwise trust the unchanged date.
         """
         row = self._inventory.get(candidate.remote_id) or {}
-        if not row.get("mcp_endpoint_id") or row.get("discovered_reason"):
+        if (
+            not row.get("mcp_endpoint_id")
+            or row.get("discovered_reason")
+            or revision_status(candidate.revision) != revision_status(row.get("imported_revision"))
+        ):
             return FreshnessKey(remote_checksum=candidate.revision)
         return FreshnessKey(
             remote_updated_at=candidate.updated_at,
@@ -569,6 +674,20 @@ class McpRegistrySource(ConnectorRefreshSource):
         """
         entry = self._entry(candidate)
         known_id = str(row["mcp_endpoint_id"]) if row.get("mcp_endpoint_id") else None
+        if split_server_name(entry.name) is None:
+            return ItemSyncOutcome(
+                mcp_endpoint_id=known_id,
+                discovered_reason=(
+                    f"{REASON_NAME_NOT_NAMESPACED}: {entry.name[:_NAME_MAX]!r} is not a reverse-DNS namespaced "
+                    "server name (<namespace>/<server>, for example io.github.acme/weather)."
+                ),
+            )
+        if known_id is None:
+            known_id, duplicate = self._claim_name(db, entry)
+            if duplicate:
+                return ItemSyncOutcome(discovered_reason=duplicate)
+        if entry.status == "deleted":
+            return self._mark_deleted(db, entry, known_id)
         choice = select_remote(entry.server)
         if isinstance(choice, str):
             return ItemSyncOutcome(mcp_endpoint_id=known_id, discovered_reason=choice)
@@ -590,6 +709,45 @@ class McpRegistrySource(ConnectorRefreshSource):
                 discovered_reason=f"{REASON_DISCOVERY_UNREACHABLE}: discovery could not reach {where} ({code}).",
             )
         return ItemSyncOutcome(mcp_endpoint_id=endpoint_id)
+
+    def _claim_name(self, db: Any, entry: RegistryServer) -> Tuple[Optional[str], Optional[str]]:
+        """Find the MCP server that already carries the entry's name, if any.
+
+        One registry server name is one MCP server per tenant. A server imported from the same
+        registry (another connector with another search) is adopted; one imported from a different
+        registry keeps the name, and this entry stays ``discovered``.
+
+        Returns:
+            ``(endpoint id to refresh or None, duplicate reason or None)``.
+        """
+        existing = db.find_registry_mcp_endpoint(str(self.connector["tenant_id"]), entry.name)
+        if not existing:
+            return None, None
+        metadata = existing.get("registry_metadata") if isinstance(existing.get("registry_metadata"), Mapping) else {}
+        other = normalize_registry_base(str(metadata.get("registryUrl") or ""))
+        if other == self.registry_url:
+            return str(existing["id"]), None
+        return None, (
+            f"{REASON_DUPLICATE_NAME}: {entry.name} is already in the catalog from {other or 'another registry'} "
+            f"(MCP server {existing.get('slug') or existing['id']}); one name is one MCP server."
+        )
+
+    def _mark_deleted(self, db: Any, entry: RegistryServer, known_id: Optional[str]) -> ItemSyncOutcome:
+        """Record a ``deleted`` entry: its MCP server (when there is one) is kept and marked deleted.
+
+        Nothing is created, discovered or linked; the row stays ``discovered`` with the reason.
+        """
+        reason = f"{REASON_REGISTRY_DELETED}: the registry marks {entry.name} deleted"
+        endpoint = db.get_mcp_endpoint(str(self.connector["tenant_id"]), known_id) if known_id else None
+        if not endpoint:
+            return ItemSyncOutcome(discovered_reason=f"{reason}; nothing was imported.")
+        self._record_registry_metadata(
+            db, endpoint, entry, str(endpoint.get("transport") or ""), str(endpoint.get("endpoint_url") or "")
+        )
+        return ItemSyncOutcome(
+            mcp_endpoint_id=str(endpoint["id"]),
+            discovered_reason=f"{reason}; its MCP server is kept and marked deleted.",
+        )
 
     def _record_registry_metadata(
         self, db: Any, endpoint: Mapping[str, Any], entry: RegistryServer, transport: str, url: str

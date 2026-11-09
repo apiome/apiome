@@ -20,8 +20,12 @@ import type { ConnectorRun } from '@lib/connectors-api';
 /** The REST connector kind the dialog registers. */
 export const MCP_REGISTRY_CONNECTOR_KIND = 'mcp-registry';
 
-/** Daily: the cadence "Keep these servers in sync" schedules (one of the connector cadences). */
-export const REGISTRY_SYNC_SECONDS = 86400;
+/**
+ * "Keep these servers in sync" sends no cadence of its own: the server re-syncs an `mcp-registry`
+ * connector hourly by default (`APIOME_MCP_REGISTRY_SYNC_INTERVAL`, V2-MCP-26.3). Left unticked, the
+ * connector is registered `paused`, so it syncs only when asked.
+ */
+export const REGISTRY_SYNC_PAUSED = 'paused';
 
 /** The conflict policy every new connector starts with (the Add connector page's default). */
 const DEFAULT_CONFLICT_POLICY = 'hold-for-review';
@@ -48,7 +52,7 @@ export interface McpRegistryForm {
   credentialType: McpRegistryCredentialType;
   /** The token or API key; ignored when `credentialType` is `none`. */
   credential: string;
-  /** Schedule a daily re-sync (otherwise the connector syncs only when asked). */
+  /** Keep the connector on the hourly registry sync (otherwise it is paused and syncs only when asked). */
   keepInSync: boolean;
 }
 
@@ -90,6 +94,8 @@ export interface McpRegistryConnectorDraft {
   scope: Record<string, unknown>;
   refreshIntervalSeconds: number | null;
   conflictPolicy: string;
+  /** `paused` when the servers are not kept in sync; omitted otherwise. */
+  status?: typeof REGISTRY_SYNC_PAUSED;
 }
 
 /**
@@ -97,7 +103,8 @@ export interface McpRegistryConnectorDraft {
  *
  * @param form - A valid form.
  * @returns `mcp-registry`, named after the registry host (and search, when one narrows it), with the
- *   search scope, and a daily cadence when "Keep these servers in sync" is on.
+ *   search scope and no cadence of its own (the server's hourly registry default); `paused` when
+ *   "Keep these servers in sync" is off.
  */
 export function buildRegistryConnectorDraft(form: McpRegistryForm): McpRegistryConnectorDraft {
   const baseUrl = form.registryUrl.trim();
@@ -113,8 +120,9 @@ export function buildRegistryConnectorDraft(form: McpRegistryForm): McpRegistryC
     name: `MCP registry · ${host}${search ? ` · ${search}` : ''}`.slice(0, 200),
     baseUrl,
     scope: search ? { search } : {},
-    refreshIntervalSeconds: form.keepInSync ? REGISTRY_SYNC_SECONDS : null,
+    refreshIntervalSeconds: null,
     conflictPolicy: DEFAULT_CONFLICT_POLICY,
+    ...(form.keepInSync ? {} : { status: REGISTRY_SYNC_PAUSED }),
   };
 }
 
@@ -191,7 +199,8 @@ export function registryRunFailed(run: ConnectorRun): boolean {
 
 /**
  * The first part of a `discoveredReason` — its stable code (`no-remote`, `remote-templated`,
- * `remote-refused`, `remote-unreachable`) — and the explanation after it.
+ * `remote-refused`, `remote-unreachable`, and from V2-MCP-26.3 `name-not-namespaced`, `duplicate-name`,
+ * `registry-deleted`) — and the explanation after it.
  */
 export function splitDiscoveredReason(reason: string): { code: string; detail: string } {
   const index = reason.indexOf(':');

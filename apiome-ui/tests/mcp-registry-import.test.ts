@@ -7,7 +7,7 @@
 
 import {
   MCP_REGISTRY_CONNECTOR_KIND,
-  REGISTRY_SYNC_SECONDS,
+  REGISTRY_SYNC_PAUSED,
   buildRegistryConnectorDraft,
   buildRegistryCredentials,
   emptyMcpRegistryForm,
@@ -44,21 +44,22 @@ describe('validateMcpRegistryForm', () => {
 });
 
 describe('buildRegistryConnectorDraft', () => {
-  it('names the connector after the host and search and schedules a daily sync', () => {
+  it('names the connector after the host and search and leaves the hourly registry cadence to the server', () => {
     expect(buildRegistryConnectorDraft(form({ registryUrl: ' https://apiome.example/registry/mcp/acme ', search: ' io.github.acme ' }))).toEqual({
       kind: MCP_REGISTRY_CONNECTOR_KIND,
       name: 'MCP registry · apiome.example · io.github.acme',
       baseUrl: 'https://apiome.example/registry/mcp/acme',
       scope: { search: 'io.github.acme' },
-      refreshIntervalSeconds: REGISTRY_SYNC_SECONDS,
+      refreshIntervalSeconds: null,
       conflictPolicy: 'hold-for-review',
     });
   });
 
-  it('leaves the scope empty and the cadence unset when asked', () => {
+  it('leaves the scope empty and registers a paused connector when not kept in sync', () => {
     const draft = buildRegistryConnectorDraft(form({ keepInSync: false }));
     expect(draft.scope).toEqual({});
     expect(draft.refreshIntervalSeconds).toBeNull();
+    expect(draft.status).toBe(REGISTRY_SYNC_PAUSED);
     expect(draft.name).toBe('MCP registry · registry.modelcontextprotocol.io');
   });
 });

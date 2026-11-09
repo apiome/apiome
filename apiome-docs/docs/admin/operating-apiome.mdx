@@ -334,6 +334,17 @@ is listed. Change the sweep on the REST API:
 | `APIOME_MCP_DISCOVERY_MAX_CONCURRENCY` | `4` | Servers discovered at once |
 | `APIOME_MCP_DISCOVERY_ENDPOINT_TIMEOUT` | `150` | Seconds one server's discovery may take before it is counted as `failed` |
 
+### MCP registry sync
+
+An [MCP registry connector](../bring-in/mcp-servers.mdx#servers-from-a-registry) re-syncs on the
+connector sweep, with every other connector. A registry connector with no cadence of its own
+re-syncs hourly; one with a cadence keeps it. `APIOME_REFRESH_ENABLED=false` stops it with the rest,
+and `APIOME_REFRESH_MIN_INTERVAL` is still the shortest cadence.
+
+| Setting | Default | Means |
+| --- | --- | --- |
+| `APIOME_MCP_REGISTRY_SYNC_INTERVAL` | `3600` | Seconds between syncs of an `mcp-registry` connector with no cadence of its own (at least `60`) |
+
 ## The operator screens
 
 - [The admin console](./admin-console.mdx) — signing in, and the overview.

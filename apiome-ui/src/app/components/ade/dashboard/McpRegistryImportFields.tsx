@@ -128,7 +128,7 @@ export default function McpRegistryImportFields({ form, onChange }: McpRegistryI
         <span>
           Keep these servers in sync
           <span className="block text-xs text-fg-muted">
-            Re-sync daily. Only servers whose registry entry changed are imported again. Change the cadence
+            Re-sync hourly. Only servers whose registry entry changed are imported again. Change the cadence
             later under Bring in → Connectors.
           </span>
         </span>
