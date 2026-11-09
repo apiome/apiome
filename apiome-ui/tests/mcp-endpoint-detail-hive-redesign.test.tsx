@@ -258,6 +258,29 @@ function notesPayload(bodies: string[] = ['Prefer the staging endpoint for QA.']
   };
 }
 
+/** The last day of reachability probes (V2-MCP-27.3): one failure in 288 still reads `up` (≥ 99%). */
+function uptimePayload() {
+  return {
+    success: true,
+    endpoint_id: ENDPOINT_ID,
+    summary: {
+      status: 'up',
+      window_hours: 24,
+      checks: 288,
+      up: 287,
+      down: 1,
+      uptime_pct: 99.65,
+      latency_p50_ms: 118,
+      latency_p95_ms: 342,
+      last_checked_at: '2026-08-12T16:40:00Z',
+      last_status: 'up',
+      last_error_code: null,
+    },
+    checks: [],
+    truncated: true,
+  };
+}
+
 /** A test-harness result for `payments.search` (V2-MCP-22.4). */
 function testResultPayload() {
   return {
@@ -299,6 +322,7 @@ function routeFetch(overrides: Partial<Record<string, () => Response>> = {}) {
       return jsonResponse(endpointPayload());
     }
     if (url.includes('/notes')) return (overrides.notes ?? (() => jsonResponse(notesPayload())))();
+    if (url.includes('/uptime')) return (overrides.uptime ?? (() => jsonResponse(uptimePayload())))();
     if (url.includes('/versions/compare')) return (overrides.compare ?? (() => jsonResponse(comparePayload())))();
     if (url.includes('/lint')) return (overrides.lint ?? (() => jsonResponse(lintPayload())))();
     if (/\/versions\/[^/?]+$/.test(url)) return (overrides.version ?? (() => jsonResponse(versionPayload())))();
@@ -367,6 +391,18 @@ describe('the page header', () => {
     expect(within(header).getByText(/Last discovered/)).toBeInTheDocument();
     expect(within(header).getByText('Enabled')).toBeInTheDocument();
     expect(within(header).getByText('Published')).toBeInTheDocument();
+  });
+
+  it('shows the last day of reachability as an uptime badge (V2-MCP-27.3)', async () => {
+    await renderScreen();
+
+    const header = screen.getByTestId('page-header');
+    const badge = within(header).getByTestId('mcp-uptime-badge');
+    await waitFor(() => expect(badge).toHaveTextContent('Up · 99.6% · 118 ms'));
+    expect(badge).toHaveAttribute('data-status', 'healthy');
+    expect(badge.getAttribute('title')).toBe(
+      '287 of 288 probes answered in the last 24 hours; median 118 ms, p95 342 ms.',
+    );
   });
 
   it('carries the grade beside the title once the lint report lands', async () => {

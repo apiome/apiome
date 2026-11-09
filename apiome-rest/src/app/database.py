@@ -24300,6 +24300,136 @@ class Database:
             (limit,),
         )
 
+    # --- MCP endpoint health / uptime monitoring (V2-MCP-27.3 / MCAT-13.3, #3713) -------------
+
+    _MCP_HEALTH_CHECK_COLUMNS = "id, endpoint_id, checked_at, status, latency_ms, error_code"
+
+    def list_due_mcp_health_endpoints(
+        self, *, cadence_seconds: int, limit: int
+    ) -> List[Dict[str, Any]]:
+        """Return the endpoints due for a reachability probe, least recently probed first (#3713).
+
+        An endpoint is *due* when it is live (``deleted_at IS NULL``), turned on (``enabled``),
+        reachable over the network (``transport <> 'stdio'`` — a stdio server has no URL to probe),
+        and its latest ``mcp_endpoint_health_checks`` row is older than ``cadence_seconds`` (or it
+        has none). Quarantined endpoints are deliberately **included**: quarantine pauses the heavy
+        discovery sweep, but an uptime monitor that stops looking once a server goes down could
+        never record it coming back. The recency comparison runs in the database against ``now()``.
+
+        Args:
+            cadence_seconds: How often each endpoint is probed; values below 1 are treated as 1.
+            limit: The most endpoints returned (one tick's budget); values below 1 are treated as 1.
+
+        Returns:
+            Endpoint rows (the standard endpoint columns), never-probed first, then oldest probe.
+        """
+        cadence = max(1, int(cadence_seconds))
+        q = f"""
+            SELECT {self._MCP_ENDPOINT_COLUMNS}
+            FROM apiome.mcp_endpoints
+            LEFT JOIN LATERAL (
+                SELECT max(h.checked_at) AS last_checked_at
+                FROM apiome.mcp_endpoint_health_checks h
+                WHERE h.endpoint_id = mcp_endpoints.id
+            ) hc ON TRUE
+            WHERE deleted_at IS NULL
+              AND enabled = TRUE
+              AND transport <> 'stdio'
+              AND (
+                hc.last_checked_at IS NULL
+                OR hc.last_checked_at <= now() - make_interval(secs => %s)
+              )
+            ORDER BY hc.last_checked_at ASC NULLS FIRST, created_at ASC
+            LIMIT %s
+        """
+        return self.execute_query(q, (cadence, max(1, int(limit))))
+
+    def record_mcp_health_check(
+        self,
+        endpoint_id: str,
+        *,
+        status: str,
+        latency_ms: Optional[int],
+        error_code: Optional[str],
+    ) -> Dict[str, Any]:
+        """Persist one reachability probe of an endpoint (#3713).
+
+        ``checked_at`` is wall-clock (``clock_timestamp()``) so consecutive probes in one
+        transaction still order correctly.
+
+        Args:
+            endpoint_id: The probed endpoint.
+            status: ``up`` (the initialize handshake completed) or ``down``.
+            latency_ms: Wall-clock milliseconds the probe took; ``None`` when not measured.
+            error_code: The stable discovery error code for a ``down`` probe; ignored (stored as
+                ``NULL``) for an ``up`` probe.
+
+        Returns:
+            The new health-check row.
+
+        Raises:
+            ValueError: ``status`` is not ``up`` or ``down``, or ``latency_ms`` is negative.
+        """
+        if status not in ("up", "down"):
+            raise ValueError(f"unknown health check status {status!r}")
+        if latency_ms is not None and latency_ms < 0:
+            raise ValueError("latency_ms must not be negative")
+        rows = self.execute_query(
+            f"""
+            INSERT INTO apiome.mcp_endpoint_health_checks
+                (endpoint_id, checked_at, status, latency_ms, error_code)
+            VALUES (%s::uuid, clock_timestamp(), %s, %s, %s)
+            RETURNING {self._MCP_HEALTH_CHECK_COLUMNS}
+            """,
+            (endpoint_id, status, latency_ms, error_code if status == "down" else None),
+        )
+        return dict(rows[0])
+
+    def list_mcp_health_checks(
+        self, endpoint_id: str, *, window_hours: int, limit: int
+    ) -> List[Dict[str, Any]]:
+        """Return an endpoint's probes from the last ``window_hours``, newest first (#3713).
+
+        Args:
+            endpoint_id: The endpoint whose history is read. Callers scope it to a tenant first.
+            window_hours: How far back to read; values below 1 are treated as 1.
+            limit: The most rows returned; values below 1 are treated as 1.
+
+        Returns:
+            Health-check rows, newest ``checked_at`` first.
+        """
+        q = f"""
+            SELECT {self._MCP_HEALTH_CHECK_COLUMNS}
+            FROM apiome.mcp_endpoint_health_checks
+            WHERE endpoint_id = %s::uuid
+              AND checked_at >= now() - make_interval(hours => %s)
+            ORDER BY checked_at DESC
+            LIMIT %s
+        """
+        return self.execute_query(
+            q, (endpoint_id, max(1, int(window_hours)), max(1, int(limit)))
+        )
+
+    def prune_mcp_health_checks(self, *, retention_days: int) -> int:
+        """Delete probes older than the retention window (#3713).
+
+        Args:
+            retention_days: Probes older than this many days are deleted; must be >= 1.
+
+        Returns:
+            How many rows were deleted.
+
+        Raises:
+            ValueError: ``retention_days`` is below 1.
+        """
+        if retention_days < 1:
+            raise ValueError("retention_days must be at least 1")
+        return self._execute_write(
+            "DELETE FROM apiome.mcp_endpoint_health_checks "
+            "WHERE checked_at < CURRENT_TIMESTAMP - make_interval(days => %s)",
+            (retention_days,),
+        )
+
     def mark_mcp_discovery_job_running(self, job_id: str) -> Optional[Dict[str, Any]]:
         """Transition a queued job to ``running`` and stamp ``started_at``.
 

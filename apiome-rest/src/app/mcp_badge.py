@@ -13,9 +13,10 @@ Design rules:
   neutral ``"unknown"`` badge — same shape, grey, no identifying content — so an anonymous caller
   can never tell an unpublished endpoint from one that does not exist.
 * **Query-selectable metric.** ``grade`` (the A–F lint grade), ``health`` (the derived operational
-  label, reusing :func:`app.mcp_catalog_inventory.derive_health`), or ``version`` (the server's
-  reported version). An unrecognized metric normalizes to ``grade`` rather than erroring, so a badge
-  URL in a README always renders *something* valid.
+  label, reusing :func:`app.mcp_catalog_inventory.derive_health`), ``version`` (the server's
+  reported version), or ``uptime`` (the reachability probes' recent status and uptime percentage,
+  :mod:`app.mcp_health`, MCAT-13.3). An unrecognized metric normalizes to ``grade`` rather than
+  erroring, so a badge URL in a README always renders *something* valid.
 * **Light / dark label variants.** The colored message segment is fixed by the metric's value; the
   *label* segment's background switches with the ``theme`` so the badge sits well on a light or a
   dark README.
@@ -29,15 +30,23 @@ import hashlib
 from typing import Any, Mapping, Optional, Tuple
 
 from .mcp_catalog_inventory import derive_health
+from .mcp_health import (
+    STATUS_DEGRADED,
+    STATUS_DOWN,
+    STATUS_UNKNOWN,
+    STATUS_UP,
+    format_uptime_pct,
+)
 
 # --- Metric / theme vocabularies -------------------------------------------------------------------
 
 METRIC_GRADE = "grade"
 METRIC_HEALTH = "health"
 METRIC_VERSION = "version"
+METRIC_UPTIME = "uptime"
 
 #: The query-selectable metrics, in documentation order. ``grade`` is the default.
-BADGE_METRICS: Tuple[str, ...] = (METRIC_GRADE, METRIC_HEALTH, METRIC_VERSION)
+BADGE_METRICS: Tuple[str, ...] = (METRIC_GRADE, METRIC_HEALTH, METRIC_VERSION, METRIC_UPTIME)
 
 THEME_LIGHT = "light"
 THEME_DARK = "dark"
@@ -81,11 +90,20 @@ _HEALTH_COLORS = {
     "undiscovered": _COLOR_GREY,
 }
 
+#: Uptime status (:mod:`app.mcp_health`) → segment color.
+_UPTIME_COLORS = {
+    STATUS_UP: _COLOR_BRIGHTGREEN,
+    STATUS_DEGRADED: _COLOR_YELLOW,
+    STATUS_DOWN: _COLOR_RED,
+    STATUS_UNKNOWN: _COLOR_GREY,
+}
+
 #: The left label text per metric.
 _METRIC_LABELS = {
     METRIC_GRADE: "mcp grade",
     METRIC_HEALTH: "mcp health",
     METRIC_VERSION: "mcp version",
+    METRIC_UPTIME: "mcp uptime",
 }
 
 
@@ -134,6 +152,22 @@ def _version_message(row: Mapping[str, Any]) -> Optional[str]:
     return None
 
 
+def _uptime_message(row: Mapping[str, Any]) -> Tuple[str, str]:
+    """Derive the ``uptime`` metric's ``(message, color)`` from a resolved endpoint row.
+
+    Reads the row's ``uptime`` summary (an :meth:`app.mcp_health.UptimeSummary.as_dict`, attached
+    by the badge route). ``up`` and ``degraded`` carry the window's uptime figure
+    (``up · 99.9%``); ``down`` and a missing summary render without one.
+    """
+    summary = row.get("uptime") or {}
+    status = str(summary.get("status") or STATUS_UNKNOWN)
+    if status not in _UPTIME_COLORS:
+        status = STATUS_UNKNOWN
+    figure = format_uptime_pct(summary.get("uptime_pct"))
+    message = f"{status} · {figure}" if status in (STATUS_UP, STATUS_DEGRADED) and figure else status
+    return message, _UPTIME_COLORS[status]
+
+
 def resolve_badge(
     row: Optional[Mapping[str, Any]], metric: str
 ) -> Tuple[str, str, str]:
@@ -145,8 +179,9 @@ def resolve_badge(
     the badge can never disclose whether such an endpoint exists.
 
     Args:
-        row: An enriched, *already public-gated* endpoint row (grade/score, the health columns, and
-            the current version fields), or ``None`` when no published endpoint resolved.
+        row: An enriched, *already public-gated* endpoint row (grade/score, the health columns, the
+            current version fields and, for ``uptime``, the ``uptime`` summary), or ``None`` when no
+            published endpoint resolved.
         metric: A normalized metric from :func:`normalize_metric`.
 
     Returns:
@@ -165,6 +200,10 @@ def resolve_badge(
     if metric == METRIC_HEALTH:
         health = derive_health(row)
         return label, health, _HEALTH_COLORS.get(health, _COLOR_GREY)
+
+    if metric == METRIC_UPTIME:
+        message, color = _uptime_message(row)
+        return label, message, color
 
     # METRIC_VERSION
     version = _version_message(row)

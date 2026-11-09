@@ -15740,6 +15740,62 @@ def mcp_discovery_health_out(
     )
 
 
+class McpHealthCheckOut(BaseModel):
+    """One reachability probe of an endpoint (V2-MCP-27.3 / MCAT-13.3, #3713).
+
+    ``status`` is ``up`` when the MCP ``initialize`` handshake completed and ``down`` when it did not;
+    ``latency_ms`` is the probe's wall-clock time; ``error_code`` is the stable discovery error code
+    (``connect_error`` / ``timeout`` / ``auth_required`` / …) of a ``down`` probe.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    checked_at: datetime
+    status: str
+    latency_ms: Optional[int] = None
+    error_code: Optional[str] = None
+
+
+class McpUptimeSummaryOut(BaseModel):
+    """An endpoint's reachability over a window of probes — what the health badge shows (#3713).
+
+    ``status`` is ``down`` when the latest probe failed, ``degraded`` when it succeeded but the
+    window's uptime is under 99%, ``up`` otherwise, and ``unknown`` with no probe in the window.
+    ``uptime_pct`` is successful probes over all probes (``None`` with none); the latency
+    percentiles cover the successful probes only.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    status: str
+    window_hours: int
+    checks: int = 0
+    up: int = 0
+    down: int = 0
+    uptime_pct: Optional[float] = None
+    latency_p50_ms: Optional[int] = None
+    latency_p95_ms: Optional[int] = None
+    last_checked_at: Optional[datetime] = None
+    last_status: Optional[str] = None
+    last_error_code: Optional[str] = None
+
+
+class McpEndpointUptimeResponse(BaseModel):
+    """Response envelope for ``GET …/endpoints/{endpoint_id}/uptime`` (#3713).
+
+    ``summary`` folds every probe in the window; ``checks`` lists the most recent of them,
+    newest first, capped at the request's ``limit`` (``truncated`` says the window held more).
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    summary: McpUptimeSummaryOut
+    checks: List[McpHealthCheckOut] = Field(default_factory=list)
+    truncated: bool = False
+
+
 class McpTrustAxisOut(BaseModel):
     """One normalized 0-100 axis of the composite trust profile (V2-MCP-31.4 / MCAT-17.4).
 

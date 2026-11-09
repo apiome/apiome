@@ -1,0 +1,26 @@
+---
+slug: mcp-uptime
+title: See whether your MCP servers are up
+description: "Apiome checks every MCP server every few minutes and shows its uptime and latency."
+authors: [apiome]
+---
+
+Every cataloged MCP server now has an uptime badge on its page. Apiome checks each enabled server
+every five minutes with the MCP `initialize` handshake alone and keeps whether it answered and how long
+it took.
+
+{/* truncate */}
+
+- **A badge for the last day** — for example **Up · 99.6% · 118 ms**. It reads **Up**, **Degraded**
+  (the latest check answered but fewer than 99% did), **Down** (the latest check failed) or
+  **Uptime unknown**. Hover for the counts and the 95th-percentile time.
+- **Light by design.** A check never lists or calls the server's tools and never changes how
+  discovery treats the server. A server that discovery has paused after repeated failures is still
+  checked, so you see when it comes back. `stdio` servers are not checked.
+- **History over the API** — `GET /v1/mcp/{tenant}/endpoints/{endpoint}/uptime` returns the summary
+  for up to a week and the latest checks. Checks are kept for 30 days.
+- **README badge** — a published, public server's badge shows the same status with
+  `?metric=uptime`.
+- Operators tune it with the `APIOME_MCP_HEALTH_*` settings.
+
+See [Uptime and latency](/bring-in/mcp-servers#uptime-and-latency).
