@@ -40,6 +40,7 @@ from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from .database import db
+from .mcp_change_events import build_version_created_event, emit_version_created
 from .mcp_client import (
     DiscoveryError,
     DiscoveryErrorCode,
@@ -433,6 +434,45 @@ def _surface_counts(surface: DiscoverySurface) -> Dict[str, int]:
     }
 
 
+def _emit_version_created(
+    endpoint: Dict[str, Any],
+    persisted: Dict[str, Any],
+    previous: Optional[Dict[str, Any]],
+    change_rows: List[Dict[str, Any]],
+    discovered_at: datetime,
+    trigger: Optional[str],
+) -> None:
+    """Emit the ``mcp.version.created`` change-notification event (V2-MCP-27.1 / MCAT-13.1).
+
+    Best-effort: building the event is guarded here and delivery is isolated by
+    :func:`app.mcp_change_events.emit_version_created`, so a notification problem never fails
+    the discovery job that persisted the version.
+
+    Args:
+        endpoint: The endpoint row that was discovered.
+        persisted: The new version's ``record_mcp_discovery_version`` result.
+        previous: The version row it replaced, or ``None`` on first discovery.
+        change_rows: The diff rows persisted with the version.
+        discovered_at: When the discovery ran.
+        trigger: The producing job's trigger, when known.
+    """
+    try:
+        event = build_version_created_event(
+            endpoint,
+            persisted,
+            previous,
+            change_rows,
+            discovered_at=discovered_at,
+            discovery_trigger=trigger,
+        )
+    except Exception:  # noqa: BLE001 - a malformed row must not fail the persisted version
+        logger.exception(
+            "failed to build mcp.version.created event endpoint=%s", endpoint.get("id")
+        )
+        return
+    emit_version_created(event)
+
+
 def _persist_outcome(
     job_id: str,
     endpoint: Dict[str, Any],
@@ -500,6 +540,9 @@ def _persist_outcome(
     # path: a transcript records the discovery that produced *this* snapshot, and the unchanged
     # path creates no snapshot to attach one to.
     _capture_mcp_conformance(persisted["version_id"], surface, transcript)
+    # Tell subscribers a new version exists (MCAT-13.1). Only this changed path emits, once per
+    # persisted version; the unchanged path above returns before reaching here.
+    _emit_version_created(endpoint, persisted, previous, change_rows, discovered_at, trigger)
     result = {
         "version_id": persisted["version_id"],
         "version_seq": persisted["version_seq"],
