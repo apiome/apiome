@@ -1,0 +1,89 @@
+---
+title: Import and catalog any format
+description: Bring in an API in any format and search, version, lint and convert it.
+sidebar_position: 1.07
+tags: [import, catalog, formats, overview]
+---
+
+<Route path="/ade/dashboard/catalog" />
+
+Apiome is not limited to OpenAPI. It imports gRPC and Protocol Buffers, GraphQL, AsyncAPI, OData,
+Avro, SOAP / WSDL, TypeSpec, RAML, API Blueprint, Smithy, agent descriptors, modern RPC and event
+formats, and healthcare, finance and EDI standards. The full list, with which importer handles each
+format and what this deployment can run, is on [Supported formats](./supported-formats.md).
+
+OpenAPI and Swagger become a [project](../build/projects.mdx) you can edit and publish. Every other
+format becomes a **catalog** item and keeps its own structure: a Protobuf service stays a service, an
+X12 envelope stays an envelope. Either way, the API is versioned, compared, linted, searched and
+exported the same way as everything else in Apiome.
+
+<Screenshot id="catalog-cards" alt="The Catalog in Cards view, grouped by protocol" />
+
+## When to use it
+
+- **Your APIs aren't all REST.** Keep the gRPC services, GraphQL schemas, event APIs and Avro records
+  in one catalog, next to the OpenAPI documents, instead of one list per format.
+- **You want to see what an API is before you change it.** Import a WSDL, a RAML file or a Smithy
+  model to read its surface, lint it and follow its versions, without converting it first.
+- **You are moving to OpenAPI.** Import the old format, then
+  [convert it to OpenAPI](./convert-to-openapi.md) and see what the conversion keeps.
+
+## Where you import from
+
+| Where | Best for | Details |
+| --- | --- | --- |
+| **Import to catalog** on the **Catalog** (Bring in › Catalog) | A file, a URL, pasted text, a Git repository or an archive of several specs | [Import wizard](./import-wizard.mdx#import-to-catalog) |
+| A live endpoint | A GraphQL, gRPC or FHIR service that describes itself | [Keep a catalog item fresh](./catalog-refresh.mdx) |
+| A connected repository | Every spec in a Git repository, kept in sync | [Repositories](./repositories.mdx) |
+| A schema registry | The subjects of a Confluent-compatible registry | [Mirror a schema registry](./schema-registry-connector.md) |
+| **CLI** (`apiome import`) | Scripts and CI | [`apiome import`](../reference/cli/import.md) |
+
+[How importing works](./how-importing-works.mdx) explains the flow every import follows: analyze,
+preview, commit, record.
+
+## Find the importer for your format
+
+| Your API is… | Read |
+| --- | --- |
+| gRPC / Protobuf, GraphQL, AsyncAPI, OData, Avro or WSDL | [Supported formats](./supported-formats.md), then [Import a specification](./import-a-spec.md) |
+| TypeSpec, RAML, API Blueprint or Smithy | [TypeSpec](./typespec-import.md), [RAML](./raml-import.md), [API Blueprint](./apiblueprint-import.md), [Smithy](./smithy-import.md) |
+| An OData service or a SOAP service | [Import an OData service](./odata-import.md), [Import a SOAP / WSDL service](./wsdl-import.md) |
+| An Avro schema or a schema registry | [Import an Apache Avro schema](./avro-import.md), [Mirror a schema registry](./schema-registry-connector.md) |
+| An AI agent's descriptor | [A2A Agent Card](./a2a-agent-card-import.md), [ACP agent manifest](./acp-agent-manifest-import.md), [agentic-web manifests](./agents-manifest-import.md) |
+| OpenRPC, xRegistry, CloudEvents, Thrift, FlatBuffers, Cap'n Proto or Connect RPC | [RPC and event formats](./rpc-and-event-formats.mdx) |
+| FHIR, HL7 v2, ISO 20022, FIX, ISO 8583 or EDI | [Healthcare and finance standards](./healthcare-and-finance-standards.mdx) |
+| A collection, a traffic capture or a legacy contract | [Collections and captured traffic](./collections-and-captures.mdx), [Legacy, mainframe and middleware formats](./legacy-and-mainframe-formats.mdx) |
+
+## At a glance
+
+| You want to… | Read |
+| --- | --- |
+| Know what an import stores and where it came from | [What an import records](./what-an-import-records.md) |
+| Read an item in its own format's vocabulary | [Read a catalog item's format details](./catalog-format-details.md) |
+| Tell what was declared from what Apiome inferred | [Declared, inferred and synthesized](./inference-provenance.mdx) |
+| Follow an item's versions and what changed between them | [An item's page](./catalog.mdx#an-items-page) |
+| Lint and score an item with its format's rules | [How linting works](../build/how-linting-works.md) |
+| Know which formats need a bundled tool, and what happens without it | [Formats that need a bundled tool](./import-a-spec.md#formats-that-need-a-bundled-tool) |
+| Filter, categorize and search by protocol and format | [Find APIs across formats](./find-apis-across-formats.md) |
+| Keep an import up to date | [Keep imports up to date](./keep-imports-fresh.mdx) |
+| Turn an item into an OpenAPI project | [Convert a catalog item to OpenAPI](./convert-to-openapi.md) |
+| Export it to another format | [Export to any format](../ship/export-to-any-format.mdx) |
+
+## How the pieces fit
+
+- **One import flow.** Each format has its own importer, but every one is detected, previewed and
+  committed the same way, and records the same provenance.
+- **One model underneath.** Every importer reads its format into the same internal model of
+  services, operations, types and channels. That is why the catalog can search, compare and lint a
+  GraphQL schema and a WSDL with the same tools.
+- **Versions and fingerprints.** Each import is a revision with a fingerprint of its model, so you
+  can tell whether two revisions say the same thing, and compare them with the changes graded
+  **breaking**, **dangerous** or **safe** in the format's own terms.
+- **The format's own rules.** Lint runs a rule pack written for the format, plus the linters that
+  format's community uses where the server has them, and gives every item a score and a grade.
+- **The format's own tools.** Formats that need a compiler or a reference parser (`buf`, `tsp`,
+  `smithy`, `drafter` and others) run it on the server. When a tool is missing,
+  [Supported formats](./supported-formats.md) says so in its **Runtime** column.
+- **Organized by protocol.** Every item is filed as **REST**, **RPC**, **Event**, **Graph**,
+  **Data Schema** or **Agent**, and you can add a domain and tags. All of them are filters on the
+  Catalog, in search and on Browse.
