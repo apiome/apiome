@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.675.0] - 2026-11-08
+
+### Added
+- **MCP Registry API v0.1 client (V2-MCP-26.1 / MCAT-12.1, #3707).** `app/mcp_registry_client.py`
+  reads any registry that speaks the official MCP Registry API: the official registry
+  (`https://registry.modelcontextprotocol.io`, staging at
+  `https://staging.registry.modelcontextprotocol.io`), Azure API Center, Kong, or another Apiome
+  tenant. Every path is pinned to `/v0.1/`.
+  - `McpRegistryClient.list_servers_page` / `iter_servers` / `list_servers` call
+    `GET /v0.1/servers` with `limit`, `cursor`, `search`, `updated_since` (a string or a datetime,
+    sent as RFC 3339 UTC) and `version` (`latest` by default). They follow `metadata.nextCursor`,
+    stop when a cursor repeats, and raise instead of truncating after `max_pages` pages.
+  - `McpRegistryClient.get_server_version(name, version="latest")` calls
+    `GET /v0.1/servers/{name}/versions/{version}` with the name percent-encoded. It returns `None`
+    on `404`. It also returns a `deleted` entry, with its status on `RegistryServer.status`.
+  - **Schema drift is tolerated.** Unknown fields are kept. The flat shape and earlier snake_case
+    drafts are read, including `metadata.next_cursor`. An element with no server name is skipped
+    instead of failing the page.
+  - Failures raise `McpRegistryClientError`, a `RefreshSourceError` with the HTTP status and error
+    class. Without an injected `httpx.Client`, the client sends through the SSRF-guarded connector
+    client.
+
+### Changed
+- The `mcp-registry` connector source (`app/mcp_registry_connector_source.py`) now pages the
+  registry through the new client. `RegistryServer`, `parse_server_entry` and
+  `normalize_registry_base` moved to the client and are re-exported from the source unchanged.
+  Sync behaviour is the same, and the source also follows an earlier draft's
+  `metadata.next_cursor`. apiome-rest 1.674.1 → 1.675.0 (no API change; the REST reference is
+  unchanged).
+
 ## [1.674.1] - 2026-11-08
 
 ### Added

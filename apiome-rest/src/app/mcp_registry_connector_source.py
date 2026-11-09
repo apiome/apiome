@@ -9,8 +9,9 @@ items, so the source syncs each entry itself (the engine's ``sync_item`` hook).
 
 **Listing.** The source pages ``GET {base}/v0.1/servers`` (``limit``, ``cursor`` from
 ``metadata.nextCursor``, ``version=latest``) with the connector scope's ``search`` and
-``updatedSince`` (sent as ``updated_since``) filters. The base URL is the registry root; a trailing
-``/v0.1`` or ``/v0.1/servers`` is accepted and dropped. Each server name is one inventory row
+``updatedSince`` (sent as ``updated_since``) filters, through the registry client
+(:class:`app.mcp_registry_client.McpRegistryClient`, V2-MCP-26.1). The base URL is the registry root; a
+trailing ``/v0.1`` or ``/v0.1/servers`` is accepted and dropped. Each server name is one inventory row
 (``remoteId``); a name listed in several versions keeps its ``isLatest`` entry, and an entry the
 registry marks ``deleted`` is left out, so its row turns ``missing``. ``updatedSince`` is a fixed
 filter, never advanced by a sync: an entry the filter hides is reported missing.
@@ -53,7 +54,6 @@ import hashlib
 import json
 import logging
 import re
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 from urllib.parse import quote, urlsplit
@@ -61,14 +61,17 @@ from urllib.parse import quote, urlsplit
 import httpx
 
 from .catalog_connector_sync import ConnectorRefreshSource, ItemSyncOutcome, register_connector_source
-from .catalog_connectors import (
-    CODE_INVALID,
-    ConnectorError,
-    build_connector_http_client,
-    connector_base_url_from_settings,
-)
+from .catalog_connectors import CODE_INVALID, ConnectorError, connector_base_url_from_settings
 from .mcp_registry import remote_url
-from .mcp_server_json import camelize, normalize_server_json, registry_metadata
+from .mcp_registry_client import (
+    DEFAULT_MAX_PAGES,
+    DEFAULT_PAGE_SIZE,
+    McpRegistryClient,
+    RegistryServer,
+    normalize_registry_base,
+    parse_server_entry,
+)
+from .mcp_server_json import registry_metadata
 from .mcp_source_link import (
     PROVENANCE_REGISTRY,
     SOURCE_GIT,
@@ -86,7 +89,6 @@ from .refresh_source import (
     RefreshCandidate,
     RefreshSourceError,
 )
-from .ssrf_guard import SSRFError
 
 _logger = logging.getLogger(__name__)
 
@@ -109,12 +111,9 @@ __all__ = [
 
 KIND = "mcp-registry"
 
-#: The registry API path the source pages (relative to the registry root).
-SERVERS_PATH = "/v0.1/servers"
-
 #: Entries requested per page, and the most pages followed (10 000 servers).
-PAGE_SIZE = 100
-MAX_PAGES = 100
+PAGE_SIZE = DEFAULT_PAGE_SIZE
+MAX_PAGES = DEFAULT_MAX_PAGES
 
 #: Scope keys the kind accepts.
 SCOPE_KEYS = ("search", "updatedSince")
@@ -122,8 +121,6 @@ _SEARCH_MAX = 200
 
 #: Error class for a scope or base URL that cannot address a registry.
 ERROR_CLASS_INVALID_CONFIGURATION = "invalid-configuration"
-#: Error class for a request the SSRF guard refused (a redirect or re-resolution to a private address).
-ERROR_CLASS_ADDRESS_REFUSED = "address-refused"
 
 #: Stable reason codes an entry stays ``discovered`` with (the stored reason is ``"<code>: <why>"``).
 REASON_NO_REMOTE = "no-remote"
@@ -142,10 +139,6 @@ UNREACHABLE_DISCOVERY_CODES = frozenset(
 #: Registry package types that are Package URL ecosystems (``registryType`` → purl type).
 _PURL_TYPES = {"npm": "npm", "pypi": "pypi", "nuget": "nuget", "cargo": "cargo"}
 
-#: The ``_meta`` key of the official registry's status fields.
-_OFFICIAL_META_KEY = "io.modelcontextprotocol.registry/official"
-
-_ERROR_DETAIL_MAX = 300
 _SLUG_UNSAFE = re.compile(r"[^a-z0-9]+")
 
 #: ``(endpoint row) -> discovery failure code, or None when the server answered``.
@@ -198,76 +191,9 @@ def validate_mcp_registry_scope(scope: Mapping[str, Any], base_url: Optional[str
         raise _scope_error("updatedSince must be an RFC 3339 instant, for example 2026-01-01T00:00:00Z.")
 
 
-def normalize_registry_base(url: str) -> str:
-    """Return the registry root: trailing ``/``, ``/v0.1`` and ``/v0.1/servers`` removed.
-
-    Args:
-        url: The connector base URL.
-
-    Returns:
-        The root the source appends :data:`SERVERS_PATH` to.
-    """
-    base = (url or "").strip().rstrip("/")
-    for suffix in (SERVERS_PATH, "/v0.1"):
-        if base.endswith(suffix):
-            base = base[: -len(suffix)].rstrip("/")
-    return base
-
-
 # ---------------------------------------------------------------------------------------
 # Entries
 # ---------------------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class RegistryServer:
-    """One registry entry: its ``server.json`` and the official status metadata.
-
-    Attributes:
-        server: The ``server.json`` document (``name``, ``version``, ``remotes``, ``packages``, …).
-        official: ``_meta["io.modelcontextprotocol.registry/official"]`` (``status``,
-            ``isLatest``, ``publishedAt``, ``updatedAt``), or ``{}``.
-    """
-
-    server: Mapping[str, Any]
-    official: Mapping[str, Any]
-
-    @property
-    def name(self) -> str:
-        return str(self.server.get("name") or "")
-
-    @property
-    def version(self) -> str:
-        return str(self.server.get("version") or "").strip()
-
-
-def parse_server_entry(entry: Any) -> Optional[RegistryServer]:
-    """Read one ``servers[]`` element of a ``ServerList``.
-
-    Accepts the v0.1 shape (``{"server": {...}, "_meta": {...}}``) and the older flat shape (the
-    server's fields at the top level, ``_meta`` beside them), in the current camelCase draft or an
-    earlier snake_case one (:func:`app.mcp_server_json.normalize_server_json`).
-
-    Args:
-        entry: The list element.
-
-    Returns:
-        The entry, or ``None`` when it has no server name or the registry marks it ``deleted``.
-    """
-    if not isinstance(entry, Mapping):
-        return None
-    server = entry.get("server") if isinstance(entry.get("server"), Mapping) else entry
-    meta = entry.get("_meta") if isinstance(entry.get("_meta"), Mapping) else server.get("_meta")
-    official = meta.get(_OFFICIAL_META_KEY) if isinstance(meta, Mapping) else None
-    # An entry in an earlier snake_case draft reads as the current camelCase one (V2-MCP-26.2).
-    official = camelize(official) if isinstance(official, Mapping) else {}
-    server = normalize_server_json(server)
-    name = server.get("name")
-    if not isinstance(name, str) or not name.strip():
-        return None
-    if str(official.get("status") or "").lower() == "deleted":
-        return None
-    return RegistryServer(server=server, official=official)
 
 
 def latest_servers(entries: Sequence[RegistryServer]) -> List[RegistryServer]:
@@ -514,18 +440,6 @@ def _default_discover(endpoint: Mapping[str, Any]) -> Optional[str]:
 # ---------------------------------------------------------------------------------------
 
 
-def _error_detail(response: httpx.Response) -> str:
-    """The human part of a registry error body (problem JSON ``title`` / ``detail`` / ``message``)."""
-    try:
-        body = response.json()
-    except ValueError:
-        return (response.text or "").strip()[:_ERROR_DETAIL_MAX]
-    if not isinstance(body, Mapping):
-        return ""
-    parts = [str(body[k]) for k in ("title", "detail", "message") if isinstance(body.get(k), str) and body.get(k)]
-    return ": ".join(dict.fromkeys(parts))[:_ERROR_DETAIL_MAX]
-
-
 class McpRegistrySource(ConnectorRefreshSource):
     """``mcp-registry``: the servers of an upstream MCP registry, synced into the MCP server catalog.
 
@@ -565,7 +479,7 @@ class McpRegistrySource(ConnectorRefreshSource):
         return normalize_registry_base(str(self.connector.get("base_url") or ""))
 
     def _headers(self) -> Dict[str, str]:
-        headers = {"Accept": "application/json"}
+        headers: Dict[str, str] = {}
         creds = self.credentials or {}
         token = str(creds.get("token") or "").strip()
         api_key = str(creds.get("apiKey") or "").strip()
@@ -575,83 +489,28 @@ class McpRegistrySource(ConnectorRefreshSource):
             headers["X-API-Key"] = api_key
         return headers
 
-    def _get(self, client: httpx.Client, params: Mapping[str, Any]) -> Mapping[str, Any]:
-        """GET one ``ServerList`` page.
+    def list_candidates(self) -> List[RefreshCandidate]:
+        """Page through ``/v0.1/servers`` and return one candidate per server name.
 
         Raises:
-            RefreshSourceError: The registry answered non-2xx, did not answer, the SSRF guard
-                refused the address, or the body is not a ``ServerList``.
+            RefreshSourceError: No base URL, or the registry client failed
+                (:class:`app.mcp_registry_client.McpRegistryClientError`: a refusal, no answer, a
+                body that is not a ``ServerList``, or more than :data:`MAX_PAGES` pages).
         """
-        url = f"{self.registry_url}{SERVERS_PATH}"
-        try:
-            response = client.get(url, params=dict(params))
-        except SSRFError as exc:
-            raise RefreshSourceError(
-                f"Request to the MCP registry refused: {exc}", error_class=ERROR_CLASS_ADDRESS_REFUSED
-            ) from exc
-        except httpx.HTTPError as exc:
-            raise RefreshSourceError(
-                f"The MCP registry did not answer GET {SERVERS_PATH}: {type(exc).__name__}"
-            ) from exc
-        if not 200 <= response.status_code < 300:
-            detail = _error_detail(response)
-            raise RefreshSourceError(
-                f"The MCP registry answered {response.status_code} to GET {SERVERS_PATH}"
-                + (f": {detail}" if detail else ""),
-                http_status=response.status_code,
-            )
-        try:
-            body = response.json()
-        except ValueError as exc:
-            raise RefreshSourceError(
-                f"The MCP registry answered GET {SERVERS_PATH} with a body that is not JSON.",
-                http_status=response.status_code,
-                error_class=ERROR_CLASS_UNEXPECTED,
-            ) from exc
-        if not isinstance(body, Mapping) or not isinstance(body.get("servers"), list):
-            raise RefreshSourceError(
-                f"The MCP registry answered GET {SERVERS_PATH} with an unexpected body (no servers list).",
-                http_status=response.status_code,
-                error_class=ERROR_CLASS_UNEXPECTED,
-            )
-        return body
-
-    def list_candidates(self) -> List[RefreshCandidate]:
-        """Page through ``/v0.1/servers`` and return one candidate per server name."""
         if not self.registry_url:
             raise RefreshSourceError(
                 "An MCP registry connector needs a base URL (the registry root).",
                 error_class=ERROR_CLASS_INVALID_CONFIGURATION,
             )
-        params: Dict[str, Any] = {"limit": PAGE_SIZE, "version": "latest"}
-        if isinstance(self.scope.get("search"), str) and self.scope["search"].strip():
-            params["search"] = self.scope["search"].strip()
-        if isinstance(self.scope.get("updatedSince"), str) and self.scope["updatedSince"].strip():
-            params["updated_since"] = self.scope["updatedSince"].strip()
-        kwargs: Dict[str, Any] = {"headers": self._headers(), "timeout": 30.0}
-        if self._transport is not None:
-            kwargs["transport"] = self._transport
-        entries: List[RegistryServer] = []
-        client = build_connector_http_client(**kwargs)
-        try:
-            cursor: Optional[str] = None
-            seen_cursors = set()
-            for _ in range(MAX_PAGES):
-                page = dict(params, **({"cursor": cursor} if cursor else {}))
-                body = self._get(client, page)
-                entries.extend(e for e in map(parse_server_entry, body["servers"]) if e is not None)
-                metadata = body.get("metadata") if isinstance(body.get("metadata"), Mapping) else {}
-                cursor = metadata.get("nextCursor") if isinstance(metadata.get("nextCursor"), str) else None
-                if not cursor or cursor in seen_cursors:
-                    break
-                seen_cursors.add(cursor)
-            else:
-                raise RefreshSourceError(
-                    f"The MCP registry lists more than {MAX_PAGES * PAGE_SIZE} servers; narrow it with a search.",
-                    error_class=ERROR_CLASS_UNEXPECTED,
-                )
-        finally:
-            client.close()
+        search = self.scope.get("search")
+        since = self.scope.get("updatedSince")
+        with McpRegistryClient(self.registry_url, headers=self._headers(), transport=self._transport) as client:
+            entries = client.list_servers(
+                limit=PAGE_SIZE,
+                search=search if isinstance(search, str) else None,
+                updated_since=since.strip() if isinstance(since, str) and since.strip() else None,
+                max_pages=MAX_PAGES,
+            )
         self._entries = {entry.name: entry for entry in latest_servers(entries)}
         return [build_candidate(entry, registry_url=self.registry_url) for entry in self._entries.values()]
 
