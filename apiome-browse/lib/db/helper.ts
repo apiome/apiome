@@ -3,6 +3,17 @@
 import { unstable_noStore as noStore } from 'next/cache';
 import connectionPool from './db';
 import { mcpSortOrderSql, type McpSortMode } from '../mcpSort';
+import {
+  OFFICIAL_REGISTRY_URL,
+  federateRegistryEntries,
+  fetchRegistryServers,
+  normalizeRegistryBase,
+  registryQuery,
+  registryRemoteHosts,
+  toClientEntry,
+  type McpFederatedRegistryResult,
+  type McpPublishedEndpointRef,
+} from '../mcp/registrySearch';
 import type {
   McpPublicEndpoint,
   McpPublicHostGroup,
@@ -746,4 +757,89 @@ export async function searchPublicMcpCatalog(
     logError('searchPublicMcpCatalog', err);
     return [];
   }
+}
+
+/**
+ * Published public endpoints a registry entry may duplicate (V2-MCP-26.4, #3710).
+ *
+ * Reads, in one query, the published endpoints whose registry server name is one of `serverNames`
+ * (case-insensitive), whose URL host is one of `hosts`, or whose id is one of `endpointIds` (the
+ * catalog hits, so a registry import is labeled even when the search did not return its entry).
+ * Only `mcp_v_public_endpoints` rows qualify; the raw `endpoint_url` is joined from
+ * `mcp_endpoints` for the server-side URL comparison and never leaves this process.
+ *
+ * @param serverNames - Registry server names the search returned.
+ * @param hosts - Lower-case hosts of those entries' remotes.
+ * @param endpointIds - Endpoint ids of the catalog hits.
+ * @returns Matching rows; `[]` when every list is empty or the query fails.
+ */
+async function findPublishedMcpEndpointsForRegistryDedupe(
+  serverNames: string[],
+  hosts: string[],
+  endpointIds: string[]
+): Promise<McpPublishedEndpointRef[]> {
+  if (!serverNames.length && !hosts.length && !endpointIds.length) return [];
+  try {
+    const result = await connectionPool.query(
+      `SELECT v.id AS endpoint_id, e.endpoint_url,
+              CASE WHEN e.added_via = 'registry' THEN e.registry_metadata->>'serverName' END
+                AS registry_server_name
+       FROM apiome.mcp_v_public_endpoints v
+       JOIN apiome.mcp_endpoints e ON e.id = v.id
+       WHERE lower(e.registry_metadata->>'serverName') = ANY($1::text[])
+          OR lower(v.host) = ANY($2::text[])
+          OR v.id = ANY($3::uuid[])`,
+      [serverNames.map((n) => n.toLowerCase()), hosts, endpointIds]
+    );
+    return result.rows as McpPublishedEndpointRef[];
+  } catch (err) {
+    logError('findPublishedMcpEndpointsForRegistryDedupe', err);
+    return [];
+  }
+}
+
+/**
+ * The MCP registry half of a federated public search (V2-MCP-26.4, #3710).
+ *
+ * Asks the registry (`MCP_REGISTRY_SEARCH_URL`, the official registry by default; blank turns
+ * federation off) for servers whose names match `query`, then drops the entries a published
+ * endpoint already is ({@link federateRegistryEntries}). A registry that is slow, down or refuses
+ * yields `error` and no entries — the catalog results render either way.
+ *
+ * @param query - The sanitized search query.
+ * @param catalogEndpointIds - Endpoint ids of the catalog hits (to label registry imports).
+ * @returns The deduped, browser-safe registry result.
+ */
+export async function searchRegistryForPublicCatalog(
+  query: string,
+  catalogEndpointIds: string[]
+): Promise<McpFederatedRegistryResult> {
+  noStore();
+  const configured = process.env.MCP_REGISTRY_SEARCH_URL;
+  const registryUrl = normalizeRegistryBase(configured === undefined ? OFFICIAL_REGISTRY_URL : configured);
+  const empty = { entries: [], duplicates: 0, serverNameByEndpoint: {} };
+  if (!registryUrl) {
+    return { ...empty, included: false, registryUrl: null, error: 'MCP Registry search is turned off on this site.' };
+  }
+  let entries;
+  try {
+    entries = await fetchRegistryServers(registryQuery(query), { baseUrl: registryUrl });
+  } catch (err) {
+    logError('searchRegistryForPublicCatalog', err);
+    return { ...empty, included: false, registryUrl, error: 'The MCP Registry could not be reached.' };
+  }
+  const published = await findPublishedMcpEndpointsForRegistryDedupe(
+    entries.map((e) => e.serverName),
+    registryRemoteHosts(entries),
+    [...new Set(catalogEndpointIds)]
+  );
+  const result = federateRegistryEntries(entries, published);
+  return {
+    included: true,
+    registryUrl,
+    entries: result.entries.map(toClientEntry),
+    duplicates: result.duplicates,
+    serverNameByEndpoint: result.serverNameByEndpoint,
+    error: null,
+  };
 }

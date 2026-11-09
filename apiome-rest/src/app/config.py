@@ -1589,6 +1589,28 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Federated catalog search (V2-MCP-26.4, #3710). `GET /v1/mcp/{tenant}/search?include_registry=true`
+    # also searches this MCP registry (its `/v0.1/servers?search=` listing) and blends the matches
+    # after the caller's own hits. Blank disables federation (the search answers with
+    # `registry_error`). The timeout bounds the registry call so a slow registry never stalls the
+    # local search, whose hits are returned either way.
+    mcp_registry_search_url: str = Field(
+        default="https://registry.modelcontextprotocol.io",
+        validation_alias=AliasChoices(
+            "APIOME_MCP_REGISTRY_SEARCH_URL",
+            "mcp_registry_search_url",
+        ),
+    )
+    mcp_registry_search_timeout_seconds: float = Field(
+        default=5.0,
+        gt=0,
+        le=60,
+        validation_alias=AliasChoices(
+            "APIOME_MCP_REGISTRY_SEARCH_TIMEOUT",
+            "mcp_registry_search_timeout_seconds",
+        ),
+    )
+
     # Polyglot toolchain runner (MFI-5.1, #3750). The shared service that runs external
     # parser/linter/diff CLIs (buf, tsp, smithy, …) in a constrained subprocess.
     # toolchain_max_concurrency   Global cap on simultaneously-running tool subprocesses, so a

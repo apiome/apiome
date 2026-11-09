@@ -25968,6 +25968,58 @@ class Database:
         rows = self.execute_query(q, (tenant_id, server_name))
         return dict(rows[0]) if rows else None
 
+    def find_mcp_endpoints_for_registry_dedupe(
+        self,
+        tenant_id: str,
+        *,
+        server_names: List[str],
+        hosts: List[str],
+        endpoint_ids: List[str],
+    ) -> List[Dict[str, Any]]:
+        """The tenant's live endpoints a federated search may dedupe registry entries against (V2-MCP-26.4, #3710).
+
+        A federated catalog search drops each registry entry the tenant already has. This reads the
+        candidates in one query: endpoints whose ``registry_metadata.serverName`` is one of
+        ``server_names`` (case-insensitive), whose URL host is one of ``hosts`` (the caller then
+        compares the full URL), or whose id is one of ``endpoint_ids`` (the local hits, so a
+        registry-imported one is labeled even when the search did not return its entry).
+
+        Args:
+            tenant_id: The tenant.
+            server_names: Registry server names the search returned.
+            hosts: Lower-case hosts of those entries' remotes.
+            endpoint_ids: Endpoint ids of the local hits.
+
+        Returns:
+            Rows with ``id``, ``endpoint_url``, ``added_via`` and ``registry_server_name``; empty
+            when every list is empty.
+        """
+        if not (server_names or hosts or endpoint_ids):
+            return []
+        q = """
+            SELECT id, endpoint_url, added_via,
+                   registry_metadata->>'serverName' AS registry_server_name
+            FROM apiome.mcp_endpoints
+            WHERE tenant_id = %s::uuid
+              AND deleted_at IS NULL
+              AND (
+                    lower(registry_metadata->>'serverName') = ANY(%s::text[])
+                 OR lower(substring(endpoint_url from '://(?:[^@/]*@)?([^:/?#]+)')) = ANY(%s::text[])
+                 OR id = ANY(%s::uuid[])
+              )
+            ORDER BY created_at, id
+        """
+        rows = self.execute_query(
+            q,
+            (
+                tenant_id,
+                [n.lower() for n in server_names],
+                [h.lower() for h in hosts],
+                list(endpoint_ids),
+            ),
+        )
+        return [dict(r) for r in rows or []]
+
     def set_mcp_endpoint_registry_metadata(
         self,
         tenant_id: str,

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.536.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.537.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `mcp-catalog` · 82 operations
 
@@ -2659,6 +2659,10 @@ MCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* 
 endpoints rather than exposing another tenant's. A query that reduces to nothing under full-text
 parsing (e.g. only stop-words) is a valid request that simply returns no hits.
 
+Federated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also
+carries the MCP registry's matches (:func:`_federate_with_registry`), each labeled
+``source = "registry"``; local hits stay ``source = "local"``.
+
 Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 
 **Parameters**
@@ -2674,6 +2678,8 @@ Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
 | `limit` | query | integer | no | Maximum hits to return. |
 | `offset` | query | integer | no | Hits to skip (pagination). |
+| `include_registry` | query | boolean | no | Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names match, on the first page only (offset=0). Registry matches come back in registry_hits, after the local hits, minus any the caller already has (deduped by registry server name or remote URL). |
+| `registry_limit` | query | integer | no | Maximum registry entries to ask the registry for (include_registry=true). |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -3584,6 +3590,12 @@ The dependency inventory of a source artifact — coordinates only (CLX-3.2, #48
 
 Response envelope for a catalog search — ranked hits plus the echoed query/scope (MCAT-9.2).
 
+A federated search (``include_registry=true``, V2-MCP-26.4) also carries the MCP registry's
+matches: ``registry_hits`` blends after the local ``hits`` (local first), ``registry_duplicates``
+counts the registry entries left out because the caller already has them, and
+``registry_error`` says why the registry was not searched (disabled, unreachable, refused) —
+the local hits are returned either way.
+
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
@@ -3593,6 +3605,11 @@ Response envelope for a catalog search — ranked hits plus the echoed query/sco
 | `offset` | integer | yes | Offset. |
 | `count` | integer | yes | Number of count. |
 | `hits` | array of `McpSearchHit` | yes | Hits. |
+| `registry_included` | boolean | no | Whether the MCP registry was searched and answered (include_registry=true). |
+| `registry_url` | string or null | no | Root of the MCP registry searched, when federation ran. |
+| `registry_hits` | array of `McpRegistrySearchHit` | no | Registry entries the caller does not already have, after the local hits. |
+| `registry_duplicates` | integer | no | Registry entries left out because the caller already has them. |
+| `registry_error` | string or null | no | Why the registry was not searched (turned off, unreachable, refused). |
 
 ### `McpServerDigestGenerateResponse` {#schema-mcpserverdigestgenerateresponse}
 

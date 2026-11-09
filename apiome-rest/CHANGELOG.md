@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.677.0] - 2026-11-08
+
+### Added
+- **Federated MCP search incl. the MCP registry (V2-MCP-26.4 / MCAT-12.4, #3710).**
+  `GET /v1/mcp/{tenant_slug}/search` takes `include_registry` (default `false`) and
+  `registry_limit` (1–100, default 20). On the first page (`offset=0`) it also searches the MCP
+  registry at `APIOME_MCP_REGISTRY_SEARCH_URL` (`settings.mcp_registry_search_url`, default the
+  official registry; empty turns it off) through the SSRF-guarded `McpRegistryClient`, with
+  `APIOME_MCP_REGISTRY_SEARCH_TIMEOUT` seconds (default `5`) to answer.
+  - **Labels.** `McpSearchHit.source` is `local`. New `McpRegistrySearchHit` (`source: registry`,
+    `server_name`, `title`, `description`, `version`, `status`, `website_url`, `remote_url`,
+    `transport`, `host`, `registry_url`), credential-free.
+  - **Dedupe.** A registry entry the tenant already has is dropped: an endpoint whose
+    `registry_metadata.serverName` matches (case-insensitive) or whose URL is one of the entry's
+    remotes (scheme, host, port and path; userinfo, query, fragment and a trailing `/` ignored).
+    The matching local hit gets `registry_server_name`, as does any registry-imported hit.
+    Candidates come from `Database.find_mcp_endpoints_for_registry_dedupe`.
+  - **Envelope.** `McpSearchResponse` adds `registry_included`, `registry_url`, `registry_hits`,
+    `registry_duplicates` and `registry_error`. A disabled, slow or failing registry sets
+    `registry_error` and still returns the local hits.
+  - New module `app/mcp_federated_search.py`. OpenAPI 1.536.0 → 1.537.0; REST reference regenerated.
+
 ## [1.676.0] - 2026-11-08
 
 ### Added
