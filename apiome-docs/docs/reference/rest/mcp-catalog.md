@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 83 operations."
+description: "REST endpoints tagged mcp-catalog: 93 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.540.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.541.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 83 operations
+Tag: `mcp-catalog` · 93 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -238,6 +238,10 @@ counts (tools/resources/resource templates/prompts), quality score/grade, and
 last-discovered time. Like every catalog route, scoping comes from the token's
 ``tenant_id`` — never the URL slug — so a tenant only ever browses its own catalog.
 
+Each endpoint carries its manual ``tags``, and the ``category`` / ``tag`` facets (V2-MCP-23.3 /
+MCAT-9.3) narrow the list: the two facets AND together, values within one facet OR, and
+``uncategorized`` / ``untagged`` select endpoints with none.
+
 Operation id: `browse_mcp_endpoints_v1_mcp__tenant_slug__browse_get`
 
 **Parameters**
@@ -246,6 +250,8 @@ Operation id: `browse_mcp_endpoints_v1_mcp__tenant_slug__browse_get`
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
 | `team` | query | string or null | no | Only endpoints whose owner (confirmed, else suggested) is this team slug (CDG-2.4). |
+| `category` | query | array of string or null | no | Category facet: stored category values such as a category slug (case-insensitive) and/or 'uncategorized'. Repeatable; values OR. |
+| `tag` | query | array of string or null | no | Tag facet: manual tags and/or 'untagged'. Repeatable; values OR. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -339,6 +345,144 @@ Operation id: `cross_server_capability_search_v1_mcp__tenant_slug__capabilities_
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for cross server capability search. | `application/json` [`McpCrossServerCapabilitySearchResponse`](#schema-mcpcrossservercapabilitysearchresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/mcp/{tenant_slug}/categories` {#list-mcp-categories-v1-mcp-tenant-slug-categories-get}
+
+**List Mcp Categories**
+
+List the category lookup: built-in categories plus the tenant's own, with endpoint counts.
+
+Operation id: `list_mcp_categories_v1_mcp__tenant_slug__categories_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mcp categories. | `application/json` [`McpCategoryListResponse`](#schema-mcpcategorylistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/mcp/{tenant_slug}/categories` {#create-mcp-category-v1-mcp-tenant-slug-categories-post}
+
+**Create Mcp Category**
+
+Add a tenant-defined category.
+
+The slug defaults to one derived from the label. A slug or label already used by a visible
+category (built-in or the tenant's) is a ``409``; an invalid slug or label is a ``422``.
+
+Operation id: `create_mcp_category_v1_mcp__tenant_slug__categories_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for create mcp category.
+
+- `application/json` — [`McpCategoryCreate`](#schema-mcpcategorycreate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for create mcp category. | `application/json` [`McpCategoryResponse`](#schema-mcpcategoryresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/mcp/{tenant_slug}/categories/{slug}` {#get-mcp-category-v1-mcp-tenant-slug-categories-slug-get}
+
+**Get Mcp Category**
+
+Fetch one visible category (built-in or the tenant's) by slug; ``404`` when unknown.
+
+Operation id: `get_mcp_category_v1_mcp__tenant_slug__categories__slug__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `slug` | path | string | yes | URL-safe resource slug. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get mcp category. | `application/json` [`McpCategoryResponse`](#schema-mcpcategoryresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PATCH /v1/mcp/{tenant_slug}/categories/{slug}` {#update-mcp-category-v1-mcp-tenant-slug-categories-slug-patch}
+
+**Update Mcp Category**
+
+Change a tenant category's label, description or sort order (the slug never changes).
+
+Only keys present in the body are applied; an empty body returns the category unchanged.
+``403`` for a built-in category, ``404`` when unknown, ``409`` when the new label is taken.
+
+Operation id: `update_mcp_category_v1_mcp__tenant_slug__categories__slug__patch`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `slug` | path | string | yes | URL-safe resource slug. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for update mcp category.
+
+- `application/json` — [`McpCategoryUpdate`](#schema-mcpcategoryupdate)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for update mcp category. | `application/json` [`McpCategoryResponse`](#schema-mcpcategoryresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/mcp/{tenant_slug}/categories/{slug}` {#delete-mcp-category-v1-mcp-tenant-slug-categories-slug-delete}
+
+**Delete Mcp Category**
+
+Remove a tenant category. Endpoints filed under it keep the slug as an unlisted category.
+
+``403`` for a built-in category, ``404`` when unknown.
+
+Operation id: `delete_mcp_category_v1_mcp__tenant_slug__categories__slug__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `slug` | path | string | yes | URL-safe resource slug. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for delete mcp category. | `application/json` map of boolean |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/mcp/{tenant_slug}/collections` {#list-mcp-collections-v1-mcp-tenant-slug-collections-get}
@@ -1831,6 +1975,119 @@ Request body for attach mcp source sbom.
 | 201 | Successful response for attach mcp source sbom. | `application/json` [`McpSbomOut`](#schema-mcpsbomout) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags` {#list-mcp-endpoint-tags-v1-mcp-tenant-slug-endpoints-endpoint-id-tags-get}
+
+**List Mcp Endpoint Tags**
+
+Return an endpoint's tags, alphabetical; ``404`` when the endpoint is not the tenant's.
+
+Operation id: `list_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mcp endpoint tags. | `application/json` [`McpEndpointTagsResponse`](#schema-mcpendpointtagsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `PUT /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags` {#replace-mcp-endpoint-tags-v1-mcp-tenant-slug-endpoints-endpoint-id-tags-put}
+
+**Replace Mcp Endpoint Tags**
+
+Replace an endpoint's tags with ``body.tags`` (an empty list clears them).
+
+``422`` when a tag is invalid or there are more than 32 distinct tags.
+
+Operation id: `replace_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_put`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for replace mcp endpoint tags.
+
+- `application/json` — [`McpEndpointTagsBody`](#schema-mcpendpointtagsbody)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for replace mcp endpoint tags. | `application/json` [`McpEndpointTagsResponse`](#schema-mcpendpointtagsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags` {#add-mcp-endpoint-tags-v1-mcp-tenant-slug-endpoints-endpoint-id-tags-post}
+
+**Add Mcp Endpoint Tags**
+
+Add ``body.tags`` to an endpoint's existing tags; tags it already has are ignored.
+
+``422`` when a tag is invalid or the result would exceed 32 tags.
+
+Operation id: `add_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for add mcp endpoint tags.
+
+- `application/json` — [`McpEndpointTagsBody`](#schema-mcpendpointtagsbody)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for add mcp endpoint tags. | `application/json` [`McpEndpointTagsResponse`](#schema-mcpendpointtagsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags/{tag}` {#remove-mcp-endpoint-tag-v1-mcp-tenant-slug-endpoints-endpoint-id-tags-tag-delete}
+
+**Remove Mcp Endpoint Tag**
+
+Remove one tag from an endpoint; ``404`` when the endpoint does not carry it.
+
+Operation id: `remove_mcp_endpoint_tag_v1_mcp__tenant_slug__endpoints__endpoint_id__tags__tag__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `tag` | path | string | yes | Path parameter identifying the tag segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for remove mcp endpoint tag. | `application/json` [`McpEndpointTagsResponse`](#schema-mcpendpointtagsresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/test` {#test-mcp-endpoint-capability-v1-mcp-tenant-slug-endpoints-endpoint-id-test-post}
 
 **Test Mcp Endpoint Capability**
@@ -2413,11 +2670,13 @@ Operation id: `export_mcp_catalog_inventory_v1_mcp__tenant_slug__endpoints_expor
 Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).
 
 The catalog's rich metrics as queryable facets: filter by grade band, transport, category,
-safety posture, complexity band, protocol version, and discovery health. Filters **AND across
+safety posture, complexity band, protocol version, discovery health, and manual tag
+(V2-MCP-23.3). Filters **AND across
 facets** and **OR within a facet**; the response carries the matching endpoint page (browse-
 shaped rows, each with its facet fields) plus per-dimension bucket counts aggregated over the
 same filtered set, so the counts are live. Every bucket label — including the NULL-bucket
-sentinels ``ungraded`` / ``uncategorized`` / ``unknown`` — is itself a valid filter value.
+sentinels ``ungraded`` / ``uncategorized`` / ``untagged`` / ``unknown`` — is itself a valid
+filter value.
 
 Like every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug —
 so the search only ever spans the caller's own catalog, and ``visibility`` narrows the
@@ -2438,6 +2697,7 @@ Operation id: `faceted_mcp_catalog_search_v1_mcp__tenant_slug__facets_get`
 | `complexity` | query | array of string or null | no | Complexity-band facet: simple / moderate / complex / unknown. Repeatable. |
 | `protocol` | query | array of string or null | no | Protocol-version facet: exact reported versions (e.g. 2025-06-18) and/or 'unknown'. Repeatable. |
 | `health` | query | array of string or null | no | Discovery-health facet: healthy / failing / undiscovered / disabled / quarantined. Repeatable. |
+| `tag` | query | array of string or null | no | Tag facet: manual tags (case-insensitive) and/or 'untagged'. Repeatable. |
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
 | `limit` | query | integer | no | Maximum endpoints to return. |
 | `offset` | query | integer | no | Endpoints to skip (pagination). |
@@ -2687,7 +2947,8 @@ Backed by the V127 capability-item ``tsvector`` GIN index. ``scope`` selects wha
 single capability kind, every capability kind (the default), or the endpoints themselves
 (``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,
 score/grade, visibility) so the result is renderable without a second read. The ``host`` /
-``category`` / ``grade`` / ``visibility`` filters compose (each supplied filter is ANDed in).
+``category`` / ``grade`` / ``visibility`` / ``tag`` filters compose (each supplied filter is
+ANDed in).
 
 Like every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug — so a
 search only ever returns the caller's own catalog (the public-directory variant waits on the
@@ -2712,6 +2973,7 @@ Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 | `category` | query | string or null | no | Filter to endpoints in this category (case-insensitive). |
 | `grade` | query | string or null | no | Filter to endpoints whose current snapshot earned this A-F grade. |
 | `visibility` | query | enum `"public"`, `"private"` or null | no | Filter to 'private' or 'public' endpoints within the caller's own catalog. |
+| `tag` | query | string or null | no | Filter to endpoints carrying this manual tag (case-insensitive). |
 | `limit` | query | integer | no | Maximum hits to return. |
 | `offset` | query | integer | no | Hits to skip (pagination). |
 | `include_registry` | query | boolean | no | Also search the MCP registry (APIOME_MCP_REGISTRY_SEARCH_URL) for servers whose names match, on the first page only (offset=0). Registry matches come back in registry_hits, after the local hits, minus any the caller already has (deduped by registry server name or remote URL). |
@@ -2724,6 +2986,29 @@ Operation id: `search_mcp_catalog_v1_mcp__tenant_slug__search_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for search mcp catalog. | `application/json` [`McpSearchResponse`](#schema-mcpsearchresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/mcp/{tenant_slug}/tags` {#list-mcp-tag-vocabulary-v1-mcp-tenant-slug-tags-get}
+
+**List Mcp Tag Vocabulary**
+
+List every tag in use across the tenant's live endpoints, busiest first.
+
+Operation id: `list_mcp_tag_vocabulary_v1_mcp__tenant_slug__tags_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list mcp tag vocabulary. | `application/json` [`McpTagVocabularyResponse`](#schema-mcptagvocabularyresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}
@@ -2789,6 +3074,47 @@ Paginated capability directory envelope (MCAT-21.4).
 | `total` | integer | yes | Total. |
 | `count` | integer | yes | Number of count. |
 | `items` | array of `McpCapabilityDirectoryEntry` | no | Items. |
+
+### `McpCategoryCreate` {#schema-mcpcategorycreate}
+
+Body for adding a tenant-defined category (MCAT-9.3).
+
+``slug`` is derived from ``label`` when omitted. It is immutable once created.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `label` | string | yes | Label. |
+| `slug` | string or null | no | URL-safe identifier. |
+| `description` | string or null | no | Free-text description. |
+| `sortOrder` | integer | no | Sort Order. |
+
+### `McpCategoryListResponse` {#schema-mcpcategorylistresponse}
+
+Envelope for the category lookup list (MCAT-9.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `categories` | array of `McpCategoryOut` | no | Categories. |
+
+### `McpCategoryResponse` {#schema-mcpcategoryresponse}
+
+Envelope for a single category (MCAT-9.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `category` | `McpCategoryOut` | yes | Classification category for the primitive type. |
+
+### `McpCategoryUpdate` {#schema-mcpcategoryupdate}
+
+Patch body for a tenant-defined category; only the keys present are applied (MCAT-9.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `label` | string or null | no | Label. |
+| `description` | string or null | no | Free-text description. |
+| `sortOrder` | integer or null | no | Sort Order. |
 
 ### `McpCollectionCreate` {#schema-mcpcollectioncreate}
 
@@ -3144,6 +3470,26 @@ McpEndpointResponse schema.
 | --- | --- | --- | --- |
 | `success` | boolean | no | Success. |
 | `endpoint` | `McpEndpointOut` | yes | Endpoint. |
+
+### `McpEndpointTagsBody` {#schema-mcpendpointtagsbody}
+
+Body for replacing (``PUT``) or adding to (``POST``) an endpoint's tags (MCAT-9.3).
+
+Tags are folded to lowercase with whitespace runs turned into ``-`` before validation.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `tags` | array of string | no | Associated tag labels. |
+
+### `McpEndpointTagsResponse` {#schema-mcpendpointtagsresponse}
+
+An endpoint's manual tags after a read or write, alphabetical (MCAT-9.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint_id` | string | yes | Endpoint ID. |
+| `tags` | array of string | no | Associated tag labels. |
 
 ### `McpEndpointTestRequest` {#schema-mcpendpointtestrequest}
 
@@ -3800,6 +4146,15 @@ MCP surface-lint rule catalog (CLX-4.3, #4861).
 | `docsPage` | string | yes | Repository-relative docs page for MCP surface lint rules. |
 | `rules` | array of `McpSurfaceLintRuleOut` | yes | Rules. |
 | `count` | integer | yes | Number of count. |
+
+### `McpTagVocabularyResponse` {#schema-mcptagvocabularyresponse}
+
+Every tag in use across the tenant's live endpoints, busiest first (MCAT-9.3).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `tags` | array of `McpTagUsageOut` | no | Associated tag labels. |
 
 ### `McpVersionChangesResponse` {#schema-mcpversionchangesresponse}
 

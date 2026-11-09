@@ -89,6 +89,7 @@ from .mcp_catalog_routes import mcp_endpoints_router
 from .mcp_collection_routes import router as mcp_collection_router
 from .mcp_credential_crypto import validate_credential_encryption_keys
 from .mcp_endpoint_note_routes import router as mcp_endpoint_note_router
+from .mcp_categorization_routes import router as mcp_categorization_router
 from .mcp_feed_routes import router as mcp_feed_router
 from .mcp_registry_routes import registry_router as mcp_registry_alias_router
 from .mcp_registry_routes import router as mcp_registry_router
@@ -214,7 +215,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.540.0",
+    version="1.541.0",
 )
 
 
@@ -602,6 +603,7 @@ app.include_router(mcp_trust_baseline_router)
 app.include_router(mcp_catalog_digest_router)
 app.include_router(mcp_saved_search_router)
 app.include_router(mcp_endpoint_note_router)
+app.include_router(mcp_categorization_router)
 app.include_router(mcp_collection_router)
 # MCP tool catalog + capability presets (MTG-1.1 / MTG-5.1): GET /api-keys/mcp-tools,
 # GET /api-keys/mcp-capability-presets for CLI + admin UX.

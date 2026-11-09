@@ -58,6 +58,7 @@ from .mcp_auth import (
 )
 from .mcp_capability_graph import compute_capability_graph
 from .mcp_catalog_inventory import inventory_record, stream_csv, stream_json
+from .mcp_categorization import resolve_category
 from .mcp_change_severity import severity_counts
 from .mcp_client.normalize import (
     ITEM_TYPE_PROMPT,
@@ -81,7 +82,7 @@ from .mcp_discovery_engine import (
     trigger_discovery,
 )
 from .mcp_duplicate_detection import mcp_duplicate_report_from_rows
-from .mcp_facets import FacetValidationError, normalize_catalog_facet_filters
+from .mcp_facets import FacetValidationError, canonical_tag, normalize_catalog_facet_filters
 from .mcp_freshness_report import mcp_freshness_report_from_rows
 from .mcp_health import (
     DEFAULT_WINDOW_HOURS,
@@ -300,6 +301,17 @@ async def browse_mcp_endpoints(
         max_length=128,
         description="Only endpoints whose owner (confirmed, else suggested) is this team slug (CDG-2.4).",
     ),
+    category: Optional[List[str]] = Query(
+        None,
+        description=(
+            "Category facet: stored category values such as a category slug (case-insensitive) "
+            "and/or 'uncategorized'. Repeatable; values OR."
+        ),
+    ),
+    tag: Optional[List[str]] = Query(
+        None,
+        description="Tag facet: manual tags and/or 'untagged'. Repeatable; values OR.",
+    ),
     auth_data: Dict[str, Any] = Depends(validate_authentication),
 ) -> McpBrowseResponse:
     """Private browse: the caller's cataloged endpoints grouped by host (V2-MCP-23.1 / MCAT-9.1).
@@ -310,10 +322,17 @@ async def browse_mcp_endpoints(
     counts (tools/resources/resource templates/prompts), quality score/grade, and
     last-discovered time. Like every catalog route, scoping comes from the token's
     ``tenant_id`` — never the URL slug — so a tenant only ever browses its own catalog.
+
+    Each endpoint carries its manual ``tags``, and the ``category`` / ``tag`` facets (V2-MCP-23.3 /
+    MCAT-9.3) narrow the list: the two facets AND together, values within one facet OR, and
+    ``uncategorized`` / ``untagged`` select endpoints with none.
     """
     _ = tenant_slug  # scoping comes from the token, not the URL slug
     tenant_id = str(auth_data["tenant_id"])
-    rows = db.browse_mcp_endpoints(tenant_id, team=team)
+    filters = normalize_catalog_facet_filters(category=category, tag=tag)
+    rows = db.browse_mcp_endpoints(
+        tenant_id, team=team, categories=filters.categories, tags=filters.tags
+    )
     return group_mcp_browse_endpoints(rows)
 
 
@@ -397,6 +416,9 @@ async def search_mcp_catalog(
         None,
         description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
     ),
+    tag: Optional[str] = Query(
+        None, description="Filter to endpoints carrying this manual tag (case-insensitive)."
+    ),
     limit: int = Query(50, ge=1, le=200, description="Maximum hits to return."),
     offset: int = Query(0, ge=0, description="Hits to skip (pagination)."),
     include_registry: bool = Query(
@@ -422,7 +444,8 @@ async def search_mcp_catalog(
     single capability kind, every capability kind (the default), or the endpoints themselves
     (``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,
     score/grade, visibility) so the result is renderable without a second read. The ``host`` /
-    ``category`` / ``grade`` / ``visibility`` filters compose (each supplied filter is ANDed in).
+    ``category`` / ``grade`` / ``visibility`` / ``tag`` filters compose (each supplied filter is
+    ANDed in).
 
     Like every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug — so a
     search only ever returns the caller's own catalog (the public-directory variant waits on the
@@ -441,6 +464,7 @@ async def search_mcp_catalog(
     host_filter = host.strip() if host and host.strip() else None
     category_filter = category.strip() if category and category.strip() else None
     grade_filter = grade.strip() if grade and grade.strip() else None
+    tag_filter = canonical_tag(tag) or None
 
     if not query:
         # An empty/whitespace-only query has nothing to match; return an empty result rather than 422.
@@ -456,6 +480,7 @@ async def search_mcp_catalog(
             category=category_filter,
             grade=grade_filter,
             visibility=visibility,
+            tag=tag_filter,
             limit=limit,
             offset=offset,
         )
@@ -468,6 +493,7 @@ async def search_mcp_catalog(
             category=category_filter,
             grade=grade_filter,
             visibility=visibility,
+            tag=tag_filter,
             limit=limit,
             offset=offset,
         )
@@ -793,6 +819,10 @@ async def faceted_mcp_catalog_search(
             "Repeatable."
         ),
     ),
+    tag: Optional[List[str]] = Query(
+        None,
+        description="Tag facet: manual tags (case-insensitive) and/or 'untagged'. Repeatable.",
+    ),
     visibility: Optional[McpSearchVisibility] = Query(
         None,
         description="Filter to 'private' or 'public' endpoints within the caller's own catalog.",
@@ -804,11 +834,13 @@ async def faceted_mcp_catalog_search(
     """Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).
 
     The catalog's rich metrics as queryable facets: filter by grade band, transport, category,
-    safety posture, complexity band, protocol version, and discovery health. Filters **AND across
+    safety posture, complexity band, protocol version, discovery health, and manual tag
+    (V2-MCP-23.3). Filters **AND across
     facets** and **OR within a facet**; the response carries the matching endpoint page (browse-
     shaped rows, each with its facet fields) plus per-dimension bucket counts aggregated over the
     same filtered set, so the counts are live. Every bucket label — including the NULL-bucket
-    sentinels ``ungraded`` / ``uncategorized`` / ``unknown`` — is itself a valid filter value.
+    sentinels ``ungraded`` / ``uncategorized`` / ``untagged`` / ``unknown`` — is itself a valid
+    filter value.
 
     Like every catalog route, scoping comes from the token's ``tenant_id`` — never the URL slug —
     so the search only ever spans the caller's own catalog, and ``visibility`` narrows the
@@ -827,6 +859,7 @@ async def faceted_mcp_catalog_search(
             complexity=complexity,
             protocol=protocol,
             health=health,
+            tag=tag,
         )
     except FacetValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
@@ -841,6 +874,7 @@ async def faceted_mcp_catalog_search(
         protocols=filters.protocols,
         health=filters.health,
         visibility=visibility,
+        tags=filters.tags,
         limit=limit,
         offset=offset,
     )
@@ -909,9 +943,13 @@ async def create_mcp_endpoint(
     description = body.description.strip() if body.description else None
     if description == "":
         description = None
-    category = body.category.strip() if body.category else None
-    if category == "":
-        category = None
+    # Lenient category lookup (V2-MCP-23.3): a value matching a category's slug or label is stored
+    # as that slug; anything else is kept as given.
+    category = (
+        resolve_category(body.category, db.list_mcp_categories(tenant_id))
+        if body.category and body.category.strip()
+        else None
+    )
 
     try:
         inserted = db.insert_mcp_endpoint(
@@ -968,8 +1006,11 @@ async def update_mcp_endpoint(
         stripped = body.description.strip()
         fields["description"] = stripped or None
     if body.category is not None:
-        stripped = body.category.strip()
-        fields["category"] = stripped or None
+        fields["category"] = (
+            resolve_category(body.category, db.list_mcp_categories(tenant_id))
+            if body.category.strip()
+            else None
+        )
     if body.visibility is not None:
         fields["visibility"] = body.visibility
     if body.published is not None:

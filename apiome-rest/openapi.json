@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.540.0",
+    "version": "1.541.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -99569,7 +99569,7 @@
           "mcp-catalog"
         ],
         "summary": "Browse Mcp Endpoints",
-        "description": "Private browse: the caller's cataloged endpoints grouped by host (V2-MCP-23.1 / MCAT-9.1).\n\nThe browse-list half of the private catalog view (the detail half reuses the existing\nendpoint and version-detail reads). Returns every live endpoint the caller's tenant owns,\nbucketed by the host its URL points at, each carrying its current snapshot's capability\ncounts (tools/resources/resource templates/prompts), quality score/grade, and\nlast-discovered time. Like every catalog route, scoping comes from the token's\n``tenant_id`` \u2014 never the URL slug \u2014 so a tenant only ever browses its own catalog.",
+        "description": "Private browse: the caller's cataloged endpoints grouped by host (V2-MCP-23.1 / MCAT-9.1).\n\nThe browse-list half of the private catalog view (the detail half reuses the existing\nendpoint and version-detail reads). Returns every live endpoint the caller's tenant owns,\nbucketed by the host its URL points at, each carrying its current snapshot's capability\ncounts (tools/resources/resource templates/prompts), quality score/grade, and\nlast-discovered time. Like every catalog route, scoping comes from the token's\n``tenant_id`` \u2014 never the URL slug \u2014 so a tenant only ever browses its own catalog.\n\nEach endpoint carries its manual ``tags``, and the ``category`` / ``tag`` facets (V2-MCP-23.3 /\nMCAT-9.3) narrow the list: the two facets AND together, values within one facet OR, and\n``uncategorized`` / ``untagged`` select endpoints with none.",
         "operationId": "browse_mcp_endpoints_v1_mcp__tenant_slug__browse_get",
         "parameters": [
           {
@@ -99603,6 +99603,52 @@
               "title": "Team"
             },
             "description": "Only endpoints whose owner (confirmed, else suggested) is this team slug (CDG-2.4)."
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Browse MCP Endpointscategory schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Browse MCP Endpointscategory schema."
+                }
+              ],
+              "description": "Category facet: stored category values such as a category slug (case-insensitive) and/or 'uncategorized'. Repeatable; values OR.",
+              "title": "Category"
+            },
+            "description": "Category facet: stored category values such as a category slug (case-insensitive) and/or 'uncategorized'. Repeatable; values OR."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Browse MCP Endpointstag schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Browse MCP Endpointstag schema."
+                }
+              ],
+              "description": "Tag facet: manual tags and/or 'untagged'. Repeatable; values OR.",
+              "title": "Tag"
+            },
+            "description": "Tag facet: manual tags and/or 'untagged'. Repeatable; values OR."
           },
           {
             "name": "authorization",
@@ -99851,7 +99897,7 @@
           "mcp-catalog"
         ],
         "summary": "Search Mcp Catalog",
-        "description": "Free-text search over the caller's MCP catalog, relevance-then-score ranked (V2-MCP-23.2 / MCAT-9.2).\n\nBacked by the V127 capability-item ``tsvector`` GIN index. ``scope`` selects what is searched: a\nsingle capability kind, every capability kind (the default), or the endpoints themselves\n(``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,\nscore/grade, visibility) so the result is renderable without a second read. The ``host`` /\n``category`` / ``grade`` / ``visibility`` filters compose (each supplied filter is ANDed in).\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so a\nsearch only ever returns the caller's own catalog (the public-directory variant waits on the\nMCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* private/public\nendpoints rather than exposing another tenant's. A query that reduces to nothing under full-text\nparsing (e.g. only stop-words) is a valid request that simply returns no hits.\n\nFederated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also\ncarries the MCP registry's matches (:func:`_federate_with_registry`), each labeled\n``source = \"registry\"``; local hits stay ``source = \"local\"``.",
+        "description": "Free-text search over the caller's MCP catalog, relevance-then-score ranked (V2-MCP-23.2 / MCAT-9.2).\n\nBacked by the V127 capability-item ``tsvector`` GIN index. ``scope`` selects what is searched: a\nsingle capability kind, every capability kind (the default), or the endpoints themselves\n(``scope=endpoint``). Each hit carries its owning endpoint's browse context (host, category,\nscore/grade, visibility) so the result is renderable without a second read. The ``host`` /\n``category`` / ``grade`` / ``visibility`` / ``tag`` filters compose (each supplied filter is\nANDed in).\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014 so a\nsearch only ever returns the caller's own catalog (the public-directory variant waits on the\nMCAT-1.6 public read view). ``visibility`` therefore narrows the caller's *own* private/public\nendpoints rather than exposing another tenant's. A query that reduces to nothing under full-text\nparsing (e.g. only stop-words) is a valid request that simply returns no hits.\n\nFederated search (V2-MCP-26.4 / MCAT-12.4): with ``include_registry=true`` the first page also\ncarries the MCP registry's matches (:func:`_federate_with_registry`), each labeled\n``source = \"registry\"``; local hits stay ``source = \"local\"``.",
         "operationId": "search_mcp_catalog_v1_mcp__tenant_slug__search_get",
         "parameters": [
           {
@@ -99987,6 +100033,26 @@
               "title": "Visibility"
             },
             "description": "Filter to 'private' or 'public' endpoints within the caller's own catalog."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Search MCP Catalogtag schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Search MCP Catalogtag schema."
+                }
+              ],
+              "description": "Filter to endpoints carrying this manual tag (case-insensitive).",
+              "title": "Tag"
+            },
+            "description": "Filter to endpoints carrying this manual tag (case-insensitive)."
           },
           {
             "name": "limit",
@@ -100648,7 +100714,7 @@
           "mcp-catalog"
         ],
         "summary": "Faceted Mcp Catalog Search",
-        "description": "Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).\n\nThe catalog's rich metrics as queryable facets: filter by grade band, transport, category,\nsafety posture, complexity band, protocol version, and discovery health. Filters **AND across\nfacets** and **OR within a facet**; the response carries the matching endpoint page (browse-\nshaped rows, each with its facet fields) plus per-dimension bucket counts aggregated over the\nsame filtered set, so the counts are live. Every bucket label \u2014 including the NULL-bucket\nsentinels ``ungraded`` / ``uncategorized`` / ``unknown`` \u2014 is itself a valid filter value.\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014\nso the search only ever spans the caller's own catalog, and ``visibility`` narrows the\ncaller's *own* private/public endpoints. A filter combination matching nothing returns an\nempty page with zeroed counts, not an error; an invalid facet value is a ``422``.",
+        "description": "Faceted search over the caller's MCP catalog with live facet counts (V2-MCP-35.1 / MCAT-21.1).\n\nThe catalog's rich metrics as queryable facets: filter by grade band, transport, category,\nsafety posture, complexity band, protocol version, discovery health, and manual tag\n(V2-MCP-23.3). Filters **AND across\nfacets** and **OR within a facet**; the response carries the matching endpoint page (browse-\nshaped rows, each with its facet fields) plus per-dimension bucket counts aggregated over the\nsame filtered set, so the counts are live. Every bucket label \u2014 including the NULL-bucket\nsentinels ``ungraded`` / ``uncategorized`` / ``untagged`` / ``unknown`` \u2014 is itself a valid\nfilter value.\n\nLike every catalog route, scoping comes from the token's ``tenant_id`` \u2014 never the URL slug \u2014\nso the search only ever spans the caller's own catalog, and ``visibility`` narrows the\ncaller's *own* private/public endpoints. A filter combination matching nothing returns an\nempty page with zeroed counts, not an error; an invalid facet value is a ``422``.",
         "operationId": "faceted_mcp_catalog_search_v1_mcp__tenant_slug__facets_get",
         "parameters": [
           {
@@ -100822,6 +100888,29 @@
               "title": "Health"
             },
             "description": "Discovery-health facet: healthy / failing / undiscovered / disabled / quarantined. Repeatable."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Faceted MCP Catalog Searchtag schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Faceted MCP Catalog Searchtag schema."
+                }
+              ],
+              "description": "Tag facet: manual tags (case-insensitive) and/or 'untagged'. Repeatable.",
+              "title": "Tag"
+            },
+            "description": "Tag facet: manual tags (case-insensitive) and/or 'untagged'. Repeatable."
           },
           {
             "name": "visibility",
@@ -109399,6 +109488,1010 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for delete mcp endpoint noteresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/categories": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "List Mcp Categories",
+        "description": "List the category lookup: built-in categories plus the tenant's own, with endpoint counts.",
+        "operationId": "list_mcp_categories_v1_mcp__tenant_slug__categories_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Categoriesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Categoriesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Categories Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Categories Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpCategoryListResponse",
+                  "description": "Response payload for list mcp categoriesresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcp categoriesresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Create Mcp Category",
+        "description": "Add a tenant-defined category.\n\nThe slug defaults to one derived from the label. A slug or label already used by a visible\ncategory (built-in or the tenant's) is a ``409``; an invalid slug or label is a ``422``.",
+        "operationId": "create_mcp_category_v1_mcp__tenant_slug__categories_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create MCP Categoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create MCP Categoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create MCP Category Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create MCP Category Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpCategoryCreate",
+                "description": "Request body for create mcp categoryrequest."
+              }
+            }
+          },
+          "description": "Request body for create mcp category."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create mcp category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpCategoryResponse",
+                  "description": "Response payload for create mcp categoryresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create mcp categoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/categories/{slug}": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Get Mcp Category",
+        "description": "Fetch one visible category (built-in or the tenant's) by slug; ``404`` when unknown.",
+        "operationId": "get_mcp_category_v1_mcp__tenant_slug__categories__slug__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Categoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Categoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get MCP Category Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get MCP Category Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get mcp category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpCategoryResponse",
+                  "description": "Response payload for get mcp categoryresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get mcp categoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Update Mcp Category",
+        "description": "Change a tenant category's label, description or sort order (the slug never changes).\n\nOnly keys present in the body are applied; an empty body returns the category unchanged.\n``403`` for a built-in category, ``404`` when unknown, ``409`` when the new label is taken.",
+        "operationId": "update_mcp_category_v1_mcp__tenant_slug__categories__slug__patch",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update MCP Categoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update MCP Categoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update MCP Category Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update MCP Category Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpCategoryUpdate",
+                "description": "Request body for update mcp categoryrequest."
+              }
+            }
+          },
+          "description": "Request body for update mcp category."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update mcp category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpCategoryResponse",
+                  "description": "Response payload for update mcp categoryresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for update mcp categoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Delete Mcp Category",
+        "description": "Remove a tenant category. Endpoints filed under it keep the slug as an unlisted category.\n\n``403`` for a built-in category, ``404`` when unknown.",
+        "operationId": "delete_mcp_category_v1_mcp__tenant_slug__categories__slug__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Slug",
+              "description": "Slug schema."
+            },
+            "description": "URL-safe resource slug."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete MCP Categoryauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete MCP Categoryauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete MCP Category Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete MCP Category Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete mcp category.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Delete Mcp Category V1 Mcp  Tenant Slug  Categories  Slug  Delete",
+                  "description": "Response Delete Mcp Category V1 Mcp  Tenant Slug  Categories  Slug  Delete schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete mcp categoryresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/tags": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "List Mcp Tag Vocabulary",
+        "description": "List every tag in use across the tenant's live endpoints, busiest first.",
+        "operationId": "list_mcp_tag_vocabulary_v1_mcp__tenant_slug__tags_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Tag Vocabularyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Tag Vocabularyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Tag Vocabulary Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Tag Vocabulary Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp tag vocabulary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpTagVocabularyResponse",
+                  "description": "Response payload for list mcp tag vocabularyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcp tag vocabularyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags": {
+      "get": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "List Mcp Endpoint Tags",
+        "description": "Return an endpoint's tags, alphabetical; ``404`` when the endpoint is not the tenant's.",
+        "operationId": "list_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Endpoint Tagsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Endpoint Tagsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List MCP Endpoint Tags Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List MCP Endpoint Tags Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list mcp endpoint tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointTagsResponse",
+                  "description": "Response payload for list mcp endpoint tagsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list mcp endpoint tagsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Replace Mcp Endpoint Tags",
+        "description": "Replace an endpoint's tags with ``body.tags`` (an empty list clears them).\n\n``422`` when a tag is invalid or there are more than 32 distinct tags.",
+        "operationId": "replace_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replace MCP Endpoint Tagsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replace MCP Endpoint Tagsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Replace MCP Endpoint Tags Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Replace MCP Endpoint Tags Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpEndpointTagsBody",
+                "description": "Request body for replace mcp endpoint tagsrequest."
+              }
+            }
+          },
+          "description": "Request body for replace mcp endpoint tags."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for replace mcp endpoint tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointTagsResponse",
+                  "description": "Response payload for replace mcp endpoint tagsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for replace mcp endpoint tagsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Add Mcp Endpoint Tags",
+        "description": "Add ``body.tags`` to an endpoint's existing tags; tags it already has are ignored.\n\n``422`` when a tag is invalid or the result would exceed 32 tags.",
+        "operationId": "add_mcp_endpoint_tags_v1_mcp__tenant_slug__endpoints__endpoint_id__tags_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Add MCP Endpoint Tagsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Add MCP Endpoint Tagsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Add MCP Endpoint Tags Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Add MCP Endpoint Tags Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpEndpointTagsBody",
+                "description": "Request body for add mcp endpoint tagsrequest."
+              }
+            }
+          },
+          "description": "Request body for add mcp endpoint tags."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for add mcp endpoint tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointTagsResponse",
+                  "description": "Response payload for add mcp endpoint tagsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for add mcp endpoint tagsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/tags/{tag}": {
+      "delete": {
+        "tags": [
+          "mcp-catalog"
+        ],
+        "summary": "Remove Mcp Endpoint Tag",
+        "description": "Remove one tag from an endpoint; ``404`` when the endpoint does not carry it.",
+        "operationId": "remove_mcp_endpoint_tag_v1_mcp__tenant_slug__endpoints__endpoint_id__tags__tag__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "endpoint_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Endpoint Id",
+              "description": "Endpoint Id schema."
+            },
+            "description": "MCP endpoint identifier."
+          },
+          {
+            "name": "tag",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tag",
+              "description": "Tag schema."
+            },
+            "description": "Path parameter identifying the tag segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Remove MCP Endpoint Tagauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Remove MCP Endpoint Tagauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Remove MCP Endpoint Tag Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Remove MCP Endpoint Tag Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for remove mcp endpoint tag.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpEndpointTagsResponse",
+                  "description": "Response payload for remove mcp endpoint tagresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for remove mcp endpoint tagresponse422."
                 }
               }
             }
@@ -159197,6 +160290,15 @@
             "description": "Complexity Band.",
             "example": "example"
           },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Associated tag labels.",
+            "maxItems": 1000
+          },
           "freshness": {
             "type": "string",
             "title": "Freshness",
@@ -159932,6 +161034,15 @@
             "title": "Health",
             "description": "Health.",
             "maxItems": 1000
+          },
+          "tag": {
+            "items": {
+              "$ref": "#/components/schemas/McpCatalogBucketOut"
+            },
+            "type": "array",
+            "title": "Tag",
+            "description": "Tag.",
+            "maxItems": 1000
           }
         },
         "type": "object",
@@ -159967,6 +161078,247 @@
         ],
         "title": "McpCatalogLeaderOut",
         "description": "One change-frequency leader \u2014 an endpoint and how many surface changes it has recorded (18.1)."
+      },
+      "McpCategoryCreate": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Label",
+            "description": "Label.",
+            "example": "example"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "MCP Category Create schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Category Create schema."
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-safe identifier."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "MCP Category Create schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Category Create schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "sortOrder": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Sortorder",
+            "default": 500,
+            "description": "Sort Order.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "McpCategoryCreate",
+        "description": "Body for adding a tenant-defined category (MCAT-9.3).\n\n``slug`` is derived from ``label`` when omitted. It is immutable once created."
+      },
+      "McpCategoryListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/McpCategoryOut"
+            },
+            "type": "array",
+            "title": "Categories",
+            "description": "Categories.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "McpCategoryListResponse",
+        "description": "Envelope for the category lookup list (MCAT-9.3)."
+      },
+      "McpCategoryOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-safe identifier.",
+            "example": "pet-store"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "Label.",
+            "example": "example"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp category."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp category."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order",
+            "default": 0,
+            "description": "Sort Order.",
+            "example": 1
+          },
+          "builtin": {
+            "type": "boolean",
+            "title": "Builtin",
+            "default": false,
+            "description": "Builtin.",
+            "example": false
+          },
+          "endpoint_count": {
+            "type": "integer",
+            "title": "Endpoint Count",
+            "default": 0,
+            "description": "Number of endpoint.",
+            "example": 1
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp category."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp category."
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp (ISO 8601)."
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for mcp category."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for mcp category."
+              }
+            ],
+            "title": "Updated At",
+            "description": "Last update timestamp (ISO 8601)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "label"
+        ],
+        "title": "McpCategoryOut",
+        "description": "One category in the lookup a tenant files endpoints under (MCAT-9.3).\n\n``builtin`` categories are the shared vocabulary every tenant sees and cannot be changed\nthrough the API; the rest belong to the caller's tenant. ``endpoint_count`` is how many of\nthe tenant's live endpoints are filed under ``slug``."
+      },
+      "McpCategoryResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "category": {
+            "$ref": "#/components/schemas/McpCategoryOut",
+            "description": "Classification category for the primitive type."
+          }
+        },
+        "type": "object",
+        "required": [
+          "category"
+        ],
+        "title": "McpCategoryResponse",
+        "description": "Envelope for a single category (MCAT-9.3)."
+      },
+      "McpCategoryUpdate": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 128,
+                "minLength": 1,
+                "description": "MCP Category Update schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Category Update schema."
+              }
+            ],
+            "title": "Label",
+            "description": "Label."
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "description": "MCP Category Update schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Category Update schema."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "sortOrder": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000.0,
+                "minimum": 0.0,
+                "description": "MCP Category Update schema."
+              },
+              {
+                "type": "null",
+                "description": "MCP Category Update schema."
+              }
+            ],
+            "title": "Sortorder",
+            "description": "Sort Order."
+          }
+        },
+        "type": "object",
+        "title": "McpCategoryUpdate",
+        "description": "Patch body for a tenant-defined category; only the keys present are applied (MCAT-9.3)."
       },
       "McpChangeSeverityCounts": {
         "properties": {
@@ -163241,6 +164593,54 @@
         ],
         "title": "McpEndpointResponse",
         "description": "McpEndpointResponse schema."
+      },
+      "McpEndpointTagsBody": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 64,
+            "title": "Tags",
+            "description": "Associated tag labels."
+          }
+        },
+        "type": "object",
+        "title": "McpEndpointTagsBody",
+        "description": "Body for replacing (``PUT``) or adding to (``POST``) an endpoint's tags (MCAT-9.3).\n\nTags are folded to lowercase with whitespace runs turned into ``-`` before validation."
+      },
+      "McpEndpointTagsResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "endpoint_id": {
+            "type": "string",
+            "title": "Endpoint Id",
+            "description": "Endpoint ID.",
+            "example": "endpoint_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Associated tag labels.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "endpoint_id"
+        ],
+        "title": "McpEndpointTagsResponse",
+        "description": "An endpoint's manual tags after a read or write, alphabetical (MCAT-9.3)."
       },
       "McpEndpointTestRequest": {
         "properties": {
@@ -169130,6 +170530,52 @@
         ],
         "title": "McpSurfaceProvenanceResponse",
         "description": "The declared-vs-observed attribution for one endpoint's surface."
+      },
+      "McpTagUsageOut": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag",
+            "description": "Tag.",
+            "example": "example"
+          },
+          "endpoint_count": {
+            "type": "integer",
+            "title": "Endpoint Count",
+            "default": 0,
+            "description": "Number of endpoint.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag"
+        ],
+        "title": "McpTagUsageOut",
+        "description": "One tag in a tenant's tag vocabulary, with how many live endpoints carry it (MCAT-9.3)."
+      },
+      "McpTagVocabularyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true,
+            "description": "Success.",
+            "example": false
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/McpTagUsageOut"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Associated tag labels.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "McpTagVocabularyResponse",
+        "description": "Every tag in use across the tenant's live endpoints, busiest first (MCAT-9.3)."
       },
       "McpToolCatalogItem": {
         "properties": {

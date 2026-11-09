@@ -22,6 +22,7 @@ from .mcp_facets import (
     UNCATEGORIZED_VALUE,
     UNGRADED_VALUE,
     UNKNOWN_VALUE,
+    UNTAGGED_VALUE,
 )
 from .mcp_lifecycle_signals import STAGE_UNSPECIFIED, assess_capability_lifecycle
 from .payload_analysis import PayloadAnalysisSummary
@@ -12852,6 +12853,8 @@ class McpBrowseEndpointOut(BaseModel):
     has_destructive: bool = False
     read_only_only: bool = False
     complexity_band: str = "unknown"
+    # Manual tags (V2-MCP-23.3 / MCAT-9.3): the endpoint's free-form labels, alphabetical.
+    tags: List[str] = Field(default_factory=list)
     # Freshness (V2-MCP-36.2 / MCAT-22.2): cadence/backoff/quarantine/failure staleness for cards.
     freshness: str = "fresh"
     last_known_good_at: Optional[str] = None
@@ -12949,6 +12952,7 @@ def mcp_browse_endpoint_out_from_row(row: Dict[str, Any]) -> McpBrowseEndpointOu
         has_destructive=bool(row.get("has_destructive") or False),
         read_only_only=bool(row.get("read_only_only") or False),
         complexity_band=str(row.get("complexity_band") or "unknown"),
+        tags=[str(t) for t in (row.get("tags") or [])],
         freshness=str(
             row.get("freshness")
             or derive_freshness_status(
@@ -16246,6 +16250,9 @@ class McpCatalogFacetsOut(BaseModel):
     complexity: List[McpCatalogBucketOut] = Field(default_factory=list)
     protocol_version: List[McpCatalogBucketOut] = Field(default_factory=list)
     health: List[McpCatalogBucketOut] = Field(default_factory=list)
+    # Manual tags (V2-MCP-23.3 / MCAT-9.3): an endpoint counts once in each of its tags' buckets,
+    # so these counts can sum past the endpoint total; ``untagged`` is the empty bucket.
+    tag: List[McpCatalogBucketOut] = Field(default_factory=list)
 
 
 class McpFacetedSearchResponse(BaseModel):
@@ -16298,8 +16305,13 @@ def mcp_faceted_search_response_from_bundle(
     Endpoint rows reuse the browse projection (host derivation, credential redaction, facet
     fields); the per-dimension bucket rows are projected with their NULL buckets folded into the
     matching sentinel filter values, and the safety tallies become the two fixed posture buckets
-    (always present, ordered ``has_destructive`` then ``read_only_only``).
+    (always present, ordered ``has_destructive`` then ``read_only_only``). Tag buckets come
+    busiest first, followed by an ``untagged`` bucket when any matching endpoint has no tags.
     """
+    tag_buckets = _facet_buckets(bundle.get("tag_rows"), null_label=UNTAGGED_VALUE)
+    untagged = int(bundle.get("untagged_count") or 0)
+    if untagged:
+        tag_buckets.append(McpCatalogBucketOut(label=UNTAGGED_VALUE, count=untagged))
     endpoints = [
         mcp_browse_endpoint_out_from_row(r) for r in (bundle.get("endpoints") or [])
     ]
@@ -16325,6 +16337,7 @@ def mcp_faceted_search_response_from_bundle(
             bundle.get("protocol_rows"), null_label=UNKNOWN_VALUE
         ),
         health=_facet_buckets(bundle.get("health_rows"), null_label="undiscovered"),
+        tag=tag_buckets,
     )
     return McpFacetedSearchResponse(
         success=True,
@@ -16848,6 +16861,145 @@ def mcp_endpoint_note_out_from_row(row: Dict[str, Any]) -> McpEndpointNoteOut:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
     )
+
+
+# ===========================================================================
+# MCP Catalog — categories & manual tags (V2-MCP-23.3 / MCAT-9.3, #3693)
+# ===========================================================================
+#
+# The category lookup (built-in vocabulary plus tenant-defined entries) and the free-form tags on
+# each endpoint. Both are facets on browse (``/browse``, ``/facets``) and search (``/search``).
+
+
+class McpCategoryOut(BaseModel):
+    """One category in the lookup a tenant files endpoints under (MCAT-9.3).
+
+    ``builtin`` categories are the shared vocabulary every tenant sees and cannot be changed
+    through the API; the rest belong to the caller's tenant. ``endpoint_count`` is how many of
+    the tenant's live endpoints are filed under ``slug``.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    slug: str
+    label: str
+    description: Optional[str] = None
+    sort_order: int = 0
+    builtin: bool = False
+    endpoint_count: int = 0
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class McpCategoryListResponse(BaseModel):
+    """Envelope for the category lookup list (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    categories: List[McpCategoryOut] = Field(default_factory=list)
+
+
+class McpCategoryResponse(BaseModel):
+    """Envelope for a single category (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    category: McpCategoryOut
+
+
+class McpCategoryCreate(BaseModel):
+    """Body for adding a tenant-defined category (MCAT-9.3).
+
+    ``slug`` is derived from ``label`` when omitted. It is immutable once created.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    label: str = Field(..., min_length=1, max_length=128)
+    slug: Optional[str] = Field(default=None, max_length=64)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    sort_order: int = Field(
+        default=500,
+        ge=0,
+        le=100000,
+        validation_alias=AliasChoices("sortOrder", "sort_order"),
+    )
+
+
+class McpCategoryUpdate(BaseModel):
+    """Patch body for a tenant-defined category; only the keys present are applied (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    label: Optional[str] = Field(default=None, min_length=1, max_length=128)
+    description: Optional[str] = Field(default=None, max_length=2000)
+    sort_order: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=100000,
+        validation_alias=AliasChoices("sortOrder", "sort_order"),
+    )
+
+
+def mcp_category_out_from_row(row: Dict[str, Any]) -> McpCategoryOut:
+    """Project a :meth:`Database.list_mcp_categories` / ``get_mcp_category`` row onto the wire model."""
+
+    def _ts(value: Any) -> Optional[str]:
+        if value is None:
+            return None
+        return value.isoformat() if hasattr(value, "isoformat") else str(value)
+
+    return McpCategoryOut(
+        slug=str(row["slug"]),
+        label=str(row["label"]),
+        description=row.get("description"),
+        sort_order=int(row.get("sort_order") or 0),
+        builtin=bool(row.get("builtin")),
+        endpoint_count=int(row.get("endpoint_count") or 0),
+        created_at=_ts(row.get("created_at")),
+        updated_at=_ts(row.get("updated_at")),
+    )
+
+
+class McpEndpointTagsBody(BaseModel):
+    """Body for replacing (``PUT``) or adding to (``POST``) an endpoint's tags (MCAT-9.3).
+
+    Tags are folded to lowercase with whitespace runs turned into ``-`` before validation.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tags: List[str] = Field(default_factory=list, max_length=64)
+
+
+class McpEndpointTagsResponse(BaseModel):
+    """An endpoint's manual tags after a read or write, alphabetical (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    endpoint_id: str
+    tags: List[str] = Field(default_factory=list)
+
+
+class McpTagUsageOut(BaseModel):
+    """One tag in a tenant's tag vocabulary, with how many live endpoints carry it (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    tag: str
+    endpoint_count: int = 0
+
+
+class McpTagVocabularyResponse(BaseModel):
+    """Every tag in use across the tenant's live endpoints, busiest first (MCAT-9.3)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    success: bool = True
+    tags: List[McpTagUsageOut] = Field(default_factory=list)
 
 
 class McpCollectionMemberOut(BaseModel):

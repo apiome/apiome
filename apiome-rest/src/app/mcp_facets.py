@@ -12,8 +12,9 @@ Facet semantics (mirrored by the SQL in :mod:`app.database`):
 * **Across facets, filters AND** — an endpoint must satisfy every supplied dimension.
 * **Within a facet, values OR** — ``grade=A&grade=B`` matches endpoints graded A *or* B.
 * **Sentinels select the NULL bucket** — ``ungraded`` (no score yet), ``uncategorized`` (no
-  category), and ``unknown`` (no reported protocol / underivable complexity) are real, filterable
-  values, so every bucket a count reports can be clicked back into a filter.
+  category), ``untagged`` (no manual tags), and ``unknown`` (no reported protocol / underivable
+  complexity) are real, filterable values, so every bucket a count reports can be clicked back
+  into a filter.
 
 Everything here is pure and total: normalizers only validate/canonicalize strings, and
 :func:`complexity_band` is the Python mirror of the SQL banding expression so tests can pin the
@@ -22,6 +23,7 @@ two to the same thresholds.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence, Tuple
 
@@ -38,6 +40,9 @@ TRANSPORT_VALUES: Tuple[str, ...] = ("streamable_http", "sse", "stdio")
 
 #: Sentinel category value selecting endpoints with no category (NULL or blank).
 UNCATEGORIZED_VALUE: str = "uncategorized"
+
+#: Sentinel tag value selecting endpoints with no manual tags (V2-MCP-23.3 / MCAT-9.3).
+UNTAGGED_VALUE: str = "untagged"
 
 #: Sentinel protocol value selecting endpoints with no reported protocol version (undiscovered,
 #: or the server never reported one).
@@ -101,6 +106,23 @@ def complexity_band(max_tool_properties: Optional[int]) -> str:
     if max_tool_properties <= COMPLEXITY_MODERATE_MAX_PROPERTIES:
         return "moderate"
     return "complex"
+
+
+def canonical_tag(raw: Optional[str]) -> str:
+    """Fold a raw manual tag into its stored spelling without validating it (V2-MCP-23.3).
+
+    Strips the ends, lowercases, and turns each run of whitespace into one hyphen, so
+    ``"  Team Payments "`` becomes ``"team-payments"``. Facet and search filters use this directly
+    (an invalid tag simply matches nothing); writes go through
+    :func:`app.mcp_categorization.normalize_tag`, which also validates.
+
+    Args:
+        raw: The tag as supplied, or ``None``.
+
+    Returns:
+        The canonical tag, or ``""`` for ``None`` / blank input.
+    """
+    return re.sub(r"\s+", "-", (raw or "").strip().lower())
 
 
 # --- Request normalization ------------------------------------------------------------------------
@@ -184,6 +206,7 @@ class CatalogFacetFilters:
     complexity: List[str] = field(default_factory=list)
     protocols: List[str] = field(default_factory=list)
     health: List[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
 
 
 def normalize_catalog_facet_filters(
@@ -195,13 +218,15 @@ def normalize_catalog_facet_filters(
     complexity: Optional[Sequence[str]] = None,
     protocol: Optional[Sequence[str]] = None,
     health: Optional[Sequence[str]] = None,
+    tag: Optional[Sequence[str]] = None,
 ) -> CatalogFacetFilters:
     """Validate and canonicalize a faceted-search request's raw facet query params.
 
     Closed-vocabulary facets (grade, transport, safety, complexity, health) reject values outside
     their vocabulary; free-form facets (category, protocol) are only cleaned (stripped,
     de-blanked, de-duplicated) with their NULL-bucket sentinels canonicalized to lowercase, so a
-    typo'd category simply matches nothing rather than erroring.
+    typo'd category simply matches nothing rather than erroring. Tags (V2-MCP-23.3) are free-form
+    too, folded to their stored spelling (lowercase, whitespace runs to ``-``).
 
     Args:
         grade: Raw ``grade`` values (A-F, any case, or ``ungraded``).
@@ -211,6 +236,7 @@ def normalize_catalog_facet_filters(
         complexity: Raw ``complexity`` values (``simple`` / ``moderate`` / ``complex`` / ``unknown``).
         protocol: Raw ``protocol`` values (free-form versions, or ``unknown``).
         health: Raw ``health`` values (the five derived health labels).
+        tag: Raw ``tag`` values (free-form manual tags, or ``untagged``).
 
     Returns:
         The canonical :class:`CatalogFacetFilters`.
@@ -225,6 +251,11 @@ def normalize_catalog_facet_filters(
     protocols = [
         UNKNOWN_VALUE if v.lower() == UNKNOWN_VALUE else v for v in _cleaned(protocol)
     ]
+    tags: List[str] = []
+    for value in _cleaned(tag):
+        canonical = canonical_tag(value)
+        if canonical not in tags:
+            tags.append(canonical)
     return CatalogFacetFilters(
         grades=_normalize_grades(grade),
         transports=_normalize_enum("transport", transport, TRANSPORT_VALUES),
@@ -233,4 +264,5 @@ def normalize_catalog_facet_filters(
         complexity=_normalize_enum("complexity", complexity, COMPLEXITY_VALUES),
         protocols=protocols,
         health=_normalize_enum("health", health, HEALTH_VALUES),
+        tags=tags,
     )
