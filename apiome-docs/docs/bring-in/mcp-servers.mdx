@@ -83,9 +83,9 @@ sweep and **Test** calls.
 | Auth type | What Apiome sends | Set it with |
 | --- | --- | --- |
 | **None (anonymous)** | Nothing | The default; clear a credential to return to it |
-| **Bearer token** | `Authorization: Bearer <token>` | **Add MCP server**, or `PUT …/credentials` with `{"token": "…"}` |
-| **Custom header** | One header you name, such as `X-Api-Key: <value>` | **Add MCP server**, or `PUT …/credentials` with `{"name": "…", "value": "…"}` |
-| **OAuth 2.1** | `Authorization: Bearer <access token>`, renewed by Apiome | **Settings → “Connect with OAuth”** (see [Connect with OAuth](#connect-with-oauth)), or paste an **OAuth 2.1 access token** in **Add MCP server** |
+| **Bearer token** | `Authorization: Bearer <token>` | **Add MCP server**, the server's **Credentials** tab (see [Manage credentials](#manage-credentials)), or `PUT …/credentials` with `{"token": "…"}` |
+| **Custom header** | One header you name, such as `X-Api-Key: <value>` | **Add MCP server**, the **Credentials** tab, or `PUT …/credentials` with `{"name": "…", "value": "…"}` |
+| **OAuth 2.1** | `Authorization: Bearer <access token>`, renewed by Apiome | **Credentials → “Connect with OAuth”** (see [Connect with OAuth](#connect-with-oauth)), or paste an **OAuth 2.1 access token** in **Add MCP server** or on the **Credentials** tab |
 
 How credentials are kept:
 
@@ -103,6 +103,36 @@ How credentials are kept:
 - **An unreadable secret is not guessed at.** If a stored secret cannot be decrypted (for example,
   its key was removed), Apiome sends no credential, and the server's **401** shows up as
   `auth_required` on the run.
+
+### Manage credentials
+
+A server's **Credentials** tab sets, replaces and clears its credential after it is cataloged, and
+shows what is stored without ever showing the secret.
+
+1. **Open the server's page** and **click the “Credentials” tab**.
+2. **Stored credential** says what Apiome holds — **Bearer token stored**, **Custom header stored**,
+   **OAuth 2.1 token stored** or **No credential stored** — with the scheme's badge, a mask
+   (`••••••••`) in place of the secret, the encryption key version and when it was last written.
+3. To set or replace it, choose the **Auth type** under **Set credential** (or **Replace
+   credential**): **Bearer token**, **Custom header** or **OAuth 2.1 access token**. Paste the
+   **Access token**, or enter the **Header name** (`X-Api-Key`) and **Header value**. The secret
+   field is hidden as you type; the eye button shows it until you save.
+4. **Click “Save credential”** (or **“Replace credential”**). The field empties, the card shows the
+   new scheme masked, and the header's auth badge follows. The next discovery run, sweep or
+   **Test** call sends the new secret.
+5. To return the server to anonymous access, **click “Clear credential”** and confirm. The stored
+   secret is deleted and cannot be recovered.
+
+<Screenshot id="mcp-endpoint-credentials" alt="An MCP endpoint's Credentials tab: a bearer token stored and shown masked with its key version, the Set credential form and the encryption note" />
+
+What the tab refuses before sending: an empty token or header value, a secret or header name with a
+line break, a header name outside the characters HTTP allows, and `Authorization` as a custom header
+name (choose **Bearer token** instead). If the workspace has no encryption key
+(`APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS`), saving fails with the server's reason and nothing is
+stored.
+
+A server protected by OAuth also shows an **OAuth connection** section on this tab — see
+[Connect with OAuth](#connect-with-oauth).
 
 A server that answers **401** without a credential tells Apiome how to sign in. The next two
 sections cover that.
@@ -124,7 +154,7 @@ re-discovery that gets a **401**, following the
 3. It stores the result with the endpoint's credential: the authorization, token and registration
    endpoints, the scopes, the resource indicator, and whether the server supports PKCE (`S256`).
 
-Once the metadata is stored, connect the server from its **Settings** tab — see
+Once the metadata is stored, connect the server from its **Credentials** tab — see
 [Connect with OAuth](#connect-with-oauth). Until then, discovery keeps running anonymously.
 
 The metadata is read from
@@ -181,7 +211,7 @@ Safety rules for these fetches:
 After discovery has found the authorization server, sign Apiome in to the server once. Apiome then
 keeps the token up to date by itself.
 
-1. **Open the server's page** and **click the “Settings” tab**. The **OAuth connection** section
+1. **Open the server's page** and **click the “Credentials” tab**. The **OAuth connection** section
    appears only for a server whose authorization server was discovered.
 2. If the section shows a **Client ID** field, the authorization server does not register clients
    automatically. Register Apiome with it first, using the callback URL
@@ -189,11 +219,11 @@ keeps the token up to date by itself.
    example `apiome-prod`). Otherwise leave it out: Apiome registers itself.
 3. **Click “Connect with OAuth”.** Your browser goes to the authorization server.
 4. Sign in there and approve the access Apiome asks for.
-5. The browser comes back to Apiome, which stores the token and returns you to **Settings**. The
-   section now says **Connected**, when the token expires, and **renews automatically** when the
-   server issued a refresh token.
+5. The browser comes back to Apiome, which stores the token and returns you to **Credentials**.
+   The section now says **Connected**, when the token expires, and **renews automatically** when
+   the server issued a refresh token.
 
-<Screenshot id="mcp-endpoint-oauth" alt="An MCP endpoint's Settings tab: the OAuth connection section, connected, with the token's expiry, renews automatically and its scope" />
+<Screenshot id="mcp-endpoint-oauth" alt="An MCP endpoint's Credentials tab: the OAuth connection section, connected, with the token's expiry, renews automatically and its scope" />
 
 From then on, discovery runs, the scheduled sweep and **Test** calls send the token. To connect
 again — for example with other scopes, or after the server revoked the token — **click
@@ -297,6 +327,7 @@ the connector's **Runs** tab. Change its cadence, or sync it again, under **Brin
 | **Versions** | Every version of the server, newest first; pick a **Base version** and **Target version** to see what changed, **Side-by-side** or **Unified** — see [How versions work](#how-versions-work) |
 | **Lint & score** | The grade and findings — see [MCP surface lint rules](../govern/mcp-surface-lint-rules.md) and [MCP conformance rules](../govern/mcp-conformance-rules.md) |
 | **Test** | Run one of the server's tools and see what it returns — see [Test a tool](#test-a-tool) |
+| **Credentials** | The stored credential, masked; set, replace or clear it; **Connect with OAuth** — see [Manage credentials](#manage-credentials) |
 | **Settings** | Name, URL, transport, visibility and **Discovery cadence**; **Delete endpoint** |
 | **Trust posture** | *Proposed* — see [MCP trust-posture rules](../govern/mcp-trust-posture-rules.md) |
 

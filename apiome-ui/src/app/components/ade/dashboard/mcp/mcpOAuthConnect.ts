@@ -1,8 +1,9 @@
 /**
  * Model for connecting an OAuth-protected MCP server (V2-MCP-20.4 / MCAT-6.4, #3680).
  *
- * A discovery run that meets a `401` stores the server's OAuth metadata (MCAT-6.3). The Settings
- * tab then offers **Connect with OAuth**: apiome-rest returns an authorization URL (PKCE S256, the
+ * A discovery run that meets a `401` stores the server's OAuth metadata (MCAT-6.3). The
+ * Credentials tab (V2-MCP-24.6) then offers **Connect with OAuth**: apiome-rest returns an
+ * authorization URL (PKCE S256, the
  * RFC 8707 resource, a sealed state), the browser goes there, the user consents, and the
  * authorization server sends the browser back to {@link MCP_OAUTH_CALLBACK_PATH}. That page posts
  * the query parameters to apiome-rest, which exchanges the code and stores the tokens sealed.
@@ -14,7 +15,7 @@
 /** The UI route the authorization server redirects back to. Registered as the client's redirect URI. */
 export const MCP_OAUTH_CALLBACK_PATH = '/ade/dashboard/mcp/oauth/callback';
 
-/** What the Settings tab knows about an endpoint's OAuth connection. */
+/** What the Credentials tab knows about an endpoint's OAuth connection. */
 export interface McpOAuthStatus {
   /** Discovery found an authorization server (the section is shown only then). */
   discovered: boolean;
@@ -126,10 +127,10 @@ export function mcpOAuthCallbackParams(search: string | URLSearchParams): McpOAu
  * Where the callback page sends the user once the connection is stored.
  *
  * @param endpointId The connected endpoint.
- * @returns The endpoint's Settings tab.
+ * @returns The endpoint's Credentials tab (V2-MCP-24.6), where the OAuth connection section lives.
  */
 export function mcpOAuthReturnPath(endpointId: string): string {
-  return `/ade/dashboard/mcp/${encodeURIComponent(endpointId)}?tab=settings`;
+  return `/ade/dashboard/mcp/${encodeURIComponent(endpointId)}?tab=credentials`;
 }
 
 /**

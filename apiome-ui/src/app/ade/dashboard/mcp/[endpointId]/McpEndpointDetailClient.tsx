@@ -93,7 +93,7 @@ import McpVersionHistory from './McpVersionHistory';
 import McpEndpointInsight from './McpEndpointInsight';
 import McpLintReport from './McpLintReport';
 import McpEndpointSettings from './McpEndpointSettings';
-import McpOAuthConnection from './McpOAuthConnection';
+import McpEndpointCredentials from './McpEndpointCredentials';
 import McpToolTestPanel from './McpToolTestPanel';
 import { McpEndpointNotesPanel } from '@/app/components/ade/dashboard/mcp/McpEndpointNotesPanel';
 import { McpSurfaceProvenancePanel } from '@/app/components/ade/dashboard/mcp/McpSurfaceProvenancePanel';
@@ -365,7 +365,7 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
   const [highlightedAnchor, setHighlightedAnchor] = React.useState<string | null>(null);
   const mountedRef = React.useRef(true);
 
-  // `?tab=<value>` opens that tab — the OAuth callback returns to `?tab=settings` (MCAT-6.4).
+  // `?tab=<value>` opens that tab — the OAuth callback returns to `?tab=credentials` (MCAT-6.4).
   React.useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get('tab');
     if (requested && endpointTabs.some((tab) => tab.value === requested)) setActiveTab(requested);
@@ -539,6 +539,23 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
   const handleSettingsSaved = React.useCallback((updated: McpEndpointDetail) => {
     setEndpoint(updated);
   }, []);
+
+  /**
+   * After the Credentials tab stores or clears a credential (MCAT-10.6), re-read the endpoint
+   * record so the header's auth badge follows — without the full-page loading state, which
+   * would unmount the tab the user is on.
+   */
+  const handleCredentialChanged = React.useCallback(async () => {
+    try {
+      const res = await fetch(`/api/mcp/endpoints/${endpointId}`, { credentials: 'include', cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !mountedRef.current) return;
+      const updated = mcpEndpointDetailFromPayload(data);
+      if (updated) setEndpoint(updated);
+    } catch {
+      // Best-effort: the badge catches up on the next full load.
+    }
+  }, [endpointId]);
 
   /** After a Settings-tab delete, surface the teardown summary and return to the catalog. */
   const handleSettingsDeleted = React.useCallback(
@@ -900,6 +917,11 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
               <McpToolTestPanel endpointId={endpointId} items={version?.items ?? null} />
             </McpEndpointTabPanel>
 
+            <McpEndpointTabPanel value="credentials" active={activeTab}>
+              {/* Set / clear the outbound credential; the OAuth connection (MCAT-6.4) lives inside. */}
+              <McpEndpointCredentials endpointId={endpointId} onChanged={() => void handleCredentialChanged()} />
+            </McpEndpointTabPanel>
+
             {hasDependencies ? (
               <McpEndpointTabPanel value="dependencies" active={activeTab}>
                 <DependenciesPanel
@@ -914,8 +936,6 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
             ) : null}
 
             <McpEndpointTabPanel value="settings" active={activeTab}>
-              {/* Rendered only for an OAuth-protected server (MCAT-6.4). */}
-              <McpOAuthConnection endpointId={endpointId} />
               <McpEndpointSettings
                 endpoint={endpoint}
                 onSaved={handleSettingsSaved}

@@ -29,6 +29,7 @@ import {
   ChartSpline,
   FlaskConical,
   History,
+  KeyRound,
   Network,
   Settings2,
   ShieldCheck,
@@ -71,8 +72,9 @@ export const MCP_ENDPOINT_PROPOSED_LABEL = 'Proposed';
 
 /**
  * The strip, in the mockup's order: the surface, then what we know about it, then how it got
- * that way, then its score, then a live test call against it (V2-MCP-24.5), what it depends on
- * (CDG-3.4), then its settings — and the proposal last.
+ * that way, then its score, then a live test call against it (V2-MCP-24.5), the credential those
+ * calls carry (V2-MCP-24.6), what it depends on (CDG-3.4), then its settings — and the proposal
+ * last.
  */
 export const MCP_ENDPOINT_TABS: readonly McpEndpointTab[] = [
   { value: 'capabilities', label: 'Capabilities', icon: Wrench },
@@ -80,6 +82,7 @@ export const MCP_ENDPOINT_TABS: readonly McpEndpointTab[] = [
   { value: 'versions', label: 'Versions', icon: History },
   { value: 'lint', label: 'Lint & score', icon: ShieldCheck },
   { value: 'test', label: 'Test', icon: FlaskConical },
+  { value: 'credentials', label: 'Credentials', icon: KeyRound },
   { value: 'dependencies', label: 'Dependencies', icon: Network },
   { value: 'settings', label: 'Settings', icon: Settings2 },
   {

@@ -12,7 +12,7 @@ import AxeBuilder from '@axe-core/playwright';
  * questions that are about *computed layout*, because jsdom compiles no CSS:
  *
  *   • **"No horizontal document scroll at ≥1280 px"**, held across all nine themes, both
- *     densities and all six font scales — on a screen carrying a six-tab strip, a four-tile stat
+ *     densities and all six font scales — on a screen carrying a seven-tab strip, a four-tile stat
  *     strip, a two-column capability block, a sticky fourteen-item rail, a timeline beside a
  *     Monaco diff, and a two-column settings grid.
  *   • **The four splits really collapse.** `.mcp-insight`, `.mcp-versions`, `.mcp-lint` and
@@ -74,11 +74,11 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1100, 1024, 960, 900, 768, 640, 420];
 /** Where the jsdom suite writes what it rendered. */
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-mcp-endpoint');
 
-/** The four panels the jsdom suite dumps. */
-type Fixture = 'capabilities' | 'versions' | 'lint' | 'settings';
+/** The five panels the jsdom suite dumps (credentials: V2-MCP-24.6). */
+type Fixture = 'capabilities' | 'versions' | 'lint' | 'settings' | 'credentials';
 
-/** All four, for the sweeps that do not care which. */
-const ALL_FIXTURES: Fixture[] = ['capabilities', 'versions', 'lint', 'settings'];
+/** All five, for the sweeps that do not care which. */
+const ALL_FIXTURES: Fixture[] = ['capabilities', 'versions', 'lint', 'settings', 'credentials'];
 
 /**
  * One rendered surface, as the jsdom suite wrote it.

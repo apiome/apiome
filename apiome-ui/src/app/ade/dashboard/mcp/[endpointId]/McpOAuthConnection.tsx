@@ -1,7 +1,8 @@
 'use client';
 
 /**
- * The **OAuth connection** section of an MCP endpoint's Settings tab (V2-MCP-20.4 / MCAT-6.4, #3680).
+ * The **OAuth connection** section of an MCP endpoint's Credentials tab (V2-MCP-20.4 / MCAT-6.4,
+ * #3680; moved from Settings to the Credentials tab by V2-MCP-24.6, #3702).
  *
  * Shown only once a discovery run has found the server's authorization server (MCAT-6.3); for
  * every other endpoint it renders nothing. It says whether a token is stored, when it expires and
