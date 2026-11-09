@@ -1,0 +1,70 @@
+---
+title: MCP notifications and monitoring
+description: Get told when an MCP server changes, and watch whether it stays up.
+sidebar_position: 1.56
+tags: [mcp, webhooks, monitoring]
+---
+
+<Route path="/ade/dashboard/mcp/[endpointId]" />
+
+Once your [MCP servers](./mcp-servers.mdx) are cataloged, Apiome keeps watching them. It tells your
+systems when a server's tools, resources or prompts change, checks every few minutes that each server
+still answers, and lets you see how the whole catalog and its scheduled re-discovery are doing. This
+page maps where each of those lives.
+
+<Screenshot id="mcp-endpoint-versions" alt="An MCP server's page: the header shows its grade and an Up · 99.6% · 118 ms uptime badge, above the version timeline" />
+
+## When to use it
+
+- **Another system must react when a server changes.** A CI job, a chat channel or an agent gateway
+  receives a signed webhook the moment a new version is found, with a summary of what changed and how
+  serious it is.
+- **You need to know a server is reachable before you rely on it.** The uptime badge on its page
+  shows the last day at a glance, and the API gives you the history.
+- **You run Apiome and want to know the background work is healthy.** Check that scheduled
+  re-discovery is running, and see the catalog broken down by grade, health and change frequency.
+
+## Where you use it
+
+| Where | What you do there | Details |
+| --- | --- | --- |
+| **REST API** (`POST /v1/push-webhook-subscriptions/{tenant}`) | Subscribe a URL; it then receives every `mcp.version.created` event, signed | [Get the change event as a webhook](./mcp-servers.mdx#get-the-change-event-as-a-webhook) |
+| A server's page (`/ade/dashboard/mcp/<id>`) | Read the **Uptime** badge in the header, e.g. **Up · 99.6% · 118 ms**, and see each new version on **Versions** | [Uptime and latency](./mcp-servers.mdx#uptime-and-latency) |
+| **REST API** (`GET /v1/mcp/{tenant}/endpoints/{endpoint}/uptime`) | Read a server's uptime summary and its latest checks, for up to a week | [Uptime and latency](./mcp-servers.mdx#uptime-and-latency) |
+| A README or wiki (`/mcp/badge/{tenant}/{slug}.svg?metric=uptime`) | Show a published, public server's uptime as an image | [Uptime and latency](./mcp-servers.mdx#uptime-and-latency) |
+| **MCP servers → Analytics** (*Preview*) | See the catalog by category, transport, grade and health, with change frequency; **“Export CSV”** | [Analytics](./mcp-servers.mdx#analytics) |
+| **REST API** (`GET /v1/ops/mcp-discovery-sweep`), platform administrators | See each scheduled re-discovery tick: what it checked, changed and failed | [Watch MCP re-discovery](../admin/operating-apiome.mdx#watch-mcp-re-discovery) |
+| Server settings | Turn uptime checks off or change how often they run | [MCP uptime checks](../admin/operating-apiome.mdx#mcp-uptime-checks) |
+
+## At a glance
+
+| You want to… | Read |
+| --- | --- |
+| Know what a change event carries (`event_id`, `change_summary`, `max_severity` …) | [The change event](./mcp-servers.mdx#the-change-event) |
+| Check a webhook's signature and drop repeated deliveries | [Get the change event as a webhook](./mcp-servers.mdx#get-the-change-event-as-a-webhook) |
+| Know when a new version is created at all | [How versions work](./mcp-servers.mdx#how-versions-work) |
+| Know what **Up**, **Degraded**, **Down** and **Uptime unknown** mean | [Uptime and latency](./mcp-servers.mdx#uptime-and-latency) |
+| Find failed webhook deliveries | [Webhooks reference](../reference/rest/webhooks.md) |
+| Read the log lines the REST API writes for events, webhooks and checks | [Operating Apiome](../admin/operating-apiome.mdx#watch-mcp-re-discovery) |
+
+## How the pieces fit
+
+- **One event per new version.** A discovery — by hand, on schedule or from a registry sync — that
+  finds a changed surface creates a version and raises one `mcp.version.created` event. A discovery
+  that finds nothing new, or fails, raises none.
+- **Webhooks reuse your subscriptions.** Every active push-webhook subscription in the workspace
+  receives the event, signed with its secret and retried with backoff; a delivery that keeps failing
+  is dead-lettered. A webhook problem never fails the discovery.
+- **Events never leak where a server lives.** They name a server by id, name and slug — never its URL
+  or credential.
+- **Uptime checks are much lighter than discovery.** A check is only the MCP `initialize` handshake,
+  every five minutes by default. It never lists or calls tools and never changes how discovery treats
+  the server, and it keeps checking a server discovery has paused, so you see it come back.
+- **The badge is about the last day.** **Up** needs the latest check to answer and at least 99% of the
+  day's checks to have answered; checks are kept for 30 days.
+
+## Where next
+
+- [MCP servers](./mcp-servers.mdx)
+- [MCP Registry integration](./mcp-registry-integration.mdx)
+- [Operating Apiome](../admin/operating-apiome.mdx)
