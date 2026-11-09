@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.681.0] - 2026-11-08
+
+### Added
+- **MCP catalog categorization model & manual tags (V2-MCP-23.3 / MCAT-9.3, #3693).** Endpoints
+  can be filed under a category from a lookup and given free-form tags, and both filter browse and
+  search.
+  - **Storage** — apiome-db V365 adds `mcp_categories` (built-in rows with `tenant_id` NULL, seeded
+    with 12 categories, plus tenant-defined rows; slug unique per scope) and `mcp_endpoint_tags`
+    (one normalized tag per row, primary key `(endpoint_id, tag)`, cascades with the endpoint).
+  - **Lenient lookup** — `mcp_endpoints.category` stays free-form. On `POST` / `PATCH
+    /v1/mcp/{tenant_slug}/endpoints`, a value matching a category's slug or label
+    (case-insensitive) is stored as the slug; any other value is stored as given.
+  - **Category CRUD** — `GET` / `POST /v1/mcp/{tenant_slug}/categories`, `GET` / `PATCH` / `DELETE
+    …/categories/{slug}`. Built-in categories are read-only (`403`); a slug or label already in use
+    is a `409`. Each category reports `builtin` and `endpoint_count`.
+  - **Tag CRUD** — `GET` / `PUT` (replace) / `POST` (add) `…/endpoints/{endpoint_id}/tags`,
+    `DELETE …/endpoints/{endpoint_id}/tags/{tag}`, and `GET /v1/mcp/{tenant_slug}/tags` (the
+    tenant's tag vocabulary with endpoint counts). Tags are lowercased with whitespace runs turned
+    into `-`, at most 64 characters of `a-z 0-9 . _ : -`, 32 per endpoint; `untagged` is reserved.
+  - **Facets** — `GET …/browse` gains repeatable `category` and `tag` filters; `GET …/facets`
+    gains a repeatable `tag` filter and a `facets.tag` bucket list (with an `untagged` bucket);
+    `GET …/search` gains a single `tag` filter. Browse and faceted rows carry `tags`.
+  - New pure `app/mcp_categorization.py` (vocabulary, normalizers, `resolve_category`) and
+    `app/mcp_categorization_routes.py`.
+
 ## [1.680.0] - 2026-11-08
 
 ### Added

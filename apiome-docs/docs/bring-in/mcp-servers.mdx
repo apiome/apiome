@@ -632,6 +632,81 @@ sets `APIOME_MCP_REGISTRY_SEARCH_URL` (see
 The public browse app has the same search with an **Include MCP Registry** toggle — see
 [Search MCP servers, including the MCP Registry](../ship/browse-published-specs.md#search-mcp-servers).
 
+## Categories and tags
+
+Every server can have one **category** and up to 32 **tags**. The browse, faceted search and catalog
+search APIs filter on both, so you can narrow the catalog to, say, every **Databases** server tagged
+`prod`. You set and filter them over the API for now. In the app, **Filters** narrows by category,
+and tags aren't shown yet.
+
+### Categories
+
+Apiome comes with these categories. Every workspace has them and they can't be changed:
+
+| Slug | Label |
+| --- | --- |
+| `developer-tools` | Developer tools |
+| `data-analytics` | Data & analytics |
+| `databases` | Databases |
+| `files-storage` | Files & storage |
+| `search-web` | Search & web |
+| `productivity` | Productivity |
+| `communication` | Communication |
+| `cloud-infrastructure` | Cloud & infrastructure |
+| `finance-commerce` | Finance & commerce |
+| `ai-ml` | AI & machine learning |
+| `security` | Security |
+| `other` | Other |
+
+To add your own, send a label (and optionally a slug, a description and a sort order):
+
+```bash
+curl -X POST "$APIOME_URL/v1/mcp/<tenant>/categories" \
+  -H "Authorization: Bearer $APIOME_API_KEY" -H "Content-Type: application/json" \
+  -d '{"label": "Internal APIs", "description": "Servers our platform team runs"}'
+```
+
+The slug comes from the label when you leave it out (`internal-apis` here). A slug is lowercase
+letters, digits and hyphens and can't change later. A slug or label that is already in use is
+refused (**409**). You can rename, re-describe and re-order your own categories, or delete them;
+the built-in ones can't be changed (**403**).
+
+To file a server, set `category` when you register it, or later with
+`PATCH /v1/mcp/<tenant>/endpoints/<endpoint>`. A value that matches a category's slug or label (in any
+case) is stored as the slug, so `"Data & Analytics"` becomes `data-analytics`. Any other value is
+kept as you typed it, so categories you used before still work. When you delete a category, the
+servers filed under it keep its slug.
+
+`GET /v1/mcp/<tenant>/categories` lists every category with `builtin` and the number of servers filed
+under it (`endpoint_count`).
+
+### Tags
+
+Tags are free labels such as `prod`, `team-payments` or `tier:gold`. Apiome lowercases them and
+turns spaces into hyphens, so `Team Payments` is stored as `team-payments`. A tag is up to 64
+characters: letters, digits, `.`, `_`, `:` and `-`, starting with a letter or digit. `untagged` is
+reserved.
+
+| Request | What it does |
+| --- | --- |
+| `GET …/endpoints/<endpoint>/tags` | The server's tags, A–Z. |
+| `PUT …/endpoints/<endpoint>/tags` with `{"tags": […]}` | Replaces the server's tags. `[]` clears them. |
+| `POST …/endpoints/<endpoint>/tags` with `{"tags": […]}` | Adds tags. Tags the server already has are skipped. |
+| `DELETE …/endpoints/<endpoint>/tags/<tag>` | Removes one tag (**404** if the server doesn't have it). |
+| `GET /v1/mcp/<tenant>/tags` | Every tag in use and how many servers have it, most used first. |
+
+### Filter by category and tag
+
+- **`GET /v1/mcp/<tenant>/browse`** and **`GET /v1/mcp/<tenant>/facets`** take `category` and
+  `tag`. `category` takes the stored value, which is the slug for a listed category (in any case).
+  You can repeat either one: a server matches **any** of the values you give for one filter, and
+  must match **every** filter. `category=uncategorized` finds servers with no category,
+  and `tag=untagged` finds servers with no tags. Each server in the result has its `tags`.
+- **`/facets`** also counts servers per tag in `facets.tag`, most used first, then `untagged`. A
+  server with three tags counts once in each, so these counts can add up to more than the total.
+- **`GET /v1/mcp/<tenant>/search`** takes one `tag` alongside `host`, `category`, `grade` and
+  `visibility`.
+
 ## With the CLI or the API
 
 The `apiome mcp` commands do everything on this page from a terminal or a CI job: register a
@@ -685,6 +760,7 @@ Add `--json` before `mcp` to print the REST response unchanged, for scripts. Exi
   `GET …/endpoints/{endpoint}/versions`, `GET …/endpoints/{endpoint}/uptime`,
   `GET` / `POST …/versions/{version}/lint`,
   `GET …/versions/{version}/lint/evidence`, `GET /v1/mcp/{tenant}/browse`,
+  `GET` / `POST /v1/mcp/{tenant}/categories`, `GET` / `PUT` / `POST …/endpoints/{endpoint}/tags`,
   `GET /v1/mcp/{tenant}/search` (add `include_registry=true` to [search the registry
   too](#search-your-catalog-and-the-registry-together)),
   `GET /v1/mcp/{tenant}/capabilities`, `GET /v1/mcp/lint/rules` — see the [API

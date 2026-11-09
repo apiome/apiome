@@ -46,6 +46,7 @@ from .mcp_facets import (
     UNCATEGORIZED_VALUE,
     UNGRADED_VALUE,
     UNKNOWN_VALUE,
+    UNTAGGED_VALUE,
 )
 from .provider_checks import (
     AUDIT_CHECK_PUBLISHED,
@@ -21631,7 +21632,14 @@ class Database:
         """
         return self.execute_query(q, (tenant_id,))
 
-    def browse_mcp_endpoints(self, tenant_id: str, *, team: Optional[str] = None) -> List[Dict[str, Any]]:
+    def browse_mcp_endpoints(
+        self,
+        tenant_id: str,
+        *,
+        team: Optional[str] = None,
+        categories: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
         """List a tenant's live endpoints enriched for the private browse view (MCAT-9.1).
 
         Each row is a catalog endpoint joined to its *current* version snapshot's quality
@@ -21647,14 +21655,27 @@ class Database:
         (``has_destructive`` / ``read_only_only``), and the ``complexity_band`` — so the catalog
         grid can filter on every facet dimension without a second read.
 
+        Each row also carries the endpoint's manual ``tags`` (V2-MCP-23.3), and the optional
+        ``categories`` / ``tags`` facet filters narrow the list with the faceted search's semantics
+        (AND across the two, OR within each, ``uncategorized`` / ``untagged`` select the empty
+        bucket — see :meth:`_mcp_facet_filter_clauses`).
+
         Args:
             tenant_id: The caller's token tenant; the sole scoping predicate, so an endpoint
                 never leaks across tenants.
+            team: Only endpoints owned by this team slug (CDG-2.4).
+            categories: Canonical category facet values; ``None`` / empty means no constraint.
+            tags: Canonical tag facet values; ``None`` / empty means no constraint.
 
         Returns:
-            One dict per live endpoint with its score/grade, capability counts, and facet fields.
+            One dict per live endpoint with its score/grade, capability counts, facet fields, and
+            tags.
         """
         team_clause, team_params = owner_team_filter(team)
+        facet_clauses, facet_params = self._mcp_facet_filter_clauses(
+            categories=categories, tags=tags
+        )
+        facet_clause = "".join(f" AND {c}" for c in facet_clauses)
         q = f"""
             SELECT e.id, e.tenant_id, e.name, e.slug, e.endpoint_url, e.transport,
                    e.description, e.category, e.visibility, e.published, e.enabled,
@@ -21670,6 +21691,7 @@ class Database:
                    {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
                    {self._MCP_VERSION_COUNT_EXPR} AS version_count,
+                   {self._MCP_ENDPOINT_TAGS_EXPR} AS tags,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'tool')              AS tool_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource')          AS resource_count,
                    COUNT(ci.id) FILTER (WHERE ci.item_type = 'resource_template') AS resource_template_count,
@@ -21681,12 +21703,12 @@ class Database:
             LEFT JOIN apiome.mcp_capability_items ci ON ci.version_id = e.current_version_id
             CROSS JOIN LATERAL (SELECT {self._MCP_MAX_TOOL_PROPS_EXPR} AS max_tool_props) mtp
             {owner_envelope_join(("mcp_endpoint",), "e.id", "e.tenant_id")}
-            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL {team_clause}
+            WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL {team_clause}{facet_clause}
             GROUP BY e.id, s.score, s.grade, s.scored_at, cv.server_branding,
                      cv.protocol_version, cv.discovered_at, mtp.max_tool_props, own.entity_owner
             ORDER BY e.name ASC
         """
-        return self.execute_query(q, (tenant_id, *team_params))
+        return self.execute_query(q, (tenant_id, *team_params, *facet_params))
 
     def list_mcp_duplicate_candidates(self, tenant_id: str) -> List[Dict[str, Any]]:
         """Live endpoints in a tenant with fields needed for duplicate detection (MCAT-22.1).
@@ -21898,6 +21920,13 @@ class Database:
         "WHERE vc.endpoint_id = e.id)"
     )
 
+    #: An endpoint's manual tags (V2-MCP-23.3 / MCAT-9.3, V365), alphabetical, as a text array —
+    #: empty when untagged. A scalar subquery so browse/faceted queries need no extra GROUP BY.
+    _MCP_ENDPOINT_TAGS_EXPR = (
+        "(SELECT COALESCE(array_agg(et.tag::text ORDER BY et.tag), ARRAY[]::text[]) "
+        "FROM apiome.mcp_endpoint_tags et WHERE et.endpoint_id = e.id)"
+    )
+
     #: The shared FROM block of every faceted-search query: the endpoint, its current snapshot's
     #: score and version rows, and the LATERAL max-tool-properties scalar the complexity band
     #: reads. LEFT JOINs keep never-discovered endpoints in scope (they band as ``unknown``).
@@ -21915,6 +21944,7 @@ class Database:
         category: Optional[str],
         grade: Optional[str],
         visibility: Optional[str],
+        tag: Optional[str] = None,
     ) -> Tuple[List[str], List[Any]]:
         """Build the composable WHERE clauses shared by both catalog-search queries (MCAT-9.2).
 
@@ -21922,10 +21952,17 @@ class Database:
         ``(clauses, params)`` pair the caller splices into its query; the clauses reference the
         ``e`` (endpoint) and ``s`` (version score) aliases both search queries expose. Host and
         category match case-insensitively; grade matches case-insensitively against the current
-        snapshot's letter grade; visibility matches the endpoint's ``visibility`` exactly.
+        snapshot's letter grade; visibility matches the endpoint's ``visibility`` exactly; tag
+        (V2-MCP-23.3, already canonical) keeps endpoints carrying that manual tag.
         """
         clauses: List[str] = []
         params: List[Any] = []
+        if tag:
+            clauses.append(
+                "EXISTS (SELECT 1 FROM apiome.mcp_endpoint_tags et "
+                "WHERE et.endpoint_id = e.id AND et.tag = %s)"
+            )
+            params.append(tag)
         if host:
             clauses.append(f"lower({self._MCP_ENDPOINT_HOST_EXPR}) = lower(%s)")
             params.append(host)
@@ -21950,6 +21987,7 @@ class Database:
         category: Optional[str] = None,
         grade: Optional[str] = None,
         visibility: Optional[str] = None,
+        tag: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -21972,6 +22010,7 @@ class Database:
             category: Restrict to endpoints in this category (case-insensitive).
             grade: Restrict to endpoints whose current snapshot earned this A-F grade.
             visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
+            tag: Restrict to endpoints carrying this canonical manual tag (V2-MCP-23.3).
             limit: Maximum rows to return.
             offset: Rows to skip (pagination).
 
@@ -21982,7 +22021,7 @@ class Database:
         """
         fts = self._MCP_CAPABILITY_FTS_EXPR
         clauses, fparams = self._mcp_search_filter_clauses(
-            host=host, category=category, grade=grade, visibility=visibility
+            host=host, category=category, grade=grade, visibility=visibility, tag=tag
         )
         if item_type:
             clauses.append("ci.item_type = %s")
@@ -22116,6 +22155,7 @@ class Database:
         category: Optional[str] = None,
         grade: Optional[str] = None,
         visibility: Optional[str] = None,
+        tag: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -22135,6 +22175,7 @@ class Database:
             category: Restrict to endpoints in this category (case-insensitive).
             grade: Restrict to endpoints whose current snapshot earned this A-F grade.
             visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
+            tag: Restrict to endpoints carrying this canonical manual tag (V2-MCP-23.3).
             limit: Maximum rows to return.
             offset: Rows to skip (pagination).
 
@@ -22144,7 +22185,7 @@ class Database:
         """
         fts = self._MCP_ENDPOINT_FTS_EXPR
         clauses, fparams = self._mcp_search_filter_clauses(
-            host=host, category=category, grade=grade, visibility=visibility
+            host=host, category=category, grade=grade, visibility=visibility, tag=tag
         )
         where_extra = ("\n              AND " + "\n              AND ".join(clauses)) if clauses else ""
         q = f"""
@@ -22338,6 +22379,7 @@ class Database:
         protocols: Optional[List[str]] = None,
         health: Optional[List[str]] = None,
         visibility: Optional[str] = None,
+        tags: Optional[List[str]] = None,
     ) -> Tuple[List[str], List[Any]]:
         """Build the composable facet WHERE clauses of the faceted catalog search (MCAT-21.1).
 
@@ -22360,6 +22402,8 @@ class Database:
             protocols: Protocol versions (matched exactly) and/or ``unknown``.
             health: Derived health labels (the five :data:`app.mcp_facets.HEALTH_VALUES`).
             visibility: ``private`` or ``public`` (single-valued, like the 9.2 search filter).
+            tags: Manual tags (canonical, V2-MCP-23.3) and/or ``untagged``; an endpoint matches
+                when it carries *any* listed tag.
 
         Returns:
             A ``(clauses, params)`` pair for the caller to AND into its WHERE.
@@ -22421,6 +22465,22 @@ class Database:
             clauses.append("e.visibility = %s")
             params.append(visibility)
 
+        if tags:
+            parts = []
+            named = [t for t in tags if t != UNTAGGED_VALUE]
+            if named:
+                parts.append(
+                    "EXISTS (SELECT 1 FROM apiome.mcp_endpoint_tags et "
+                    "WHERE et.endpoint_id = e.id AND et.tag = ANY(%s))"
+                )
+                params.append(named)
+            if UNTAGGED_VALUE in tags:
+                parts.append(
+                    "NOT EXISTS (SELECT 1 FROM apiome.mcp_endpoint_tags et "
+                    "WHERE et.endpoint_id = e.id)"
+                )
+            clauses.append("(" + " OR ".join(parts) + ")")
+
         return clauses, params
 
     def search_mcp_catalog_faceted(
@@ -22435,6 +22495,7 @@ class Database:
         protocols: Optional[List[str]] = None,
         health: Optional[List[str]] = None,
         visibility: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> Dict[str, Any]:
@@ -22449,13 +22510,13 @@ class Database:
         never crosses tenants.
 
         Endpoint rows carry the same enrichment browse rows do (score/grade, per-kind capability
-        tallies, protocol, health, safety flags, complexity band), ordered by name for a stable
-        page. An empty match yields an empty page, zero total, and empty bucket lists — never an
+        tallies, protocol, health, safety flags, complexity band, manual tags), ordered by name for
+        a stable page. An empty match yields an empty page, zero total, and empty bucket lists — never an
         error.
 
         Args:
             tenant_id: The caller's token tenant; the sole cross-tenant scoping predicate.
-            grades / transports / categories / safety / complexity / protocols / health:
+            grades / transports / categories / safety / complexity / protocols / health / tags:
                 Canonical facet selections (see :meth:`_mcp_facet_filter_clauses`); ``None`` or
                 empty means no constraint on that dimension.
             visibility: Restrict to ``private`` or ``public`` endpoints within the tenant.
@@ -22465,8 +22526,9 @@ class Database:
         Returns:
             A dict with ``endpoints`` (the page rows), ``total`` (the full match count), the
             ``{label, count}`` row lists ``grade_rows`` / ``transport_rows`` / ``category_rows`` /
-            ``complexity_rows`` / ``protocol_rows`` / ``health_rows``, and ``safety_counts``
-            (``has_destructive`` / ``read_only_only`` tallies).
+            ``complexity_rows`` / ``protocol_rows`` / ``health_rows`` / ``tag_rows``, ``safety_counts``
+            (``has_destructive`` / ``read_only_only`` tallies), and ``untagged_count``. An endpoint
+            with several tags counts once in each of its tag buckets.
         """
         clauses, fparams = self._mcp_facet_filter_clauses(
             grades=grades,
@@ -22477,6 +22539,7 @@ class Database:
             protocols=protocols,
             health=health,
             visibility=visibility,
+            tags=tags,
         )
         where = "WHERE e.tenant_id = %s::uuid AND e.deleted_at IS NULL"
         if clauses:
@@ -22504,6 +22567,7 @@ class Database:
                    {self._MCP_READ_ONLY_ONLY_EXPR} AS read_only_only,
                    {self._MCP_COMPLEXITY_BAND_EXPR} AS complexity_band,
                    {self._MCP_VERSION_COUNT_EXPR} AS version_count,
+                   {self._MCP_ENDPOINT_TAGS_EXPR} AS tags,
                    {_kind_count('tool')}              AS tool_count,
                    {_kind_count('resource')}          AS resource_count,
                    {_kind_count('resource_template')} AS resource_template_count,
@@ -22525,19 +22589,30 @@ class Database:
 
         safety_q = f"""
             SELECT COUNT(*) FILTER (WHERE {self._MCP_HAS_DESTRUCTIVE_EXPR}) AS has_destructive,
-                   COUNT(*) FILTER (WHERE {self._MCP_READ_ONLY_ONLY_EXPR})  AS read_only_only
+                   COUNT(*) FILTER (WHERE {self._MCP_READ_ONLY_ONLY_EXPR})  AS read_only_only,
+                   COUNT(*) FILTER (WHERE NOT EXISTS (
+                       SELECT 1 FROM apiome.mcp_endpoint_tags ut WHERE ut.endpoint_id = e.id
+                   )) AS untagged
             {base}
+        """
+        # Tags are many-per-endpoint, so their buckets count tag rows of the filtered endpoints.
+        tag_q = f"""
+            SELECT bt.tag AS label, COUNT(*) AS count
+            FROM apiome.mcp_endpoint_tags bt
+            WHERE bt.endpoint_id IN (SELECT e.id {base})
+            GROUP BY 1 ORDER BY count DESC, label ASC
         """
 
         total_rows = self.execute_query(total_q, params)
         safety_rows = self.execute_query(safety_q, params)
+        safety_counts = dict(safety_rows[0]) if safety_rows else {}
         return {
             "endpoints": self.execute_query(endpoints_q, (*params, int(limit), int(offset))),
             "total": int(total_rows[0]["total"]) if total_rows else 0,
             "grade_rows": self.execute_query(_bucket_q("upper(s.grade)"), params),
             "transport_rows": self.execute_query(_bucket_q("e.transport"), params),
             "category_rows": self.execute_query(_bucket_q("e.category"), params),
-            "safety_counts": dict(safety_rows[0]) if safety_rows else {},
+            "safety_counts": safety_counts,
             "complexity_rows": self.execute_query(
                 _bucket_q(self._MCP_COMPLEXITY_BAND_EXPR), params
             ),
@@ -22545,7 +22620,209 @@ class Database:
             "health_rows": self.execute_query(
                 _bucket_q(self._MCP_ENDPOINT_HEALTH_EXPR), params
             ),
+            "tag_rows": self.execute_query(tag_q, params),
+            "untagged_count": int(safety_counts.get("untagged") or 0),
         }
+
+    # -----------------------------------------------------------------------
+    # MCP Catalog — categories & manual tags (V2-MCP-23.3 / MCAT-9.3, #3693)
+    # -----------------------------------------------------------------------
+
+    #: Columns of a category row as the API projects it: ``builtin`` marks the shared vocabulary
+    #: (``tenant_id IS NULL``) and ``endpoint_count`` tallies the tenant's live endpoints filed
+    #: under the slug (``mcp_endpoints.category`` matched case-insensitively).
+    _MCP_CATEGORY_SELECT = """
+        SELECT c.id, c.tenant_id, c.slug, c.label, c.description, c.sort_order,
+               (c.tenant_id IS NULL) AS builtin, c.created_at, c.updated_at,
+               (SELECT COUNT(*)::int FROM apiome.mcp_endpoints ce
+                 WHERE ce.tenant_id = %s::uuid AND ce.deleted_at IS NULL
+                   AND lower(ce.category) = c.slug) AS endpoint_count
+        FROM apiome.mcp_categories c
+    """
+
+    def list_mcp_categories(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """List the categories a tenant can file endpoints under: built-ins plus its own (MCAT-9.3).
+
+        Args:
+            tenant_id: The caller's token tenant; only its own tenant-defined rows are included.
+
+        Returns:
+            One row per category (see :data:`_MCP_CATEGORY_SELECT`), ordered by ``sort_order``,
+            then label, then slug.
+        """
+        q = f"""
+            {self._MCP_CATEGORY_SELECT}
+            WHERE c.tenant_id IS NULL OR c.tenant_id = %s::uuid
+            ORDER BY c.sort_order ASC, lower(c.label) ASC, c.slug ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id, tenant_id))]
+
+    def get_mcp_category(self, tenant_id: str, slug: str) -> Optional[Dict[str, Any]]:
+        """Fetch one category visible to the tenant by slug — a built-in or its own (MCAT-9.3).
+
+        Args:
+            tenant_id: The caller's token tenant.
+            slug: The lowercase category slug.
+
+        Returns:
+            The category row, or ``None`` when no visible category has that slug.
+        """
+        q = f"""
+            {self._MCP_CATEGORY_SELECT}
+            WHERE c.slug = %s AND (c.tenant_id IS NULL OR c.tenant_id = %s::uuid)
+            ORDER BY c.tenant_id NULLS FIRST
+            LIMIT 1
+        """
+        rows = self.execute_query(q, (tenant_id, slug, tenant_id))
+        return dict(rows[0]) if rows else None
+
+    def create_mcp_category(
+        self,
+        tenant_id: str,
+        user_id: Optional[str],
+        *,
+        slug: str,
+        label: str,
+        description: Optional[str],
+        sort_order: int,
+    ) -> Dict[str, Any]:
+        """Insert a tenant-defined category (MCAT-9.3).
+
+        The caller has already validated the slug and checked it does not shadow a visible
+        category; a racing duplicate still trips ``uq_mcp_categories_tenant_slug`` and raises
+        ``psycopg2.errors.UniqueViolation``.
+
+        Args:
+            tenant_id: The owning tenant.
+            user_id: The author, when attributable.
+            slug: The validated slug.
+            label: The validated label.
+            description: Optional description.
+            sort_order: Display order.
+
+        Returns:
+            The created category row.
+        """
+        q = """
+            INSERT INTO apiome.mcp_categories
+                (tenant_id, slug, label, description, sort_order, created_by)
+            VALUES (%s::uuid, %s, %s, %s, %s, %s::uuid)
+        """
+        self._execute_write(q, (tenant_id, slug, label, description, sort_order, user_id))
+        return self.get_mcp_category(tenant_id, slug) or {}
+
+    def update_mcp_category(
+        self, tenant_id: str, slug: str, fields: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """Patch a tenant-defined category's label / description / sort order (MCAT-9.3).
+
+        Built-in rows never match (``tenant_id`` must equal the caller's), so they stay read-only.
+
+        Args:
+            tenant_id: The owning tenant.
+            slug: The category slug (immutable).
+            fields: Any of ``label``, ``description``, ``sort_order``; other keys are ignored.
+
+        Returns:
+            The updated row, or ``None`` when the tenant owns no category with that slug.
+        """
+        allowed = ("label", "description", "sort_order")
+        sets = [f"{k} = %s" for k in allowed if k in fields]
+        params: List[Any] = [fields[k] for k in allowed if k in fields]
+        sets.append("updated_at = CURRENT_TIMESTAMP")
+        q = f"""
+            UPDATE apiome.mcp_categories
+            SET {", ".join(sets)}
+            WHERE tenant_id = %s::uuid AND slug = %s
+        """
+        if self._execute_write(q, (*params, tenant_id, slug)) == 0:
+            return None
+        return self.get_mcp_category(tenant_id, slug)
+
+    def delete_mcp_category(self, tenant_id: str, slug: str) -> bool:
+        """Delete a tenant-defined category (MCAT-9.3); built-ins never match.
+
+        Endpoints filed under the slug keep it as their (now unlisted) category — the lookup is
+        lenient, so nothing is rewritten.
+
+        Returns:
+            ``True`` when a row was deleted.
+        """
+        q = "DELETE FROM apiome.mcp_categories WHERE tenant_id = %s::uuid AND slug = %s"
+        return self._execute_write(q, (tenant_id, slug)) > 0
+
+    def list_mcp_endpoint_tags(self, endpoint_id: str) -> List[str]:
+        """Return an endpoint's manual tags, alphabetical (MCAT-9.3).
+
+        The caller has already confirmed the endpoint belongs to its tenant.
+        """
+        q = """
+            SELECT tag FROM apiome.mcp_endpoint_tags
+            WHERE endpoint_id = %s::uuid
+            ORDER BY tag ASC
+        """
+        return [str(r["tag"]) for r in self.execute_query(q, (endpoint_id,))]
+
+    def replace_mcp_endpoint_tags(
+        self, tenant_id: str, endpoint_id: str, tags: List[str], user_id: Optional[str]
+    ) -> List[str]:
+        """Replace an endpoint's whole tag set in one transaction (MCAT-9.3).
+
+        Tags already present keep their original ``created_at`` / ``created_by``; tags not in
+        ``tags`` are removed; new ones are inserted.
+
+        Args:
+            tenant_id: The endpoint's tenant (denormalized onto each tag row).
+            endpoint_id: The endpoint, already confirmed to be the tenant's.
+            tags: The validated, distinct canonical tags (may be empty to clear).
+            user_id: The author of any newly added tag, when attributable.
+
+        Returns:
+            The endpoint's tags after the write, alphabetical.
+        """
+
+        def work(cursor: Any) -> bool:
+            cursor.execute(
+                "DELETE FROM apiome.mcp_endpoint_tags "
+                "WHERE endpoint_id = %s::uuid AND NOT (tag = ANY(%s))",
+                (endpoint_id, list(tags)),
+            )
+            for tag in tags:
+                cursor.execute(
+                    "INSERT INTO apiome.mcp_endpoint_tags (endpoint_id, tenant_id, tag, created_by) "
+                    "VALUES (%s::uuid, %s::uuid, %s, %s::uuid) "
+                    "ON CONFLICT (endpoint_id, tag) DO NOTHING",
+                    (endpoint_id, tenant_id, tag, user_id),
+                )
+            return True
+
+        self._guarded_tx(work)
+        return self.list_mcp_endpoint_tags(endpoint_id)
+
+    def remove_mcp_endpoint_tag(self, endpoint_id: str, tag: str) -> bool:
+        """Remove one tag from an endpoint (MCAT-9.3).
+
+        Returns:
+            ``True`` when the endpoint carried the tag.
+        """
+        q = "DELETE FROM apiome.mcp_endpoint_tags WHERE endpoint_id = %s::uuid AND tag = %s"
+        return self._execute_write(q, (endpoint_id, tag)) > 0
+
+    def list_mcp_tag_vocabulary(self, tenant_id: str) -> List[Dict[str, Any]]:
+        """Every tag in use across a tenant's live endpoints, busiest first (MCAT-9.3).
+
+        Returns:
+            ``{tag, endpoint_count}`` rows ordered by count desc, then tag.
+        """
+        q = """
+            SELECT t.tag, COUNT(*)::int AS endpoint_count
+            FROM apiome.mcp_endpoint_tags t
+            JOIN apiome.mcp_endpoints e ON e.id = t.endpoint_id
+            WHERE t.tenant_id = %s::uuid AND e.deleted_at IS NULL
+            GROUP BY t.tag
+            ORDER BY endpoint_count DESC, t.tag ASC
+        """
+        return [dict(r) for r in self.execute_query(q, (tenant_id,))]
 
     # -----------------------------------------------------------------------
     # MCP Catalog — saved searches (V2-MCP-35.3 / MCAT-21.3, #4662)

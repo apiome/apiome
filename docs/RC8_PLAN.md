@@ -191,7 +191,7 @@ later.
 | CLI | [#3184](https://github.com/apiome/apiome/issues/3184), [#3222](https://github.com/apiome/apiome/issues/3222), [#3259](https://github.com/apiome/apiome/issues/3259), [#3260](https://github.com/apiome/apiome/issues/3260), [#3261](https://github.com/apiome/apiome/issues/3261), [#3262](https://github.com/apiome/apiome/issues/3262), [#3269](https://github.com/apiome/apiome/issues/3269) |
 | Primitives (gated `primitives`) | [#3442](https://github.com/apiome/apiome/issues/3442), [#3482](https://github.com/apiome/apiome/issues/3482) |
 | Repository refresh policy | [#3541](https://github.com/apiome/apiome/issues/3541), [#3542](https://github.com/apiome/apiome/issues/3542) |
-| MCP Cataloging (External MCP Catalog, `ROADMAP_MCP_CATALOGING.md`) | open issues [#3693](https://github.com/apiome/apiome/issues/3693), [#3694](https://github.com/apiome/apiome/issues/3694), [#3695](https://github.com/apiome/apiome/issues/3695), [#3702](https://github.com/apiome/apiome/issues/3702) |
+| MCP Cataloging (External MCP Catalog, `ROADMAP_MCP_CATALOGING.md`) | open issues [#3694](https://github.com/apiome/apiome/issues/3694), [#3695](https://github.com/apiome/apiome/issues/3695), [#3702](https://github.com/apiome/apiome/issues/3702) |
 | Legacy epics | [#1023](https://github.com/apiome/apiome/issues/1023), [#1048](https://github.com/apiome/apiome/issues/1048), [#1066](https://github.com/apiome/apiome/issues/1066) |
 
 ---

@@ -1,0 +1,23 @@
+---
+slug: mcp-categories-and-tags
+title: Sort MCP servers by category and tag
+description: "File MCP servers under categories, tag them, and filter the catalog by both."
+authors: [apiome]
+---
+
+You can now file every cataloged MCP server under a category and give it tags, then filter the
+catalog by both. For now you set them over the REST API.
+
+{/* truncate */}
+
+- **Twelve built-in categories**, from **Developer tools** and **Databases** to **Security** and
+  **Other**, plus any your workspace adds with `POST /v1/mcp/{tenant}/categories`. Setting a
+  server's `category` to a category's slug or label stores the slug, so `"Data & Analytics"` becomes
+  `data-analytics`. Other values are kept as typed, so categories you already use keep working.
+- **Up to 32 tags per server**, such as `prod` or `team-payments`, set with
+  `PUT` / `POST /v1/mcp/{tenant}/endpoints/{endpoint}/tags`. `GET /v1/mcp/{tenant}/tags` lists every tag
+  in use.
+- **Filters.** `browse` and `facets` take repeatable `category` and `tag` filters, including
+  `uncategorized` and `untagged`. `facets` counts servers per tag, and `search` takes a `tag` filter.
+
+See [Categories and tags](/bring-in/mcp-servers#categories-and-tags).
