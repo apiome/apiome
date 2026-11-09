@@ -253,6 +253,7 @@ repository literally named `status` must be refreshed by UUID.
 |-------|----------|-------|
 | Unit | `tests/test_*.py` | No live network; mock HTTP with `pytest-httpx` where needed; `repos` coverage in `tests/test_repos_commands.py` plus `tests/test_repos_*_helpers.py` |
 | Integration (mocked) | `tests/integration/` | Import wait loop and list commands against mocked REST |
+| Contract | `tests/test_mcp_cli_contract.py` | Runs the `mcp` lifecycle (register → list → show → discover → lint → test) and checks every request path/body and every mocked response against `apiome-rest/openapi.json` (`RestContract`); reuse it when a command's REST shapes change |
 | Scaffold | `tests/test_scaffold.py`, `test/scaffold.test.mjs` | Package layout and tooling |
 | Docs | `tests/test_readme.py`, `tests/test_agents.py` | README and AGENTS.md guard required sections |
 | Fixtures | `tests/fixtures/` | Synthetic OpenAPI/Arazzo/AsyncAPI (2.6/3.0/3.1)/GraphQL SDL/gRPC `.proto`/Avro `.avsc` samples (no credentials or PII) for import/export tests |

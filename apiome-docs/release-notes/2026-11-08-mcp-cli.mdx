@@ -1,0 +1,20 @@
+---
+slug: mcp-cli
+title: Catalog an MCP server from the terminal, start to finish
+description: "The apiome mcp commands register, discover, grade and test a server, for CI too."
+authors: [apiome]
+---
+
+The `apiome mcp` commands cover an MCP server's whole life in the catalog. **Register** it, with a
+sealed bearer token or header if it needs one. **Discover** it and wait for the new version and
+grade. **Grade** it with a `--min-grade` gate. **Call one of its tools** and check the result. See
+[With the CLI or the API](/bring-in/mcp-servers#with-the-cli-or-the-api).
+
+{/* truncate */}
+
+- **Built for CI.** Exit code `1` means a failed discovery, a grade below `--min-grade`, a failed
+  policy gate or a tool error. Exit code `2` means a usage error, such as a destructive tool run
+  without `--confirm`. Add `--json` to get the REST response unchanged.
+- **Kept in step with the API.** A new contract test runs the whole lifecycle and checks every
+  request the CLI sends, and every response it reads, against Apiome's OpenAPI document. A change
+  on either side that breaks the other now fails the build.

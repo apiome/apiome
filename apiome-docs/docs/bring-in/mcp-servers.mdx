@@ -482,8 +482,51 @@ answer is added, but its row on the connector stays **discovered** until it does
 
 ## With the CLI or the API
 
-- CLI: `apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp`, `apiome mcp
-  list|show|discover|test|lint|conformance` — see the [CLI quick-start](../reference/cli-quickstart.md).
+The `apiome mcp` commands do everything on this page from a terminal or a CI job: register a
+server, discover it, grade it and call one of its tools. They need an API key and a workspace — see
+[Sign in the CLI](../reference/sign-in-the-cli.mdx). Every command is listed in the
+[`apiome mcp` reference](../reference/cli/mcp.md).
+
+1. **Register the server.** Use `--bearer <token>` or `--header 'Name:Value'` to store a
+   credential at the same time. It is sealed on the server and never printed.
+
+   ```bash
+   apiome mcp register --name "Apiome specs" --url http://localhost:8765/mcp
+   ```
+
+   The table that comes back starts with the endpoint's **ID**. `apiome mcp list` shows every
+   server, and `apiome mcp show <id>` shows one.
+2. **Discover it.** The command starts a discovery run and waits for it. It then prints the new
+   version, whether the surface changed, and the grade. Add `--no-wait` to start the run and return
+   at once.
+
+   ```bash
+   apiome mcp discover <id>
+   ```
+
+3. **Grade it.** This lints the current version and lists the findings. `--min-grade B` fails the
+   command when the grade is worse than B, and `--fail-on-policy` also applies your workspace's
+   lint policy.
+
+   ```bash
+   apiome mcp lint <id> --min-grade B
+   ```
+
+4. **Call a tool.** Each `--arg key=value` is read as JSON when it parses (`5`, `true`), and as
+   text otherwise. A tool marked destructive or open-world needs `--confirm`.
+
+   ```bash
+   apiome mcp test <id> --tool spec_search --arg q=payments
+   ```
+
+Add `--json` before `mcp` to print the REST response unchanged, for scripts. Exit codes, for CI:
+
+| Code | When |
+| --- | --- |
+| `0` | The command succeeded and every gate passed. |
+| `1` | Discovery failed or timed out, the grade is below `--min-grade`, a policy gate failed, or the tool reported an error. |
+| `2` | A usage error, such as a missing `--confirm` for a destructive tool or a bad `--min-grade`. |
+
 - REST: `GET` / `POST /v1/mcp/{tenant}/endpoints`, `POST …/endpoints/{endpoint}/discover`,
   `POST …/endpoints/{endpoint}/test`, `POST …/endpoints/{endpoint}/oauth/authorize`,
   `POST /v1/mcp/{tenant}/oauth/callback`,
