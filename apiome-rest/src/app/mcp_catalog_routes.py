@@ -17,6 +17,7 @@ slug is derived from the endpoint name and made unique within the tenant.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 import time
@@ -103,6 +104,8 @@ from .mcp_insight_aggregation import (
 from .mcp_invoke import get_prompt, invoke_tool, read_resource
 from .mcp_license_signals import detect_license_signals
 from .mcp_lifecycle_signals import detect_lifecycle_signals
+from .mcp_oauth_flow import OAuthFlowError
+from .mcp_oauth_service import complete_authorization, start_authorization
 from .mcp_owasp import catalog as owasp_catalog
 from .mcp_protocol_transcript import ProtocolTranscript
 from .mcp_provenance import build_endpoint_provenance
@@ -173,6 +176,10 @@ from .models import (
     McpInsightTrustResponse,
     McpInvocationReliabilityOut,
     McpLintReportResponse,
+    McpOAuthAuthorizeRequest,
+    McpOAuthAuthorizeResponse,
+    McpOAuthCallbackRequest,
+    McpOAuthCallbackResponse,
     McpOwaspRiskOut,
     McpPeerPercentileOut,
     McpPostureProfileOut,
@@ -2287,6 +2294,119 @@ async def clear_mcp_endpoint_credentials(
 
 
 # ===========================================================================
+# OAuth 2.1 connect — authorization code + PKCE (V2-MCP-20.4 / MCAT-6.4, #3680)
+# ===========================================================================
+#
+# Two steps around the user's consent in the browser. ``authorize`` returns the URL to send the
+# user to (PKCE S256, RFC 8707 resource, Dynamic Client Registration when no client id is given);
+# the authorization server then redirects to the UI's callback page, which posts the query
+# parameters to ``oauth/callback``. That route exchanges the code and stores the tokens sealed, as
+# an ``oauth2`` credential that discovery, the sweep and the test harness refresh by themselves.
+# Neither response carries a token.
+
+#: HTTP status per :class:`OAuthFlowError` code; anything unlisted is a ``400``.
+_OAUTH_FLOW_ERROR_STATUS = {
+    "not_discovered": 409,
+    "pkce_unsupported": 409,
+    "client_required": 409,
+    "invalid_redirect_uri": 422,
+    "invalid_url": 502,
+    "registration_failed": 502,
+    "token_error": 502,
+}
+
+
+def _oauth_flow_http_error(exc: OAuthFlowError) -> HTTPException:
+    """Map a flow failure onto an HTTP error whose detail names the code and the reason."""
+    return HTTPException(
+        status_code=_OAUTH_FLOW_ERROR_STATUS.get(exc.code, 400),
+        detail=f"{exc.message} ({exc.code})",
+    )
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/endpoints/{endpoint_id}/oauth/authorize",
+    response_model=McpOAuthAuthorizeResponse,
+)
+async def start_mcp_endpoint_oauth(
+    tenant_slug: str,
+    endpoint_id: uuid.UUID,
+    body: McpOAuthAuthorizeRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpOAuthAuthorizeResponse:
+    """Start connecting an OAuth-protected endpoint: return the authorization URL to open.
+
+    Needs the OAuth metadata a discovery run stores after the server's ``401`` (MCAT-6.3). The URL
+    carries a PKCE ``S256`` challenge, the RFC 8707 ``resource`` indicator and a sealed ``state``
+    valid for ten minutes; starting again replaces an unfinished authorization. Returns ``404`` when
+    the endpoint is not the caller's tenant's, ``409`` when no metadata was discovered, the server
+    lacks PKCE ``S256`` or a client id is needed (no registration endpoint), ``422`` for a refused
+    ``redirect_uri``, ``502`` when client registration fails and ``503`` when credential encryption
+    is not configured.
+    """
+    _ = tenant_slug
+    _require_tenant_endpoint(auth_data, endpoint_id)
+    try:
+        started = await asyncio.to_thread(
+            start_authorization,
+            endpoint_id=str(endpoint_id),
+            tenant_id=str(auth_data["tenant_id"]),
+            user_id=str(auth_data.get("user_id") or ""),
+            redirect_uri=body.redirect_uri,
+            scopes=body.scopes,
+            client_id=body.client_id,
+            client_secret=body.client_secret,
+        )
+    except OAuthFlowError as exc:
+        raise _oauth_flow_http_error(exc) from exc
+    except CredentialEncryptionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return McpOAuthAuthorizeResponse(success=True, endpoint_id=str(endpoint_id), **started)
+
+
+@mcp_endpoints_router.post(
+    "/{tenant_slug}/oauth/callback",
+    response_model=McpOAuthCallbackResponse,
+)
+async def complete_mcp_endpoint_oauth(
+    tenant_slug: str,
+    body: McpOAuthCallbackRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> McpOAuthCallbackResponse:
+    """Finish an OAuth connection with the authorization server's redirect parameters.
+
+    The sealed ``state`` names the endpoint; it is accepted once, only from the user who started the
+    authorization, within ten minutes. The code is exchanged (with the PKCE verifier and the
+    ``resource``), the tokens' audience is checked, and they are stored sealed as an ``oauth2``
+    credential. Returns the **redacted** credential status. ``400`` for a bad, reused, expired or
+    foreign state, a declined consent, an issuer or audience mismatch or an unusable token response;
+    ``502`` when the token endpoint refuses or cannot be reached; ``503`` when credential encryption
+    is not configured.
+    """
+    _ = tenant_slug
+    try:
+        endpoint_id, row = await asyncio.to_thread(
+            complete_authorization,
+            tenant_id=str(auth_data["tenant_id"]),
+            user_id=str(auth_data.get("user_id") or ""),
+            state=body.state,
+            code=body.code,
+            error=body.error,
+            error_description=body.error_description,
+            iss=body.iss,
+        )
+    except OAuthFlowError as exc:
+        raise _oauth_flow_http_error(exc) from exc
+    except CredentialEncryptionError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return McpOAuthCallbackResponse(
+        success=True,
+        endpoint_id=endpoint_id,
+        credential=mcp_credential_status_from_row(endpoint_id, row),
+    )
+
+
+# ===========================================================================
 # Test harness — invoke one cataloged capability live (V2-MCP-22.2 / MCAT-8.2, #3688)
 # ===========================================================================
 #
@@ -2671,7 +2791,8 @@ async def test_mcp_endpoint_capability(
     # fully-validated calls count against the per-endpoint budget).
     _enforce_test_rate_limit(str(endpoint_id))
 
-    headers, override_applied = _resolve_test_headers(str(endpoint_id), body)
+    # Loading stored headers may refresh an expiring OAuth token over the network (MCAT-6.4).
+    headers, override_applied = await asyncio.to_thread(_resolve_test_headers, str(endpoint_id), body)
 
     result = await _invoke_test_capability(
         url=str(endpoint["endpoint_url"]),

@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.535.0
+  version: 1.536.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -76738,6 +76738,187 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for clear mcp endpoint credentialsresponse422.
+  /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/oauth/authorize:
+    post:
+      tags:
+      - mcp-catalog
+      summary: Start Mcp Endpoint Oauth
+      description: 'Start connecting an OAuth-protected endpoint: return the authorization
+        URL to open.
+
+
+        Needs the OAuth metadata a discovery run stores after the server''s ``401``
+        (MCAT-6.3). The URL
+
+        carries a PKCE ``S256`` challenge, the RFC 8707 ``resource`` indicator and
+        a sealed ``state``
+
+        valid for ten minutes; starting again replaces an unfinished authorization.
+        Returns ``404`` when
+
+        the endpoint is not the caller''s tenant''s, ``409`` when no metadata was
+        discovered, the server
+
+        lacks PKCE ``S256`` or a client id is needed (no registration endpoint), ``422``
+        for a refused
+
+        ``redirect_uri``, ``502`` when client registration fails and ``503`` when
+        credential encryption
+
+        is not configured.'
+      operationId: start_mcp_endpoint_oauth_v1_mcp__tenant_slug__endpoints__endpoint_id__oauth_authorize_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: endpoint_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Endpoint Id
+          description: Endpoint Id schema.
+        description: MCP endpoint identifier.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Start MCP Endpoint Oauthauthorization schema.
+          - type: 'null'
+            description: Start MCP Endpoint Oauthauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Start MCP Endpoint OAuth Xapikey schema.
+          - type: 'null'
+            description: Start MCP Endpoint OAuth Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpOAuthAuthorizeRequest'
+              description: Request body for start mcp endpoint oauthrequest.
+        description: Request body for start mcp endpoint oauth.
+      responses:
+        '200':
+          description: Successful response for start mcp endpoint oauth.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpOAuthAuthorizeResponse'
+                description: Response payload for start mcp endpoint oauthresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for start mcp endpoint oauthresponse422.
+  /v1/mcp/{tenant_slug}/oauth/callback:
+    post:
+      tags:
+      - mcp-catalog
+      summary: Complete Mcp Endpoint Oauth
+      description: 'Finish an OAuth connection with the authorization server''s redirect
+        parameters.
+
+
+        The sealed ``state`` names the endpoint; it is accepted once, only from the
+        user who started the
+
+        authorization, within ten minutes. The code is exchanged (with the PKCE verifier
+        and the
+
+        ``resource``), the tokens'' audience is checked, and they are stored sealed
+        as an ``oauth2``
+
+        credential. Returns the **redacted** credential status. ``400`` for a bad,
+        reused, expired or
+
+        foreign state, a declined consent, an issuer or audience mismatch or an unusable
+        token response;
+
+        ``502`` when the token endpoint refuses or cannot be reached; ``503`` when
+        credential encryption
+
+        is not configured.'
+      operationId: complete_mcp_endpoint_oauth_v1_mcp__tenant_slug__oauth_callback_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Complete MCP Endpoint Oauthauthorization schema.
+          - type: 'null'
+            description: Complete MCP Endpoint Oauthauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Complete MCP Endpoint OAuth Xapikey schema.
+          - type: 'null'
+            description: Complete MCP Endpoint OAuth Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpOAuthCallbackRequest'
+              description: Request body for complete mcp endpoint oauthrequest.
+        description: Request body for complete mcp endpoint oauth.
+      responses:
+        '200':
+          description: Successful response for complete mcp endpoint oauth.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpOAuthCallbackResponse'
+                description: Response payload for complete mcp endpoint oauthresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for complete mcp endpoint oauthresponse422.
   /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/test:
     post:
       tags:
@@ -124432,6 +124613,197 @@ components:
       - reason
       title: McpManifestImportResponse
       description: The outcome of cataloguing a server from a manifest.
+    McpOAuthAuthorizeRequest:
+      properties:
+        redirectUri:
+          type: string
+          title: Redirecturi
+          description: Redirect URI.
+          example: example
+        scopes:
+          anyOf:
+          - items:
+              type: string
+            type: array
+            description: Request body for mcp oauth authorize.
+          - type: 'null'
+            description: Request body for mcp oauth authorize.
+          title: Scopes
+          description: Scopes.
+        clientId:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth authorize.
+          - type: 'null'
+            description: Request body for mcp oauth authorize.
+          title: Clientid
+          description: Client ID.
+        clientSecret:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth authorize.
+          - type: 'null'
+            description: Request body for mcp oauth authorize.
+          title: Clientsecret
+          description: Client Secret.
+      type: object
+      required:
+      - redirectUri
+      title: McpOAuthAuthorizeRequest
+      description: 'Start an OAuth 2.1 authorization-code + PKCE connection to a protected
+        endpoint (MCAT-6.4).
+
+
+        ``redirect_uri`` is the page the authorization server sends the user back
+        to (the Apiome UI''s
+
+        callback page); it must be ``https://`` (``http://`` only to loopback). Leave
+        ``client_id`` out to
+
+        use Dynamic Client Registration (RFC 7591); supply it (and ``client_secret``
+        for a confidential
+
+        client) when the server needs a client registered out of band. ``scopes``
+        overrides the scopes
+
+        discovery found. Accepts camelCase and snake_case keys.'
+    McpOAuthAuthorizeResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        endpoint_id:
+          type: string
+          title: Endpoint Id
+          description: Endpoint ID.
+          example: endpoint_01h2xcejqtf3fz5y5j0v8k9m2p
+        authorization_url:
+          type: string
+          title: Authorization Url
+          description: Authorization URL.
+          example: https://example.com/resource
+        expires_at:
+          type: string
+          title: Expires At
+          description: Expires At timestamp (ISO 8601).
+          example: '2026-11-09T00:10:31Z'
+        client_id:
+          type: string
+          title: Client Id
+          description: Client ID.
+          example: client_01h2xcejqtf3fz5y5j0v8k9m2p
+        client_registration:
+          type: string
+          title: Client Registration
+          description: Client Registration.
+          example: example
+        scopes:
+          items:
+            type: string
+          type: array
+          title: Scopes
+          description: Scopes.
+          maxItems: 1000
+      type: object
+      required:
+      - endpoint_id
+      - authorization_url
+      - expires_at
+      - client_id
+      - client_registration
+      title: McpOAuthAuthorizeResponse
+      description: 'Where to send the user to consent (MCAT-6.4).
+
+
+        ``authorization_url`` carries the PKCE ``S256`` challenge, the RFC 8707 ``resource``
+        and an
+
+        opaque sealed ``state``; it is valid until ``expires_at``. ``client_registration``
+        is
+
+        ``dynamic`` (RFC 7591) or ``preregistered``.'
+    McpOAuthCallbackRequest:
+      properties:
+        state:
+          type: string
+          title: State
+          description: State.
+          example: example
+        code:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth callback.
+          - type: 'null'
+            description: Request body for mcp oauth callback.
+          title: Code
+          description: Code.
+        error:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth callback.
+          - type: 'null'
+            description: Request body for mcp oauth callback.
+          title: Error
+          description: Error.
+        errorDescription:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth callback.
+          - type: 'null'
+            description: Request body for mcp oauth callback.
+          title: Errordescription
+          description: Error Description.
+        iss:
+          anyOf:
+          - type: string
+            description: Request body for mcp oauth callback.
+          - type: 'null'
+            description: Request body for mcp oauth callback.
+          title: Iss
+          description: Iss.
+      type: object
+      required:
+      - state
+      title: McpOAuthCallbackRequest
+      description: 'The query parameters the authorization server redirected back
+        with (MCAT-6.4).
+
+
+        Send ``state`` with either ``code`` (consent given) or ``error`` (and ``error_description``)
+
+        when the user declined. ``iss`` is checked against the discovered issuer when
+        present (RFC 9207).'
+    McpOAuthCallbackResponse:
+      properties:
+        success:
+          type: boolean
+          title: Success
+          default: true
+          description: Success.
+          example: false
+        endpoint_id:
+          type: string
+          title: Endpoint Id
+          description: Endpoint ID.
+          example: endpoint_01h2xcejqtf3fz5y5j0v8k9m2p
+        credential:
+          $ref: '#/components/schemas/McpCredentialStatusOut'
+          description: Credential.
+      type: object
+      required:
+      - endpoint_id
+      - credential
+      title: McpOAuthCallbackResponse
+      description: 'The connected endpoint and its **redacted** credential status
+        (MCAT-6.4).
+
+
+        The tokens are sealed server-side and never returned; ``credential.oauth_metadata.token``
+
+        describes them (client id, scope, expiry, whether they can be refreshed).'
     McpOwaspRiskOut:
       properties:
         riskId:

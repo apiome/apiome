@@ -92,6 +92,7 @@ import McpVersionHistory from './McpVersionHistory';
 import McpEndpointInsight from './McpEndpointInsight';
 import McpLintReport from './McpLintReport';
 import McpEndpointSettings from './McpEndpointSettings';
+import McpOAuthConnection from './McpOAuthConnection';
 import McpToolTestPanel from './McpToolTestPanel';
 import { McpEndpointNotesPanel } from '@/app/components/ade/dashboard/mcp/McpEndpointNotesPanel';
 import { McpSurfaceProvenancePanel } from '@/app/components/ade/dashboard/mcp/McpSurfaceProvenancePanel';
@@ -362,6 +363,12 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
   /** The item currently wearing the deep-link ring (cleared after a short delay). */
   const [highlightedAnchor, setHighlightedAnchor] = React.useState<string | null>(null);
   const mountedRef = React.useRef(true);
+
+  // `?tab=<value>` opens that tab — the OAuth callback returns to `?tab=settings` (MCAT-6.4).
+  React.useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('tab');
+    if (requested && endpointTabs.some((tab) => tab.value === requested)) setActiveTab(requested);
+  }, [endpointTabs]);
 
   React.useEffect(() => {
     mountedRef.current = true;
@@ -905,6 +912,8 @@ export default function McpEndpointDetailClient({ endpointId }: Props) {
             ) : null}
 
             <McpEndpointTabPanel value="settings" active={activeTab}>
+              {/* Rendered only for an OAuth-protected server (MCAT-6.4). */}
+              <McpOAuthConnection endpointId={endpointId} />
               <McpEndpointSettings
                 endpoint={endpoint}
                 onSaved={handleSettingsSaved}

@@ -26260,6 +26260,107 @@ class Database:
             conn.rollback()
             raise e
 
+    def consume_mcp_endpoint_oauth_pending(
+        self, endpoint_id: str, nonce_sha256: str
+    ) -> Optional[Dict[str, Any]]:
+        """Atomically consume an endpoint's pending OAuth authorization (MCAT-6.4).
+
+        Starting an authorization records ``oauth_metadata.pending_authorization`` with the SHA-256
+        of the state's nonce. The callback consumes it here: the key is removed only when it still
+        names that nonce, so a state is accepted once and a newer authorization supersedes an older
+        one. The secret and ``auth_type`` are untouched.
+
+        Args:
+            endpoint_id: The endpoint the authorization is for.
+            nonce_sha256: Hex SHA-256 of the nonce sealed inside the callback's ``state``.
+
+        Returns:
+            The updated credential row, or ``None`` when no matching pending authorization exists
+            (already used, superseded, or never started).
+        """
+        q = """
+            UPDATE apiome.mcp_endpoint_credentials
+            SET oauth_metadata = oauth_metadata - 'pending_authorization'
+            WHERE endpoint_id = %s::uuid
+              AND oauth_metadata -> 'pending_authorization' ->> 'nonce_sha256' = %s
+            RETURNING id, endpoint_id, auth_type, encrypted_payload, key_version,
+                      oauth_metadata, last_refreshed_at, created_at, updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(q, (endpoint_id, nonce_sha256))
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def store_mcp_endpoint_oauth_tokens(
+        self,
+        *,
+        endpoint_id: str,
+        encrypted_payload: bytes,
+        key_version: int,
+        metadata_patch: Dict[str, Any],
+        expected_last_refreshed_at: Any = None,
+        compare: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """Store a sealed OAuth token set on an endpoint's credential row (MCAT-6.4).
+
+        Sets ``auth_type = 'oauth2'``, the ciphertext and its ``key_version``, merges
+        ``metadata_patch`` over ``oauth_metadata`` (JSONB ``||``, so discovery's keys survive) and
+        bumps ``last_refreshed_at``. The row must exist — discovery creates it.
+
+        With ``compare=True`` this is a compare-and-set for token refresh: the write happens only if
+        ``last_refreshed_at`` still equals ``expected_last_refreshed_at``, so when two workers
+        refresh the same token the second write is dropped and its caller re-reads the winner's.
+
+        Args:
+            endpoint_id: The endpoint the tokens belong to.
+            encrypted_payload: The sealed token payload (ciphertext only).
+            key_version: The master-key version that sealed it.
+            metadata_patch: Non-secret keys to merge into ``oauth_metadata`` (e.g. ``token``).
+            expected_last_refreshed_at: The ``last_refreshed_at`` read before refreshing.
+            compare: Whether to apply the compare-and-set guard.
+
+        Returns:
+            The stored row, or ``None`` when the row is missing or the compare-and-set lost.
+        """
+        q = """
+            UPDATE apiome.mcp_endpoint_credentials
+            SET auth_type = 'oauth2',
+                encrypted_payload = %s,
+                key_version = %s,
+                oauth_metadata = oauth_metadata || %s,
+                last_refreshed_at = CURRENT_TIMESTAMP
+            WHERE endpoint_id = %s::uuid
+              AND (NOT %s OR last_refreshed_at IS NOT DISTINCT FROM %s)
+            RETURNING id, endpoint_id, auth_type, encrypted_payload, key_version,
+                      oauth_metadata, last_refreshed_at, created_at, updated_at
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    q,
+                    (
+                        psycopg2.Binary(encrypted_payload),
+                        key_version,
+                        Json(metadata_patch),
+                        endpoint_id,
+                        compare,
+                        expected_last_refreshed_at,
+                    ),
+                )
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
     def delete_mcp_endpoint_credentials(self, endpoint_id: str) -> bool:
         """Clear an endpoint's stored credential, removing the row (MCAT-6.5).
 

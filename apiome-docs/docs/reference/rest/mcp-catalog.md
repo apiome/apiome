@@ -1,6 +1,6 @@
 ---
 title: "MCP catalog"
-description: "REST endpoints tagged mcp-catalog: 80 operations."
+description: "REST endpoints tagged mcp-catalog: 82 operations."
 sidebar_position: 51
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.535.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.536.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `mcp-catalog` · 80 operations
+Tag: `mcp-catalog` · 82 operations
 
 ## `GET /mcp/badge/{tenant}/{slug}.svg` {#get-mcp-status-badge-mcp-badge-tenant-slug-svg-get}
 
@@ -1614,6 +1614,44 @@ Operation id: `delete_mcp_endpoint_note_v1_mcp__tenant_slug__endpoints__endpoint
 | 200 | Successful response for delete mcp endpoint note. | `application/json` map of boolean |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/oauth/authorize` {#start-mcp-endpoint-oauth-v1-mcp-tenant-slug-endpoints-endpoint-id-oauth-authorize-post}
+
+**Start Mcp Endpoint Oauth**
+
+Start connecting an OAuth-protected endpoint: return the authorization URL to open.
+
+Needs the OAuth metadata a discovery run stores after the server's ``401`` (MCAT-6.3). The URL
+carries a PKCE ``S256`` challenge, the RFC 8707 ``resource`` indicator and a sealed ``state``
+valid for ten minutes; starting again replaces an unfinished authorization. Returns ``404`` when
+the endpoint is not the caller's tenant's, ``409`` when no metadata was discovered, the server
+lacks PKCE ``S256`` or a client id is needed (no registration endpoint), ``422`` for a refused
+``redirect_uri``, ``502`` when client registration fails and ``503`` when credential encryption
+is not configured.
+
+Operation id: `start_mcp_endpoint_oauth_v1_mcp__tenant_slug__endpoints__endpoint_id__oauth_authorize_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `endpoint_id` | path | string (uuid) | yes | MCP endpoint identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for start mcp endpoint oauth.
+
+- `application/json` — [`McpOAuthAuthorizeRequest`](#schema-mcpoauthauthorizerequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for start mcp endpoint oauth. | `application/json` [`McpOAuthAuthorizeResponse`](#schema-mcpoauthauthorizeresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/mcp/{tenant_slug}/endpoints/{endpoint_id}/report` {#export-mcp-endpoint-report-v1-mcp-tenant-slug-endpoints-endpoint-id-report-get}
 
 **Export Mcp Endpoint Report**
@@ -2404,6 +2442,43 @@ Operation id: `get_mcp_catalog_insight_v1_mcp__tenant_slug__insight_catalog_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for get mcp catalog insight. | `application/json` [`McpInsightCatalogResponse`](#schema-mcpinsightcatalogresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/mcp/{tenant_slug}/oauth/callback` {#complete-mcp-endpoint-oauth-v1-mcp-tenant-slug-oauth-callback-post}
+
+**Complete Mcp Endpoint Oauth**
+
+Finish an OAuth connection with the authorization server's redirect parameters.
+
+The sealed ``state`` names the endpoint; it is accepted once, only from the user who started the
+authorization, within ten minutes. The code is exchanged (with the PKCE verifier and the
+``resource``), the tokens' audience is checked, and they are stored sealed as an ``oauth2``
+credential. Returns the **redacted** credential status. ``400`` for a bad, reused, expired or
+foreign state, a declined consent, an issuer or audience mismatch or an unusable token response;
+``502`` when the token endpoint refuses or cannot be reached; ``503`` when credential encryption
+is not configured.
+
+Operation id: `complete_mcp_endpoint_oauth_v1_mcp__tenant_slug__oauth_callback_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for complete mcp endpoint oauth.
+
+- `application/json` — [`McpOAuthCallbackRequest`](#schema-mcpoauthcallbackrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for complete mcp endpoint oauth. | `application/json` [`McpOAuthCallbackResponse`](#schema-mcpoauthcallbackresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/mcp/{tenant_slug}/saved-searches` {#list-mcp-saved-searches-v1-mcp-tenant-slug-saved-searches-get}
@@ -3344,6 +3419,69 @@ present when the report came from / was written to storage).
 | `compositeScore` | integer or null | no | Weighted composite when required coverage is met; null otherwise. |
 | `compositeGrade` | string or null | no | A-F grade of the composite; null when compositeScore is null. |
 | `requiredCoverageMet` | boolean or null | no | True when required axes (v1: quality) are assessed. |
+
+### `McpOAuthAuthorizeRequest` {#schema-mcpoauthauthorizerequest}
+
+Start an OAuth 2.1 authorization-code + PKCE connection to a protected endpoint (MCAT-6.4).
+
+``redirect_uri`` is the page the authorization server sends the user back to (the Apiome UI's
+callback page); it must be ``https://`` (``http://`` only to loopback). Leave ``client_id`` out to
+use Dynamic Client Registration (RFC 7591); supply it (and ``client_secret`` for a confidential
+client) when the server needs a client registered out of band. ``scopes`` overrides the scopes
+discovery found. Accepts camelCase and snake_case keys.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `redirectUri` | string | yes | Redirect URI. |
+| `scopes` | array of string or null | no | Scopes. |
+| `clientId` | string or null | no | Client ID. |
+| `clientSecret` | string or null | no | Client Secret. |
+
+### `McpOAuthAuthorizeResponse` {#schema-mcpoauthauthorizeresponse}
+
+Where to send the user to consent (MCAT-6.4).
+
+``authorization_url`` carries the PKCE ``S256`` challenge, the RFC 8707 ``resource`` and an
+opaque sealed ``state``; it is valid until ``expires_at``. ``client_registration`` is
+``dynamic`` (RFC 7591) or ``preregistered``.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint_id` | string | yes | Endpoint ID. |
+| `authorization_url` | string | yes | Authorization URL. |
+| `expires_at` | string | yes | Expires At timestamp (ISO 8601). |
+| `client_id` | string | yes | Client ID. |
+| `client_registration` | string | yes | Client Registration. |
+| `scopes` | array of string | no | Scopes. |
+
+### `McpOAuthCallbackRequest` {#schema-mcpoauthcallbackrequest}
+
+The query parameters the authorization server redirected back with (MCAT-6.4).
+
+Send ``state`` with either ``code`` (consent given) or ``error`` (and ``error_description``)
+when the user declined. ``iss`` is checked against the discovered issuer when present (RFC 9207).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `state` | string | yes | State. |
+| `code` | string or null | no | Code. |
+| `error` | string or null | no | Error. |
+| `errorDescription` | string or null | no | Error Description. |
+| `iss` | string or null | no | Iss. |
+
+### `McpOAuthCallbackResponse` {#schema-mcpoauthcallbackresponse}
+
+The connected endpoint and its **redacted** credential status (MCAT-6.4).
+
+The tokens are sealed server-side and never returned; ``credential.oauth_metadata.token``
+describes them (client id, scope, expiry, whether they can be refreshed).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `success` | boolean | no | Success. |
+| `endpoint_id` | string | yes | Endpoint ID. |
+| `credential` | `McpCredentialStatusOut` | yes | Credential. |
 
 ### `McpPostureRulesResponse` {#schema-mcpposturerulesresponse}
 

@@ -21,6 +21,13 @@ The work splits across two tickets that meet here:
 
 The ``none`` auth type (or no credential row at all) is fully supported today: it yields no auth
 headers, which is exactly right for public/anonymous MCP servers.
+
+**OAuth token refresh (MCAT-6.4, #3680).** An ``oauth2`` credential obtained through the
+authorization-code flow carries a refresh token and an expiry. :func:`load_endpoint_auth_headers`
+hands it to :func:`app.mcp_oauth_service.refresh_endpoint_credential` first, so a token that is about
+to expire is renewed before the headers are built — every discovery run, sweep and test call gets a
+live token without knowing OAuth is involved. :func:`refresh_endpoint_auth_headers` forces a refresh
+after a ``401``.
 """
 
 from __future__ import annotations
@@ -29,8 +36,9 @@ import logging
 from typing import Any, Dict, Optional
 
 from .database import db
-from .mcp_auth import AUTH_TYPE_NONE, CredentialPayloadError, build_auth_headers
+from .mcp_auth import AUTH_TYPE_NONE, AUTH_TYPE_OAUTH2, CredentialPayloadError, build_auth_headers
 from .mcp_credential_crypto import unseal_credential_payload
+from .mcp_oauth_service import refresh_endpoint_credential
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +121,8 @@ def load_endpoint_auth_headers(endpoint_id: str) -> Dict[str, str]:
 
     Best-effort: any failure reading the credential is swallowed (logged) and treated as
     "no credential", so a credential-store hiccup degrades to an unauthenticated run instead
-    of failing the whole discovery before it starts.
+    of failing the whole discovery before it starts. An ``oauth2`` token that is about to expire
+    is refreshed first (MCAT-6.4); a failed refresh keeps the stored token.
 
     Args:
         endpoint_id: The endpoint whose credentials to load.
@@ -131,4 +140,40 @@ def load_endpoint_auth_headers(endpoint_id: str) -> Dict[str, str]:
             exc_info=True,
         )
         return {}
-    return _headers_for_credential(credential)
+    return _headers_for_credential(_refreshed(endpoint_id, credential, force=False))
+
+
+def _refreshed(
+    endpoint_id: str, credential: Optional[Dict[str, Any]], *, force: bool
+) -> Optional[Dict[str, Any]]:
+    """Run the OAuth refresh step on a credential row; any crash keeps the row as read."""
+    try:
+        return refresh_endpoint_credential(endpoint_id, credential, force=force)
+    except Exception:  # noqa: BLE001 - a refresh problem must not block the run
+        logger.warning("oauth refresh crashed for MCP endpoint %s", endpoint_id, exc_info=True)
+        return credential
+
+
+def refresh_endpoint_auth_headers(endpoint_id: str) -> Optional[Dict[str, str]]:
+    """Force an OAuth token refresh after a ``401`` and return the new headers (MCAT-6.4).
+
+    Args:
+        endpoint_id: The endpoint whose request was refused.
+
+    Returns:
+        The headers built from the refreshed token, or ``None`` when nothing changed — the
+        credential is not ``oauth2``, has no refresh token, or the refresh failed — so the caller
+        knows a retry would send the same token.
+    """
+    try:
+        credential = db.get_mcp_endpoint_credentials(endpoint_id)
+    except Exception:  # noqa: BLE001 - best-effort, like load_endpoint_auth_headers
+        logger.warning("failed to load credentials for MCP endpoint %s", endpoint_id, exc_info=True)
+        return None
+    if not credential or credential.get("auth_type") != AUTH_TYPE_OAUTH2:
+        return None
+    refreshed = _refreshed(endpoint_id, credential, force=True)
+    if not refreshed or refreshed.get("last_refreshed_at") == credential.get("last_refreshed_at"):
+        return None
+    headers = _headers_for_credential(refreshed)
+    return headers or None

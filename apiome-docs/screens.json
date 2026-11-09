@@ -1902,6 +1902,13 @@
       "data": "fixture:hive-mcp-endpoint/settings.html"
     },
     {
+      "id": "mcp-endpoint-oauth",
+      "route": "/ade/dashboard/mcp/[endpointId]",
+      "waitFor": "#a11y-mount > *",
+      "scrollTo": "[data-testid=\"mcp-oauth-connection\"]",
+      "data": "fixture:hive-mcp-endpoint/settings-oauth.html"
+    },
+    {
       "id": "mcp-analytics",
       "route": "/ade/dashboard/mcp/analytics",
       "waitFor": "[data-testid=\"page-header\"]",
