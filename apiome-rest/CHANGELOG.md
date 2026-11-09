@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.679.0] - 2026-11-08
+
+### Added
+- **Webhook subscriptions on MCP change (V2-MCP-27.2 / MCAT-13.2, #3712).** Every
+  `mcp.version.created` event (#3711) is now delivered to the endpoint's tenant over its active
+  push-webhook subscriptions (`/v1/push-webhook-subscriptions/{tenant}`), reusing the existing
+  dispatch queue: one `push_webhook_delivery_events` row per subscription, sent by the standard
+  worker HMAC-signed (`X-Apiome-Signature: sha256=…`) with `X-Apiome-Event: mcp.version.created`,
+  retried with bounded backoff (4 attempts, `Retry-After` honoured) and then dead-lettered.
+  - **Body** is the event payload unchanged (`McpVersionCreatedEvent.to_payload()`,
+    `schema_version` 1) — the endpoint is named by id / name / slug, never its URL.
+  - **Best-effort.** Fan-out goes through `push_webhook_fanout.enqueue_event`; a listing or
+    enqueue failure is logged and never fails the discovery job. An event without a tenant id
+    is dropped and logged. Like the other `mcp.*` families, the publish-only `minSeverity`
+    filter does not apply.
+  - New module `app/mcp_change_webhooks.py`, subscribed by `mcp_discovery_engine` at import with
+    its own database handle. No API surface change. OpenAPI 1.538.0 → 1.539.0; REST reference
+    regenerated.
+
 ## [1.678.0] - 2026-11-08
 
 ### Added

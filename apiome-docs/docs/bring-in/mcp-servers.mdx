@@ -338,8 +338,32 @@ version is saved. A discovery that finds the same surface, or fails, raises none
 | `discovered_at`, `trigger` | When the discovery ran and what started it: `manual`, `sweep` or `registry` |
 | `change_summary` | `total` changes, counts `by_change_type` (`added` / `removed` / `modified`), `by_item_type` and `by_severity` (`additive` / `review` / `breaking`), the worst `max_severity`, and `initial` for **v1** |
 
-The event is not delivered outside Apiome yet; webhook subscriptions for it come next. Operators see
-it in the REST API log — see [Watch MCP re-discovery](../admin/operating-apiome.mdx#watch-mcp-re-discovery).
+#### Get the change event as a webhook
+
+Every active push-webhook subscription in the workspace receives each `mcp.version.created` event —
+there is nothing extra to turn on. Add a subscription with `POST /v1/push-webhook-subscriptions/{tenant}`,
+giving the receiver's `url` and a `signingSecret` you keep (see the
+[Webhooks reference](../reference/rest/webhooks.md)). Apiome never returns the secret again.
+
+Each delivery is a `POST` to the subscription's URL:
+
+| Part | Holds |
+| --- | --- |
+| `X-Apiome-Event` header | `mcp.version.created` |
+| `X-Apiome-Signature` header | `sha256=` and the hex HMAC-SHA256 of the raw body, keyed by the subscription's signing secret |
+| Body | The event fields in the table above, as JSON |
+
+**Check the signature** before you trust a delivery: compute the HMAC of the raw body with your
+secret and compare it to the header. **Use `event_id` to drop repeats** — it is the same every time
+for the same version.
+
+A delivery that fails (no answer, or any status outside `2xx`) is retried after 10 seconds, 1 minute
+and 5 minutes — sooner or later if a `429` or `503` names a `Retry-After`. After the fourth failed
+attempt it is dead-lettered and listed by `GET /v1/push-webhook-subscriptions/{tenant}/deliveries/dead-letter`. A webhook problem never fails the discovery. A subscription's `minSeverity`
+filter applies only to published versions, so it does not hold back MCP change events.
+
+Operators see each event in the REST API log — see
+[Watch MCP re-discovery](../admin/operating-apiome.mdx#watch-mcp-re-discovery).
 
 ### How servers are graded
 
