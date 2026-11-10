@@ -253,7 +253,7 @@ const DRAWER_MARKUP = `
     </div>
 
     <section>
-      <h3 class="mbr-caps mb-2">Membership</h3>
+      <h3 class="hive-caps mb-2">Membership</h3>
       <dl class="mbr-kv" id="mbr-kv">
         <dt>Role</dt>
         <dd><select class="hive-control mbr-role-select" aria-label="Role for ${LONG_NAME}"><option>Editor</option></select></dd>
@@ -266,7 +266,7 @@ const DRAWER_MARKUP = `
     </section>
 
     <section>
-      <h3 class="mbr-caps mb-2">Effective permissions</h3>
+      <h3 class="hive-caps mb-2">Effective permissions</h3>
       <div class="flex flex-wrap gap-1" id="mbr-tags">
         <span class="mbr-tag">projects:view</span><span class="mbr-tag">projects:edit</span>
         <span class="mbr-tag">versions:create</span><span class="mbr-tag">versions:edit</span>
@@ -277,7 +277,7 @@ const DRAWER_MARKUP = `
     </section>
 
     <section>
-      <h3 class="mbr-caps mb-2">Recent access activity</h3>
+      <h3 class="hive-caps mb-2">Recent access activity</h3>
       <div id="mbr-activity">
         <div class="mbr-activity"><span class="mbr-activity__action">verification_evidence.compare_against_published_baseline</span><span class="mbr-activity__when">3 hours ago</span></div>
         <div class="mbr-activity"><span class="mbr-activity__action">role.assigned</span><span class="mbr-activity__when">Yesterday</span></div>

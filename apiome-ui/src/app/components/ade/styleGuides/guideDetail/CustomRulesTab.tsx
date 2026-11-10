@@ -286,7 +286,7 @@ export default function CustomRulesTab({ state, readOnlyReason }: CustomRulesTab
                 <FileCode2 aria-hidden className="gd-card-title__glyph" />
                 Custom rules (YAML)
               </h3>
-              <p className="sg-quiet">
+              <p className="hive-quiet">
                 {state.view?.ruleCount ?? 0} rule{state.view?.ruleCount === 1 ? '' : 's'} saved
                 {' · '}Spectral-compatible subset · schema completion from{' '}
                 <code className="mono">custom-rule-dsl.schema.json</code>
@@ -374,7 +374,7 @@ export default function CustomRulesTab({ state, readOnlyReason }: CustomRulesTab
                 <FlaskConical aria-hidden className="gd-card-title__glyph" />
                 Test against…
               </h3>
-              <p className="sg-quiet">dry run · nothing is saved</p>
+              <p className="hive-quiet">dry run · nothing is saved</p>
             </div>
           </CardHeader>
 
@@ -427,7 +427,7 @@ export default function CustomRulesTab({ state, readOnlyReason }: CustomRulesTab
                 {state.previewing ? 'Running…' : 'Run'}
               </Button>
               {state.runMeta && (
-                <span className="sg-quiet" data-testid="custom-rules-run-meta">
+                <span className="hive-quiet" data-testid="custom-rules-run-meta">
                   Last run {state.runMeta.at} · {state.runMeta.seconds} s
                   {state.runMeta.target ? ` · ${state.runMeta.target}` : ''}
                 </span>

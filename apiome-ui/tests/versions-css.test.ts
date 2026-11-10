@@ -105,7 +105,6 @@ const VERSION_PRELUDES = [
   '.vt__actions',
   '.ver-flag',
   '.ver-flag > svg',
-  '.ver-quiet',
   '.ver-link',
   '.ver-header .page-header__title',
   '.ver-header__badges',
@@ -652,7 +651,6 @@ describe('horizontal containment', () => {
 describe('contrast', () => {
   /** Every quiet line in the block, with the ground it is drawn on. */
   const QUIET = [
-    ['.ver-quiet', '--bg-surface'],
     ['.ver-date-pop__title', '--bg-surface'],
     ['.ver-date-pop__field', '--bg-surface'],
     ['.ver-gitlike__label', '--bg-surface'],

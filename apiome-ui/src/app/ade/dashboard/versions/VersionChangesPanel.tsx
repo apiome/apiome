@@ -344,7 +344,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
                       <Badge variant={severityBadgeVariant(section.severity)}>
                         {severityLabel(section.severity)}
                       </Badge>
-                      <span className="vdlg-quiet">
+                      <span className="hive-quiet">
                         {section.entries.length} change{section.entries.length === 1 ? '' : 's'}
                       </span>
                     </h4>
@@ -404,7 +404,7 @@ export function VersionChangesPanel({ projectId, versions, onOpenDiff }: Version
                 </p>
               ) : null}
               {countsSummary(payload?.counts) ? (
-                <p className="vdlg-quiet">Totals: {countsSummary(payload?.counts)}</p>
+                <p className="hive-quiet">Totals: {countsSummary(payload?.counts)}</p>
               ) : null}
             </div>
           )}

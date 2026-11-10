@@ -153,7 +153,7 @@ export default function RuleCatalogTab({ state, readOnlyReason }: RuleCatalogTab
             Modified only
           </DataTableFilterChip>
           <DataTableToolbarSpacer />
-          <span className="sg-quiet">
+          <span className="hive-quiet">
             Severity is per guide; the default pill shows the catalog baseline.
           </span>
         </DataTableToolbar>

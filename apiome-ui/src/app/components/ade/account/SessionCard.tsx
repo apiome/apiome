@@ -95,7 +95,7 @@ export function SessionCard({
         <span className="acct-card__note">Your current sign-in session</span>
       </CardHeader>
       <CardContent className="acct-session">
-        <div className="acct-caps">Expires</div>
+        <div className="hive-caps">Expires</div>
         {lifetime ? (
           <>
             <p className="acct-session__value" data-testid="profile-session-expires">

@@ -88,7 +88,6 @@ const STYLE_GUIDE_PRELUDES = [
   '.sg-select',
   '.sg-select:disabled',
   '.sg-num',
-  '.sg-quiet',
   '.sg-section-title',
   '.sg-section-desc',
   '.sg-inline-link',
@@ -230,7 +229,7 @@ describe('the style-guides section of globals.css', () => {
   });
 
   it('sits after the unlayered p and h1–h4 base rules it has to outrank', () => {
-    // `.qp-card-title` is an `h3` and `.sg-quiet` / `.qp-card-desc` are `p`s; both base rules
+    // `.qp-card-title` is an `h3` and `.qp-card-desc` is a `p`; both base rules
     // are unlayered, so a rule declared before them would lose whatever its specificity.
     for (const prelude of STYLE_GUIDE_PRELUDES) {
       expect(guideRule(prelude).line).toBeGreaterThan(BASE_TYPE_RULE_LINE);
@@ -440,7 +439,6 @@ describe('quiet text', () => {
       '.sg-empty-cell',
       '.sg-field__hint',
       '.sg-field__optional',
-      '.sg-quiet',
       '.sg-section-desc',
       '.sg-dialog-note',
       '.sg-assign-row__id',

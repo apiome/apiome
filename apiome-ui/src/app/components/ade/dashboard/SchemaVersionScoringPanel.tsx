@@ -124,7 +124,7 @@ export function SchemaVersionScoringPanel({
       </div>
 
       {status === 'idle' || status === 'loading' ? (
-        <p className="vdlg-quiet" data-testid="studio-lint-loading">
+        <p className="hive-quiet" data-testid="studio-lint-loading">
           Loading lint report…
         </p>
       ) : status === 'error' ? (

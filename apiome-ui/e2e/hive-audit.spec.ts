@@ -310,7 +310,7 @@ const DRAWER_MARKUP = `
         <p class="aud-callout">ada@example.com assigned a role to linus@example.com from the web console.</p>
 
         <section>
-          <h3 class="aud-caps mb-2">Actor</h3>
+          <h3 class="hive-caps mb-2">Actor</h3>
           <div class="aud-party">
             <span aria-hidden="true" class="inline-flex shrink-0 items-center justify-center rounded-full size-8 text-xs font-semibold bg-accent-soft text-accent-fg">AL</span>
             <span class="aud-party__text">
@@ -322,7 +322,7 @@ const DRAWER_MARKUP = `
         </section>
 
         <section>
-          <h3 class="aud-caps mb-2">Target</h3>
+          <h3 class="hive-caps mb-2">Target</h3>
           <div class="aud-party">
             <span class="tnt-icon-tile" data-tone="honey">${LOCK}</span>
             <span class="aud-party__text">
@@ -336,7 +336,7 @@ const DRAWER_MARKUP = `
         </section>
 
         <section>
-          <h3 class="aud-caps mb-2">Recorded detail</h3>
+          <h3 class="hive-caps mb-2">Recorded detail</h3>
           <dl class="aud-kv" id="aud-kv">
             <dt class="mono">role</dt><dd>Release manager</dd>
             <dt class="mono">role_id</dt><dd>role-7d21ac9e-1f2b-3c4d-5e6f-708192a3b4c5</dd>
@@ -344,7 +344,7 @@ const DRAWER_MARKUP = `
         </section>
 
         <section>
-          <h3 class="aud-caps mb-2">Hash chain</h3>
+          <h3 class="hive-caps mb-2">Hash chain</h3>
           <div class="aud-chain">
             <div class="aud-chain__row">
               <span class="aud-chain__label">Previous entry</span>
@@ -359,7 +359,7 @@ const DRAWER_MARKUP = `
         </section>
 
         <section>
-          <h3 class="aud-caps mb-2">Event JSON</h3>
+          <h3 class="hive-caps mb-2">Event JSON</h3>
           <div class="aud-json-head">
             <span class="aud-quiet">The entry exactly as the ledger stores it.</span>
             <button type="button" class="${BUTTON_GHOST}" aria-label="Copy the event JSON">Copy</button>

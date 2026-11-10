@@ -834,7 +834,7 @@ export default function PrimitiveEditorDialog({ primitive, onClose, onSave, onMe
                 {formData.category === 'array' && renderArrayFields()}
                 {formData.category === 'object' && renderObjectFields()}
                 {formData.category === 'boolean' && (
-                  <p className="prm-quiet">
+                  <p className="hive-quiet">
                     Boolean type has no additional constraints. Use enum if you want to restrict to
                     specific values.
                   </p>

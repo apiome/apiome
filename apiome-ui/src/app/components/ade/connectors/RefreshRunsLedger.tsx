@@ -110,7 +110,7 @@ export function RefreshRunsLedger({
                         <Link href={`/ade/dashboard/connectors/${encodeURIComponent(run.connectorId ?? '')}`} className="cnx-link">
                           {run.connectorName ?? run.connectorId}
                         </Link>
-                        <span className="cnx-meta">
+                        <span className="hive-meta">
                           {connectorKindLabel(run.connectorKind)}
                           {run.trigger ? ` · ${run.trigger}` : ''}
                         </span>
@@ -118,7 +118,7 @@ export function RefreshRunsLedger({
                     ) : (
                       <>
                         <span className="cnx-name">{run.repositoryName ?? run.repositoryId}</span>
-                        <span className="cnx-meta cnx-mono">
+                        <span className="hive-meta cnx-mono">
                           {run.branch}
                           {run.path ? ` · ${run.path}` : ''}
                         </span>
@@ -132,7 +132,7 @@ export function RefreshRunsLedger({
                   </td>
                   <td>
                     {runOutcome(run)}
-                    {run.errorMessage ? <span className="cnx-meta">{run.errorMessage}</span> : null}
+                    {run.errorMessage ? <span className="hive-meta">{run.errorMessage}</span> : null}
                   </td>
                   <td className="cnx-mono">{run.startedAt ? new Date(run.startedAt).toLocaleString() : '—'}</td>
                 </tr>

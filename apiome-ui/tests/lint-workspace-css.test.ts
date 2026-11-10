@@ -70,7 +70,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const LINT_PRELUDES = [
-  '.lw-caps',
   '.lw-caps__aside',
   '.lw-quiet',
   '.lw-inline',
@@ -107,7 +106,7 @@ const LINT_PRELUDES = [
   '.lw-select',
   '.lw-facets',
   '.lw-facet-group',
-  '.lw-facet-group > .lw-caps',
+  '.lw-facet-group > .hive-caps',
   '.lw-facet-dot',
   ".lw-facet-dot[data-tone='danger']",
   ".lw-facet-dot[data-tone='warn']",
@@ -504,7 +503,6 @@ describe('density and font-scale independence', () => {
 describe('quiet text', () => {
   it('uses --fg-muted rather than --fg-subtle, which does not clear AA at these sizes', () => {
     for (const prelude of [
-      '.lw-caps',
       '.lw-quiet',
       '.lw-grade-chip',
       '.lw-views__note',

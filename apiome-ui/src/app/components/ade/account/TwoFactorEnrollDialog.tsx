@@ -282,7 +282,7 @@ export function TwoFactorEnrollDialog({
               </div>
               <div className="acct-enroll__fields">
                 <div className="acct-field">
-                  <div className="acct-caps">Or enter this URI</div>
+                  <div className="hive-caps">Or enter this URI</div>
                   <div className="acct-uri">
                     <code className="mono">{totpURI}</code>
                     <Button

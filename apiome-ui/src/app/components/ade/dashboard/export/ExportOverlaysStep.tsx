@@ -69,7 +69,7 @@ export function ExportOverlaysStep({ overlays, onChange }: ExportOverlaysStepPro
         Overlays
       </div>
       <div className="xstd-rule" />
-      <p className="xstd-quiet">
+      <p className="hive-quiet">
         An overlay changes the exported document without changing the version — for example a
         partner&apos;s servers, descriptions or <span className="xstd-mono">x-</span> extensions.
         Overlays apply in the order listed, to versions imported from OpenAPI.
@@ -95,7 +95,7 @@ export function ExportOverlaysStep({ overlays, onChange }: ExportOverlaysStepPro
                 </span>
                 <span className="xstd-overlay__main">
                   <span className="xstd-overlay__name">{overlay.name}</span>
-                  <span className="xstd-quiet">
+                  <span className="hive-quiet">
                     {title ? `${title} · ` : ''}
                     {actions} {actions === 1 ? 'action' : 'actions'}
                   </span>

@@ -84,7 +84,6 @@ const REPOSITORY_DETAIL_PRELUDES = [
   '.repo-det-card__title',
   '.repo-det-card__title > svg',
   '.repo-det-card__head',
-  '.repo-det-caps',
   '.repo-det-chips',
   '.repo-det-split',
   '.repo-det-rows > * + *',
@@ -520,7 +519,6 @@ describe('quiet text clears AA in every theme', () => {
   it('uses --fg-muted, never the mockup’s --fg-subtle', () => {
     for (const prelude of [
       '.repo-det-note',
-      '.repo-det-caps',
       '.repo-det-row__end',
       '.repo-det-subcell',
       '.repo-det-table__state',

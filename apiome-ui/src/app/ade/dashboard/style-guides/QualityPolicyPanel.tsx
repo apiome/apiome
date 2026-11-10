@@ -429,10 +429,10 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
             <div className="qp-overrides">
               <div className="qp-overrides__head">
                 <span className="sg-section-title">Per-format overrides</span>
-                <span className="sg-quiet">read-only · set via the REST policy API</span>
+                <span className="hive-quiet">read-only · set via the REST policy API</span>
               </div>
               {Object.keys(policy?.formatOverrides ?? {}).length === 0 ? (
-                <p className="sg-quiet">None. Every format uses the tenant floors above.</p>
+                <p className="hive-quiet">None. Every format uses the tenant floors above.</p>
               ) : (
                 <ul className="qp-overrides__list" data-testid="quality-policy-format-overrides">
                   {Object.entries(policy?.formatOverrides ?? {}).map(([format, block]) => (
@@ -455,7 +455,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
             about saving — the error alert above is the whole of the panel in that state. */}
         {draft && (
         <CardFooter>
-          <span className="sg-quiet">
+          <span className="hive-quiet">
             {readOnly
               ? 'Read-only: only tenant administrators can save a policy version.'
               : policy?.isDefault
@@ -491,7 +491,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
           </CardHeader>
           {versions.length === 0 ? (
             <CardContent>
-              <p className="sg-quiet">No policy has been saved yet.</p>
+              <p className="hive-quiet">No policy has been saved yet.</p>
             </CardContent>
           ) : (
             <ul className="qp-rows" data-testid="quality-policy-versions">
@@ -534,7 +534,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
           </CardHeader>
           {waivers.length === 0 ? (
             <CardContent>
-              <p className="sg-quiet">No active waivers.</p>
+              <p className="hive-quiet">No active waivers.</p>
             </CardContent>
           ) : (
             <ul className="qp-rows" data-testid="quality-policy-waivers">
@@ -553,7 +553,7 @@ export default function QualityPolicyPanel({ readOnly = false }: { readOnly?: bo
                         {waiver.formatKey ? ` · ${waiver.formatKey}` : ''}
                       </Badge>
                       {waiver.grade && (
-                        <span className="sg-quiet">
+                        <span className="hive-quiet">
                           graded {waiver.grade}
                           {typeof waiver.score === 'number' ? ` (${waiver.score})` : ''}
                         </span>

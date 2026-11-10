@@ -270,7 +270,7 @@ export default function RegistrySettingsPanel({ onMessage }: RegistrySettingsPan
               {storage.label}
             </Badge>
           ) : (
-            <span className="prm-quiet">status unknown</span>
+            <span className="hive-quiet">status unknown</span>
           )}
         </div>
         <p className="prm-settings-card__desc">

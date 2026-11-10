@@ -88,7 +88,7 @@ export function BenchSuiteRunHistory({ suiteId, refreshToken }: BenchSuiteRunHis
   }
   if (runs.length === 0) {
     return (
-      <p className="vdlg-quiet" data-testid="suite-history-empty">
+      <p className="hive-quiet" data-testid="suite-history-empty">
         {VERSION_DIALOG_COPY.benchNoRuns}
       </p>
     );
@@ -160,7 +160,7 @@ export function BenchSuiteRunHistory({ suiteId, refreshToken }: BenchSuiteRunHis
                     ))}
                   </ul>
                 ) : (
-                  <p className="vdlg-quiet">Loading results…</p>
+                  <p className="hive-quiet">Loading results…</p>
                 )}
               </div>
             ) : null}

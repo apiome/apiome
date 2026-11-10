@@ -30,7 +30,7 @@ export function OverlayReportPanel({ report }: OverlayReportPanelProps) {
         <Layers aria-hidden />
         Overlays
       </div>
-      <p className="xstd-quiet" data-testid="export-overlay-summary">
+      <p className="hive-quiet" data-testid="export-overlay-summary">
         {overlayReportSummary(report)}
       </p>
 
@@ -73,7 +73,7 @@ export function OverlayReportPanel({ report }: OverlayReportPanelProps) {
               {report.ledger.map((row, index) =>
                 row.kind === 'truncated' ? (
                   <tr key="truncated">
-                    <td colSpan={3} className="xstd-quiet">
+                    <td colSpan={3} className="hive-quiet">
                       {row.detail}
                     </td>
                   </tr>

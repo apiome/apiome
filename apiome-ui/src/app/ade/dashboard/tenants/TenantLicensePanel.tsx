@@ -259,7 +259,7 @@ export default function TenantLicensePanel({
                       <BadgeCheck aria-hidden />
                     </span>
                     <div>
-                      <p className="tnt-caps">Current plan</p>
+                      <p className="hive-caps">Current plan</p>
                       {license.plan ? (
                         <div className="flex items-center gap-2">
                           <span className="text-lg font-semibold text-fg">

@@ -260,7 +260,7 @@ export default function AdeHome({
 
         <section aria-labelledby="launch-applications">
           <div className="launch-eyebrow">
-            <h2 id="launch-applications" className="launch-caps">
+            <h2 id="launch-applications" className="hive-caps">
               Applications
             </h2>
             <span className="launch-eyebrow__sub">Jump into the tool you need right now.</span>
@@ -284,7 +284,7 @@ export default function AdeHome({
         <div className="launch-lower">
           <Card className="launch-panel" role="region" aria-labelledby="launch-resources">
             <div className="launch-eyebrow">
-              <h2 id="launch-resources" className="launch-caps">
+              <h2 id="launch-resources" className="hive-caps">
                 Resources
               </h2>
               <span className="launch-eyebrow__sub">Learn, then get back to work.</span>

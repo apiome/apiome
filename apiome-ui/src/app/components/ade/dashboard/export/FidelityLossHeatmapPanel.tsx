@@ -353,7 +353,7 @@ function ReconciliationStrip({
           them all and reconcile against the fidelity report.
         </span>
         {loading ? (
-          <span className="xstd-quiet inline-flex items-center gap-1">
+          <span className="hive-quiet inline-flex items-center gap-1">
             <Loader2 className="h-3 w-3 motion-safe:animate-spin text-accent" aria-hidden />
             Loading…
           </span>

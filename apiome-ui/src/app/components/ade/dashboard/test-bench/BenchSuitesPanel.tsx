@@ -399,7 +399,7 @@ export function BenchSuitesPanel({
                       </span>
                     )
                   ) : (
-                    <span className="vdlg-quiet">never run</span>
+                    <span className="hive-quiet">never run</span>
                   )}
                   {latest?.regression ? (
                     <Badge variant={verdictTone('failed')} data-testid={`suite-regression-${suite.id}`}>
@@ -477,7 +477,7 @@ export function BenchSuitesPanel({
           })}
         </ul>
       ) : (
-        <p className="vdlg-quiet" data-testid="suites-empty">
+        <p className="hive-quiet" data-testid="suites-empty">
           {VERSION_DIALOG_COPY.benchNoSuites}
         </p>
       )}

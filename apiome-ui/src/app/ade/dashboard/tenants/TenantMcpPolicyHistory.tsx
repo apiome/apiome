@@ -81,7 +81,7 @@ function ChangeDetail({ diff }: { diff: McpPolicySnapshotDiff }) {
     <div className="tnt-hist-diff">
       {diff.topLevel.length > 0 && (
         <div>
-          <p className="tnt-caps mb-1">Settings changes</p>
+          <p className="hive-caps mb-1">Settings changes</p>
           {diff.topLevel.map((change) => (
             <DiffLine
               key={change.field}
@@ -95,7 +95,7 @@ function ChangeDetail({ diff }: { diff: McpPolicySnapshotDiff }) {
 
       {diff.tools.length > 0 && (
         <div className={diff.topLevel.length > 0 ? 'mt-2' : undefined}>
-          <p className="tnt-caps mb-1">Tool-flag changes</p>
+          <p className="hive-caps mb-1">Tool-flag changes</p>
           {diff.tools.map((change) => (
             <DiffLine
               key={`${change.tool_id}:${change.flag}`}
@@ -206,7 +206,7 @@ export default function TenantMcpPolicyHistory({
         </p>
       ) : (
         <div className="tnt-card tnt-card--flush">
-          <div className="tnt-hist-row tnt-hist-row--head tnt-caps" aria-hidden>
+          <div className="tnt-hist-row tnt-hist-row--head hive-caps" aria-hidden>
             <span>When</span>
             <span>Actor</span>
             <span>Change</span>

@@ -3051,6 +3051,50 @@ p {
    was silently swallowed and every button rendered at the inherited body size.
    Removed by HIVE-2.1 (#5280); preflight still supplies the inheritance. */
 
+/* ---- Shared type helpers (SUX-1.10, apiome#6751) -------------------------
+   The four quiet registers every screen family used to restate under its own
+   prefix (`.prj-quiet`, `.cid-caps`, `.shd-meta`, `.sr-label`, …). A screen now
+   takes the shared class; a screen rule may still refine it (a margin, an
+   `overflow-wrap`) because those rules come later in this file.
+
+   - `.hive-quiet` — the muted line: an empty cell, a footer note, a card's id.
+   - `.hive-meta`  — the 11px block line under a name (`display: block`).
+   - `.hive-caps`  — the 11px caps section label or eyebrow.
+   - `.hive-label` — a form field's label in a plain `label` element.
+
+   They are unlayered classes on purpose, declared after the unlayered `p` /
+   `h1`–`h4` base rules above: each has to outrank them, which a Tailwind
+   utility would not. Colours are `--fg-muted` (never `--fg-subtle`), which
+   clears AA in all nine appearances.
+   The screen copies that were *not* identical stay in their own blocks
+   (`.aud-quiet`, `.lw-quiet`, `.xdlv-quiet`, `.vdlg-caps`, `.xstd-caps`,
+   `.cid-meta`, `.rail-label`, `.xstd-axis-label`) — see the SUX roadmap. */
+.hive-quiet {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+.hive-meta {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
+.hive-caps {
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.hive-label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--fg);
+}
+
 /* The app-wide focus ring. Unlayered on purpose: it has to outrank the
    `@layer utilities` box-shadow a component may already carry, so *every*
    interactive element — primitive or not — shows the same DESIGN.md §9 ring.
@@ -4886,17 +4930,8 @@ button.tfa-reset-notice__close > svg {
   margin-bottom: var(--space-4);
 }
 
-/* A caps label is a heading here, so it has to be a class for the third time:
-   the unlayered `h2 { font-size: clamp(…) }` would otherwise render the word
-   "Applications" at page-title scale. */
-.launch-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
+/* The caps label beside it is `.hive-caps` (shared type helpers, SUX-1.10): it is a
+   heading here, and the class outranks the unlayered `h2 { font-size: clamp(…) }`. */
 .launch-eyebrow__sub {
   font-size: var(--fs-sm);
   color: var(--fg-muted);
@@ -6385,14 +6420,6 @@ button.tfa-reset-notice__close > svg {
   min-width: 0;
 }
 
-.acct-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
 /* A `Card variant="soft"` carries `bg-subtle` as a utility; this rule is unlayered and
    so re-tints it to the inset well for the contrast reason `.acct-tile` gives — the
    caps heading above the list is `--fg-muted`. */
@@ -7664,14 +7691,6 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg-muted);
 }
 
-.tnt-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
 /* The "select this tenant first" note. A quiet inset rather than an empty
    state: the section is not empty, it is out of scope from here, and the
    sentence that says so is the whole content.
@@ -8353,15 +8372,8 @@ button.tfa-reset-notice__close > svg {
   }
 }
 
-/* A section heading inside the drawer. Stated once so five sections cannot
-   drift into five sizes — the same reason `.tnt-caps` exists above. */
-.mbr-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
+/* A section heading inside the drawer is `.hive-caps` (shared type helpers,
+   SUX-1.10), so five sections cannot drift into five sizes. */
 
 /* One `resource:action` grant. A tag rather than a badge: it names a thing,
    not a state, so it takes the square corner the design language reserves for
@@ -9140,14 +9152,6 @@ button.tfa-reset-notice__close > svg {
   padding-block: var(--space-4);
 }
 
-.akey-secret-label {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
 /* The box the key itself sits in. Inset ground rather than a tinted one: the
    warning above it is already amber, and a second tint would compete with the
    one thing on this screen the reader has to act on. */
@@ -9536,15 +9540,8 @@ button.tfa-reset-notice__close > svg {
 }
 
 /* ---- The drawer ---------------------------------------------------------- */
-/* A section heading inside the sheet. Stated once so six sections cannot drift
-   into six sizes — the same reason `.mbr-caps` and `.tnt-caps` exist above. */
-.aud-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
+/* A section heading inside the sheet is `.hive-caps` (shared type helpers,
+   SUX-1.10), so six sections cannot drift into six sizes. */
 
 /* The header's title row: the family badge, then the entry's id. Wraps rather
    than eliding, because an id the reader cannot read in full is an id they
@@ -10054,13 +10051,8 @@ button.tfa-reset-notice__close > svg {
   font-variant-numeric: tabular-nums;
 }
 
-/* A quiet line — an empty-copy sentence, a footer note. A `p` or a `span`, so
-   the colour is stated here to beat the unlayered `p` base rule. */
-.sg-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+/* A quiet line — an empty-copy sentence, a footer note — is `.hive-quiet` (shared
+   type helpers, SUX-1.10); the class beats the unlayered `p` base rule. */
 .sg-section-title {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -10614,9 +10606,9 @@ button.tfa-reset-notice__close > svg {
      rather than the mockup's `--warn-fg` over a `--warn`-tinted inset shadow,
      which composites differently in each theme.
 
-   Three classes are borrowed rather than restated: `.sg-select`, `.sg-quiet`
-   and `.sg-field` from the style-guides block above (the native `select`s, the
-   quiet lines and the label/control stack), plus `.tnt-icon-tile` from the
+   Three classes are borrowed rather than restated: `.sg-select` and `.sg-field`
+   from the style-guides block above (the native `select`s and the label/control
+   stack) and the shared `.hive-quiet` (the quiet lines), plus `.tnt-icon-tile` from the
    tenants block and `.hive-control` from the primitives block.
    ========================================================================== */
 
@@ -11279,18 +11271,9 @@ button.tfa-reset-notice__close > svg {
    ========================================================================== */
 
 /* ---- Shared quiet type --------------------------------------------------
-   The caps section label and the muted line, used by all six components of the
-   workspace — and `.lw-caps` also by the shared `LintViolationFindingsList`
-   header, which is the same 11px caps label and had spelled it as a
-   `text-gray-500 dark:text-gray-400` utility string. */
-.lw-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
+   The caps section label is `.hive-caps` (shared type helpers, SUX-1.10), used by
+   all six components of the workspace and by the shared `LintViolationFindingsList`
+   header. Its aside and the muted line stay here. */
 .lw-caps__aside {
   font-weight: 500;
   letter-spacing: normal;
@@ -11661,7 +11644,7 @@ button.tfa-reset-notice__close > svg {
   gap: var(--space-1);
 }
 
-.lw-facet-group > .lw-caps {
+.lw-facet-group > .hive-caps {
   margin-inline-end: var(--space-1);
 }
 
@@ -12523,12 +12506,8 @@ button.tfa-reset-notice__close > svg {
 
 /* ---- Shared quiet type --------------------------------------------------
    The muted lines every part of the screen draws — a cell that has nothing in
-   it, the "Empty project" note, a card's identifier line. */
-.prj-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+   it, the "Empty project" note, a card's identifier line — are `.hive-quiet`
+   (shared type helpers, SUX-1.10). */
 .prj-num {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -13538,12 +13517,8 @@ button.tfa-reset-notice__close > svg {
   block-size: 0.625rem;
 }
 
-/* ---- Shared quiet type -------------------------------------------------- */
-.ver-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+/* ---- Shared quiet type --------------------------------------------------
+   The muted line is `.hive-quiet` (shared type helpers, SUX-1.10). */
 /* Links take `--accent-fg`, not `--accent`: `--accent` is a fill and measures 4.1:1 as ink
    on the surface in four themes (the shortcut sheet's note); the `-fg` step clears 7:1 in all
    nine. `--accent` returns on hover, where the underline is doing the work. */
@@ -15472,7 +15447,7 @@ button.tfa-reset-notice__close > svg {
 
    * quiet text is `--fg-muted`, not the mockup's `--fg-subtle` or
      `--fg-faint`, neither of which clears AA at these sizes (HIVE-6.2's
-     finding, and the reason `.vdlg-quiet` exists at all);
+     finding, and the reason `.hive-quiet` is `--fg-muted`);
    * no `-fg` ink is drawn on the surface and no `-soft` fill under `--fg`:
      outside the light and dark themes those pairs are not calibrated for it
      (`--ok-fg` measures 1.5:1 on Nord's surface). So the unresolved conflict
@@ -15495,13 +15470,9 @@ button.tfa-reset-notice__close > svg {
    ========================================================================== */
 
 /* ---- Shared type ---------------------------------------------------------
-   The three steps every panel in this block leans on. `.vdlg-quiet` is the
-   muted step, not `--fg-subtle`: the reason the header note above records. */
-.vdlg-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+   The three steps every panel in this block leans on. The muted step is
+   `.hive-quiet` (shared type helpers, SUX-1.10) — `--fg-muted`, not
+   `--fg-subtle`: the reason the header note above records. */
 .vdlg-caps {
   display: inline-flex;
   align-items: center;
@@ -19915,15 +19886,10 @@ button.tfa-reset-notice__close > svg {
    ========================================================================== */
 
 /* ---- Shared quiet type --------------------------------------------------
-   The three weights of secondary text the screen repeats: a muted line, a
-   figure, and the em-dash a cell prints when it has nothing to say. Stated
-   here rather than as utilities because they have to outrank the unlayered
-   `p` base rule near line 2497. */
-.prm-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+   The three weights of secondary text the screen repeats: a muted line
+   (`.hive-quiet`, shared type helpers, SUX-1.10), a figure, and the em-dash a
+   cell prints when it has nothing to say. Stated as classes rather than
+   utilities because they have to outrank the unlayered `p` base rule. */
 .prm-num {
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
@@ -21598,7 +21564,7 @@ html[data-motion='reduce'] .prm-spin {
 
    Every colour below is a token and every dimension is a token or `rem`, so
    the screen follows the nine themes, both densities and all six font scales.
-   Nine classes are borrowed rather than restated: `.prm-quiet`, `.prm-hint`,
+   Nine classes are borrowed rather than restated: `.hive-quiet`, `.prm-hint`,
    `.prm-faint`, `.prm-error`, `.prm-caution`, `.prm-code`, `.prm-lock`,
    `.prm-ref-link` and the `.prm-panel-head*` block from the registry
    (HIVE-6.5) — this route is the registry's own detail view and must not drift
@@ -22104,12 +22070,8 @@ html[data-motion='reduce'] .prm-spin {
 
 /* ---- Shared quiet type --------------------------------------------------
    The muted lines every part of the screen draws — a provenance cell with
-   nothing in it, "Format pending", a legend's second half. */
-.cat-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+   nothing in it, "Format pending", a legend's second half — are `.hive-quiet`
+   (shared type helpers, SUX-1.10). */
 .cat-stamp {
   font-size: var(--fs-xs);
   font-variant-numeric: tabular-nums;
@@ -23570,15 +23532,10 @@ html[data-motion='reduce'] .prm-spin {
    ========================================================================== */
 
 /* ---- Shared quiet type --------------------------------------------------
-   The four registers this screen writes in: a quiet line beside a heading, a
-   note under a figure, the 11px meta line, and a caps label. Stated once here
-   because eleven components draw them and the pre-Hive spelling of each was a
-   different four-class string in every one. */
-.cid-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+   The four registers this screen writes in: a quiet line beside a heading
+   (`.hive-quiet`), a note under a figure, the 11px meta line, and a caps label
+   (`.hive-caps`). The quiet line and the caps label are the shared type helpers
+   (SUX-1.10); the note and the meta line are stated here. */
 .cid-note {
   margin-block-start: var(--space-2);
   font-size: var(--fs-xs);
@@ -23601,14 +23558,6 @@ html[data-motion='reduce'] .prm-spin {
 .cid-micro {
   margin-block-start: var(--space-1);
   font-size: var(--fs-2xs);
-  color: var(--fg-muted);
-}
-
-.cid-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--track-caps);
   color: var(--fg-muted);
 }
 
@@ -24447,7 +24396,7 @@ button.cid-entity__head {
   overflow-wrap: anywhere;
 }
 
-.cid-refresh__error + .cid-quiet,
+.cid-refresh__error + .hive-quiet,
 .cid-kv + .cid-refresh__error {
   flex-basis: 100%;
   margin-block-start: var(--space-2);
@@ -24803,11 +24752,8 @@ button.cid-entity__head {
 
 /* ---- Shared quiet type --------------------------------------------------
    The muted lines every part of the screen draws — a health column with
-   nothing in it, a footer's last-scan phrase. */
-.repo-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
+   nothing in it, a footer's last-scan phrase — are `.hive-quiet` (shared type
+   helpers, SUX-1.10). */
 
 /* A menu row that destroys something. The rule the projects and catalog blocks
    both state: no red in the token layer clears AA as 13px ink on the menu
@@ -26146,7 +26092,7 @@ button.cid-entity__head {
    Seven classes are borrowed rather than restated: `.hive-stat*` (the KPI
    strip), `.mono` (HIVE-1.4), `.input-wrap` (HIVE-2.1's leading-icon field),
    `.tnt-menu` + `.tnt-menu__item` (the row and branch menus), `.repo-provider`
-   + `data-provider` (HIVE-7.3's provider tint table), `.repo-quiet` (HIVE-7.3)
+   + `data-provider` (HIVE-7.3's provider tint table), `.hive-quiet` (SUX-1.10)
    and the whole `.imp-wizard*` frame (HIVE-6.4), which the Map & import
    overlay is a second instance of rather than a copy.
    ========================================================================== */
@@ -26224,14 +26170,6 @@ button.cid-entity__head {
 }
 
 /* A section eyebrow inside a card — "Per-file overrides", "Classes · 42 rows". */
-.repo-det-caps {
-  font-size: var(--fs-2xs);
-  font-weight: 600;
-  letter-spacing: var(--track-caps);
-  text-transform: uppercase;
-  color: var(--fg-muted);
-}
-
 /* ---- The header's meta row ----------------------------------------------
    The provider slug and the branch, as monospace chips beside the title. */
 .repo-det-chips {
@@ -31972,7 +31910,7 @@ tr:focus-within .pub-url__glyph {
 
    Nine classes are borrowed rather than restated: `.vdlg-export__target` and
    its five siblings (HIVE-6.3 already drew the target card, and the Studio
-   and the ExportDialog must not drift), `.vdlg-quiet`, `.vdlg-link`,
+   and the ExportDialog must not drift), `.hive-quiet`, `.vdlg-link`,
    `.mono` (HIVE-1.4), `.input-wrap` (HIVE-2.1), `.tnt-icon-tile` and
    `.sr-only`.
 
@@ -32009,13 +31947,9 @@ tr:focus-within .pub-url__glyph {
    ========================================================================== */
 
 /* ---- Shared type --------------------------------------------------------- */
-/* The three steps the whole Studio leans on. `.xstd-quiet` is the muted step,
-   not `--fg-subtle`: deviation 1 in the header note. */
-.xstd-quiet {
-  font-size: var(--fs-xs);
-  color: var(--fg-muted);
-}
-
+/* The three steps the whole Studio leans on. The muted step is `.hive-quiet`
+   (shared type helpers, SUX-1.10) — `--fg-muted`, not `--fg-subtle`:
+   deviation 1 in the header note. */
 .xstd-note {
   font-size: var(--fs-2xs);
   color: var(--fg-muted);
@@ -38861,13 +38795,6 @@ a.shd-name:hover,
   text-decoration: underline;
 }
 
-.shd-meta {
-  display: block;
-  font-size: var(--fs-2xs);
-  color: var(--fg-muted);
-  overflow-wrap: anywhere;
-}
-
 .shd-mono {
   font-family: var(--font-mono);
   overflow-wrap: anywhere;
@@ -38948,13 +38875,6 @@ a.shd-name:hover,
   display: block;
   font-weight: 600;
   color: var(--fg);
-}
-
-.cnx-meta {
-  display: block;
-  font-size: var(--fs-2xs);
-  color: var(--fg-muted);
-  overflow-wrap: anywhere;
 }
 
 .cnx-mono {
@@ -40132,12 +40052,6 @@ a.tm-list__name {
   display: grid;
   gap: var(--space-1);
   min-inline-size: 0;
-}
-
-.sr-label {
-  color: var(--fg);
-  font-size: var(--fs-sm);
-  font-weight: 500;
 }
 
 .sr-select {

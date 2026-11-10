@@ -103,7 +103,6 @@ const API_KEY_PRELUDES = [
   '.akey-expiry-field',
   '.akey-dialog-note',
   '.akey-secret-body',
-  '.akey-secret-label',
   '.akey-secret',
   '.akey-secret__value',
   '.akey-secret__copy',
@@ -319,7 +318,6 @@ describe('density and font-scale independence', () => {
       ['.akey-scope-title', 'var(--fs-sm)'],
       ['.akey-scope-hint', 'var(--fs-xs)'],
       ['.akey-dialog-note', 'var(--fs-xs)'],
-      ['.akey-secret-label', 'var(--fs-2xs)'],
       ['.akey-secret__value', 'var(--fs-sm)'],
       ['.akey-secret-note', 'var(--fs-xs)'],
       ['.akey-confirm-identity__name', 'var(--fs-sm)'],
@@ -357,7 +355,7 @@ describe('density and font-scale independence', () => {
   });
 
   it('tracks its caps labels with the shared caps tracking', () => {
-    for (const prelude of ['.akey-secret-label', '.akey-scope-table th']) {
+    for (const prelude of ['.hive-caps', '.akey-scope-table th']) {
       expect(declaration(prelude, 'letter-spacing')).toBe('var(--track-caps)');
     }
   });

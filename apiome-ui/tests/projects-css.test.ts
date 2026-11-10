@@ -72,7 +72,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const PROJECT_PRELUDES = [
-  '.prj-quiet',
   '.prj-num',
   '.prj-stamp',
   '.prj-menu__item--danger[data-highlighted], .prj-menu__item--danger:hover',
@@ -522,7 +521,6 @@ describe('horizontal containment', () => {
 describe('contrast', () => {
   /** Every quiet line in the block, with the ground it is drawn on. */
   const QUIET = [
-    ['.prj-quiet', '--bg-surface'],
     ['.prj-stamp', '--bg-surface'],
     ['.prj-card__id', '--bg-surface'],
     ['.prj-card__summary', '--bg-surface'],

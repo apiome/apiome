@@ -262,7 +262,7 @@ export default function VersionHistoryGraphPanel({
       <div className="vdlg-dag__head">
         <div>
           <h3 className="vdlg-section-title">Revision history graph</h3>
-          <p className="vdlg-quiet">
+          <p className="hive-quiet">
             Left-to-right lanes (older → newer). Solid slate edge = primary parent; dashed violet = merge parent. Click a
             node to compare with its primary parent; Ctrl/Cmd-click to view spec. Merge commits use violet styling; branch
             tips show names and an emerald marker.
@@ -282,7 +282,7 @@ export default function VersionHistoryGraphPanel({
           {atMaxNodes && (
             <Badge variant="warn">Max render limit reached ({MAX_HISTORY_GRAPH_NODES} nodes)</Badge>
           )}
-          <span className="vdlg-quiet">
+          <span className="hive-quiet">
             Showing {expanded.length} revision{expanded.length !== 1 ? 's' : ''}
             {expanded.length < branchFiltered.length ? ` (of ${branchFiltered.length} in branch filter)` : ''}
             {branchFiltered.length < versions.length ? ` — ${versions.length} total in table filter` : ''}

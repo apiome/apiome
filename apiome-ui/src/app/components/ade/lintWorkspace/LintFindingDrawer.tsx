@@ -280,7 +280,7 @@ export default function LintFindingDrawer({
 
           <DrawerBody className="lw-drawer-body">
             <section data-testid="detail-evidence">
-              <h3 className="lw-caps">Evidence</h3>
+              <h3 className="hive-caps">Evidence</h3>
               <dl className="lw-kv">
                 <Row term="Scanner" mono>
                   {finding.scannerId}
@@ -311,7 +311,7 @@ export default function LintFindingDrawer({
             </section>
 
             <section data-testid="detail-links">
-              <h3 className="lw-caps">Links</h3>
+              <h3 className="hive-caps">Links</h3>
               <dl className="lw-kv">
                 <Row term="Subject">
                   {subjectHref ? (
@@ -360,7 +360,7 @@ export default function LintFindingDrawer({
 
             <section data-testid="detail-history">
               <div className="lw-section-head">
-                <h3 className="lw-caps">Remediation history</h3>
+                <h3 className="hive-caps">Remediation history</h3>
                 {canOpenReport ? (
                   <Button
                     variant="link"

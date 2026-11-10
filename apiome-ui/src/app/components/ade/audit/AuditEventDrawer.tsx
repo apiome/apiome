@@ -106,7 +106,7 @@ export interface AuditEventDrawerProps {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="aud-caps mb-2">{title}</h3>
+      <h3 className="hive-caps mb-2">{title}</h3>
       {children}
     </section>
   );

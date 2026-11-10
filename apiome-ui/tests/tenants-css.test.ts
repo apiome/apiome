@@ -74,7 +74,6 @@ const BASE_TYPE_RULE_LINE = (() => {
 const TENANT_PRELUDES = [
   '.tnt-section-title',
   '.tnt-section-desc',
-  '.tnt-caps',
   '.tnt-lock-note',
   '.tnt-icon-tile',
   '.tnt-icon-tile > svg',
@@ -274,7 +273,6 @@ describe('density and font-scale independence', () => {
     for (const [prelude, expected] of [
       ['.tnt-section-title', 'var(--fs-lg)'],
       ['.tnt-section-desc', 'var(--fs-xs)'],
-      ['.tnt-caps', 'var(--fs-2xs)'],
       ['.tnt-lock-note', 'var(--fs-sm)'],
       ['.tnt-tool-row', 'var(--fs-sm)'],
       ['.tnt-dirty-bar', 'var(--fs-sm)'],
@@ -472,7 +470,7 @@ describe('what the block borrows rather than reinvents', () => {
   });
 
   it('tracks its caps labels with the shared caps tracking', () => {
-    for (const prelude of ['.tnt-caps', '.tnt-tool-row--head', '.tnt-kv dt']) {
+    for (const prelude of ['.hive-caps', '.tnt-tool-row--head', '.tnt-kv dt']) {
       expect(declaration(prelude, 'letter-spacing')).toBe('var(--track-caps)');
     }
   });

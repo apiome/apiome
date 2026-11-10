@@ -341,7 +341,7 @@ function ParsedProvenanceFilter({
         aria-label="Filter entities by provenance"
       >
         <SegmentedItem value="all" data-testid="catalog-detail-provenance-option-all">
-          All <span className="cid-quiet mono">{counts.all}</span>
+          All <span className="hive-quiet mono">{counts.all}</span>
         </SegmentedItem>
         {PROVENANCE_CLASSES.map((provenance) => (
           <SegmentedItem
@@ -351,7 +351,7 @@ function ParsedProvenanceFilter({
             title={PROVENANCE_PRESENTATION[provenance].meaning}
           >
             {PROVENANCE_PRESENTATION[provenance].label}{' '}
-            <span className="cid-quiet mono">{counts[provenance]}</span>
+            <span className="hive-quiet mono">{counts[provenance]}</span>
           </SegmentedItem>
         ))}
       </Segmented>
@@ -520,7 +520,7 @@ function ParsedGroupCard({
             ) : null}
           </div>
           {filtering && !rawOpen ? (
-            <span data-testid="catalog-detail-parsed-filter-count" className="cid-quiet mono">
+            <span data-testid="catalog-detail-parsed-filter-count" className="hive-quiet mono">
               {visible.length} of {total}
             </span>
           ) : null}

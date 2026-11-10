@@ -143,7 +143,7 @@ export function CatalogItemOverview({
                 <Braces aria-hidden />
                 API surface
               </CardTitle>
-              {countLine ? <span className="cid-quiet">{countLine}</span> : null}
+              {countLine ? <span className="hive-quiet">{countLine}</span> : null}
             </CardHeader>
             <CardBody>
               {hasAnyCount ? (
@@ -244,7 +244,7 @@ export function CatalogItemOverview({
                       {qualityScore}
                       <span className="cid-score__max"> /100</span>
                     </p>
-                    <p className="cid-quiet">{catalogQualityBand(qualityScore)?.band}</p>
+                    <p className="hive-quiet">{catalogQualityBand(qualityScore)?.band}</p>
                   </div>
                 </div>
                 <Meter
@@ -287,7 +287,7 @@ export function CatalogItemOverview({
                 >
                   {catalogSourceHeadline(source)}
                 </p>
-                <p className="cid-quiet">{catalogSourceKindView(source?.kind ?? null).label}</p>
+                <p className="hive-quiet">{catalogSourceKindView(source?.kind ?? null).label}</p>
               </div>
             </div>
             <div className="cid-chips">
@@ -308,7 +308,7 @@ export function CatalogItemOverview({
             <Card className="cid-panel" data-testid="catalog-detail-insights">
               <div className="cid-panel__head">
                 <h2 className="cid-panel__title">Model observability</h2>
-                <span className="cid-quiet mono">
+                <span className="hive-quiet mono">
                   {catalogModelCountLine(fieldStats.entityCount, fieldStats.fieldCount)}
                 </span>
               </div>
@@ -352,7 +352,7 @@ export function CatalogItemOverview({
               </div>
               {tagDistribution.length > 0 ? (
                 <>
-                  <h3 className="cid-caps">Entity kinds</h3>
+                  <h3 className="hive-caps">Entity kinds</h3>
                   <div className="cid-chips" data-testid="catalog-detail-kind-mix">
                     {tagDistribution.map((row) => (
                       <Badge key={row.tag} variant="neutral" mono>

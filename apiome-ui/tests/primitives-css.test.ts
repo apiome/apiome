@@ -75,7 +75,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const PRIMITIVE_PRELUDES = [
-  ".prm-quiet",
   ".prm-num",
   ".prm-faint",
   ".prm-hint",

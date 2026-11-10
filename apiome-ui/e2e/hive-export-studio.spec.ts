@@ -406,7 +406,7 @@ test.describe('a tinted surface keeps the page foreground legible', () => {
           if (value) notice.setAttribute('data-tone', value);
           else notice.removeAttribute('data-tone');
           const probe = document.createElement('span');
-          probe.className = 'xstd-quiet';
+          probe.className = 'hive-quiet';
           notice.appendChild(probe);
           const read = {
             ground: getComputedStyle(notice).backgroundColor,

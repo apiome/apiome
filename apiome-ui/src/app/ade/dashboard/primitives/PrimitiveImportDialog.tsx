@@ -573,7 +573,7 @@ export default function PrimitiveImportDialog({ onClose, onComplete, onMessage, 
           </span>
           <div className="imp-wizard__heading">
             <DialogTitle>Import primitives</DialogTitle>
-            <p className="prm-quiet">
+            <p className="hive-quiet">
               Review detected types, resolve refs and conflicts, then import.
             </p>
           </div>
@@ -831,10 +831,10 @@ function RefResolutionSection({
               >
                 <CheckCircle className="prm-detected__mark prm-detected__mark--ok" aria-hidden />
                 <span className="mono">{entry.ref}</span>
-                <span className="prm-quiet">→</span>
+                <span className="hive-quiet">→</span>
                 <span className="mono prm-refs__target">{entry.target}</span>
                 {entry.origin === 'import' ? (
-                  <span className="prm-quiet">(in this import)</span>
+                  <span className="hive-quiet">(in this import)</span>
                 ) : null}
                 {entry.rewrittenTo ? (
                   <span className="prm-caution">
@@ -845,7 +845,7 @@ function RefResolutionSection({
             ) : null
           )}
           {resolved.length > REF_LIST_CAP ? (
-            <li className="prm-quiet" data-testid="ref-resolved-truncated">
+            <li className="hive-quiet" data-testid="ref-resolved-truncated">
               +{resolved.length - REF_LIST_CAP} more resolved
             </li>
           ) : null}
@@ -1164,10 +1164,10 @@ function SourceMethodInput(props: SourceStepProps) {
               <FileJson className="prm-file__glyph" aria-hidden />
               <span className="prm-file__text">
                 <span className="prm-file__name">{file.name}</span>
-                <span className="prm-quiet">{(file.size / 1024).toFixed(1)} KB</span>
+                <span className="hive-quiet">{(file.size / 1024).toFixed(1)} KB</span>
               </span>
             </span>
-            {isLoadingFile ? <span className="prm-quiet">Processing file…</span> : null}
+            {isLoadingFile ? <span className="hive-quiet">Processing file…</span> : null}
             <Button variant="ghost" size="sm" onClick={onClearFile} aria-label="Clear file">
               <X aria-hidden />
             </Button>
@@ -1274,7 +1274,7 @@ function ReviewStep(props: ReviewStepProps) {
         </Badge>
         <Badge variant="outline">{summary.identical} identical</Badge>
         {summary.invalid > 0 && <Badge variant="danger">{summary.invalid} invalid</Badge>}
-        <span className="prm-quiet">· {summary.total} total</span>
+        <span className="hive-quiet">· {summary.total} total</span>
       </p>
 
       {review.warnings.length > 0 && (
@@ -1347,7 +1347,7 @@ function ReviewTypeRow(props: ReviewTypeRowProps) {
         <Label htmlFor={checkboxId} className="mono prm-review-row__name">
           {type.name}
         </Label>
-        {category && <span className="prm-quiet">({category})</span>}
+        {category && <span className="hive-quiet">({category})</span>}
         <Badge variant={badge.variant}>{badge.label}</Badge>
         {type.unresolved_refs.length > 0 && (
           <Badge variant="warn">
@@ -1391,7 +1391,7 @@ function ReviewTypeRow(props: ReviewTypeRowProps) {
 
       {type.status === 'conflict' && (
         <div className="prm-review-row__resolve">
-          <span className="prm-quiet">A different type already exists. Resolve:</span>
+          <span className="hive-quiet">A different type already exists. Resolve:</span>
           <select
             value={resolution?.action ?? 'keep'}
             onChange={(e) => onResolutionAction(type.name, e.target.value as ResolutionAction)}

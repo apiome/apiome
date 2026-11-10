@@ -77,7 +77,7 @@ export function DeliveryGatePanel({ delivery }: DeliveryGatePanelProps) {
         {blocked ? <ShieldAlert aria-hidden /> : <AlertTriangle aria-hidden />}
         <div className="min-w-0 space-y-1">
           <div className="xstd-gate__title">{delivery.headline}</div>
-          <p className="xstd-quiet" data-testid="delivery-gate-message">
+          <p className="hive-quiet" data-testid="delivery-gate-message">
             {delivery.message}
           </p>
         </div>

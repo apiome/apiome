@@ -256,7 +256,7 @@ export function MockCorrelationEditor({
         />
 
         {loading ? (
-          <p className="vdlg-quiet" data-testid="mock-correlation-loading">
+          <p className="hive-quiet" data-testid="mock-correlation-loading">
             Loading correlation…
           </p>
         ) : (
@@ -315,7 +315,7 @@ export function MockCorrelationEditor({
               <fieldset className="vdlg-mock__scenario" data-testid="mock-correlation-bindings">
                 <div>
                   <p className="vdlg-section-title">Explicit bindings</p>
-                  <p className="vdlg-quiet">
+                  <p className="hive-quiet">
                     {modeCopy.infers
                       ? 'Applied after the automatic ones above and always winning, so a binding here overrides whatever inference decided for the same property.'
                       : 'The only bindings applied in this mode.'}
@@ -323,7 +323,7 @@ export function MockCorrelationEditor({
                 </div>
 
                 {draft.bindings.length === 0 && (
-                  <p className="vdlg-quiet">
+                  <p className="hive-quiet">
                     No explicit bindings.{' '}
                     {modeCopy.infers
                       ? 'The automatic bindings above are all that apply.'
@@ -466,7 +466,7 @@ export function MockCorrelationEditor({
             <fieldset className="vdlg-mock__scenario" data-testid="mock-correlation-preview">
               <div>
                 <p className="vdlg-section-title">Try it</p>
-                <p className="vdlg-quiet">
+                <p className="hive-quiet">
                   Renders a request against the settings on screen — no save, no mock to enable,
                   nothing sent anywhere. The trace says which layer produced each value.
                 </p>

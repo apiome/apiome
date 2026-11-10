@@ -112,7 +112,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
         {state.error && <Alert variant="error">{state.error}</Alert>}
         <Card>
           <CardContent>
-            <p className="sg-quiet">Policy settings not found.</p>
+            <p className="hive-quiet">Policy settings not found.</p>
           </CardContent>
         </Card>
       </div>
@@ -147,7 +147,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
               {/* `h3` takes its type from the unlayered base rules in `globals.css`, which
                   outrank every utility class — so it is not given one here. */}
               <h3 className="gd-card-title">Policy</h3>
-              <p className="sg-quiet">
+              <p className="hive-quiet">
                 Gate settings applied when evaluating lint evidence against this guide.
               </p>
             </span>
@@ -315,7 +315,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
         </CardContent>
 
         <CardFooter>
-          <span className="sg-quiet">Saving creates an immutable policy version.</span>
+          <span className="hive-quiet">Saving creates an immutable policy version.</span>
           {!readOnly && (
             <Button
               disabled={state.saving || !state.dirty}
@@ -337,7 +337,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
             </span>
             <span className="gd-card-header__text">
               <h3 className="gd-card-title">Policy versions</h3>
-              <p className="sg-quiet">
+              <p className="hive-quiet">
                 Immutable snapshots created when policy is saved.{' '}
                 <a
                   href={buildGovernanceDocsHref(POLICY_DOCS_PAGE)}
@@ -355,7 +355,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
 
         {state.versions.length === 0 ? (
           <CardContent>
-            <p className="sg-quiet">No policy versions yet.</p>
+            <p className="hive-quiet">No policy versions yet.</p>
           </CardContent>
         ) : (
           <ul className="gd-version-list">

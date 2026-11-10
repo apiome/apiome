@@ -70,7 +70,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const CATALOG_PRELUDES = [
-  '.cat-quiet',
   '.cat-stamp',
   '.cat-menu__item--danger[data-highlighted], .cat-menu__item--danger:hover',
   '.cat-menu__item--danger[data-highlighted] > svg, .cat-menu__item--danger:hover > svg',
@@ -550,7 +549,6 @@ describe('horizontal containment', () => {
 describe('contrast', () => {
   /** Every quiet line in the block, with the ground it is drawn on. */
   const QUIET = [
-    ['.cat-quiet', '--bg-surface'],
     ['.cat-stamp', '--bg-surface'],
     ['.cat-sort-mark', '--bg-surface'],
     ['.cat-deleted-switch', '--bg-surface'],

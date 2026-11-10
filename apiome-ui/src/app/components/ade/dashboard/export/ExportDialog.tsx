@@ -676,7 +676,7 @@ export function ExportDialog({
         {step === 'export' && multiMode && (
           <div className="space-y-4" data-testid="export-dialog-multi-run">
             {presetDelivery ? (
-              <p className="xstd-quiet">
+              <p className="hive-quiet">
                 Delivered with{' '}
                 <strong>{presetDelivery.names.length ? presetDelivery.names.join(', ') : 'the preset’s delivery profiles'}</strong>{' '}
                 as soon as

@@ -149,7 +149,7 @@ export function LintViolationFindingsList({
     <div className={className} data-testid="lint-violations-list">
       {showHeader ? (
         <div className="mb-3 flex items-center justify-between gap-3">
-          <span className="lw-caps">Findings</span>
+          <span className="hive-caps">Findings</span>
           <label className="flex items-center gap-2 text-xs text-fg-muted">
             <Switch
               checked={groupByRule}

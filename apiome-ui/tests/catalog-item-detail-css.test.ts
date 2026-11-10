@@ -70,12 +70,10 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const DETAIL_PRELUDES = [
-  '.cid-quiet',
   '.cid-note',
   '.cid-note--icon',
   '.cid-note--icon > svg',
   '.cid-micro',
-  '.cid-caps',
   '.cid-absent',
   '.cid-caution',
   '.cid-caution--sm',
@@ -443,10 +441,8 @@ describe('horizontal containment', () => {
 describe('contrast', () => {
   /** Every quiet line in the block, with the ground it is drawn on. */
   const QUIET = [
-    '.cid-quiet',
     '.cid-note',
     '.cid-micro',
-    '.cid-caps',
     '.cid-absent',
     '.cid-caution',
     '.cid-idline',

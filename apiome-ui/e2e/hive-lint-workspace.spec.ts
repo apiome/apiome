@@ -159,7 +159,7 @@ const SUMMARY_MARKUP = `
   </div>
   <div class="rounded-lg bg-surface text-fg shadow-sm lw-bands" id="lw-bands">
     <section>
-      <h2 class="lw-caps">Grades</h2>
+      <h2 class="hive-caps">Grades</h2>
       <div class="lw-chip-row">
         <span class="lw-grade-chip"><span class="lw-grade-chip__letter bg-ok text-fg-on-accent">A</span><span class="lw-grade-chip__count">3</span></span>
         <span class="lw-grade-chip"><span class="lw-grade-chip__letter bg-warn text-fg-on-accent">C</span><span class="lw-grade-chip__count">2</span></span>
@@ -168,7 +168,7 @@ const SUMMARY_MARKUP = `
       </div>
     </section>
     <section>
-      <h2 class="lw-caps">Axes <span class="lw-caps__aside">· average score</span></h2>
+      <h2 class="hive-caps">Axes <span class="lw-caps__aside">· average score</span></h2>
       <div class="lw-chip-row">
         <span class="${BADGE_LG} bg-accent-soft text-accent-fg">Quality · 84</span>
         <span class="${BADGE_LG} bg-accent-soft text-accent-fg">Supportability · 78</span>
@@ -181,7 +181,7 @@ const SUMMARY_MARKUP = `
 /** The saved-views bar, with the current view marked. */
 const VIEWS_MARKUP = `
 <section class="lw-views" aria-label="Saved views" id="lw-views">
-  <h2 class="lw-caps">Views</h2>
+  <h2 class="hive-caps">Views</h2>
   <span class="lw-view-chip is-current" id="lw-view-current" data-current="true">
     <button type="button" class="lw-view-chip__apply">New security errors</button>
     <button type="button" class="lw-view-chip__action" aria-label="Unpin New security errors">${LINK_GLYPH}</button>
@@ -199,7 +199,7 @@ const VIEWS_MARKUP = `
 function facetGroup(label: string, chips: ReadonlyArray<[string, number, string | null]>): string {
   return `
   <div class="lw-facet-group" role="group" aria-label="${label}">
-    <span class="lw-caps">${label}</span>
+    <span class="hive-caps">${label}</span>
     ${chips
       .map(
         ([name, count, tone], index) => `
@@ -382,7 +382,7 @@ const DRAWER_MARKUP = `
 
       <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4 lw-drawer-body" id="lw-drawer-body">
         <section>
-          <h3 class="lw-caps">Evidence</h3>
+          <h3 class="hive-caps">Evidence</h3>
           <dl class="lw-kv" id="lw-kv">
             <dt>Scanner</dt><dd class="mono">apiome-security</dd>
             <dt>Profile</dt><dd>Acme REST · security pack</dd>
@@ -393,7 +393,7 @@ const DRAWER_MARKUP = `
         </section>
 
         <section>
-          <h3 class="lw-caps">Links</h3>
+          <h3 class="hive-caps">Links</h3>
           <dl class="lw-kv">
             <dt>Subject</dt><dd><a class="lw-link" id="lw-link" href="#">Payments API · v2.4.0${LINK_GLYPH}</a></dd>
             <dt>Policy</dt><dd><span class="lw-inline"><span class="${BADGE} bg-danger-soft text-danger-fg">Failed</span><span class="lw-quiet">evaluation <span class="mono">ev_44b0c1</span></span></span></dd>
@@ -402,7 +402,7 @@ const DRAWER_MARKUP = `
 
         <section>
           <div class="lw-section-head">
-            <h3 class="lw-caps">Remediation history</h3>
+            <h3 class="hive-caps">Remediation history</h3>
             <button type="button" class="${BUTTON_SM} h-auto bg-transparent p-0 px-0 text-accent-fg">Open lint report</button>
           </div>
           <ol class="lw-timeline" id="lw-timeline">

@@ -121,7 +121,7 @@ export default function RelationshipGraphDialog({
                   ? 'No schema data loaded.'
                   : 'This version has no classes yet.'}
               </p>
-              <p className="vdlg-quiet">
+              <p className="hive-quiet">
                 Add classes in the Studio and use reference properties ($ref) to other classes to see a relationship graph here.
               </p>
             </div>

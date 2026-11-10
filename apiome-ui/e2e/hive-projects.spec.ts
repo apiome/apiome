@@ -214,7 +214,7 @@ function projectCard(card: CardFixture): string {
        </footer>`;
 
   const meter = deleted
-    ? `<span class="prj-quiet">Empty project</span>`
+    ? `<span class="hive-quiet">Empty project</span>`
     : `<div class="prj-card__scores prj-card__above">
          <button type="button" class="prj-orb prj-orb--action" id="${card.id}-quality" title="Open quality score history">${ring('88', 'Quality score')}<span class="prj-orb__label">Quality</span></button>
          <button type="button" class="prj-orb prj-orb--action" title="Open lint report">${ring('B', 'Lint grade')}<span class="prj-orb__label">Lint</span></button>

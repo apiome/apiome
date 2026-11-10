@@ -414,7 +414,7 @@ export default function LintQueueTable({
           <div className="lw-facets" data-testid="workspace-facets">
             {groups.map((group) => (
               <div key={group.key} className="lw-facet-group" role="group" aria-label={group.label}>
-                <span className="lw-caps">{group.label}</span>
+                <span className="hive-caps">{group.label}</span>
                 {group.chips.map((chip) => (
                   <DataTableFilterChip
                     key={chip.value}

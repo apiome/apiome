@@ -51,17 +51,17 @@ export function CompareRevisionCard({
     <div className="vdlg-revcard" data-side={side === 'base' ? 'base' : 'compare'}>
       <div className="vdlg-revcard__head">
         <span className="vdlg-revcard__label">
-          {label} <span className="vdlg-quiet">({side})</span>
+          {label} <span className="hive-quiet">({side})</span>
         </span>
         {published ? <Badge status="published">Published</Badge> : <Badge variant="outline">Draft</Badge>}
       </div>
       <div className="vdlg-revcard__note">
-        <span className="vdlg-quiet">Revision note:</span> {note || '—'}
+        <span className="hive-quiet">Revision note:</span> {note || '—'}
       </div>
       {body ? (
         <pre className="vdlg-revcard__changelog">{body}</pre>
       ) : (
-        <p className="vdlg-quiet">No changelog</p>
+        <p className="hive-quiet">No changelog</p>
       )}
       {breakingHints.length > 0 ? (
         <p className="vdlg-revcard__hints">

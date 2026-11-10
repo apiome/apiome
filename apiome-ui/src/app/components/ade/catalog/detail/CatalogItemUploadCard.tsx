@@ -93,7 +93,7 @@ export function CatalogItemUploadCard({ upload, error, canReupload, onReupload, 
           <dt>Uploaded</dt>
           <dd>
             {formatRefreshTime(upload.uploadedAt)}
-            <span className="cid-quiet"> ({uploadAgeText(upload.ageDays)})</span>
+            <span className="hive-quiet"> ({uploadAgeText(upload.ageDays)})</span>
           </dd>
           <dt>May be stale after</dt>
           <dd data-testid="catalog-detail-upload-threshold">
@@ -102,7 +102,7 @@ export function CatalogItemUploadCard({ upload, error, canReupload, onReupload, 
           <dt>Re-upload uses</dt>
           <dd data-testid="catalog-detail-upload-settings">
             {!upload.spec ? (
-              <span className="cid-quiet">Default settings (uploaded before Apiome kept import settings)</span>
+              <span className="hive-quiet">Default settings (uploaded before Apiome kept import settings)</span>
             ) : settings.length ? (
               <ul className="cid-upload__settings">
                 {settings.map((row) => (
@@ -112,7 +112,7 @@ export function CatalogItemUploadCard({ upload, error, canReupload, onReupload, 
                 ))}
               </ul>
             ) : (
-              <span className="cid-quiet">The default settings, as the first upload did</span>
+              <span className="hive-quiet">The default settings, as the first upload did</span>
             )}
           </dd>
         </dl>

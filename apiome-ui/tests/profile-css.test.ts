@@ -106,7 +106,6 @@ const ACCOUNT_PRELUDES = [
   '.acct-row__title',
   '.acct-row__desc',
   '.acct-2fa',
-  '.acct-caps',
   '.acct-methods',
   '.acct-methods__list',
   '.acct-methods__list li',
@@ -378,7 +377,7 @@ describe('type', () => {
   });
 
   it('sets the caps labels in the 11 px step the design language reserves for them', () => {
-    for (const prelude of ['.acct-caps', '.acct-tile__label']) {
+    for (const prelude of ['.hive-caps', '.acct-tile__label']) {
       expect(declaration(prelude, 'font-size')).toBe('var(--fs-2xs)');
       expect(declaration(prelude, 'letter-spacing')).toBe('var(--track-caps)');
       expect(declaration(prelude, 'text-transform')).toBe('uppercase');

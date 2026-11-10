@@ -109,7 +109,7 @@ export default function LintSavedViewsBar({
 
   return (
     <section className="lw-views" aria-label="Saved views" data-testid="lint-workspace-saved-views">
-      <h2 className="lw-caps">Views</h2>
+      <h2 className="hive-caps">Views</h2>
 
       {views.map((view) => {
         const current = savedViewMatches(view, filters, sort);

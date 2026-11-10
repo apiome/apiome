@@ -228,7 +228,7 @@ export function MockPreviewPanel({
             {result.operation ? (
               <span className="mono mock-prev__op">{result.operation}</span>
             ) : (
-              <span className="vdlg-quiet">No operation matched</span>
+              <span className="hive-quiet">No operation matched</span>
             )}
             {result.draft && <Badge variant="warn">Unsaved draft</Badge>}
           </div>
