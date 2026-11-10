@@ -867,7 +867,7 @@ const DataTableToolbarSpacer = React.forwardRef<
 DataTableToolbarSpacer.displayName = 'DataTableToolbarSpacer';
 
 export interface DataTableSearchProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** The field's accessible name — required, since the magnifier is decorative. */
   'aria-label': string;
 }

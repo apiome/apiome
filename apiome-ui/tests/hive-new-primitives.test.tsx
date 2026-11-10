@@ -217,7 +217,7 @@ describe('Segmented — the view switch', () => {
     expect(classesOf(selected)).toContain('data-[state=on]:shadow-[var(--shadow-raised)]');
     // Derived from the control metric, never frozen: the density and font-size
     // preferences reach the option through `--control-h`.
-    expect(classesOf(selected)).toContain('h-[calc(var(--control-h)-0.5rem)]');
+    expect(classesOf(selected)).toContain('h-[calc(var(--control-h)-0.375rem)]');
   });
 
   it('renders the sm option one step down', () => {

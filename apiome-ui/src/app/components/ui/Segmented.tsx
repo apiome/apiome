@@ -33,8 +33,12 @@ import { cn } from '../../../../lib/utils';
  * group knows which of them owns its single Tab stop before anything has been rendered.
  */
 
-/** The sizes an option comes in — the track itself is the same well at both. */
-export type SegmentedSize = 'default' | 'sm';
+/**
+ * The sizes an option comes in — the track itself is the same well at each. With the
+ * track's inset the whole control is `--control-h-sm`, `--control-h` or `--control-h-lg`
+ * tall, the same as a `Button` or field of that size beside it (SUX-1.2).
+ */
+export type SegmentedSize = 'sm' | 'default' | 'lg';
 
 /**
  * The track: a tinted inset well the thumb is raised out of, 3 px around it (`p-0.75`).
@@ -47,10 +51,10 @@ const segmentedTrackClass =
 /**
  * One option.
  *
- * The height is derived from `--control-h` rather than stated, so an option keeps its
- * proportion to the buttons beside it at both densities and every font scale: the track
- * inset (3 px top and bottom, plus the 1 px the design leaves) is subtracted from the
- * control metric instead of being frozen at the comfortable value.
+ * The height is derived from the control metric rather than stated, so the whole control
+ * — option plus the track's 3 px inset top and bottom (`0.375rem`) — is exactly as tall as
+ * a button of the same size, at both densities and every font scale (SUX-1.2; the default
+ * used to leave a 2 px gap and stood 34 px beside a 36 px button).
  *
  * The radius is derived the same way — the track's `--r-md` less its own 3 px inset —
  * which is what keeps the thumb concentric with the well however the radius is themed.
@@ -74,10 +78,16 @@ const segmentedItemVariants = cva(
   {
     variants: {
       size: {
-        /** 28 px — the 36 px control less the track's 2 × 3 px inset and a 1 px breath. */
-        default: 'h-[calc(var(--control-h)-0.5rem)] px-2.75 text-sm',
-        /** 24 px — the toolbar/filter size, beside a `sm` button. */
+        /**
+         * 24 px — the toolbar/filter size, beside a `sm` button. Spelled from `--control-h`
+         * (less `0.75rem`), which equals `--control-h-sm` less the `0.375rem` inset at both
+         * densities (36 − 12 = 30 − 6; 32 − 12 = 26 − 6), so existing markup keeps its class.
+         */
         sm: 'h-[calc(var(--control-h)-0.75rem)] px-2 text-xs',
+        /** 30 px — the 36 px `--control-h` less the track's 2 × 3 px inset. */
+        default: 'h-[calc(var(--control-h)-0.375rem)] px-2.75 text-sm',
+        /** 36 px — the 42 px `--control-h-lg` less the track's 2 × 3 px inset. */
+        lg: 'h-[calc(var(--control-h-lg)-0.375rem)] px-3.5 text-base',
       },
     },
     defaultVariants: { size: 'default' },

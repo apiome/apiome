@@ -3,6 +3,12 @@
 import * as React from 'react';
 import { CircleAlert } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
+import {
+  FIELD_LABEL_SIZE_CLASS,
+  FieldSizeContext,
+  useFieldSize,
+  type FieldSize,
+} from './controlSize';
 
 export interface FormFieldProps {
   /** The field's name. Rendered above the control. */
@@ -23,6 +29,12 @@ export interface FormFieldProps {
    * pointing `for` at a `<div>` is worse than pointing it nowhere. So the caller states it.
    */
   htmlFor?: string;
+  /**
+   * The size of the fields inside (SUX-1.2): every `Input`, `Textarea` and `SelectTrigger`
+   * below takes it unless it names its own, and the label drops to `text-xs` at `sm`.
+   * Defaults to an enclosing `FormField`'s size, else `md`.
+   */
+  size?: FieldSize;
   className?: string;
   children: React.ReactNode;
 }
@@ -43,10 +55,14 @@ export interface FormFieldProps {
  * validation failure is a sentence a sighted reader sees appear and nobody else is told about
  * — which is what the hand-rolled fields this primitive replaced had each wired up for
  * themselves, in four different ways.
+ *
+ * `size` reaches the control through `FieldSizeContext` rather than a cloned prop, so it
+ * also finds a `SelectTrigger` inside a `Select`, or an input inside a wrapper `div`.
  */
 export const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
-  ({ label, helperText, error, required, htmlFor, className, children }, ref) => {
+  ({ label, helperText, error, required, htmlFor, size, className, children }, ref) => {
     const invalid = Boolean(error);
+    const resolvedSize = useFieldSize(size);
 
     // The message's id, so the control can point at it. Derived from the control's own id
     // rather than generated, so the two cannot drift apart across a re-render; a field that
@@ -81,7 +97,13 @@ export const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
     return (
       <div ref={ref} data-invalid={invalid || undefined} className={cn('flex flex-col gap-1.5', className)}>
         {label && (
-          <label htmlFor={htmlFor} className="text-sm font-medium tracking-[0.01em] text-fg">
+          <label
+            htmlFor={htmlFor}
+            className={cn(
+              FIELD_LABEL_SIZE_CLASS[resolvedSize],
+              'font-medium tracking-[0.01em] text-fg'
+            )}
+          >
             {label}
             {required && (
               <span className="ml-0.5 text-danger" aria-hidden="true">
@@ -90,7 +112,7 @@ export const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
             )}
           </label>
         )}
-        {control}
+        <FieldSizeContext.Provider value={resolvedSize}>{control}</FieldSizeContext.Provider>
         {error ? (
           <p id={errorId} role="alert" className="flex items-center gap-1 text-xs text-danger-fg">
             <CircleAlert className="size-3 shrink-0" aria-hidden="true" />

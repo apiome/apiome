@@ -1,6 +1,6 @@
 ---
 title: "Hive design tokens"
-description: "The named tokens the Hive design system builds with, starting with stacking."
+description: "The named tokens the Hive design system builds with: spacing, sizes, stacking."
 sidebar_position: 13
 tags: [content, reference]
 ---
@@ -20,7 +20,7 @@ place.
 | Radius and elevation | `--radius-*`, `--shadow-*` | `rounded-md`, `shadow-lg` … |
 | Motion | `--dur-*`, `--ease-*` | `transition`, `duration-*` |
 | Spacing | `--space-1` … `--space-6`, `--space-8`, `--space-10`, `--space-12` | `var(--space-4)` in a stylesheet; `p-4`, `gap-4` … |
-| Density and layout | `--control-h`, `--page-pad`, `--rail-w` … | `h-control`, `p-page` … |
+| Density and layout | `--control-h`, `--control-h-sm`, `--control-h-lg`, `--page-pad`, `--rail-w` … | `h-control`, `p-page`, the `size` prop of controls (see below) … |
 | Stacking | `--z-*` | `z-chrome`, `z-modal` … (see below) |
 
 ### Spacing
@@ -86,9 +86,46 @@ Inside an element that already stacks (anything with its own z-index), a step on
 element's children. A menu inside the header can never rise above a dialog, however high its
 step.
 
+### Control sizes
+
+Buttons, text inputs, selects, text areas and segmented switches come in the same three sizes.
+Each size uses one height token, so controls of the same size placed side by side are the same
+height and their text lines up. The heights change with the **Density** and **Font size**
+preferences. SUX-1.2 (apiome#6749) added the small and large sizes to inputs, selects and text
+areas.
+
+| Size | Height token | Height (**Comfortable**) | Height (**Compact**) | Padding | Text | Corner radius |
+| --- | --- | --- | --- | --- | --- | --- |
+| Small | `--control-h-sm` | 30 px | 26 px | 10 px | 12 px | `rounded-sm` |
+| Medium (the default) | `--control-h` | 36 px | 32 px | 12 px | 14 px | `rounded-md` |
+| Large | `--control-h-lg` | 42 px | 38 px | 16 px | 16 px | `rounded-md` |
+
+Each control names the sizes in its own way:
+
+| Control | Small | Medium | Large |
+| --- | --- | --- | --- |
+| `Button` | `size="sm"` | no `size`, or `size="default"` | `size="lg"` |
+| `Input`, `SelectTrigger`, `Textarea` | `size="sm"` | no `size`, or `size="md"` | `size="lg"` |
+| `Segmented` | `size="sm"` | no `size`, or `size="default"` | `size="lg"` |
+| `FormField` | `size="sm"` | no `size`, or `size="md"` | `size="lg"` |
+
+- A control with no `size` is medium. Existing screens did not change.
+- A `FormField` passes its size to the input, select or text area inside it, even one inside a
+  wrapper. Its label is 12 px at the small size. A `size` set on the control itself wins.
+- A text area keeps its minimum height of six lines and grows as you type. Its size changes only
+  its padding, text and corner radius.
+- A segmented switch is as tall as a button of the same size, including its track. Before
+  SUX-1.2, the medium one was 34 px next to a 36 px button.
+- `Input` uses `size` for its height. The HTML `size` attribute, a width in characters, is not
+  available. Set the width with a class such as `w-40`.
+
+<Screenshot id="design-system-control-sizes" alt="The control sizes specimen: a small, a medium and a large row, each with a button, an input, a select and a segmented switch of the same height, and a labelled input and text area under each row" />
+
 ## Where to see them
 
 The design-system gallery is the `/design-system` route of `apiome-ui`. It needs no sign-in.
 **Overlays & banners** has **Open layered drawer**, which opens a drawer, a dialog inside it and
 a select inside that. It is the case the stacking scale exists for, and
-`apiome-ui/e2e/hive-z-index-scale.spec.ts` checks it in a browser.
+`apiome-ui/e2e/hive-z-index-scale.spec.ts` checks it in a browser. **Forms** ends with the control
+sizes: a row for each size, which `apiome-ui/e2e/hive-control-sizes.spec.ts` measures in a browser
+at both densities.

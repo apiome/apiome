@@ -123,6 +123,7 @@ import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
 import { ComingNextShowcase } from './ComingNextShowcase';
+import { ControlSizesShowcase } from './ControlSizesShowcase';
 import { LayeringShowcase } from './LayeringShowcase';
 import { QuietListShowcase } from './QuietListShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
@@ -413,7 +414,7 @@ export function HiveGallery() {
         <Section
           id="forms"
           title="Forms"
-          description="36 px controls, hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon."
+          description="36 px controls by default, with sm and lg steps that match the buttons. Hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon."
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
@@ -492,6 +493,7 @@ export function HiveGallery() {
               </Demo>
             </div>
           </div>
+          <ControlSizesShowcase />
         </Section>
 
         <Section

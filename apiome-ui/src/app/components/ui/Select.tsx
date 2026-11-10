@@ -5,6 +5,7 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../../../../lib/utils';
 import { CONTROL_FIELD_CLASS } from './Input';
+import { fieldSizeVariants, useFieldSize, type FieldSize } from './controlSize';
 
 /**
  * Select — the Hive dropdown (HIVE-2.1, #5280).
@@ -20,26 +21,43 @@ const Select = SelectPrimitive.Root;
 const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 
+/** Props of {@link SelectTrigger}. */
+export interface SelectTriggerProps
+  extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> {
+  /**
+   * Height step, matching `Input` and `Button` (SUX-1.2). Defaults to the surrounding
+   * `FormField`'s size, else `md`.
+   */
+  size?: FieldSize;
+}
+
+/**
+ * The closed select — the same field chrome and size steps as {@link Input}, with a chevron.
+ */
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      CONTROL_FIELD_CLASS,
-      'h-[var(--control-h)] items-center justify-between gap-2 text-left',
-      '[&>span]:line-clamp-1',
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="size-4 shrink-0 text-fg-subtle" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-));
+  SelectTriggerProps
+>(({ className, children, size, ...props }, ref) => {
+  const resolvedSize = useFieldSize(size);
+  return (
+    <SelectPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        CONTROL_FIELD_CLASS,
+        fieldSizeVariants({ size: resolvedSize }),
+        'items-center justify-between gap-2 text-left',
+        '[&>span]:line-clamp-1',
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown className="size-4 shrink-0 text-fg-subtle" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  );
+});
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
 const SelectScrollUpButton = React.forwardRef<
