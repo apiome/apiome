@@ -61,8 +61,23 @@ const dialogContentVariants = cva(
         /** 1200 px, near-full height — a workbench. */
         full: 'h-[calc(100vh-3rem)] max-w-[75rem]',
       },
+      /**
+       * A dialog that walks through steps or tabs (`.hive-dialog--steps` in globals.css,
+       * SUX-2.3).
+       *
+       * An ordinary dialog is as tall as its content and centred, so when a step swaps in a
+       * longer or shorter body both edges move and the stepper and buttons jump under the
+       * pointer. A stepped dialog has one fixed height — `--dialog-steps-block-size`, capped
+       * at the viewport — and is a column: the header and footer keep their place and the
+       * body between them ({@link DialogBody}) scrolls. Every step therefore has the same
+       * outer box.
+       */
+      steps: {
+        true: 'hive-dialog--steps',
+        false: '',
+      },
     },
-    defaultVariants: { size: 'default' },
+    defaultVariants: { size: 'default', steps: false },
   }
 );
 
@@ -98,6 +113,7 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
       className,
       children,
       size,
+      steps,
       showCloseButton = true,
       closeLabel = 'Close',
       onOpenAutoFocus,
@@ -112,7 +128,7 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
         <DialogOverlay />
         <DialogPrimitive.Content
           ref={ref}
-          className={cn(dialogContentVariants({ size }), className)}
+          className={cn(dialogContentVariants({ size, steps }), className)}
           {...props}
           onOpenAutoFocus={(event) => {
             // Runs before Radix moves focus in, so this is still the element that opened it.
@@ -146,10 +162,30 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
 );
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
+/**
+ * The dialog's head: title, description and — in a stepped dialog — the stepper or tab list.
+ *
+ * `hive-dialog__header` is the hook a stepped dialog uses to keep the head from shrinking.
+ */
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('flex flex-col gap-1 pr-8 text-left', className)} {...props} />
+  <div className={cn('hive-dialog__header flex flex-col gap-1 pr-8 text-left', className)} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
+
+/**
+ * The scrolling middle of a stepped dialog (`<DialogContent steps>`).
+ *
+ * It takes the height the header and footer leave and scrolls its own content, so a long
+ * step scrolls inside the frame rather than growing it. Outside a stepped dialog it is a
+ * plain block that scrolls only if a caller caps its height.
+ *
+ * @param props Any `<div>` attribute; `className` is merged after the slot's own classes.
+ * @returns The body region.
+ */
+const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn('hive-dialog__body min-h-0 flex-1 overflow-y-auto', className)} {...props} />
+);
+DialogBody.displayName = 'DialogBody';
 
 export interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -166,7 +202,8 @@ export interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> 
 const DialogFooter = ({ className, bleed = true, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
+      // `hive-dialog__footer`: the hook a stepped dialog uses to pin the footer to its foot.
+      'hive-dialog__footer flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
       bleed &&
         '-mx-6 -mb-6 mt-2 rounded-b-xl border-t border-border bg-[color-mix(in_srgb,var(--bg-subtle)_60%,var(--bg-surface))] px-6 py-3.5',
       className,
@@ -204,6 +241,7 @@ export {
   DialogTrigger,
   DialogContent,
   DialogHeader,
+  DialogBody,
   DialogFooter,
   DialogTitle,
   DialogDescription,

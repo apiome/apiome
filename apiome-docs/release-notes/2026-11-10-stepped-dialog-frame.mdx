@@ -1,0 +1,21 @@
+---
+slug: stepped-dialog-frame
+title: A fixed frame for dialogs with steps
+description: "DialogContent gains an opt-in steps frame: one height, a scrolling body and a pinned footer."
+authors: [apiome]
+---
+
+The shared dialog has a new option for dialogs with steps or tabs. With `steps`, a dialog keeps one
+height on every step, its footer stays at the bottom, and a long step scrolls inside it. See
+[Stepped dialogs](/reference/design-tokens#stepped-dialogs).
+
+{/* truncate */}
+
+- **Opt-in.** Dialogs in the web app look the same as before; none of them uses the option yet.
+  This is not the fixed-height change that was
+  [rolled back](/release-notes/form-and-dialog-spacing-reverted) on 9 November.
+- **Studio.** The Studio class import, class and property editors, canvas settings and export
+  dialogs use it.
+- **For contributors.** `DialogContent` takes `steps`, and the new `DialogBody` slot is the part
+  that scrolls. The height is the `--dialog-steps-block-size` token, 720 px at the default font
+  size, or less in a short window.

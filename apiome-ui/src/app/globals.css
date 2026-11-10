@@ -2148,6 +2148,32 @@ html[data-kbd-hints="off"] .kbd-group {
   pointer-events: none;
 }
 
+/* A stepped dialog (`<DialogContent steps>`, SUX-2.3): one fixed height on every step
+   rather than content-tall, so neither edge moves when a step or tab swaps in a longer or
+   shorter body. It is a column — the header and footer keep their size and the
+   `DialogBody` between them scrolls. The height is `--dialog-steps-block-size` (720 px at
+   the default font size), capped at the viewport less the 1.5 rem margin every dialog
+   keeps; a caller may set the property on its own class. Unlayered, so it outranks the
+   base panel's `grid` and `overflow-y-auto` utilities; `full` is already fixed-height and
+   keeps its own. */
+.hive-dialog.hive-dialog--steps {
+  --dialog-steps-block-size: 45rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  block-size: min(var(--dialog-steps-block-size), calc(100vh - 3rem));
+}
+
+.hive-dialog--steps > .hive-dialog__header {
+  flex-shrink: 0;
+}
+
+/* The footer sits at the foot of the frame, not under whatever the step happened to hold. */
+.hive-dialog--steps > .hive-dialog__footer {
+  flex-shrink: 0;
+  margin-block-start: auto;
+}
+
 .hive-overlay[data-state="open"] {
   animation: hive-overlay-in var(--dur-base) var(--ease-out);
 }

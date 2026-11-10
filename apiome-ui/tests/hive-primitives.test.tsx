@@ -30,8 +30,10 @@ import {
   CardHeader,
   Checkbox,
   Dialog,
+  DialogBody,
   DialogContent,
   DialogFooter,
+  DialogHeader,
   DialogTitle,
   FormField,
   Input,
@@ -444,6 +446,49 @@ describe('Dialog', () => {
     const classes = classesOf(screen.getByRole('dialog'));
     expect(classes).toContain('max-w-2xl');
     expect(classes).not.toContain('max-w-[35rem]');
+  });
+
+  it('is an ordinary content-tall dialog unless `steps` is set', () => {
+    render(
+      <Dialog open>
+        <DialogContent size="lg">
+          <DialogTitle>Publish</DialogTitle>
+        </DialogContent>
+      </Dialog>
+    );
+    expect(classesOf(screen.getByRole('dialog'))).not.toContain('hive-dialog--steps');
+  });
+
+  it.each([
+    ['lg', 'max-w-[47.5rem]'],
+    ['xl', 'max-w-[60rem]'],
+  ] as const)('gives a stepped %s dialog the fixed steps frame at its own width', (size, width) => {
+    render(
+      <Dialog open>
+        <DialogContent size={size} steps>
+          <DialogHeader>
+            <DialogTitle>Import</DialogTitle>
+          </DialogHeader>
+          <DialogBody>step body</DialogBody>
+          <DialogFooter>actions</DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+    const classes = classesOf(screen.getByRole('dialog'));
+    expect(classes).toContain('hive-dialog--steps');
+    expect(classes).toContain(width);
+    // The slots carry the hooks `.hive-dialog--steps` pins and scrolls by.
+    expect(classesOf(screen.getByText('Import').parentElement as HTMLElement)).toContain('hive-dialog__header');
+    expect(classesOf(screen.getByText('step body'))).toContain('hive-dialog__body');
+    expect(classesOf(screen.getByText('actions'))).toContain('hive-dialog__footer');
+  });
+
+  it('scrolls the body slot inside the space the header and footer leave', () => {
+    render(<DialogBody className="px-1">step body</DialogBody>);
+    const classes = classesOf(screen.getByText('step body'));
+    for (const name of ['hive-dialog__body', 'flex-1', 'min-h-0', 'overflow-y-auto', 'px-1']) {
+      expect(classes).toContain(name);
+    }
   });
 
   it('bleeds the footer to the dialog edges by default, and stops when told to', () => {
