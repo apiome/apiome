@@ -466,7 +466,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
           if (!open) resetRegen();
         }}
       >
-        <DialogContent size="sm" steps>
+        <DialogContent size="sm">
           <DialogHeader className="acct-dialog__header acct-dialog__header--stacked">
             <div className="acct-dialog__lead">
               <span className="acct-glyph acct-glyph--warn" aria-hidden>

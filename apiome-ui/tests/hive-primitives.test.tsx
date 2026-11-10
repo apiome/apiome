@@ -33,11 +33,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogTitle,
-  Form,
-  FormActions,
   FormField,
-  FormRow,
-  FormSection,
   Input,
   Label,
   RadioGroup,
@@ -406,58 +402,6 @@ describe('Alert — the banner', () => {
   });
 });
 
-describe('Form', () => {
-  it('spaces label, fields and sections from the three form tokens, not from literals', () => {
-    render(
-      <Form aria-label="settings">
-        <FormSection title="Connection" description="Where Apiome reaches the server." data-testid="one">
-          <FormRow data-testid="row">
-            <FormField label="Endpoint URL" htmlFor="url">
-              <Input id="url" />
-            </FormField>
-          </FormRow>
-        </FormSection>
-        <FormSection data-testid="two">fields</FormSection>
-        <FormActions data-testid="actions">buttons</FormActions>
-      </Form>
-    );
-    expect(classesOf(screen.getByRole('form', { name: 'settings' }))).toContain('gap-[var(--space-form)]');
-    expect(classesOf(screen.getByTestId('row'))).toContain('gap-[var(--space-form)]');
-    const section = classesOf(screen.getByTestId('two'));
-    expect(section).toContain('gap-[var(--space-form)]');
-    // Section to section is `--space-section`: the parent's gap plus the difference.
-    expect(section).toContain('[&+&]:mt-[calc(var(--space-section)-var(--space-form))]');
-    // `FormField` spends the same vocabulary for label → control.
-    const field = screen.getByLabelText('Endpoint URL').parentElement as HTMLElement;
-    expect(classesOf(field)).toContain('gap-[var(--space-field)]');
-    expect(screen.getByRole('heading', { level: 3, name: 'Connection' })).toBeInTheDocument();
-    expect(screen.getByText('Where Apiome reaches the server.')).toBeInTheDocument();
-  });
-
-  it('caps a narrow form at the ordinary dialog width and leaves a full one to its container', () => {
-    const { rerender } = render(<Form aria-label="f" width="narrow" />);
-    expect(classesOf(screen.getByRole('form'))).toContain('max-w-[35rem]');
-    rerender(<Form aria-label="f" />);
-    expect(classesOf(screen.getByRole('form'))).not.toContain('max-w-[35rem]');
-  });
-
-  it.each([
-    ['end', 'justify-end'],
-    ['start', 'justify-start'],
-    ['between', 'justify-between'],
-  ] as const)('aligns its actions to the %s', (align, expected) => {
-    render(<FormActions align={align} data-testid="actions" />);
-    expect(classesOf(screen.getByTestId('actions'))).toContain(expected);
-  });
-
-  it('lets a caller keep its own gap, as every other primitive does', () => {
-    render(<Form aria-label="f" className="gap-2" />);
-    const classes = classesOf(screen.getByRole('form'));
-    expect(classes).toContain('gap-2');
-    expect(classes).not.toContain('gap-[var(--space-form)]');
-  });
-});
-
 describe('Dialog', () => {
   it.each([
     ['sm', 'max-w-[27.5rem]'],
@@ -487,42 +431,6 @@ describe('Dialog', () => {
     const classes = classesOf(screen.getByRole('dialog'));
     expect(classes).toContain('rounded-xl');
     expect(classes).toContain('bg-surface');
-  });
-
-  it('hangs a stepped dialog from a fixed top edge with a height floor', () => {
-    render(
-      <Dialog open>
-        <DialogContent steps>
-          <DialogTitle>Enable two-factor authentication</DialogTitle>
-          <DialogFooter>footer</DialogFooter>
-        </DialogContent>
-      </Dialog>
-    );
-    const dialog = screen.getByRole('dialog');
-    expect(classesOf(dialog)).toContain('hive-dialog--steps');
-    expect(classesOf(dialog)).not.toContain('hive-dialog--steps-sm');
-    // The hook `.hive-dialog--steps > .hive-dialog__footer` pins to the foot of the floor.
-    expect(dialog.querySelector(':scope > .hive-dialog__footer')).not.toBeNull();
-  });
-
-  it('gives a small stepped dialog the lower floor, and an ordinary dialog none', () => {
-    const { unmount } = render(
-      <Dialog open>
-        <DialogContent steps size="sm">
-          <DialogTitle>Regenerate backup codes</DialogTitle>
-        </DialogContent>
-      </Dialog>
-    );
-    expect(classesOf(screen.getByRole('dialog'))).toContain('hive-dialog--steps-sm');
-    unmount();
-    render(
-      <Dialog open>
-        <DialogContent>
-          <DialogTitle>Publish</DialogTitle>
-        </DialogContent>
-      </Dialog>
-    );
-    expect(classesOf(screen.getByRole('dialog'))).not.toContain('hive-dialog--steps');
   });
 
   it('lets a caller keep its own width, which is what 30-odd dialogs already do', () => {

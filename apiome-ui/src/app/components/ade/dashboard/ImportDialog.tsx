@@ -848,11 +848,9 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
         }}
       >
         {/* HIVE-11.11: `lg` and as tall as the step needs (up to the viewport), not a fixed
-            full-height sheet that leaves the source step half empty. `steps` gives it a
-            height floor and a fixed top edge, so the frame holds still between steps. */}
+            full-height sheet that leaves the source step half empty. */}
         <DialogContent
           size="lg"
-          steps
           className="imp-wizard imp-wizard--fit"
           closeLabel={IMPORT_WIZARD_COPY.closeWarning}
         >
