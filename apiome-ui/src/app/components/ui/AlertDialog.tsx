@@ -28,7 +28,7 @@ const AlertDialogOverlay = React.forwardRef<
   <AlertDialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      'hive-overlay fixed inset-0 z-[10050] bg-overlay backdrop-blur-sm',
+      'hive-overlay fixed inset-0 z-alert bg-overlay backdrop-blur-sm',
       className
     )}
     {...props}
@@ -48,7 +48,8 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, size = 'sm', ...props }, ref) => (
   <AlertDialogPortal>
     <AlertDialogOverlay />
-    <div className="pointer-events-none fixed inset-0 z-[10051] flex items-center justify-center p-4">
+    {/* Scrim and wrapper share `z-alert` (SUX-1.1): the wrapper comes later, so it wins the tie. */}
+    <div className="pointer-events-none fixed inset-0 z-alert flex items-center justify-center p-4">
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(

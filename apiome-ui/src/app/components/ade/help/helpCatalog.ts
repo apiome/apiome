@@ -595,6 +595,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['mockup', 'playwright', 'design tokens', 'above the fold', 'screenshot'],
   },
   {
+    id: 'design-tokens',
+    title: 'Hive design tokens',
+    summary: 'The named tokens the Hive design system builds with, starting with stacking.',
+    page: 'apiome-docs/docs/reference/design-tokens.md',
+    section: 'reference',
+    keywords: ['z-index', 'stacking', 'layers', 'modal', 'popover', 'design system'],
+  },
+  {
     id: 'catalog-journey',
     title: 'Catalog to project journey test',
     summary: 'The end-to-end test that walks Catalog import through export on every pull request.',

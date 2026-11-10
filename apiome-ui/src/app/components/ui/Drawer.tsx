@@ -59,7 +59,7 @@ const DrawerOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     ref={ref}
-    className={cn('hive-overlay fixed inset-0 z-[9998] bg-overlay backdrop-blur-sm', className)}
+    className={cn('hive-overlay fixed inset-0 z-overlay bg-overlay backdrop-blur-sm', className)}
     {...props}
   />
 ));
@@ -75,7 +75,7 @@ DrawerOverlay.displayName = 'DrawerOverlay';
  */
 const drawerContentVariants = cva(
   [
-    'hive-drawer fixed inset-y-0 right-0 z-[9999] flex h-full w-full flex-col',
+    'hive-drawer fixed inset-y-0 right-0 z-modal flex h-full w-full flex-col',
     'bg-surface text-fg shadow-lg focus:outline-none',
   ].join(' '),
   {

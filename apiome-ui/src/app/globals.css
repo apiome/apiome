@@ -282,6 +282,31 @@
   --page-gutter: max(var(--page-pad), 2.5%);
   --content-max: 1200px;
 
+  /* ---- Stacking — the z-index scale (SUX-1.1, apiome#6748) -----------
+     Every z-index in the product names one of these steps instead of a number, so "what
+     paints over what" has one answer. The page layer (base → floating) sits below every
+     overlay layer (overlay → alert) by an order of magnitude, which is what lets a modal
+     dim the global header: the header is `chrome`, the scrim is `overlay`.
+
+       alert 1040 ─ toast 1030 ─ popover 1020 ─ modal 1010 ─ overlay 1000
+       ──────────────────────────────────────────────────────────────────
+       floating 300 ─ chrome 200 ─ sticky 100 ─ raised 10 ─ base 0
+
+     `popover` is above `modal` on purpose: a select, menu or tooltip opened inside a dialog
+     (or a dialog inside a drawer) portals to `<body>` and has to clear the dialog it came
+     from. Spend them through the `z-*` utilities below (`z-chrome`, `z-modal`, …) or as
+     `var(--z-*)` in a stylesheet; never as a literal. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 100;      /* sticky table heads, page headers, save bars */
+  --z-chrome: 200;      /* global headers and rails */
+  --z-floating: 300;    /* canvas toolbars, docked panels, notices over chrome */
+  --z-overlay: 1000;    /* modal scrims */
+  --z-modal: 1010;      /* dialogs, drawers */
+  --z-popover: 1020;    /* selects, menus, tooltips — including inside modals */
+  --z-toast: 1030;
+  --z-alert: 1040;      /* alert dialogs: scrim and surface */
+
   /* ---- Animation keyframes for Radix UI ------------------------------- */
   --animate-in: enter var(--dur-base) var(--ease-out);
   --animate-out: exit var(--dur-fast) var(--ease-out);
@@ -1173,12 +1198,13 @@ html[data-rail="collapsed"] {
 
 /* The rail paints over the page. Its menus (the workspace switcher, the user menu) and the
    collapse handle on its edge reach out over the content column, where a positioned card
-   or the sticky `.page-header` (20) would otherwise cover them — the header comes later in
-   the document, so it wins a tie. The rail sits one layer above the page chrome: above
-   every card and the header, below the notices (40) and dialogs. `main` is deliberately
+   or the sticky `.page-header` (`--z-sticky`) would otherwise cover them — the header comes
+   later in the document, so it wins a tie. The rail is `--z-chrome`, one step above the
+   page's sticky layer: above every card and the header, below the notices
+   (`--z-floating`) and dialogs. `main` is deliberately
    not isolated, so a fixed overlay a page renders inline still rises above the rail. */
 .hive-shell > .rail {
-  z-index: 30;
+  z-index: var(--z-chrome);
 }
 
 /* Rail parts that answer to icon mode. Unlayered on purpose: `@layer utilities`
@@ -1264,12 +1290,12 @@ html[data-rail="collapsed"] {
   --page-width: var(--page-narrow);
 }
 
-/* Sticky, translucent, one hairline. `z-index` clears the page's own content
+/* Sticky, translucent, one hairline. `--z-sticky` clears the page's own content
    without reaching dialog or toast territory (both portal to the body). */
 .page-header {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-sticky);
   background: color-mix(in srgb, var(--bg-canvas) 86%, transparent);
   -webkit-backdrop-filter: saturate(1.4) blur(10px);
   backdrop-filter: saturate(1.4) blur(10px);
@@ -1567,7 +1593,7 @@ html[data-rail="collapsed"] {
    keeps it inside a phone. */
 .palette {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-modal);
   top: 12vh;
   left: 50%;
   width: calc(100vw - var(--space-8));
@@ -1903,6 +1929,51 @@ html[data-rail="collapsed"] {
 
 @utility p-card {
   padding: var(--card-pad);
+}
+
+/* ---- Stacking utilities (SUX-1.1, apiome#6748) ---------------------------
+   One utility per step of the `--z-*` scale in `@theme`. Tailwind's own `z-*` reads the
+   `--z-index-*` namespace, which this scale deliberately does not use: a bare `z-50` keeps
+   meaning 50, so a literal still stands out in review (and in the SUX-1.4 gate) instead
+   of silently resolving to a token. */
+@utility z-base {
+  z-index: var(--z-base);
+}
+
+@utility z-raised {
+  z-index: var(--z-raised);
+}
+
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+
+@utility z-chrome {
+  z-index: var(--z-chrome);
+}
+
+@utility z-floating {
+  z-index: var(--z-floating);
+}
+
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+
+@utility z-toast {
+  z-index: var(--z-toast);
+}
+
+@utility z-alert {
+  z-index: var(--z-alert);
 }
 
 /* ---- Data-table rhythm (DESIGN.md §3.3, §8 "List page") -----------------
@@ -3047,7 +3118,7 @@ p {
   width: max(100%, var(--target-min));
   height: max(100%, var(--target-min));
   transform: translate(-50%, -50%);
-  z-index: -1;
+  z-index: calc(var(--z-base) - 1);
 }
 
 :where(:has(> .hit-target)) {
@@ -3058,7 +3129,7 @@ p {
    sits at z 0 instead. A cell holds one control (a row checkbox, a row action), so there is no
    sibling for it to cover; the next cell paints after it and still wins the overlap. */
 :is(td, th) > .hit-target::after {
-  z-index: 0;
+  z-index: var(--z-base);
 }
 
 /* ==========================================================================
@@ -3713,7 +3784,7 @@ a.coming-next__follow:hover {
    which is painted on their shared parent. */
 .auth-center > .auth-form {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
   flex: 1;
 }
 
@@ -3724,7 +3795,7 @@ a.coming-next__follow:hover {
 .auth-center::before {
   content: "";
   position: absolute;
-  z-index: 0;
+  z-index: var(--z-base);
   width: 32.5rem;
   height: 32.5rem;
   left: 50%;
@@ -4217,13 +4288,13 @@ button.auth-link:disabled {
    corner instead of taking a row of the layout: the signed-in shell is a
    fixed-height box each route fills, so a banner inside it would shorten every
    page. The stack keeps two notices from landing on top of each other. Above
-   the rail (`z-index: 30`) and page chrome (20), below dialogs. The close button is
+   the rail (`--z-chrome`) and page chrome (`--z-sticky`), below dialogs. The close button is
    an element selector for the reason given at `button.auth-link`. */
 .tfa-notice-stack {
   position: fixed;
   right: var(--space-4);
   bottom: var(--space-4);
-  z-index: 40;
+  z-index: var(--z-floating);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -7841,7 +7912,7 @@ button.tfa-reset-notice__close > svg {
 .tnt-dirty-bar {
   position: sticky;
   bottom: 0;
-  z-index: 2;
+  z-index: var(--z-sticky);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -7954,7 +8025,7 @@ button.tfa-reset-notice__close > svg {
 .tnt-manage-nav {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--z-raised);
   background: var(--bg-surface);
 }
 
@@ -8024,7 +8095,7 @@ button.tfa-reset-notice__close > svg {
 /* ---- The row overflow menu ----------------------------------------------
    hive.css §16 `.menu`, as the tenants table's row actions need it. */
 .tnt-menu {
-  z-index: 50;
+  z-index: var(--z-popover);
   min-inline-size: 12rem;
   padding: var(--space-1);
   border-radius: var(--r-md);
@@ -8731,7 +8802,7 @@ button.tfa-reset-notice__close > svg {
 .rol-save-bar {
   position: sticky;
   inset-block-end: var(--space-4);
-  z-index: 15;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -10727,7 +10798,7 @@ button.tfa-reset-notice__close > svg {
 .gd-save-bar {
   position: sticky;
   inset-block-end: var(--space-4);
-  z-index: 15;
+  z-index: var(--z-sticky);
   align-self: center;
   display: flex;
   flex-wrap: wrap;
@@ -12720,7 +12791,7 @@ button.tfa-reset-notice__close > svg {
    reachable by pointer as well as by keyboard. */
 .prj-card__above {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 /* The ⋯ menu: the last item of the header row, after the status pill, and always
@@ -12730,7 +12801,7 @@ button.tfa-reset-notice__close > svg {
    small ghost button up with the pill instead of pushing the row taller. */
 .prj-card__actions {
   flex: none;
-  z-index: 1;
+  z-index: var(--z-raised);
   margin-block: calc(var(--space-1) * -1);
   margin-inline-start: calc(var(--space-1) * -1);
 }
@@ -15048,7 +15119,7 @@ button.tfa-reset-notice__close > svg {
 
 .vt__node {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
   display: grid;
   place-items: center;
   inline-size: var(--space-5);
@@ -16240,7 +16311,7 @@ button.tfa-reset-notice__close > svg {
 .vdlg-diff__pane-title {
   position: sticky;
   inset-block-start: 0;
-  z-index: 1;
+  z-index: var(--z-sticky);
   padding: var(--space-1) var(--space-3);
   border-block-end: 1px solid var(--border);
   background: var(--bg-subtle);
@@ -16931,7 +17002,7 @@ button.tfa-reset-notice__close > svg {
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline-end: var(--space-2);
-  z-index: 10;
+  z-index: var(--z-floating);
   display: flex;
   gap: var(--space-1);
 }
@@ -17119,7 +17190,7 @@ button.tfa-reset-notice__close > svg {
 }
 
 .vdlg-node__menu {
-  z-index: 100;
+  z-index: var(--z-popover);
 }
 
 .vdlg-node__menu-sep {
@@ -17374,13 +17445,13 @@ button.tfa-reset-notice__close > svg {
 /* The two layers are separated by opacity, not by hue — the base is the same
    drawing seen through the compare side. */
 .vdlg-canvas__layer--under {
-  z-index: 0;
+  z-index: var(--z-base);
   pointer-events: none;
   opacity: 0.72;
 }
 
 .vdlg-canvas__layer--over {
-  z-index: 10;
+  z-index: var(--z-raised);
   opacity: 0.88;
 }
 
@@ -18258,7 +18329,7 @@ button.tfa-reset-notice__close > svg {
   position: absolute;
   inset-block-start: var(--space-2);
   inset-inline-end: var(--space-2);
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 /* A status line states its verdict in words and leads with a distinct glyph
@@ -22477,7 +22548,7 @@ html[data-motion='reduce'] .prm-spin {
    recovery buttons are reachable by pointer as well as by keyboard. */
 .cat-card__above {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 /* The ⋯ menu: the last item of the header row, after the status pill, and always
@@ -22488,7 +22559,7 @@ html[data-motion='reduce'] .prm-spin {
    treatment as `.prj-card__actions`). */
 .cat-card__actions {
   flex: none;
-  z-index: 1;
+  z-index: var(--z-raised);
   margin-block: calc(var(--space-1) * -1);
   margin-inline-start: calc(var(--space-1) * -1);
 }
@@ -25081,7 +25152,7 @@ button.cid-entity__head {
 /* One stacking step above the stretched link, so these stay clickable. */
 .repo-card__above {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 /* Two lines, always the same height, so a grid of cards keeps its rhythm
@@ -29644,7 +29715,7 @@ button.cid-entity__head {
    not trap focus, does not close on Escape and does not answer the arrow keys;
    this is Radix's, on the same surface `.tnt-menu` (HIVE-5.1) draws. */
 .mcp-menu {
-  z-index: 50;
+  z-index: var(--z-popover);
   min-inline-size: 16rem;
   padding: var(--space-1);
   border-radius: var(--r-md);
@@ -36575,7 +36646,7 @@ tr:focus-within .pub-url__glyph {
 .rvw-decision {
   position: sticky;
   inset-block-end: var(--space-4);
-  z-index: 15;
+  z-index: var(--z-sticky);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -41269,7 +41340,7 @@ tr[data-selected="true"] > td:first-child {
   pointer-events: none;
   opacity: 0;
   transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
-  z-index: 0;
+  z-index: var(--z-base);
 }
 .rail-pill[data-on="true"] {
   opacity: 1;
@@ -41279,7 +41350,7 @@ tr[data-selected="true"] > td:first-child {
 }
 .rail .rail-nav .rail-item {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 .rail .rail-nav[data-pill="true"] .rail-item:hover {
   background: transparent;

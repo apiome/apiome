@@ -310,7 +310,7 @@ describe('auth surfaces — the two-factor card (HIVE-4.2)', () => {
     expect(wash.get('background')).toContain('var(--honey)');
     expect(wash.get('pointer-events')).toBe('none');
     // The card column has to sit over it, not under it.
-    expect(declarationsOf('.auth-center > .auth-form').get('z-index')).toBe('1');
+    expect(declarationsOf('.auth-center > .auth-form').get('z-index')).toBe('var(--z-raised)');
   });
 
   it('cuts the subject glyph from the shared hexagon, not a second copy of it', () => {

@@ -39,6 +39,7 @@ import {
   topLevelRules,
   type CssRule,
   type Rgb,
+  resolveZIndex,
 } from './helpers/design-tokens';
 
 const css = readGlobalsCss();
@@ -523,8 +524,8 @@ describe('the sticky rail and bar', () => {
     expect(decls.get('position')).toBe('sticky');
     expect(decls.get('bottom')).toBe('0');
     // Above the toolset cards it floats over, and above the tab rail's own stacking.
-    expect(Number(decls.get('z-index'))).toBeGreaterThan(
-      Number(parseDeclarations(tenantRule('.tnt-manage-nav').body).get('z-index'))
+    expect(resolveZIndex(decls.get('z-index'))).toBeGreaterThan(
+      resolveZIndex(parseDeclarations(tenantRule('.tnt-manage-nav').body).get('z-index'))
     );
   });
 

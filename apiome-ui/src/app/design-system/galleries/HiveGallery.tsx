@@ -123,6 +123,7 @@ import { GradeChip } from '@/app/components/ui/catalog/GradeChip';
 import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
 import { ComingNextShowcase } from './ComingNextShowcase';
+import { LayeringShowcase } from './LayeringShowcase';
 import { QuietListShowcase } from './QuietListShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
 import { TablesShowcase } from './TablesShowcase';
@@ -834,6 +835,7 @@ export function HiveGallery() {
                 </DrawerFooter>
               </DrawerContent>
             </Drawer>
+            <LayeringShowcase />
           </Demo>
           <div className="flex flex-col gap-2">
             {(['info', 'ok', 'warn', 'danger', 'honey', 'neutral'] as const).map((tone) => (

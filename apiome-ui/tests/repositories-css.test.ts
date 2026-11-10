@@ -36,6 +36,7 @@ import {
   topLevelRules,
   type CssRule,
   type Rgb,
+  resolveZIndex,
 } from './helpers/design-tokens';
 
 const css = readGlobalsCss();
@@ -382,7 +383,7 @@ describe('the card is one link, not a button full of buttons', () => {
 
   it('lifts the controls that must stay clickable above it', () => {
     expect(declaration('.repo-card__above', 'position')).toBe('relative');
-    expect(Number(declaration('.repo-card__above', 'z-index'))).toBeGreaterThan(0);
+    expect(resolveZIndex(declaration('.repo-card__above', 'z-index'))).toBeGreaterThan(0);
   });
 });
 

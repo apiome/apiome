@@ -628,8 +628,8 @@ describe('the card’s stretched link', () => {
 
   it('lifts every control above it rather than under it', () => {
     expect(declaration('.prj-card__above', 'position')).toBe('relative');
-    expect(declaration('.prj-card__above', 'z-index')).toBe('1');
-    expect(declaration('.prj-card__actions', 'z-index')).toBe('1');
+    expect(declaration('.prj-card__above', 'z-index')).toBe('var(--z-raised)');
+    expect(declaration('.prj-card__actions', 'z-index')).toBe('var(--z-raised)');
   });
 
   it('draws the focus ring on the card, which is what the link activates', () => {

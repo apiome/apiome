@@ -38,6 +38,7 @@ import {
   resolveThemeToken,
   topLevelRules,
   type CssRule,
+  resolveZIndex,
 } from './helpers/design-tokens';
 
 const css = readGlobalsCss();
@@ -138,7 +139,7 @@ describe('page chrome — the sticky header', () => {
     expect(header.get('position')).toBe('sticky');
     expect(header.get('top')).toBe('0');
     expect(header.get('border-bottom')).toBe('1px solid var(--border)');
-    expect(Number(header.get('z-index'))).toBeGreaterThan(0);
+    expect(resolveZIndex(header.get('z-index'))).toBeGreaterThan(0);
   });
 
   it('is a translucent wash of the canvas token, so every theme reaches it', () => {

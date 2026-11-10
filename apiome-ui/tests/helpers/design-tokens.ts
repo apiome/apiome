@@ -162,6 +162,34 @@ export function resolveToken(name: string, layer: TokenLayer): string {
   }
 }
 
+/**
+ * Resolve a declared `z-index` to the number the browser stacks by (SUX-1.1).
+ *
+ * Understands the three shapes the stylesheet writes: a bare integer, a step of the
+ * `--z-*` scale (`var(--z-chrome)`), and one step offset from it
+ * (`calc(var(--z-base) - 1)`).
+ *
+ * @param value The declared value, as {@link parseDeclarations} returns it.
+ * @param layer Parsed token layer. Defaults to the real `globals.css`.
+ * @returns The resolved stacking order.
+ * @throws If the value is missing or is not one of the shapes above.
+ */
+export function resolveZIndex(value: string | undefined, layer: TokenLayer = readTokenLayer()): number {
+  if (value === undefined) throw new Error('No z-index declared');
+  if (/^-?\d+$/.test(value)) return Number(value);
+
+  const token = /^var\((--z-[a-z]+)\)$/.exec(value);
+  if (token) return Number(resolveToken(token[1], layer));
+
+  const offset = /^calc\(var\((--z-[a-z]+)\) ([-+]) (\d+)\)$/.exec(value);
+  if (offset) {
+    const base = Number(resolveToken(offset[1], layer));
+    return offset[2] === '-' ? base - Number(offset[3]) : base + Number(offset[3]);
+  }
+
+  throw new Error(`Unrecognised z-index \`${value}\``);
+}
+
 /** One raw hex literal found outside every allow-listed region. */
 export interface UnfencedHex {
   /** 1-based line number in `globals.css`. */

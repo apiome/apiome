@@ -10,7 +10,7 @@
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { parseBlock, parseDeclarations, readGlobalsCss, stripCssComments, topLevelRules } from './helpers/design-tokens';
+import { parseBlock, parseDeclarations, readGlobalsCss, stripCssComments, topLevelRules, resolveZIndex } from './helpers/design-tokens';
 
 const css = readGlobalsCss();
 const rules = topLevelRules(css);
@@ -61,7 +61,7 @@ describe('.hit-target', () => {
   });
 
   it('sits behind every real box, so a neighbour control always wins the click', () => {
-    expect(after.get('z-index')).toBe('-1');
+    expect(resolveZIndex(after.get('z-index'))).toBe(-1);
     expect(rule(':where(:has(> .hit-target))').get('isolation')).toBe('isolate');
   });
 
