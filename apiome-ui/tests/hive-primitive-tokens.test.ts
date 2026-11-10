@@ -229,52 +229,6 @@ describe('type utilities reach a control again', () => {
   });
 });
 
-describe('Radix Themes token-name collisions', () => {
-  /** Every `--color-*` name `@radix-ui/themes` declares on `.radix-themes`. */
-  const radixColorNames = (() => {
-    const source = readFileSync(
-      join(__dirname, '..', '..', 'node_modules', '@radix-ui', 'themes', 'styles.css'),
-      'utf8'
-    );
-    return new Set([...source.matchAll(/^\s*(--color-[a-z0-9-]+)\s*:/gm)].map((m) => m[1]));
-  })();
-
-  /** The bridge block that has to restate them. */
-  const bridge = parseBlock(css, 'html .radix-themes');
-
-  it('restates every name Radix and the Hive token layer both claim', () => {
-    // Not a fixed list: a Radix upgrade that adds a fourth colliding name has to fail here,
-    // because the failure mode is silent — a component simply paints the wrong colour, in
-    // every theme at once, and nothing else in the suite can see it.
-    const collisions = [...radixColorNames].filter((name) => layer.theme.has(name)).sort();
-    expect(collisions).toEqual(['--color-overlay', '--color-surface']);
-    for (const name of collisions) {
-      expect(bridge.get(name)).toMatch(/^var\(--/);
-    }
-  });
-
-  it('keeps --color-background on the canvas for Radix\'s own components', () => {
-    // No longer a collision: the legacy `bg-background` utility token left `@theme` in
-    // HIVE-10.6 (#5342). Radix still reads the name for its own surfaces, though, so the
-    // bridge keeps pointing it at the Hive canvas.
-    expect(layer.theme.has('--color-background')).toBe(false);
-    expect(bridge.get('--color-background')).toBe('var(--bg-canvas)');
-  });
-
-  it('points each collision back at the Hive token it shadowed', () => {
-    expect(bridge.get('--color-surface')).toBe('var(--bg-surface)');
-    expect(bridge.get('--color-overlay')).toBe('var(--bg-overlay)');
-    expect(bridge.get('--color-background')).toBe('var(--bg-canvas)');
-  });
-
-  it('restates them on `.radix-themes` itself, because :root cannot reach past it', () => {
-    // A custom property is inherited from the nearest *declaring ancestor*; `<Theme>` is an
-    // ancestor of everything, so no amount of specificity on `:root` would win.
-    const rule = /html \.radix-themes\s*\{/.test(css);
-    expect(rule).toBe(true);
-  });
-});
-
 describe('honey ink', () => {
   it('has a fixed foreground for the fixed brand hue, aliased like every other token', () => {
     expect(layer.theme.get('--color-honey-ink')).toMatch(/^#[0-9A-Fa-f]{6}$/);

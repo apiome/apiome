@@ -16,18 +16,15 @@
  *      breaks the per-theme swaps in `hive-theme-blocks.test.ts` without erroring);
  *   4. raw hex appears only inside a documented `hex-allow-start` / `hex-allow-end` fence.
  *
- * A fifth group covers the Radix Themes reconfiguration on both layouts, which is the one
- * part of the ticket that lives outside the stylesheet.
+ * A fifth group used to pin the Radix Themes `<Theme>` props on both layouts; SUX-1.3 (#2877)
+ * removed the wrapper, and `tests/radix-themes-removed.test.ts` now guards its absence.
  */
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import {
   contrastRatio,
   designDocColorTokens,
   findUnfencedHex,
   hexToRgb,
-  parseBlock,
   readGlobalsCss,
   readTokenLayer,
   resolveToken,
@@ -99,20 +96,6 @@ const RETIRED_UTILITY_TOKENS = [
   '--color-border-subtle',
   '--color-text-muted',
 ];
-
-/**
- * Read a layout module's source.
- *
- * The layouts are React Server Components wired to auth, theming and session providers;
- * rendering one in jsdom would assert on the mocks rather than on the props, so the Radix
- * configuration is checked at the source.
- *
- * @param segments Path segments below `src/app`.
- * @returns The file's text.
- */
-function readLayout(...segments: string[]): string {
-  return readFileSync(join(__dirname, '..', 'src', 'app', ...segments), 'utf8');
-}
 
 describe('design authority — DESIGN.md §3.1 tokens', () => {
   const documented = designDocColorTokens();
@@ -300,34 +283,5 @@ describe('light-palette legibility (WCAG 2.2 AA)', () => {
     ['--accent', '--bg-surface'],
   ])('%s on %s clears AA for large text and non-text marks', (ink, surface) => {
     expect(contrastRatio(colorOf(ink), colorOf(surface))).toBeGreaterThanOrEqual(WCAG_AA_LARGE_TEXT_MIN);
-  });
-});
-
-describe('Radix Themes reconfiguration', () => {
-  const layouts: Array<[string, string]> = [
-    ['src/app/layout.tsx', readLayout('layout.tsx')],
-    ['src/app/ade/layout.tsx', readLayout('ade', 'layout.tsx')],
-  ];
-
-  it.each(layouts)('%s configures RadixTheme for the Hive palette', (_path, source) => {
-    expect(source).toContain('accentColor="blue"');
-    expect(source).toContain('grayColor="sand"');
-    expect(source).toContain('radius="large"');
-    expect(source).toContain('panelBackground="solid"');
-  });
-
-  it.each(layouts)('%s no longer carries the pre-Hive indigo/slate configuration', (_path, source) => {
-    expect(source).not.toContain('accentColor="indigo"');
-    expect(source).not.toContain('grayColor="slate"');
-    expect(source).not.toContain('radius="medium"');
-  });
-});
-
-describe('Radix typography bridge', () => {
-  it('still points the Radix font tokens at the app fonts', () => {
-    const radix = parseBlock(css, 'html .radix-themes');
-    expect(radix.get('--default-font-family')).toBe('var(--app-font-sans)');
-    expect(radix.get('--heading-font-family')).toBe('var(--app-font-sans)');
-    expect(radix.get('--code-font-family')).toBe('var(--app-font-mono)');
   });
 });
