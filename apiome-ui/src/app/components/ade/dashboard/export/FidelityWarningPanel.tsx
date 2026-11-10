@@ -120,7 +120,7 @@ export function FidelityWarningPanel({
       <div className="vdlg-export__fidelity-head">
         <div>
           <div className="vdlg-section-title">Exporting to {targetLabel}</div>
-          <div className="vdlg-quiet">{targetDescription}</div>
+          <div className="hive-quiet">{targetDescription}</div>
         </div>
         <Badge variant={tierTone(fidelity.tier)}>{tierLabel(fidelity.tier)}</Badge>
       </div>
@@ -209,7 +209,7 @@ export function FidelityWarningPanel({
               </Badge>
             ))}
           </div>
-          <p className="vdlg-quiet">
+          <p className="hive-quiet">
             {fidelity.total} construct{fidelity.total === 1 ? '' : 's'} considered for this
             source.
           </p>
@@ -376,7 +376,7 @@ export function FidelityReportRow({ item }: { item: LossItem }) {
         </span>
         <span className="vdlg-export__report-message">{item.message}</span>
         {item.target_mapping && (
-          <span className="vdlg-quiet">
+          <span className="hive-quiet">
             In the target: {item.target_mapping}
           </span>
         )}

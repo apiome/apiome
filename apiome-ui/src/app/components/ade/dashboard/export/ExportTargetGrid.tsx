@@ -202,7 +202,7 @@ export function ExportTargetGrid({
                         <span className="vdlg-export__target-label">
                           {card.entry.descriptor.label}
                         </span>
-                        <span className="vdlg-quiet">
+                        <span className="hive-quiet">
                           {card.entry.descriptor.paradigm}
                           {card.entry.descriptor.multi_file ? ' · multi-file' : ''}
                         </span>
@@ -245,7 +245,7 @@ export function ExportTargetGrid({
                     {!card.available && (
                       <div
                         data-testid={`export-target-unavailable-${card.key}`}
-                        className="vdlg-quiet"
+                        className="hive-quiet"
                       >
                         {cardTitle(card, target)}
                       </div>
@@ -253,7 +253,7 @@ export function ExportTargetGrid({
                     {target && card.available && (
                       <div
                         data-testid={`export-target-rationale-${card.key}`}
-                        className="vdlg-quiet"
+                        className="hive-quiet"
                       >
                         {target.rationale}
                       </div>
@@ -290,7 +290,7 @@ export function ExportTargetGrid({
                 {dialect.label}
               </Badge>
             )}
-            <span className="vdlg-quiet">{fidelity.preserved_percent}% preserved</span>
+            <span className="hive-quiet">{fidelity.preserved_percent}% preserved</span>
           </div>
         </div>
       )}

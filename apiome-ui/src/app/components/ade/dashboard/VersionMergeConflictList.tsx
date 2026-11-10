@@ -130,7 +130,7 @@ export function VersionMergeConflictList({
               {conflicts.length} path{conflicts.length !== 1 ? 's' : ''} need a resolution before apply can succeed on
               the server. Choices are stored in this session for the upcoming merge-resolution API.
             </p>
-            <p className="vdlg-quiet">
+            <p className="hive-quiet">
               <strong>Mine</strong> = target branch <span className="mono">{targetBranchName || '—'}</span>
               {' · '}
               <strong>Theirs</strong> = source branch <span className="mono">{sourceBranchName || '—'}</span>
@@ -172,7 +172,7 @@ export function VersionMergeConflictList({
               </Select>
             </div>
           </div>
-          <p className="vdlg-quiet">
+          <p className="hive-quiet">
             Filter matches <strong>{filteredConflicts.length}</strong> of <strong>{conflicts.length}</strong> path
             {conflicts.length !== 1 ? 's' : ''}. Bulk actions for <strong>shown</strong> use this filter.
           </p>

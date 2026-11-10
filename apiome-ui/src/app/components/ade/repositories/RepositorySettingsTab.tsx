@@ -243,7 +243,7 @@ export function RepositorySettingsTab({
           </p>
 
           <div className="flex flex-col gap-2" data-testid="repository-refresh-inheritance">
-            <h4 className="repo-det-caps">Workspace defaults</h4>
+            <h4 className="hive-caps">Workspace defaults</h4>
             <p className="repo-det-note">
               Each setting follows the workspace{' '}
               <a href={REFRESH_DEFAULTS_HREF} className="repo-det-link">

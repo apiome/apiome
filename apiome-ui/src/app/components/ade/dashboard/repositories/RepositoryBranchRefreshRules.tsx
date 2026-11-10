@@ -162,7 +162,7 @@ export function RepositoryBranchRefreshRules({ repositoryId }: { repositoryId: s
         </div>
 
         <div className="flex flex-col gap-2">
-          <h4 className="repo-det-caps flex items-center gap-2">
+          <h4 className="hive-caps flex items-center gap-2">
             <GitBranch className="size-3.5 shrink-0" aria-hidden />
             Tracked branches
           </h4>
@@ -190,7 +190,7 @@ export function RepositoryBranchRefreshRules({ repositoryId }: { repositoryId: s
         </div>
 
         <fieldset className="flex flex-col gap-3" disabled={saving}>
-          <legend className="repo-det-caps">Rules</legend>
+          <legend className="hive-caps">Rules</legend>
           {drafts.length === 0 ? (
             <p className="repo-det-note" data-testid="branch-refresh-no-rules">
               No rules — every branch follows the repository settings.

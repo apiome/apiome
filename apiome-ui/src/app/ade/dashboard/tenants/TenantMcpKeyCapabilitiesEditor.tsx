@@ -399,7 +399,7 @@ export default function TenantMcpKeyCapabilitiesEditor({
               Copy it now and store it securely.
             </Alert>
             <div className="rounded-md bg-subtle p-4 shadow-[inset_0_0_0_1px_var(--border)]">
-              <p className="tnt-caps mb-2">
+              <p className="hive-caps mb-2">
                 Your MCP API key
               </p>
               <div className="flex items-start gap-2">

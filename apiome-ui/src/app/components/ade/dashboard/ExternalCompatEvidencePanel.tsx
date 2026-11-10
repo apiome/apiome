@@ -134,10 +134,10 @@ export function ExternalCompatEvidencePanel({
           <Badge variant={COMPAT_VERDICT_TONE[compatVerdict(overall)]}>{overall}</Badge>
         ) : null}
       </p>
-      {loading ? <p className="vdlg-quiet">Loading independent evidence…</p> : null}
+      {loading ? <p className="hive-quiet">Loading independent evidence…</p> : null}
       {error ? <Alert variant="warn">{error}</Alert> : null}
       {!loading && !error && findings.length === 0 ? (
-        <p className="vdlg-quiet">No oasdiff findings for this pair.</p>
+        <p className="hive-quiet">No oasdiff findings for this pair.</p>
       ) : null}
       {findings.length > 0 ? (
         <ul className="vdlg-evidence__list">
@@ -166,7 +166,7 @@ export function ExternalCompatEvidencePanel({
                   {path}
                   {typeof line === 'number' ? `:${line}` : ''}
                 </a>
-                <div className="vdlg-quiet">
+                <div className="hive-quiet">
                   <span className="mono">[{changeClass}] {rule}</span>
                   {' — '}
                   {f.message}

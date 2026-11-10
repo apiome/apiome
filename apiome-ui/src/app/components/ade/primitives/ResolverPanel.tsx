@@ -284,7 +284,7 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
             </p>
             <div className="prm-graph__body" data-testid="resolver-graph">
               {rows.length === 0 ? (
-                <p className="prm-quiet">No references match this filter.</p>
+                <p className="hive-quiet">No references match this filter.</p>
               ) : (
                 rows.map((row) => (
                   <span key={row.key} className="prm-refline" data-cross-scope={row.crossScope}>
@@ -298,7 +298,7 @@ export default function ResolverPanel({ onMessage }: ResolverPanelProps) {
                       {row.resolvedTarget || row.relativeRef}
                     </ResolvedTargetLink>
                     {row.crossScope ? (
-                      <span className="prm-quiet">(cross-scope: tenant → core)</span>
+                      <span className="hive-quiet">(cross-scope: tenant → core)</span>
                     ) : null}
                   </span>
                 ))

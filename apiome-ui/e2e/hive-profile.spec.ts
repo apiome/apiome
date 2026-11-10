@@ -174,7 +174,7 @@ const PROFILE_MARKUP = `
                 <button type="button" class="inline-flex shrink-0 items-center gap-1.5 rounded-sm bg-surface px-2.5 text-xs font-medium text-fg shadow-control h-[var(--control-h-sm)]">Disable 2FA</button>
               </div>
               <div class="rounded-lg acct-methods">
-                <div class="acct-caps">Sign-in methods</div>
+                <div class="hive-caps">Sign-in methods</div>
                 <ul class="acct-methods__list">
                   <li>Authenticator app (TOTP)</li>
                   <li>Email OTP — available at sign-in (no separate enrollment)</li>
@@ -239,7 +239,7 @@ const PROFILE_MARKUP = `
             <span class="acct-card__note">Your current sign-in session</span>
           </div>
           <div class="p-[var(--card-pad)] acct-session">
-            <div class="acct-caps">Expires</div>
+            <div class="hive-caps">Expires</div>
             <p class="acct-session__value">8/22/2026, 9:12:00 AM</p>
             <p class="acct-session__date">Saturday, August 22, 2026</p>
             <div class="acct-session__meter">
@@ -296,7 +296,7 @@ const PROFILE_MARKUP = `
           <div class="acct-qr bg-white"><span style="display:block;width:180px;height:180px;background:#111"></span></div>
           <div class="acct-enroll__fields">
             <div class="acct-field">
-              <div class="acct-caps">Or enter this URI</div>
+              <div class="hive-caps">Or enter this URI</div>
               <div class="acct-uri"><code class="mono">otpauth://totp/Apiome:${LONG_EMAIL}?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP&amp;issuer=Apiome&amp;digits=6&amp;period=30</code><button type="button" class="inline-flex shrink-0 items-center rounded-sm text-fg-muted h-[var(--control-h-sm)] px-2.5" aria-label="Copy URI">⧉</button></div>
             </div>
             <div class="acct-field">

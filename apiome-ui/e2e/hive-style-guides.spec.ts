@@ -366,7 +366,7 @@ const QUALITY_MARKUP = `
           <div class="qp-overrides" id="sg-overrides">
             <div class="qp-overrides__head">
               <span class="sg-section-title">Per-format overrides</span>
-              <span class="sg-quiet">read-only · set via the REST policy API</span>
+              <span class="hive-quiet">read-only · set via the REST policy API</span>
             </div>
             <ul class="qp-overrides__list">
               <li class="qp-overrides__row"><code class="qp-overrides__format mono">asyncapi</code><span class="qp-overrides__value mono">{"import":{"minGrade":"D","enforcement":"advisory"},"export":{"minScore":60,"blockOnSeverity":"error"}}</span></li>
@@ -375,7 +375,7 @@ const QUALITY_MARKUP = `
           </div>
         </div>
         <div class="flex items-center justify-between gap-3 border-t border-border px-[var(--card-pad)] py-3 text-sm text-fg-muted">
-          <span class="sg-quiet">Saving creates an immutable policy version; the current one is v3.</span>
+          <span class="hive-quiet">Saving creates an immutable policy version; the current one is v3.</span>
           <button type="button" class="${BUTTON_SM} bg-ink text-ink-fg shadow-control-solid">Save policy</button>
         </div>
       </div>
@@ -412,7 +412,7 @@ const QUALITY_MARKUP = `
                 <span class="qp-waiver-row__head">
                   <span class="qp-waiver-row__subject">Payments API · v2.4.0 import</span>
                   <span class="${BADGE} bg-transparent text-fg-muted shadow-control">import · openapi</span>
-                  <span class="sg-quiet">graded D (61)</span>
+                  <span class="hive-quiet">graded D (61)</span>
                 </span>
                 <span class="qp-waiver-row__reason">“Legacy vendor spec; descriptions to be back-filled before publish.”</span>
                 <span class="qp-waiver-row__meta">Grace Hopper (admin) · expires Aug 17, 2026, 04:22 PM</span>

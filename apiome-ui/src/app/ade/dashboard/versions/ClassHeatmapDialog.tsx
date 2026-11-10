@@ -149,7 +149,7 @@ export default function ClassHeatmapDialog({
               <p className="vdlg-relgraph__state-title">
                 {classes === null ? 'No schema data loaded.' : 'This version has no classes yet.'}
               </p>
-              <p className="vdlg-quiet">Add classes in the Studio to see them on the heatmap.</p>
+              <p className="hive-quiet">Add classes in the Studio to see them on the heatmap.</p>
             </div>
           ) : (
             <ul className="vdlg-heatmap__grid" aria-label={`Classes by ${copy.label.toLowerCase()}`} data-testid="heatmap-grid">

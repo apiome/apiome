@@ -241,7 +241,7 @@ function ConnectSection({ registryUrl }: { registryUrl: string }) {
         Connect a serializer
       </h2>
       <div className="sr-field">
-        <span className="sr-label">Registry URL</span>
+        <span className="hive-label">Registry URL</span>
         <div className="sr-url">
           <code className="sr-code-inline mono" data-testid="registry-url">
             {registryUrl}

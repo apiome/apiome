@@ -172,7 +172,7 @@ export default function LintPostureSummary({
 
       <Card className="lw-bands">
         <section data-testid="summary-grades">
-          <h2 className="lw-caps">Grades</h2>
+          <h2 className="hive-caps">Grades</h2>
           <div className="lw-chip-row">
             {grades.map((grade) => (
               <LintGradeChip key={grade.key} grade={grade} />
@@ -180,7 +180,7 @@ export default function LintPostureSummary({
           </div>
         </section>
         <section data-testid="summary-axes">
-          <h2 className="lw-caps">
+          <h2 className="hive-caps">
             Axes <span className="lw-caps__aside">· average score</span>
           </h2>
           <div className="lw-chip-row">

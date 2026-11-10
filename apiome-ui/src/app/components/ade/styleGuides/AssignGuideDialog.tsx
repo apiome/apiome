@@ -213,7 +213,7 @@ export default function AssignGuideDialog({
                 ))}
               </ul>
             ) : (
-              <p className="sg-quiet">No projects assigned to this guide.</p>
+              <p className="hive-quiet">No projects assigned to this guide.</p>
             )}
           </section>
         </div>

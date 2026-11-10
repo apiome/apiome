@@ -163,7 +163,7 @@ describe('the version-dialogs section of globals.css', () => {
   });
 
   it('sits after the unlayered p and h1–h4 base rules it has to outrank', () => {
-    // `.vdlg-section-title` and `.vdlg-panel-title` are headings, and `.vdlg-quiet`,
+    // `.vdlg-section-title` and `.vdlg-panel-title` are headings, and
     // `.vdlg-hint` and `.vdlg-changes__note` are `p`s; both base rules are unlayered, so a
     // rule declared before them would lose whatever its specificity.
     for (const rule of SECTION_RULES) {
@@ -465,7 +465,6 @@ describe('contrast', () => {
    * head, the rule-hit list).
    */
   const QUIET = [
-    '.vdlg-quiet',
     '.vdlg-caps',
     '.vdlg-hint',
     '.vdlg-field__label',

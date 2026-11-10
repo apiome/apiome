@@ -419,7 +419,7 @@ export default function CatalogTable({
 /** The quiet em dash a provenance or score cell prints when it has nothing to show. */
 function CatalogDash({ title }: { title?: string }) {
   return (
-    <span className="cat-quiet" title={title}>
+    <span className="hive-quiet" title={title}>
       —
     </span>
   );

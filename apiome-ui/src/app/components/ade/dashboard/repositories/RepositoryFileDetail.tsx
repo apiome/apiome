@@ -501,7 +501,7 @@ function RepositorySpecDetailTables({ tables }: { tables: RepositoryFileDetailTa
    */
   const sectionHead = (title: string, count: number, truncated: boolean) => (
     <div className="repo-det-card__head">
-      <span className="repo-det-caps">{title}</span>
+      <span className="hive-caps">{title}</span>
       <span className="repo-det-note mono">
         {count.toLocaleString()} row{count === 1 ? '' : 's'}
         {truncated ? ' · truncated' : ''}
@@ -1327,7 +1327,7 @@ export function RepositoryFileDetail({
             {loading ? (
               <Skeleton className="h-8 w-[22rem] rounded-md" aria-hidden />
             ) : sourceOnlyLayout ? (
-              <span className="repo-det-caps">Source</span>
+              <span className="hive-caps">Source</span>
             ) : (
               <Segmented
                 value={tab}

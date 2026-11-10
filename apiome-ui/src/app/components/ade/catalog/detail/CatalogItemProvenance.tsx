@@ -140,7 +140,7 @@ function ProvenanceStep({
         <Glyph />
       </span>
       <div className="min-w-0">
-        <p className="cid-caps">
+        <p className="hive-caps">
           Step {step} · {title}
         </p>
         <p className="cid-step__caption">{caption}</p>
@@ -192,7 +192,7 @@ export function CatalogItemProvenance({
       </CardHeader>
       <CardBody className="cid-prov">
         <section className="cid-prov__col" aria-labelledby="catalog-provenance-source-head">
-          <h4 id="catalog-provenance-source-head" className="cid-caps cid-prov__head">
+          <h4 id="catalog-provenance-source-head" className="hive-caps cid-prov__head">
             Source &amp; provenance
           </h4>
           <ol className="cid-rail">
@@ -308,13 +308,13 @@ export function CatalogItemProvenance({
                 <dd>
                   <CalendarClock aria-hidden className="cid-kv__glyph" />
                   {catalogDetailTimestamp(createdAt)}
-                  {createdRelative ? <span className="cid-quiet"> · {createdRelative}</span> : null}
+                  {createdRelative ? <span className="hive-quiet"> · {createdRelative}</span> : null}
                 </dd>
                 <dt>Last updated</dt>
                 <dd>
                   <CalendarClock aria-hidden className="cid-kv__glyph" />
                   {catalogDetailTimestamp(updatedAt)}
-                  {updatedRelative ? <span className="cid-quiet"> · {updatedRelative}</span> : null}
+                  {updatedRelative ? <span className="hive-quiet"> · {updatedRelative}</span> : null}
                 </dd>
               </dl>
             </ProvenanceStep>
@@ -326,7 +326,7 @@ export function CatalogItemProvenance({
           aria-labelledby="catalog-provenance-routing-head"
           data-testid="catalog-detail-routing"
         >
-          <h4 id="catalog-provenance-routing-head" className="cid-caps cid-prov__head">
+          <h4 id="catalog-provenance-routing-head" className="hive-caps cid-prov__head">
             Toolchain &amp; routing
           </h4>
           <dl className="cid-kv">
@@ -346,7 +346,7 @@ export function CatalogItemProvenance({
               <Badge variant="neutral" mono>
                 {publishableRow.value}
               </Badge>
-              <span className="cid-quiet">{publishableRow.note}</span>
+              <span className="hive-quiet">{publishableRow.note}</span>
             </dd>
             <dt>Secret scrub</dt>
             <dd data-testid="catalog-detail-secret-scrub">
@@ -360,7 +360,7 @@ export function CatalogItemProvenance({
                     <ShieldCheck aria-hidden />
                     {scrub.applied ? `${scrub.redactions} redacted` : `${scrub.redactions} found`}
                   </Badge>
-                  <span className="cid-quiet">
+                  <span className="hive-quiet">
                     {scrub.applied
                       ? scrub.withheld
                         ? 'The archive was withheld; only its member list was stored.'
@@ -383,14 +383,14 @@ export function CatalogItemProvenance({
                 </>
               )}
               {scrub?.locked ? (
-                <span className="cid-prov__scrub-locked cid-quiet">Always enforced for this format.</span>
+                <span className="cid-prov__scrub-locked hive-quiet">Always enforced for this format.</span>
               ) : null}
             </dd>
             <dt>Routing</dt>
             <dd data-testid="catalog-detail-routing-note">
               <span className="cid-prov__note">{routingNote.text}</span>
               {routingNote.recorded ? null : (
-                <span className="cid-quiet">
+                <span className="hive-quiet">
                   Derived from the format; the import did not record a reason.
                 </span>
               )}

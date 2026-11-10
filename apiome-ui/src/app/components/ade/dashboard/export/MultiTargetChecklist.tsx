@@ -35,7 +35,7 @@ export function MultiTargetChecklist({
     <div className="xstd-stack xstd-stack--tight" data-testid="export-studio-multi-targets">
       <div>
         <div className="xstd-source__name">{heading}</div>
-        <p className="xstd-quiet" role="status">
+        <p className="hive-quiet" role="status">
           {selected.length === 0
             ? 'Nothing ticked yet.'
             : `${selected.length} target${selected.length === 1 ? '' : 's'} ticked${selected.length < minimum ? ' — tick one more to continue' : ''}.`}

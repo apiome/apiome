@@ -377,7 +377,7 @@ export function CommitRevisionDialog({
                   <span>Commit on current branch</span>
                   <span aria-hidden>·</span>
                   <span>{selectedBranch.name}</span>
-                  <span className="vdlg-quiet">(tip v{selectedBranch.tip_version_string ?? '?'})</span>
+                  <span className="hive-quiet">(tip v{selectedBranch.tip_version_string ?? '?'})</span>
                 </div>
                 <p className="vdlg-hint">
                   This revision will stack on that branch&apos;s tip — the same as{' '}

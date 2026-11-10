@@ -109,7 +109,7 @@ function LintFindingRow({
     <>
       <div className="flex flex-wrap items-center gap-2">
         <SeverityChip severity={finding.severity} />
-        <code className="xstd-quiet">{finding.rule}</code>
+        <code className="hive-quiet">{finding.rule}</code>
         {finding.category && <span className="xstd-rule-chip">{finding.category}</span>}
       </div>
       <div className="mt-1 xstd-finding__message">{finding.message}</div>
@@ -161,7 +161,7 @@ export function EmittedLintLens({
   // when it knows (MFX-5.2: no import adapter reads the format back, or it refused the artifact).
   if (state === 'not_applicable') {
     return (
-      <p className="xstd-quiet" data-testid="verify-lint-empty">
+      <p className="hive-quiet" data-testid="verify-lint-empty">
         {lint?.reason ? (
           <>
             {targetLabel ? <strong>{targetLabel}</strong> : 'This artifact'} was not linted:{' '}
@@ -189,7 +189,7 @@ export function EmittedLintLens({
     <div className="space-y-3" data-testid="verify-lint" data-lint-state={state}>
       {/* Distinguishing note: this is the emitted artifact's lint, not the source's catalog lint. */}
       <p
-        className="xstd-quiet flex items-start gap-1.5"
+        className="hive-quiet flex items-start gap-1.5"
         data-testid="verify-lint-source-note"
       >
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -222,14 +222,14 @@ export function EmittedLintLens({
         {score && (
           <span className="flex items-center gap-1.5" data-testid="verify-lint-grade">
             <GradeChip grade={score.grade} />{' '}
-            <span className="xstd-quiet">· {score.score}/100</span>
+            <span className="hive-quiet">· {score.score}/100</span>
           </span>
         )}
         <SeverityChip severity="error" count={counts.error} />
         <SeverityChip severity="warning" count={counts.warning} />
         <SeverityChip severity="info" count={counts.info} />
         {rules > 0 && (
-          <span className="xstd-quiet" data-testid="verify-lint-rules">
+          <span className="hive-quiet" data-testid="verify-lint-rules">
             {rules} rule{rules === 1 ? '' : 's'} triggered
           </span>
         )}

@@ -89,7 +89,7 @@ export function CatalogBulkExportDialog({ open, items, onOpenChange }: CatalogBu
 
         <fieldset className="xstd-stack xstd-stack--tight" disabled={loading}>
           <legend className="xstd-source__name">Target</legend>
-          {loading ? <p className="xstd-quiet">Loading export targets…</p> : null}
+          {loading ? <p className="hive-quiet">Loading export targets…</p> : null}
           <ul className="xstd-multi__list" data-testid="catalog-bulk-export-targets">
             {cards.map((card) => (
               <li key={card.key}>

@@ -118,7 +118,7 @@ export default function RolesList({
   const renderGroup = (title: string, group: RoleRecord[]) =>
     group.length === 0 ? null : (
       <div>
-        <p className="tnt-caps px-3 pb-1.5">{title}</p>
+        <p className="hive-caps px-3 pb-1.5">{title}</p>
         <ul className="rol-list" aria-label={`${title} roles`}>
           {group.map((role) => (
             <RoleRow

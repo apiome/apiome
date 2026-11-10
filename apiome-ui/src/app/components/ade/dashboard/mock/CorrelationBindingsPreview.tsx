@@ -50,12 +50,12 @@ export function CorrelationBindingsPreview({
       <p className="vdlg-caps">What this binds, per operation — before you save</p>
 
       {operations.length === 0 ? (
-        <p className="vdlg-quiet">
+        <p className="hive-quiet">
           This version’s operations could not be listed, so there is nothing to project. The mode
           still saves.
         </p>
       ) : shown.length === 0 ? (
-        <p className="vdlg-quiet">
+        <p className="hive-quiet">
           Nothing would be bound automatically on this version — no response property matches a path
           parameter{mode === 'inferred' ? ' or a request-body field' : ''}. Add an explicit binding
           below to correlate anyway.

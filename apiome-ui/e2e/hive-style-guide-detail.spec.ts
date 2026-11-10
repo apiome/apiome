@@ -247,7 +247,7 @@ const CATALOG_MARKUP = `
         ${PENCIL}Modified only <span class="tabular-nums text-fg-muted">2</span>
       </button>
       <span aria-hidden class="flex-1"></span>
-      <span class="sg-quiet">Severity is per guide; the default pill shows the catalog baseline.</span>
+      <span class="hive-quiet">Severity is per guide; the default pill shows the catalog baseline.</span>
     </div>
     ${ruleGroup('naming', 2, NAMING)}
     ${ruleGroup('security', 2, SECURITY)}
@@ -269,7 +269,7 @@ const EDITOR_MARKUP = `
       <div class="flex flex-col gap-1.5 border-b border-border p-[var(--card-pad)] gd-editor-head">
         <div class="gd-editor-head__text">
           <h3 class="gd-card-title">Custom rules (YAML)</h3>
-          <p class="sg-quiet">2 rules saved · Spectral-compatible subset · schema completion from
+          <p class="hive-quiet">2 rules saved · Spectral-compatible subset · schema completion from
             <code class="mono">custom-rule-dsl.schema.json</code></p>
         </div>
         <div class="gd-editor-head__actions">
@@ -291,7 +291,7 @@ const EDITOR_MARKUP = `
       <div class="flex flex-col gap-1.5 border-b border-border p-[var(--card-pad)] gd-editor-head">
         <div class="gd-editor-head__text">
           <h3 class="gd-card-title">Test against…</h3>
-          <p class="sg-quiet">dry run · nothing is saved</p>
+          <p class="hive-quiet">dry run · nothing is saved</p>
         </div>
       </div>
       <div class="p-[var(--card-pad)] gd-preview-body">
@@ -307,7 +307,7 @@ const EDITOR_MARKUP = `
         </div>
         <div class="gd-preview-run">
           <button type="button" class="${BUTTON_PRIMARY}">Run</button>
-          <span class="sg-quiet">Last run 09:41 · 1.2 s · Payments API v2.4.0</span>
+          <span class="hive-quiet">Last run 09:41 · 1.2 s · Payments API v2.4.0</span>
         </div>
         <div class="gd-findings">
           <div class="gd-findings__head">
@@ -346,7 +346,7 @@ const POLICY_MARKUP = `
         <span class="tnt-icon-tile" data-tone="accent">${PENCIL}</span>
         <span class="gd-card-header__text">
           <h3 class="gd-card-title">Policy</h3>
-          <p class="sg-quiet">Gate settings applied when evaluating lint evidence against this guide.</p>
+          <p class="hive-quiet">Gate settings applied when evaluating lint evidence against this guide.</p>
         </span>
       </span>
     </div>
@@ -388,7 +388,7 @@ const POLICY_MARKUP = `
       </div>
     </div>
     <div class="flex items-center justify-between gap-3 border-t border-border px-[var(--card-pad)] py-3 text-sm text-fg-muted">
-      <span class="sg-quiet">Saving creates an immutable policy version.</span>
+      <span class="hive-quiet">Saving creates an immutable policy version.</span>
       <button type="button" class="${BUTTON_PRIMARY}">Save</button>
     </div>
   </div>

@@ -138,7 +138,7 @@ export function RepositoryTable({
           ) : (
             // Health is computed by the API; a payload without it means "not known", which is
             // a different fact from "healthy" and must not be drawn as one.
-            <span className="repo-quiet" title="Health has not been computed for this repository">
+            <span className="hive-quiet" title="Health has not been computed for this repository">
               —
             </span>
           ),

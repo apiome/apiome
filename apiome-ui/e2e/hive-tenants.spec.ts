@@ -319,7 +319,7 @@ const HISTORY_MARKUP = `
 <div class="page" id="tnt-history-probe">
   <div class="page-body">
     <div class="tnt-card tnt-card--flush">
-      <div class="tnt-hist-row tnt-hist-row--head tnt-caps" aria-hidden="true"><span>When</span><span>Actor</span><span>Change</span><span></span></div>
+      <div class="tnt-hist-row tnt-hist-row--head hive-caps" aria-hidden="true"><span>When</span><span>Actor</span><span>Change</span><span></span></div>
       <ul>
         <li>
           <div class="tnt-hist-row">
@@ -329,9 +329,9 @@ const HISTORY_MARKUP = `
             <button type="button" aria-expanded="true" aria-label="Toggle details" class="${BUTTON_SM} bg-transparent shadow-none px-1.5">▾</button>
           </div>
           <div class="tnt-hist-diff">
-            <p class="tnt-caps mb-1">Settings changes</p>
+            <p class="hive-caps mb-1">Settings changes</p>
             <div class="tnt-diff-line"><span class="tnt-diff-line__field">Capability profile</span><span class="tnt-diff-line__from" id="tnt-diff-from">Full catalog</span><svg viewBox="0 0 24 24" aria-hidden="true" class="size-[var(--icon-button)] shrink-0"><path d="M5 12h14"/></svg><span class="tnt-diff-line__to" id="tnt-diff-to">CI &amp; contract gates</span></div>
-            <p class="tnt-caps mt-2 mb-1">Tool-flag changes</p>
+            <p class="hive-caps mt-2 mb-1">Tool-flag changes</p>
             <div class="tnt-diff-line"><span class="tnt-diff-line__field">${LONG_TOOL_ID} · Ceiling</span><span class="tnt-diff-line__from">on</span><svg viewBox="0 0 24 24" aria-hidden="true" class="size-[var(--icon-button)] shrink-0"><path d="M5 12h14"/></svg><span class="tnt-diff-line__to">off</span></div>
           </div>
         </li>

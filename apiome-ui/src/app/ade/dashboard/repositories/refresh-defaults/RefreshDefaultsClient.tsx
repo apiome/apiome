@@ -193,7 +193,7 @@ export function RefreshDefaultsClient() {
               </div>
 
               <fieldset className="flex flex-col gap-2" disabled={!editable}>
-                <legend className="repo-det-caps">Refresh conflicts</legend>
+                <legend className="hive-caps">Refresh conflicts</legend>
                 {CONFLICT_POLICIES.map((policy) => (
                   <ConflictPolicyOption
                     key={policy}

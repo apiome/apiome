@@ -219,7 +219,7 @@ export default function ProjectsTable({
               {project.description}
             </div>
           ) : (
-            <span className="prj-quiet">No description</span>
+            <span className="hive-quiet">No description</span>
           ),
         skeletonWidth: '16rem',
       },
@@ -541,14 +541,14 @@ function QualityTrendCell({ project, history, onOpenTrend }: QualityTrendCellPro
 
   if (scores.isEmpty) {
     return (
-      <span className="prj-quiet" data-testid="projects-table-empty">
+      <span className="hive-quiet" data-testid="projects-table-empty">
         Empty project
       </span>
     );
   }
   if (scores.quality == null) {
     return (
-      <span className="prj-quiet" title="No quality score captured yet">
+      <span className="hive-quiet" title="No quality score captured yet">
         —
       </span>
     );

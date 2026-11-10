@@ -368,7 +368,7 @@ const PAGE_MARKUP = `
           <div class="relative flex w-full items-start gap-2.5 rounded-md px-3.5 py-2.5 text-sm bg-warn-soft text-warn-fg">
             <span><strong>Important:</strong> This is the only time you'll see this API key.</span>
           </div>
-          <div class="akey-secret-label">Your API key</div>
+          <div class="hive-caps">Your API key</div>
           <div class="akey-secret" id="akey-secret">
             <code class="akey-secret__value mono" id="akey-secret-value">${SECRET}</code>
             <button type="button" class="${BUTTON_OUTLINE} akey-secret__copy">${COPY_ICON}Copy</button>

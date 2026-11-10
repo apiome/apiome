@@ -127,7 +127,7 @@ export function VersionExportPanel({
           <Shuffle aria-hidden />
           Convert to any format
         </div>
-        <p className="vdlg-quiet">
+        <p className="hive-quiet">
           This version is held in the normalized model, so it can be transcoded to any target
           format. Fidelity varies — less-expressive targets drop or approximate detail. Pick a
           target to open it in the Export Studio.
@@ -205,7 +205,7 @@ export function VersionExportPanel({
           Recent exports
         </div>
         {recent.length === 0 ? (
-          <p className="vdlg-quiet">{VERSION_DIALOG_COPY.exportNoRecent}</p>
+          <p className="hive-quiet">{VERSION_DIALOG_COPY.exportNoRecent}</p>
         ) : (
           <ul className="vdlg-export__recent" data-testid="version-recent-exports">
             {recent.map((entry) => (
@@ -226,7 +226,7 @@ export function VersionExportPanel({
                 </span>
                 <span className="vdlg-export__recent-meta">
                   <Badge variant={tierTone(entry.tier)}>{fidelityBadgeLabel(entry)}</Badge>
-                  <span className="vdlg-quiet">
+                  <span className="hive-quiet">
                     {formatRelativeTime(new Date(entry.exportedAt).toISOString()) ?? ''}
                   </span>
                 </span>
@@ -296,7 +296,7 @@ function TargetBadgeRow({ label, cards, artifact, version, artifactLabel }: Targ
       <dt className="vdlg-caps">{label}</dt>
       <dd className="vdlg-chips">
         {cards.length === 0 ? (
-          <span className="vdlg-quiet">{VERSION_DIALOG_COPY.exportBucketEmpty}</span>
+          <span className="hive-quiet">{VERSION_DIALOG_COPY.exportBucketEmpty}</span>
         ) : (
           cards.map((card) => (
             <Link

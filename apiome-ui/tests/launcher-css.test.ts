@@ -64,7 +64,6 @@ const LAUNCHER_PRELUDES = [
   '.launch-chip > svg',
   '.launch-chip__name',
   '.launch-eyebrow',
-  '.launch-caps',
   '.launch-eyebrow__sub',
   '.launch-grid',
   '.launch-card',
@@ -249,7 +248,8 @@ describe('launcher — the unlayered element rules are answered with classes', (
     // `h1 { font-size: clamp(…) }` at the foot of this stylesheet is unlayered and outranks
     // every `@layer utilities` size, so `text-5xl` on the `<h1>` would be swallowed.
     expect(declarationsOf('.launch-display').get('font-size')).toBe('var(--fs-5xl)');
-    expect(declarationsOf('.launch-caps').get('font-size')).toBe('var(--fs-2xs)');
+    // The caps eyebrow is an `h2` too; it takes the shared `.hive-caps` (SUX-1.10).
+    expect(declarationsOf('.hive-caps').get('font-size')).toBe('var(--fs-2xs)');
   });
 
 });
@@ -292,7 +292,6 @@ describe('launcher — only openable tiles (HIVE-12.5)', () => {
 describe('launcher — quiet text still has to be readable', () => {
   it('uses `--fg-muted` wherever the mockup used `--fg-subtle`', () => {
     for (const prelude of [
-      '.launch-caps',
       '.launch-eyebrow__sub',
       '.launch-card__tag',
       '.launch-card__foot',

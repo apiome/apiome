@@ -465,7 +465,7 @@ export function ExportManifestPanel({
           data-testid="export-manifest-loading"
         >
           <Loader2 className="h-6 w-6 motion-safe:animate-spin text-accent" aria-hidden />
-          <p className="xstd-quiet">Describing the artifact…</p>
+          <p className="hive-quiet">Describing the artifact…</p>
         </div>
       ) : error ? (
         <p

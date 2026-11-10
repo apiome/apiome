@@ -260,7 +260,7 @@ export function RepositoryConflictPolicy({
         </div>
 
         <fieldset className="flex flex-col gap-2" disabled={saving}>
-          <legend className="repo-det-caps">Repository policy</legend>
+          <legend className="hive-caps">Repository policy</legend>
           {CONFLICT_POLICIES.map((policy) => (
             <ConflictPolicyOption
               key={policy}
@@ -273,7 +273,7 @@ export function RepositoryConflictPolicy({
         </fieldset>
 
         <div className="flex flex-col gap-3">
-          <h4 className="repo-det-caps flex items-center gap-2">
+          <h4 className="hive-caps flex items-center gap-2">
             <GitBranch className="size-3.5 shrink-0" aria-hidden />
             Per-file overrides
           </h4>

@@ -250,14 +250,14 @@ const PAGE_MARKUP = `
                class="hive-control h-[var(--control-h-sm)] w-full max-w-full pl-8 text-sm" />
       </div>
       <div>
-        <p class="tnt-caps px-3 pb-1.5">Built-in</p>
+        <p class="hive-caps px-3 pb-1.5">Built-in</p>
         <ul class="rol-list" aria-label="Built-in roles">
           ${roleItem({ slug: 'owner', name: 'Owner', builtin: true, count: 1, current: true })}
           ${roleItem({ slug: 'admin', name: 'Admin', builtin: true, count: 4 })}
         </ul>
       </div>
       <div>
-        <p class="tnt-caps px-3 pb-1.5">Custom</p>
+        <p class="hive-caps px-3 pb-1.5">Custom</p>
         <ul class="rol-list" aria-label="Custom roles">
           ${roleItem({ slug: 'long', name: LONG_ROLE_NAME, builtin: false, count: 128 })}
         </ul>

@@ -146,7 +146,7 @@ export function MultiExportRun({
 
       {rows.length > 0 && (
         <>
-          <p className="xstd-quiet" role="status" data-testid="multi-export-summary">
+          <p className="hive-quiet" role="status" data-testid="multi-export-summary">
             {failed === 0
               ? `${rows.length} of ${rows.length} completed${mode === 'verify' ? ' — fidelity measured, nothing generated' : ''}.`
               : `${rows.length - failed} of ${rows.length} completed, ${failed} failed — the archive holds the rest.`}

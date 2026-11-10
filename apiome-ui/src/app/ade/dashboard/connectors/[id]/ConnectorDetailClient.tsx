@@ -190,10 +190,10 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
               <Badge status={connector.status} dot>
                 {connector.status}
               </Badge>
-              <span className="cnx-meta">
+              <span className="hive-meta">
                 {connector.lastRunAt ? `Last run ${new Date(connector.lastRunAt).toLocaleString()}` : 'Never synced'}
               </span>
-              <span className="cnx-meta">{connector.hasCredentials ? 'Credential stored' : 'No stored credential'}</span>
+              <span className="hive-meta">{connector.hasCredentials ? 'Credential stored' : 'No stored credential'}</span>
             </div>
           ) : (
             <p className="cnx-note">Reading the connector…</p>
@@ -220,7 +220,7 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                       <tr key={item.id} data-testid={`connector-item-${item.id}`}>
                         <td>
                           <span className="cnx-name">{item.remoteName ?? item.remoteId}</span>
-                          <span className="cnx-meta cnx-mono">{item.remoteId}</span>
+                          <span className="hive-meta cnx-mono">{item.remoteId}</span>
                         </td>
                         <td>{item.environment ?? '—'}</td>
                         <td className="cnx-mono">{item.remoteRevision ?? '—'}</td>
@@ -229,7 +229,7 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                             {item.status}
                           </Badge>
                           {item.discoveredReason ? (
-                            <span className="cnx-meta" data-testid={`connector-item-reason-${item.id}`}>
+                            <span className="hive-meta" data-testid={`connector-item-reason-${item.id}`}>
                               {item.discoveredReason}
                             </span>
                           ) : null}
@@ -252,7 +252,7 @@ export default function ConnectorDetailClient({ connectorId }: { connectorId: st
                               Open the MCP server
                             </Link>
                           ) : (
-                            <span className="cnx-meta">Not imported</span>
+                            <span className="hive-meta">Not imported</span>
                           )}
                         </td>
                       </tr>

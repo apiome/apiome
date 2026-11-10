@@ -335,7 +335,7 @@ export default function VerificationPolicyPanel({ readOnly = false }: { readOnly
           ) : null}
 
           <CardFooter>
-            <span className="sg-quiet">
+            <span className="hive-quiet">
               {readOnly
                 ? 'Read-only: only tenant administrators can save a policy version.'
                 : 'Every save creates a new immutable version.'}
@@ -366,7 +366,7 @@ export default function VerificationPolicyPanel({ readOnly = false }: { readOnly
             </CardHeader>
             {versions.length === 0 ? (
               <CardContent>
-                <p className="sg-quiet">No version has been saved yet.</p>
+                <p className="hive-quiet">No version has been saved yet.</p>
               </CardContent>
             ) : (
               <ul className="qp-rows" data-testid="verification-policy-versions">

@@ -4685,7 +4685,7 @@ const Versions = () => {
                           </span>
                         ))}
                       </div>
-                      <div className="vdlg-quiet">{formatVersionWithPrefix(versions.find(v => v.id === compareVersion1Id)?.version_id)} → {formatVersionWithPrefix(versions.find(v => v.id === compareVersion2Id)?.version_id)}</div>
+                      <div className="hive-quiet">{formatVersionWithPrefix(versions.find(v => v.id === compareVersion1Id)?.version_id)} → {formatVersionWithPrefix(versions.find(v => v.id === compareVersion2Id)?.version_id)}</div>
                     </div>
                     <div className="vdlg-diff" data-testid="compare-diff" data-changes-only={diffChangesOnly}>
                       {diffViewMode === 'overlay' ? (
@@ -4738,7 +4738,7 @@ const Versions = () => {
                         <div className="vdlg-classdiff__head">
                           <div>
                             <h3 className="vdlg-section-title">Classes</h3>
-                            <p className="vdlg-quiet">
+                            <p className="hive-quiet">
                               Structural diff (git-style). Stable ID = OpenAPI schema name.{' '}
                               <span className="vdlg-stat">+{classDiffCounts.added}</span>
                               {' · '}
@@ -4784,7 +4784,7 @@ const Versions = () => {
                             Show unchanged
                           </label>
                         </div>
-                        <p className="vdlg-quiet">
+                        <p className="hive-quiet">
                           Showing {filteredClassDiffRows.length} of {classDiffRows.length} classes
                           {classDiffListRender.virtualize ? ' · Virtualized list' : ''}
                         </p>
@@ -4959,7 +4959,7 @@ const Versions = () => {
                       {(!diffFilter.showAdded && !diffFilter.showRemoved && !diffFilter.showModified) ? (
                         <div className="vdlg-inline-empty">
                           <div>{VERSION_DIALOG_COPY.classDiffAllFiltered}</div>
-                          <div className="vdlg-quiet">Enable at least one filter to see changes</div>
+                          <div className="hive-quiet">Enable at least one filter to see changes</div>
                         </div>
                       ) : (
                         (diffFilter.showAdded && schemaDiffSummary.added.length === 0) &&
@@ -4986,7 +4986,7 @@ const Versions = () => {
                               <div key={idx} className="vdlg-changelist__row" data-change="added">
                                 <span className="vdlg-classdiff__sigil" aria-hidden>+</span>
                                 <span className="vdlg-changelist__path">{getPathLabel(diff.path)}</span>
-                                <span className="vdlg-quiet">({diff.itemType})</span>
+                                <span className="hive-quiet">({diff.itemType})</span>
                               </div>
                             ))}
                           </div>
@@ -5005,7 +5005,7 @@ const Versions = () => {
                               <div key={idx} className="vdlg-changelist__row" data-change="removed">
                                 <span className="vdlg-classdiff__sigil" aria-hidden>−</span>
                                 <span className="vdlg-changelist__path">{getPathLabel(diff.path)}</span>
-                                <span className="vdlg-quiet">({diff.itemType})</span>
+                                <span className="hive-quiet">({diff.itemType})</span>
                               </div>
                             ))}
                           </div>
@@ -5026,10 +5026,10 @@ const Versions = () => {
                                 <div className="flex-1">
                                   <div className="vdlg-changelist__line">
                                     <span className="vdlg-changelist__path">{getPathLabel(diff.path)}</span>
-                                    <span className="vdlg-quiet">({diff.itemType})</span>
+                                    <span className="hive-quiet">({diff.itemType})</span>
                                   </div>
                                   {diff.changes && diff.changes.length > 0 && (
-                                    <div className="vdlg-quiet">Changed: {diff.changes.join(', ')}</div>
+                                    <div className="hive-quiet">Changed: {diff.changes.join(', ')}</div>
                                   )}
                                 </div>
                               </div>
@@ -5044,7 +5044,7 @@ const Versions = () => {
                 ) : activeCompareTab === 'breaking' ? (
                   <div className="vdlg-compare__tabpanel vdlg-doc">
                     <div className="vdlg-doc__head">
-                      <p className="vdlg-quiet vdlg-doc__note">
+                      <p className="hive-quiet vdlg-doc__note">
                         Generated from the schema diff. Stable identifiers use{' '}
                         <span className="mono">components.schemas…</span> paths. The same revision pair always yields the same text (template version is in the header).
                       </p>
@@ -5087,7 +5087,7 @@ const Versions = () => {
                 ) : activeCompareTab === 'migration' ? (
                   <div className="vdlg-compare__tabpanel vdlg-doc">
                     <div className="vdlg-doc__head">
-                      <p className="vdlg-quiet vdlg-doc__note">
+                      <p className="hive-quiet vdlg-doc__note">
                         Ordered steps for <strong>breaking</strong>{' '}
                         contract changes, tied to this revision pair. Companion to the{' '}
                         <strong>Breaking doc</strong> tab (#746) and
@@ -5479,7 +5479,7 @@ const Versions = () => {
                 />
               )}
             {mergePreviewData?.mergeBaseVersionId != null && mergePreviewData?.classification && (
-              <p className="vdlg-quiet">
+              <p className="hive-quiet">
                 Merge-base revision: <span className="mono">{mergePreviewData.mergeBaseVersionId}</span>
               </p>
             )}
@@ -5697,7 +5697,7 @@ const Versions = () => {
                   </Alert>
                 ) : null}
                 {(rollbackPreview.deprecationWarnings ?? []).length > 0 ? (
-                  <p className="vdlg-quiet">
+                  <p className="hive-quiet">
                     Deprecation warnings: {(rollbackPreview.deprecationWarnings ?? []).length} (see compatibility API / sunset
                     timeline)
                   </p>

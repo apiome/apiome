@@ -101,7 +101,7 @@ export interface CatalogFormatRowProps {
 export function CatalogFormatRow({ item }: CatalogFormatRowProps) {
   const source = catalogItemSource(item);
   if (!item.sourceFormat && !item.protocol && !source) {
-    return <span className="cat-quiet">Format pending</span>;
+    return <span className="hive-quiet">Format pending</span>;
   }
   return (
     <>

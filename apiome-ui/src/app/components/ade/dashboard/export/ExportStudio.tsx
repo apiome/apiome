@@ -1404,7 +1404,7 @@ export function ExportStudio({
               ) : (
                 <div className="xstd-stack xstd-stack--tight">
                   <div className="xstd-source__name">{sourceLabel}</div>
-                  <div className="xstd-quiet">
+                  <div className="hive-quiet">
                     Version {versionLabel}
                     {response ? ` · ${cards.length} export targets available` : ''}
                   </div>
@@ -1422,7 +1422,7 @@ export function ExportStudio({
                   )}
                 </div>
               )}
-              <p className="xstd-quiet">
+              <p className="hive-quiet">
                 Export is scoped to this version: the fidelity badge on every target card is
                 computed for this source, not a generic estimate.
                 {isCatalogSource
@@ -1460,7 +1460,7 @@ export function ExportStudio({
                 />
               ) : null}
               {!multiMode && cards.length > 0 && !selectedKey ? (
-                <p className="xstd-quiet" data-testid="export-studio-choose-target">
+                <p className="hive-quiet" data-testid="export-studio-choose-target">
                   Choose a target to continue.
                 </p>
               ) : null}
@@ -1484,7 +1484,7 @@ export function ExportStudio({
                     heading={
                       <div>
                         <div className="xstd-source__name">Choose a target format</div>
-                        <p className="xstd-quiet">
+                        <p className="hive-quiet">
                           Fidelity badges are computed for <strong>this</strong> source (version{' '}
                           {versionLabel}).
                         </p>
@@ -1513,7 +1513,7 @@ export function ExportStudio({
               </div>
               <div className="xstd-rule" />
               {optionFields.length === 0 ? (
-                <p className="xstd-quiet" data-testid="export-studio-no-options">
+                <p className="hive-quiet" data-testid="export-studio-no-options">
                   This target has no options — it exports with its defaults. Continue to verify the
                   conversion.
                 </p>

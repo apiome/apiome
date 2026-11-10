@@ -69,7 +69,7 @@ export function CatalogStatsRow({ items }: CatalogStatsRowProps) {
               <small>· {stats.avgScore}</small>
             </span>
           ) : (
-            <span className="cat-quiet">—</span>
+            <span className="hive-quiet">—</span>
           )
         }
         footnote={`across ${stats.total} item${stats.total === 1 ? '' : 's'}`}
@@ -87,7 +87,7 @@ export function CatalogStatsRow({ items }: CatalogStatsRowProps) {
               {stats.formatCount > stats.sampleFormats.length ? ' …' : ''}
             </Badge>
           ) : (
-            <span className="cat-quiet">No formats yet</span>
+            <span className="hive-quiet">No formats yet</span>
           )
         }
       />

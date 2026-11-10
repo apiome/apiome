@@ -121,6 +121,30 @@ Each control names the sizes in its own way:
 
 <Screenshot id="design-system-control-sizes" alt="The control sizes specimen: a small, a medium and a large row, each with a button, an input, a select and a segmented switch of the same height, and a labelled input and text area under each row" />
 
+### Type helpers
+
+Four classes cover the secondary text used on every screen. Use one of them instead of writing
+a rule with a screen's own prefix.
+
+| Class | Use it for | Text | Ink |
+| --- | --- | --- | --- |
+| `.hive-quiet` | A muted line: an empty cell, a footer note, a card's identifier | 12 px | `--fg-muted` |
+| `.hive-meta` | A small line under a name, on its own row; long values wrap | 11 px | `--fg-muted` |
+| `.hive-caps` | A section label or eyebrow: 11 px, semibold, upper case, caps tracking | 11 px | `--fg-muted` |
+| `.hive-label` | The label of a form field drawn with a plain `label` element | 14 px, medium | `--fg` |
+
+- The sizes are type tokens (`--fs-xs`, `--fs-2xs`, `--fs-sm`), so they grow with the **Font
+  size** preference. Each ink clears WCAG AA on the page surface in every theme.
+- They are plain classes, not Tailwind utilities, so they win over the base `p` and `h2` rules.
+  A screen rule later in `globals.css` can still add to one, for example a margin.
+- Until SUX-1.10 (apiome#6751), each screen had its own copy — `.prj-quiet`, `.cid-caps`,
+  `.shd-meta`, `.sr-label` and 17 more with the same declarations. Those copies are gone, and
+  `apiome-ui/tests/shared-type-helpers-css.test.ts` fails if one comes back. Eight per-screen
+  rules that are *not* identical, such as `.aud-quiet` (14 px) and `.vdlg-caps` (an inline row
+  with an icon), are still per-screen.
+- Nothing on screen changed. A browser comparison of every changed fixture, in the light and
+  dark themes, found no difference in computed style.
+
 ## Where to see them
 
 The design-system gallery is the `/design-system` route of `apiome-ui`. It needs no sign-in.

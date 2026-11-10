@@ -412,7 +412,7 @@ export default function TypeCollectionsPanel({
       sortable: true,
       skeletonWidth: '3.5rem',
       cell: (entry) => (
-        <span className="prm-quiet mono">
+        <span className="hive-quiet mono">
           {entry.kind === 'group' ? entry.header.draft || '—' : entry.row.draft}
         </span>
       ),

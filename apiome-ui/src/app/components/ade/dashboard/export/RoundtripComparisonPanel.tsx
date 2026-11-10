@@ -107,7 +107,7 @@ export function RoundtripComparisonPanel({
       <section className={cn('space-y-2', className)} data-testid="roundtrip-panel">
         <SectionHeading targetLabel={targetLabel} />
         <div className="xstd-rt__prompt">
-          <p className="xstd-quiet">
+          <p className="hive-quiet">
             Check the fidelity report against reality: emit this artifact, re-import it, and
             diff the result against the source. Runs one real emit + re-import, only when you
             ask.
@@ -340,7 +340,7 @@ export function RoundtripComparisonPanel({
           </div>
         )}
           {result.diff_count === 0 && drops.length === 0 && (
-            <p className="xstd-quiet">The re-imported model matches the source: nothing changed.</p>
+            <p className="hive-quiet">The re-imported model matches the source: nothing changed.</p>
           )}
         </TabsContent>
         <TabsContent value="text" data-testid="roundtrip-text-diff">
@@ -361,7 +361,7 @@ export function RoundtripComparisonPanel({
               />
             </div>
           ) : (
-            <p className="xstd-quiet" data-testid="roundtrip-text-diff-unavailable">
+            <p className="hive-quiet" data-testid="roundtrip-text-diff-unavailable">
               {result.text_diff_reason ??
                 'There is no text to compare: the round trip did not get as far as re-importing the artifact.'}
             </p>

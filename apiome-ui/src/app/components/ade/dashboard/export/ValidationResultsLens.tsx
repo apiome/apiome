@@ -78,9 +78,9 @@ export function ValidationResultsLens({
             <Icon aria-hidden />
             {validation.headline}
           </div>
-          <p className="xstd-quiet">{validation.message}</p>
+          <p className="hive-quiet">{validation.message}</p>
           {tool && (
-            <p className="xstd-quiet flex items-center gap-1" data-testid="verify-validation-tool">
+            <p className="hive-quiet flex items-center gap-1" data-testid="verify-validation-tool">
               <Wrench className="h-3 w-3 shrink-0" aria-hidden />
               {state === 'unavailable' ? (
                 <span>
@@ -114,7 +114,7 @@ export function ValidationResultsLens({
 
       {/* Not-applicable: no toolchain matches the format, so there is genuinely nothing to check. */}
       {state === 'not_applicable' && (
-        <p className="xstd-quiet" data-testid="verify-validation-not-applicable">
+        <p className="hive-quiet" data-testid="verify-validation-not-applicable">
           No validator matches this format — there is nothing to validate for this target.
         </p>
       )}

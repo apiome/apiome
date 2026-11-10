@@ -335,7 +335,7 @@ export function TwoFactorSettings({ className }: TwoFactorSettingsProps) {
       {enabled ? (
         <>
           <Card variant="soft" className="acct-methods" data-testid="two-factor-methods">
-            <div className="acct-caps">Sign-in methods</div>
+            <div className="hive-caps">Sign-in methods</div>
             <ul className="acct-methods__list">
               <li>
                 <Check size={ICON_SIZE.dense} className="text-ok" aria-hidden />

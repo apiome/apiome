@@ -110,7 +110,7 @@ export default function ApiKeySecretDialog({
             </span>
           </Alert>
 
-          <div className="akey-secret-label">Your API key</div>
+          <div className="hive-caps">Your API key</div>
           <div className="akey-secret">
             {/*
               Selectable, wrapping and monospace: the copy button is the fast path, and this

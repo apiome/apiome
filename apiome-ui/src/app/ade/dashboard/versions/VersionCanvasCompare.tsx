@@ -279,7 +279,7 @@ export default function VersionCanvasCompare({
   return (
     <div className="vdlg-canvas" data-mode={mode}>
       <CanvasLegend />
-      <p className="vdlg-quiet">{VERSION_DIALOG_COPY.canvasNote}</p>
+      <p className="hive-quiet">{VERSION_DIALOG_COPY.canvasNote}</p>
       {mode === 'split' ? (
         <div className="vdlg-canvas__split">
           <FlowPane state={left} side="left" diff={diff} title={leftLabel} showTitle interactive />
@@ -297,11 +297,11 @@ export default function VersionCanvasCompare({
           <div className="vdlg-canvas__overlay-key">
             <span>
               <span className="vdlg-canvas__overlay-side">Base</span> — {leftLabel}{' '}
-              <span className="vdlg-quiet">(underlay, dimmed)</span>
+              <span className="hive-quiet">(underlay, dimmed)</span>
             </span>
             <span>
               <span className="vdlg-canvas__overlay-side">Compare</span> — {rightLabel}{' '}
-              <span className="vdlg-quiet">(on top, pan/zoom)</span>
+              <span className="hive-quiet">(on top, pan/zoom)</span>
             </span>
           </div>
           <div className="vdlg-canvas__stack">

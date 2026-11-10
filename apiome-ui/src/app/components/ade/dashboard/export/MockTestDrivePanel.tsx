@@ -217,7 +217,7 @@ export function MockTestDrivePanel({
       <section className={cn('space-y-2', className)} data-testid="mock-test-drive-panel">
         <SectionHeading targetLabel={targetLabel} />
         <div className="xstd-mock__prompt" data-testid="mock-unavailable">
-          <p className="xstd-quiet">{availability.reason}</p>
+          <p className="hive-quiet">{availability.reason}</p>
           <Button size="sm" variant="outline" disabled data-testid="mock-start">
             <Play className="h-3.5 w-3.5" aria-hidden />
             Start mock
@@ -274,7 +274,7 @@ export function MockTestDrivePanel({
 
       {!instance ? (
         <div className="xstd-mock__prompt" data-testid="mock-start-prompt">
-          <p className="xstd-quiet">
+          <p className="hive-quiet">
             Serve this artifact as a live API for{' '}
             <strong>{capability?.defaultTtlMinutes ?? 30} minutes</strong> and send it real
             requests. Responses are generated from the document&rsquo;s own response schemas, so a
@@ -310,14 +310,14 @@ export function MockTestDrivePanel({
               <Badge variant={live ? countdownTone(instance.expiresInSeconds) : 'danger'}>
                 {live ? `Expires in ${formatCountdown(instance.expiresInSeconds)}` : 'Expired'}
               </Badge>
-              <span className="xstd-quiet" data-testid="mock-operation-count">
+              <span className="hive-quiet" data-testid="mock-operation-count">
                 {instance.operationCount} operation{instance.operationCount === 1 ? '' : 's'}
               </span>
-              <span className="xstd-quiet">{instance.requestCount} served</span>
-              <span className="xstd-quiet">{instance.rateLimitPerMinute}/min limit</span>
+              <span className="hive-quiet">{instance.requestCount} served</span>
+              <span className="hive-quiet">{instance.rateLimitPerMinute}/min limit</span>
             </div>
             {!live && (
-              <p className="xstd-quiet" data-testid="mock-expired-note">
+              <p className="hive-quiet" data-testid="mock-expired-note">
                 This mock has reached its time limit and no longer answers. Start another to keep
                 testing.
               </p>
@@ -378,7 +378,7 @@ export function MockTestDrivePanel({
                   <Badge variant={statusTone(lastResult.status)} data-testid="mock-result-status">
                     HTTP {lastResult.status}
                   </Badge>
-                  <span className="xstd-quiet">{lastResult.durationMs} ms</span>
+                  <span className="hive-quiet">{lastResult.durationMs} ms</span>
                   <Button size="sm" variant="ghost" onClick={clearResult} data-testid="mock-result-clear">
                     Clear
                   </Button>
@@ -397,7 +397,7 @@ export function MockTestDrivePanel({
                 {lastResult.body || '(empty body)'}
               </pre>
               {lastResult.truncated && (
-                <p className="xstd-quiet">Body clipped for display.</p>
+                <p className="hive-quiet">Body clipped for display.</p>
               )}
             </div>
           )}
@@ -426,13 +426,13 @@ export function MockTestDrivePanel({
                         {requestOutcomeLabel(entry)}
                       </Badge>
                       <span className="xstd-mock__op-spacer" />
-                      <span className="xstd-quiet">{entry.scenario}</span>
-                      <span className="xstd-quiet">{entry.durationMs} ms</span>
+                      <span className="hive-quiet">{entry.scenario}</span>
+                      <span className="hive-quiet">{entry.durationMs} ms</span>
                     </li>
                   ))}
                 </ul>
                 {log.truncated && (
-                  <p className="xstd-quiet" data-testid="mock-log-truncated">
+                  <p className="hive-quiet" data-testid="mock-log-truncated">
                     Showing the most recent {log.capacity} requests; older traffic has rolled off.
                   </p>
                 )}

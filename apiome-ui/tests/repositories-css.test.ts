@@ -72,7 +72,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  * silently dropping out of the token-only walk below.
  */
 const REPOSITORY_PRELUDES = [
-  '.repo-quiet',
   '.repo-menu__item--danger[data-highlighted], .repo-menu__item--danger:hover',
   '.repo-menu__item--danger[data-highlighted] > svg, .repo-menu__item--danger:hover > svg',
   '.repo-menu__sep',
@@ -227,7 +226,7 @@ describe('the repositories section of globals.css', () => {
   });
 
   it('is the whole block — no nested banner truncates the slice', () => {
-    expect(SECTION).toContain('.repo-quiet');
+    expect(SECTION).toContain('.repo-menu__sep');
     expect(SECTION).toContain('.repo-refresh--failed');
     expect(SECTION).toContain('@media (max-width: 40rem)');
   });
@@ -394,7 +393,6 @@ describe('the card is one link, not a button full of buttons', () => {
 describe('contrast', () => {
   /** Every rule on this screen whose whole job is to be quiet. */
   const QUIET = [
-    '.repo-quiet',
     '.repo-kpi__unwired',
     '.repo-card__full-name',
     '.repo-card__summary',

@@ -89,7 +89,7 @@ export function BenchGeneratedPanel({
           <Sparkles aria-hidden />
           {generating ? 'Generating…' : 'Generate payloads'}
         </Button>
-        {result?.notice ? <p className="vdlg-quiet">{result.notice}</p> : null}
+        {result?.notice ? <p className="hive-quiet">{result.notice}</p> : null}
       </div>
 
       {validInstances.length > 0 ? (
@@ -107,14 +107,14 @@ export function BenchGeneratedPanel({
       ) : null}
 
       {result && (result.rejected_mutants ?? 0) > 0 ? (
-        <p data-testid="test-bench-rejected-mutants" className="vdlg-quiet">
+        <p data-testid="test-bench-rejected-mutants" className="hive-quiet">
           {result.rejected_mutants} mutant candidate{result.rejected_mutants === 1 ? '' : 's'} were
           rejected because they did not provoke exactly the targeted violation.
         </p>
       ) : null}
 
       {(result?.diagnostics ?? []).map((diagnostic, index) => (
-        <p key={`${diagnostic.code}:${index}`} className="vdlg-quiet">
+        <p key={`${diagnostic.code}:${index}`} className="hive-quiet">
           <code className="mono">{diagnostic.code}</code> {diagnostic.message}
         </p>
       ))}

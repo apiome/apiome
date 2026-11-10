@@ -114,7 +114,7 @@ export function BenchSavedPayloads({
           ))}
         </ul>
       ) : (
-        <p className="vdlg-quiet">No saved payloads for this schema yet.</p>
+        <p className="hive-quiet">No saved payloads for this schema yet.</p>
       )}
     </section>
   );

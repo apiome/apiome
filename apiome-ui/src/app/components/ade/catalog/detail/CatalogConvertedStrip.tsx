@@ -89,9 +89,9 @@ export function CatalogConvertedStrip({
           </span>
         )}
         {view.deletedHint ? (
-          <span className="cid-quiet"> — “{view.deletedHint}”.</span>
+          <span className="hive-quiet"> — “{view.deletedHint}”.</span>
         ) : null}
-        {view.countLine ? <span className="cid-quiet"> — {view.countLine}.</span> : null}
+        {view.countLine ? <span className="hive-quiet"> — {view.countLine}.</span> : null}
       </span>
     </Alert>
   );

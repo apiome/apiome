@@ -320,13 +320,13 @@ function ItemTable({
             <tr key={item.itemId} data-testid={`shadow-row-${item.itemId}`}>
               <td>
                 <span className="shd-name">{item.name ?? item.remoteId}</span>
-                <span className="shd-meta">
+                <span className="hive-meta">
                   {item.connectorName}
                   {item.environment ? ` · ${item.environment}` : ''}
                   {item.stale ? ' · stale' : ''}
                 </span>
                 {item.ignored?.reappeared ? (
-                  <span className="shd-meta" data-testid={`shadow-reappeared-${item.itemId}`}>
+                  <span className="hive-meta" data-testid={`shadow-reappeared-${item.itemId}`}>
                     Ignored before (“{item.ignored.reason}”), now served somewhere else.
                   </span>
                 ) : null}
@@ -423,7 +423,7 @@ function UndeployedTable({ rows }: { rows: ShadowUndeployed[] }) {
                 <Link href={itemHref(entry)} className="shd-name">
                   {entry.name ?? entry.projectId}
                 </Link>
-                <span className="shd-meta">
+                <span className="hive-meta">
                   {entry.kind === 'project' ? 'Project' : 'Catalog item'}
                   {entry.versionLabel ? ` · ${entry.versionLabel}` : ''}
                 </span>
@@ -552,7 +552,7 @@ function LinkDialog({
               />
               <span className="shd-candidate__body">
                 <span className="shd-name">{candidate.target.name ?? candidate.target.projectId}</span>
-                <span className="shd-meta">
+                <span className="hive-meta">
                   {tierLabel(candidate.tier)} · {confidencePercent(candidate.confidence)} · {candidate.reason}
                 </span>
               </span>

@@ -75,7 +75,6 @@ const BASE_TYPE_RULE_LINE = (() => {
  */
 const STUDIO_PRELUDES = [
   // shared type + layout
-  '.xstd-quiet',
   '.xstd-note',
   '.xstd-caps',
   '.xstd-link',
@@ -358,7 +357,7 @@ describe('the export-studio section of globals.css', () => {
   });
 
   it('is the whole block — no nested banner truncates the slice', () => {
-    expect(SECTION).toContain('.xstd-quiet');
+    expect(SECTION).toContain('.xstd-note');
     expect(SECTION).toContain('.xstd-evidence__action');
   });
 
@@ -515,7 +514,6 @@ describe('quiet text is the muted step, never the subtle one', () => {
   });
 
   it('gives the quiet steps the muted token', () => {
-    expect(declaration('.xstd-quiet', 'color')).toBe('var(--fg-muted)');
     expect(declaration('.xstd-note', 'color')).toBe('var(--fg-muted)');
     expect(declaration('.xstd-stage__desc', 'color')).toBe('var(--fg-muted)');
     expect(declaration('.xstd-failure__body', 'color')).toBe('var(--fg-muted)');

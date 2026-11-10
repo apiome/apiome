@@ -439,7 +439,7 @@ export function MergeBranchesDialog({
           )}
 
           {previewData?.mergeBaseVersionId != null && previewData?.classification && (
-            <p className="vdlg-quiet">
+            <p className="hive-quiet">
               Merge-base revision: <span className="mono">{previewData.mergeBaseVersionId}</span>
             </p>
           )}

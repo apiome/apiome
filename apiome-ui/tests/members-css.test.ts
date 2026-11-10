@@ -84,7 +84,6 @@ const MEMBER_PRELUDES = [
   '.mbr-kv',
   '.mbr-kv dt',
   '.mbr-kv dd',
-  '.mbr-caps',
   '.mbr-tag',
   '.mbr-activity',
   '.mbr-activity + .mbr-activity',
@@ -266,7 +265,6 @@ describe('density and font-scale independence', () => {
       ['.mbr-role-select', 'var(--fs-xs)'],
       ['.mbr-kv', 'var(--fs-sm)'],
       ['.mbr-kv dt', 'var(--fs-xs)'],
-      ['.mbr-caps', 'var(--fs-2xs)'],
       ['.mbr-tag', 'var(--fs-2xs)'],
       ['.mbr-activity', 'var(--fs-xs)'],
     ] as const) {
@@ -409,7 +407,7 @@ describe('how a pending invitation is distinguished', () => {
 
 describe('what the block borrows rather than reinvents', () => {
   it('tracks its caps labels with the shared caps tracking', () => {
-    for (const prelude of ['.mbr-kv dt', '.mbr-caps']) {
+    for (const prelude of ['.mbr-kv dt', '.hive-caps']) {
       expect(declaration(prelude, 'letter-spacing')).toBe('var(--track-caps)');
     }
   });

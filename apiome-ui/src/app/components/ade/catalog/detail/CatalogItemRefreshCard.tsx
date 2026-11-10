@@ -184,7 +184,7 @@ export function CatalogItemRefreshCard({ item, active, canEdit }: CatalogItemRef
                 {status!.label}
               </Badge>
               {!refresh.tenantEnabled ? (
-                <span className="cid-quiet">An administrator switched catalog refresh off for this workspace.</span>
+                <span className="hive-quiet">An administrator switched catalog refresh off for this workspace.</span>
               ) : null}
             </dd>
             {configured ? (
@@ -206,7 +206,7 @@ export function CatalogItemRefreshCard({ item, active, canEdit }: CatalogItemRef
                     <dt>Last failure</dt>
                     <dd data-testid="catalog-detail-refresh-failure">
                       <span className="cid-refresh__error">{refresh.lastError}</span>
-                      <span className="cid-quiet">
+                      <span className="hive-quiet">
                         {refresh.consecutiveFailures === 1
                           ? '1 failed check in a row; the next one is delayed.'
                           : `${refresh.consecutiveFailures} failed checks in a row; the next one is delayed.`}
@@ -224,7 +224,7 @@ export function CatalogItemRefreshCard({ item, active, canEdit }: CatalogItemRef
             ) : (
               <>
                 <dt>Source</dt>
-                <dd className="cid-quiet">
+                <dd className="hive-quiet">
                   Not set up. GraphQL, gRPC and FHIR sources can be re-checked hourly, daily or weekly.
                 </dd>
               </>

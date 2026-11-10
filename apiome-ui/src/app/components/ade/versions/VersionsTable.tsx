@@ -232,7 +232,7 @@ export default function VersionsTable({
                 {version.shortMessage}
               </DataTableCellPrimary>
             ) : (
-              <span className="ver-quiet">—</span>
+              <span className="hive-quiet">—</span>
             )}
             {version.changelog ? (
               <DataTableCellSub className="ver-note__sub" title={version.changelog}>

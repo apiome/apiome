@@ -1106,7 +1106,7 @@ export function RepositoryFileImportMapping({
               the same and is 5.45 worst-of-nine. */}
           <Card variant="flat">
             <CardContent className="flex flex-col gap-2">
-              <p className="repo-det-caps">Source</p>
+              <p className="hive-caps">Source</p>
               <dl className="imp-kv">
                 <dt>Repository</dt>
                 <dd>{sourceRepoDisplay}</dd>

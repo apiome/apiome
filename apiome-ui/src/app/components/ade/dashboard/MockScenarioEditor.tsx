@@ -821,13 +821,13 @@ export function MockScenarioEditor({
         />
 
         {loading ? (
-          <p className="vdlg-quiet" data-testid="mock-scenario-loading">
+          <p className="hive-quiet" data-testid="mock-scenario-loading">
             {VERSION_DIALOG_COPY.scenariosLoading}
           </p>
         ) : (
           <div className="vdlg-form">
             {drafts.length === 0 && (
-              <p className="vdlg-quiet">
+              <p className="hive-quiet">
                 No scenarios defined yet. Add one to get started — for example{' '}
                 <span className="mono">quota-exceeded</span> returning HTTP 429 from a list
                 operation.
@@ -1156,7 +1156,7 @@ export function MockScenarioEditor({
                 <p className="vdlg-section-title">
                   Latency &amp; chaos
                 </p>
-                <p className="vdlg-quiet">
+                <p className="hive-quiet">
                   Simulate a slow or flaky API: every response waits the configured delay (± jitter,
                   capped at 30s) and the error rate answers that percentage of calls with an injected
                   5xx. Route overrides win over the defaults; leave everything blank for an instant,
@@ -1169,7 +1169,7 @@ export function MockScenarioEditor({
             <fieldset className="vdlg-mock__scenario" data-testid="mock-scenario-preview">
               <div>
                 <p className="vdlg-section-title">Try it</p>
-                <p className="vdlg-quiet">
+                <p className="hive-quiet">
                   Renders a request against the scenarios and knobs on screen — no save, no mock to
                   enable, nothing sent anywhere. The trace says which layer answered, and which
                   match rule fired. Chaos is reported rather than applied.

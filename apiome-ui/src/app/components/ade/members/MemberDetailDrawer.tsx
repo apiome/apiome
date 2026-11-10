@@ -128,7 +128,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mbr-caps mb-2">{title}</h3>
+      <h3 className="hive-caps mb-2">{title}</h3>
       {children}
     </section>
   );

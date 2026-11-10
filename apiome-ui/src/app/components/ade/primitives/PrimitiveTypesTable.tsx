@@ -182,7 +182,7 @@ export default function PrimitiveTypesTable({
       skeletonWidth: '8rem',
       cell: (primitive) =>
         primitive.namespace ? (
-          <span className="prm-quiet mono">{primitive.namespace}</span>
+          <span className="hive-quiet mono">{primitive.namespace}</span>
         ) : (
           <span className="prm-faint">—</span>
         ),

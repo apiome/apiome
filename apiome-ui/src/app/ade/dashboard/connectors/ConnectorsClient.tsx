@@ -164,7 +164,7 @@ export default function ConnectorsClient() {
                           <Link href={`/ade/dashboard/connectors/${encodeURIComponent(connector.id)}`} className="cnx-link">
                             {connector.name}
                           </Link>
-                          <span className="cnx-meta">{connectorKindLabel(connector.kind)}</span>
+                          <span className="hive-meta">{connectorKindLabel(connector.kind)}</span>
                         </td>
                         <td>
                           <Badge status={connector.status} dot>
@@ -198,12 +198,12 @@ export default function ConnectorsClient() {
                     <Link href={`/ade/dashboard/connectors/${encodeURIComponent(connector.id)}`} className="cnx-link">
                       {connector.name}
                     </Link>
-                    <span className="cnx-meta">{connectorKindLabel(connector.kind)}</span>
+                    <span className="hive-meta">{connectorKindLabel(connector.kind)}</span>
                     <div className="cnx-card__row">
                       <Badge status={connector.status} dot>
                         {connector.status}
                       </Badge>
-                      <span className="cnx-meta">
+                      <span className="hive-meta">
                         {connector.lastRunAt ? `Last run ${new Date(connector.lastRunAt).toLocaleString()}` : 'Never synced'}
                       </span>
                     </div>

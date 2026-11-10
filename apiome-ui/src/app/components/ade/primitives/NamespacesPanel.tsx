@@ -192,7 +192,7 @@ export default function NamespacesPanel({
       id: 'base',
       header: 'Base URI',
       skeletonWidth: '11rem',
-      cell: (ns) => <span className="prm-quiet mono">{shortBaseUri(ns.base_uri)}</span>,
+      cell: (ns) => <span className="hive-quiet mono">{shortBaseUri(ns.base_uri)}</span>,
     },
     {
       id: 'version',
@@ -211,7 +211,7 @@ export default function NamespacesPanel({
       id: 'visibility',
       header: 'Visibility',
       skeletonWidth: '5rem',
-      cell: (ns) => <span className="prm-quiet">{visibilityLabel(ns)}</span>,
+      cell: (ns) => <span className="hive-quiet">{visibilityLabel(ns)}</span>,
     },
     {
       id: 'default',
@@ -354,7 +354,7 @@ export default function NamespacesPanel({
                 </span>
                 <span className="prm-precedence__text">
                   <span className="prm-precedence__title">
-                    {step.title} <span className="prm-quiet mono">{step.pattern}</span>
+                    {step.title} <span className="hive-quiet mono">{step.pattern}</span>
                   </span>
                   <span className="prm-precedence__body">{step.body}</span>
                 </span>

@@ -189,7 +189,7 @@ export default function AddConnectorClient() {
                     />
                     <span className="cnx-kind__body">
                       <span className="cnx-name">{candidate.label}</span>
-                      <span className="cnx-meta">{candidate.description}</span>
+                      <span className="hive-meta">{candidate.description}</span>
                       {available ? null : <Badge variant="outline">Not available on this deployment</Badge>}
                     </span>
                   </label>
@@ -284,7 +284,7 @@ export default function AddConnectorClient() {
                       {dryRun.items.map((item) => (
                         <li key={item.remoteId}>
                           <span className="cnx-name">{item.name ?? item.remoteId}</span>
-                          <span className="cnx-meta">
+                          <span className="hive-meta">
                             {[item.environment, item.revision ? `revision ${item.revision}` : null].filter(Boolean).join(' · ')}
                           </span>
                         </li>

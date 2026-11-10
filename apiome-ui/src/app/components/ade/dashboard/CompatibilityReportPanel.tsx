@@ -84,7 +84,7 @@ export function CompatibilityReportPanel({
 
   return (
     <div className={`compat-report-panel vdlg-compat ${className}`}>
-      {intro ? <div className="compat-report-intro vdlg-quiet">{intro}</div> : null}
+      {intro ? <div className="compat-report-intro hive-quiet">{intro}</div> : null}
       {overall ? (
         <p className="compat-report-overall vdlg-compat__overall">
           <span className="vdlg-compat__overall-label">Overall:</span>{' '}
@@ -106,7 +106,7 @@ export function CompatibilityReportPanel({
         </div>
       ) : null}
       {grouped.length === 0 ? (
-        <p className="compat-report-empty vdlg-quiet">{VERSION_DIALOG_COPY.compatNoFindings}</p>
+        <p className="compat-report-empty hive-quiet">{VERSION_DIALOG_COPY.compatNoFindings}</p>
       ) : (
         <div className="compat-report-findings vdlg-compat__findings">
           {grouped.map((section) => (
