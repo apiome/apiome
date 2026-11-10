@@ -102,7 +102,7 @@ export function JsonViewer({ value, label, language = 'json', maxLines = 24, cla
         </div>
       ) : null}
       <div className="relative bg-white dark:bg-[#1e1e1e]">
-        {!label ? <div className="absolute right-1.5 top-1.5 z-10">{copyButton}</div> : null}
+        {!label ? <div className="absolute right-1.5 top-1.5 z-raised">{copyButton}</div> : null}
         <MonacoEditor
           height={height}
           language={language}

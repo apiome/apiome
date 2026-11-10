@@ -189,7 +189,7 @@ const CELL_X_CLASS = 'px-3.5';
  * through it as they pass underneath.
  */
 const TH_CLASS = [
-  'sticky top-0 z-1 whitespace-nowrap border-b border-border bg-surface text-left align-middle',
+  'sticky top-0 z-raised whitespace-nowrap border-b border-border bg-surface text-left align-middle',
   'text-2xs font-semibold tracking-[var(--track-caps)] uppercase text-fg-muted',
   CELL_X_CLASS,
 ].join(' ');
@@ -1229,7 +1229,7 @@ const DataTableBulkBar = React.forwardRef<HTMLDivElement, DataTableBulkBarProps>
       role="group"
       aria-label="Bulk actions"
       className={cn(
-        'sticky bottom-4 z-15 mx-auto flex w-max max-w-full flex-wrap items-center gap-2.5',
+        'sticky bottom-4 z-sticky mx-auto flex w-max max-w-full flex-wrap items-center gap-2.5',
         'rounded-lg bg-fg py-2 pr-2 pl-3.5 text-sm text-surface shadow-[var(--shadow-lg)]',
         className
       )}

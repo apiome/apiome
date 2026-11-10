@@ -1,6 +1,7 @@
 'use client';
 
 import { Toaster as SonnerToaster } from 'sonner';
+import { zLayer } from '@lib/zLayers';
 
 /**
  * Toaster — the Hive toast surface (re-tokened in HIVE-2.2, #5281).
@@ -16,6 +17,11 @@ import { Toaster as SonnerToaster } from 'sonner';
  * toast has to be the same green as a published badge. Tone therefore comes from the tokens
  * below, and the icon inherits the `--ok` / `--danger` / `--warn` role from the type of
  * toast raised.
+ *
+ * Stacking: sonner pins the toaster list to its own nine-digit layer. The inline
+ * `style` puts it back on the scale at `--z-toast` (SUX-1.1) — above every dialog, drawer
+ * and popover, below an alert dialog — and an inline value is the one thing that outranks
+ * the unlayered rule sonner injects.
  */
 export function Toaster() {
   return (
@@ -23,6 +29,7 @@ export function Toaster() {
       position="bottom-right"
       expand={false}
       closeButton
+      style={{ zIndex: zLayer('toast') }}
       toastOptions={{
         // 360 px in `rem`, so a toast follows the font-size preference like everything
         // else. `--shadow-lg` already carries the hairline as its second layer, the way

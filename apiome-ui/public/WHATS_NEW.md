@@ -279,6 +279,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Confirming a new account no longer flashes *We could not sign you in automatically* before the **Let's set up your first workspace** screen
   - **Sign In** stays disabled while you are being signed in, instead of turning back on and inviting a second click; it comes back only if the attempt fails
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
+- Dialogs and menus:
+  - Every dialog, drawer and confirm now dims the whole screen behind it, Studio's top header included — the header could stay bright and clickable over an open dialog. A list, menu or tooltip opened inside a dialog, or inside a dialog opened from a drawer, now shows in full above it instead of being cut off underneath, and toasts always show above an open dialog
 - Code editors:
   - Code in Apiome's editors (the spec viewer under **Versions**, and others) is easier to read: keys, strings, numbers and line numbers now have enough contrast against the code background in every theme. Before, light-theme keys, strings and line numbers were too faint
 - Contrast and touch targets:

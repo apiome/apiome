@@ -22,6 +22,7 @@ import {
   readGlobalsCss,
   topLevelRules,
   type CssRule,
+  resolveZIndex,
 } from './helpers/design-tokens';
 import { RAIL_ICON_BREAKPOINT_PX } from '../src/app/components/shell/useIconRail';
 
@@ -119,14 +120,14 @@ describe('the shell grid', () => {
   // The workspace switcher's menu and the collapse handle reach out over the page column;
   // a card in the page must never paint over them.
   it('stacks the rail above the page\'s cards', () => {
-    expect(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index')).toBe('30');
+    expect(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index')).toBe('var(--z-chrome)');
   });
 
   // The sticky page header follows the rail in the document, so an equal z-index lets it
   // paint over the collapse chevron and the workspace switcher's menu.
   it('stacks the rail above the sticky page header', () => {
-    const rail = Number(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index'));
-    const header = Number(parseDeclarations(ruleFor('.page-header').body).get('z-index'));
+    const rail = resolveZIndex(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index'));
+    const header = resolveZIndex(parseDeclarations(ruleFor('.page-header').body).get('z-index'));
     expect(rail).toBeGreaterThan(header);
   });
 
@@ -136,8 +137,8 @@ describe('the shell grid', () => {
 
   it('keeps the rail below the notices and dialogs that float over the shell', () => {
     const notices = parseDeclarations(ruleFor('.tfa-notice-stack').body);
-    const rail = Number(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index'));
-    expect(Number(notices.get('z-index'))).toBeGreaterThan(rail);
+    const rail = resolveZIndex(parseDeclarations(ruleFor('.hive-shell > .rail').body).get('z-index'));
+    expect(resolveZIndex(notices.get('z-index'))).toBeGreaterThan(rail);
   });
 });
 

@@ -246,7 +246,7 @@ export function CapabilityPresenceMatrixPanel({ versions, loading, error, onSele
             <tr className="border-b border-border bg-inset">
               <th
                 scope="col"
-                className="sticky left-0 z-10 bg-inset px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-fg-muted"
+                className="sticky left-0 z-raised bg-inset px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-fg-muted"
               >
                 Capability
               </th>
@@ -290,7 +290,7 @@ function MatrixRow({ row, columns }: { row: McpMatrixRow; columns: readonly McpM
     <tr className="border-b border-border last:border-0">
       <th
         scope="row"
-        className="sticky left-0 z-10 max-w-[18rem] bg-surface px-3 py-1.5 text-left"
+        className="sticky left-0 z-raised max-w-[18rem] bg-surface px-3 py-1.5 text-left"
       >
         <span className="flex items-center gap-2">
           <span className="min-w-0">
