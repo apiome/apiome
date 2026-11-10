@@ -124,6 +124,7 @@ import { setPreferenceAxis } from '../PreferenceAxes';
 import { Demo, Section } from './GallerySection';
 import { ComingNextShowcase } from './ComingNextShowcase';
 import { ControlSizesShowcase } from './ControlSizesShowcase';
+import { FormFrameShowcase } from './FormFrameShowcase';
 import { LayeringShowcase } from './LayeringShowcase';
 import { QuietListShowcase } from './QuietListShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
@@ -414,7 +415,7 @@ export function HiveGallery() {
         <Section
           id="forms"
           title="Forms"
-          description="36 px controls by default, with sm and lg steps that match the buttons. Hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon."
+          description="36 px controls by default, with sm and lg steps that match the buttons. Hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon. FormFrame holds a whole form: sections 24 px apart, fields 16 px apart, a sticky footer."
         >
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
@@ -494,6 +495,7 @@ export function HiveGallery() {
             </div>
           </div>
           <ControlSizesShowcase />
+          <FormFrameShowcase />
         </Section>
 
         <Section

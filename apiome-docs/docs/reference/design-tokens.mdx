@@ -23,6 +23,7 @@ place.
 | Density and layout | `--control-h`, `--control-h-sm`, `--control-h-lg`, `--page-pad`, `--rail-w` … | `h-control`, `p-page`, the `size` prop of controls (see below) … |
 | Stacking | `--z-*` | `z-chrome`, `z-modal` … (see below) |
 | Dialog frame | `--dialog-steps-block-size` | `<DialogContent steps>` (see below) |
+| Form frame | `--form-frame-section-gap`, `--form-frame-field-gap`, `--form-frame-max-inline-size` | `<FormFrame>` and `<FormSection>` (see below) |
 
 ### Spacing
 
@@ -122,6 +123,55 @@ Each control names the sizes in its own way:
 
 <Screenshot id="design-system-control-sizes" alt="The control sizes specimen: a small, a medium and a large row, each with a button, an input, a select and a segmented switch of the same height, and a labelled input and text area under each row" />
 
+### Forms
+
+`FormFrame` is the container for a whole form, on a page or in a dialog. It sets the spacing
+and the place of the buttons, so two forms of the same kind look the same and are the same
+width.
+
+```tsx
+<FormFrame
+  width="narrow"
+  header={<h2>Project settings</h2>}
+  submitLabel="Save project"
+  onSubmit={save}
+  dirty={dirty}
+  error={saveError}
+  secondaryActions={<Button variant="ghost" onClick={cancel}>Cancel</Button>}
+>
+  <FormSection title="Basics" description="What the project is called.">
+    <FormField label="Project name" htmlFor="name">
+      <Input id="name" />
+    </FormField>
+  </FormSection>
+  <FormSection title="Access">{/* more FormFields */}</FormSection>
+</FormFrame>
+```
+
+| Part | What it does |
+| --- | --- |
+| `header` | The title. In a dialog, pass a `DialogHeader`. |
+| Body (the children) | One or more `FormSection`s, 24 px apart. This part scrolls. |
+| Footer | Sticks to the bottom. On the left: **Unsaved changes** when `dirty` is set, and `error` as an alert. On the right: `secondaryActions`, then the primary button (`submitLabel`). |
+| `width` | `narrow` (560 px), `default` (720 px) or `wide` (960 px), as a maximum. |
+
+- **The spacing rule.** A `FormSection` has a title, an optional description and its fields,
+  16 px apart. `FormField` is the only way to pair a label with its control, with 6 px between
+  them. The gaps are fixed: compact density does not shrink them.
+- **On a page** the page scrolls and the footer stays at the bottom of the window. **In a
+  dialog** (`<DialogContent><FormFrame …/></DialogContent>`) the dialog's body scrolls between
+  its header and footer.
+- **Keyboard.** **Enter** in a single-line field submits the form; in a text area it adds a
+  line. **⌘S** (macOS) or **Ctrl+S** anywhere in the form also submits, instead of the browser's
+  **Save page**. Neither submits while the primary button is disabled (`submitDisabled`) or
+  saving (`submitting`). A disabled primary button shows why as its tooltip: pass the reason as
+  `submitDisabledReason`.
+- **Secondary buttons never submit.** A button in `secondaryActions` with no `type` becomes
+  `type="button"`, so **Enter** cannot press **Cancel** by mistake.
+- `FormFrame` is opt-in. No screen uses it yet; existing forms look the same as before.
+
+<Screenshot id="design-system-form-frame" alt="The form frame specimen: a Project settings form with a Basics and an Access section, scrolled inside a well with its footer of Discard and Save project still visible, and an Open the form in a dialog button under it" />
+
 ### Type helpers
 
 Four classes cover the secondary text used on every screen. Use one of them instead of writing
@@ -181,4 +231,5 @@ The design-system gallery is the `/design-system` route of `apiome-ui`. It needs
 a select inside that. It is the case the stacking scale exists for, and
 `apiome-ui/e2e/hive-z-index-scale.spec.ts` checks it in a browser. **Forms** ends with the control
 sizes: a row for each size, which `apiome-ui/e2e/hive-control-sizes.spec.ts` measures in a browser
-at both densities.
+at both densities. After them comes the form frame: the same two-section form on the page and, from
+**Open the form in a dialog**, inside a dialog.
