@@ -22,6 +22,7 @@ place.
 | Spacing | `--space-1` … `--space-6`, `--space-8`, `--space-10`, `--space-12` | `var(--space-4)` in a stylesheet; `p-4`, `gap-4` … |
 | Density and layout | `--control-h`, `--control-h-sm`, `--control-h-lg`, `--page-pad`, `--rail-w` … | `h-control`, `p-page`, the `size` prop of controls (see below) … |
 | Stacking | `--z-*` | `z-chrome`, `z-modal` … (see below) |
+| Dialog frame | `--dialog-steps-block-size` | `<DialogContent steps>` (see below) |
 
 ### Spacing
 
@@ -144,6 +145,34 @@ a rule with a screen's own prefix.
   with an icon), are still per-screen.
 - Nothing on screen changed. A browser comparison of every changed fixture, in the light and
   dark themes, found no difference in computed style.
+
+### Stepped dialogs
+
+A dialog is normally as tall as its content and centred. In a dialog with steps or tabs, moving
+to a longer or shorter step moves both edges, and the buttons move with them. Pass `steps` to
+`DialogContent` to give the dialog a fixed frame instead:
+
+```tsx
+<DialogContent size="lg" steps>
+  <DialogHeader>
+    <DialogTitle>Import classes</DialogTitle>
+    <Stepper steps={steps} current={current} fill />
+  </DialogHeader>
+  <DialogBody>{/* the current step */}</DialogBody>
+  <DialogFooter>{/* Back · Next · Import */}</DialogFooter>
+</DialogContent>
+```
+
+- The dialog has one height on every step: `--dialog-steps-block-size` (45 rem, 720 px at the
+  default font size), or the window height less 3 rem when the window is shorter. The width is
+  still its `size`.
+- `DialogHeader` holds the title and the stepper or tab list. `DialogFooter` sits at the bottom.
+  Neither shrinks.
+- `DialogBody` fills the space between them and scrolls. A long step scrolls inside the frame;
+  it does not make the dialog taller.
+- `steps` is opt-in. A dialog without it is unchanged, and no screen in the web app uses it yet.
+  Studio uses it for its class import, class and property editors, canvas settings and export
+  dialogs (SUX-2.3).
 
 ## Where to see them
 
