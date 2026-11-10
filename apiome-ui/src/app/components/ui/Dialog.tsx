@@ -61,8 +61,24 @@ const dialogContentVariants = cva(
         /** 1200 px, near-full height — a workbench. */
         full: 'h-[calc(100vh-3rem)] max-w-[75rem]',
       },
+      /**
+       * A dialog that walks through steps (`.hive-dialog--steps` in globals.css).
+       *
+       * An ordinary dialog is as tall as its content and centred, so when a step swaps in a
+       * longer or shorter body *both* edges move and the stepper and buttons jump under the
+       * pointer. A stepped dialog hangs from a fixed top edge instead and keeps a height
+       * floor, so short steps share one height and a long step only pushes the footer down.
+       */
+      steps: {
+        true: 'hive-dialog--steps',
+        false: '',
+      },
     },
-    defaultVariants: { size: 'default' },
+    compoundVariants: [
+      // A 440 px confirm-sized flow needs a lower floor than a wizard does.
+      { steps: true, size: 'sm', className: 'hive-dialog--steps-sm' },
+    ],
+    defaultVariants: { size: 'default', steps: false },
   }
 );
 
@@ -98,6 +114,7 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
       className,
       children,
       size,
+      steps,
       showCloseButton = true,
       closeLabel = 'Close',
       onOpenAutoFocus,
@@ -112,7 +129,7 @@ const DialogContent = React.forwardRef<React.ElementRef<typeof DialogPrimitive.C
         <DialogOverlay />
         <DialogPrimitive.Content
           ref={ref}
-          className={cn(dialogContentVariants({ size }), className)}
+          className={cn(dialogContentVariants({ size, steps }), className)}
           {...props}
           onOpenAutoFocus={(event) => {
             // Runs before Radix moves focus in, so this is still the element that opened it.
@@ -166,7 +183,8 @@ export interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> 
 const DialogFooter = ({ className, bleed = true, ...props }: DialogFooterProps) => (
   <div
     className={cn(
-      'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
+      // `hive-dialog__footer`: the hook a stepped dialog uses to pin the footer to its foot.
+      'hive-dialog__footer flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end',
       bleed &&
         '-mx-6 -mb-6 mt-2 rounded-b-xl border-t border-border bg-[color-mix(in_srgb,var(--bg-subtle)_60%,var(--bg-surface))] px-6 py-3.5',
       className,

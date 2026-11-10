@@ -300,7 +300,7 @@ export default function AddMcpServerDialog({ open, onClose, onSuccess }: AddMcpS
         if (!next) void close();
       }}
     >
-      <DialogContent size="lg" className="imp-wizard imp-wizard--fit" data-testid="add-mcp-server-dialog">
+      <DialogContent size="lg" steps className="imp-wizard imp-wizard--fit" data-testid="add-mcp-server-dialog">
         <ImportWizardHead
           icon={<Network />}
           title={ADD_MCP_SERVER_COPY.title}

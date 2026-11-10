@@ -215,7 +215,7 @@ export function TwoFactorEnrollDialog({
         close();
       }}
     >
-      <DialogContent size="lg">
+      <DialogContent size="lg" steps>
         <DialogHeader className="acct-dialog__header acct-dialog__header--stacked">
           <div className="acct-dialog__lead">
             <span className="acct-glyph acct-glyph--ok" aria-hidden>

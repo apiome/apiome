@@ -16,6 +16,7 @@ export * from './tabStyles';
 export * from './Select';
 export * from './Collapsible';
 export * from './RadioGroup';
+export * from './Form';
 export * from './FormField';
 export * from './Spinner';
 
