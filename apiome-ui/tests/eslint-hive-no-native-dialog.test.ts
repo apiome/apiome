@@ -37,7 +37,7 @@ const ruleTester = new RuleTester({
 describe('hive/no-native-dialog', () => {
   it('is registered alongside the typography rule under the same plugin', () => {
     expect(hive.meta.name).toBe('hive');
-    expect(Object.keys(hive.rules).sort()).toEqual(['no-native-dialog', 'no-px-typography', 'no-raw-form-control']);
+    expect(Object.keys(hive.rules).sort()).toEqual(['no-native-dialog', 'no-px-typography']);
   });
 
   // `RuleTester` declares a `describe`/`it` of its own per case, so it runs in the suite

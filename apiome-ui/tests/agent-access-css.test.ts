@@ -146,8 +146,7 @@ describe('density and font-scale independence', () => {
     for (const rule of SECTION_RULES) {
       const gap = parseDeclarations(rule.body).get('gap');
       if (gap === undefined) continue;
-      // A step of the grid (`--space-3`) or one of the named form gaps (`--space-field`).
-      expect(gap).toMatch(/^var\(--space-[a-z\d]+\)( var\(--space-[a-z\d]+\))?$/);
+      expect(gap).toMatch(/^var\(--space-\d\)( var\(--space-\d\))?$/);
     }
   });
 });
