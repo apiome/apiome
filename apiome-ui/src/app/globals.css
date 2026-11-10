@@ -453,6 +453,12 @@
   --space-8: 2rem;      /* 32px */
   --space-10: 2.5rem;   /* 40px */
   --space-12: 3rem;     /* 48px */
+  /* Form rhythm — one set of gaps for every form, so a label sits the same distance from
+     its control, and a field from the next field, on every screen. The `Form*` primitives
+     and the per-page `.…-field` / `.…-form` rules both spend these. */
+  --space-field: 0.375rem;   /* 6px  — label → control → hint */
+  --space-form: 1rem;        /* 16px — field → field */
+  --space-section: 1.5rem;   /* 24px — section → section */
   --control-h: 2.25rem;      /* 36px */
   --control-h-sm: 1.875rem;  /* 30px */
   --control-h-lg: 2.625rem;  /* 42px */
@@ -1023,6 +1029,8 @@ html[data-density="compact"] {
   --target-min: 1.5rem;      /* 24px */
   --space-6: 1.25rem;        /* 20px */
   --space-8: 1.5rem;         /* 24px */
+  --space-form: 0.75rem;     /* 12px */
+  --space-section: 1.25rem;  /* 20px */
 }
 
 /* ---- Font scale (DESIGN.md §4.1) ----------------------------------------
@@ -2111,6 +2119,32 @@ html[data-kbd-hints="off"] .kbd-group {
 .hive-dialog[data-state="closed"] {
   animation: hive-dialog-sink var(--dur-base) var(--ease-out);
   pointer-events: none;
+}
+
+/* A stepped dialog (`<DialogContent steps>`): hung from a fixed top edge with a height
+   floor, rather than content-tall and centred. The head and stepper therefore never move
+   between steps, steps shorter than the floor share one height, and a longer step grows
+   downward only — capped at the viewport, past which the dialog (or a wizard's own body)
+   scrolls. `translate` is restated because the centring is Tailwind's `-translate-y-1/2`;
+   the doubled class outranks `.imp-wizard--fit`'s own cap further down. */
+.hive-dialog.hive-dialog--steps {
+  --dialog-steps-top: max(1.5rem, 8vh);
+  --dialog-steps-max: calc(100vh - var(--dialog-steps-top) - 1.5rem);
+  top: var(--dialog-steps-top);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  min-block-size: min(var(--dialog-steps-min, 28rem), var(--dialog-steps-max));
+  max-block-size: var(--dialog-steps-max);
+}
+
+.hive-dialog--steps-sm {
+  --dialog-steps-min: 22rem;
+}
+
+/* The footer sits at the foot of the floor, not under whatever the step happened to hold. */
+.hive-dialog--steps > .hive-dialog__footer {
+  margin-block-start: auto;
 }
 
 .hive-overlay[data-state="open"] {
@@ -4387,11 +4421,23 @@ button.tfa-reset-notice__close > svg {
 
 /* The card. Its own padding is zero — each band below owns its inset. */
 .wiz-card {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  /* A floor, so the short steps share one height and the action band stays where it was
+     when the step changes; a longer step still grows. */
+  min-block-size: 27rem;
   padding: 0;
   overflow: clip;
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-md);
+}
+
+/* The organization step wraps its two bands in a `<form>`; it has to pass the column on. */
+.wiz-card > form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
 }
 
 /* The progress band, tinted a shade off the card so the two read as separate
@@ -4403,6 +4449,7 @@ button.tfa-reset-notice__close > svg {
 }
 
 .wiz-card__body {
+  flex: 1 1 auto;
   padding: calc(var(--card-pad) * 1.4);
 }
 
@@ -6567,7 +6614,7 @@ button.tfa-reset-notice__close > svg {
 .acct-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-field);
   min-width: 0;
 }
 
@@ -6653,7 +6700,7 @@ button.tfa-reset-notice__close > svg {
 .acct-enroll__fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   min-width: 0;
 }
 
@@ -8955,7 +9002,7 @@ button.tfa-reset-notice__close > svg {
 .akey-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   padding-block: var(--space-4);
 }
 
@@ -8963,7 +9010,7 @@ button.tfa-reset-notice__close > svg {
 .akey-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -9966,14 +10013,14 @@ button.tfa-reset-notice__close > svg {
 .sg-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   min-width: 0;
 }
 
 .sg-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-width: 0;
 }
 
@@ -11546,7 +11593,7 @@ button.tfa-reset-notice__close > svg {
 .lw-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
 }
 
 .lw-form__row {
@@ -14191,7 +14238,7 @@ button.tfa-reset-notice__close > svg {
 .ver-date-pop__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   font-size: var(--fs-xs);
   color: var(--fg-muted);
 }
@@ -14433,7 +14480,7 @@ button.tfa-reset-notice__close > svg {
 .ver-field {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--space-1) + 0.125rem);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -14622,7 +14669,7 @@ button.tfa-reset-notice__close > svg {
 .ver-publish__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   min-inline-size: 0;
 }
 
@@ -15717,7 +15764,7 @@ button.tfa-reset-notice__close > svg {
 .vdlg-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-form);
   min-block-size: 0;
   overflow-y: auto;
   padding-block: var(--space-1);
@@ -15726,7 +15773,7 @@ button.tfa-reset-notice__close > svg {
 .vdlg-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -18153,13 +18200,13 @@ button.tfa-reset-notice__close > svg {
 .mock-prev__fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-form);
 }
 
 .mock-prev__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -19030,9 +19077,12 @@ button.tfa-reset-notice__close > svg {
 }
 
 /* HIVE-11.11: the Projects import wizard sizes to its step (DESIGN.md §8: `--lg`), capped
-   at the viewport so a long step still scrolls inside the body. Only the head, stepper and
-   footer reserve height; nothing pads an empty step out to full height. */
+   at the viewport so a long step still scrolls inside the body — it is not a full-height
+   sheet. Its callers also pass `steps` to `DialogContent`, which adds a height floor and a
+   fixed top edge so the frame does not jump between steps (`.hive-dialog--steps`). */
 .imp-wizard--fit {
+  /* A wizard's steps run taller than a form's, so its floor is higher than the default. */
+  --dialog-steps-min: 40rem;
   max-block-size: calc(100vh - 3rem);
 }
 
@@ -20650,7 +20700,7 @@ html[data-motion='reduce'] .prm-spin {
   min-inline-size: 13rem;
   flex: 1 1 13rem;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
 }
 
 .prm-resolver-go {
@@ -20851,7 +20901,7 @@ html[data-motion='reduce'] .prm-spin {
   display: flex;
   min-inline-size: 0;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
 }
 
 .prm-field__legend {
@@ -22945,7 +22995,7 @@ html[data-motion='reduce'] .prm-spin {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-form);
 }
 
 .cat-imp-form > * {
@@ -24414,7 +24464,7 @@ button.cid-entity__head {
 .cid-refresh-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
 }
 
 .cid-refresh-form__check {
@@ -26635,7 +26685,7 @@ button.cid-entity__head {
 .repo-files-filters__fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-form);
   align-items: start;
 }
 
@@ -27167,7 +27217,7 @@ button.cid-entity__head {
 .repo-map-choice__fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-form);
 }
 
 /* A field inside a chosen card sits on the tint, so its own surface has to be
@@ -27458,7 +27508,7 @@ button.cid-entity__head {
 .repo-set-override-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-form);
   align-items: end;
 }
 
@@ -29982,7 +30032,7 @@ button.cid-entity__head {
 .mcp-settings-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-form);
 }
 
 .mcp-settings-fields__wide {
@@ -34942,14 +34992,14 @@ tr:focus-within .pub-url__glyph {
 .cns-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   min-inline-size: 0;
 }
 
 .cns-form__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -35531,7 +35581,7 @@ tr:focus-within .pub-url__glyph {
 
 .sdks-field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -35916,7 +35966,7 @@ tr:focus-within .pub-url__glyph {
 
 .xdlv-field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
   margin: 0;
   padding: 0;
@@ -37275,7 +37325,7 @@ tr:focus-within .pub-url__glyph {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-form);
   min-inline-size: 0;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
@@ -37292,7 +37342,7 @@ tr:focus-within .pub-url__glyph {
 .bnd-form__grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-form);
   inline-size: 100%;
   min-inline-size: 0;
 }
@@ -38236,7 +38286,7 @@ tr:focus-within .pub-url__glyph {
 .prb-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-form);
   min-inline-size: 0;
 }
 
@@ -38307,7 +38357,7 @@ tr:focus-within .pub-url__glyph {
 .prb-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -38585,14 +38635,14 @@ tr:focus-within .pub-url__glyph {
 .agx-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-form);
   padding-block: var(--space-4);
 }
 
 .agx-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -39061,7 +39111,7 @@ a.shd-name:hover,
 .cnx-fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-form);
 }
 
 .cnx-check {
@@ -39617,14 +39667,14 @@ a.tm-list__name {
 .dg-suggest-dialog__fields {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-form);
   padding-block: var(--space-3);
 }
 
 .dg-suggest-dialog__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
 }
 
 .dg-edge__via {
@@ -39886,7 +39936,7 @@ a.tm-list__name {
 .dg-blast__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-form);
   align-items: flex-start;
 }
 
@@ -39920,7 +39970,7 @@ a.tm-list__name {
 .dg-blast__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-field);
   inline-size: 100%;
 }
 
@@ -40088,7 +40138,7 @@ a.tm-list__name {
 
 .sr-field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-field);
   min-inline-size: 0;
 }
 
@@ -40904,7 +40954,7 @@ a.tm-list__name {
 
 .mig-dialog__field {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-field);
 }
 
 .mig-dialog__check {

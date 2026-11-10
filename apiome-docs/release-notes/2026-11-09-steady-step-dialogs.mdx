@@ -1,0 +1,20 @@
+---
+slug: steady-step-dialogs
+title: Dialogs with steps hold still
+description: "Multi-step dialogs keep a fixed top edge and a minimum height, so they no longer jump between steps."
+authors: [apiome]
+---
+
+A dialog that walks you through steps used to be exactly as tall as the step it was showing, and
+centred. Moving to a longer or shorter step moved both its edges, and the buttons with them.
+Those dialogs now stay put. [The Import wizard](/bring-in/import-wizard).
+
+{/* truncate */}
+
+- **A fixed top edge.** **Import specification**, **Add an MCP server**, **Enable two-factor
+  authentication** and **Regenerate backup codes** open a little below the top of the window. The
+  title and the step markers do not move when the step changes.
+- **A minimum height.** Short steps share one height, with the buttons at the foot of the dialog.
+  A step that needs more room grows downward, up to the height of the window, and then scrolls.
+- **First-tenant setup.** The setup card keeps one height across its short steps, so **Back** and
+  **Continue** stay in the same place.

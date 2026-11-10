@@ -79,7 +79,7 @@ export const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
       : children;
 
     return (
-      <div ref={ref} data-invalid={invalid || undefined} className={cn('flex flex-col gap-1.5', className)}>
+      <div ref={ref} data-invalid={invalid || undefined} className={cn('flex flex-col gap-[var(--space-field)]', className)}>
         {label && (
           <label htmlFor={htmlFor} className="text-sm font-medium tracking-[0.01em] text-fg">
             {label}

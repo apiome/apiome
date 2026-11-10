@@ -63,7 +63,11 @@ import {
   EmptyState,
   ErrorBanner,
   ErrorState,
+  Form,
+  FormActions,
   FormField,
+  FormRow,
+  FormSection,
   FreshnessPill,
   GRADE_LETTERS,
   GatedState,
@@ -412,8 +416,37 @@ export function HiveGallery() {
         <Section
           id="forms"
           title="Forms"
-          description="36 px controls, hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon."
+          description="36 px controls, hairline inset borders, azure focus. Labels above, hints below, errors inline with an icon. One rhythm: 6 px label to control, 16 px between fields, 24 px between sections."
         >
+          <Demo>
+            {/* The rhythm, stated once: `Form` spaces fields, `FormSection` spaces groups,
+                `FormRow` puts two fields side by side and `FormActions` holds the buttons. */}
+            <Form width="narrow" className="w-full" onSubmit={(event) => event.preventDefault()}>
+              <FormSection title="Connection" description="Where Apiome reaches the server.">
+                <FormRow>
+                  <FormField label="Endpoint URL" required htmlFor="ds-form-url">
+                    <Input id="ds-form-url" placeholder="https://api.example.com" />
+                  </FormField>
+                  <FormField label="Display name" htmlFor="ds-form-name">
+                    <Input id="ds-form-name" placeholder="Defaults to the host" />
+                  </FormField>
+                </FormRow>
+              </FormSection>
+              <FormSection title="Notes">
+                <FormField label="Description" helperText="Shown on the catalog card." htmlFor="ds-form-notes">
+                  <Textarea id="ds-form-notes" placeholder="What does this API do?" />
+                </FormField>
+              </FormSection>
+              <FormActions>
+                <Button variant="outline" type="button">
+                  Cancel
+                </Button>
+                <Button variant="primary" type="submit">
+                  Save
+                </Button>
+              </FormActions>
+            </Form>
+          </Demo>
           <div className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-4">
               <FormField label="Project name" required htmlFor="ds-project-name">

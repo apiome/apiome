@@ -1,7 +1,13 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import { readFileSync } from "node:fs";
 import hive from "./eslint-rules/hive.js";
+
+/** Files that used raw form controls before `hive/no-raw-form-control` existed. Only shrinks. */
+const rawFormControlBaseline = JSON.parse(
+  readFileSync(new URL("./eslint-rules/raw-form-control-baseline.json", import.meta.url), "utf8"),
+);
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -46,6 +52,22 @@ const eslintConfig = defineConfig([
     files: ["src/**/*.{ts,tsx}"],
     plugins: { hive },
     rules: { "hive/no-native-dialog": "error" },
+  },
+  {
+    /*
+     * The form-control backstop.
+     *
+     * Every `<input>`, `<select>` and `<textarea>` in the app goes through the primitives in
+     * `components/ui`, which are the only files allowed to draw one. The files that predate
+     * the rule are listed in `eslint-rules/raw-form-control-baseline.json`; migrating one
+     * means deleting its line, and `tests/hive-raw-form-control-baseline.test.ts` fails if a
+     * line outlives the last raw control in its file — so the list can only get shorter.
+     */
+    files: ["src/app/**/*.tsx"],
+    // Route folders are spelled `[slug]`, which a glob would read as a character class.
+    ignores: ["src/app/components/ui/**", ...rawFormControlBaseline.map((file) => file.replace(/[[\]]/g, "\\$&"))],
+    plugins: { hive },
+    rules: { "hive/no-raw-form-control": "error" },
   },
 ]);
 

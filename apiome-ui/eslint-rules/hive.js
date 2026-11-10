@@ -239,6 +239,100 @@ const noNativeDialog = {
   },
 };
 
+// ---------------------------------------------------------------------------
+// `hive/no-raw-form-control`
+// ---------------------------------------------------------------------------
+
+/**
+ * `<input type>` values with no Hive primitive: the browser's own control is the right one,
+ * or the element draws nothing at all.
+ */
+const UNSTYLED_INPUT_TYPES = new Set(['hidden', 'file', 'range', 'color', 'submit', 'reset', 'button', 'image']);
+
+/** The primitive that replaces each kind of raw control. */
+const RAW_CONTROL_PRIMITIVE = {
+  input: '<Input>',
+  checkbox: '<Checkbox> or <Switch>',
+  radio: '<RadioGroup>',
+  select: '<Select>',
+  textarea: '<Textarea>',
+};
+
+const rawFormControlMessages = {
+  rawControl:
+    "Raw '<{{element}}>'. Use {{primitive}} from 'components/ui' (inside a `FormField`) " +
+    'instead: the primitive carries the control height, hairline, focus ring and invalid ' +
+    'state, and follows the theme and density preferences — a hand-styled control follows ' +
+    'none of them and is why two forms end up with different field sizes.',
+};
+
+/**
+ * The literal `type` of a JSX `<input>`, or `null` when it has none or it is computed.
+ *
+ * @param node The `JSXOpeningElement`.
+ * @returns The lower-cased type, or `null`.
+ */
+function literalInputType(node) {
+  for (const attribute of node.attributes) {
+    if (attribute.type !== 'JSXAttribute' || attribute.name.name !== 'type') continue;
+    const value = attribute.value;
+    if (value && value.type === 'Literal' && typeof value.value === 'string') return value.value.toLowerCase();
+    if (
+      value &&
+      value.type === 'JSXExpressionContainer' &&
+      value.expression.type === 'Literal' &&
+      typeof value.expression.value === 'string'
+    ) {
+      return value.expression.value.toLowerCase();
+    }
+    return null;
+  }
+  return null;
+}
+
+/**
+ * `no-raw-form-control` — no hand-styled `<input>`, `<select>` or `<textarea>` in app code.
+ *
+ * The primitives in `components/ui` are where a field's size and chrome are decided. A raw
+ * element re-decides them with whatever classes its author reached for, which is how the
+ * same form ends up 32 px tall on one page and 40 px on the next. The primitives themselves
+ * are exempt by configuration (`eslint.config.mjs`), as are the files that predate the rule —
+ * `eslint-rules/raw-form-control-baseline.json`, a list that may only get shorter.
+ */
+const noRawFormControl = {
+  meta: {
+    type: 'suggestion',
+    docs: {
+      description:
+        'Disallow raw <input>, <select> and <textarea>; use the Hive form primitives so every ' +
+        'field shares one size, one focus ring and one invalid state.',
+    },
+    schema: [],
+    messages: rawFormControlMessages,
+  },
+  create(context) {
+    return {
+      JSXOpeningElement(node) {
+        if (node.name.type !== 'JSXIdentifier') return;
+        const element = node.name.name;
+        if (element !== 'input' && element !== 'select' && element !== 'textarea') return;
+
+        let kind = element;
+        if (element === 'input') {
+          const type = literalInputType(node);
+          if (type && UNSTYLED_INPUT_TYPES.has(type)) return;
+          if (type === 'checkbox' || type === 'radio') kind = type;
+        }
+        context.report({
+          node,
+          messageId: 'rawControl',
+          data: { element, primitive: RAW_CONTROL_PRIMITIVE[kind] },
+        });
+      },
+    };
+  },
+};
+
 /*
  * CommonJS, deliberately: `eslint.config.mjs` imports this as ESM (Node hands back
  * `module.exports` as the default export), and `tests/eslint-hive-no-px-typography.test.ts`
@@ -250,5 +344,6 @@ module.exports = {
   rules: {
     'no-px-typography': noPxTypography,
     'no-native-dialog': noNativeDialog,
+    'no-raw-form-control': noRawFormControl,
   },
 };
