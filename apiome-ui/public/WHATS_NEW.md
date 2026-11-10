@@ -288,6 +288,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Every dialog, drawer and confirm now dims the whole screen behind it, Studio's top header included — the header could stay bright and clickable over an open dialog. A list, menu or tooltip opened inside a dialog, or inside a dialog opened from a drawer, now shows in full above it instead of being cut off underneath, and toasts always show above an open dialog
   - Dialogs with steps or tabs can now keep one size from the first step to the last, with their buttons fixed at the bottom and a long step scrolling inside. Studio's import, editor, settings and export dialogs use it; dialogs in the Control Panel look the same as before
   - Forms can now share one layout: sections and fields evenly spaced, three standard widths, and Save and Cancel in a footer that stays visible while the form scrolls. **Enter** in a single-line field and **⌘S** / **Ctrl+S** save the form. Forms in the Control Panel look the same as before; the design-system gallery shows it under **Forms**
+  - Steps in a progress row can now be clicked to jump to that step. Studio's class and property editors use it in **Guided** mode; steppers in the Control Panel are unchanged
 - Code editors:
   - Code in Apiome's editors (the spec viewer under **Versions**, and others) is easier to read: keys, strings, numbers and line numbers now have enough contrast against the code background in every theme. Before, light-theme keys, strings and line numbers were too faint
 - Contrast and touch targets:

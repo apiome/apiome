@@ -3567,6 +3567,29 @@ p {
   background: var(--ok);
 }
 
+/* Clickable steps (SUX-2.5, apiome#6766): `Stepper`'s `onStepSelect` wraps a
+   step's badge and label in a button. It takes the `.step` layout and ink, so
+   a clickable row looks like a display-only one until it is hovered or focused;
+   the focus ring is the app-wide `*:focus-visible` one. */
+.step__button {
+  display: inherit;
+  align-items: inherit;
+  gap: inherit;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.step__button:hover {
+  color: var(--fg);
+}
+
 /* ==========================================================================
    STATUS STRIP (HIVE-11.1, #5597)
    --------------------------------------------------------------------------

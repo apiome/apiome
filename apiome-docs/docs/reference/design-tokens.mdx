@@ -223,6 +223,9 @@ to a longer or shorter step moves both edges, and the buttons move with them. Pa
 - `steps` is opt-in. A dialog without it is unchanged, and no screen in the web app uses it yet.
   Studio uses it for its class import, class and property editors, canvas settings and export
   dialogs (SUX-2.3).
+- `Stepper` takes an optional `onStepSelect(id, index)`. With it, every step is a button that
+  jumps to that step; without it, the row only shows progress. Studio's class and property
+  editors use it in **Guided** mode (SUX-2.5).
 
 ## Where to see them
 

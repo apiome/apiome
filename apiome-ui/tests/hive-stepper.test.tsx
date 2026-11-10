@@ -7,7 +7,7 @@
  * not given, and where the filled run stops.
  */
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { axe } from 'jest-axe';
 import 'jest-axe/extend-expect';
@@ -163,5 +163,58 @@ describe('Stepper — the row', () => {
       expect(await axe(container)).toHaveNoViolations();
       unmount();
     }
+  });
+});
+
+describe('Stepper — clickable steps (SUX-2.5, apiome#6766)', () => {
+  it('renders no buttons when `onStepSelect` is not passed', () => {
+    const { container } = render(<Stepper aria-label="Setup progress" steps={STEPS} current="organization" />);
+
+    expect(container.querySelector('button')).toBeNull();
+  });
+
+  it('makes every step a plain button named by its label and state', () => {
+    render(
+      <Stepper aria-label="Setup progress" steps={STEPS} current="organization" onStepSelect={() => {}} />
+    );
+
+    const buttons = screen.getAllByRole('button');
+    expect(buttons).toHaveLength(3);
+    for (const button of buttons) {
+      // A typeless button inside a form would submit it.
+      expect(button).toHaveAttribute('type', 'button');
+      expect(button).toHaveClass('step__button');
+    }
+    expect(screen.getByRole('button', { name: 'Welcome Completed' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Organization Step 2 of 3' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review Not started' })).toBeInTheDocument();
+  });
+
+  it('keeps `aria-current` on the list item, not the button', () => {
+    render(
+      <Stepper aria-label="Setup progress" steps={STEPS} current="organization" onStepSelect={() => {}} />
+    );
+
+    expect(items()[1]).toHaveAttribute('aria-current', 'step');
+    expect(screen.getByRole('button', { name: /Organization/ })).not.toHaveAttribute('aria-current');
+  });
+
+  it('calls `onStepSelect` with the step’s id and index', () => {
+    const onStepSelect = jest.fn();
+    render(
+      <Stepper aria-label="Setup progress" steps={STEPS} current="welcome" onStepSelect={onStepSelect} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Review/ }));
+    expect(onStepSelect).toHaveBeenCalledWith('summary', 2);
+    fireEvent.click(screen.getByRole('button', { name: /Welcome/ }));
+    expect(onStepSelect).toHaveBeenLastCalledWith('welcome', 0);
+  });
+
+  it('has no axe violations when clickable', async () => {
+    const { container } = render(
+      <Stepper aria-label="Setup progress" steps={STEPS} current="organization" onStepSelect={() => {}} />
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

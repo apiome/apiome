@@ -47,6 +47,8 @@ const STEPPER_PRELUDES = [
   '.step.is-active .step__num',
   '.step__line',
   '.step__line.is-done',
+  '.step__button',
+  '.step__button:hover',
 ];
 
 /**
@@ -189,5 +191,23 @@ describe('stepper — the two deviations from the mockup', () => {
   it('lets the connectors, not the labels, absorb the spare width when filled', () => {
     expect(declarationsOf('.stepper--fill').get('justify-content')).toBe('space-between');
     expect(declarationsOf('.stepper--fill .step__line').get('flex')).toBe('1');
+  });
+});
+
+describe('stepper — clickable steps look like the display-only row', () => {
+  it('resets the button so the step keeps its own layout and ink', () => {
+    const button = declarationsOf('.step__button');
+    expect(button.get('display')).toBe('inherit');
+    expect(button.get('gap')).toBe('inherit');
+    expect(button.get('padding')).toBe('0');
+    expect(button.get('border')).toBe('none');
+    expect(button.get('background')).toBe('transparent');
+    expect(button.get('color')).toBe('inherit');
+    expect(button.get('font')).toBe('inherit');
+    expect(button.get('cursor')).toBe('pointer');
+  });
+
+  it('inks a hovered step in full contrast', () => {
+    expect(declarationsOf('.step__button:hover').get('color')).toBe('var(--fg)');
   });
 });
