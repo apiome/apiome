@@ -343,7 +343,7 @@
                   },
                   {
                     "attributes": {
-                      "conditionValue": "B' 'X",
+                      "conditionValue": "'B' 'X'",
                       "level": 88
                     },
                     "children": [],

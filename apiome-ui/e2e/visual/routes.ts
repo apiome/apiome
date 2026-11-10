@@ -199,10 +199,13 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     route: '/ade/dashboard/versions',
     subject: { kind: 'fixture', dir: 'hive-versions', file: 'timeline.html' },
     roadmapRef: 'HIVE-6.2',
-    firstRow: firstRowBudget('versions', FIRST_DATA_ROW, {
-      ceilingPx: 710,
+    // The facelift (PROPOSALS_FACELIFT.md §8, "timeline") made the timeline the default view, so
+    // `timeline.html` draws its revisions as `.vt__row` entries rather than DataTable rows; the
+    // table view (the at-size fixture) still uses the DataTable row. Either is the first revision.
+    firstRow: firstRowBudget('versions', `${FIRST_DATA_ROW}, .page-body .vt__row[data-row-id]`, {
+      ceilingPx: 740,
       reason:
-        'at the build/versions.html page width the first revision row lands at 702 px; HIVE-13.4 moves the pairing to proposals/versions-status-strip.html',
+        'at the build/versions.html page width the first revision row lands at 715 px (timeline) and 738 px (300-revision table): the facts card carries both of the mockup\'s links (Published surface, Export studio) since the latest version is selected by default, and the facelift\'s display title adds 7 px; HIVE-13.4 moves the pairing to proposals/versions-status-strip.html',
     }),
   },
   {
@@ -314,9 +317,9 @@ export const PARITY_ROUTES: readonly ParityRoute[] = [
     roadmapRef: 'HIVE-7.8',
     // The versions panel is the endpoint's content; the stat grid and the notes card precede it.
     firstRow: firstRowBudget('detail', '[data-testid="mcp-endpoint-panel-versions"]', {
-      ceilingPx: 590,
+      ceilingPx: 600,
       reason:
-        'no quiet pass yet: a four-tile stat grid and the notes card stand above the versions panel',
+        'no quiet pass yet: a four-tile stat grid and the notes card stand above the versions panel (594 px; the facelift\'s display title added 5 px to the 589 px before it)',
     }),
   },
   {

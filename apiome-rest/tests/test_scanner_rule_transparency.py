@@ -24,7 +24,8 @@ def test_transparency_catalog_matches_live_error_rules() -> None:
     assert set(blocking_rule_ids()) == live_blocking_rule_ids()
     # +2 FHIR profile rules (MFI-20.1), +1 overlay (GVM-4.1), +5 FlatBuffers / Cap'n Proto (MFI-19.4),
     # the WADL / CORBA IDL / ASN.1 / COBOL packs (MFI-21.x), +4 EDI X12 / EDIFACT controls (MFI-20.5)
-    assert len(BLOCKING_RULES) == 83
+    # +10 FIX Orchestra / HL7 v2 / ISO 8583 / ONC RPC packs (MFI-20.2, 20.4, 20.6, 21.6)
+    assert len(BLOCKING_RULES) == 93
 
 
 def test_every_blocking_rule_has_required_transparency_fields() -> None:

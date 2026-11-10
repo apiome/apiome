@@ -275,9 +275,27 @@ def _cb2xml_item(element: Element) -> LayoutItem:
         occurs=occurs,
         depending_on=attrs.get("depending-on") or None,
         redefines=attrs.get("redefines") or None,
-        conditions=tuple((c.get("name", ""), c.get("value", "")) for c in element if c.tag == "condition"),
+        conditions=tuple((c.get("name", ""), _cb2xml_condition_value(c)) for c in element if c.tag == "condition"),
         children=tuple(_cb2xml_item(child) for child in element if child.tag == "item"),
     )
+
+
+def _cb2xml_condition_value(condition: Element) -> str:
+    """An ``88`` level's value as cb2xml wrote it.
+
+    A single value is the ``value`` attribute (with ``through`` for a range). A list of values
+    (``VALUE 'B' 'X'``) is one nested ``<condition value=…>`` per literal, read back as the list
+    written in the copybook (``'B' 'X'``).
+    """
+
+    def one(element: Element) -> str:
+        value = element.get("value", "")
+        through = element.get("through")
+        return f"{value} THRU {through}" if through else value
+
+    if condition.get("value") is not None:
+        return one(condition)
+    return " ".join(one(c) for c in condition if c.tag == "condition")
 
 
 def plan_layout(trees: Sequence[Mapping[str, Any]]) -> List[LayoutItem]:
@@ -364,8 +382,8 @@ def _item_differences(planned: LayoutItem, read: LayoutItem) -> List[Tuple[str, 
         out.append(("OCCURS", _occurs_shown(planned), _occurs_shown(read)))
     if _name_key(planned.redefines) != _name_key(read.redefines):
         out.append(("REDEFINES", _shown(planned.redefines), _shown(read.redefines)))
-    planned_88 = [(name.upper(), _literal_key(value)) for name, value in planned.conditions]
-    read_88 = [(name.upper(), _literal_key(value)) for name, value in read.conditions]
+    planned_88 = [(name.upper(), _condition_key(value)) for name, value in planned.conditions]
+    read_88 = [(name.upper(), _condition_key(value)) for name, value in read.conditions]
     if planned_88 != read_88:
         out.append(("88 levels", _conditions_shown(planned.conditions), _conditions_shown(read.conditions)))
     return out
@@ -398,6 +416,29 @@ def _literal_key(value: str) -> str:
     if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
         return value[1:-1].replace(value[0] * 2, value[0])
     return value
+
+
+#: One literal of an ``88`` value list: a quoted literal (doubled quotes inside), ``THRU``, or a bare word.
+_CONDITION_TOKEN_RE = re.compile(r"""'(?:[^']|'')*'|"(?:[^"]|"")*"|[^\s,'"]+""")
+
+
+def _condition_key(value: str) -> Tuple[str, ...]:
+    """An ``88`` value as the literals it lists, each without its quotes (``THROUGH`` read as ``THRU``).
+
+    The plan keeps a single literal unquoted (``A``) but a list or range as written (``'B' 'X'``,
+    ``'A' THRU 'C'``), and cb2xml quotes every literal, so both sides are split into literals first.
+    A value that is not a sequence of literals (an unquoted text with a quote in it) is one literal.
+    """
+    text = value.strip()
+    if text[:1] in ("'", '"'):
+        matches = list(_CONDITION_TOKEN_RE.finditer(text))
+        gaps = [text[a.end():b.start()] for a, b in zip(matches, matches[1:])]
+        whole = bool(matches) and matches[0].start() == 0 and matches[-1].end() == len(text)
+        if whole and all(not gap.strip(" \t,") for gap in gaps):
+            tokens = [m.group(0) for m in matches]
+            keys = tuple(_literal_key(token) for token in tokens)
+            return tuple("THRU" if key.upper() in ("THRU", "THROUGH") else key for key in keys)
+    return (_literal_key(text),)
 
 
 def _shown(value: Optional[str], none: str = "none") -> str:

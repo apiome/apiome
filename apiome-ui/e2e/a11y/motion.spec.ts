@@ -12,7 +12,9 @@ import { test, expect, type Page } from '@playwright/test';
  * - a closing scrim does not swallow a click aimed at the page behind it.
  */
 
-test.use({ viewport: { width: 1280, height: 900 } });
+// The a11y config defaults to reduced motion so axe scans settled pages; this suite is about
+// the motion itself, so it starts from "no preference" and opts in to reduce per test.
+test.use({ viewport: { width: 1280, height: 900 }, contextOptions: { reducedMotion: 'no-preference' } });
 
 /** The gallery's first dialog trigger. */
 const trigger = (page: Page) => page.locator('#dialogs').getByRole('button', { name: 'Destructive confirm' });

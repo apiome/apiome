@@ -12,7 +12,7 @@
     "dropped_edge_count": 0,
     "edges": [
       {
-        "count": 1,
+        "count": 4,
         "detail": "named types carried from the source into components.schemas",
         "evidence": [],
         "id": "checklist:components.schemas",
@@ -264,6 +264,54 @@
           {
             "kind": "source-construct",
             "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-VOLUME-M3"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-VOLUME-M3"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-WEIGHT-KG"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-WEIGHT-KG"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
             "ref": "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT.FILLER"
           },
           {
@@ -456,6 +504,174 @@
           {
             "kind": "source-construct",
             "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-TS"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-TS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-USER"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-USER"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-ID"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-ID"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-LAST-COUNTED"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-LAST-COUNTED"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-MEASURES"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-MEASURES"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-STATUS"
+          }
+        ],
+        "id": "construct:field:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-STATUS"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.BIN-MEASURES"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES"
+          }
+        ],
+        "id": "construct:type:WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
             "ref": "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT"
           },
           {
@@ -472,6 +688,54 @@
         "source": "source:construct:WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT",
         "status": "retained",
         "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-AUDIT"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT"
+          }
+        ],
+        "id": "construct:type:WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "WAREHOUSE-SNAPSHOT.WH-BINS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS"
+          }
+        ],
+        "id": "construct:type:WAREHOUSE-SNAPSHOT.WH-BINS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS",
+        "status": "retained",
+        "target": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS"
       },
       {
         "count": 1,
@@ -867,6 +1131,45 @@
         "target": null
       },
       {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "kind": "source",
+        "label": "BIN-MEASURES",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "BIN-MEASURES",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3",
+        "kind": "source",
+        "label": "BIN-VOLUME-M3",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-VOLUME-M3",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG",
+        "kind": "source",
+        "label": "BIN-WEIGHT-KG",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-WEIGHT-KG",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
         "construct_key": "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT",
         "id": "source:construct:WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT",
         "kind": "source",
@@ -984,6 +1287,143 @@
         "target": null
       },
       {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "kind": "source",
+        "label": "WH-AUDIT",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "WH-AUDIT",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS",
+        "kind": "source",
+        "label": "WH-AUDIT-TS",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "WH-AUDIT-TS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER",
+        "kind": "source",
+        "label": "WH-AUDIT-USER",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "WH-AUDIT-USER",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS",
+        "kind": "source",
+        "label": "WH-BINS",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "WH-BINS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID",
+        "kind": "source",
+        "label": "BIN-ID",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-ID",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED",
+        "kind": "source",
+        "label": "BIN-LAST-COUNTED",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-LAST-COUNTED",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES",
+        "kind": "source",
+        "label": "BIN-MEASURES",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-MEASURES",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS",
+        "id": "source:construct:WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS",
+        "kind": "source",
+        "label": "BIN-STATUS",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BIN-STATUS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-VOLUME-M3",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-VOLUME-M3",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-VOLUME-M3",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-VOLUME-M3",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.BIN-MEASURES.BIN-WEIGHT-KG",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-WEIGHT-KG",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-WEIGHT-KG",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.BIN-MEASURES/properties/BIN-WEIGHT-KG",
+          "native_path": null
+        }
+      },
+      {
         "construct_key": "WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT",
         "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WAREHOUSE-SNAPSHOT",
         "kind": "target",
@@ -1083,6 +1523,94 @@
         }
       },
       {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-TS",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-TS",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-TS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-TS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-AUDIT.WH-AUDIT-USER",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-USER",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-USER",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-AUDIT/properties/WH-AUDIT-USER",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-ID",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-ID",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-ID",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-ID",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-LAST-COUNTED",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-LAST-COUNTED",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-LAST-COUNTED",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-LAST-COUNTED",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-MEASURES",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-MEASURES",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-MEASURES",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-MEASURES",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "WAREHOUSE-SNAPSHOT.WH-BINS.BIN-STATUS",
+        "id": "target:/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-STATUS",
+        "kind": "target",
+        "label": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-STATUS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/WAREHOUSE-SNAPSHOT.WH-BINS/properties/BIN-STATUS",
+          "native_path": null
+        }
+      },
+      {
         "construct_key": "info.title",
         "id": "target:/info/title",
         "kind": "target",
@@ -1119,7 +1647,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 9,
+      "construct": 20,
       "loss": 0
     },
     "source": {
@@ -1151,7 +1679,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 11,
+      "retained": 22,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1162,7 +1690,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 33,
+    "total_constructs": 44,
     "truncated": false
   },
   "snapshot_version": 1,
@@ -1170,10 +1698,10 @@
     "conversion_mode": "lossy",
     "defaults": {},
     "dropped_edge_count": 0,
-    "edge_count": 33,
+    "edge_count": 44,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 44,
+    "node_count": 66,
     "reason_counts": {
       "destination_unsupported": 0,
       "emitter_unsupported": 5,
@@ -1188,7 +1716,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 9,
+      "construct": 20,
       "loss": 0
     },
     "source": {
@@ -1220,7 +1748,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 11,
+      "retained": 22,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1231,7 +1759,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 33,
+    "total_constructs": 44,
     "truncated": false,
     "worst_severity": "warn"
   }

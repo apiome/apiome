@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/oncrpc-enum-values-unique",
+  "source_format": "oncrpc",
+  "description": "ONC RPC program with exactly one blocking defect: KV_NOT_FOUND and KV_ERROR share the value 1.",
+  "document": "/* ONC RPC scanner-evaluation fixture (MFI-21.6). */\nenum kv_status {\n    KV_OK = 0,\n    KV_NOT_FOUND = 1,\n    KV_ERROR = 1\n};\n\nstruct kv_entry {\n    string key<256>;\n    opaque value<1024>;\n};\n\nprogram KV_PROG {\n    version KV_VERS {\n        void KV_NULL(void) = 0;\n        kv_status KV_PUT(kv_entry) = 1;\n    } = 1;\n} = 0x20000001;\n"
+}

@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/hl7v2-message-type-declared",
+  "source_format": "hl7v2",
+  "description": "HL7 v2 message with exactly one blocking defect: MSH-9 (message type) is empty.",
+  "document": "MSH|^~\\&|GHH LAB|GOOD HEALTH HOSPITAL|ADT1|GOOD HEALTH HOSPITAL|20260116090000|||ACK00001|P|2.5\rMSA|AA|MSG00001\r"
+}

@@ -61,6 +61,12 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    // Axe judges the page at rest. The facelift's entrance motion (`hive-rise` on
+    // `.page-body > *` and the page header row) fades content in over `--dur-slow`, so a scan
+    // that lands mid-fade measures text at partial opacity and reports contrast failures that
+    // the settled page does not have. Reduced motion zeroes every animation (globals.css), so
+    // the scan sees the final frame. `e2e/a11y/motion.spec.ts` opts back in to test motion.
+    contextOptions: { reducedMotion: 'reduce' },
   },
 
   projects: [

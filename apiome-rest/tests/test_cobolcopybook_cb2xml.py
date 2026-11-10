@@ -20,6 +20,7 @@ runtime has it (``APIOME_CB2XML_BIN`` or ``cb2xml`` on ``PATH``). Covers:
 
 from __future__ import annotations
 
+import re
 import stat
 import sys
 from pathlib import Path
@@ -43,7 +44,12 @@ from app.cobolcopybook_cb2xml import (
     plan_layout,
     run_cb2xml,
 )
-from app.cobolcopybook_emitter import CobolCopybookEmitOptions, copybook_emit_options, copybook_emit_plan
+from app.cobolcopybook_emitter import (
+    _LITERAL_LIST_RE,
+    CobolCopybookEmitOptions,
+    copybook_emit_options,
+    copybook_emit_plan,
+)
 from app.cobolcopybook_parser import _parse_flat_fields
 from app.emitter import EmitResult, EmittedFile
 from app.export_job_engine import ExportJobStartRequest, schedule_export_job
@@ -81,14 +87,33 @@ def _cb2xml_xml(items: List[LayoutItem]) -> str:
         if i.redefines:
             attrs["redefines"] = i.redefines
         rendered = " ".join(f"{k}={quoteattr(v)}" for k, v in attrs.items())
-        conditions = "".join(
-            f"<condition name={quoteattr(name)} value={quoteattr(_quoted(value))}/>" for name, value in i.conditions
-        )
+        conditions = "".join(_condition_xml(name, value) for name, value in i.conditions)
         return f"<item {rendered}>{conditions}{''.join(item(c) for c in i.children)}</item>"
 
     body = "".join(item(i) for i in items)
     header = '<?xml version="1.0" ?><copybook filename="x.cpy" dialect="Mainframe" cb2xml-format="2017">'
     return f"{header}{body}</copybook>"
+
+
+def _condition_xml(name: str, value: str) -> str:
+    """One 88 level as cb2xml writes it: a single value as ``value``, a list as a nested ``<condition>``
+    per literal (``THRU`` ranges as ``value`` + ``through``)."""
+    if not _LITERAL_LIST_RE.match(value):
+        return f"<condition name={quoteattr(name)} value={quoteattr(_quoted(value))}/>"
+    literals = re.findall(r"""'(?:[^']|'')*'|"(?:[^"]|"")*"|THRU|THROUGH""", value, re.IGNORECASE)
+    ranges: List[List[str]] = []
+    for index, literal in enumerate(literals):
+        if literal.upper() in ("THRU", "THROUGH"):
+            continue
+        if index and literals[index - 1].upper() in ("THRU", "THROUGH"):
+            ranges[-1].append(literal)
+        else:
+            ranges.append([literal])
+    nested = "".join(
+        f"<condition value={quoteattr(r[0])}" + (f" through={quoteattr(r[1])}" if len(r) > 1 else "") + "/>"
+        for r in ranges
+    )
+    return f"<condition name={quoteattr(name)}>{nested}</condition>"
 
 
 def _quoted(value: str) -> str:
@@ -269,6 +294,29 @@ def test_equivalent_spellings_agree() -> None:
         LayoutItem(level=5, name="F", picture="X(1)"),
     ))]
     assert layout_differences(planned, read) == []
+
+
+def test_an_88_level_with_a_list_of_values_is_read_and_compared_literal_by_literal() -> None:
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<copybook filename="Bins.cpy" dialect="Mainframe" cb2xml-format="2017">
+  <item level="01" name="BIN" picture="X" position="1">
+    <condition name="BIN-ACTIVE" value="'A'"/>
+    <condition name="BIN-UNUSABLE"><condition value="'B'"/><condition value="'X'"/></condition>
+    <condition name="BIN-LOW"><condition value="'C'" through="'E'"/></condition>
+  </item>
+</copybook>"""
+    read = parse_cb2xml_layout(xml)
+    assert read[0].conditions == (
+        ("BIN-ACTIVE", "'A'"), ("BIN-UNUSABLE", "'B' 'X'"), ("BIN-LOW", "'C' THRU 'E'"),
+    )
+    planned = [LayoutItem(level=1, name="BIN", picture="X", conditions=(
+        ("BIN-ACTIVE", "A"), ("BIN-UNUSABLE", "'B', 'X'"), ("BIN-LOW", "'C' THROUGH 'E'"),
+    ))]
+    assert layout_differences(planned, read) == []
+    fused = [LayoutItem(level=1, name="BIN", picture="X", conditions=(
+        ("BIN-ACTIVE", "A"), ("BIN-UNUSABLE", "B' 'X"), ("BIN-LOW", "'C' THRU 'E'"),
+    ))]
+    assert [path for path, _ in layout_differences(fused, read)] == ["BIN"]
 
 
 def test_each_difference_is_one_problem_at_its_path() -> None:

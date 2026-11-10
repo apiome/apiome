@@ -43,6 +43,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC8`)
 - Import:
+  - Import and catalog any format — a new docs page maps all of multi-format import: where to import from, the guide for each format family, and what every catalog item gets (versions, compare, lint, toolchain, search by protocol, convert and export)
   - URL catalog items refresh — a catalog item imported with **URL Import** in **Import to catalog** now follows its **Document URL**: Apiome asks the URL whether the document changed on the connector cadence and adds a revision, with a change report, only when it did. Existing URL items are covered by a new **Catalog URLs** connector, and URL items you import later join it automatically
   - Refresh defaults — **Repositories** has a **Refresh defaults** tab where workspace administrators set the cadence, refresh-conflict behaviour and auto-refresh switch every new repository starts from, optionally applying them to existing repositories that follow them. On a repository's **Settings** tab, **Scan cadence** now has a **Cadence** choice and marks each refresh setting **Workspace default** or **Custom**, with **Use workspace default** to follow the default again
   - Branch refresh rules — a repository's **Settings** tab has **Branch refresh rules**: name a branch (`main`) or a pattern (`release/*`) and set whether it refreshes, how often, and the version line its refreshes land in (`2.x-2026-11-03T21:00Z`). **Tracked branches** shows how each branch refreshes and which rule decided it. From the CLI: `apiome repository branch-rules show|set|remove|clear`
@@ -282,6 +283,11 @@ We continue to improve the platform based on your feedback with improvements and
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
 - Code editors:
   - Code in Apiome's editors (the spec viewer under **Versions**, and others) is easier to read: keys, strings, numbers and line numbers now have enough contrast against the code background in every theme. Before, light-theme keys, strings and line numbers were too faint
+- Contrast and touch targets:
+  - The hexagon avatar of a catalog item, project or table row now draws its initials on a deeper shade of the format colour, so they are readable on every format (white on the brighter hues, such as cyan and orange, was too faint)
+  - In the export studio's coverage heatmap, the level line under the count in the two hottest cells is now full-strength text instead of muted, so it stays readable on the red wash
+  - On an MCP server's **Credentials** tab, a greyed-out **Save**, **Clear credential** or **Connect with OAuth** now says why when you point at it, and the error icons there and on **Test** use the readable error colour
+  - The delivery-profile checkboxes in an export preset sit a little further apart, so each one is easier to hit, and the hidden **Add overlay files** input is named for screen readers
 - Admin console:
   - Signing up again with the address of a deleted account no longer fails with *We could not send the confirmation email*. Deleting a user now releases their email address and linked sign-ins, signs them out everywhere, and the reason for a failed sign-up is logged
   - A disabled or deleted account can no longer sign in with its password

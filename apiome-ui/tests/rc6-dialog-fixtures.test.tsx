@@ -279,7 +279,8 @@ describe('the version Export dialog', () => {
 
     const chooseTarget = await screen.findByTestId('export-dialog-choose-target');
     await waitFor(() => expect(chooseTarget).toBeEnabled());
-    expect(screen.queryByText('Open in Export Studio')).toBeNull();
+    // Export Studio is released (RC7): the dialog offers the escalation from its first step.
+    expect(screen.getByRole('button', { name: /Open in Export Studio/ })).toBeInTheDocument();
     fireEvent.click(chooseTarget);
     await waitFor(() => expect(screen.getByTestId('export-target-proto')).toBeInTheDocument());
     fireEvent.click(screen.getByTestId('export-target-proto'));

@@ -1,0 +1,7 @@
+{
+  "kind": "catalog_import_source",
+  "id": "catalog/oncrpc-type-resolves",
+  "source_format": "oncrpc",
+  "description": "ONC RPC program with exactly one blocking defect: kv_entry has a field of type kv_blob, which the file does not declare.",
+  "document": "/* ONC RPC scanner-evaluation fixture (MFI-21.6). */\nstruct kv_entry {\n    string key<256>;\n    kv_blob value;\n};\n\nprogram KV_PROG {\n    version KV_VERS {\n        void KV_NULL(void) = 0;\n        kv_entry KV_GET(string) = 1;\n    } = 1;\n} = 0x20000001;\n"
+}

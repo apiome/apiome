@@ -12,7 +12,7 @@
     "dropped_edge_count": 0,
     "edges": [
       {
-        "count": 1,
+        "count": 3,
         "detail": "named types carried from the source into components.schemas",
         "evidence": [],
         "id": "checklist:components.schemas",
@@ -264,6 +264,54 @@
           {
             "kind": "source-construct",
             "location": null,
+            "ref": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-MONTH"
+          }
+        ],
+        "id": "construct:field:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+        "status": "retained",
+        "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-MONTH"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-YEAR"
+          }
+        ],
+        "id": "construct:field:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+        "status": "retained",
+        "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-YEAR"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
             "ref": "LEDGER-RECORD.LEDGER-RECORD.LEDGER-AMOUNT"
           },
           {
@@ -384,6 +432,54 @@
           {
             "kind": "source-construct",
             "location": null,
+            "ref": "LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS/properties/LEDGER-STAMP"
+          }
+        ],
+        "id": "construct:field:LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+        "status": "retained",
+        "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-STATUS/properties/LEDGER-STAMP"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "LEDGER-RECORD.LEDGER-PERIOD"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD"
+          }
+        ],
+        "id": "construct:type:LEDGER-RECORD.LEDGER-PERIOD",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:LEDGER-RECORD.LEDGER-PERIOD",
+        "status": "retained",
+        "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
             "ref": "LEDGER-RECORD.LEDGER-RECORD"
           },
           {
@@ -400,6 +496,30 @@
         "source": "source:construct:LEDGER-RECORD.LEDGER-RECORD",
         "status": "retained",
         "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-RECORD"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "LEDGER-RECORD.LEDGER-STATUS"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS"
+          }
+        ],
+        "id": "construct:type:LEDGER-RECORD.LEDGER-STATUS",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:LEDGER-RECORD.LEDGER-STATUS",
+        "status": "retained",
+        "target": "target:/components/schemas/LEDGER-RECORD.LEDGER-STATUS"
       },
       {
         "count": 1,
@@ -821,6 +941,45 @@
         "target": null
       },
       {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD",
+        "id": "source:construct:LEDGER-RECORD.LEDGER-PERIOD",
+        "kind": "source",
+        "label": "LEDGER-PERIOD",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "LEDGER-PERIOD",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+        "id": "source:construct:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+        "kind": "source",
+        "label": "LEDGER-MONTH",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LEDGER-MONTH",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+        "id": "source:construct:LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+        "kind": "source",
+        "label": "LEDGER-YEAR",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LEDGER-YEAR",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
         "construct_key": "LEDGER-RECORD.LEDGER-RECORD",
         "id": "source:construct:LEDGER-RECORD.LEDGER-RECORD",
         "kind": "source",
@@ -899,6 +1058,65 @@
         "target": null
       },
       {
+        "construct_key": "LEDGER-RECORD.LEDGER-STATUS",
+        "id": "source:construct:LEDGER-RECORD.LEDGER-STATUS",
+        "kind": "source",
+        "label": "LEDGER-STATUS",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "LEDGER-STATUS",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+        "id": "source:construct:LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+        "kind": "source",
+        "label": "LEDGER-STAMP",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "LEDGER-STAMP",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD",
+        "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD",
+        "kind": "target",
+        "label": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-MONTH",
+        "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-MONTH",
+        "kind": "target",
+        "label": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-MONTH",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-MONTH",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-PERIOD.LEDGER-YEAR",
+        "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-YEAR",
+        "kind": "target",
+        "label": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-YEAR",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/LEDGER-RECORD.LEDGER-PERIOD/properties/LEDGER-YEAR",
+          "native_path": null
+        }
+      },
+      {
         "construct_key": "LEDGER-RECORD.LEDGER-RECORD",
         "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-RECORD",
         "kind": "target",
@@ -965,6 +1183,28 @@
         }
       },
       {
+        "construct_key": "LEDGER-RECORD.LEDGER-STATUS",
+        "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-STATUS",
+        "kind": "target",
+        "label": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "LEDGER-RECORD.LEDGER-STATUS.LEDGER-STAMP",
+        "id": "target:/components/schemas/LEDGER-RECORD.LEDGER-STATUS/properties/LEDGER-STAMP",
+        "kind": "target",
+        "label": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS/properties/LEDGER-STAMP",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/LEDGER-RECORD.LEDGER-STATUS/properties/LEDGER-STAMP",
+          "native_path": null
+        }
+      },
+      {
         "construct_key": "info.title",
         "id": "target:/info/title",
         "kind": "target",
@@ -1001,7 +1241,7 @@
     "scope_counts": {
       "analysis": 7,
       "checklist": 18,
-      "construct": 6,
+      "construct": 11,
       "loss": 0
     },
     "source": {
@@ -1033,7 +1273,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 8,
+      "retained": 13,
       "transformed": 0,
       "unavailable": 7
     },
@@ -1044,7 +1284,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 31,
+    "total_constructs": 36,
     "truncated": false
   },
   "snapshot_version": 1,
@@ -1052,10 +1292,10 @@
     "conversion_mode": "lossy",
     "defaults": {},
     "dropped_edge_count": 0,
-    "edge_count": 31,
+    "edge_count": 36,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 39,
+    "node_count": 49,
     "reason_counts": {
       "destination_unsupported": 0,
       "emitter_unsupported": 5,
@@ -1070,7 +1310,7 @@
     "scope_counts": {
       "analysis": 7,
       "checklist": 18,
-      "construct": 6,
+      "construct": 11,
       "loss": 0
     },
     "source": {
@@ -1102,7 +1342,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 8,
+      "retained": 13,
       "transformed": 0,
       "unavailable": 7
     },
@@ -1113,7 +1353,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 31,
+    "total_constructs": 36,
     "truncated": false,
     "worst_severity": "warn"
   }

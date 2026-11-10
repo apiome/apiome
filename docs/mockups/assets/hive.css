@@ -133,27 +133,30 @@ html[data-font-scale="2xl"]{ font-size: 125%; }    /* 20px */
 /* ---------- 4. Themes -------------------------------------------------- */
 /* Every theme = a token swap. Dark is a full palette; the others override
    the handful of tokens that define their character. */
+/* Dark is the signature Dark (facelift "themes", PROPOSALS_FACELIFT.md §8, adopted
+   2026-11-02): navy-black surfaces that carry the brand's navy, honey as the primary, azure
+   links — the palette `assets/facelift.css` §8 proposed and apiome-ui ships. */
 html[data-theme="dark"] {
   color-scheme: dark;
-  --bg-canvas: #141311; --bg-rail: #100F0E; --bg-surface: #1B1A18; --bg-subtle: #23221F;
-  --bg-inset: #2A2825; --bg-overlay: rgba(0,0,0,.6);
-  --fg: #EDEBE6; --fg-muted: #A8A49C; --fg-subtle: #8D8983; --fg-faint: #57544E;
-  --border: rgba(255,250,240,.09); --border-strong: rgba(255,250,240,.18);
-  --accent: #5AA6F2; --accent-hover: #79B7F5; --accent-soft: rgba(90,166,242,.14); --accent-fg: #9CCBF8;
-  --ink: #EDEBE6; --ink-hover: #FFFFFF; --ink-fg: #16150F;
-  --honey: #F5B301; --honey-soft: rgba(245,179,1,.14); --honey-fg: #F8CB4F;
+  --bg-canvas: #0C0F1F; --bg-rail: #090C19; --bg-surface: #141931; --bg-subtle: #1A203C;
+  --bg-inset: #0E1226; --bg-overlay: rgba(2,4,14,.66);
+  --fg: #EEF0FA; --fg-muted: #AAB1CF; --fg-subtle: #828BAE; --fg-faint: #4C5478;
+  --border: rgba(176,190,255,.10); --border-strong: rgba(176,190,255,.22);
+  --accent: #74B6FF; --accent-hover: #93C6FF; --accent-soft: rgba(116,182,255,.14); --accent-fg: #ADD3FF;
+  --ink: #F5B301; --ink-hover: #FFC32E; --ink-fg: #1A1200;
+  --honey: #F5B301; --honey-soft: rgba(245,179,1,.16); --honey-fg: #FFD35C;
   --ok: #34C08A; --ok-soft: rgba(52,192,138,.14); --ok-fg: #6FDDB0;
   --warn: #F0A02F; --warn-soft: rgba(240,160,47,.14); --warn-fg: #F7C36F;
   --danger: #F26A63; --danger-soft: rgba(242,106,99,.14); --danger-fg: #FF9A94;
-  --neutral: #A8A49C; --neutral-soft: rgba(255,255,255,.07); --neutral-fg: #CFCBC3;
+  --neutral: #AAB1CF; --neutral-soft: rgba(255,255,255,.07); --neutral-fg: #CFD4EA;
   --violet: #9C84EE; --violet-soft: rgba(156,132,238,.16); --violet-fg: #C1B0FA;
   --orange: #F0873F; --orange-soft: rgba(240,135,63,.14); --orange-fg: #F8B085;
   --rose: #ED6AA0; --rose-soft: rgba(237,106,160,.14); --rose-fg: #F79CC0;
-  --shadow-xs: 0 1px 1px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.05);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06);
-  --shadow-md: 0 8px 20px -8px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.07);
-  --shadow-lg: 0 20px 48px -12px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.08);
-  --shadow-raised: 0 1px 2px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.08);
+  --shadow-xs: 0 1px 1px rgba(0,0,0,.3), 0 0 0 1px rgba(176,190,255,.06);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.5), 0 0 0 1px rgba(176,190,255,.08);
+  --shadow-md: 0 8px 20px -8px rgba(0,0,0,.7), 0 0 0 1px rgba(176,190,255,.09);
+  --shadow-lg: 0 20px 48px -12px rgba(0,0,0,.8), 0 0 0 1px rgba(176,190,255,.10);
+  --shadow-raised: 0 1px 2px rgba(0,0,0,.6), 0 0 0 1px rgba(176,190,255,.10);
 }
 html[data-theme="high-contrast"] {
   color-scheme: dark;
@@ -376,8 +379,11 @@ html[data-rail="collapsed"] .rail__collapse i { transform: rotate(180deg); }
 .crumbs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--fg-subtle); margin-bottom: 6px; }
 .crumbs a { color: var(--fg-subtle); } .crumbs a:hover { color: var(--fg); text-decoration: none; }
 .crumbs [data-lucide] { width: 12px; height: 12px; opacity: .7; }
-.page-title { font-size: var(--fs-3xl); font-weight: 600; letter-spacing: var(--track-tight); line-height: 1.15; display: flex; align-items: center; gap: 10px; }
-.page-desc { margin-top: 4px; font-size: var(--fs-sm); color: var(--fg-muted); max-width: 72ch; }
+/* The page title and its line take the facelift's display voice (PROPOSALS_FACELIFT.md §8,
+   adopted 2026-11-02 in apiome-ui 0.578.0): the display face at 800 on the stat step, tracked
+   tighter, and the description at body size — what `.page-header__title` / `__desc` ship. */
+.page-title { font-family: var(--font-display, var(--font-sans)); font-size: var(--fs-4xl); font-weight: 800; letter-spacing: calc(var(--track-tight) * 1.5); line-height: 1.1; display: flex; align-items: center; gap: 10px; }
+.page-desc { margin-top: 4px; font-size: var(--fs-md); color: var(--fg-muted); max-width: 72ch; }
 .page-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 2px; flex-wrap: wrap; justify-content: flex-end; }
 .page-actions > .btn { flex-shrink: 0; }
 .page-body { flex: 1; width: 100%; max-width: var(--page-max); margin: 0 auto; padding: var(--space-6) var(--page-gutter) var(--space-12); display: flex; flex-direction: column; gap: var(--space-6); }

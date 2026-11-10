@@ -249,10 +249,18 @@ def test_every_row_carries_a_resolved_capability_summary(rows: List[FormatMatrix
 
 
 def test_no_row_is_an_unknown_format(rows: List[FormatMatrixRow]) -> None:
-    """Every published format has a registered adapter or emitter, so none may report
-    ``unknown_format`` — that value exists for retired keys a catalog item still names."""
+    """Every importable format has a registered adapter, so none may report ``unknown_format`` —
+    that value exists for retired keys a catalog item still names.
+
+    An export-only destination (an emitter with no adapter, such as ``iceberg`` or the EDI
+    implementation guides) has nothing for the import-side capability registry to describe, so it
+    honestly reports ``unknown_format`` (see
+    :func:`test_export_only_destination_gets_a_row`); it is excused here.
+    """
     for row in rows:
-        assert row.capability.provenance.value != "unknown_format"
+        if not row.import_support.supported:
+            continue
+        assert row.capability.provenance.value != "unknown_format", row.key
 
 
 # ===========================================================================
@@ -497,8 +505,9 @@ def test_export_only_destination_gets_a_row() -> None:
 def test_export_only_destination_is_counted_and_filtered_as_such() -> None:
     """The counts and the direction filters follow the row, with no special case."""
     emitter = _probe_emitter()
+    shipped = build_format_matrix().counts.export_only
     with _registered_emitter(emitter):
-        assert build_format_matrix().counts.export_only == 1
+        assert build_format_matrix().counts.export_only == shipped + 1
         export_keys = {row.key for row in build_format_matrix(
             direction=DirectionFilter.EXPORT
         ).formats}

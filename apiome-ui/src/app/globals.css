@@ -34225,6 +34225,13 @@ tr:focus-within .pub-url__glyph {
   color: var(--fg-muted);
 }
 
+/* The two hottest washes are too dark for muted text at 11px (4.5:1); the level line takes the
+   full ink there, as the count above it already does. */
+.xstd-heat__cell[data-heat='3'] .xstd-heat__level,
+.xstd-heat__cell[data-heat='4'] .xstd-heat__level {
+  color: var(--fg);
+}
+
 .xstd-heat__empty {
   display: block;
   padding: var(--space-1) var(--space-2);
@@ -36028,6 +36035,8 @@ tr:focus-within .pub-url__glyph {
   flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-2);
+  /* Stacked checkboxes need 24px between centres (WCAG 2.5.8 target size). */
+  min-block-size: 1.5rem;
   cursor: pointer;
 }
 
@@ -41193,8 +41202,11 @@ a.tm-list__name {
   clip-path: var(--hex-clip);
   pointer-events: none;
 }
+/* White on the raw format hue fails contrast (cyan 2.4:1, orange 2.8:1); 65% of the hue over
+   black keeps the colour family and clears 5.2:1 for every tone, so the initials stay legible
+   at any avatar size. */
 .avatar-hex[data-fmt-tone] {
-  background: var(--fmtc);
+  background: color-mix(in srgb, var(--fmtc) 65%, black);
   color: white;
   font-weight: 700;
 }

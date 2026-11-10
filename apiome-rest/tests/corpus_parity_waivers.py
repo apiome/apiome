@@ -36,4 +36,13 @@ KNOWN_EXPORT_ONLY_DESTINATIONS: Dict[str, str] = {
     "iceberg": "MFX-36.3 (#4319): an Iceberg schema lives in a table's metadata in a catalog, not in a document "
     "anyone uploads; Apiome writes it for a lake table and reads it back with nothing. pyiceberg parses every "
     "export in the gate instead.",
+    "x12-guide": "MFX-24.1 (#4145): an X12 implementation guide (JSON guide, segment CSV, Markdown) documents a "
+    "transaction set for trading partners; it is not an interchange, and the X12 adapter (`edix12`) reads "
+    "interchanges. The emitted guide is checked by `x12_guide_validation` in the gate instead.",
+    "edifact-guide": "MFX-24.2 (#4146): an EDIFACT message implementation guide (JSON guide, segment CSV, Markdown) "
+    "documents a message for trading partners; it is not an interchange, and the EDIFACT adapter (`edifact`) "
+    "reads interchanges. The emitted guide is checked by `edifact_guide_validation` in the gate instead.",
+    "hl7v2-guide": "MFX-26.3 (#4159): an HL7 v2 segment-definition guide (JSON guide, segment CSV, Markdown) "
+    "documents messages and segments; it is not a message, and the HL7 v2 adapter (`hl7v2`) reads messages. "
+    "The emitted guide is checked by `hl7v2_guide_validation` in the gate instead.",
 }

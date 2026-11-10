@@ -12,7 +12,7 @@
     "dropped_edge_count": 0,
     "edges": [
       {
-        "count": 1,
+        "count": 5,
         "detail": "named types carried from the source into components.schemas",
         "evidence": [],
         "id": "checklist:components.schemas",
@@ -264,22 +264,22 @@
           {
             "kind": "source-construct",
             "location": null,
-            "ref": "PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL"
+            "ref": "PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT"
           },
           {
             "kind": "document-pointer",
             "location": null,
-            "ref": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/BANK-DETAIL"
+            "ref": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ACCOUNT"
           }
         ],
-        "id": "construct:field:PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
+        "id": "construct:field:PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
         "reason": null,
         "remediation": null,
         "scope": "construct",
         "severity": "info",
-        "source": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
+        "source": "source:construct:PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
         "status": "retained",
-        "target": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/BANK-DETAIL"
+        "target": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ACCOUNT"
       },
       {
         "count": 1,
@@ -288,22 +288,118 @@
           {
             "kind": "source-construct",
             "location": null,
-            "ref": "PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL"
+            "ref": "PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING"
           },
           {
             "kind": "document-pointer",
             "location": null,
-            "ref": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/CARD-DETAIL"
+            "ref": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ROUTING"
           }
         ],
-        "id": "construct:field:PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
+        "id": "construct:field:PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
         "reason": null,
         "remediation": null,
         "scope": "construct",
         "severity": "info",
-        "source": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
+        "source": "source:construct:PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
         "status": "retained",
-        "target": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/CARD-DETAIL"
+        "target": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ROUTING"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.BANK-DETAIL.FILLER"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/FILLER"
+          }
+        ],
+        "id": "construct:field:PAYMENT-RECORD.BANK-DETAIL.FILLER",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.BANK-DETAIL.FILLER",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/FILLER"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-EXPIRY-YYMM"
+          }
+        ],
+        "id": "construct:field:PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-EXPIRY-YYMM"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-NUMBER"
+          }
+        ],
+        "id": "construct:field:PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-NUMBER"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.CARD-DETAIL.FILLER"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/FILLER"
+          }
+        ],
+        "id": "construct:field:PAYMENT-RECORD.CARD-DETAIL.FILLER",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.CARD-DETAIL.FILLER",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/FILLER"
       },
       {
         "count": 1,
@@ -424,6 +520,102 @@
         "source": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD.PAYMENT-TYPE",
         "status": "retained",
         "target": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/PAYMENT-TYPE"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.BANK-DETAIL"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL"
+          }
+        ],
+        "id": "construct:type:PAYMENT-RECORD.BANK-DETAIL",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.BANK-DETAIL",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.CARD-DETAIL"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL"
+          }
+        ],
+        "id": "construct:type:PAYMENT-RECORD.CARD-DETAIL",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.CARD-DETAIL",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.PAYMENT-DETAIL"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL"
+          }
+        ],
+        "id": "construct:type:PAYMENT-RECORD.PAYMENT-DETAIL",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.PAYMENT-DETAIL",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL"
+      },
+      {
+        "count": 1,
+        "detail": "carried from the source into the emitted document",
+        "evidence": [
+          {
+            "kind": "source-construct",
+            "location": null,
+            "ref": "PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY"
+          },
+          {
+            "kind": "document-pointer",
+            "location": null,
+            "ref": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY"
+          }
+        ],
+        "id": "construct:type:PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "reason": null,
+        "remediation": null,
+        "scope": "construct",
+        "severity": "info",
+        "source": "source:construct:PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "status": "retained",
+        "target": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY"
       },
       {
         "count": 1,
@@ -843,6 +1035,136 @@
         "target": null
       },
       {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL",
+        "id": "source:construct:PAYMENT-RECORD.BANK-DETAIL",
+        "kind": "source",
+        "label": "BANK-DETAIL",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "BANK-DETAIL",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
+        "id": "source:construct:PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
+        "kind": "source",
+        "label": "BANK-ACCOUNT",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BANK-ACCOUNT",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
+        "id": "source:construct:PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
+        "kind": "source",
+        "label": "BANK-ROUTING",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "BANK-ROUTING",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.FILLER",
+        "id": "source:construct:PAYMENT-RECORD.BANK-DETAIL.FILLER",
+        "kind": "source",
+        "label": "FILLER",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "FILLER",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL",
+        "id": "source:construct:PAYMENT-RECORD.CARD-DETAIL",
+        "kind": "source",
+        "label": "CARD-DETAIL",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "CARD-DETAIL",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+        "id": "source:construct:PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+        "kind": "source",
+        "label": "CARD-EXPIRY-YYMM",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CARD-EXPIRY-YYMM",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+        "id": "source:construct:PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+        "kind": "source",
+        "label": "CARD-NUMBER",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "CARD-NUMBER",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.FILLER",
+        "id": "source:construct:PAYMENT-RECORD.CARD-DETAIL.FILLER",
+        "kind": "source",
+        "label": "FILLER",
+        "source": {
+          "construct_kind": "field",
+          "native_id": null,
+          "native_name": "FILLER",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.PAYMENT-DETAIL",
+        "id": "source:construct:PAYMENT-RECORD.PAYMENT-DETAIL",
+        "kind": "source",
+        "label": "PAYMENT-DETAIL",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PAYMENT-DETAIL",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "id": "source:construct:PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "kind": "source",
+        "label": "PAYMENT-DETAIL-OVERLAY",
+        "source": {
+          "construct_kind": "type",
+          "native_id": null,
+          "native_name": "PAYMENT-DETAIL-OVERLAY",
+          "source_location": null
+        },
+        "target": null
+      },
+      {
         "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD",
         "id": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD",
         "kind": "source",
@@ -851,32 +1173,6 @@
           "construct_kind": "type",
           "native_id": null,
           "native_name": "PAYMENT-RECORD",
-          "source_location": null
-        },
-        "target": null
-      },
-      {
-        "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
-        "id": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
-        "kind": "source",
-        "label": "BANK-DETAIL",
-        "source": {
-          "construct_kind": "field",
-          "native_id": null,
-          "native_name": "BANK-DETAIL",
-          "source_location": null
-        },
-        "target": null
-      },
-      {
-        "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
-        "id": "source:construct:PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
-        "kind": "source",
-        "label": "CARD-DETAIL",
-        "source": {
-          "construct_kind": "field",
-          "native_id": null,
-          "native_name": "CARD-DETAIL",
           "source_location": null
         },
         "target": null
@@ -947,6 +1243,116 @@
         "target": null
       },
       {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL",
+        "id": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ACCOUNT",
+        "id": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ACCOUNT",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ACCOUNT",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ACCOUNT",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.BANK-ROUTING",
+        "id": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ROUTING",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ROUTING",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/BANK-ROUTING",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.BANK-DETAIL.FILLER",
+        "id": "target:/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/FILLER",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/FILLER",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.BANK-DETAIL/properties/FILLER",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL",
+        "id": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.CARD-EXPIRY-YYMM",
+        "id": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-EXPIRY-YYMM",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-EXPIRY-YYMM",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-EXPIRY-YYMM",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.CARD-NUMBER",
+        "id": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-NUMBER",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-NUMBER",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/CARD-NUMBER",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.CARD-DETAIL.FILLER",
+        "id": "target:/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/FILLER",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/FILLER",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.CARD-DETAIL/properties/FILLER",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.PAYMENT-DETAIL",
+        "id": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL",
+          "native_path": null
+        }
+      },
+      {
+        "construct_key": "PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "id": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "kind": "target",
+        "label": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+        "source": null,
+        "target": {
+          "json_pointer": "/components/schemas/PAYMENT-RECORD.PAYMENT-DETAIL-OVERLAY",
+          "native_path": null
+        }
+      },
+      {
         "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD",
         "id": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD",
         "kind": "target",
@@ -954,28 +1360,6 @@
         "source": null,
         "target": {
           "json_pointer": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD",
-          "native_path": null
-        }
-      },
-      {
-        "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD.BANK-DETAIL",
-        "id": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/BANK-DETAIL",
-        "kind": "target",
-        "label": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/BANK-DETAIL",
-        "source": null,
-        "target": {
-          "json_pointer": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/BANK-DETAIL",
-          "native_path": null
-        }
-      },
-      {
-        "construct_key": "PAYMENT-RECORD.PAYMENT-RECORD.CARD-DETAIL",
-        "id": "target:/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/CARD-DETAIL",
-        "kind": "target",
-        "label": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/CARD-DETAIL",
-        "source": null,
-        "target": {
-          "json_pointer": "/components/schemas/PAYMENT-RECORD.PAYMENT-RECORD/properties/CARD-DETAIL",
           "native_path": null
         }
       },
@@ -1071,7 +1455,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 8,
+      "construct": 16,
       "loss": 0
     },
     "source": {
@@ -1103,7 +1487,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 10,
+      "retained": 18,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1114,7 +1498,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 32,
+    "total_constructs": 40,
     "truncated": false
   },
   "snapshot_version": 1,
@@ -1122,10 +1506,10 @@
     "conversion_mode": "lossy",
     "defaults": {},
     "dropped_edge_count": 0,
-    "edge_count": 32,
+    "edge_count": 40,
     "is_lossless": false,
     "manifest_hash": "[volatile]",
-    "node_count": 42,
+    "node_count": 58,
     "reason_counts": {
       "destination_unsupported": 0,
       "emitter_unsupported": 5,
@@ -1140,7 +1524,7 @@
     "scope_counts": {
       "analysis": 6,
       "checklist": 18,
-      "construct": 8,
+      "construct": 16,
       "loss": 0
     },
     "source": {
@@ -1172,7 +1556,7 @@
       "dropped": 3,
       "inferred": 0,
       "not-applicable": 13,
-      "retained": 10,
+      "retained": 18,
       "transformed": 0,
       "unavailable": 6
     },
@@ -1183,7 +1567,7 @@
       "emitter": "openapi-3.1",
       "fidelity-analyzer": "MFI-22.3"
     },
-    "total_constructs": 32,
+    "total_constructs": 40,
     "truncated": false,
     "worst_severity": "warn"
   }

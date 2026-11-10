@@ -240,9 +240,3 @@ None.
 Fixtures staged ahead of the adapter that will claim them (`adapter_key: null`). They are not gated until an adapter registers, at which point every requirement above applies.
 
 `schematron`
-
-## Export-only destinations with no import adapter
-
-An emitter with no adapter behind it cannot be covered by the import corpus. Record it in `KNOWN_EXPORT_ONLY_DESTINATIONS` with a reason, or register an adapter.
-
-`edifact-guide`, `hl7v2-guide`, `x12-guide`

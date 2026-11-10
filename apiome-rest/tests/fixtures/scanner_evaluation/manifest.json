@@ -784,6 +784,76 @@
       "expected_blocking_rule_ids": [
         "capnproto.contiguous-ordinals"
       ]
+    },
+    {
+      "id": "catalog/fix-orchestra-message-msgtype-declared",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "fix-orchestra.message-msgtype-declared"
+      ]
+    },
+    {
+      "id": "catalog/fix-orchestra-msgtype-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "fix-orchestra.msgtype-unique"
+      ]
+    },
+    {
+      "id": "catalog/fix-orchestra-code-values-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "fix-orchestra.code-values-unique"
+      ]
+    },
+    {
+      "id": "catalog/hl7v2-message-type-declared",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "hl7v2.message-type-declared"
+      ]
+    },
+    {
+      "id": "catalog/iso8583-de-number-valid",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "iso8583.de-number-valid"
+      ]
+    },
+    {
+      "id": "catalog/oncrpc-version-numbers-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "oncrpc.version-numbers-unique"
+      ]
+    },
+    {
+      "id": "catalog/oncrpc-procedure-numbers-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "oncrpc.procedure-numbers-unique"
+      ]
+    },
+    {
+      "id": "catalog/oncrpc-procedure-names-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "oncrpc.procedure-names-unique"
+      ]
+    },
+    {
+      "id": "catalog/oncrpc-type-resolves",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "oncrpc.type-resolves"
+      ]
+    },
+    {
+      "id": "catalog/oncrpc-enum-values-unique",
+      "kind": "catalog_import_source",
+      "expected_blocking_rule_ids": [
+        "oncrpc.enum-values-unique"
+      ]
     }
   ]
 }

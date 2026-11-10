@@ -216,6 +216,8 @@ def test_the_classified_diff_answers_410_for_a_pruned_base(auth):
 def test_the_version_read_answers_410_for_a_pruned_version(auth, monkeypatch):
     monkeypatch.setattr(db, "user_has_permission", lambda *a, **k: True)
     monkeypatch.setattr(db, "get_version_by_id", lambda *a, **k: None)
+    # The not-found read writes a version.pull failure audit row first; keep it off the database.
+    monkeypatch.setattr(db, "insert_workflow_audit", lambda *a, **k: None)
     calls = []
     monkeypatch.setattr("app.versions_routes.raise_if_pruned", lambda *a: calls.append(a) or _pruned())
     r = client.get(f"/v1/versions/acme/{_ITEM}/{_vid(4)}")

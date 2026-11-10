@@ -1324,12 +1324,16 @@ def _reset_import_export_metrics():
     import_export_metrics.reset()
 
 
-async def _wait_for_job_totals(registry) -> dict:
+async def _wait_for_job_totals(registry, outcome: str) -> dict:
     """The terminal job metric lands in the driver wrapper's ``finally``, moments after
-    the terminal state becomes pollable — wait briefly for it."""
+    the terminal state becomes pollable — wait briefly for it.
+
+    Waits for a total with this test's ``outcome``, not just any total: an export job a
+    previous test scheduled can still finish after the metrics reset and land its own
+    (``completed``) total first."""
     for _ in range(200):
-        jobs = registry.snapshot()["jobs"].get("export")
-        if jobs:
+        jobs = registry.snapshot()["jobs"].get("export") or {}
+        if any(outcome in by_outcome for formats in jobs.values() for by_outcome in formats.values()):
             return jobs
         await asyncio.sleep(0.01)
     raise AssertionError("terminal export job metrics never landed")
@@ -1360,7 +1364,7 @@ async def test_completed_export_records_all_stages_bytes_and_the_job_total(
         assert stages[stage]["completed"]["total_duration_ms"] >= 0
 
     # The submitted alias "openapi" is normalized to the canonical emit format key.
-    jobs = await _wait_for_job_totals(registry)
+    jobs = await _wait_for_job_totals(registry, "completed")
     (target_key,) = jobs.keys()
     assert target_key.startswith("openapi")
     cell = jobs[target_key][target_key]["completed"]
@@ -1395,7 +1399,7 @@ async def test_failed_export_counts_the_taxonomy_code_and_carries_the_correlatio
     assert target_key.startswith("openapi")
     assert failures["SOURCE_LOAD_FAILED"][target_key] == 1
     # The failed job also lands in the job totals under its outcome.
-    jobs = await _wait_for_job_totals(registry)
+    jobs = await _wait_for_job_totals(registry, "failed")
     assert jobs[target_key][target_key]["failed"]["count"] == 1
 
 

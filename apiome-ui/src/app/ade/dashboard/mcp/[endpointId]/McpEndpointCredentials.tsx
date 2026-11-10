@@ -240,7 +240,7 @@ export default function McpEndpointCredentials({ endpointId, onChanged }: McpEnd
           <CardBody className="mcp-ep-row">
             {loadError ? (
               <p role="alert" className="flex items-center gap-1.5 text-sm text-fg" data-testid="mcp-credentials-load-error">
-                <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger" />
+                <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger-fg" />
                 {loadError}
               </p>
             ) : !status || !summary || !badge ? (
@@ -277,6 +277,7 @@ export default function McpEndpointCredentials({ endpointId, onChanged }: McpEnd
                     variant="danger-soft"
                     onClick={() => void handleClear()}
                     disabled={anyBusy}
+                    title={anyBusy ? 'Wait for the credential change to finish' : undefined}
                     data-testid="mcp-credentials-clear"
                   >
                     {clearing ? <Loader2 className="animate-spin" aria-hidden /> : <Trash2 aria-hidden />}
@@ -398,7 +399,7 @@ export default function McpEndpointCredentials({ endpointId, onChanged }: McpEnd
                   className="mcp-settings-fields__wide flex items-center gap-1.5 text-sm text-fg"
                   data-testid="mcp-credentials-error"
                 >
-                  <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger" />
+                  <TriangleAlert aria-hidden className="size-4 shrink-0 text-danger-fg" />
                   {formError}
                 </p>
               ) : null}
@@ -417,7 +418,18 @@ export default function McpEndpointCredentials({ endpointId, onChanged }: McpEnd
                 data-testid="mcp-credentials-live"
               />
               <div className="mcp-settings-actions mcp-settings-fields__wide">
-                <Button type="submit" disabled={anyBusy || !dirty} data-testid="mcp-credentials-save">
+                <Button
+                  type="submit"
+                  disabled={anyBusy || !dirty}
+                  title={
+                    anyBusy
+                      ? 'Wait for the credential change to finish'
+                      : !dirty
+                        ? `Enter the ${secretLabel.toLowerCase()} first`
+                        : undefined
+                  }
+                  data-testid="mcp-credentials-save"
+                >
                   {saving ? <Loader2 className="animate-spin" aria-hidden /> : <Save aria-hidden />}
                   {saving ? 'Saving…' : status?.configured ? 'Replace credential' : 'Save credential'}
                 </Button>

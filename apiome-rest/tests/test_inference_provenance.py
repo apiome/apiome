@@ -316,20 +316,22 @@ def test_a_declared_gateway_flavor_infers_only_regex_recovered_paths() -> None:
     assert all(c.evidence and "regex" in c.evidence for c in inferred)
 
 
-def test_postman_infers_schemas_from_example_bodies_and_declares_requests() -> None:
+def test_postman_infers_every_construct_from_the_saved_requests() -> None:
+    """Since MFI-32.7 (#4409) Postman runs on the shared inferred-spec engine: a collection declares
+    requests but no schemas, so every service, operation, parameter, message and type is inferred
+    (a raw non-JSON body is synthesized) — and each says what it was inferred from."""
     models = _corpus_models("postman")
     assert models
     kinds = set()
     for api in models:
         for construct in iter_construct_provenance(api):
-            if construct.kind in ("service", "operation", "parameter"):
-                assert construct.provenance == DECLARED, construct
-            if construct.kind == "type":
-                assert construct.provenance == INFERRED, construct
-                assert construct.evidence and "example" in construct.evidence
+            assert construct.provenance in (INFERRED, SYNTHESIZED), construct
+            assert construct.evidence, construct
+            if construct.kind == "type" and construct.provenance == INFERRED:
+                assert "example" in construct.evidence, construct
             if construct.provenance == INFERRED:
                 kinds.add(construct.kind)
-    assert {"type", "message"} <= kinds
+    assert {"service", "operation", "type", "message"} <= kinds
 
 
 @pytest.mark.parametrize("format_key", ["typescript-types", "zod", "trpc", "pydantic", "cue", "pkl", "dhall"])
@@ -413,11 +415,12 @@ def _postman_item() -> Dict[str, object]:
 def test_catalog_entities_carry_their_construct_class_and_evidence() -> None:
     parsed, summary = derive_catalog_parsed_view(_postman_item())
     entities = {e["name"]: e for group in parsed for e in group["entities"]}
-    assert entities["Create order"]["provenance"] == DECLARED
-    assert entities["Create order"]["provenance_evidence"] is None
-    assert entities["Order"]["provenance"] == INFERRED
-    assert "POST /orders" in entities["Order"]["provenance_evidence"]
-    assert summary["inferred"] >= 2  # the Order type and the request message
+    # MFI-32.7 (#4409): the engine infers the operations from the requests and the types from their bodies.
+    assert entities["Create order"]["provenance"] == INFERRED
+    assert "/orders" in entities["Create order"]["provenance_evidence"]
+    assert entities["PostOrderRequest"]["provenance"] == INFERRED
+    assert "example" in entities["PostOrderRequest"]["provenance_evidence"]
+    assert summary["declared"] == 0 and summary["inferred"] >= 3
     assert summary["total"] == summary["declared"] + summary["inferred"] + summary["synthesized"]
 
 
