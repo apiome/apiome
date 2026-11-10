@@ -1965,6 +1965,22 @@
       "route": "/ade/dashboard/mcp/agents",
       "waitFor": "#a11y-mount > *",
       "data": "fixture:hive-a11y/agent-access-usage.html"
+    },
+    {
+      "id": "design-system-control-sizes",
+      "route": "/design-system",
+      "waitFor": "[data-testid=\"design-system-control-sizes\"]",
+      "data": "signed-out",
+      "scrollTo": "[data-testid=\"design-system-control-sizes\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ui/controlSize.ts",
+        "apiome-ui/src/app/components/ui/Input.tsx",
+        "apiome-ui/src/app/components/ui/Select.tsx",
+        "apiome-ui/src/app/components/ui/Textarea.tsx",
+        "apiome-ui/src/app/components/ui/FormField.tsx",
+        "apiome-ui/src/app/components/ui/Segmented.tsx",
+        "apiome-ui/src/app/components/ui/Button.tsx"
+      ]
     }
   ]
 }

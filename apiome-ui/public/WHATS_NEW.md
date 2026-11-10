@@ -281,6 +281,8 @@ We continue to improve the platform based on your feedback with improvements and
   - The sign-in page's *Watch our intro video* link, which no longer worked, is now **Explore our YouTube** and opens the Apiome YouTube channel
 - Spacing and type:
   - Spacing across the Control Panel now matches the design: gaps and padding that had drifted to 24, 32 and 48 px are back to 20, 24 and 32 px, and **Compact** density in Preferences tightens spacing as well as controls. Body text follows the **Font size** preference everywhere, and pages load about 80 KB less stylesheet
+- Controls:
+  - Switches such as **All types** / **REST API** / **MCP server** on **API keys** are now as tall as the buttons and fields beside them; they were 2 px shorter. Text inputs, dropdowns and text areas also come in the small and large sizes that buttons have, so a small button and a small field line up
 - Dialogs and menus:
   - Every dialog, drawer and confirm now dims the whole screen behind it, Studio's top header included — the header could stay bright and clickable over an open dialog. A list, menu or tooltip opened inside a dialog, or inside a dialog opened from a drawer, now shows in full above it instead of being cut off underneath, and toasts always show above an open dialog
 - Code editors:

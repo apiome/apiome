@@ -2,6 +2,7 @@
 export * from './Dialog';
 export * from './Label';
 export * from './Input';
+export * from './controlSize';
 export * from './Button';
 export * from './Alert';
 export * from './Card';

@@ -597,10 +597,10 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
   {
     id: 'design-tokens',
     title: 'Hive design tokens',
-    summary: 'The named tokens the Hive design system builds with, starting with stacking.',
-    page: 'apiome-docs/docs/reference/design-tokens.md',
+    summary: 'The named tokens the Hive design system builds with: spacing, sizes, stacking.',
+    page: 'apiome-docs/docs/reference/design-tokens.mdx',
     section: 'reference',
-    keywords: ['z-index', 'stacking', 'layers', 'modal', 'popover', 'design system'],
+    keywords: ['z-index', 'stacking', 'layers', 'modal', 'popover', 'design system', 'control sizes', 'field height'],
   },
   {
     id: 'catalog-journey',

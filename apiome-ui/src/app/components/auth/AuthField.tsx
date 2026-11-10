@@ -21,7 +21,7 @@ import { cn } from '../../../../lib/utils';
  * hairline (`.hive-control[aria-invalid]`) and is announced — so the ring and the
  * announcement can never disagree. Same rule as `FormField`.
  */
-export interface AuthFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id'> {
+export interface AuthFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'id' | 'size'> {
   /** The control's `id`; the label points at it and callers query the page by it. */
   id: string;
   /** The field's visible name. */
