@@ -74,7 +74,7 @@ function ChangeChip({ kind, count }: { kind: ReimportChangeKind; count?: number 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+        'inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
         REIMPORT_CHANGE_TONE[kind],
       )}
     >
@@ -167,7 +167,7 @@ export function CatalogImportReimportDelta({
                     {' — worst change: '}
                     <span
                       className={cn(
-                        'rounded px-1.5 py-0.5 font-semibold',
+                        'rounded-xs px-1.5 py-0.5 font-semibold',
                         REIMPORT_SEVERITY_TONE[delta.overall_severity],
                       )}
                     >
@@ -374,7 +374,7 @@ function DeltaEntryRow({
       {entry.severity ? (
         <span
           className={cn(
-            'rounded px-1.5 py-0.5 text-2xs font-semibold',
+            'rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
             REIMPORT_SEVERITY_TONE[entry.severity],
           )}
           data-testid="import-reimport-severity"

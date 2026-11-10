@@ -160,14 +160,14 @@ export default function DataInspectionView() {
 
   if (!selectedClassName) {
     return (
-      <div className="h-full flex flex-col min-h-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
-          <Database className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+      <div className="h-full flex flex-col min-h-0 border-t border-border bg-surface">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-subtle shrink-0">
+          <Database className="w-4 h-4 text-fg-muted" />
+          <h3 className="text-sm font-semibold text-fg-muted">
             Data inspection
           </h3>
         </div>
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+        <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
           <Search className="w-8 h-8" />
           <p className="text-sm text-center">Select a class in the sidebar to inspect migration data.</p>
         </div>
@@ -176,17 +176,17 @@ export default function DataInspectionView() {
   }
 
   return (
-    <div className="h-full flex flex-col min-h-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
-        <Database className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+    <div className="h-full flex flex-col min-h-0 border-t border-border bg-surface">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-subtle shrink-0">
+        <Database className="w-4 h-4 text-fg-muted" />
+        <h3 className="text-sm font-semibold text-fg-muted">
           Data inspection — {selectedClassName}
         </h3>
       </div>
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Left 20%: record list (from-data, searchable, read-only) */}
-        <div className="shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30" style={{ width: '20%', minWidth: 0 }}>
-          <div className="p-2 border-b border-gray-200 dark:border-gray-700 space-y-2">
+        <div className="shrink-0 flex flex-col border-r border-border bg-subtle/50" style={{ width: '20%', minWidth: 0 }}>
+          <div className="p-2 border-b border-border space-y-2">
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -194,12 +194,12 @@ export default function DataInspectionView() {
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md border border-border bg-surface text-sm text-fg placeholder:text-fg-subtle"
               />
               <button
                 type="button"
                 onClick={handleSearch}
-                className="shrink-0 p-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="shrink-0 p-1.5 rounded-md border border-border bg-surface text-fg-muted hover:bg-subtle"
                 title="Search"
               >
                 <Search className="w-4 h-4" />
@@ -208,7 +208,7 @@ export default function DataInspectionView() {
             <button
               type="button"
               onClick={handleViewAll}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
             >
               <List className="w-4 h-4" />
               View all records
@@ -216,7 +216,7 @@ export default function DataInspectionView() {
           </div>
           <div className="flex-1 min-h-0 overflow-auto">
             {viewMode === 'none' ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">
+              <div className="p-3 text-sm text-fg-muted">
                 Click &quot;View all records&quot; or search to load data.
               </div>
             ) : loading ? (
@@ -245,17 +245,17 @@ export default function DataInspectionView() {
                         }}
                         className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors border ${
                           isSelected
-                            ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-100'
-                            : 'border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-accent-soft border-accent/30 text-accent-fg'
+                            : 'border-transparent text-fg-muted hover:bg-inset'
                         }`}
                       >
-                        <div className="font-mono text-xs text-gray-500 dark:text-gray-400 truncate">
+                        <div className="font-mono text-xs text-fg-muted truncate">
                           {row.record_id}
                         </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">
+                        <div className="text-xs text-fg-muted mt-0.5 truncate">
                           {truncateDataPreview(row.data, DATA_PREVIEW_MAX_LEN)}
                         </div>
-                        <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        <div className="text-xs text-fg-subtle mt-0.5">
                           {formatDateTime(row.updated_at)}
                         </div>
                       </button>
@@ -265,23 +265,23 @@ export default function DataInspectionView() {
               </ul>
             )}
             {viewMode !== 'none' && totalPages > 1 && (
-              <div className="flex items-center justify-between gap-2 p-2 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between gap-2 p-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page <= 1}
-                  className="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300"
+                  className="px-2 py-1 text-xs rounded-xs border border-border disabled:opacity-50 text-fg-muted"
                 >
                   Prev
                 </button>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-muted">
                   {page} / {totalPages}
                 </span>
                 <button
                   type="button"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page >= totalPages}
-                  className="px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300"
+                  className="px-2 py-1 text-xs rounded-xs border border-border disabled:opacity-50 text-fg-muted"
                 >
                   Next
                 </button>
@@ -293,10 +293,10 @@ export default function DataInspectionView() {
         {/* Center 40% + Right 40%: before / after views (50/50 of remaining space) */}
         <div className="flex-1 min-w-0 flex overflow-hidden">
           {/* Before: source data (Monaco JSON) */}
-          <div className="flex-1 min-w-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="h-11 flex items-center gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
-              <FileJson className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <div className="flex-1 min-w-0 flex flex-col border-r border-border bg-surface">
+            <div className="h-11 flex items-center gap-2 px-3 border-b border-border bg-subtle/50 shrink-0">
+              <FileJson className="w-4 h-4 text-fg-muted" />
+              <span className="text-sm font-medium text-fg-muted">
                 Before
               </span>
             </div>
@@ -316,7 +316,7 @@ export default function DataInspectionView() {
                   }}
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                   <FileJson className="w-10 h-10" />
                   <p className="text-sm text-center">Select a record to see source data.</p>
                 </div>
@@ -324,11 +324,11 @@ export default function DataInspectionView() {
             </div>
           </div>
           {/* After: transformed (Monaco JSON) — only show content when Evaluate was clicked for this record */}
-          <div className="flex-1 min-w-0 flex flex-col bg-white dark:bg-gray-900">
-            <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
+          <div className="flex-1 min-w-0 flex flex-col bg-surface">
+            <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-border bg-subtle/50 shrink-0">
               <div className="flex items-center gap-2 min-w-0">
-                <FileJson className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
+                <FileJson className="w-4 h-4 shrink-0 text-fg-muted" />
+                <span className="text-sm font-medium text-fg-muted truncate">
                   After rules applied
                 </span>
               </div>
@@ -336,7 +336,7 @@ export default function DataInspectionView() {
                 type="button"
                 onClick={() => selectedRecord && runEvaluate(selectedRecord)}
                 disabled={!selectedRecord || evaluateLoading}
-                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
+                className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-accent/30 bg-accent-soft text-accent-fg hover:bg-accent-soft disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
               >
                 <Play className="w-4 h-4" />
                 {evaluateLoading ? 'Evaluating…' : 'Evaluate'}
@@ -344,19 +344,19 @@ export default function DataInspectionView() {
             </div>
             <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
               {evaluateError && (
-                <div className="shrink-0 px-3 py-2 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-300">
+                <div className="shrink-0 px-3 py-2 bg-danger-soft border-b border-danger/30 text-sm text-danger-fg">
                   {evaluateError}
                 </div>
               )}
               {!selectedRecord ? (
-                <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                   <FileJson className="w-10 h-10" />
                   <p className="text-sm text-center">
                     Select a record to see the transformed object (after rules are applied).
                   </p>
                 </div>
               ) : evaluateLoading ? (
-                <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                   <p className="text-sm">Applying rules…</p>
                 </div>
               ) : evaluatedRecordId === selectedRecord.record_id && evaluatedData !== null ? (
@@ -374,7 +374,7 @@ export default function DataInspectionView() {
                   }}
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                   <Play className="w-10 h-10" />
                   <p className="text-sm text-center">
                     Click <strong>Evaluate</strong> above to see the result after rules are applied for this record.

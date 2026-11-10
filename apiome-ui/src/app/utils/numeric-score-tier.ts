@@ -50,9 +50,9 @@ const EXCELLENT = tier(
   'Production ready',
   // The ok ink token, not `text-green-600` (3.2:1 on the light canvas), for the same reason as GOOD.
   'text-ok-fg',
-  'text-green-500 dark:text-green-400',
+  'text-ok-fg',
   'from-green-500 to-green-600',
-  'bg-green-500'
+  'bg-ok'
 );
 
 const GOOD = tier(
@@ -63,9 +63,9 @@ const GOOD = tier(
   // The warning ink token, not `text-yellow-600`: yellow on the light canvas is 2.9:1, under
   // even the 3:1 large-text bar (RC6-H2, #6209); `--warn-fg` is calibrated per theme.
   'text-warn-fg',
-  'text-yellow-500 dark:text-yellow-400',
+  'text-warn-fg',
   'from-yellow-500 to-amber-500',
-  'bg-yellow-500'
+  'bg-warn'
 );
 
 const FAIR = tier(
@@ -73,10 +73,10 @@ const FAIR = tier(
   '50–69',
   'Fair',
   'Significant improvements recommended',
-  'text-orange-600 dark:text-orange-400',
-  'text-orange-500 dark:text-orange-400',
+  'text-orange-fg',
+  'text-orange-fg',
   'from-orange-500 to-orange-600',
-  'bg-orange-500'
+  'bg-orange'
 );
 
 const POOR = tier(
@@ -84,10 +84,10 @@ const POOR = tier(
   '0–49',
   'Poor',
   'Major issues must be addressed',
-  'text-red-600 dark:text-red-400',
-  'text-red-500 dark:text-red-400',
+  'text-danger-fg',
+  'text-danger-fg',
   'from-red-500 to-red-600',
-  'bg-red-500'
+  'bg-danger'
 );
 
 /** Static legend rows for tooltips and help copy */

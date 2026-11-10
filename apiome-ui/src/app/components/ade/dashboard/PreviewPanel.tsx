@@ -165,7 +165,7 @@ function PreviewClassNode({ data }: { data: { label: string; propertyCount: numb
       }`}>
         <div className="flex items-center gap-1.5">
           {data.hasComposition && data.compositionType && (
-            <span className="text-2xs px-1 py-0.5 bg-violet-soft text-violet-fg rounded">
+            <span className="text-2xs px-1 py-0.5 bg-violet-soft text-violet-fg rounded-xs">
               {data.compositionType}
             </span>
           )}
@@ -243,7 +243,7 @@ function ExpandablePropertyRow({
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="flex items-center gap-2 w-full text-left rounded px-1 -mx-1 hover:bg-inset"
+            className="flex items-center gap-2 w-full text-left rounded-xs px-1 -mx-1 hover:bg-inset"
           >
             {hasAny ? (
               isExpanded ? (
@@ -395,7 +395,7 @@ function SchemaSelectCheckbox({
       aria-label={`Import ${name}`}
       title={locked ? `Required by ${nameList(requiredBy)}` : undefined}
       data-testid={`schema-select-${name}`}
-      className={`rounded border-2 border-border-strong bg-surface data-[state=checked]:bg-accent data-[state=checked]:border-accent flex items-center justify-center flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${className ?? ''}`}
+      className={`rounded-xs border-2 border-border-strong bg-surface data-[state=checked]:bg-accent data-[state=checked]:border-accent flex items-center justify-center flex-shrink-0 disabled:cursor-not-allowed disabled:opacity-60 ${className ?? ''}`}
     >
       <Checkbox.Indicator>
         <Check className="w-4 h-4 text-fg-on-accent" />
@@ -454,7 +454,7 @@ function SchemaTreeItem({
                 e.stopPropagation();
                 onToggleExpand(node.name);
               }}
-              className="p-0.5 rounded hover:bg-inset text-fg-muted"
+              className="p-0.5 rounded-xs hover:bg-inset text-fg-muted"
               aria-label={isExpanded ? 'Collapse' : 'Expand'}
             >
               {isExpanded ? (
@@ -1084,7 +1084,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setSortOrder(sortOrder === 'asc' ? null : 'asc')}
-                    className={`p-1.5 rounded transition-colors ${
+                    className={`p-1.5 rounded-xs transition-colors ${
                       sortOrder === 'asc'
                         ? 'bg-accent-soft text-accent-fg'
                         : 'text-fg-faint hover:text-fg-muted hover:bg-inset'
@@ -1095,7 +1095,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   </button>
                   <button
                     onClick={() => setSortOrder(sortOrder === 'desc' ? null : 'desc')}
-                    className={`p-1.5 rounded transition-colors ${
+                    className={`p-1.5 rounded-xs transition-colors ${
                       sortOrder === 'desc'
                         ? 'bg-accent-soft text-accent-fg'
                         : 'text-fg-faint hover:text-fg-muted hover:bg-inset'
@@ -1172,7 +1172,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                 <div className="flex items-center gap-1 bg-inset rounded-lg p-1">
                   <button
                     onClick={() => setViewMode('summary')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-colors ${
                       viewMode === 'summary'
                         ? 'bg-surface text-accent shadow-sm'
                         : 'text-fg-muted hover:text-fg'
@@ -1182,7 +1182,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   </button>
                   <button
                     onClick={() => setViewMode('json')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-colors ${
                       viewMode === 'json'
                         ? 'bg-surface text-accent shadow-sm'
                         : 'text-fg-muted hover:text-fg'
@@ -1192,7 +1192,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                   </button>
                   <button
                     onClick={() => setViewMode('yaml')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-xs transition-colors ${
                       viewMode === 'yaml'
                         ? 'bg-surface text-accent shadow-sm'
                         : 'text-fg-muted hover:text-fg'
@@ -1288,7 +1288,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                                   <div key={idx} className="text-sm flex items-center gap-2">
                                     <span className="text-ok">→</span>
                                     <span className="font-mono text-fg">{rel.name}</span>
-                                    <span className="text-xs px-2 py-0.5 rounded bg-ok-soft text-ok-fg">
+                                    <span className="text-xs px-2 py-0.5 rounded-xs bg-ok-soft text-ok-fg">
                                       {rel.type}
                                     </span>
                                   </div>
@@ -1315,7 +1315,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                                 <div key={idx} className="text-sm flex items-center gap-2">
                                   <span className="text-accent">↑</span>
                                   <span className="font-mono text-fg">{refName}</span>
-                                  <span className="text-xs px-2 py-0.5 rounded bg-accent-soft text-accent-fg">
+                                  <span className="text-xs px-2 py-0.5 rounded-xs bg-accent-soft text-accent-fg">
                                     extends
                                   </span>
                                 </div>
@@ -1371,7 +1371,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                                 <div key={idx} className="text-sm flex items-center gap-2">
                                   <span className="text-violet">◇</span>
                                   <span className="font-mono text-fg">{refName}</span>
-                                  <span className="text-xs px-2 py-0.5 rounded bg-violet-soft text-violet-fg">
+                                  <span className="text-xs px-2 py-0.5 rounded-xs bg-violet-soft text-violet-fg">
                                     variant
                                   </span>
                                 </div>
@@ -1429,7 +1429,7 @@ export function PreviewPanel({ analysis, onImportOptionsChange }: PreviewPanelPr
                                 <div key={idx} className="text-sm flex items-center gap-2">
                                   <span className="text-accent">○</span>
                                   <span className="font-mono text-fg">{refName}</span>
-                                  <span className="text-xs px-2 py-0.5 rounded bg-accent-soft text-accent-fg">
+                                  <span className="text-xs px-2 py-0.5 rounded-xs bg-accent-soft text-accent-fg">
                                     option
                                   </span>
                                 </div>

@@ -45,28 +45,28 @@ export default function SchemaViewModal({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 bg-overlay z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl max-h-[90vh] min-h-[600px] flex flex-col rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl max-h-[90vh] min-h-[600px] flex flex-col rounded-lg bg-surface shadow-lg border border-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         >
-          <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white p-6 pb-2 flex items-center gap-2 shrink-0">
-            <FileCode className="w-5 h-5 text-indigo-500" />
+          <Dialog.Title className="text-lg font-semibold text-fg p-6 pb-2 flex items-center gap-2 shrink-0">
+            <FileCode className="w-5 h-5 text-accent-fg" />
             JSON Schema — {className}
           </Dialog.Title>
-          <Dialog.Description className="px-6 text-sm text-gray-500 dark:text-gray-400 shrink-0">
+          <Dialog.Description className="px-6 text-sm text-fg-muted shrink-0">
             Class schema definition for validation and insert form.
           </Dialog.Description>
           <div className="flex-1 min-h-0 overflow-hidden flex flex-col p-6 pt-3">
             {loading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading schema…</p>
+              <p className="text-sm text-fg-muted">Loading schema…</p>
             )}
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <p className="text-sm text-danger-fg">{error}</p>
             )}
             {!loading && !error && normalizedSchema != null && (
               <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-                <div className="flex-1 min-h-[480px] rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden bg-[#1e1e1e]">
+                <div className="flex-1 min-h-[480px] rounded-lg border border-border overflow-hidden bg-[#1e1e1e]">
                   <MonacoEditor
                     key={`schema-${className}`}
                     height="65vh"
@@ -85,11 +85,11 @@ export default function SchemaViewModal({
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-2 p-6 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-2 p-6 pt-2 border-t border-border">
             <Dialog.Close asChild>
               <button
                 type="button"
-                className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 rounded-lg border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
               >
                 Close
               </button>

@@ -339,7 +339,7 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
               type="checkbox"
               checked={saveCredentials}
               onChange={(e) => setSaveCredentials(e.target.checked)}
-              className="rounded text-accent focus:ring-accent"
+              className="rounded-xs text-accent focus:ring-accent"
             />
             <span className="text-sm text-fg-muted">
               Save credentials for future imports
@@ -360,7 +360,7 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
               type="checkbox"
               checked={followRedirects}
               onChange={(e) => setFollowRedirects(e.target.checked)}
-              className="rounded text-accent focus:ring-accent"
+              className="rounded-xs text-accent focus:ring-accent"
             />
             <span className="text-sm text-fg-muted">
               Follow redirects
@@ -372,7 +372,7 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
               type="checkbox"
               checked={resolveExternalRefs}
               onChange={(e) => setResolveExternalRefs(e.target.checked)}
-              className="rounded text-accent focus:ring-accent"
+              className="rounded-xs text-accent focus:ring-accent"
             />
             <span className="text-sm text-fg-muted">
               Resolve external $ref URLs
@@ -384,7 +384,7 @@ const UrlImportPanel = forwardRef<UrlImportPanelHandle, UrlImportPanelProps>(fun
               type="checkbox"
               checked={cacheFetched}
               onChange={(e) => setCacheFetched(e.target.checked)}
-              className="rounded text-accent focus:ring-accent"
+              className="rounded-xs text-accent focus:ring-accent"
             />
             <span className="text-sm text-fg-muted">
               Cache fetched content

@@ -58,15 +58,15 @@ export interface BreakingPublishGuardrail {
 
 /** Badge CSS classes per status, keyed for the summary strip. */
 const STATUS_BADGE_CLASSES: Record<BreakingPublishStatus, string> = {
-  blocked: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  ok: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  'no-baseline': 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
-  disabled: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  unavailable: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  blocked: 'bg-danger-soft text-danger-fg',
+  warning: 'bg-warn-soft text-warn-fg',
+  ok: 'bg-ok-soft text-ok-fg',
+  'no-baseline': 'bg-accent-soft text-accent-fg',
+  disabled: 'bg-subtle text-fg-muted',
+  unavailable: 'bg-subtle text-fg-muted',
 };
 
-const STATUS_BADGE_FALLBACK = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+const STATUS_BADGE_FALLBACK = 'bg-subtle text-fg-muted';
 
 /** Return the badge CSS classes for a guardrail status (defensive fallback for unknowns). */
 export function guardrailStatusBadgeClass(status: string): string {

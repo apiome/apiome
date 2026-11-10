@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, AlertCircle } from 'lucide-react';
 import { BrandMark } from '@/app/components/brand';
+import { Button } from '@/app/components/ui/Button';
+import { Input } from '@/app/components/ui/Input';
 
 export default function AdminLoginClient() {
   const [password, setPassword] = useState('');
@@ -42,31 +44,31 @@ export default function AdminLoginClient() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-subtle flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 border border-slate-200 dark:border-gray-700">
+        <div className="bg-surface rounded-lg shadow-lg p-8 border border-border">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center mb-4">
               <BrandMark variant="glyph" size={44} />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-3xl font-bold text-fg mb-2">
               Super Admin
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
+            <p className="text-fg-muted text-sm">
               Apiome Administration Portal
             </p>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-900/50 border border-red-700 rounded-lg flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 bg-danger/50 border border-danger rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-danger-fg flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-red-400 font-semibold text-sm mb-1">
+                <h3 className="text-danger-fg font-semibold text-sm mb-1">
                   Authentication Failed
                 </h3>
-                <p className="text-red-300 text-sm">{error}</p>
+                <p className="text-danger-fg text-sm">{error}</p>
               </div>
             </div>
           )}
@@ -76,18 +78,18 @@ export default function AdminLoginClient() {
             <div className="mb-6">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                className="block text-sm font-medium text-fg mb-[var(--space-field)]"
               >
                 Admin Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-fg-muted" />
+                <Input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-gray-900 border border-slate-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                  className="pl-10 pr-4"
                   placeholder="Enter admin password"
                   required
                   disabled={isLoading}
@@ -96,10 +98,10 @@ export default function AdminLoginClient() {
               </div>
             </div>
 
-            <button
+            <Button
               type="submit"
               disabled={isLoading || !password}
-              className="w-full py-3 px-4 bg-red-600 hover:bg-red-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-[var(--dur-base)] flex items-center justify-center gap-2"
+              variant="danger" className="w-full"
             >
               {isLoading ? (
                 <>
@@ -112,7 +114,7 @@ export default function AdminLoginClient() {
                   Access Admin Portal
                 </>
               )}
-            </button>
+            </Button>
           </form>
 
           {/* Warning */}

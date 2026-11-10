@@ -64,5 +64,5 @@ export function Markdown({
 
 /** Default empty-state line for change report sections */
 export const MARKDOWN_EMPTY_EM_DASH = (
-  <p className="text-sm text-gray-500 dark:text-gray-400">—</p>
+  <p className="text-sm text-fg-muted">—</p>
 );

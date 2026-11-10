@@ -138,27 +138,27 @@ export function useSidebarTokens(): SidebarDensityTokens {
  */
 export const sidebarTheme = {
   surface:
-    'bg-white dark:bg-slate-950',
+    'bg-surface',
   border:
-    'border-slate-200 dark:border-slate-800',
+    'border-border',
   borderSoft:
-    'border-slate-200/70 dark:border-slate-800/70',
+    'border-border/70',
   textPrimary:
-    'text-slate-900 dark:text-slate-100',
+    'text-fg',
   textSecondary:
-    'text-slate-500 dark:text-slate-400',
+    'text-fg-muted',
   textTertiary:
-    'text-slate-400 dark:text-slate-500',
+    'text-fg-subtle',
   hover:
-    'hover:bg-slate-100 dark:hover:bg-slate-900',
+    'hover:bg-subtle',
   rowSelected:
-    'bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300',
+    'bg-accent-soft text-accent-fg',
   rowSelectedRing:
-    'ring-1 ring-inset ring-indigo-200 dark:ring-indigo-800/60',
+    'ring-1 ring-inset ring-accent/30',
   iconBadge:
-    'bg-indigo-50 dark:bg-indigo-950/50 ring-1 ring-indigo-100 dark:ring-indigo-900/60 text-indigo-600 dark:text-indigo-400',
+    'bg-accent-soft ring-1 ring-accent/30 text-accent-fg',
   inputBase:
-    'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none',
+    'bg-surface border-border text-fg placeholder:text-fg-faint focus:border-accent focus:ring-2 focus:ring-accent/20 focus:outline-none',
   sectionLabel:
-    'text-2xs font-semibold tracking-[0.08em] uppercase text-slate-400 dark:text-slate-500',
+    'text-2xs font-semibold tracking-[0.08em] uppercase text-fg-subtle',
 } as const;

@@ -72,14 +72,14 @@ function NavItem({
     >
       {active && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-indigo-500"
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-accent"
           aria-hidden
         />
       )}
       <span
         className={[
           'shrink-0 flex items-center justify-center',
-          active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300',
+          active ? 'text-accent-fg' : 'text-fg-subtle group-hover:text-fg-muted',
         ].join(' ')}
       >
         {item.icon}
@@ -125,9 +125,9 @@ export default function AdminSidebar() {
               'flex items-center gap-1.5 rounded-md transition-colors',
               tokens.rowPaddingY,
               'px-2.5 text-xs font-medium',
-              'text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400',
-              'hover:bg-rose-50 dark:hover:bg-rose-950/30',
-              'border border-transparent hover:border-rose-200 dark:hover:border-rose-900/60',
+              'text-fg-muted hover:text-danger-fg',
+              'hover:bg-danger-soft',
+              'border border-transparent hover:border-danger/30',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             ].join(' ')}
           >

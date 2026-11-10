@@ -67,15 +67,15 @@ export interface VersionLintReport {
 
 /** CSS utility classes for the grade chip, keyed by letter grade. */
 const GRADE_CHIP_CLASSES: Record<string, string> = {
-  A: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800',
+  A: 'bg-ok-soft text-ok-fg border-ok/30',
   B: 'bg-lime-100 text-lime-800 border-lime-200 dark:bg-lime-900/40 dark:text-lime-300 dark:border-lime-800',
-  C: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800',
-  D: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-800',
-  F: 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+  C: 'bg-warn-soft text-warn-fg border-warn/30',
+  D: 'bg-orange-soft text-orange-fg border-orange/30',
+  F: 'bg-danger-soft text-danger-fg border-danger/30',
 };
 
 const GRADE_CHIP_FALLBACK =
-  'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
+  'bg-subtle text-fg-muted border-border';
 
 /** Return the chip CSS classes for a letter grade (defensive fallback for unknown grades). */
 export function gradeChipClass(grade: string): string {
@@ -83,12 +83,12 @@ export function gradeChipClass(grade: string): string {
 }
 
 const SEVERITY_CLASSES: Record<LintSeverity, string> = {
-  error: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  info: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+  error: 'bg-danger-soft text-danger-fg',
+  warning: 'bg-warn-soft text-warn-fg',
+  info: 'bg-accent-soft text-accent-fg',
 };
 
-const SEVERITY_FALLBACK = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+const SEVERITY_FALLBACK = 'bg-subtle text-fg-muted';
 
 /** Return the badge CSS classes for a finding severity. */
 export function severityBadgeClass(severity: string): string {

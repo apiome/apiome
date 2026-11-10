@@ -120,12 +120,12 @@ export function advisorySeverityTone(severity: AdvisorySeverity | null): StatusT
 export function advisoryBannerClass(strength: AdvisoryPresentation['strength']): string {
   switch (strength) {
     case 'critical':
-      return 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-200';
+      return 'border-danger/30 bg-danger-soft text-danger-fg';
     case 'warning':
-      return 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200';
+      return 'border-warn/30 bg-warn-soft text-warn-fg';
     case 'info':
     default:
-      return 'border-sky-300 bg-sky-50 text-sky-900 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200';
+      return 'border-accent/30 bg-accent-soft text-accent-fg';
   }
 }
 
@@ -133,12 +133,12 @@ export function advisoryBannerClass(strength: AdvisoryPresentation['strength']):
 export function advisorySeverityPillClass(severity: AdvisorySeverity | null): string {
   switch (severity) {
     case 'critical':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300';
+      return 'bg-danger-soft text-danger-fg';
     case 'warn':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+      return 'bg-warn-soft text-warn-fg';
     case 'info':
     default:
-      return 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300';
+      return 'bg-accent-soft text-accent-fg';
   }
 }
 

@@ -137,7 +137,7 @@ function ColumnHeader({
         onClick={onSelect}
         aria-label={intent}
         title={intent}
-        className={`inline-flex min-w-[2.25rem] flex-col items-center rounded px-1.5 py-1 text-xs font-medium tabular-nums transition-colors hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        className={`inline-flex min-w-[2.25rem] flex-col items-center rounded-xs px-1.5 py-1 text-xs font-medium tabular-nums transition-colors hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           isCurrent
             ? 'text-accent-fg'
             : 'text-fg-muted'

@@ -278,15 +278,15 @@ export default function InsertStubModal({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 bg-overlay z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl h-[85vh] max-h-[720px] flex flex-col rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl h-[85vh] max-h-[720px] flex flex-col rounded-lg bg-surface shadow-lg border border-border data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         >
-          <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white p-6 pb-2">
+          <Dialog.Title className="text-lg font-semibold text-fg p-6 pb-2">
             {isEdit ? 'Edit record' : 'Insert record'}
           </Dialog.Title>
-          <Dialog.Description className="px-6 text-sm text-gray-500 dark:text-gray-400">
+          <Dialog.Description className="px-6 text-sm text-fg-muted">
             {isEdit
               ? `Edit the record in "${tableName}". Data is validated against the class schema before saving.`
               : `Insert a new record into "${tableName}". Data is validated against the class schema before saving.`}
@@ -294,10 +294,10 @@ export default function InsertStubModal({
 
           <div className="flex-1 min-h-[320px] flex flex-col p-6 gap-4 overflow-hidden">
             {schemaLoading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">Loading schema…</p>
+              <p className="text-sm text-fg-muted">Loading schema…</p>
             )}
             {schemaError && (
-              <p className="text-sm text-red-600 dark:text-red-400">{schemaError}</p>
+              <p className="text-sm text-danger-fg">{schemaError}</p>
             )}
             {schema && !schemaLoading && (
               <>
@@ -309,7 +309,7 @@ export default function InsertStubModal({
                   <TabsContent value="form" className="flex-1 min-h-0 overflow-auto mt-3 data-[state=inactive]:hidden">
                     <div className="space-y-4 pr-2">
                       {propertyEntries.length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No properties defined in schema.</p>
+                        <p className="text-sm text-fg-muted">No properties defined in schema.</p>
                       ) : (
                         propertyEntries.map(([key, propSchema]) => {
                           const type = getPropertyType(propSchema);
@@ -319,7 +319,7 @@ export default function InsertStubModal({
                             ? (nullable ? 'Required, Nullable' : 'Required')
                             : (nullable ? 'Optional, Nullable' : 'Optional');
                           const requirementPillClass =
-                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+                            'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-subtle text-fg-muted';
                           const label = (propSchema.title as string) || key;
                           const fieldSummary = (propSchema.summary as string) || (propSchema.description as string) || undefined;
                           const patternLabel = getPattern(propSchema);
@@ -337,12 +337,12 @@ export default function InsertStubModal({
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <Label htmlFor={`field-${key}`} className="cursor-pointer">
                                       {label}
-                                      {required && <span className="text-red-500 ml-0.5">*</span>}
+                                      {required && <span className="text-danger-fg ml-0.5">*</span>}
                                     </Label>
                                     <span className={requirementPillClass}>{requirementLabel}</span>
                                   </div>
                                   {fieldSummary && (
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">{fieldSummary}</span>
+                                    <span className="text-xs text-fg-muted">{fieldSummary}</span>
                                   )}
                                 </div>
                               </div>
@@ -357,12 +357,12 @@ export default function InsertStubModal({
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Label htmlFor={`field-${key}`}>
                                     {label}
-                                    {required && <span className="text-red-500 ml-0.5">*</span>}
+                                    {required && <span className="text-danger-fg ml-0.5">*</span>}
                                   </Label>
                                   <span className={requirementPillClass}>{requirementLabel}</span>
                                 </div>
                                 {fieldSummary && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{fieldSummary}</p>
+                                  <p className="text-xs text-fg-muted">{fieldSummary}</p>
                                 )}
                                 <Input
                                   id={`field-${key}`}
@@ -392,12 +392,12 @@ export default function InsertStubModal({
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <Label htmlFor={`field-${key}`}>
                                     {label} ({type})
-                                    {required && <span className="text-red-500 ml-0.5">*</span>}
+                                    {required && <span className="text-danger-fg ml-0.5">*</span>}
                                   </Label>
                                   <span className={requirementPillClass}>{requirementLabel}</span>
                                 </div>
                                 {fieldSummary && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{fieldSummary}</p>
+                                  <p className="text-xs text-fg-muted">{fieldSummary}</p>
                                 )}
                                 <Textarea
                                   id={`field-${key}`}
@@ -425,16 +425,16 @@ export default function InsertStubModal({
                                 <Label htmlFor={`field-${key}`}>
                                   {label}
                                   {patternLabel && (
-                                    <span className="text-gray-500 dark:text-gray-400 font-normal">
+                                    <span className="text-fg-muted font-normal">
                                       {' '}(regex: {patternLabel})
                                     </span>
                                   )}
-                                  {required && <span className="text-red-500 ml-0.5">*</span>}
+                                  {required && <span className="text-danger-fg ml-0.5">*</span>}
                                 </Label>
                                 <span className={requirementPillClass}>{requirementLabel}</span>
                               </div>
                               {fieldSummary && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400">{fieldSummary}</p>
+                                <p className="text-xs text-fg-muted">{fieldSummary}</p>
                               )}
                               {(() => {
                                 const enumOpts = getEnumOptions(propSchema);
@@ -493,10 +493,10 @@ export default function InsertStubModal({
                                         type="text"
                                         value={strVal}
                                         onChange={handlePatternChange}
-                                        className={patternError ? 'border-red-500 dark:border-red-500' : ''}
+                                        className={patternError ? 'border-danger' : ''}
                                       />
                                       {patternError && (
-                                        <p className="text-xs text-red-600 dark:text-red-400">{patternError}</p>
+                                        <p className="text-xs text-danger-fg">{patternError}</p>
                                       )}
                                     </>
                                   );
@@ -601,7 +601,7 @@ export default function InsertStubModal({
                     </div>
                   </TabsContent>
                   <TabsContent value="json" className="flex-1 min-h-0 flex flex-col mt-3 data-[state=inactive]:hidden">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                    <p className="text-xs text-fg-muted mb-2">
                       Edit the JSON below. Apply to sync into the form view.
                     </p>
                     <Textarea
@@ -615,17 +615,17 @@ export default function InsertStubModal({
                     <button
                       type="button"
                       onClick={applyJsonToForm}
-                      className="mt-2 self-start px-3 py-1.5 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="mt-2 self-start px-3 py-1.5 text-sm rounded-lg border border-border bg-surface text-fg-muted hover:bg-subtle"
                     >
                       Apply to form
                     </button>
                     {jsonParseError && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{jsonParseError}</p>
+                      <p className="mt-1 text-sm text-danger-fg">{jsonParseError}</p>
                     )}
                   </TabsContent>
                 </Tabs>
                 {(validationErrors.length > 0 || submitError) && (
-                  <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                  <div className="rounded-lg border border-danger/30 bg-danger-soft p-3 text-sm text-danger-fg">
                     {submitError && <p className="font-medium">{submitError}</p>}
                     {validationErrors.length > 0 && (
                       <ul className="mt-1 list-disc list-inside">
@@ -642,11 +642,11 @@ export default function InsertStubModal({
             )}
           </div>
 
-          <div className="flex justify-end gap-2 p-6 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex justify-end gap-2 p-6 pt-2 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="px-4 py-2 rounded-lg border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
             >
               Cancel
             </button>
@@ -654,7 +654,7 @@ export default function InsertStubModal({
               type="button"
               onClick={handleSubmit}
               disabled={!schema || submitting || Object.values(patternErrors).some(Boolean)}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+              className="px-4 py-2 rounded-lg bg-accent text-fg-on-accent text-sm font-medium hover:bg-accent-hover disabled:opacity-50 disabled:pointer-events-none"
             >
               {submitting ? (isEdit ? 'Saving…' : 'Inserting…') : isEdit ? 'Save' : 'Insert'}
             </button>

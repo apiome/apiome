@@ -9,6 +9,8 @@ import {
   setUserFeatureFlag,
   removeUserFeatureFlag,
 } from '../../../../../lib/db/admin-actions';
+import { Button } from '@/app/components/ui/Button';
+import { Input } from '@/app/components/ui/Input';
 
 export interface FeatureFlagRow {
   id: string;
@@ -36,7 +38,7 @@ interface FeatureFlagGroupRow {
 
 function PreviewBadge() {
   return (
-    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-semibold uppercase bg-amber-900/40 text-amber-300 border border-amber-700/40">
+    <span className="inline-flex items-center px-1.5 py-0.5 rounded-xs text-2xs font-semibold uppercase bg-warn/40 text-warn-fg border border-warn/40">
       Preview
     </span>
   );
@@ -235,9 +237,9 @@ export function FeatureFlagUserOverridesPanel({
   if (loading) {
     return (
       <div
-        className={`flex flex-col items-center justify-center py-16 text-gray-500 gap-3 ${className}`}
+        className={`flex flex-col items-center justify-center py-16 text-fg-muted gap-3 ${className}`}
       >
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-ok-fg" />
         <p className="text-sm">
           Loading flags for {userName}
           {userEmail ? ` (${userEmail})` : ''}…
@@ -252,14 +254,14 @@ export function FeatureFlagUserOverridesPanel({
     return (
       <li
         key={`${mode}-${flag.id}`}
-        className="flex items-center gap-2 border-b border-slate-200 px-3 py-2 last:border-b-0 dark:border-slate-800"
+        className="flex items-center gap-2 border-b border-border px-3 py-2 last:border-b-0"
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-gray-900 dark:text-white">{flag.label}</span>
-            <code className="text-2xs text-gray-500 truncate">{flag.name}</code>
+            <span className="text-sm font-medium text-fg">{flag.label}</span>
+            <code className="text-2xs text-fg-muted truncate">{flag.name}</code>
             {inLicense && (
-              <span className="px-1.5 py-0.5 bg-emerald-900/30 text-emerald-400 text-2xs rounded shrink-0">
+              <span className="px-1.5 py-0.5 bg-ok/30 text-ok-fg text-2xs rounded-xs shrink-0">
                 license
               </span>
             )}
@@ -272,7 +274,7 @@ export function FeatureFlagUserOverridesPanel({
             title="Add to this user's granted flags"
             disabled={busy}
             onClick={() => addGrantedFlag(flag.id)}
-            className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-40 transition-colors"
+            className="shrink-0 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-fg-on-accent hover:bg-accent-hover disabled:opacity-40 transition-colors"
           >
             <Plus className="w-5 h-5" />
           </button>
@@ -282,7 +284,7 @@ export function FeatureFlagUserOverridesPanel({
             title="Remove from this user’s granted flags"
             disabled={busy}
             onClick={() => removeGrantedFlag(flag.id)}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-400 text-gray-700 transition-colors hover:border-red-800 hover:bg-red-950/40 hover:text-red-300 disabled:opacity-40 dark:border-slate-600 dark:text-slate-200"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-strong text-fg-muted transition-colors hover:border-danger hover:bg-danger/40 hover:text-danger-fg disabled:opacity-40"
           >
             <Minus className="w-5 h-5" />
           </button>
@@ -293,28 +295,28 @@ export function FeatureFlagUserOverridesPanel({
 
   return (
     <div className={`flex h-full min-h-0 flex-col gap-3 ${className}`}>
-      <div className="flex shrink-0 flex-wrap gap-3 text-xs text-gray-500 dark:text-slate-400">
+      <div className="flex shrink-0 flex-wrap gap-3 text-xs text-fg-muted">
         <span className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-500" /> Also on license
+          <span className="w-2 h-2 rounded-full bg-ok" /> Also on license
         </span>
         <span className="flex items-center gap-1.5">
-          <Plus className="w-3 h-3 text-indigo-400" /> Add explicit grant
+          <Plus className="w-3 h-3 text-accent-fg" /> Add explicit grant
         </span>
         <span className="flex items-center gap-1.5">
-          <Minus className="w-3 h-3 text-gray-400" /> Remove explicit grant
+          <Minus className="w-3 h-3 text-fg-subtle" /> Remove explicit grant
         </span>
       </div>
 
       <section className="shrink-0">
-        <h4 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-1.5">
-          <Package className="w-4 h-4 text-indigo-400" />
+        <h4 className="text-sm font-semibold text-fg flex items-center gap-2 mb-1.5">
+          <Package className="w-4 h-4 text-accent-fg" />
           Feature packages
         </h4>
-        <p className="mb-2 text-xs text-gray-500 dark:text-slate-400">
+        <p className="mb-2 text-xs text-fg-muted">
           Bulk add or remove the same flags together (defined under Licenses → Flag packages).
         </p>
         {groups.length === 0 ? (
-          <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs italic text-gray-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          <p className="rounded-lg border border-border bg-subtle px-3 py-2 text-xs italic text-fg-muted">
             No packages defined yet.
           </p>
         ) : (
@@ -325,27 +327,27 @@ export function FeatureFlagUserOverridesPanel({
               return (
                 <li
                   key={g.id}
-                  className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-800 dark:bg-slate-900"
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-subtle px-2.5 py-2"
                 >
-                  <span className="text-sm text-gray-900 dark:text-white font-medium truncate flex-1 min-w-[8rem]">
+                  <span className="text-sm text-fg font-medium truncate flex-1 min-w-[8rem]">
                     {g.label}
                   </span>
-                  <button
+                  <Button
                     type="button"
                     disabled={busy || members.length === 0}
                     onClick={() => addPackage(g)}
-                    className="px-2 py-1 rounded-md text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50"
+                    variant="accent" size="sm" className="text-xs"
                   >
                     Add all
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     disabled={busy || members.length === 0}
                     onClick={() => removePackage(g)}
-                    className="rounded-md border border-slate-300 px-2 py-1 text-xs font-medium text-gray-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                    variant="outline" size="sm" className="text-xs"
                   >
                     Remove all
-                  </button>
+                  </Button>
                 </li>
               );
             })}
@@ -354,41 +356,41 @@ export function FeatureFlagUserOverridesPanel({
       </section>
 
       <div className="relative shrink-0">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
-        <input
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-muted pointer-events-none" />
+        <Input
           type="search"
           value={flagSearch}
           onChange={e => setFlagSearch(e.target.value)}
           placeholder="Search flags by label or name…"
-          className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-500 focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-500"
+          className="pl-10 pr-3"
         />
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
-        <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
-            <Flag className="h-4 w-4 shrink-0 text-blue-400" />
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Granted for this user</h4>
-            <span className="ml-auto text-xs tabular-nums text-gray-500 dark:text-slate-500">{grantedList.length}</span>
+        <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
+            <Flag className="h-4 w-4 shrink-0 text-accent-fg" />
+            <h4 className="text-sm font-semibold text-fg">Granted for this user</h4>
+            <span className="ml-auto text-xs tabular-nums text-fg-muted">{grantedList.length}</span>
           </div>
           <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {grantedList.length === 0 ? (
-              <li className="px-3 py-8 text-center text-xs text-gray-500 italic">No explicit grants{searchLower ? ' match this search' : ''}.</li>
+              <li className="px-3 py-8 text-center text-xs text-fg-muted italic">No explicit grants{searchLower ? ' match this search' : ''}.</li>
             ) : (
               grantedList.map(f => renderFlagRow(f, 'remove'))
             )}
           </ul>
         </section>
 
-        <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 px-3 py-2 dark:border-slate-800">
-            <Search className="h-4 w-4 shrink-0 text-slate-400 dark:text-slate-500" />
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">All flags — add</h4>
-            <span className="ml-auto text-xs tabular-nums text-gray-500 dark:text-slate-500">{notGrantedList.length}</span>
+        <section className="flex min-h-0 flex-1 flex-col rounded-lg border border-border bg-surface">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2">
+            <Search className="h-4 w-4 shrink-0 text-fg-subtle" />
+            <h4 className="text-sm font-semibold text-fg">All flags — add</h4>
+            <span className="ml-auto text-xs tabular-nums text-fg-muted">{notGrantedList.length}</span>
           </div>
           <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {notGrantedList.length === 0 ? (
-              <li className="px-3 py-8 text-center text-xs text-gray-500 italic">
+              <li className="px-3 py-8 text-center text-xs text-fg-muted italic">
                 {sortedFlags.length === 0
                   ? 'No feature flags defined.'
                   : searchLower

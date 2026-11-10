@@ -393,7 +393,7 @@ export function CatalogVersionsPanel({
                     <input
                       type="checkbox"
                       data-testid="catalog-versions-checkbox"
-                      className="h-4 w-4 rounded border-border-strong text-accent-fg focus:ring-accent disabled:cursor-not-allowed"
+                      className="h-4 w-4 rounded-xs border-border-strong text-accent-fg focus:ring-accent disabled:cursor-not-allowed"
                       checked={isChecked}
                       disabled={isDisabled}
                       onChange={() => toggle(rev.id)}
@@ -406,12 +406,12 @@ export function CatalogVersionsPanel({
                         {formatVersionWithPrefix(rev.version_id)}
                       </span>
                       {rev.published ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-ok-soft px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ok-fg">
+                        <span className="inline-flex items-center gap-1 rounded-xs bg-ok-soft px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-ok-fg">
                           <Lock className="h-3 w-3" aria-hidden /> Published
                         </span>
                       ) : null}
                       {rev.lifecycle && rev.lifecycle !== 'stable' ? (
-                        <span className="inline-flex items-center rounded bg-inset px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-fg-muted">
+                        <span className="inline-flex items-center rounded-xs bg-inset px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-fg-muted">
                           {rev.lifecycle}
                         </span>
                       ) : null}

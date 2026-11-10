@@ -38,6 +38,10 @@ import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm'
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
 import { SkeletonText } from '@/app/components/ui/Skeleton';
+import { Button } from '@/app/components/ui/Button';
+import { Input } from '@/app/components/ui/Input';
+import { Textarea } from '@/app/components/ui/Textarea';
+import { ModalFrame } from '@/app/components/ui/ModalFrame';
 
 interface Tenant {
   id: string;
@@ -399,34 +403,34 @@ export default function TenantManagementClient() {
   return (
     <>
       {/* Header */}
-      <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <header className="shrink-0 border-b border-border bg-surface">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Tenants</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage tenants and assign users</p>
+              <h2 className="text-2xl font-bold text-fg">Tenants</h2>
+              <p className="text-fg-muted text-sm mt-1">Manage tenants and assign users</p>
             </div>
-            <button
+            <Button
               onClick={() => setShowCreateDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              variant="primary"
             >
               <Plus className="w-4 h-4" />
               Create Tenant
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-subtle p-6">
         <div className="space-y-6">
           {/* Message Banner */}
           {message && (
             <div
               className={`p-4 rounded-lg border flex items-start gap-3 ${
                 message.type === 'success'
-                  ? 'bg-green-900/20 border-green-700 text-green-400'
-                  : 'bg-red-900/20 border-red-700 text-red-400'
+                  ? 'bg-ok/20 border-ok text-ok-fg'
+                  : 'bg-danger/20 border-danger text-danger-fg'
               }`}
             >
               {message.type === 'success' ? (
@@ -440,54 +444,54 @@ export default function TenantManagementClient() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <div className="bg-surface border border-border rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-purple-600/20 rounded-lg">
-                  <Building2 className="w-5 h-5 text-purple-400" />
+                <div className="p-2 bg-violet/20 rounded-lg">
+                  <Building2 className="w-5 h-5 text-violet-fg" />
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">Total Tenants</p>
-                  <p className="text-gray-900 dark:text-white text-xl font-bold">{tenants.length}</p>
+                  <p className="text-fg-muted text-xs">Total Tenants</p>
+                  <p className="text-fg text-xl font-bold">{tenants.length}</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <div className="bg-surface border border-border rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-600/20 rounded-lg">
-                  <Users className="w-5 h-5 text-blue-400" />
+                <div className="p-2 bg-accent/20 rounded-lg">
+                  <Users className="w-5 h-5 text-accent-fg" />
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">Total Users</p>
-                  <p className="text-gray-900 dark:text-white text-xl font-bold">
+                  <p className="text-fg-muted text-xs">Total Users</p>
+                  <p className="text-fg text-xl font-bold">
                     {tenants.reduce((sum, t) => sum + (t.user_count || 0), 0)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <div className="bg-surface border border-border rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-orange-600/20 rounded-lg">
-                  <Shield className="w-5 h-5 text-orange-400" />
+                <div className="p-2 bg-orange/20 rounded-lg">
+                  <Shield className="w-5 h-5 text-orange-fg" />
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">Total Admins</p>
-                  <p className="text-gray-900 dark:text-white text-xl font-bold">
+                  <p className="text-fg-muted text-xs">Total Admins</p>
+                  <p className="text-fg text-xl font-bold">
                     {tenants.reduce((sum, t) => sum + (t.admin_count || 0), 0)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4">
+            <div className="bg-surface border border-border rounded-lg p-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-600/20 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
+                <div className="p-2 bg-ok/20 rounded-lg">
+                  <CheckCircle className="w-5 h-5 text-ok-fg" />
                 </div>
                 <div>
-                  <p className="text-gray-500 dark:text-gray-400 text-xs">Active Tenants</p>
-                  <p className="text-gray-900 dark:text-white text-xl font-bold">
+                  <p className="text-fg-muted text-xs">Active Tenants</p>
+                  <p className="text-fg text-xl font-bold">
                     {tenants.filter((t) => t.enabled).length}
                   </p>
                 </div>
@@ -500,7 +504,7 @@ export default function TenantManagementClient() {
             <button
               onClick={loadTenants}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-white rounded-lg transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-inset hover:bg-inset text-fg-muted rounded-lg transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
@@ -510,11 +514,11 @@ export default function TenantManagementClient() {
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tenants List */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Tenants</h3>
+            <div className="bg-surface border border-border rounded-lg">
+              <div className="p-4 border-b border-border">
+                <h3 className="text-lg font-semibold text-fg">Tenants</h3>
               </div>
-              <div className="max-h-[600px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
+              <div className="max-h-[600px] divide-y divide-border overflow-y-auto">
                 {loading ? (
                   <LoadingState message="Loading tenants…" skeleton={<SkeletonText lines={6} className="p-4" />} />
                 ) : tenants.length === 0 ? (
@@ -529,17 +533,17 @@ export default function TenantManagementClient() {
                   tenants.map((tenant) => (
                     <div
                       key={tenant.id}
-                      className={`cursor-pointer p-4 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                      className={`cursor-pointer p-4 transition-colors hover:bg-subtle ${
                         selectedTenant?.id === tenant.id
-                          ? 'border-l-4 border-red-600 bg-red-50 dark:bg-red-950/30'
+                          ? 'border-l-4 border-danger bg-danger-soft'
                           : ''
                       }`}
                       onClick={() => handleSelectTenant(tenant)}
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h4 className="text-gray-900 dark:text-white font-medium">{tenant.name}</h4>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{tenant.slug}</p>
+                          <h4 className="text-fg font-medium">{tenant.name}</h4>
+                          <p className="text-fg-muted text-sm mt-1">{tenant.slug}</p>
                         </div>
                         <div className="relative">
                           <button
@@ -552,7 +556,7 @@ export default function TenantManagementClient() {
                               });
                               setOpenTenantDropdown(openTenantDropdown === tenant.id ? null : tenant.id);
                             }}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                            className="p-1 hover:bg-subtle rounded-xs transition-colors text-fg-subtle hover:text-fg-muted"
                             title="Actions"
                           >
                             <MoreVertical className="w-4 h-4" />
@@ -568,7 +572,7 @@ export default function TenantManagementClient() {
                                 }}
                               />
                               <div
-                                className="fixed w-48 min-w-0 overflow-x-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg z-20"
+                                className="fixed w-48 min-w-0 overflow-x-hidden bg-surface border border-border rounded-lg shadow-lg z-20"
                                 style={{
                                   top: `${dropdownPosition.top}px`,
                                   right: `${dropdownPosition.right}px`
@@ -580,9 +584,9 @@ export default function TenantManagementClient() {
                                       setOpenTenantDropdown(null);
                                       handleOpenRenameDialog(tenant);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
-                                    <Edit className="w-4 h-4 text-blue-400" />
+                                    <Edit className="w-4 h-4 text-accent-fg" />
                                     Edit Tenant
                                   </button>
                                   <button
@@ -591,9 +595,9 @@ export default function TenantManagementClient() {
                                       setOpenTenantDropdown(null);
                                       handleToggleTenantEnabled(tenant);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
-                                    <Power className={`w-4 h-4 ${tenant.enabled ? 'text-orange-400' : 'text-green-400'}`} />
+                                    <Power className={`w-4 h-4 ${tenant.enabled ? 'text-orange-fg' : 'text-ok-fg'}`} />
                                     {tenant.enabled ? 'Disable Tenant' : 'Enable Tenant'}
                                   </button>
                                   <button
@@ -602,7 +606,7 @@ export default function TenantManagementClient() {
                                       setOpenTenantDropdown(null);
                                       handleDeleteTenant(tenant);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-danger-fg hover:text-danger-fg transition-colors"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                     Delete Tenant
@@ -613,7 +617,7 @@ export default function TenantManagementClient() {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-fg-muted">
                         <span className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {tenant.user_count || 0} users
@@ -630,26 +634,26 @@ export default function TenantManagementClient() {
             </div>
 
             {/* Tenant Users */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="bg-surface border border-border rounded-lg">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-fg">
                   {selectedTenant ? `Users in ${selectedTenant.name}` : 'Select a Tenant'}
                 </h3>
                 {selectedTenant && (
-                  <button
+                  <Button
                     onClick={() => setShowAddUserDialog(true)}
-                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors"
+                    variant="accent" size="sm"
                   >
                     <UserPlus className="w-4 h-4" />
                     Add User
-                  </button>
+                  </Button>
                 )}
               </div>
-              <div className="max-h-[600px] divide-y divide-slate-200 overflow-y-auto dark:divide-slate-800">
+              <div className="max-h-[600px] divide-y divide-border overflow-y-auto">
                 {!selectedTenant ? (
                   <div className="p-12 text-center">
-                    <Building2 className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-400 text-sm">Select a tenant to view users</p>
+                    <Building2 className="w-12 h-12 text-fg-muted mx-auto mb-4" />
+                    <p className="text-fg-subtle text-sm">Select a tenant to view users</p>
                   </div>
                 ) : tenantUsers.length === 0 ? (
                   <EmptyState
@@ -661,25 +665,25 @@ export default function TenantManagementClient() {
                   />
                 ) : (
                   tenantUsers.map((user) => (
-                    <div key={user.id} className="p-4 hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <div key={user.id} className="p-4 hover:bg-subtle">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1">
-                          <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-blue-400 text-sm font-medium">
+                          <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-accent-fg text-sm font-medium">
                               {user.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <h4 className="text-gray-900 dark:text-white font-medium truncate">{user.name}</h4>
+                              <h4 className="text-fg font-medium truncate">{user.name}</h4>
                               {user.is_admin && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-600/20 text-orange-400 text-xs rounded">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange/20 text-orange-fg text-xs rounded-xs">
                                   <Shield className="w-3 h-3" />
                                   Admin
                                 </span>
                               )}
                             </div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm truncate">{user.email}</p>
+                            <p className="text-fg-muted text-sm truncate">{user.email}</p>
                           </div>
                         </div>
                         <div className="relative flex-shrink-0">
@@ -693,7 +697,7 @@ export default function TenantManagementClient() {
                               });
                               setOpenUserDropdown(openUserDropdown === user.id ? null : user.id);
                             }}
-                            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                            className="p-1 hover:bg-subtle rounded-xs transition-colors text-fg-subtle hover:text-fg-muted"
                             title="Actions"
                           >
                             <MoreVertical className="w-4 h-4" />
@@ -709,7 +713,7 @@ export default function TenantManagementClient() {
                                 }}
                               />
                               <div
-                                className="fixed w-52 min-w-0 overflow-x-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg z-20"
+                                className="fixed w-52 min-w-0 overflow-x-hidden bg-surface border border-border rounded-lg shadow-lg z-20"
                                 style={{
                                   top: `${dropdownPosition.top}px`,
                                   right: `${dropdownPosition.right}px`
@@ -721,16 +725,16 @@ export default function TenantManagementClient() {
                                       setOpenUserDropdown(null);
                                       handleToggleAdmin(user);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
                                     {user.is_admin ? (
                                       <>
-                                        <ShieldX className="w-4 h-4 text-orange-400" />
+                                        <ShieldX className="w-4 h-4 text-orange-fg" />
                                         Remove Admin Rights
                                       </>
                                     ) : (
                                       <>
-                                        <ShieldCheck className="w-4 h-4 text-green-400" />
+                                        <ShieldCheck className="w-4 h-4 text-ok-fg" />
                                         Make Administrator
                                       </>
                                     )}
@@ -741,7 +745,7 @@ export default function TenantManagementClient() {
                                       setOpenUserDropdown(null);
                                       handleRemoveUser(user);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-danger-fg hover:text-danger-fg transition-colors"
                                   >
                                     <UserX className="w-4 h-4" />
                                     Remove from Tenant
@@ -763,23 +767,28 @@ export default function TenantManagementClient() {
 
       {/* Create Tenant Dialog */}
       {showCreateDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-md w-full">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create New Tenant</h3>
+        <ModalFrame
+          open
+          onClose={() => setShowCreateDialog(false)}
+          label="Create New Tenant"
+          overlayClassName="fixed inset-0 z-[200] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+          className="bg-surface border border-border rounded-xl max-w-md w-full shadow-lg"
+        >
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-fg">Create New Tenant</h3>
               <button
                 onClick={() => setShowCreateDialog(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-fg-subtle hover:text-fg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreateTenant} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Tenant Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={newTenant.name}
                   onChange={(e) => {
@@ -789,20 +798,18 @@ export default function TenantManagementClient() {
                       slug: newTenant.slug || generateSlug(e.target.value),
                     });
                   }}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="Acme Corporation"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Slug *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={newTenant.slug}
                   onChange={(e) => setNewTenant({ ...newTenant, slug: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="acme-corporation"
                   required
                   pattern="[a-z0-9-]+"
@@ -810,26 +817,26 @@ export default function TenantManagementClient() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Description
                 </label>
-                <textarea
+                <Textarea
                   value={newTenant.description}
                   onChange={(e) => setNewTenant({ ...newTenant, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
+                  className="min-h-[80px]"
                   placeholder="Description of the tenant..."
                 />
               </div>
 
               {/* Initial User Selection */}
-              <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="border-t border-border pt-4">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Initial User (Optional)
                 </label>
                 <select
                   value={newTenant.initialUserId}
                   onChange={(e) => setNewTenant({ ...newTenant, initialUserId: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="hive-control h-[var(--control-h)] w-full rounded-md bg-surface px-3 text-sm text-fg focus-visible:outline-none"
                 >
                   <option value="">-- No initial user --</option>
                   {allUsers.map((user) => (
@@ -838,7 +845,7 @@ export default function TenantManagementClient() {
                     </option>
                   ))}
                 </select>
-                <p className="text-gray-500 text-xs mt-1">
+                <p className="text-fg-muted text-xs mt-1">
                   Add a user to this tenant immediately upon creation
                 </p>
               </div>
@@ -851,57 +858,64 @@ export default function TenantManagementClient() {
                     id="makeAdmin"
                     checked={newTenant.makeAdmin}
                     onChange={(e) => setNewTenant({ ...newTenant, makeAdmin: e.target.checked })}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-0"
+                    className="w-4 h-4 rounded-xs border-border-strong bg-surface text-danger-fg focus:ring-2 focus:ring-danger focus:ring-offset-0"
                   />
-                  <label htmlFor="makeAdmin" className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-orange-400" />
+                  <label htmlFor="makeAdmin" className="text-sm text-fg-muted flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-orange-fg" />
                     Make this user a tenant administrator
                   </label>
                 </div>
               )}
 
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => setShowCreateDialog(false)}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  variant="ghost"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                  variant="primary"
                 >
                   Create Tenant
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Rename Tenant Dialog */}
       {showRenameDialog && renamingTenant && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-md w-full">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Edit Tenant</h3>
+        <ModalFrame
+          open
+          onClose={() => {
+            setShowRenameDialog(false);
+            setRenamingTenant(null);
+          }}
+          label="Edit Tenant"
+          overlayClassName="fixed inset-0 z-[200] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+          className="bg-surface border border-border rounded-xl max-w-md w-full shadow-lg"
+        >
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-fg">Edit Tenant</h3>
               <button
                 onClick={() => {
                   setShowRenameDialog(false);
                   setRenamingTenant(null);
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-fg-subtle hover:text-fg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleRenameTenant} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Tenant Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={renameData.name}
                   onChange={(e) => {
@@ -911,20 +925,18 @@ export default function TenantManagementClient() {
                       slug: renameData.slug || generateSlug(e.target.value),
                     });
                   }}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="Acme Corporation"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Slug *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={renameData.slug}
                   onChange={(e) => setRenameData({ ...renameData, slug: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="acme-corporation"
                   required
                   pattern="[a-z0-9-]+"
@@ -932,48 +944,52 @@ export default function TenantManagementClient() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Description
                 </label>
-                <textarea
+                <Textarea
                   value={renameData.description}
                   onChange={(e) => setRenameData({ ...renameData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600 min-h-[80px]"
+                  className="min-h-[80px]"
                   placeholder="Description of the tenant..."
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     setShowRenameDialog(false);
                     setRenamingTenant(null);
                   }}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  variant="ghost"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  variant="accent"
                 >
                   Save Changes
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Add User Dialog */}
       {showAddUserDialog && selectedTenant && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-md w-full max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add User to Tenant</h3>
+        <ModalFrame
+          open
+          onClose={() => setShowAddUserDialog(false)}
+          label="Add User to Tenant"
+          overlayClassName="fixed inset-0 z-[200] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+          className="bg-surface border border-border rounded-xl max-w-md w-full max-h-[80vh] flex flex-col shadow-lg"
+        >
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-fg">Add User to Tenant</h3>
               <button
                 onClick={() => setShowAddUserDialog(false)}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-fg-subtle hover:text-fg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -993,17 +1009,17 @@ export default function TenantManagementClient() {
                     <button
                       key={user.id}
                       onClick={() => handleAddUser(user.id)}
-                      className="w-full p-3 bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-gray-600 rounded-lg transition-colors text-left"
+                      className="w-full p-3 bg-subtle hover:bg-subtle border border-border hover:border-border-strong rounded-lg transition-colors text-left"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-blue-600/20 rounded-full flex items-center justify-center">
-                          <span className="text-blue-400 text-sm font-medium">
+                        <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center">
+                          <span className="text-accent-fg text-sm font-medium">
                             {user.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="text-gray-900 dark:text-white font-medium">{user.name}</p>
-                          <p className="text-gray-500 dark:text-gray-400 text-sm">{user.email}</p>
+                          <p className="text-fg font-medium">{user.name}</p>
+                          <p className="text-fg-muted text-sm">{user.email}</p>
                         </div>
                       </div>
                     </button>
@@ -1011,8 +1027,7 @@ export default function TenantManagementClient() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
+        </ModalFrame>
       )}
     </>
   );

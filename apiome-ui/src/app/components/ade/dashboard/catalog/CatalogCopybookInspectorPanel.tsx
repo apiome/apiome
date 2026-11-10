@@ -278,7 +278,7 @@ export function CatalogCopybookInspectorPanel({
                           type="button"
                           data-testid="copybook-item-reveal"
                           onClick={() => onRevealNode(row.node.id)}
-                          className="rounded font-mono font-semibold text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          className="rounded-xs font-mono font-semibold text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                         >
                           {row.name}
                           <span className="sr-only"> — show this item in the structure tree</span>
@@ -317,25 +317,25 @@ export function CatalogCopybookInspectorPanel({
                         {row.storage.basis ? (
                           <span
                             title={copybookBasisLabel(row.storage.basis)}
-                            className="rounded bg-subtle px-1.5 py-0.5 text-2xs font-medium text-fg"
+                            className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs font-medium text-fg"
                           >
                             {row.storage.basis}
                           </span>
                         ) : null}
                         {row.storage.signed ? (
-                          <span className="rounded bg-subtle px-1.5 py-0.5 text-2xs text-fg">
+                          <span className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs text-fg">
                             signed
                           </span>
                         ) : null}
                         {row.storage.decimals !== null ? (
-                          <span className="rounded bg-subtle px-1.5 py-0.5 text-2xs text-fg">
+                          <span className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs text-fg">
                             {row.storage.decimals} dp
                           </span>
                         ) : null}
                         {row.occursMax !== null ? (
                           <span
                             data-testid="copybook-occurs"
-                            className="rounded bg-accent-soft px-1.5 py-0.5 text-2xs font-medium text-accent-fg"
+                            className="rounded-xs bg-accent-soft px-1.5 py-0.5 text-2xs font-medium text-accent-fg"
                           >
                             OCCURS {row.occursMin ?? row.occursMax}
                             {row.occursMin !== null && row.occursMin !== row.occursMax
@@ -346,7 +346,7 @@ export function CatalogCopybookInspectorPanel({
                         {row.storage.redefines ? (
                           <span
                             data-testid="copybook-redefines"
-                            className="rounded bg-violet-soft px-1.5 py-0.5 text-2xs font-medium text-violet-fg"
+                            className="rounded-xs bg-violet-soft px-1.5 py-0.5 text-2xs font-medium text-violet-fg"
                           >
                             redefines {row.storage.redefines}
                           </span>
@@ -357,7 +357,7 @@ export function CatalogCopybookInspectorPanel({
                             title={row.conditions
                               .map((entry) => `${entry.name}${entry.value ? ` = ${entry.value}` : ''}`)
                               .join(', ')}
-                            className="rounded bg-subtle px-1.5 py-0.5 text-2xs text-fg"
+                            className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs text-fg"
                           >
                             {row.conditions.length} condition
                             {row.conditions.length === 1 ? '' : 's'}
@@ -369,7 +369,7 @@ export function CatalogCopybookInspectorPanel({
                             data-testid="copybook-canonical-link"
                             data-entity={target.entity}
                             onClick={() => onRevealEntity(target.entity)}
-                            className="rounded text-2xs font-medium text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            className="rounded-xs text-2xs font-medium text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                           >
                             {target.field ? `field on ${target.entity}` : 'parsed entity'}
                             <span className="sr-only">

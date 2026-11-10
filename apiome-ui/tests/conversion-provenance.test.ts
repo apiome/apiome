@@ -5,7 +5,7 @@
  * snapshot-unavailable degrade shape, the expected-hash refusal), and the pure helpers that
  * decide a row's trust presentation: `hasStoredSnapshot` guards the pre-migration empty state
  * twice over, `sourceChangedSince` only ever claims a change when both digests are known, and
- * every class-map helper pairs a `dark:` variant.
+ * no class-map helper pins a `dark:` variant.
  */
 
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
@@ -187,9 +187,10 @@ describe('trust helpers', () => {
     expect(snapshotHashShort(null)).toBe('');
   });
 
-  it('every class-map helper pairs a dark: variant', () => {
+  it('no class-map helper pins a dark: variant', () => {
     for (const helper of [snapshotChipClass, snapshotMissingChipClass, sourceChangedBadgeClass]) {
-      expect(helper()).toContain('dark:');
+      // Role tokens follow the theme on their own; a `dark:` pair would pin a second palette.
+      expect(helper()).not.toContain('dark:');
     }
   });
 });

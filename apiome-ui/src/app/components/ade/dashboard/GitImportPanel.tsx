@@ -1012,7 +1012,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                   placeholder="Search repositories..."
                   value={repoSearchQuery}
                   onChange={(e) => setRepoSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded bg-surface text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                  className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-xs bg-surface text-fg placeholder:text-fg-faint focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 />
               </div>
             </div>
@@ -1133,7 +1133,7 @@ export const GitImportPanel: React.FC<GitImportPanelProps> = ({
                   handleNavigateToPath(parentPath);
                 }}
                 disabled={isLoading}
-                className="p-1 rounded hover:bg-inset transition-colors"
+                className="p-1 rounded-xs hover:bg-inset transition-colors"
               >
                 <ArrowLeft className="h-4 w-4 text-fg-muted" />
               </button>

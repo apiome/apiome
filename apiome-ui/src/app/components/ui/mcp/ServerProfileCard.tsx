@@ -53,7 +53,7 @@ function ServerIdentityGlyph({ iconUrl, name }: { iconUrl: string | null; name: 
       <img
         src={iconUrl}
         alt={`${name} logo`}
-        className="h-5 w-5 shrink-0 rounded object-contain"
+        className="h-5 w-5 shrink-0 rounded-xs object-contain"
         loading="lazy"
         referrerPolicy="no-referrer"
         onError={() => setFailed(true)}

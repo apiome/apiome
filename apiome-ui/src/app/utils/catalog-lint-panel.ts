@@ -158,25 +158,25 @@ const TIER_META: Record<CatalogLintTier, CatalogLintTierMeta> = {
     key: 'must',
     label: 'MUST',
     description: 'Hard requirements — fix these to raise the grade.',
-    badgeClass: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+    badgeClass: 'bg-danger-soft text-danger-fg',
     rowClass:
-      'border-l-4 border-rose-500 bg-rose-50/60 dark:border-rose-500 dark:bg-rose-950/20',
+      'border-l-4 border-danger bg-danger-soft/60',
   },
   should: {
     key: 'should',
     label: 'SHOULD',
     description: 'Recommendations — address these to polish the surface.',
-    badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    badgeClass: 'bg-warn-soft text-warn-fg',
     rowClass:
-      'border-l-4 border-amber-500 bg-amber-50/60 dark:border-amber-500 dark:bg-amber-950/20',
+      'border-l-4 border-warn bg-warn-soft/60',
   },
   advisory: {
     key: 'advisory',
     label: 'Advisory',
     description: 'Informational notes about the surface.',
-    badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+    badgeClass: 'bg-accent-soft text-accent-fg',
     rowClass:
-      'border-l-4 border-gray-300 bg-gray-50/60 dark:border-gray-600 dark:bg-gray-900/30',
+      'border-l-4 border-border-strong bg-subtle/60',
   },
 };
 

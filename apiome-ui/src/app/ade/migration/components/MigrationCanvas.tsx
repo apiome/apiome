@@ -264,7 +264,7 @@ function MigrationCanvasInner() {
         onNodeClick={onNodeClick}
         fitView
         fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
-        className="bg-gray-50 dark:bg-gray-900"
+        className="bg-subtle"
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
         <Controls />

@@ -69,11 +69,11 @@ function SortHeader({
 }) {
   const isActive = currentSortBy === column;
   return (
-    <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300">
+    <th className="text-left py-2 px-2 font-medium text-fg-muted">
       <button
         type="button"
         onClick={() => onSort(column)}
-        className="inline-flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+        className="inline-flex items-center gap-1 hover:text-accent-fg focus:outline-none focus:ring-2 focus:ring-accent rounded-xs"
       >
         {label}
         {isActive ? (
@@ -294,24 +294,24 @@ export default function QueryManager() {
 
   if (!selectedProjectId || !selectedVersionId) {
     return (
-      <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+      <div className="h-full flex items-center justify-center bg-canvas">
         <div className="relative">
           <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full blur-3xl opacity-60" />
           <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-3xl opacity-60" />
 
-          <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-12 md:p-16 text-center shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50">
+          <div className="relative bg-surface/80 backdrop-blur-xl border border-border/50 rounded-2xl p-12 md:p-16 text-center shadow-lg shadow-gray-200/50">
             <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <Database className="h-10 w-10 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+            <h3 className="text-2xl font-bold text-fg mb-3">
               No Project Selected
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
+            <p className="text-fg-muted max-w-sm mx-auto leading-relaxed">
               Select a project and version from the dropdowns above to view and query data records
             </p>
 
-            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
-              <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-2">
+            <div className="mt-8 pt-6 border-t border-border">
+              <p className="text-xs text-fg-subtle flex items-center justify-center gap-2">
                 <Info className="w-4 h-4" />
                 Tip: Published versions have frozen schemas; pick a table to view records, search, or query with AI
               </p>
@@ -325,12 +325,12 @@ export default function QueryManager() {
   if (!selectedTable) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
-        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-10 text-center shadow-lg max-w-md">
+        <div className="relative bg-surface/80 backdrop-blur-sm border border-border/50 rounded-2xl p-10 text-center shadow-lg max-w-md">
           <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 dark:from-indigo-500/30 dark:to-purple-600/30 rounded-xl flex items-center justify-center">
-            <Database className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+            <Database className="h-8 w-8 text-accent-fg" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Select a table</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <h3 className="text-lg font-semibold text-fg mb-2">Select a table</h3>
+          <p className="text-sm text-fg-muted">
             Select a table from the left to view records, search, or query with AI.
           </p>
         </div>
@@ -344,13 +344,13 @@ export default function QueryManager() {
     <div className="flex flex-col h-full overflow-hidden p-4">
       <div className="flex items-center justify-between gap-4 mb-4">
         <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{selectedTable.className}</h3>
+          <h3 className="text-lg font-medium text-fg">{selectedTable.className}</h3>
           {count !== null && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">{count} record{count !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-fg-muted">{count} record{count !== 1 ? 's' : ''}</p>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+          <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-fg-muted cursor-pointer">
             <Switch
               checked={showDeleted}
               onCheckedChange={(checked) => setShowDeleted(checked)}
@@ -360,7 +360,7 @@ export default function QueryManager() {
           <button
             type="button"
             onClick={handleViewAll}
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
           >
             <List className="w-4 h-4" />
             View all records
@@ -372,12 +372,12 @@ export default function QueryManager() {
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white min-w-[160px]"
+              className="px-3 py-2 rounded-lg border border-border bg-surface text-sm text-fg min-w-[160px]"
             />
             <button
               type="button"
               onClick={handleSearch}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
             >
               <Search className="w-4 h-4" />
               Search
@@ -387,7 +387,7 @@ export default function QueryManager() {
             <button
               type="button"
               onClick={() => setInsertModalOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/30 text-sm text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/50"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-ok/30 bg-ok-soft text-sm text-ok-fg hover:bg-ok-soft"
             >
               <Plus className="w-4 h-4" />
               Insert
@@ -397,7 +397,7 @@ export default function QueryManager() {
       </div>
 
       {(viewMode === 'viewAll' || viewMode === 'search') && (
-        <div className="flex-1 flex flex-col min-h-0 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 border border-border rounded-lg overflow-hidden">
           {loading ? (
             <LoadingState message="Loading records…" skeleton={<SkeletonText className="p-4" />} />
           ) : rows.length === 0 ? (
@@ -413,14 +413,14 @@ export default function QueryManager() {
               <div className="flex-1 overflow-auto p-2">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 dark:border-gray-600">
+                    <tr className="border-b border-border">
                       <SortHeader label="OID" column="record_id" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
                       <SortHeader label="Created" column="created_at" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
                       <SortHeader label="Updated" column="updated_at" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
                       <SortHeader label="Seq" column="record_sequence" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
                       <SortHeader label="Last action" column="last_action" currentSortBy={sortBy} currentSortDir={sortDir} onSort={handleSort} />
-                      <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300 max-w-[200px]">Data</th>
-                      <th className="text-left py-2 px-2 font-medium text-gray-700 dark:text-gray-300 w-0" />
+                      <th className="text-left py-2 px-2 font-medium text-fg-muted max-w-[200px]">Data</th>
+                      <th className="text-left py-2 px-2 font-medium text-fg-muted w-0" />
                     </tr>
                   </thead>
                   <tbody>
@@ -429,22 +429,22 @@ export default function QueryManager() {
                       return (
                       <tr
                         key={row.record_id}
-                        className={`border-b border-gray-100 dark:border-gray-700 ${isDeleted ? 'bg-gray-50 dark:bg-gray-800/50 opacity-90' : ''}`}
+                        className={`border-b border-border ${isDeleted ? 'bg-subtle opacity-90' : ''}`}
                       >
-                        <td className="py-2 px-2 font-mono text-xs text-gray-600 dark:text-gray-400">{row.record_id}</td>
-                        <td className="py-2 px-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDateTime(row.created_at)}</td>
-                        <td className="py-2 px-2 text-gray-600 dark:text-gray-400 whitespace-nowrap">{formatDateTime(row.updated_at)}</td>
-                        <td className="py-2 px-2 text-gray-600 dark:text-gray-400">{row.record_sequence ?? '—'}</td>
-                        <td className="py-2 px-2 text-gray-600 dark:text-gray-400">
+                        <td className="py-2 px-2 font-mono text-xs text-fg-muted">{row.record_id}</td>
+                        <td className="py-2 px-2 text-fg-muted whitespace-nowrap">{formatDateTime(row.created_at)}</td>
+                        <td className="py-2 px-2 text-fg-muted whitespace-nowrap">{formatDateTime(row.updated_at)}</td>
+                        <td className="py-2 px-2 text-fg-muted">{row.record_sequence ?? '—'}</td>
+                        <td className="py-2 px-2 text-fg-muted">
                           {row.last_action ?? '—'}
                           {isDeleted && (
-                            <span className="ml-1.5 inline-flex items-center rounded-md bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-xs font-medium text-amber-800 dark:text-amber-200">
+                            <span className="ml-1.5 inline-flex items-center rounded-md bg-warn-soft px-1.5 py-0.5 text-xs font-medium text-warn-fg">
                               Deleted
                             </span>
                           )}
                         </td>
                         <td className="py-2 px-2 max-w-[200px]">
-                          <span className="text-xs text-gray-700 dark:text-gray-300 truncate block" title={JSON.stringify(row.data)}>
+                          <span className="text-xs text-fg-muted truncate block" title={JSON.stringify(row.data)}>
                             {truncateDataPreview(row.data, DATA_PREVIEW_MAX_LEN)}
                           </span>
                         </td>
@@ -453,7 +453,7 @@ export default function QueryManager() {
                             <button
                               type="button"
                               onClick={() => setViewRecord(row)}
-                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xs border border-border bg-surface text-xs text-fg-muted hover:bg-subtle"
                             >
                               <FileJson className="w-3.5 h-3.5" />
                               View
@@ -463,7 +463,7 @@ export default function QueryManager() {
                                 <button
                                   type="button"
                                   onClick={() => setEditRecordId(row.record_id)}
-                                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/20 text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xs border border-accent/30 bg-accent-soft text-xs text-accent-fg hover:bg-accent-soft"
                                   title="Edit record"
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
@@ -473,7 +473,7 @@ export default function QueryManager() {
                                   type="button"
                                   onClick={() => handleDelete(row.record_id)}
                                 disabled={deletingId === row.record_id}
-                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-xs text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/40 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xs border border-danger/30 bg-danger-soft text-xs text-danger-fg hover:bg-danger-soft disabled:opacity-50"
                                 title="Delete record (data stored in event log for restore)"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -486,7 +486,7 @@ export default function QueryManager() {
                                 type="button"
                                 onClick={() => handleRestore(row.record_id)}
                                 disabled={restoringId === row.record_id}
-                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 text-xs text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 disabled:opacity-50"
+                                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-xs border border-ok/30 bg-ok-soft text-xs text-ok-fg hover:bg-ok-soft disabled:opacity-50"
                                 title="Restore deleted record"
                               >
                                 <RotateCcw className="w-3.5 h-3.5" />
@@ -501,23 +501,23 @@ export default function QueryManager() {
                 </table>
               </div>
               {totalPages > 1 && (
-                <div className="flex items-center justify-between gap-2 p-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between gap-2 p-2 border-t border-border">
                   <button
                     type="button"
                     onClick={() => handlePageChange(page - 1)}
                     disabled={page <= 1}
-                    className="px-3 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 disabled:opacity-50"
+                    className="px-3 py-1 text-sm rounded-xs border border-border disabled:opacity-50"
                   >
                     Previous
                   </button>
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-fg-muted">
                     Page {page} of {totalPages}
                   </span>
                   <button
                     type="button"
                     onClick={() => handlePageChange(page + 1)}
                     disabled={page >= totalPages}
-                    className="px-3 py-1 text-sm rounded border border-gray-200 dark:border-gray-600 disabled:opacity-50"
+                    className="px-3 py-1 text-sm rounded-xs border border-border disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -529,7 +529,7 @@ export default function QueryManager() {
       )}
 
       {viewMode === 'none' && (
-        <div className="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm">
+        <div className="flex-1 flex items-center justify-center text-fg-muted text-sm">
           Click &quot;View all records&quot; or &quot;Search&quot; to load data.
         </div>
       )}
@@ -565,16 +565,16 @@ export default function QueryManager() {
             <DialogTitle>Record — {viewRecord?.record_id ?? ''}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-3 flex-1 min-h-0">
-            <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
-              <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-600 p-0.5 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center gap-2 border-b border-border pb-2">
+              <span className="text-sm font-medium text-fg-muted">View:</span>
+              <div className="inline-flex rounded-lg border border-border p-0.5 bg-subtle">
                 <button
                   type="button"
                   onClick={() => setRecordViewTab('current')}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     recordViewTab === 'current'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-surface text-fg shadow-sm'
+                      : 'text-fg-muted hover:text-fg'
                   }`}
                 >
                   Current
@@ -584,8 +584,8 @@ export default function QueryManager() {
                   onClick={() => setRecordViewTab('historical')}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     recordViewTab === 'historical'
-                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                      ? 'bg-surface text-fg shadow-sm'
+                      : 'text-fg-muted hover:text-fg'
                   }`}
                 >
                   Historical
@@ -594,21 +594,21 @@ export default function QueryManager() {
             </div>
             {recordViewTab === 'current' && viewRecord && (
               <>
-                <div className="shrink-0 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-sm">
+                <div className="shrink-0 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 px-3 py-2 rounded-lg border border-border bg-subtle text-sm">
                   <div>
-                    <span className="text-gray-500 dark:text-gray-400">Record sequence</span>
-                    <p className="font-medium text-gray-900 dark:text-white">{viewRecord.record_sequence ?? '—'}</p>
+                    <span className="text-fg-muted">Record sequence</span>
+                    <p className="font-medium text-fg">{viewRecord.record_sequence ?? '—'}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500 dark:text-gray-400">Created</span>
-                    <p className="font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatDateTime(viewRecord.created_at)}</p>
+                    <span className="text-fg-muted">Created</span>
+                    <p className="font-medium text-fg whitespace-nowrap">{formatDateTime(viewRecord.created_at)}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500 dark:text-gray-400">Updated</span>
-                    <p className="font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatDateTime(viewRecord.updated_at)}</p>
+                    <span className="text-fg-muted">Updated</span>
+                    <p className="font-medium text-fg whitespace-nowrap">{formatDateTime(viewRecord.updated_at)}</p>
                   </div>
                 </div>
-                <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700" style={{ height: '55vh' }}>
+                <div className="flex-1 min-h-0 rounded-lg overflow-hidden border border-border" style={{ height: '55vh' }}>
                   <MonacoEditor
                   height="100%"
                   language="json"
@@ -627,8 +627,8 @@ export default function QueryManager() {
             )}
             {recordViewTab === 'historical' && (
               <div className="flex-1 flex gap-3 min-h-0">
-                <div className="w-56 shrink-0 flex flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                  <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                <div className="w-56 shrink-0 flex flex-col gap-1 rounded-lg border border-border overflow-hidden">
+                  <div className="px-2 py-1.5 text-xs font-medium text-fg-muted border-b border-border bg-subtle">
                     Events
                   </div>
                   {recordHistoryLoading ? (
@@ -647,10 +647,10 @@ export default function QueryManager() {
                           key={evt.record_sequence}
                           type="button"
                           onClick={() => setSelectedHistoryIndex(idx)}
-                          className={`w-full text-left px-2 py-1.5 rounded text-sm truncate block ${
+                          className={`w-full text-left px-2 py-1.5 rounded-xs text-sm truncate block ${
                             selectedHistoryIndex === idx
-                              ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-200'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                              ? 'bg-accent-soft text-accent-fg'
+                              : 'text-fg-muted hover:bg-subtle'
                           }`}
                           title={`#${evt.record_sequence} ${evt.action} — ${formatDateTime(evt.created_at)}`}
                         >
@@ -660,25 +660,25 @@ export default function QueryManager() {
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col gap-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div className="flex-1 min-w-0 flex flex-col gap-2 rounded-lg overflow-hidden border border-border">
                   {recordHistory.length > 0 && recordHistory[selectedHistoryIndex] && (
                     <>
-                      <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 px-3 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-sm">
+                      <div className="shrink-0 grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-1 px-3 py-2 bg-subtle border-b border-border text-sm">
                         <div>
-                          <span className="text-gray-500 dark:text-gray-400">Sequence</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{recordHistory[selectedHistoryIndex].record_sequence}</p>
+                          <span className="text-fg-muted">Sequence</span>
+                          <p className="font-medium text-fg">{recordHistory[selectedHistoryIndex].record_sequence}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500 dark:text-gray-400">Action</span>
-                          <p className="font-medium text-gray-900 dark:text-white capitalize">{recordHistory[selectedHistoryIndex].action}</p>
+                          <span className="text-fg-muted">Action</span>
+                          <p className="font-medium text-fg capitalize">{recordHistory[selectedHistoryIndex].action}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500 dark:text-gray-400">Created at</span>
-                          <p className="font-medium text-gray-900 dark:text-white whitespace-nowrap">{formatDateTime(recordHistory[selectedHistoryIndex].created_at)}</p>
+                          <span className="text-fg-muted">Created at</span>
+                          <p className="font-medium text-fg whitespace-nowrap">{formatDateTime(recordHistory[selectedHistoryIndex].created_at)}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500 dark:text-gray-400">Created by</span>
-                          <p className="font-mono text-xs text-gray-900 dark:text-white truncate" title={recordHistory[selectedHistoryIndex].created_by ?? undefined}>
+                          <span className="text-fg-muted">Created by</span>
+                          <p className="font-mono text-xs text-fg truncate" title={recordHistory[selectedHistoryIndex].created_by ?? undefined}>
                             {recordHistory[selectedHistoryIndex].created_by ?? '—'}
                           </p>
                         </div>

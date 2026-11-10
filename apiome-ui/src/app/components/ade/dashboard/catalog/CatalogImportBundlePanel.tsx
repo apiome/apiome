@@ -111,7 +111,7 @@ function RoleBadge({ role, count }: { role: BundleFileRole; count?: number }) {
       data-role={role}
       title={BUNDLE_ROLE_HINT[role]}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+        'inline-flex shrink-0 items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
         BUNDLE_ROLE_TONE[role],
       )}
     >
@@ -144,7 +144,7 @@ function ImportRow({ edge }: { edge: BundleImportEdge }) {
         <span className="font-mono text-2xs text-fg">{edge.target}</span>
         <span
           className={cn(
-            'rounded px-1.5 py-0.5 text-2xs font-semibold',
+            'rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
             unresolved
               ? 'bg-danger-soft text-danger-fg'
               : edge.resolution === 'provided'
@@ -526,7 +526,7 @@ export function CatalogImportBundlePanel({
                 {row.file!.verdict === 'failed' ? (
                   <span
                     data-testid="bundle-verdict-failed"
-                    className="rounded bg-danger-soft px-1.5 py-0.5 text-2xs font-semibold text-danger-fg"
+                    className="rounded-xs bg-danger-soft px-1.5 py-0.5 text-2xs font-semibold text-danger-fg"
                   >
                     {BUNDLE_VERDICT_LABEL.failed}
                   </span>
@@ -677,7 +677,7 @@ export function CatalogImportBundlePanel({
                   data-testid="bundle-filter-clear"
                   onClick={() => setFilter('')}
                   aria-label="Clear file filter"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-fg-subtle motion-safe:transition-colors hover:text-fg"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xs p-0.5 text-fg-subtle motion-safe:transition-colors hover:text-fg"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
@@ -777,7 +777,7 @@ export function CatalogImportBundlePanel({
               {selectedFile.error ? (
                 <p
                   data-testid="bundle-file-error"
-                  className="flex items-start gap-2 rounded border border-danger bg-danger-soft px-2 py-1.5 font-mono text-2xs text-danger-fg"
+                  className="flex items-start gap-2 rounded-xs border border-danger bg-danger-soft px-2 py-1.5 font-mono text-2xs text-danger-fg"
                 >
                   <FileWarning className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                   <span className="min-w-0 flex-1">{selectedFile.error}</span>

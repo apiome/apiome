@@ -145,7 +145,7 @@ export default function DatabaseHeader() {
 
   return (
     <div
-      className="bg-gradient-to-r from-white via-slate-50 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 border-b border-gray-200/80 dark:border-gray-700/80 px-2 py-1.5 shadow-sm"
+      className="bg-surface border-b border-border/80 px-2 py-1.5 shadow-sm"
       /*
        * In flow, not fixed. The `top: 48` this used to carry cleared the pre-Hive
        * `TopHeader`, retired in HIVE-3.8 (#5294); the toolbar is now the first row of its
@@ -161,31 +161,31 @@ export default function DatabaseHeader() {
             onValueChange={handleProjectChange}
             disabled={isLoadingProjects || !currentTenantId}
           >
-            <Select.Trigger className="inline-flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-indigo-300 dark:hover:border-indigo-500/50 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Select.Trigger className="inline-flex items-center gap-2 bg-surface rounded-lg border border-border shadow-sm px-3 py-2 text-sm text-fg hover:border-accent/30 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg className="w-4 h-4 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
               <Select.Value placeholder="Select project..." />
               <Select.Icon className="ml-auto">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Select.Icon>
             </Select.Trigger>
             <Select.Portal>
-              <Select.Content className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]" position="popper" sideOffset={5}>
+              <Select.Content className="overflow-hidden bg-surface rounded-lg shadow-lg border border-border z-[9999]" position="popper" sideOffset={5}>
                 <Select.Viewport className="p-1">
                   {projects.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No projects yet — create one in Projects</div>
+                    <div className="px-3 py-2 text-sm text-fg-muted">No projects yet — create one in Projects</div>
                   ) : (
                     projects.map((project) => (
                       <Select.Item
                         key={project.id}
                         value={project.id}
-                        className="relative flex items-center px-8 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[state=checked]:bg-indigo-50 dark:data-[state=checked]:bg-indigo-900/30"
+                        className="relative flex items-center px-8 py-2 text-sm text-fg-muted rounded-md outline-none cursor-pointer hover:bg-subtle data-[highlighted]:bg-subtle data-[state=checked]:bg-accent-soft"
                       >
                         <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
-                          <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <Check className="w-4 h-4 text-accent-fg" />
                         </Select.ItemIndicator>
                         <Select.ItemText>{project.name}</Select.ItemText>
                       </Select.Item>
@@ -202,31 +202,31 @@ export default function DatabaseHeader() {
             onValueChange={handleVersionChange}
             disabled={isLoadingVersions || !localProjectId || versions.length === 0}
           >
-            <Select.Trigger className="inline-flex items-center gap-2 bg-white dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-indigo-300 dark:hover:border-indigo-500/50 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed">
-              <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Select.Trigger className="inline-flex items-center gap-2 bg-surface rounded-lg border border-border shadow-sm px-3 py-2 text-sm text-fg hover:border-accent/30 min-w-[220px] disabled:opacity-50 disabled:cursor-not-allowed">
+              <svg className="w-4 h-4 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               <Select.Value placeholder="Select version..." />
               <Select.Icon className="ml-auto">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 text-fg-subtle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </Select.Icon>
             </Select.Trigger>
             <Select.Portal>
-              <Select.Content className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-[9999]" position="popper" sideOffset={5}>
+              <Select.Content className="overflow-hidden bg-surface rounded-lg shadow-lg border border-border z-[9999]" position="popper" sideOffset={5}>
                 <Select.Viewport className="p-1">
                   {versions.length === 0 ? (
-                    <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">No versions yet — create one in Versions</div>
+                    <div className="px-3 py-2 text-sm text-fg-muted">No versions yet — create one in Versions</div>
                   ) : (
                     versions.map((version) => (
                       <Select.Item
                         key={version.id}
                         value={version.id}
-                        className="relative flex items-center px-8 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md outline-none cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 data-[highlighted]:bg-gray-100 dark:data-[highlighted]:bg-gray-700 data-[state=checked]:bg-indigo-50 dark:data-[state=checked]:bg-indigo-900/30"
+                        className="relative flex items-center px-8 py-2 text-sm text-fg-muted rounded-md outline-none cursor-pointer hover:bg-subtle data-[highlighted]:bg-subtle data-[state=checked]:bg-accent-soft"
                       >
                         <Select.ItemIndicator className="absolute left-2 inline-flex items-center">
-                          <Check className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                          <Check className="w-4 h-4 text-accent-fg" />
                         </Select.ItemIndicator>
                         <Select.ItemText>
                           {formatVersionSelectorLabel(version)}
@@ -243,14 +243,14 @@ export default function DatabaseHeader() {
           <div
             className={`ml-auto flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm ${
               newerPublishedSchemaAvailable
-                ? 'border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200'
-                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700/50 text-gray-700 dark:text-gray-300'
+                ? 'border-warn/30 bg-warn-soft text-warn-fg'
+                : 'border-border bg-surface text-fg-muted'
             }`}
             role="status"
           >
             {newerPublishedSchemaAvailable ? (
               <>
-                <Info className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+                <Info className="h-4 w-4 shrink-0 text-warn-fg" aria-hidden />
                 <span>Newer schema available: consider migrating</span>
               </>
             ) : (

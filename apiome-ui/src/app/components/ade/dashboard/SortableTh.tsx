@@ -49,16 +49,16 @@ export default function SortableTh<C extends string>({
         onClick={() => onSort(column)}
         data-testid={testId}
         aria-label={ariaLabel}
-        className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium uppercase tracking-wider text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white ${
+        className={`inline-flex max-w-full items-center gap-1.5 rounded-md px-1 py-0.5 text-xs font-medium uppercase tracking-wider text-fg-muted transition-colors hover:bg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           align === 'right' ? 'flex-row-reverse' : ''
         }`}
       >
         <span className="truncate">{children}</span>
         {active ? (
           direction === 'asc' ? (
-            <ArrowUp className="h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+            <ArrowUp className="h-3.5 w-3.5 shrink-0 text-accent-fg" aria-hidden />
           ) : (
-            <ArrowDown className="h-3.5 w-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" aria-hidden />
+            <ArrowDown className="h-3.5 w-3.5 shrink-0 text-accent-fg" aria-hidden />
           )
         ) : (
           <ArrowUpDown className="h-3.5 w-3.5 shrink-0 opacity-40" aria-hidden />

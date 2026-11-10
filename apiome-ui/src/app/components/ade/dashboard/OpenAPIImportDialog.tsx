@@ -30,16 +30,16 @@ const sxToStyle = (sx: any): React.CSSProperties => {
 };
 const Box = ({ sx, children, component: C = 'div', ...rest }: any) => <C style={sxToStyle(sx)} {...rest}>{children}</C>;
 const Typography = ({ variant, sx, children, component: C = 'span', ...rest }: any) => <C style={sxToStyle(sx)} {...rest}>{children}</C>;
-const Alert = ({ severity, sx, children, ...rest }: any) => <div role="alert" style={sxToStyle(sx)} className={`p-3 rounded-lg ${severity === 'error' ? 'bg-red-50 dark:bg-red-900/20 text-red-800' : severity === 'warning' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-800' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-800'}`} {...rest}>{children}</div>;
+const Alert = ({ severity, sx, children, ...rest }: any) => <div role="alert" style={sxToStyle(sx)} className={`p-3 rounded-lg ${severity === 'error' ? 'bg-danger-soft text-danger-fg' : severity === 'warning' ? 'bg-warn-soft text-warn-fg' : 'bg-accent-soft text-accent-fg'}`} {...rest}>{children}</div>;
 const TextField = ({ label, value, onChange, fullWidth, sx, margin, helperText, ...rest }: any) => (
   <div style={{ marginBottom: margin === 'dense' ? 8 : 16, ...sxToStyle(sx) }}>
     {label && <label className="block text-sm font-medium mb-1">{label}</label>}
-    <input type="text" value={value ?? ''} onChange={(e) => onChange?.(e)} className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800" style={sxToStyle(sx)} {...rest} />
-    {helperText && <p className="text-xs text-slate-500 mt-1">{helperText}</p>}
+    <input type="text" value={value ?? ''} onChange={(e) => onChange?.(e)} className="w-full px-3 py-2 rounded-lg border border-border-strong bg-surface" style={sxToStyle(sx)} {...rest} />
+    {helperText && <p className="text-xs text-fg-muted mt-1">{helperText}</p>}
   </div>
 );
 const Button = ({ onClick, children, variant, disabled, startIcon, fullWidth, ...rest }: any) => (
-  <button type="button" onClick={onClick} disabled={disabled} className={`px-4 py-2 rounded-lg ${variant === 'contained' ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'border border-slate-300 hover:bg-slate-50'} disabled:opacity-50 ${fullWidth ? 'w-full' : ''}`} {...rest}>{startIcon}{children}</button>
+  <button type="button" onClick={onClick} disabled={disabled} className={`px-4 py-2 rounded-lg ${variant === 'contained' ? 'bg-accent text-fg-on-accent hover:bg-accent-hover' : 'border border-border-strong hover:bg-subtle'} disabled:opacity-50 ${fullWidth ? 'w-full' : ''}`} {...rest}>{startIcon}{children}</button>
 );
 const IconButton = ({ onClick, size, children, disabled, sx, ...rest }: any) => <button type="button" onClick={onClick} disabled={disabled} style={{ padding: size === 'small' ? 4 : 8, background: 'none', border: 'none', cursor: 'pointer', ...sxToStyle(sx) }} {...rest}>{children}</button>;
 const Chip = ({ label, size, icon, variant, sx, ...rest }: any) => <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 16, fontSize: 'var(--fs-xs)', ...sxToStyle(sx) }} {...rest}>{icon}{label}</span>;
@@ -500,13 +500,13 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && handleClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-[10001]" />
+        <Dialog.Overlay className="fixed inset-0 bg-overlay z-[10001]" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[10002] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-white dark:bg-gray-900 rounded-xl shadow-xl"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[10002] w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col bg-surface rounded-xl shadow-lg"
         >
-          <div className="p-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
-            <Dialog.Title className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+          <div className="p-4 border-b border-border shrink-0">
+            <Dialog.Title className="text-lg font-semibold text-fg">
               {step === 'upload' && 'Import from OpenAPI Specification'}
               {step === 'review' && 'Select Classes to Import'}
               {step === 'summary' && 'Review Import Summary'}
@@ -516,7 +516,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
 
           <div className="p-4 overflow-auto flex-1 min-h-0">
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-danger-soft text-danger-fg text-sm">
             {errorMessage}
           </div>
         )}
@@ -524,7 +524,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
         {/* Upload Step */}
         {step === 'upload' && (
           <div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-fg-muted mb-4">
               Import an OpenAPI 3.x specification from a file, URL, or your connected SSO accounts.
             </p>
 
@@ -550,21 +550,21 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
-                    isDragging ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20' : 'border-slate-300 dark:border-slate-600 hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                    isDragging ? 'border-accent bg-accent-soft' : 'border-border-strong hover:border-accent hover:bg-subtle'
                   }`}
                   onClick={() => document.getElementById('openapi-file-input')?.click()}
                 >
                   {file ? (
                     <div>
-                      <FileJson size={48} className="mx-auto mb-4 text-green-600" />
+                      <FileJson size={48} className="mx-auto mb-4 text-ok-fg" />
                       <p className="text-lg font-semibold mb-1">{file.name}</p>
-                      <p className="text-sm text-slate-500">Click to select a different file</p>
+                      <p className="text-sm text-fg-muted">Click to select a different file</p>
                     </div>
                   ) : (
                     <div>
-                      <Upload size={48} className="mx-auto mb-4 text-slate-400" />
+                      <Upload size={48} className="mx-auto mb-4 text-fg-subtle" />
                       <p className="text-lg font-semibold mb-1">Drag & Drop or Click to Select</p>
-                      <p className="text-sm text-slate-500">OpenAPI 3.x JSON or YAML specification file</p>
+                      <p className="text-sm text-fg-muted">OpenAPI 3.x JSON or YAML specification file</p>
                     </div>
                   )}
                 </div>
@@ -584,18 +584,18 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
             {importMethod === 'url' && (
               <Tabs.Content value="url" className="mt-0">
               <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">OpenAPI Specification URL</label>
+                <label className="block text-sm font-medium text-fg-muted mb-1">OpenAPI Specification URL</label>
                 <input
                   type="url"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 mb-2"
+                  className="w-full px-3 py-2 rounded-lg border border-border-strong bg-surface text-fg mb-2"
                   placeholder="https://example.com/api/openapi.json"
                   value={urlInput}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrlInput(e.target.value)}
                   disabled={isLoading}
                 />
-                <p className="text-xs text-slate-500 mb-4">Enter the URL of a publicly accessible OpenAPI specification file</p>
+                <p className="text-xs text-fg-muted mb-4">Enter the URL of a publicly accessible OpenAPI specification file</p>
 
-                <div className="mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm">
+                <div className="mb-4 p-3 rounded-lg bg-accent-soft text-accent-fg text-sm">
                   <p><strong>Examples:</strong></p>
                   <p className="mt-2 text-xs">
                     • GitHub Raw: https://raw.githubusercontent.com/user/repo/main/openapi.json<br />
@@ -606,7 +606,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
 
                 <button
                   type="button"
-                  className="w-full py-2 px-4 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2 px-4 rounded-lg bg-accent text-fg-on-accent hover:bg-accent-hover disabled:opacity-50 flex items-center justify-center gap-2"
                   onClick={handleUrlImport}
                   disabled={!urlInput.trim() || isLoading}
                 >
@@ -1318,7 +1318,7 @@ const OpenAPIImportDialog: React.FC<OpenAPIImportDialogProps> = ({
         )}
           </div>
 
-          <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2 shrink-0">
+          <div className="p-4 border-t border-border flex justify-end gap-2 shrink-0">
             <Button onClick={handleClose} disabled={isLoading}>Cancel</Button>
             {step === 'upload' && (
               <Button

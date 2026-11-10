@@ -184,33 +184,33 @@ export function ConflictReport({
     .map(([kind, count]) => ({ kind, count }));
 
   return (
-    <div className={`bg-white dark:bg-gray-800 rounded-xl border border-amber-200 dark:border-amber-800 ${className}`}>
+    <div className={`bg-surface rounded-xl border border-warn/30 ${className}`}>
       <Collapsible open={open} onOpenChange={setOpen}>
         <CollapsibleTrigger asChild>
           <button
             type="button"
-            className="w-full flex items-center justify-between p-4 text-left hover:bg-amber-50/50 dark:hover:bg-amber-900/10 rounded-t-xl transition-colors"
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-warn-soft/50 rounded-t-xl transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-warn-soft text-warn-fg">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-fg">
                   Conflict Report
                 </h3>
-                <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
+                <p className="text-sm text-warn-fg mt-0.5">
                   {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''} detected — review before importing
                 </p>
               </div>
             </div>
-            <span className="text-2xl font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+            <span className="text-2xl font-bold text-warn-fg tabular-nums">
               {conflicts.length}
             </span>
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <div className="border-t border-amber-200 dark:border-amber-800 px-4 pb-4 pt-2">
+          <div className="border-t border-warn/30 px-4 pb-4 pt-2">
             {/* Summary by type */}
             <div className="flex flex-wrap gap-2 mb-4">
               {kindSummary.map(({ kind, count }) => {
@@ -218,7 +218,7 @@ export function ConflictReport({
                 return (
                   <span
                     key={kind}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-100 dark:bg-amber-900/40 border border-amber-300 dark:border-amber-700 text-xs font-medium text-amber-800 dark:text-amber-200"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warn-soft border border-warn/30 text-xs font-medium text-warn-fg"
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {count} {CONFLICT_KIND_LABELS[kind].toLowerCase()}{count !== 1 ? 's' : ''}
@@ -232,7 +232,7 @@ export function ConflictReport({
               <button
                 type="button"
                 onClick={handleExportMarkdown}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm font-medium hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-warn/30 bg-warn-soft text-warn-fg text-sm font-medium hover:bg-warn-soft transition-colors"
               >
                 <Download className="h-4 w-4" />
                 Export as Markdown
@@ -241,33 +241,33 @@ export function ConflictReport({
 
             {/* Impact analysis (#597): what will change if resolved */}
             <div className="mb-4">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <h4 className="text-sm font-semibold text-fg-muted mb-2">
                 Impact if resolved
               </h4>
-              <p className="text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-xs text-fg-muted">
                 Below, each conflict includes what will change when you resolve it (e.g. by renaming, overwriting, or applying a resolution strategy).
               </p>
             </div>
 
             {/* Table of conflicts */}
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300">
+                  <tr className="bg-subtle border-b border-border">
+                    <th className="text-left py-2.5 px-3 font-semibold text-fg-muted">
                       Schema / Resource
                     </th>
-                    <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300">
+                    <th className="text-left py-2.5 px-3 font-semibold text-fg-muted">
                       Conflict type
                     </th>
-                    <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300">
+                    <th className="text-left py-2.5 px-3 font-semibold text-fg-muted">
                       Description
                     </th>
-                    <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300 min-w-[200px]">
+                    <th className="text-left py-2.5 px-3 font-semibold text-fg-muted min-w-[200px]">
                       What will change if resolved
                     </th>
                     {onViewDuplicateSchemaDiff && (
-                      <th className="text-left py-2.5 px-3 font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                      <th className="text-left py-2.5 px-3 font-semibold text-fg-muted whitespace-nowrap">
                         Diff
                       </th>
                     )}
@@ -280,26 +280,26 @@ export function ConflictReport({
                     return (
                       <tr
                         key={`${c.schemaName}-${c.kind}-${idx}`}
-                        className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+                        className="border-b border-border last:border-0"
                       >
-                        <td className="py-2 px-3 font-medium text-gray-900 dark:text-white">
+                        <td className="py-2 px-3 font-medium text-fg">
                           {c.schemaName}
                         </td>
                         <td className="py-2 px-3">
-                          <span className="inline-flex items-center gap-1.5 text-amber-700 dark:text-amber-300">
+                          <span className="inline-flex items-center gap-1.5 text-warn-fg">
                             <Icon className="h-4 w-4 shrink-0" />
                             {CONFLICT_KIND_LABELS[c.kind]}
                           </span>
                         </td>
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400">
+                        <td className="py-2 px-3 text-fg-muted">
                           {c.message}
                           {c.detail && (
-                            <span className="block text-xs text-gray-500 dark:text-gray-500 mt-0.5">
+                            <span className="block text-xs text-fg-muted mt-0.5">
                               {c.detail}
                             </span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-gray-600 dark:text-gray-400 text-xs">
+                        <td className="py-2 px-3 text-fg-muted text-xs">
                           {impact}
                         </td>
                         {onViewDuplicateSchemaDiff && (
@@ -308,12 +308,12 @@ export function ConflictReport({
                               <button
                                 type="button"
                                 onClick={() => onViewDuplicateSchemaDiff(c.schemaName)}
-                                className="rounded-md border border-indigo-300 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-800 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-200 dark:hover:bg-indigo-900/50"
+                                className="rounded-md border border-accent/30 bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-fg hover:bg-accent-soft"
                               >
                                 Schema diff
                               </button>
                             ) : (
-                              <span className="text-gray-400 dark:text-gray-600">—</span>
+                              <span className="text-fg-subtle">—</span>
                             )}
                           </td>
                         )}

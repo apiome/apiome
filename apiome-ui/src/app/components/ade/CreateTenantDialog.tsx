@@ -97,7 +97,7 @@ export function CreateTenantDialog({ open, onOpenChange, onCreated }: CreateTena
           <p
             role="alert"
             data-testid="create-tenant-error"
-            className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-300"
+            className="rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
           >
             {error}
           </p>
@@ -106,7 +106,7 @@ export function CreateTenantDialog({ open, onOpenChange, onCreated }: CreateTena
           <div
             role="status"
             data-testid="create-tenant-creating"
-            className="flex items-center justify-center gap-2 py-10 text-sm text-gray-600 dark:text-gray-300"
+            className="flex items-center justify-center gap-2 py-10 text-sm text-fg-muted"
           >
             <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
             Creating your tenant…

@@ -87,15 +87,15 @@ export default function QueryUsingAIPanel({
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <Dialog.Overlay className="fixed inset-0 bg-overlay z-50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <Dialog.Content
           aria-describedby={undefined}
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[80vh] flex flex-col rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-lg max-h-[80vh] flex flex-col rounded-lg bg-surface shadow-lg border border-border overflow-hidden"
         >
-          <Dialog.Title className="text-lg font-semibold text-gray-900 dark:text-white p-4 pb-0">
+          <Dialog.Title className="text-lg font-semibold text-fg p-4 pb-0">
             Query using AI
           </Dialog.Title>
-          <Dialog.Description className="text-sm text-gray-500 dark:text-gray-400 px-4 pt-1">
+          <Dialog.Description className="text-sm text-fg-muted px-4 pt-1">
             Ask a question about the data. The AI will suggest how to search or filter (e.g. which table or criteria).
           </Dialog.Description>
           <div className="p-4 flex flex-col gap-3 flex-1 min-h-0">
@@ -103,28 +103,28 @@ export default function QueryUsingAIPanel({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. Find all records where status is active"
-              className="w-full min-h-[80px] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm resize-y"
+              className="w-full min-h-[80px] px-3 py-2 rounded-lg border border-border bg-surface text-fg text-sm resize-y"
               disabled={loading}
             />
             <button
               type="button"
               onClick={handleSubmit}
               disabled={loading || !query.trim()}
-              className="self-end px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              className="self-end px-4 py-2 rounded-lg bg-accent text-fg-on-accent text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
             >
               {loading ? 'Thinking...' : 'Submit'}
             </button>
             {response && (
-              <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-gray-200 dark:border-gray-600 p-3 bg-gray-50 dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+              <div className="flex-1 min-h-0 overflow-auto rounded-lg border border-border p-3 bg-subtle text-sm text-fg-muted whitespace-pre-wrap">
                 {response}
               </div>
             )}
           </div>
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+          <div className="p-4 border-t border-border flex justify-end">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-600 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 rounded-lg border border-border text-sm text-fg-muted hover:bg-subtle"
             >
               Close
             </button>

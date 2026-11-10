@@ -117,7 +117,7 @@ export default function TablesSidebar() {
       toolbar={
         tables.length > 0 ? (
           <div className="relative">
-            <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+            <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-subtle" />
             <input
               type="text"
               value={filter}
@@ -176,7 +176,7 @@ export default function TablesSidebar() {
                     >
                       {isSelected && (
                         <span
-                          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-indigo-500"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-accent"
                           aria-hidden
                         />
                       )}
@@ -194,7 +194,7 @@ export default function TablesSidebar() {
                         <span
                           className={[
                             'shrink-0 w-1.5 h-1.5 rounded-full',
-                            isSelected ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700',
+                            isSelected ? 'bg-accent' : 'bg-inset',
                           ].join(' ')}
                           aria-hidden
                         />
@@ -205,10 +205,10 @@ export default function TablesSidebar() {
                         {showCount && (
                           <span
                             className={[
-                              'shrink-0 px-1.5 py-0.5 rounded text-2xs font-semibold tabular-nums',
+                              'shrink-0 px-1.5 py-0.5 rounded-xs text-2xs font-semibold tabular-nums',
                               isSelected
-                                ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'
-                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
+                                ? 'bg-accent-soft text-accent-fg'
+                                : 'bg-subtle text-fg-muted',
                             ].join(' ')}
                           >
                             {count.toLocaleString()}
@@ -220,9 +220,9 @@ export default function TablesSidebar() {
                         onClick={(e) => openSchemaModal(e, row)}
                         className={[
                           'shrink-0 mr-1 p-1.5 rounded-md transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100',
-                          'text-slate-400 dark:text-slate-500',
-                          'hover:text-indigo-600 dark:hover:text-indigo-400',
-                          'hover:bg-indigo-50 dark:hover:bg-indigo-950/40',
+                          'text-fg-subtle',
+                          'hover:text-accent-fg',
+                          'hover:bg-accent-soft',
                           isSelected ? 'opacity-100' : '',
                         ].join(' ')}
                         title="View JSON Schema"

@@ -25,8 +25,8 @@ export default function SidebarDensityToggle({ className }: { className?: string
       aria-label="Sidebar density"
       className={[
         'inline-flex items-center gap-0.5 p-0.5 rounded-md',
-        'bg-slate-100/80 dark:bg-slate-900/80',
-        'border border-slate-200 dark:border-slate-800',
+        'bg-subtle/80',
+        'border border-border',
         className ?? '',
       ].join(' ')}
     >
@@ -41,10 +41,10 @@ export default function SidebarDensityToggle({ className }: { className?: string
             title={DENSITY_LABELS[value]}
             onClick={() => setDensity(value)}
             className={[
-              'flex items-center justify-center w-6 h-6 rounded transition-colors',
+              'flex items-center justify-center w-6 h-6 rounded-xs transition-colors',
               active
-                ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100',
+                ? 'bg-surface text-accent-fg shadow-sm ring-1 ring-border'
+                : 'text-fg-muted hover:text-fg',
             ].join(' ')}
           >
             {ICONS[value]}

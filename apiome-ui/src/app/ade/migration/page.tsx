@@ -69,24 +69,24 @@ export default function MigrationPage() {
       : 'Use the header dropdowns to change project or versions.';
 
   return (
-    <div className="h-full flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800">
+    <div className="h-full flex items-center justify-center bg-canvas">
       <div className="relative">
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full blur-3xl opacity-60" />
         <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full blur-3xl opacity-60" />
 
-        <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-12 md:p-16 text-center shadow-xl shadow-gray-200/50 dark:shadow-gray-900/50">
+        <div className="relative bg-surface/80 backdrop-blur-xl border border-border/50 rounded-2xl p-12 md:p-16 text-center shadow-lg shadow-gray-200/50">
           <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
             <GitCompare className="h-10 w-10 text-white" />
           </div>
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+          <h3 className="text-2xl font-bold text-fg mb-3">
             {title}
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 max-w-sm mx-auto leading-relaxed">
+          <p className="text-fg-muted max-w-sm mx-auto leading-relaxed">
             {description}
           </p>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700/50">
-            <p className="text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-2">
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-xs text-fg-subtle flex items-center justify-center gap-2">
               <Info className="w-4 h-4" />
               {tip}
             </p>

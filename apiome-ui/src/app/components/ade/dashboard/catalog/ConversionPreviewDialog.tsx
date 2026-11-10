@@ -617,7 +617,7 @@ export function ConversionPreviewDialog({
                     type="checkbox"
                     checked={acknowledged}
                     onChange={(e) => setAcknowledged(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-border-strong text-accent focus:ring-accent"
+                    className="mt-0.5 h-4 w-4 rounded-xs border-border-strong text-accent focus:ring-accent"
                     data-testid="conversion-ack"
                   />
                   <span>{warning.ackLabel}</span>

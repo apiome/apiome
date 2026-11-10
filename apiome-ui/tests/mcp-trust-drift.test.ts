@@ -87,7 +87,7 @@ describe('drift class helpers', () => {
     ]);
     expect(classes.size).toBe(4);
     // Security regression reads as the danger tone.
-    expect(driftCategoryClass('security_regression')).toContain('rose');
+    expect(driftCategoryClass('security_regression')).toContain('danger');
   });
 
   it('labels categories in plain language', () => {
@@ -96,9 +96,9 @@ describe('drift class helpers', () => {
   });
 
   it('maps gate status to distinct classes', () => {
-    expect(driftGateClass('blocked')).toContain('rose');
-    expect(driftGateClass('warn')).toContain('amber');
-    expect(driftGateClass('pass')).toContain('emerald');
+    expect(driftGateClass('blocked')).toContain('danger');
+    expect(driftGateClass('warn')).toContain('warn');
+    expect(driftGateClass('pass')).toContain('ok');
   });
 });
 

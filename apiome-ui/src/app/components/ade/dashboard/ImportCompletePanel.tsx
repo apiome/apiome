@@ -496,7 +496,7 @@ export default function ImportCompletePanel({ jobId }: ImportCompletePanelProps)
                               {entry.message}
                             </p>
                             {entry.context != null && (
-                              <pre className="mt-2 max-h-40 overflow-auto rounded bg-inset p-2 text-2xs text-fg">
+                              <pre className="mt-2 max-h-40 overflow-auto rounded-xs bg-inset p-2 text-2xs text-fg">
                                 {typeof entry.context === 'string'
                                   ? entry.context
                                   : JSON.stringify(entry.context, null, 2)}

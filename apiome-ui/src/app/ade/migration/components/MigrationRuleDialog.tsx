@@ -294,9 +294,9 @@ export default function MigrationRuleDialog({
 
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden px-6 pb-4">
           {/* Rule template at top */}
-          <div className="shrink-0 flex items-center gap-3 py-3 border-b border-gray-200 dark:border-gray-700">
-            <Label className="flex items-center gap-2 shrink-0 text-sm font-medium text-gray-700 dark:text-gray-300">
-              <BookOpen className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <div className="shrink-0 flex items-center gap-3 py-3 border-b border-border">
+            <Label className="flex items-center gap-2 shrink-0 text-sm font-medium text-fg-muted">
+              <BookOpen className="h-4 w-4 text-fg-muted" />
               Rule template
             </Label>
             <Select value={selectedTemplateId ?? 'custom'} onValueChange={onTemplateChange}>
@@ -309,7 +309,7 @@ export default function MigrationRuleDialog({
                   <SelectItem key={t.id} value={t.id}>
                     {t.name}
                     {t.min_inputs > 1 || t.min_outputs > 1 ? (
-                      <span className="ml-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <span className="ml-1.5 text-xs text-fg-muted">
                         ({t.min_inputs} in → {t.min_outputs} out)
                       </span>
                     ) : null}
@@ -318,7 +318,7 @@ export default function MigrationRuleDialog({
               </SelectContent>
             </Select>
             {selectedTemplate?.description && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[240px]">
+              <p className="text-xs text-fg-muted truncate max-w-[240px]">
                 {selectedTemplate.description}
               </p>
             )}
@@ -333,18 +333,18 @@ export default function MigrationRuleDialog({
               placeholder="e.g. Split zipcode"
               className="max-w-xs font-medium"
             />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-muted">
               This name appears on the migration canvas. Leave empty for passthrough (no rule).
             </p>
           </div>
 
           {/* 50/50: Left = inputs/outputs, Right = rule code (Monaco) */}
           <div className="flex-1 min-h-0 flex gap-4 py-3 overflow-hidden">
-            <div className="w-1/2 min-w-0 flex flex-col gap-4 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50/50 dark:bg-gray-800/30">
+            <div className="w-1/2 min-w-0 flex flex-col gap-4 overflow-y-auto border border-border rounded-lg p-4 bg-subtle/50">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Inputs (source properties)</Label>
                 {selectedTemplate && selectedTemplate.min_inputs > 1 && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                  <p className="text-xs text-warn-fg">
                     At least {selectedTemplate.min_inputs} inputs required.
                   </p>
                 )}
@@ -352,13 +352,13 @@ export default function MigrationRuleDialog({
                   {inputProperties.map((name) => (
                     <span
                       key={name}
-                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
+                      className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-surface px-2 py-1 text-sm"
                     >
                       {name}
                       <button
                         type="button"
                         onClick={() => removeInput(name)}
-                        className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                        className="text-fg-muted hover:text-fg"
                         aria-label={`Remove ${name}`}
                       >
                         ×
@@ -394,7 +394,7 @@ export default function MigrationRuleDialog({
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Outputs (destination properties)</Label>
                 {selectedTemplate && selectedTemplate.min_outputs > 1 && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
+                  <p className="text-xs text-warn-fg">
                     At least {selectedTemplate.min_outputs} outputs required.
                   </p>
                 )}
@@ -402,13 +402,13 @@ export default function MigrationRuleDialog({
                   {outputProperties.map((name) => (
                     <span
                       key={name}
-                      className="inline-flex items-center gap-1 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-sm"
+                      className="inline-flex items-center gap-1 rounded-md border border-border-strong bg-surface px-2 py-1 text-sm"
                     >
                       {name}
                       <button
                         type="button"
                         onClick={() => removeOutput(name)}
-                        className="text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"
+                        className="text-fg-muted hover:text-fg"
                         aria-label={`Remove ${name}`}
                       >
                         ×
@@ -439,11 +439,11 @@ export default function MigrationRuleDialog({
                 </div>
               </div>
             </div>
-            <div className="w-1/2 min-w-0 flex flex-col gap-2 overflow-hidden border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-900">
-              <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-gray-700">
-                <Label className="text-xs font-medium text-gray-400">Rule type</Label>
+            <div className="w-1/2 min-w-0 flex flex-col gap-2 overflow-hidden border border-border rounded-lg bg-gray-900">
+              <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border-strong">
+                <Label className="text-xs font-medium text-fg-subtle">Rule type</Label>
                 <Select value={ruleType} onValueChange={(v) => setRuleType(v as MigrationRuleType)}>
-                  <SelectTrigger className="w-[160px] h-8 border-gray-600 bg-gray-800 text-gray-200">
+                  <SelectTrigger className="w-[160px] h-8 border-border-strong bg-gray-800 text-gray-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -476,16 +476,16 @@ export default function MigrationRuleDialog({
           </div>
 
           {/* Test section: 50/50 test inputs | output */}
-          <div className="shrink-0 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <div className="shrink-0 pt-3 border-t border-border">
             <div className="flex items-center justify-between mb-2">
-              <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Test rule</Label>
+              <Label className="text-sm font-medium text-fg-muted">Test rule</Label>
               <button
                 type="button"
                 onClick={handleRunTest}
                 className={cn(
                   'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm',
-                  'border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30',
-                  'text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50'
+                  'border-accent/30 bg-accent-soft',
+                  'text-accent-fg hover:bg-accent-soft'
                 )}
               >
                 <Play className="h-4 w-4" />
@@ -493,14 +493,14 @@ export default function MigrationRuleDialog({
               </button>
             </div>
             <div className="flex gap-4 min-h-[120px]">
-              <div className="w-1/2 min-w-0 flex flex-col gap-2 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800/30">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Test inputs</span>
+              <div className="w-1/2 min-w-0 flex flex-col gap-2 overflow-y-auto border border-border rounded-lg p-3 bg-subtle/50">
+                <span className="text-xs font-medium text-fg-muted">Test inputs</span>
                 {inputProperties.length === 0 ? (
-                  <p className="text-xs text-gray-400 dark:text-gray-500">Add inputs above.</p>
+                  <p className="text-xs text-fg-subtle">Add inputs above.</p>
                 ) : (
                   inputProperties.map((name) => (
                     <div key={name} className="flex items-center gap-2">
-                      <Label className="w-24 shrink-0 text-xs text-gray-600 dark:text-gray-400">{name}</Label>
+                      <Label className="w-24 shrink-0 text-xs text-fg-muted">{name}</Label>
                       <Input
                         value={testInputValues[name] ?? ''}
                         onChange={(e) =>
@@ -513,13 +513,13 @@ export default function MigrationRuleDialog({
                   ))
                 )}
               </div>
-              <div className="w-1/2 min-w-0 flex flex-col border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50/50 dark:bg-gray-800/30 overflow-hidden">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">Output</span>
+              <div className="w-1/2 min-w-0 flex flex-col border border-border rounded-lg p-3 bg-subtle/50 overflow-hidden">
+                <span className="text-xs font-medium text-fg-muted shrink-0">Output</span>
                 <div className="flex-1 min-h-0 overflow-auto mt-1">
                   {testResult === null ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Click Run to see the result.</p>
+                    <p className="text-xs text-fg-subtle">Click Run to see the result.</p>
                   ) : testResult.ok ? (
-                    <ul className="font-mono text-sm text-emerald-700 dark:text-emerald-300 space-y-0.5">
+                    <ul className="font-mono text-sm text-ok-fg space-y-0.5">
                       {outputProperties.map((name, i) => (
                         <li key={name}>
                           {name}: {String(testResult.outputs[i] ?? '')}
@@ -527,7 +527,7 @@ export default function MigrationRuleDialog({
                       ))}
                     </ul>
                   ) : (
-                    <div className="flex items-start gap-2 text-sm text-red-700 dark:text-red-300">
+                    <div className="flex items-start gap-2 text-sm text-danger-fg">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                       <span>{testResult.error}</span>
                     </div>
@@ -538,9 +538,9 @@ export default function MigrationRuleDialog({
           </div>
         </div>
 
-        <DialogFooter className="shrink-0 flex-col gap-2 sm:flex-row sm:items-center px-6 pb-6 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <DialogFooter className="shrink-0 flex-col gap-2 sm:flex-row sm:items-center px-6 pb-6 pt-2 border-t border-border">
           {!isValid && (
-            <span className="text-xs text-amber-600 dark:text-amber-400 sm:mr-auto">
+            <span className="text-xs text-warn-fg sm:mr-auto">
               {!inputsMet && `Add at least ${minInputs} input(s). `}
               {!outputsMet && `Add at least ${minOutputs} output(s). `}
               {inputsMet && outputsMet && !ruleContent.trim() && 'Enter rule expression or script.'}
@@ -550,7 +550,7 @@ export default function MigrationRuleDialog({
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="rounded-lg border border-border-strong px-4 py-2 text-sm text-fg-muted hover:bg-subtle"
             >
               Cancel
             </button>
@@ -558,7 +558,7 @@ export default function MigrationRuleDialog({
               type="button"
               onClick={handleSave}
               disabled={!isValid}
-              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 disabled:opacity-50 disabled:pointer-events-none"
+              className="rounded-lg bg-accent px-4 py-2 text-sm text-fg-on-accent hover:bg-accent-hover disabled:opacity-50 disabled:pointer-events-none"
             >
               Save rule
             </button>

@@ -296,13 +296,13 @@ describe('numeric score-tier dark-theme tokens', () => {
   it.each([95, 80, 60, 20])('gives the score-%d tier text & gauge stroke a dark variant', (score) => {
     const tier = getNumericScoreTier(score);
     expect(followsDarkTheme(tier.textClass)).toBe(true);
-    expect(hasDarkVariant(tier.gaugeStrokeClass)).toBe(true);
+    expect(followsDarkTheme(tier.gaugeStrokeClass)).toBe(true);
   });
 
   it('gives every legend band a dark variant on its surface tints', () => {
     for (const band of NUMERIC_SCORE_TIER_LEGEND) {
       expect(followsDarkTheme(band.textClass)).toBe(true);
-      expect(hasDarkVariant(band.gaugeStrokeClass)).toBe(true);
+      expect(followsDarkTheme(band.gaugeStrokeClass)).toBe(true);
     }
   });
 

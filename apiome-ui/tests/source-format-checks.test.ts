@@ -65,8 +65,8 @@ describe('presentation helpers', () => {
   });
 
   it('returns token classes for outcomes', () => {
-    expect(outcomeChipClass('passed')).toContain('emerald');
-    expect(outcomeChipClass('unavailable')).toContain('rose');
-    expect(outcomeChipClass('not_run')).toContain('gray');
+    expect(outcomeChipClass('passed')).toContain('ok');
+    expect(outcomeChipClass('unavailable')).toContain('danger');
+    expect(outcomeChipClass('not_run')).toContain('subtle');
   });
 });

@@ -328,7 +328,7 @@ function ProvenanceStrip({
         <span
           data-testid="catalog-lint-provenance-source"
           className={cn(
-            'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+            'inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
             provenance.stale
               ? 'bg-warn-soft text-warn-fg'
               : 'bg-inset text-fg',
@@ -507,7 +507,7 @@ function TierSection({
         <h4 className="flex items-center gap-2 text-sm font-semibold text-fg">
           <span
             className={cn(
-              'inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 text-2xs font-bold uppercase tracking-wide',
+              'inline-flex items-center gap-1.5 rounded-xs px-1.5 py-0.5 text-2xs font-bold uppercase tracking-wide',
               meta.badgeClass,
             )}
           >
@@ -868,7 +868,7 @@ export function CatalogLintPanel({
             data-testid="catalog-detail-quality-history"
             onClick={onOpenQualityHistory}
             disabled={!qualityAvailable}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:text-fg disabled:hover:bg-white"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-fg transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:text-fg disabled:hover:bg-surface"
           >
             <History className="h-4 w-4 text-accent" /> Quality history
           </button>
@@ -1192,7 +1192,7 @@ export function CatalogLintPanel({
         onClose={() => {
           if (!waiveSaving) setWaiveTarget(null);
         }}
-        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
         className="w-full max-w-md rounded-xl border border-border bg-surface p-5 shadow-lg"
         data-testid="catalog-lint-waive-dialog"
       >

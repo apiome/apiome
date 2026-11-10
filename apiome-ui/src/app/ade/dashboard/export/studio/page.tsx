@@ -75,7 +75,7 @@ function ExportStudioRouteContent() {
   if (!session) {
     return (
       <main className="p-6">
-        <p className="text-slate-600 dark:text-slate-400">Sign in to use the Export Studio.</p>
+        <p className="text-fg-muted">Sign in to use the Export Studio.</p>
       </main>
     );
   }

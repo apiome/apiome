@@ -39,11 +39,11 @@ const SSO_PROVIDERS_URL = '/api/admin/sso/providers';
 
 /** The green chip for a provider sign-ins reach. */
 const LIVE_CHIP_CLASSES =
-  'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-2xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400';
+  'inline-flex items-center rounded-full border border-ok/30 bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg';
 
 /** The amber chip for an enabled provider with no verified domain yet. */
 const WAITING_CHIP_CLASSES =
-  'inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400';
+  'inline-flex items-center rounded-full border border-warn/30 bg-warn-soft px-2 py-0.5 text-2xs font-medium text-warn-fg';
 
 /**
  * Whether a list row has the shape the card renders (an id, a slug and a domains array).
@@ -61,7 +61,7 @@ function ErrorNote({ message }: { message: string }) {
   return (
     <p
       role="alert"
-      className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+      className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
     >
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
       <span>{message}</span>
@@ -108,11 +108,11 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+      <label htmlFor={id} className="text-sm font-medium text-fg-muted">
         {label}
       </label>
       {children}
-      {hint && <p className="text-xs text-slate-600 dark:text-slate-400">{hint}</p>}
+      {hint && <p className="text-xs text-fg-muted">{hint}</p>}
     </div>
   );
 }
@@ -145,21 +145,21 @@ function AddProviderForm({ onAdded, onCancel }: { onAdded: (view: AdminSsoProvid
     <form
       onSubmit={submit}
       aria-label="Add identity provider"
-      className="flex flex-col gap-4 rounded-md border border-slate-200 p-4 dark:border-slate-700"
+      className="flex flex-col gap-4 rounded-md border border-border p-4"
       data-testid="sso-add-form"
     >
       <fieldset disabled={saving}>
-        <legend className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Protocol</legend>
+        <legend className="mb-2 text-sm font-medium text-fg-muted">Protocol</legend>
         <div className="flex gap-4">
           {(['oidc', 'saml'] as const).map((protocol) => (
-            <label key={protocol} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+            <label key={protocol} className="flex items-center gap-2 text-sm text-fg-muted">
               <input
                 type="radio"
                 name={`${ids}-protocol`}
                 value={protocol}
                 checked={draft.protocol === protocol}
                 onChange={() => set('protocol', protocol)}
-                className="accent-indigo-600"
+                className="accent-accent"
               />
               {protocol === 'oidc' ? 'OIDC' : 'SAML 2.0'}
             </label>
@@ -266,7 +266,7 @@ function AddProviderForm({ onAdded, onCancel }: { onAdded: (view: AdminSsoProvid
             />
           </Field>
           <fieldset disabled={saving}>
-            <legend className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">Email address comes from</legend>
+            <legend className="mb-2 text-sm font-medium text-fg-muted">Email address comes from</legend>
             <div className="flex flex-wrap gap-4">
               {(
                 [
@@ -274,14 +274,14 @@ function AddProviderForm({ onAdded, onCancel }: { onAdded: (view: AdminSsoProvid
                   ['attribute', 'An attribute'],
                 ] as const
               ).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                <label key={value} className="flex items-center gap-2 text-sm text-fg-muted">
                   <input
                     type="radio"
                     name={`${ids}-email-source`}
                     value={value}
                     checked={draft.emailSource === value}
                     onChange={() => set('emailSource', value)}
-                    className="accent-indigo-600"
+                    className="accent-accent"
                   />
                   {label}
                 </label>
@@ -367,7 +367,7 @@ function ProviderRow({
   return (
     <li className="flex flex-col gap-3 py-4" data-testid={`sso-provider-${view.slug}`}>
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">{view.display_name}</span>
+        <span className="text-sm font-semibold text-fg">{view.display_name}</span>
         <span className={NEUTRAL_CHIP_CLASSES}>{view.protocol === 'oidc' ? 'OIDC' : 'SAML 2.0'}</span>
         {view.routable ? (
           <span className={LIVE_CHIP_CLASSES}>Live</span>
@@ -376,31 +376,31 @@ function ProviderRow({
         ) : (
           <span className={NEUTRAL_CHIP_CLASSES}>Disabled</span>
         )}
-        <span className="ml-auto font-mono text-xs text-slate-500 dark:text-slate-400">{view.identity_kind}</span>
+        <span className="ml-auto font-mono text-xs text-fg-muted">{view.identity_kind}</span>
       </div>
-      <p className="text-xs text-slate-600 dark:text-slate-400">
+      <p className="text-xs text-fg-muted">
         {view.tenant_name ? `Workspace: ${view.tenant_name}. ` : ''}
         Issuer: <span className="font-mono">{view.issuer}</span>
       </p>
 
-      <dl className="grid gap-1 rounded-md bg-slate-50 p-3 text-xs dark:bg-slate-950">
+      <dl className="grid gap-1 rounded-md bg-subtle p-3 text-xs">
         {ssoSetupDetails(origin, view).map((detail) => (
           <div key={detail.label} className="flex flex-col sm:flex-row sm:gap-2">
-            <dt className="shrink-0 font-medium text-slate-700 dark:text-slate-300 sm:w-44">{detail.label}</dt>
-            <dd className="break-all font-mono text-slate-600 dark:text-slate-400">{detail.value}</dd>
+            <dt className="shrink-0 font-medium text-fg-muted sm:w-44">{detail.label}</dt>
+            <dd className="break-all font-mono text-fg-muted">{detail.value}</dd>
           </div>
         ))}
       </dl>
 
       <div className="flex flex-col gap-2">
-        <h4 className="text-sm font-medium text-slate-700 dark:text-slate-200">
-          Domains <span className="font-normal text-slate-500">({verifiedCount} verified)</span>
+        <h4 className="text-sm font-medium text-fg-muted">
+          Domains <span className="font-normal text-fg-muted">({verifiedCount} verified)</span>
         </h4>
         {view.domains.length > 0 && (
           <ul className="flex flex-col gap-1">
             {view.domains.map((d) => (
               <li key={d.domain} className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="font-mono text-slate-800 dark:text-slate-200">{d.domain}</span>
+                <span className="font-mono text-fg">{d.domain}</span>
                 {d.verified ? (
                   <span className={LIVE_CHIP_CLASSES}>Verified</span>
                 ) : (
@@ -549,16 +549,16 @@ export default function SsoProvidersCard() {
   return (
     <section
       aria-label="Single sign-on"
-      className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      className="rounded-lg border border-border bg-surface"
       data-testid="sso-providers-card"
     >
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-          <Building2 size={ICON_SIZE.dense} className="text-slate-600 dark:text-slate-300" />
+      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-subtle">
+          <Building2 size={ICON_SIZE.dense} className="text-fg-muted" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Single sign-on</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <h3 className="text-sm font-semibold text-fg">Single sign-on</h3>
+          <p className="text-xs text-fg-muted">
             A workspace’s own SAML 2.0 or OIDC identity provider, for the email domains it owns.
           </p>
         </div>
@@ -581,7 +581,7 @@ export default function SsoProvidersCard() {
         )}
 
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-fg-muted">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading single sign-on providers…
           </div>
         )}
@@ -596,13 +596,13 @@ export default function SsoProvidersCard() {
         )}
 
         {!loading && !loadError && providers && providers.length === 0 && !adding && (
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-fg-muted">
             No identity providers yet. Add one, give it the email domains it owns, mark them verified and enable it.
           </p>
         )}
 
         {!loading && !loadError && providers && providers.length > 0 && (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="divide-y divide-border">
             {providers.map((view) => (
               <ProviderRow
                 key={view.id}

@@ -15,38 +15,38 @@ import { ExternalLink } from 'lucide-react';
  */
 export const githubMarkdownComponents: Components = {
   h1: ({ children }) => (
-    <h1 className="text-2xl font-bold mt-0 mb-5 text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-600 pb-3">
+    <h1 className="text-2xl font-bold mt-0 mb-5 text-fg border-b border-border pb-3">
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="text-xl font-semibold mt-8 mb-3 text-gray-900 dark:text-white">{children}</h2>
+    <h2 className="text-xl font-semibold mt-8 mb-3 text-fg">{children}</h2>
   ),
   h3: ({ children }) => (
-    <h3 className="text-lg font-semibold mt-6 mb-2 text-gray-900 dark:text-white">{children}</h3>
+    <h3 className="text-lg font-semibold mt-6 mb-2 text-fg">{children}</h3>
   ),
   p: ({ children }) => (
-    <p className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed">{children}</p>
+    <p className="mb-4 text-fg-muted leading-relaxed">{children}</p>
   ),
   ul: ({ children }) => (
-    <ul className="list-disc pl-6 mb-4 space-y-2 text-gray-700 dark:text-gray-300">{children}</ul>
+    <ul className="list-disc pl-6 mb-4 space-y-2 text-fg-muted">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="list-decimal pl-6 mb-4 space-y-2 text-gray-700 dark:text-gray-300">{children}</ol>
+    <ol className="list-decimal pl-6 mb-4 space-y-2 text-fg-muted">{children}</ol>
   ),
   li: ({ children }) => (
     <li className="leading-relaxed [&>p]:mb-0 [&>p]:inline">{children}</li>
   ),
   strong: ({ children }) => (
-    <strong className="font-semibold text-gray-900 dark:text-white">{children}</strong>
+    <strong className="font-semibold text-fg">{children}</strong>
   ),
-  em: ({ children }) => <em className="italic text-gray-800 dark:text-gray-200">{children}</em>,
+  em: ({ children }) => <em className="italic text-fg">{children}</em>,
   a: ({ href, children }) => (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline underline-offset-2"
+      className="inline-flex items-center gap-1 text-accent-fg hover:text-accent-fg hover:underline underline-offset-2"
     >
       {children}
       <ExternalLink className="w-3.5 h-3.5 shrink-0" aria-hidden />
@@ -60,7 +60,7 @@ export const githubMarkdownComponents: Components = {
     if (inline) {
       return (
         <code
-          className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-mono"
+          className="px-1.5 py-0.5 rounded-xs bg-subtle text-fg text-sm font-mono"
           {...props}
         >
           {children}
@@ -68,16 +68,16 @@ export const githubMarkdownComponents: Components = {
       );
     }
     return (
-      <div className="my-4 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+      <div className="my-4 rounded-lg overflow-hidden border border-border">
         {language && (
-          <div className="bg-gray-100 dark:bg-gray-800 px-3 py-1.5 border-b border-gray-200 dark:border-gray-600">
-            <span className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <div className="bg-subtle px-3 py-1.5 border-b border-border">
+            <span className="text-xs font-mono text-fg-muted uppercase tracking-wider">
               {language}
             </span>
           </div>
         )}
-        <pre className="bg-gray-50 dark:bg-gray-900 p-4 overflow-x-auto m-0 text-sm">
-          <code className="font-mono text-gray-800 dark:text-gray-200" {...props}>
+        <pre className="bg-subtle p-4 overflow-x-auto m-0 text-sm">
+          <code className="font-mono text-fg" {...props}>
             {children}
           </code>
         </pre>
@@ -86,30 +86,30 @@ export const githubMarkdownComponents: Components = {
   },
   pre: ({ children }) => <>{children}</>,
   blockquote: ({ children }) => (
-    <blockquote className="border-l-4 border-indigo-500 dark:border-indigo-400 pl-4 my-4 italic text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 py-2 rounded-r">
+    <blockquote className="border-l-4 border-accent pl-4 my-4 italic text-fg-muted bg-subtle py-2 rounded-r">
       {children}
     </blockquote>
   ),
-  hr: () => <hr className="my-6 border-0 border-t border-gray-200 dark:border-gray-600" />,
+  hr: () => <hr className="my-6 border-0 border-t border-border" />,
   table: ({ children }) => (
-    <div className="my-4 overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-600">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-600">{children}</table>
+    <div className="my-4 overflow-x-auto rounded-lg border border-border">
+      <table className="min-w-full divide-y divide-border">{children}</table>
     </div>
   ),
-  thead: ({ children }) => <thead className="bg-gray-50 dark:bg-gray-800">{children}</thead>,
+  thead: ({ children }) => <thead className="bg-subtle">{children}</thead>,
   th: ({ children }) => (
-    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+    <th className="px-4 py-3 text-left text-xs font-semibold text-fg-muted uppercase tracking-wider">
       {children}
     </th>
   ),
   tr: ({ children }) => (
-    <tr className="border-b border-gray-200 dark:border-gray-600 last:border-0">{children}</tr>
+    <tr className="border-b border-border last:border-0">{children}</tr>
   ),
   td: ({ children }) => (
-    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{children}</td>
+    <td className="px-4 py-3 text-sm text-fg-muted">{children}</td>
   ),
   tbody: ({ children }) => (
-    <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
+    <tbody className="divide-y divide-border bg-surface">
       {children}
     </tbody>
   ),
@@ -117,7 +117,7 @@ export const githubMarkdownComponents: Components = {
     <img
       src={src}
       alt={alt || ''}
-      className="max-w-full h-auto rounded-lg my-4 shadow-sm border border-gray-200 dark:border-gray-600"
+      className="max-w-full h-auto rounded-lg my-4 shadow-sm border border-border"
     />
   ),
 };

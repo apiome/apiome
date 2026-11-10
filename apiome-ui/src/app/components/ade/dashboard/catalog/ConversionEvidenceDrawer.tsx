@@ -65,7 +65,7 @@ export function StatusText({ presentation }: { presentation: StatusPresentation 
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+        'inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
         presentation.badgeClass,
       )}
     >
@@ -135,7 +135,7 @@ export function ConversionEvidenceDrawer({
             </span>
           )}
           {row && (
-            <span className="rounded bg-inset px-1.5 py-0.5 text-2xs font-semibold text-fg-muted">
+            <span className="rounded-xs bg-inset px-1.5 py-0.5 text-2xs font-semibold text-fg-muted">
               {CONVERSION_SCOPE_LABEL[row.scope]} evidence
             </span>
           )}
@@ -216,7 +216,7 @@ function DrawerBody({
           )}
           {row.reason && (
             <span
-              className="rounded bg-inset px-1.5 py-0.5 font-mono text-2xs text-fg-muted"
+              className="rounded-xs bg-inset px-1.5 py-0.5 font-mono text-2xs text-fg-muted"
               data-testid="conversion-projection-reason"
             >
               {row.reason}

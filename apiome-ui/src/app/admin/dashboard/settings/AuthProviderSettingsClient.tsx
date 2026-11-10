@@ -55,6 +55,8 @@ import { ModalFrame, ModalFrameTitle } from '@/app/components/ui/ModalFrame';
 import SignupPolicyCard from './SignupPolicyCard';
 import SsoProvidersCard from './SsoProvidersCard';
 import { INPUT_CLASSES, SECONDARY_BUTTON_CLASSES } from './settingsStyles';
+import { Button } from '@/app/components/ui/Button';
+import { Input } from '@/app/components/ui/Input';
 
 /** The three admin-selectable enablement states (mirrors `enabled: true | false | null`). */
 type EnablementChoice = 'on' | 'off' | 'env';
@@ -87,7 +89,7 @@ function extrasFromView(view: AdminProviderConfigView): Record<string, string> {
 /** Small slate chip marking a field whose effective value comes from `.env` (OLO-8.5). */
 function FallbackBadge() {
   return (
-    <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-2xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+    <span className="inline-flex items-center rounded-full border border-border-strong bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted">
       using .env fallback
     </span>
   );
@@ -97,20 +99,20 @@ function FallbackBadge() {
 function EnablementChip({ enabled }: { enabled: boolean | null }) {
   if (enabled === true) {
     return (
-      <span className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-2xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400">
+      <span className="inline-flex items-center rounded-full border border-ok/30 bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg">
         Enabled (database)
       </span>
     );
   }
   if (enabled === false) {
     return (
-      <span className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-2xs font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400">
+      <span className="inline-flex items-center rounded-full border border-danger/30 bg-danger-soft px-2 py-0.5 text-2xs font-medium text-danger-fg">
         Disabled (database)
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-2xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+    <span className="inline-flex items-center rounded-full border border-border-strong bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted">
       Env-derived
     </span>
   );
@@ -118,7 +120,7 @@ function EnablementChip({ enabled }: { enabled: boolean | null }) {
 
 /** Shared classes for the destructive (remove) confirmation button. */
 const DANGER_BUTTON_CLASSES =
-  'inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-50';
+  'inline-flex items-center gap-1.5 rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-fg-on-accent transition-colors hover:bg-danger/90 disabled:cursor-not-allowed disabled:opacity-50';
 
 /** One option of the three-way enablement control. */
 function EnablementOption({
@@ -142,8 +144,8 @@ function EnablementOption({
       className={[
         'px-3 py-1 text-sm font-medium transition-colors first:rounded-l-md last:rounded-r-md',
         active
-          ? 'bg-indigo-600 text-white'
-          : 'bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800',
+          ? 'bg-accent text-fg-on-accent'
+          : 'bg-surface text-fg-muted hover:bg-subtle',
         'disabled:cursor-not-allowed disabled:opacity-50',
       ].join(' ')}
     >
@@ -305,15 +307,15 @@ function AddProviderModal({
 
   return (
     <>
-      <button
+      <Button
         type="button"
         aria-haspopup="dialog"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        variant="accent" size="sm"
       >
         <Plus className="h-4 w-4" /> Add Provider
-      </button>
+      </Button>
 
       {/* A Radix dialog under the existing look (HIVE-10.2): focus is trapped while open and
           returns to "Add Provider" on close; Escape and the backdrop close it. */}
@@ -321,12 +323,12 @@ function AddProviderModal({
         open={open}
         onClose={closeModal}
         label="Add a sign-in provider"
-        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+        overlayClassName="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+        className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
       >
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
               <ModalFrameTitle asChild>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                <h3 className="text-lg font-semibold text-fg">
                   {selected ? `Configure ${selected.label}` : 'Add Provider'}
                 </h3>
               </ModalFrameTitle>
@@ -334,7 +336,7 @@ function AddProviderModal({
                 type="button"
                 aria-label="Close"
                 onClick={closeModal}
-                className="text-slate-500 transition-colors hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                className="text-fg-muted transition-colors hover:text-fg"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -343,14 +345,14 @@ function AddProviderModal({
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
               {!selected ? (
                 candidates.length === 0 ? (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="text-sm text-fg-muted">
                     All providers are already configured.
                   </p>
                 ) : (
                   <div className="flex flex-col gap-3">
                     <div className="relative">
-                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                      <input
+                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fg-subtle" />
+                      <Input
                         type="text"
                         autoFocus
                         value={query}
@@ -365,16 +367,16 @@ function AddProviderModal({
                         }}
                         placeholder="Search providers…"
                         aria-label="Search providers"
-                        className="w-full rounded-md border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-600"
+                        className="pl-8 pr-3"
                       />
                     </div>
                     <div
                       role="listbox"
                       aria-label="Available providers"
-                      className="max-h-80 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700"
+                      className="max-h-80 overflow-y-auto rounded-md border border-border"
                     >
                       {filtered.length === 0 ? (
-                        <p className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                        <p className="px-3 py-2 text-sm text-fg-muted">
                           No providers match &ldquo;{query.trim()}&rdquo;.
                         </p>
                       ) : (
@@ -385,11 +387,11 @@ function AddProviderModal({
                             <>
                               <brand.Icon size={ICON_SIZE.button} className={brand.iconClassName} />
                               <span className="min-w-0 flex-1 truncate">{candidate.label}</span>
-                              <span className="truncate text-xs text-slate-400 dark:text-slate-500">
+                              <span className="truncate text-xs text-fg-subtle">
                                 {candidate.provider_id}
                               </span>
                               {comingSoon && (
-                                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400">
+                                <span className="inline-flex items-center rounded-full border border-warn/30 bg-warn-soft px-2 py-0.5 text-2xs font-medium text-warn-fg">
                                   Coming soon
                                 </span>
                               )}
@@ -404,7 +406,7 @@ function AddProviderModal({
                                 role="option"
                                 aria-selected={false}
                                 aria-disabled="true"
-                                className="flex w-full cursor-not-allowed items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 opacity-50 dark:text-slate-200"
+                                className="flex w-full cursor-not-allowed items-center gap-2.5 px-3 py-2.5 text-left text-sm text-fg-muted opacity-50"
                               >
                                 {content}
                               </div>
@@ -417,7 +419,7 @@ function AddProviderModal({
                               role="option"
                               aria-selected={false}
                               onClick={() => pick(candidate)}
-                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-fg-muted transition-colors hover:bg-subtle"
                             >
                               {content}
                             </button>
@@ -433,16 +435,16 @@ function AddProviderModal({
                     {(() => {
                       const brand = getProviderBrand(selected.provider_id);
                       return (
-                        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-subtle">
                           <brand.Icon size={ICON_SIZE.dense} className={brand.iconClassName} />
                         </span>
                       );
                     })()}
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      <p className="text-sm font-semibold text-fg">
                         {selected.label}
                       </p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                      <p className="text-xs text-fg-muted">
                         {selected.provider_id}
                       </p>
                     </div>
@@ -450,13 +452,13 @@ function AddProviderModal({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <span className="w-32 shrink-0 text-sm font-medium text-fg-muted">
                       Enablement
                     </span>
                     <div
                       role="radiogroup"
                       aria-label={`${selected.label} enablement`}
-                      className="inline-flex divide-x divide-slate-300 overflow-hidden rounded-md border border-slate-300 dark:divide-slate-700 dark:border-slate-700"
+                      className="inline-flex divide-x divide-border-strong overflow-hidden rounded-md border border-border-strong"
                     >
                       <EnablementOption
                         label="Enabled"
@@ -492,7 +494,7 @@ function AddProviderModal({
                   <div className="flex flex-wrap items-center gap-3">
                     <label
                       htmlFor="add-provider-client-id"
-                      className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+                      className="w-32 shrink-0 text-sm font-medium text-fg-muted"
                     >
                       Client ID
                     </label>
@@ -516,7 +518,7 @@ function AddProviderModal({
                   <div className="flex flex-wrap items-center gap-3">
                     <label
                       htmlFor="add-provider-client-secret"
-                      className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+                      className="w-32 shrink-0 text-sm font-medium text-fg-muted"
                     >
                       Client secret
                     </label>
@@ -534,12 +536,12 @@ function AddProviderModal({
                         setSecretInput(event.target.value);
                       }}
                     />
-                    <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-2xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                    <span className="inline-flex items-center rounded-full border border-border-strong bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted">
                       Secret: not set
                     </span>
                     {selected.secret_source === 'env-fallback' && <FallbackBadge />}
                   </div>
-                  <p className="-mt-2 pl-32 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="-mt-2 pl-32 text-xs text-fg-muted">
                     Write-only: the stored value is never shown.
                   </p>
 
@@ -550,7 +552,7 @@ function AddProviderModal({
                       <div key={field.envKey} className="flex flex-wrap items-center gap-3">
                         <label
                           htmlFor={`add-provider-extra-${field.envKey}`}
-                          className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+                          className="w-32 shrink-0 text-sm font-medium text-fg-muted"
                           title={field.envKey}
                         >
                           {field.label}
@@ -573,7 +575,7 @@ function AddProviderModal({
                               }));
                             }}
                           />
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <p className="mt-1 text-xs text-fg-muted">
                             {field.help} ({field.envKey})
                           </p>
                         </div>
@@ -585,7 +587,7 @@ function AddProviderModal({
                   {saveError && (
                     <div
                       role="alert"
-                      className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+                      className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
                     >
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                       <div>
@@ -603,7 +605,7 @@ function AddProviderModal({
               )}
             </div>
 
-            <div className="flex shrink-0 items-center gap-3 border-t border-slate-200 px-6 py-4 dark:border-slate-800">
+            <div className="flex shrink-0 items-center gap-3 border-t border-border px-6 py-4">
               {selected ? (
                 <>
                   <button
@@ -618,15 +620,15 @@ function AddProviderModal({
                   >
                     <ArrowLeft className="h-3.5 w-3.5" /> Back
                   </button>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => void handleSave()}
                     disabled={!dirty || saving}
-                    className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    variant="accent" size="sm"
                   >
                     {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     {saving ? 'Saving…' : 'Save'}
-                  </button>
+                  </Button>
                   <button
                     type="button"
                     onClick={closeModal}
@@ -817,7 +819,7 @@ function ProviderCard({
         setConfirmingRemove(true);
       }}
       disabled={saving || validating || removing || confirmingRemove}
-      className={`${SECONDARY_BUTTON_CLASSES} text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40`}
+      className={`${SECONDARY_BUTTON_CLASSES} text-danger-fg hover:bg-danger-soft`}
     >
       {removing ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -840,7 +842,7 @@ function ProviderCard({
       {removeError && (
         <div
           role="alert"
-          className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+          className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
         >
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{removeError}</p>
@@ -851,7 +853,7 @@ function ProviderCard({
         <div
           role="alert"
           aria-label={`Confirm removing ${view.label}`}
-          className="flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+          className="flex flex-col gap-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-3 text-sm text-danger-fg"
         >
           <div className="flex items-start gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -959,25 +961,25 @@ function ProviderCard({
     <section
       aria-label={`${view.label} provider configuration`}
       className={[
-        'rounded-lg border bg-white dark:bg-slate-900',
+        'rounded-lg border bg-surface',
         comingSoon
-          ? 'border-dashed border-slate-300 opacity-70 dark:border-slate-700'
-          : 'border-slate-200 dark:border-slate-800',
+          ? 'border-dashed border-border-strong opacity-70'
+          : 'border-border',
       ].join(' ')}
     >
       {/* Card header: brand, name, state chips */}
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-subtle">
           <brand.Icon size={ICON_SIZE.dense} className={brand.iconClassName} />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <h3 className="text-sm font-semibold text-fg">
             {view.label}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">{view.provider_id}</p>
+          <p className="text-xs text-fg-muted">{view.provider_id}</p>
         </div>
         {comingSoon ? (
-          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-2xs font-medium text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400">
+          <span className="inline-flex items-center rounded-full border border-warn/30 bg-warn-soft px-2 py-0.5 text-2xs font-medium text-warn-fg">
             Coming soon
           </span>
         ) : (
@@ -990,7 +992,7 @@ function ProviderCard({
         // it gets the remove action even though it has nothing to edit — otherwise that row would
         // be unreachable from this screen.
         <div className="flex flex-col gap-3 px-5 py-4">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-fg-muted">
             This provider is on the roadmap. Configuration will be available once its sign-in
             integration ships.
           </p>
@@ -1001,13 +1003,13 @@ function ProviderCard({
         <div className="flex flex-col gap-4 px-5 py-4">
           {/* Enablement */}
           <div className="flex flex-wrap items-center gap-3">
-            <span className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="w-32 shrink-0 text-sm font-medium text-fg-muted">
               Enablement
             </span>
             <div
               role="radiogroup"
               aria-label={`${view.label} enablement`}
-              className="inline-flex divide-x divide-slate-300 overflow-hidden rounded-md border border-slate-300 dark:divide-slate-700 dark:border-slate-700"
+              className="inline-flex divide-x divide-border-strong overflow-hidden rounded-md border border-border-strong"
             >
               <EnablementOption
                 label="Enabled"
@@ -1039,7 +1041,7 @@ function ProviderCard({
             </div>
             {view.enabled === null && <FallbackBadge />}
           </div>
-          <p className="-mt-2 pl-32 text-xs text-slate-500 dark:text-slate-400">
+          <p className="-mt-2 pl-32 text-xs text-fg-muted">
             &ldquo;Enabled&rdquo; forces this provider on using the database credentials below;
             &ldquo;Use .env&rdquo; derives enablement from environment variables.
           </p>
@@ -1048,7 +1050,7 @@ function ProviderCard({
           <div className="flex flex-wrap items-center gap-3">
             <label
               htmlFor={`${view.provider_id}-client-id`}
-              className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+              className="w-32 shrink-0 text-sm font-medium text-fg-muted"
             >
               Client ID
             </label>
@@ -1073,7 +1075,7 @@ function ProviderCard({
           <div className="flex flex-wrap items-center gap-3">
             <label
               htmlFor={`${view.provider_id}-client-secret`}
-              className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+              className="w-32 shrink-0 text-sm font-medium text-fg-muted"
             >
               Client secret
             </label>
@@ -1099,17 +1101,17 @@ function ProviderCard({
               className={[
                 'inline-flex items-center rounded-full border px-2 py-0.5 text-2xs font-medium',
                 view.secret_set
-                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400'
-                  : 'border-slate-300 bg-slate-100 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400',
+                  ? 'border-ok/30 bg-ok-soft text-ok-fg'
+                  : 'border-border-strong bg-subtle text-fg-muted',
               ].join(' ')}
             >
               {view.secret_set ? 'Secret: set' : 'Secret: not set'}
             </span>
             {view.secret_source === 'env-fallback' && <FallbackBadge />}
           </div>
-          <div className="-mt-2 pl-32 text-xs text-slate-500 dark:text-slate-400">
+          <div className="-mt-2 pl-32 text-xs text-fg-muted">
             {clearSecret ? (
-              <span className="inline-flex items-center gap-2 text-amber-700 dark:text-amber-400">
+              <span className="inline-flex items-center gap-2 text-warn-fg">
                 The stored secret will be cleared on save; the provider then falls back to .env.
                 <button
                   type="button"
@@ -1128,7 +1130,7 @@ function ProviderCard({
                 {view.secret_set && (
                   <button
                     type="button"
-                    className="font-medium text-rose-600 underline dark:text-rose-400"
+                    className="font-medium text-danger-fg underline"
                     onClick={() => {
                       touch();
                       setSecretInput('');
@@ -1150,7 +1152,7 @@ function ProviderCard({
               <div key={field.envKey} className="flex flex-wrap items-center gap-3">
                 <label
                   htmlFor={`${view.provider_id}-extra-${field.envKey}`}
-                  className="w-32 shrink-0 text-sm font-medium text-slate-700 dark:text-slate-300"
+                  className="w-32 shrink-0 text-sm font-medium text-fg-muted"
                   title={field.envKey}
                 >
                   {field.label}
@@ -1173,7 +1175,7 @@ function ProviderCard({
                       }));
                     }}
                   />
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-1 text-xs text-fg-muted">
                     {field.help} ({field.envKey})
                   </p>
                 </div>
@@ -1186,7 +1188,7 @@ function ProviderCard({
           {saveError && (
             <div
               role="alert"
-              className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+              className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
             >
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <div>
@@ -1204,17 +1206,17 @@ function ProviderCard({
           {/* Validation result */}
           {validation &&
             (validation.discoveryError ? (
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <div className="flex items-start gap-2 rounded-md border border-warn/30 bg-warn-soft px-3 py-2 text-sm text-warn-fg">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{validation.discoveryError}</p>
               </div>
             ) : validation.canEnable ? (
-              <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <div className="flex items-start gap-2 rounded-md border border-ok/30 bg-ok-soft px-3 py-2 text-sm text-ok-fg">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>Database configuration is complete — this provider can be enabled.</p>
               </div>
             ) : (
-              <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <div className="flex items-start gap-2 rounded-md border border-warn/30 bg-warn-soft px-3 py-2 text-sm text-warn-fg">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>
                   Not ready to enable — missing: {validation.missing.join(', ')}. Save the
@@ -1228,16 +1230,16 @@ function ProviderCard({
           {removeNotices}
 
           {/* Actions */}
-          <div className="flex items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
-            <button
+          <div className="flex items-center gap-3 border-t border-border pt-3">
+            <Button
               type="button"
               onClick={handleSave}
               disabled={!dirty || saving || removing}
-              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+              variant="accent" size="sm"
             >
               {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
               {saving ? 'Saving…' : 'Save'}
-            </button>
+            </Button>
             <button
               type="button"
               onClick={handleValidate}
@@ -1253,12 +1255,12 @@ function ProviderCard({
             </button>
             {removeButton}
             {justSaved && (
-              <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-sm font-medium text-ok-fg">
                 <CheckCircle2 className="h-4 w-4" /> Saved
               </span>
             )}
             {view.updated_at && (
-              <span className="ml-auto text-xs text-slate-400 dark:text-slate-500">
+              <span className="ml-auto text-xs text-fg-subtle">
                 Last changed {new Date(view.updated_at).toLocaleString()}
                 {view.updated_by ? ` by ${view.updated_by}` : ''}
               </span>
@@ -1334,13 +1336,13 @@ export default function AuthProviderSettingsClient() {
 
   return (
     <>
-      <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <header className="shrink-0 border-b border-border bg-surface">
         <div className="flex items-start justify-between gap-4 px-6 py-4">
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-fg">
               System settings
             </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-fg-muted">
               Sign-up policy, single sign-on and sign-in providers — database values override
               .env; blank fields fall back to .env.
             </p>
@@ -1353,7 +1355,7 @@ export default function AuthProviderSettingsClient() {
         </div>
       </header>
 
-      <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-subtle p-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-4">
           <SignupPolicyCard />
 
@@ -1361,7 +1363,7 @@ export default function AuthProviderSettingsClient() {
           <SsoProvidersCard />
 
           {loading && (
-            <div className="flex items-center gap-2 py-10 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 py-10 text-sm text-fg-muted">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading provider configuration…
             </div>
           )}
@@ -1369,7 +1371,7 @@ export default function AuthProviderSettingsClient() {
           {!loading && loadError && (
             <div
               role="alert"
-              className="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+              className="flex items-start gap-3 rounded-lg border border-danger/30 bg-danger-soft p-4 text-sm text-danger-fg"
             >
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
               <div className="flex-1">
@@ -1386,11 +1388,11 @@ export default function AuthProviderSettingsClient() {
           )}
 
           {!loading && !loadError && visibleProviders.length === 0 && (
-            <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-slate-300 bg-white px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <div className="flex flex-col items-center gap-1 rounded-lg border border-dashed border-border-strong bg-surface px-6 py-10 text-center">
+              <p className="text-sm font-medium text-fg-muted">
                 No providers configured.
               </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-fg-muted">
                 Click Add to add a new provider.
               </p>
             </div>

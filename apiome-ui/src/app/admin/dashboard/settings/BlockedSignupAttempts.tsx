@@ -61,7 +61,7 @@ export default function BlockedSignupAttempts() {
   return (
     <section aria-labelledby={headingId} className="flex flex-col gap-2" data-testid="blocked-signups">
       <div className="flex items-center gap-3">
-        <h4 id={headingId} className="text-sm font-medium text-slate-700 dark:text-slate-200">
+        <h4 id={headingId} className="text-sm font-medium text-fg-muted">
           Recent blocked sign-ups
         </h4>
         <button
@@ -76,21 +76,21 @@ export default function BlockedSignupAttempts() {
       </div>
 
       {error && (
-        <p role="alert" className="text-sm text-rose-700 dark:text-rose-400">
+        <p role="alert" className="text-sm text-danger-fg">
           {error}
         </p>
       )}
 
       {!error && attempts && attempts.length === 0 && (
-        <p className="text-sm text-slate-600 dark:text-slate-400" data-testid="blocked-signups-empty">
+        <p className="text-sm text-fg-muted" data-testid="blocked-signups-empty">
           No sign-ups have been blocked.
         </p>
       )}
 
       {!error && attempts && attempts.length > 0 && (
-        <div className="overflow-x-auto rounded-md border border-slate-200 dark:border-slate-700">
+        <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-slate-50 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <thead className="bg-subtle text-xs text-fg-muted">
               <tr>
                 <th scope="col" className="px-3 py-2 font-medium">When</th>
                 <th scope="col" className="px-3 py-2 font-medium">Reason</th>
@@ -99,7 +99,7 @@ export default function BlockedSignupAttempts() {
                 <th scope="col" className="px-3 py-2 font-medium">Client</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700 dark:divide-slate-800 dark:text-slate-200">
+            <tbody className="divide-y divide-border text-fg-muted">
               {attempts.map((attempt) => (
                 <tr key={attempt.id} data-testid="blocked-signup-row">
                   <td className="whitespace-nowrap px-3 py-2">

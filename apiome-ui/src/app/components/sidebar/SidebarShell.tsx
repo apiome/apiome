@@ -175,7 +175,7 @@ export function SidebarSectionLabel({
     <div className={['flex items-center justify-between px-1 mb-1.5', className ?? ''].join(' ')}>
       <span className={sidebarTheme.sectionLabel}>{children}</span>
       {trailing != null && (
-        <span className="text-2xs text-slate-400 dark:text-slate-500 tabular-nums">
+        <span className="text-2xs text-fg-subtle tabular-nums">
           {trailing}
         </span>
       )}

@@ -14,8 +14,6 @@
   "src/app/ade/migration/components/DataInspectionView.tsx",
   "src/app/ade/migration/components/MigrationPlanView.tsx",
   "src/app/ade/migration/components/MigrationSidebar.tsx",
-  "src/app/admin/AdminLoginClient.tsx",
-  "src/app/admin/dashboard/components/FeatureFlagUserOverridesPanel.tsx",
   "src/app/admin/dashboard/licenses/LicenseManagementClient.tsx",
   "src/app/admin/dashboard/settings/AuthProviderSettingsClient.tsx",
   "src/app/admin/dashboard/settings/SignupPolicyCard.tsx",

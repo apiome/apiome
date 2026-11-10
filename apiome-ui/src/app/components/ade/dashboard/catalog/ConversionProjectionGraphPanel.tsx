@@ -572,7 +572,7 @@ export function ConversionProjectionGraphPanel({
                   key={status}
                   data-testid={`conversion-projection-legend-${status}`}
                   className={cn(
-                    'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+                    'inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
                     p.badgeClass,
                   )}
                 >

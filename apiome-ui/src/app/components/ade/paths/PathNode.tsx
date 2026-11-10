@@ -278,13 +278,13 @@ const PathNode: React.FC<NodeProps> = ({ data, selected }) => {
     if (nodeType === 'path') return 'var(--node-accent-path)';
     if (color) {
       const colorMap: Record<string, string> = {
-        'bg-green-500': '#16a34a',
-        'bg-blue-500': '#2563eb',
-        'bg-orange-500': '#ea580c',
-        'bg-red-500': '#dc2626',
-        'bg-purple-500': '#9333ea',
-        'bg-gray-500': '#64748b',
-        'bg-yellow-500': '#eab308',
+        'bg-ok': '#16a34a',
+        'bg-accent': '#2563eb',
+        'bg-orange': '#ea580c',
+        'bg-danger': '#dc2626',
+        'bg-violet': '#9333ea',
+        'bg-fg-subtle': '#64748b',
+        'bg-warn': '#eab308',
       };
       return colorMap[color] || 'var(--node-accent)';
     }

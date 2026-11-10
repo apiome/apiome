@@ -745,7 +745,7 @@ export function CatalogFormatDetailPanel({
           </span>
           <span className="truncate font-mono">{analysisNodeLabel(row.node)}</span>
           {row.node.redacted ? (
-            <span className="shrink-0 rounded bg-violet-soft px-1 py-0.5 text-2xs font-semibold uppercase text-violet-fg">
+            <span className="shrink-0 rounded-xs bg-violet-soft px-1 py-0.5 text-2xs font-semibold uppercase text-violet-fg">
               redacted
             </span>
           ) : null}
@@ -753,7 +753,7 @@ export function CatalogFormatDetailPanel({
             <span
               data-testid="catalog-format-detail-node-presence"
               data-presence={presence}
-              className="shrink-0 rounded bg-accent-soft px-1 py-0.5 text-2xs font-semibold uppercase text-accent-fg"
+              className="shrink-0 rounded-xs bg-accent-soft px-1 py-0.5 text-2xs font-semibold uppercase text-accent-fg"
             >
               {presenceBadge.label}
             </span>
@@ -761,7 +761,7 @@ export function CatalogFormatDetailPanel({
           {worst ? (
             <span
               data-testid="catalog-format-detail-node-warning"
-              className="shrink-0 rounded bg-warn-soft px-1 py-0.5 text-2xs font-semibold uppercase text-warn-fg"
+              className="shrink-0 rounded-xs bg-warn-soft px-1 py-0.5 text-2xs font-semibold uppercase text-warn-fg"
             >
               {(SEVERITY_META[worst.severity] ?? SEVERITY_META.warning).label}
               {warnings.length > 1 ? ` ×${warnings.length}` : ''}
@@ -1014,7 +1014,7 @@ export function CatalogFormatDetailPanel({
                   data-testid="catalog-format-detail-filter-clear"
                   onClick={() => setFilter('')}
                   aria-label="Clear the structure filter"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-fg-muted motion-safe:transition-colors hover:text-fg"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xs p-0.5 text-fg-muted motion-safe:transition-colors hover:text-fg"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>
@@ -1149,7 +1149,7 @@ export function CatalogFormatDetailPanel({
               {selectedValue.value !== null ? (
                 <pre
                   data-testid="catalog-format-detail-node-value"
-                  className="mt-1 overflow-x-auto rounded bg-subtle p-2 font-mono text-2xs text-fg"
+                  className="mt-1 overflow-x-auto rounded-xs bg-subtle p-2 font-mono text-2xs text-fg"
                 >
                   {selectedValue.value}
                 </pre>

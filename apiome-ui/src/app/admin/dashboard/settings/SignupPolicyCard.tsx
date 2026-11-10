@@ -53,11 +53,11 @@ const SIGNUP_POLICY_URL = '/api/admin/signup-policy';
 
 /** Colour classes of the header chip, per effective mode. */
 const MODE_CHIP_CLASSES: Record<SignupMode, string> = {
-  open: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400',
+  open: 'border-ok/30 bg-ok-soft text-ok-fg',
   invite_only:
-    'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-400',
+    'border-warn/30 bg-warn-soft text-warn-fg',
   closed:
-    'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-400',
+    'border-danger/30 bg-danger-soft text-danger-fg',
 };
 
 /**
@@ -216,15 +216,15 @@ export default function SignupPolicyCard() {
   return (
     <section
       aria-label="Sign-up policy"
-      className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      className="rounded-lg border border-border bg-surface"
     >
-      <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
-          <UserPlus size={ICON_SIZE.dense} className="text-slate-600 dark:text-slate-300" />
+      <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+        <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-subtle">
+          <UserPlus size={ICON_SIZE.dense} className="text-fg-muted" />
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Sign-up</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <h3 className="text-sm font-semibold text-fg">Sign-up</h3>
+          <p className="text-xs text-fg-muted">
             Who can create an account, by email or any sign-in provider.
           </p>
         </div>
@@ -242,7 +242,7 @@ export default function SignupPolicyCard() {
 
       <div className="flex flex-col gap-4 px-5 py-4">
         {loading && (
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 text-sm text-fg-muted">
             <Loader2 className="h-4 w-4 animate-spin" /> Loading the sign-up policy…
           </div>
         )}
@@ -250,7 +250,7 @@ export default function SignupPolicyCard() {
         {!loading && loadError && (
           <div
             role="alert"
-            className="flex items-start gap-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+            className="flex items-start gap-3 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <div className="flex-1">
@@ -269,14 +269,14 @@ export default function SignupPolicyCard() {
         {!loading && !loadError && view && (
           <>
             <fieldset disabled={saving}>
-              <legend className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-200">
+              <legend className="mb-2 text-sm font-medium text-fg-muted">
                 Who can create an account
               </legend>
               <div className="grid gap-2 sm:grid-cols-3">
                 {SIGNUP_MODE_OPTIONS.map((option) => (
                   <label
                     key={option.mode}
-                    className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 px-3 py-2 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50 dark:border-slate-700 dark:has-[:checked]:bg-indigo-950/40"
+                    className="flex cursor-pointer items-start gap-3 rounded-md border border-border px-3 py-2 has-[:checked]:border-accent has-[:checked]:bg-accent-soft"
                   >
                     <input
                       type="radio"
@@ -287,13 +287,13 @@ export default function SignupPolicyCard() {
                         setMode(option.mode);
                         touch();
                       }}
-                      className="mt-1 accent-indigo-600"
+                      className="mt-1 accent-accent"
                     />
                     <span className="min-w-0">
-                      <span className="block text-sm font-medium text-slate-900 dark:text-slate-100">
+                      <span className="block text-sm font-medium text-fg">
                         {option.label}
                       </span>
-                      <span className="block text-sm text-slate-600 dark:text-slate-400">
+                      <span className="block text-sm text-fg-muted">
                         {option.description}
                       </span>
                     </span>
@@ -305,7 +305,7 @@ export default function SignupPolicyCard() {
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor={domainsId}
-                className="text-sm font-medium text-slate-700 dark:text-slate-200"
+                className="text-sm font-medium text-fg-muted"
               >
                 Allowed email domains
               </label>
@@ -324,13 +324,13 @@ export default function SignupPolicyCard() {
                 aria-invalid={domainsError ? true : undefined}
                 className={`${INPUT_CLASSES} font-mono`}
               />
-              <p id={domainsHelpId} className="text-xs text-slate-600 dark:text-slate-400">
+              <p id={domainsHelpId} className="text-xs text-fg-muted">
                 {mode === 'open'
                   ? 'Only addresses at these domains can sign up. Leave empty to allow any domain. Enter one domain per line; subdomains are listed separately.'
                   : 'Applies only while sign-up is Open.'}
               </p>
               {domainsError && (
-                <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">
+                <p role="alert" className="text-xs text-danger-fg">
                   {domainsError}
                 </p>
               )}
@@ -339,7 +339,7 @@ export default function SignupPolicyCard() {
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor={blockedId}
-                className="text-sm font-medium text-slate-700 dark:text-slate-200"
+                className="text-sm font-medium text-fg-muted"
               >
                 Blocked email domains
               </label>
@@ -359,11 +359,11 @@ export default function SignupPolicyCard() {
                 className={`${INPUT_CLASSES} font-mono`}
                 data-testid="signup-blocked-domains"
               />
-              <p id={blockedHelpId} className="text-xs text-slate-600 dark:text-slate-400">
+              <p id={blockedHelpId} className="text-xs text-fg-muted">
                 {`Email sign-up refuses these domains and their subdomains, on top of the ${BUNDLED_DISPOSABLE_EMAIL_DOMAINS.length} disposable-email domains Apiome always blocks. Sign-up with a provider is not affected. Enter one domain per line.`}
               </p>
               {blockedError && (
-                <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">
+                <p role="alert" className="text-xs text-danger-fg">
                   {blockedError}
                 </p>
               )}
@@ -372,14 +372,14 @@ export default function SignupPolicyCard() {
             {saveError && (
               <div
                 role="alert"
-                className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300"
+                className="flex items-start gap-2 rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
               >
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{saveError}</p>
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 dark:border-slate-800">
+            <div className="flex flex-wrap items-center gap-3 border-t border-border pt-3">
               <button
                 type="button"
                 onClick={() => void handleSave()}
@@ -402,12 +402,12 @@ export default function SignupPolicyCard() {
               {justSaved && (
                 <span
                   role="status"
-                  className="inline-flex items-center gap-1 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-ok-fg"
                 >
                   <CheckCircle2 className="h-4 w-4" /> Saved
                 </span>
               )}
-              <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+              <span className="ml-auto text-xs text-fg-muted">
                 {stored
                   ? view.updated_at
                     ? `Last changed ${new Date(view.updated_at).toLocaleString()}${view.updated_by ? ` by ${view.updated_by}` : ''}`
@@ -416,7 +416,7 @@ export default function SignupPolicyCard() {
               </span>
             </div>
 
-            <div className="border-t border-slate-100 pt-3 dark:border-slate-800">
+            <div className="border-t border-border pt-3">
               <BlockedSignupAttempts />
             </div>
           </>

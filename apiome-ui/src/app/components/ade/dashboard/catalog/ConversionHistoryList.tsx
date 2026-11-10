@@ -80,7 +80,7 @@ export function ConversionHistoryList({
               {row.fidelityGrade ? (
                 <span
                   data-testid="conversion-history-grade"
-                  className={cn('px-1.5 py-0.5 rounded text-2xs font-semibold', gradeChipClass(row.fidelityGrade))}
+                  className={cn('px-1.5 py-0.5 rounded-xs text-2xs font-semibold', gradeChipClass(row.fidelityGrade))}
                 >
                   {row.fidelityGrade}
                   {row.fidelityScore != null ? ` · ${row.fidelityScore}` : ''}
@@ -89,7 +89,7 @@ export function ConversionHistoryList({
               {row.reconverted ? (
                 <span
                   data-testid="conversion-history-reconverted"
-                  className="inline-flex items-center rounded bg-accent-soft px-1.5 py-0.5 text-2xs font-medium text-accent-fg"
+                  className="inline-flex items-center rounded-xs bg-accent-soft px-1.5 py-0.5 text-2xs font-medium text-accent-fg"
                 >
                   Re-converted
                 </span>

@@ -190,7 +190,7 @@ function ConstructList({
           {constructs.map((construct) => (
             <li
               key={construct}
-              className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-2xs text-fg"
+              className="rounded-xs border border-border bg-surface px-1.5 py-0.5 font-mono text-2xs text-fg"
             >
               {construct}
             </li>
@@ -346,7 +346,7 @@ export function FormatCapabilityPanel({
               {capability.canonical_projection.dropped_constructs.map((construct) => (
                 <li
                   key={construct}
-                  className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-2xs text-fg"
+                  className="rounded-xs border border-border bg-surface px-1.5 py-0.5 font-mono text-2xs text-fg"
                 >
                   {construct}
                 </li>

@@ -233,11 +233,11 @@ export const BUNDLE_ROLE_HINT: Record<BundleFileRole, string> = {
  * distinct hues so roles are told apart at a glance.
  */
 export const BUNDLE_ROLE_TONE: Record<BundleFileRole, string> = {
-  'entry-point': 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
-  dependency: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  unreferenced: 'bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300',
-  ignored: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  unreadable: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  'entry-point': 'bg-accent-soft text-accent-fg',
+  dependency: 'bg-ok-soft text-ok-fg',
+  unreferenced: 'bg-subtle text-fg-muted',
+  ignored: 'bg-warn-soft text-warn-fg',
+  unreadable: 'bg-danger-soft text-danger-fg',
 };
 
 /** Verdict label per verdict. */

@@ -186,7 +186,7 @@ exports[`Gauge matches its snapshot 1`] = `
       stroke-width="10"
     />
     <path
-      class="text-orange-500 dark:text-orange-400 transition-all duration-[var(--dur-slow)] ease-out"
+      class="text-orange-fg transition-all duration-[var(--dur-slow)] ease-out"
       d="M 27.47 92.53 A 46 46 0 0 1 82.79 20.04"
       fill="none"
       stroke="currentColor"

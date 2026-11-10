@@ -68,15 +68,15 @@ export interface ProviderBrand {
 
 /** Brand visuals per provider-registry id. */
 const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
-  github: { Icon: SiGithub, iconClassName: 'text-slate-800 dark:text-slate-100' },
-  gitlab: { Icon: SiGitlab, iconClassName: 'text-orange-600' },
+  github: { Icon: SiGithub, iconClassName: 'text-fg' },
+  gitlab: { Icon: SiGitlab, iconClassName: 'text-orange-fg' },
   azure: { Icon: MicrosoftIcon, iconClassName: '' },
-  google: { Icon: SiGoogle, iconClassName: 'text-blue-500' },
+  google: { Icon: SiGoogle, iconClassName: 'text-accent-fg' },
   okta: { Icon: SiOkta, iconClassName: 'text-[#007DC1]' },
-  aws: { Icon: SiAmazon, iconClassName: 'text-orange-500' },
+  aws: { Icon: SiAmazon, iconClassName: 'text-orange-fg' },
   keycloak: { Icon: SiKeycloak, iconClassName: 'text-[#008AAA]' },
   // Generic OIDC (OLO-9.6): key-style mark — no single vendor brand.
-  oidc: { Icon: KeyRound, iconClassName: 'text-slate-600 dark:text-slate-300' },
+  oidc: { Icon: KeyRound, iconClassName: 'text-fg-muted' },
   auth0: { Icon: SiAuth0, iconClassName: 'text-[#EB5424]' },
   line: { Icon: SiLine, iconClassName: 'text-[#06C755]' },
   vk: { Icon: SiVk, iconClassName: 'text-[#0077FF]' },
@@ -85,7 +85,7 @@ const PROVIDER_BRANDS: Record<string, ProviderBrand> = {
 /** Neutral fallback for provider ids without a brand entry (e.g. a legacy linked account). */
 const FALLBACK_BRAND: ProviderBrand = {
   Icon: KeyRound,
-  iconClassName: 'text-slate-400 dark:text-slate-500',
+  iconClassName: 'text-fg-subtle',
 };
 
 /**

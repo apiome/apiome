@@ -254,7 +254,7 @@ export const LLMChatPanel = forwardRef<{ abort: () => void } | null, LLMChatPane
                 // Inline code
                 return (
                   <code
-                    className="px-1.5 py-0.5 rounded bg-inset text-fg text-sm font-mono"
+                    className="px-1.5 py-0.5 rounded-xs bg-inset text-fg text-sm font-mono"
                     {...props}
                   >
                     {children}

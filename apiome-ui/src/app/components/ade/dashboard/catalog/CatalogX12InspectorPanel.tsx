@@ -171,7 +171,7 @@ function Separator({ separator }: { separator: X12Separator }) {
           </span>
         ) : (
           <>
-            <code className="rounded bg-subtle px-1.5 py-0.5 font-mono text-xs text-fg">
+            <code className="rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-xs text-fg">
               {separator.character}
             </code>
             <span className="font-mono text-2xs text-fg-muted">
@@ -274,7 +274,7 @@ function Group({
                         type="button"
                         data-testid="x12-transaction-reveal"
                         onClick={() => onRevealNode(transaction.node.id)}
-                        className="rounded text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        className="rounded-xs text-accent-fg underline decoration-dotted underline-offset-2 hover:decoration-solid focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       >
                         {transaction.setId ?? 'unnamed'}
                         <span className="sr-only"> — show this transaction set in the structure tree</span>
@@ -330,7 +330,7 @@ function Group({
                           <li
                             key={repeat.segmentId}
                             data-testid="x12-repeated-segment"
-                            className="inline-flex items-center gap-1 rounded bg-subtle px-1.5 py-0.5 font-mono text-2xs text-fg"
+                            className="inline-flex items-center gap-1 rounded-xs bg-subtle px-1.5 py-0.5 font-mono text-2xs text-fg"
                           >
                             {repeat.segmentId}
                             <span className="tabular-nums font-semibold">×{repeat.count}</span>

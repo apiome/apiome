@@ -255,18 +255,18 @@ export default function MigrationPlanView() {
     return (
       <div className="h-full flex flex-col min-h-0 p-6">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+          <div className="p-2 rounded-lg bg-accent-soft text-accent-fg">
             <ClipboardList className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Explorer</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <h2 className="text-lg font-semibold text-fg">Explorer</h2>
+            <p className="text-sm text-fg-muted">
               Explore datasets and preview before/after transformation for the selected schema.
             </p>
           </div>
         </div>
-        <div className="flex-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-center p-6">
-          <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+        <div className="flex-1 rounded-xl border border-border bg-subtle/50 flex items-center justify-center p-6">
+          <p className="text-fg-muted text-sm text-center">
             Select a class in the sidebar to explore records and see before/after data with rules applied.
           </p>
         </div>
@@ -277,21 +277,21 @@ export default function MigrationPlanView() {
   return (
     <div className="h-full flex flex-col min-h-0 overflow-hidden">
       {/* Top 30%: Stats when a record is selected, otherwise placeholder */}
-      <div className="flex-[0_0_30%] min-h-0 flex flex-col overflow-hidden border-b border-gray-200 dark:border-gray-700">
-        <div className="px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50 h-full flex items-center justify-center">
+      <div className="flex-[0_0_30%] min-h-0 flex flex-col overflow-hidden border-b border-border">
+        <div className="px-6 py-4 bg-subtle/50 h-full flex items-center justify-center">
           {!selectedRecord ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            <p className="text-sm text-fg-muted text-center">
               Select a record to evaluate the currently defined ruleset.
             </p>
           ) : (
             <div className="grid grid-cols-3 gap-4 w-full max-w-4xl">
-              <div className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
-                <div className="p-2 rounded-md bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3">
+                <div className="p-2 rounded-md bg-warn-soft text-warn-fg">
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Rules applied</p>
-                  <p className="text-xl font-semibold text-gray-900 dark:text-gray-100">{rulesAppliedCount}</p>
+                  <p className="text-xs font-medium text-fg-muted uppercase tracking-wide">Rules applied</p>
+                  <p className="text-xl font-semibold text-fg">{rulesAppliedCount}</p>
                 </div>
               </div>
               {[
@@ -301,37 +301,37 @@ export default function MigrationPlanView() {
                 const pct = percent ?? 0;
                 const colorClass =
                   percent == null
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                    ? 'bg-inset text-fg-muted'
                     : pct >= 70
-                      ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
+                      ? 'bg-ok-soft text-ok-fg'
                       : pct >= 40
-                        ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+                        ? 'bg-warn-soft text-warn-fg'
+                        : 'bg-inset text-fg-muted';
                 const barClass =
                   percent == null
-                    ? 'bg-gray-300 dark:bg-gray-600'
+                    ? 'bg-inset'
                     : pct >= 70
-                      ? 'bg-emerald-500 dark:bg-emerald-500'
+                      ? 'bg-ok'
                       : pct >= 40
-                        ? 'bg-amber-500 dark:bg-amber-500'
-                        : 'bg-gray-500 dark:bg-gray-500';
+                        ? 'bg-warn'
+                        : 'bg-fg-subtle';
                 return (
-                  <div key={label} className="flex flex-col gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
+                  <div key={label} className="flex flex-col gap-2 rounded-lg border border-border bg-surface px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-md shrink-0 ${colorClass}`}>
                         <ShieldCheck className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        <p className="text-xs font-medium text-fg-muted uppercase tracking-wide">
                           Data quality ({label})
                         </p>
-                        <p className="text-xl font-semibold text-gray-900 dark:text-gray-100 tabular-nums">
+                        <p className="text-xl font-semibold text-fg tabular-nums">
                           {percent != null ? `${percent}%` : '—'}
                         </p>
                       </div>
                     </div>
                     <div
-                      className="w-full h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden"
+                      className="w-full h-2 rounded-full bg-inset overflow-hidden"
                       role="progressbar"
                       aria-valuenow={percent ?? 0}
                       aria-valuemin={0}
@@ -354,7 +354,7 @@ export default function MigrationPlanView() {
       {/* Bottom 70%: search/paging, record list, before/after transform */}
       <div className="flex-[0_0_70%] min-h-0 flex flex-col overflow-hidden">
       {/* Record search and paging with next/prev */}
-      <div className="shrink-0 flex flex-wrap items-center gap-3 px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+      <div className="shrink-0 flex flex-wrap items-center gap-3 px-6 py-3 border-b border-border bg-surface">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <input
             type="text"
@@ -362,12 +362,12 @@ export default function MigrationPlanView() {
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            className="flex-1 min-w-0 max-w-xs px-3 py-2 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+            className="flex-1 min-w-0 max-w-xs px-3 py-2 rounded-md border border-border bg-surface text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent"
           />
           <button
             type="button"
             onClick={handleSearch}
-            className="shrink-0 p-2 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="shrink-0 p-2 rounded-md border border-border bg-surface text-fg-muted hover:bg-subtle"
             title="Search"
           >
             <Search className="w-4 h-4" />
@@ -375,7 +375,7 @@ export default function MigrationPlanView() {
           <button
             type="button"
             onClick={handleViewAll}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-border bg-surface text-sm text-fg-muted hover:bg-subtle"
           >
             <List className="w-4 h-4" />
             View all
@@ -386,40 +386,40 @@ export default function MigrationPlanView() {
             type="button"
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
-            className="px-2.5 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+            className="px-2.5 py-1.5 text-sm rounded-md border border-border disabled:opacity-50 text-fg-muted hover:bg-subtle disabled:hover:bg-transparent"
           >
             Page prev
           </button>
-          <span className="text-sm text-gray-500 dark:text-gray-400 tabular-nums">
+          <span className="text-sm text-fg-muted tabular-nums">
             Page {page} / {totalPages}
           </span>
           <button
             type="button"
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= totalPages}
-            className="px-2.5 py-1.5 text-sm rounded-md border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+            className="px-2.5 py-1.5 text-sm rounded-md border border-border disabled:opacity-50 text-fg-muted hover:bg-subtle disabled:hover:bg-transparent"
           >
             Page next
           </button>
         </div>
-        <div className="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 pl-3">
+        <div className="flex items-center gap-1 border-l border-border pl-3">
           <button
             type="button"
             onClick={goPrev}
             disabled={!hasPrev}
-            className="p-2 rounded-md border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+            className="p-2 rounded-md border border-border disabled:opacity-50 text-fg-muted hover:bg-subtle disabled:hover:bg-transparent"
             title="Previous record"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
-          <span className="text-sm text-gray-500 dark:text-gray-400 min-w-[6rem] text-center">
+          <span className="text-sm text-fg-muted min-w-[6rem] text-center">
             {selectedRecord ? `Record ${currentIndex + 1} of ${rows.length}` : 'Select a record'}
           </span>
           <button
             type="button"
             onClick={goNext}
             disabled={!hasNext}
-            className="p-2 rounded-md border border-gray-200 dark:border-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:hover:bg-transparent"
+            className="p-2 rounded-md border border-border disabled:opacity-50 text-fg-muted hover:bg-subtle disabled:hover:bg-transparent"
             title="Next record"
           >
             <ChevronRight className="w-5 h-5" />
@@ -430,13 +430,13 @@ export default function MigrationPlanView() {
       {/* Record list (compact) for selection + metadata + panels */}
       <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Left: record list (narrow) */}
-        <div className="shrink-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 w-52 min-w-0">
-          <div className="p-2 border-b border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-500 dark:text-gray-400">
+        <div className="shrink-0 flex flex-col border-r border-border bg-subtle/50 w-52 min-w-0">
+          <div className="p-2 border-b border-border text-xs font-medium text-fg-muted">
             Records
           </div>
           <div className="flex-1 min-h-0 overflow-auto">
             {viewMode === 'none' ? (
-              <div className="p-3 text-sm text-gray-500 dark:text-gray-400">View all or search to load.</div>
+              <div className="p-3 text-sm text-fg-muted">View all or search to load.</div>
             ) : loading ? (
               <LoadingState message="Loading records…" skeleton={<SkeletonText className="p-3" />} />
             ) : rows.length === 0 ? (
@@ -462,14 +462,14 @@ export default function MigrationPlanView() {
                         }}
                         className={`w-full text-left px-2.5 py-2 rounded-lg text-sm transition-colors border ${
                           isSelected
-                            ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-200 dark:border-indigo-800 text-indigo-900 dark:text-indigo-100'
-                            : 'border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-accent-soft border-accent/30 text-accent-fg'
+                            : 'border-transparent text-fg-muted hover:bg-inset'
                         }`}
                       >
-                        <span className="font-mono text-xs text-gray-500 dark:text-gray-400 block truncate">
+                        <span className="font-mono text-xs text-fg-muted block truncate">
                           {row.record_id}
                         </span>
-                        <span className="text-xs text-gray-400 dark:text-gray-500">{idx + 1}</span>
+                        <span className="text-xs text-fg-subtle">{idx + 1}</span>
                       </button>
                     </li>
                   );
@@ -482,59 +482,59 @@ export default function MigrationPlanView() {
         {/* Center + Right: metadata and Old | New */}
         <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
           {/* Metadata: transformed record when rules applied, otherwise original record */}
-          <div className="shrink-0 px-4 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <div className="shrink-0 px-4 py-2 border-b border-border bg-surface flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
             {transformResult ? (
               <>
-                <span className="text-gray-500 dark:text-gray-400">
-                  <strong className="text-gray-700 dark:text-gray-300">Record (after transform):</strong>{' '}
-                  <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{selectedRecord?.record_id ?? '—'}</code>
+                <span className="text-fg-muted">
+                  <strong className="text-fg-muted">Record (after transform):</strong>{' '}
+                  <code className="text-xs bg-subtle px-1.5 py-0.5 rounded-xs">{selectedRecord?.record_id ?? '—'}</code>
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  <strong className="text-gray-700 dark:text-gray-300">Transformed at:</strong> {formatDateTime(transformResult.transformedAt)}
+                <span className="text-fg-muted">
+                  <strong className="text-fg-muted">Transformed at:</strong> {formatDateTime(transformResult.transformedAt)}
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  <strong className="text-gray-700 dark:text-gray-300">Fields:</strong> {Object.keys(transformResult.data).length}
+                <span className="text-fg-muted">
+                  <strong className="text-fg-muted">Fields:</strong> {Object.keys(transformResult.data).length}
                 </span>
               </>
             ) : selectedRecord ? (
               <>
-                <span className="text-gray-500 dark:text-gray-400">
-                  <strong className="text-gray-700 dark:text-gray-300">Record (original):</strong>{' '}
-                  <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">{selectedRecord.record_id}</code>
+                <span className="text-fg-muted">
+                  <strong className="text-fg-muted">Record (original):</strong>{' '}
+                  <code className="text-xs bg-subtle px-1.5 py-0.5 rounded-xs">{selectedRecord.record_id}</code>
                 </span>
-                <span className="text-gray-500 dark:text-gray-400">
-                  <strong className="text-gray-700 dark:text-gray-300">Updated:</strong> {formatDateTime(selectedRecord.updated_at)}
+                <span className="text-fg-muted">
+                  <strong className="text-fg-muted">Updated:</strong> {formatDateTime(selectedRecord.updated_at)}
                 </span>
                 {selectedRecord.created_at != null && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    <strong className="text-gray-700 dark:text-gray-300">Created:</strong> {formatDateTime(selectedRecord.created_at)}
+                  <span className="text-fg-muted">
+                    <strong className="text-fg-muted">Created:</strong> {formatDateTime(selectedRecord.created_at)}
                   </span>
                 )}
                 {selectedRecord.record_sequence != null && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    <strong className="text-gray-700 dark:text-gray-300">Sequence:</strong> {selectedRecord.record_sequence}
+                  <span className="text-fg-muted">
+                    <strong className="text-fg-muted">Sequence:</strong> {selectedRecord.record_sequence}
                   </span>
                 )}
                 {selectedRecord.last_action && (
-                  <span className="text-gray-500 dark:text-gray-400">
-                    <strong className="text-gray-700 dark:text-gray-300">Last action:</strong> {selectedRecord.last_action}
+                  <span className="text-fg-muted">
+                    <strong className="text-fg-muted">Last action:</strong> {selectedRecord.last_action}
                   </span>
                 )}
-                <span className="text-gray-400 dark:text-gray-500 italic">Apply rules to see transformed record metadata and confidence.</span>
+                <span className="text-fg-subtle italic">Apply rules to see transformed record metadata and confidence.</span>
               </>
             ) : (
-              <span className="text-gray-500 dark:text-gray-400">Select a record to see metadata.</span>
+              <span className="text-fg-muted">Select a record to see metadata.</span>
             )}
           </div>
 
           {/* Old Record | New Record */}
           <div className="flex-1 min-h-0 flex overflow-hidden">
             {/* Old (left) */}
-            <div className="flex-1 min-w-0 flex flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-              <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
+            <div className="flex-1 min-w-0 flex flex-col border-r border-border bg-surface">
+              <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-border bg-subtle/50 shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileJson className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">Original record</span>
+                  <FileJson className="w-4 h-4 shrink-0 text-fg-muted" />
+                  <span className="text-sm font-medium text-fg-muted truncate">Original record</span>
                 </div>
                 <div className="min-w-[7.5rem] shrink-0" aria-hidden />
               </div>
@@ -554,7 +554,7 @@ export default function MigrationPlanView() {
                     }}
                   />
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                     <FileJson className="w-10 h-10" />
                     <p className="text-sm text-center">Select a record to see original data.</p>
                   </div>
@@ -563,14 +563,14 @@ export default function MigrationPlanView() {
             </div>
 
             {/* New (right) */}
-            <div className="flex-1 min-w-0 flex flex-col bg-white dark:bg-gray-900">
-              <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30 shrink-0">
+            <div className="flex-1 min-w-0 flex flex-col bg-surface">
+              <div className="h-11 flex items-center justify-between gap-2 px-3 border-b border-border bg-subtle/50 shrink-0">
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileJson className="w-4 h-4 shrink-0 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">After transform</span>
+                  <FileJson className="w-4 h-4 shrink-0 text-fg-muted" />
+                  <span className="text-sm font-medium text-fg-muted truncate">After transform</span>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
-                  <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-fg-muted">
                     <Switch
                       checked={autoApply}
                       onCheckedChange={setAutoApply}
@@ -582,7 +582,7 @@ export default function MigrationPlanView() {
                     type="button"
                     onClick={handleEvaluate}
                     disabled={!selectedRecord || evaluateLoading || autoApply}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-accent/30 bg-accent-soft text-accent-fg hover:bg-accent-soft disabled:opacity-50 disabled:pointer-events-none text-sm font-medium"
                   >
                     <Play className="w-4 h-4" />
                     {evaluateLoading ? 'Applying…' : 'Apply rules'}
@@ -591,12 +591,12 @@ export default function MigrationPlanView() {
               </div>
               <div className="flex-1 min-h-0 overflow-hidden">
                 {!selectedRecord ? (
-                  <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                     <FileJson className="w-10 h-10" />
                     <p className="text-sm text-center">Select a record, then click Apply rules to see transformed data.</p>
                   </div>
                 ) : evaluateError ? (
-                  <div className="h-full flex flex-col items-center justify-center gap-2 text-amber-600 dark:text-amber-400 p-4">
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-warn-fg p-4">
                     <p className="text-sm text-center">{evaluateError}</p>
                     <button
                       type="button"
@@ -621,7 +621,7 @@ export default function MigrationPlanView() {
                     }}
                   />
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500 p-4">
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-fg-subtle p-4">
                     <Play className="w-10 h-10" />
                     <p className="text-sm text-center">
                       Click <strong>Apply rules</strong> to run the migration plan on this record and see the result.

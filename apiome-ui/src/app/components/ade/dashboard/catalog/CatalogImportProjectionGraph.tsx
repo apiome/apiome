@@ -134,7 +134,7 @@ function familyLabel(key: ImportFamilyKey): string {
 /** Status symbol + text, the colour-independent pairing used everywhere in this section. */
 function StatusText({ presentation }: { presentation: StatusPresentation }) {
   return (
-    <span className={cn('inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold', presentation.badgeClass)}>
+    <span className={cn('inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold', presentation.badgeClass)}>
       <span aria-hidden>{presentation.symbol}</span>
       {presentation.label}
     </span>
@@ -355,7 +355,7 @@ export function CatalogImportProjectionGraph({
             return (
               <span
                 key={status}
-                className={cn('inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold', p.badgeClass)}
+                className={cn('inline-flex items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold', p.badgeClass)}
               >
                 <span aria-hidden>{p.symbol}</span>
                 {p.label}
@@ -595,7 +595,7 @@ function EvidenceCard({
         <StatusText presentation={presentation} />
         <span
           className={cn(
-            'inline-flex items-center rounded px-1.5 py-0.5 text-2xs font-semibold',
+            'inline-flex items-center rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
             PREVIEW_COVERAGE_TONE[row.coverage],
           )}
         >
@@ -603,7 +603,7 @@ function EvidenceCard({
         </span>
         {row.reason && (
           <span
-            className="rounded bg-inset px-1.5 py-0.5 font-mono text-2xs text-fg-muted"
+            className="rounded-xs bg-inset px-1.5 py-0.5 font-mono text-2xs text-fg-muted"
             data-testid="import-projection-reason"
           >
             {row.reason}

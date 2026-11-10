@@ -35,6 +35,9 @@ import { useDialog } from '@/app/components/providers/DialogProvider';
 import { destructiveConfirm } from '@/app/components/dialogs/destructiveConfirm';
 import { EmptyState } from '@/app/components/ui/EmptyState';
 import { ResetTwoFactorDialog } from '@/app/components/ade/account/ResetTwoFactorDialog';
+import { Button } from '@/app/components/ui/Button';
+import { Input } from '@/app/components/ui/Input';
+import { ModalFrame } from '@/app/components/ui/ModalFrame';
 
 interface User {
   id: string;
@@ -73,9 +76,9 @@ interface License {
 }
 
 const LICENSE_TYPE_COLORS: Record<string, string> = {
-  free:    'bg-slate-700 text-slate-200',
-  paid:    'bg-indigo-700 text-indigo-100',
-  sponsor: 'bg-amber-700 text-amber-100',
+  free:    'bg-inset text-fg-muted',
+  paid:    'bg-accent text-fg-on-accent',
+  sponsor: 'bg-warn text-fg-on-accent',
 };
 
 /**
@@ -330,35 +333,35 @@ export default function UserManagementClient() {
   return (
     <>
       {/* Header */}
-      <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <header className="shrink-0 border-b border-border bg-surface">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h2>
-              <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage user accounts, licenses and access</p>
+              <h2 className="text-2xl font-bold text-fg">Users</h2>
+              <p className="text-fg-muted text-sm mt-1">Manage user accounts, licenses and access</p>
             </div>
-            <button
+            <Button
               type="button"
               onClick={() => setShowCreateUserDialog(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors shrink-0"
+              variant="primary" className="shrink-0"
             >
               <Plus className="w-4 h-4" />
               New User
-            </button>
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50 p-6 dark:bg-slate-950">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-subtle p-6">
         <div className="space-y-6">
           {/* Message Banner */}
       {message && (
         <div
           className={`p-4 rounded-lg border flex items-start gap-3 ${
             message.type === 'success'
-              ? 'bg-green-900/20 border-green-700 text-green-400'
-              : 'bg-red-900/20 border-red-700 text-red-400'
+              ? 'bg-ok/20 border-ok text-ok-fg'
+              : 'bg-danger/20 border-danger text-danger-fg'
           }`}
         >
           {message.type === 'success' ? (
@@ -372,47 +375,47 @@ export default function UserManagementClient() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-600/20 rounded-lg">
-              <Users className="w-5 h-5 text-blue-400" />
+            <div className="p-2 bg-accent/20 rounded-lg">
+              <Users className="w-5 h-5 text-accent-fg" />
             </div>
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">Total Users</p>
-              <p className="text-gray-900 dark:text-white text-xl font-bold">{userStats?.total_users || 0}</p>
+              <p className="text-fg-muted text-xs">Total Users</p>
+              <p className="text-fg text-xl font-bold">{userStats?.total_users || 0}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
+          <p className="text-xs text-fg-muted">
             {userStats?.new_users_7_days || 0} new this week
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-green-600/20 rounded-lg">
-              <UserCheck className="w-5 h-5 text-green-400" />
+            <div className="p-2 bg-ok/20 rounded-lg">
+              <UserCheck className="w-5 h-5 text-ok-fg" />
             </div>
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">Verified Users</p>
-              <p className="text-gray-900 dark:text-white text-xl font-bold">{userStats?.verified_users || 0}</p>
+              <p className="text-fg-muted text-xs">Verified Users</p>
+              <p className="text-fg text-xl font-bold">{userStats?.verified_users || 0}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-slate-400">
+          <p className="text-xs text-fg-muted">
             {userStats?.enabled_users || 0} enabled
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-lg border border-border bg-surface p-4">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-purple-600/20 rounded-lg">
-              <UserPlus className="w-5 h-5 text-purple-400" />
+            <div className="p-2 bg-violet/20 rounded-lg">
+              <UserPlus className="w-5 h-5 text-violet-fg" />
             </div>
             <div>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">New Users</p>
-              <p className="text-gray-900 dark:text-white text-xl font-bold">{userStats?.new_users_30_days || 0}</p>
+              <p className="text-fg-muted text-xs">New Users</p>
+              <p className="text-fg text-xl font-bold">{userStats?.new_users_30_days || 0}</p>
             </div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-slate-400">Last 30 days</p>
+          <p className="text-xs text-fg-muted">Last 30 days</p>
         </div>
       </div>
 
@@ -421,7 +424,7 @@ export default function UserManagementClient() {
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-white rounded-lg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 bg-inset hover:bg-inset text-fg-muted rounded-lg transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -431,11 +434,11 @@ export default function UserManagementClient() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <RefreshCw className="w-8 h-8 text-gray-400 animate-spin" />
+          <RefreshCw className="w-8 h-8 text-fg-subtle animate-spin" />
         </div>
       ) : (
         // Users Table
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+        <div className="bg-surface border border-border rounded-lg overflow-hidden">
           {users.length === 0 ? (
             <EmptyState
               surface={false}
@@ -446,85 +449,85 @@ export default function UserManagementClient() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80">
+                <thead className="border-b border-border bg-subtle">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       User
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       Email
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       License
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       Created
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-fg-muted uppercase tracking-wider">
                       Last active
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-fg-muted uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="divide-y divide-border">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-800">
+                    <tr key={user.id} className="hover:bg-subtle">
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center">
-                            <span className="text-red-400 text-sm font-medium">
+                          <div className="w-8 h-8 bg-danger/20 rounded-full flex items-center justify-center">
+                            <span className="text-danger-fg text-sm font-medium">
                               {user.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</div>
+                          <div className="text-sm font-medium text-fg">{user.name}</div>
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-300">{user.email}</span>
+                          <Mail className="w-4 h-4 text-fg-subtle" />
+                          <span className="text-sm text-fg-muted">{user.email}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         {user.license_name && user.license_type ? (
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-semibold uppercase tracking-wide ${LICENSE_TYPE_COLORS[user.license_type] ?? 'bg-gray-700 text-gray-200'}`}>
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-xs text-xs font-semibold uppercase tracking-wide ${LICENSE_TYPE_COLORS[user.license_type] ?? 'bg-inset text-fg-muted'}`}>
                             <Award className="w-3 h-3" />
                             {user.license_name}
                           </span>
                         ) : (
-                          <span className="text-xs text-gray-400 dark:text-gray-600 italic">No license</span>
+                          <span className="text-xs text-fg-subtle italic">No license</span>
                         )}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {user.verified ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-600/20 text-green-400 text-xs rounded">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-ok/20 text-ok-fg text-xs rounded-xs">
                               <CheckCircle className="w-3 h-3" />
                               Verified
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-600/20 text-yellow-400 text-xs rounded">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-warn/20 text-warn-fg text-xs rounded-xs">
                               <AlertCircle className="w-3 h-3" />
                               Unverified
                             </span>
                           )}
                           {user.enabled ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600/20 text-blue-400 text-xs rounded">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/20 text-accent-fg text-xs rounded-xs">
                               Enabled
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-600/20 text-gray-400 text-xs rounded">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-inset text-fg-muted text-xs rounded-xs">
                               Disabled
                             </span>
                           )}
                           {user.suite_access && (
                             <span
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-violet-600/20 text-violet-400 text-xs rounded"
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-violet/20 text-violet-fg text-xs rounded-xs"
                               data-testid="admin-user-suite-access"
                             >
                               <Layers className="w-3 h-3" />
@@ -535,7 +538,7 @@ export default function UserManagementClient() {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <span
-                          className="text-sm text-gray-500 dark:text-gray-400"
+                          className="text-sm text-fg-muted"
                           title={formatDate(user.created_at, '')}
                         >
                           {formatDate(user.created_at, '—', false)}
@@ -543,7 +546,7 @@ export default function UserManagementClient() {
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <span
-                          className="text-sm text-gray-500 dark:text-gray-400"
+                          className="text-sm text-fg-muted"
                           data-testid="admin-user-last-active"
                         >
                           {formatDate(user.last_active_at ?? user.last_login_at, 'Never')}
@@ -560,7 +563,7 @@ export default function UserManagementClient() {
                               });
                               setOpenUserDropdown(openUserDropdown === user.id ? null : user.id);
                             }}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors text-gray-400 hover:text-gray-700 dark:hover:text-white"
+                            className="p-2 hover:bg-subtle rounded-xs transition-colors text-fg-subtle hover:text-fg-muted"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </button>
@@ -572,7 +575,7 @@ export default function UserManagementClient() {
                                 onClick={() => setOpenUserDropdown(null)}
                               />
                               <div
-                                className="fixed w-52 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg z-[101]"
+                                className="fixed w-52 bg-surface border border-border rounded-lg shadow-lg z-[101]"
                                 style={{
                                   top: `${userDropdownPos.top}px`,
                                   right: `${userDropdownPos.right}px`
@@ -584,16 +587,16 @@ export default function UserManagementClient() {
                                       setOpenUserDropdown(null);
                                       handleToggleUserVerified(user);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
                                     {user.verified ? (
                                       <>
-                                        <XCircle className="w-4 h-4 text-yellow-400" />
+                                        <XCircle className="w-4 h-4 text-warn-fg" />
                                         Mark Unverified
                                       </>
                                     ) : (
                                       <>
-                                        <CheckCircle className="w-4 h-4 text-green-400" />
+                                        <CheckCircle className="w-4 h-4 text-ok-fg" />
                                         Mark Verified
                                       </>
                                     )}
@@ -603,16 +606,16 @@ export default function UserManagementClient() {
                                       setOpenUserDropdown(null);
                                       handleToggleUserEnabled(user);
                                     }}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
                                     {user.enabled ? (
                                       <>
-                                        <Power className="w-4 h-4 text-orange-400" />
+                                        <Power className="w-4 h-4 text-orange-fg" />
                                         Disable User
                                       </>
                                     ) : (
                                       <>
-                                        <Power className="w-4 h-4 text-blue-400" />
+                                        <Power className="w-4 h-4 text-accent-fg" />
                                         Enable User
                                       </>
                                     )}
@@ -623,17 +626,17 @@ export default function UserManagementClient() {
                                       handleToggleSuiteAccess(user);
                                     }}
                                     data-testid={`admin-toggle-suite-access-${user.id}`}
-                                    className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+                                    className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-fg-muted hover:text-fg transition-colors"
                                   >
-                                    <Layers className="w-4 h-4 text-violet-400" />
+                                    <Layers className="w-4 h-4 text-violet-fg" />
                                     {user.suite_access ? 'Remove Suite Access' : 'Grant Suite Access'}
                                   </button>
 
-                                  <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
+                                  <div className="border-t border-border mt-1 pt-1">
                                     <div className="relative">
                                       <button
                                         onClick={() => setLicenseSubMenu(licenseSubMenu === user.id ? null : user.id)}
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-indigo-300 hover:text-indigo-200 transition-colors"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-accent-fg hover:text-accent-fg transition-colors"
                                       >
                                         <Award className="w-4 h-4" />
                                         Assign License…
@@ -644,17 +647,17 @@ export default function UserManagementClient() {
                                             <button
                                               key={lic.id}
                                               onClick={() => handleAssignLicense(user.id, lic.id)}
-                                              className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors rounded"
+                                              className="w-full px-3 py-1.5 text-left text-xs hover:bg-subtle flex items-center gap-2 text-fg-muted hover:text-fg transition-colors rounded-xs"
                                             >
-                                              <span className={`w-2 h-2 rounded-full ${lic.license_type === 'free' ? 'bg-slate-400' : lic.license_type === 'paid' ? 'bg-indigo-400' : 'bg-amber-400'}`} />
+                                              <span className={`w-2 h-2 rounded-full ${lic.license_type === 'free' ? 'bg-fg-faint' : lic.license_type === 'paid' ? 'bg-accent' : 'bg-warn'}`} />
                                               {lic.name}
-                                              {lic.id === user.license_id && <CheckCircle className="w-3 h-3 text-green-400 ml-auto" />}
+                                              {lic.id === user.license_id && <CheckCircle className="w-3 h-3 text-ok-fg ml-auto" />}
                                             </button>
                                           ))}
                                           {user.license_id && (
                                             <button
                                               onClick={() => handleRemoveLicense(user.id)}
-                                              className="w-full px-3 py-1.5 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors rounded"
+                                              className="w-full px-3 py-1.5 text-left text-xs hover:bg-subtle flex items-center gap-2 text-danger-fg hover:text-danger-fg transition-colors rounded-xs"
                                             >
                                               <Trash2 className="w-3 h-3" />
                                               Remove License
@@ -665,10 +668,10 @@ export default function UserManagementClient() {
                                     </div>
                                   </div>
 
-                                  <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
+                                  <div className="border-t border-border mt-1 pt-1">
                                     <button
                                       onClick={() => handleOpenFlagsModal(user)}
-                                      className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-emerald-300 hover:text-emerald-200 transition-colors"
+                                      className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-ok-fg hover:text-ok-fg transition-colors"
                                     >
                                       <Flag className="w-4 h-4" />
                                       Manage Feature Flags…
@@ -677,14 +680,14 @@ export default function UserManagementClient() {
 
                                   {/* Only where there is a second factor to reset (TFA-1.2, #5656). */}
                                   {user.two_factor_enabled && (
-                                    <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
+                                    <div className="border-t border-border mt-1 pt-1">
                                       <button
                                         onClick={() => {
                                           setOpenUserDropdown(null);
                                           setResetTwoFactorUser(user);
                                         }}
                                         data-testid={`admin-reset-two-factor-${user.id}`}
-                                        className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-amber-400 hover:text-amber-300 transition-colors"
+                                        className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-warn-fg hover:text-warn-fg transition-colors"
                                       >
                                         <ShieldOff className="w-4 h-4" />
                                         Reset two-factor…
@@ -692,13 +695,13 @@ export default function UserManagementClient() {
                                     </div>
                                   )}
 
-                                  <div className="border-t border-slate-200 dark:border-slate-800 mt-1 pt-1">
+                                  <div className="border-t border-border mt-1 pt-1">
                                     <button
                                       onClick={() => {
                                         setOpenUserDropdown(null);
                                         handleDeleteUser(user);
                                       }}
-                                      className="w-full px-4 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-3 text-red-400 hover:text-red-300 transition-colors"
+                                      className="w-full px-4 py-2 text-left text-sm hover:bg-subtle flex items-center gap-3 text-danger-fg hover:text-danger-fg transition-colors"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                       Delete User
@@ -723,63 +726,68 @@ export default function UserManagementClient() {
 
       {/* Create User Dialog */}
       {showCreateUserDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg max-w-md w-full">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Create New User</h3>
+        <ModalFrame
+          open
+          onClose={() => {
+            setShowCreateUserDialog(false);
+            resetNewUserForm();
+          }}
+          label="Create New User"
+          overlayClassName="fixed inset-0 z-[200] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+          className="bg-surface border border-border rounded-xl max-w-md w-full shadow-lg"
+        >
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-fg">Create New User</h3>
               <button
                 type="button"
                 onClick={() => {
                   setShowCreateUserDialog(false);
                   resetNewUserForm();
                 }}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-fg-subtle hover:text-fg transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleCreateUser} className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={newUser.name}
                   onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="Jane Doe"
                   required
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Email *
                 </label>
-                <input
+                <Input
                   type="email"
                   value={newUser.email}
                   onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="jane@example.com"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-fg mb-[var(--space-field)]">
                   Password *
                 </label>
-                <input
+                <Input
                   type="password"
                   value={newUser.password}
                   onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-lg text-gray-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
                   placeholder="Temporary password"
                   required
                   minLength={8}
                 />
-                <p className="text-gray-500 text-xs mt-1">Minimum 8 characters. Stored as a bcrypt hash.</p>
+                <p className="text-fg-muted text-xs mt-1">Minimum 8 characters. Stored as a bcrypt hash.</p>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -788,9 +796,9 @@ export default function UserManagementClient() {
                     id="newUserVerified"
                     checked={newUser.verified}
                     onChange={(e) => setNewUser({ ...newUser, verified: e.target.checked })}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-0"
+                    className="w-4 h-4 rounded-xs border-border-strong bg-surface text-danger-fg focus:ring-2 focus:ring-danger focus:ring-offset-0"
                   />
-                  <label htmlFor="newUserVerified" className="text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="newUserVerified" className="text-sm text-fg-muted">
                     Mark email as verified
                   </label>
                 </div>
@@ -800,52 +808,55 @@ export default function UserManagementClient() {
                     id="newUserEnabled"
                     checked={newUser.enabled}
                     onChange={(e) => setNewUser({ ...newUser, enabled: e.target.checked })}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 text-red-600 focus:ring-2 focus:ring-red-600 focus:ring-offset-0"
+                    className="w-4 h-4 rounded-xs border-border-strong bg-surface text-danger-fg focus:ring-2 focus:ring-danger focus:ring-offset-0"
                   />
-                  <label htmlFor="newUserEnabled" className="text-sm text-gray-700 dark:text-gray-300">
+                  <label htmlFor="newUserEnabled" className="text-sm text-fg-muted">
                     Enable account immediately
                   </label>
                 </div>
               </div>
               <div className="flex items-center justify-end gap-2 pt-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => {
                     setShowCreateUserDialog(false);
                     resetNewUserForm();
                   }}
-                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                  variant="ghost"
                   disabled={creatingUser}
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={creatingUser}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                  variant="primary"
                 >
                   {creatingUser ? 'Creating…' : 'Create User'}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Feature Flags Modal */}
       {flagsUser && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setFlagsUser(null)} />
-          <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-3xl h-[90vh] max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
-              <div className="p-2 bg-emerald-600/20 rounded-lg">
-                <Flag className="w-5 h-5 text-emerald-400" />
+        <ModalFrame
+          open
+          onClose={() => setFlagsUser(null)}
+          label="Feature Flags"
+          overlayClassName="fixed inset-0 z-[200] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm"
+          className="bg-surface border border-border rounded-xl shadow-lg w-full max-w-3xl h-[90vh] max-h-[90vh] flex flex-col overflow-hidden"
+        >
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-border shrink-0">
+              <div className="p-2 bg-ok/20 rounded-lg">
+                <Flag className="w-5 h-5 text-ok-fg" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-gray-900 dark:text-white font-semibold text-lg">Feature Flags</h3>
-                <p className="text-gray-400 text-xs truncate">{flagsUser.name} — {flagsUser.email}</p>
+                <h3 className="text-fg font-semibold text-lg">Feature Flags</h3>
+                <p className="text-fg-subtle text-xs truncate">{flagsUser.name} — {flagsUser.email}</p>
               </div>
-              <button onClick={() => setFlagsUser(null)} className="text-gray-400 hover:text-white p-1 rounded transition-colors">
+              <button onClick={() => setFlagsUser(null)} className="text-fg-subtle hover:text-fg p-1 rounded-xs transition-colors">
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -858,16 +869,15 @@ export default function UserManagementClient() {
                 onNotify={showMessage}
               />
             </div>
-            <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end shrink-0">
+            <div className="px-6 py-3 border-t border-border flex justify-end shrink-0">
               <button
                 onClick={() => setFlagsUser(null)}
-                className="px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-600 text-gray-700 dark:text-white text-sm rounded-lg transition-colors"
+                className="px-4 py-2 bg-inset hover:bg-inset text-fg-muted text-sm rounded-lg transition-colors"
               >
                 Done
               </button>
             </div>
-          </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Reset a user's two-factor (TFA-1.2, #5656). The dialog makes the call and shows the

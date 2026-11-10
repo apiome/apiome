@@ -191,6 +191,9 @@ function row(name: string) {
 /** The frame's root element. */
 const frame = () => document.body.firstElementChild as HTMLElement;
 
+/** Everything rendered — the frame and the dialog portalled beside it — without the `<body>`. */
+const bodyMarkup = () => liveMarkup(document.body).replace(/^<body[^>]*>|<\/body>$/g, '');
+
 describe('Property Templates — the docs fixtures', () => {
   it('lists the templates with their stats, categories and status', async () => {
     renderScreen();
@@ -221,7 +224,7 @@ describe('Property Templates — the docs fixtures', () => {
     expect(screen.getByText('Usage Count')).toBeInTheDocument();
     expect(screen.getByText('Created By')).toBeInTheDocument();
     expect(screen.getAllByText('Priya Raman').length).toBeGreaterThan(0);
-    writeA11yFixture('admin-property-template-view', liveMarkup(frame()));
+    writeA11yFixture('admin-property-template-view', bodyMarkup());
   });
 
   it('opens Create New Template filled in, and saves it through the server action', async () => {
@@ -242,7 +245,7 @@ describe('Property Templates — the docs fixtures', () => {
     fireEvent.change(screen.getByPlaceholderText('id, uuid, identifier, primary-key'), {
       target: { value: 'country, iso-3166, address' },
     });
-    writeA11yFixture('admin-property-template-create', liveMarkup(frame()));
+    writeA11yFixture('admin-property-template-create', bodyMarkup());
 
     fireEvent.click(screen.getByRole('button', { name: 'Create Template' }));
     await screen.findByText('Template created successfully');

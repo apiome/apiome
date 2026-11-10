@@ -77,8 +77,8 @@ export function JsonViewer({ value, label, language = 'json', maxLines = 24, cla
       className={cn(
         'inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium transition-colors',
         copied
-          ? 'text-emerald-600 dark:text-emerald-400'
-          : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-gray-700/60 dark:hover:text-gray-200',
+          ? 'text-ok-fg'
+          : 'text-fg-subtle hover:bg-subtle hover:text-fg-muted',
       )}
     >
       {copied ? <Check className="h-3.5 w-3.5" aria-hidden /> : <Copy className="h-3.5 w-3.5" aria-hidden />}
@@ -88,20 +88,20 @@ export function JsonViewer({ value, label, language = 'json', maxLines = 24, cla
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700',
+        'overflow-hidden rounded-lg border border-border',
         className,
       )}
     >
       {label ? (
-        <div className="flex items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 py-1 pl-3 pr-1.5 dark:border-gray-700 dark:bg-gray-900/60">
-          <span className="flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-300">
-            <Braces className="h-3.5 w-3.5 text-indigo-500" aria-hidden />
+        <div className="flex items-center justify-between gap-2 border-b border-border bg-subtle py-1 pl-3 pr-1.5">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-fg-muted">
+            <Braces className="h-3.5 w-3.5 text-accent-fg" aria-hidden />
             {label}
           </span>
           {copyButton}
         </div>
       ) : null}
-      <div className="relative bg-white dark:bg-[#1e1e1e]">
+      <div className="relative bg-surface dark:bg-[#1e1e1e]">
         {!label ? <div className="absolute right-1.5 top-1.5 z-10">{copyButton}</div> : null}
         <MonacoEditor
           height={height}

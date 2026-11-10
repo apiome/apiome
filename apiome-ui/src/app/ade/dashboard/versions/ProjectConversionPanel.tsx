@@ -39,10 +39,10 @@ export function ProjectConversionPanel({
       className="space-y-4"
     >
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+        <h3 className="text-sm font-semibold text-fg">
           Conversion history
         </h3>
-        <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+        <p className="mt-1 text-xs text-fg-muted">
           This project was produced by converting a catalog item. Each entry links a revision of
           this project to the conversion that created it.
         </p>
@@ -52,7 +52,7 @@ export function ProjectConversionPanel({
         <div
           data-testid="project-conversion-error"
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"
+          className="rounded-md border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-fg"
         >
           <p>{error}</p>
           <button
@@ -75,7 +75,7 @@ export function ProjectConversionPanel({
         />
       ) : null}
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className="text-xs text-fg-muted">
         Open the catalog item to replay a conversion&apos;s stored evidence graph.
       </p>
     </section>

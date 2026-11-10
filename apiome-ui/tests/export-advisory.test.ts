@@ -102,14 +102,14 @@ describe('CSS class helpers', () => {
       advisoryBannerClass('info'),
     ]);
     expect(classes.size).toBe(3);
-    expect(advisoryBannerClass('critical')).toContain('rose');
-    expect(advisoryBannerClass('warning')).toContain('amber');
+    expect(advisoryBannerClass('critical')).toContain('danger');
+    expect(advisoryBannerClass('warning')).toContain('warn');
   });
 
   it('returns a severity pill palette, defaulting for a null severity', () => {
-    expect(advisorySeverityPillClass('critical')).toContain('rose');
-    expect(advisorySeverityPillClass('warn')).toContain('amber');
-    expect(advisorySeverityPillClass(null)).toContain('sky');
+    expect(advisorySeverityPillClass('critical')).toContain('danger');
+    expect(advisorySeverityPillClass('warn')).toContain('warn');
+    expect(advisorySeverityPillClass(null)).toContain('accent');
   });
 });
 

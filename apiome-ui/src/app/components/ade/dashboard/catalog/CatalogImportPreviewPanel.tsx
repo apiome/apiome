@@ -120,7 +120,7 @@ function CoverageBadge({ coverage, count }: { coverage: string; count?: number }
       data-testid="import-preview-coverage"
       data-coverage={coverage}
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-2xs font-semibold',
+        'inline-flex shrink-0 items-center gap-1 rounded-xs px-1.5 py-0.5 text-2xs font-semibold',
         tone,
       )}
     >
@@ -543,7 +543,7 @@ export function CatalogImportPreviewPanel({
                 {row.label}
               </span>
               {row.entity!.deprecated ? (
-                <span className="shrink-0 rounded bg-inset px-1 py-0.5 text-2xs font-semibold uppercase text-fg-muted">
+                <span className="shrink-0 rounded-xs bg-inset px-1 py-0.5 text-2xs font-semibold uppercase text-fg-muted">
                   deprecated
                 </span>
               ) : null}
@@ -685,7 +685,7 @@ export function CatalogImportPreviewPanel({
                   data-testid="import-preview-filter-clear"
                   onClick={() => setFilter('')}
                   aria-label="Clear entity filter"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-fg-subtle motion-safe:transition-colors hover:text-fg"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xs p-0.5 text-fg-subtle motion-safe:transition-colors hover:text-fg"
                 >
                   <X className="h-3.5 w-3.5" aria-hidden />
                 </button>

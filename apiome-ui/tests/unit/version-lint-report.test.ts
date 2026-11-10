@@ -24,10 +24,10 @@ describe('version-lint-report helpers', () => {
   });
 
   it('maps severities to classes with a fallback', () => {
-    expect(severityBadgeClass('error')).toContain('rose');
-    expect(severityBadgeClass('warning')).toContain('amber');
-    expect(severityBadgeClass('info')).toContain('sky');
-    expect(severityBadgeClass('mystery')).toContain('gray');
+    expect(severityBadgeClass('error')).toContain('danger');
+    expect(severityBadgeClass('warning')).toContain('warn');
+    expect(severityBadgeClass('info')).toContain('accent');
+    expect(severityBadgeClass('mystery')).toContain('subtle');
   });
 
   it('sorts findings most-severe first, then by path and rule', () => {

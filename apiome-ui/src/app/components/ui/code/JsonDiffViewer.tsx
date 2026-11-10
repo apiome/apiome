@@ -103,7 +103,7 @@ export function JsonDiffViewer({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]',
+        'overflow-hidden rounded-lg border border-border bg-surface dark:bg-[#1e1e1e]',
         className,
       )}
     >

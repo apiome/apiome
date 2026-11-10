@@ -264,7 +264,7 @@ function FindingRow({
           <span className="font-mono text-2xs tabular-nums text-fg-subtle">#{finding.rank}</span>
           <span
             className={cn(
-              'inline-flex items-center rounded px-1.5 py-0.5 text-2xs font-semibold uppercase',
+              'inline-flex items-center rounded-xs px-1.5 py-0.5 text-2xs font-semibold uppercase',
               STATUS_TONE_SOFT_CLASS[statusTone(finding.severity)],
             )}
           >
@@ -915,7 +915,7 @@ export function CatalogImportQualityStep({
               type="checkbox"
               checked={skipPreference}
               onChange={(event) => onSkipPreferenceChange(event.target.checked)}
-              className="h-4 w-4 rounded border-border-strong"
+              className="h-4 w-4 rounded-xs border-border-strong"
             />
             Skip this step for clean imports
           </label>

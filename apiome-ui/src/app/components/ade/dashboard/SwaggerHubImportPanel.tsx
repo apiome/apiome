@@ -252,7 +252,7 @@ export const SwaggerHubImportPanel: React.FC<SwaggerHubImportPanelProps> = ({
             type="checkbox"
             checked={useLatestVersion}
             onChange={(e) => setUseLatestVersion(e.target.checked)}
-            className="rounded border-border-strong text-accent focus:ring-accent"
+            className="rounded-xs border-border-strong text-accent focus:ring-accent"
           />
           <span className="text-sm font-medium text-fg">
             Use latest version

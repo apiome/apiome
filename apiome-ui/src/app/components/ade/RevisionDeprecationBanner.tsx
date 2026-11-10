@@ -28,14 +28,14 @@ export default function RevisionDeprecationBanner({
   return (
     <div
       role="status"
-      className={`flex gap-3 border-b border-amber-300/80 bg-amber-50 px-4 py-2.5 text-sm text-amber-950 dark:border-amber-700/80 dark:bg-amber-950/40 dark:text-amber-100 ${className}`}
+      className={`flex gap-3 border-b border-warn/80 bg-warn-soft px-4 py-2.5 text-sm text-warn-fg ${className}`}
     >
-      <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+      <AlertTriangle className="h-5 w-5 shrink-0 text-warn-fg" aria-hidden />
       <div className="min-w-0 space-y-1">
         <p className="font-medium">
           Deprecated revision ({roleLabel}): {versionLabel}
         </p>
-        <ul className="list-disc space-y-0.5 pl-4 text-amber-900/90 dark:text-amber-100/90">
+        <ul className="list-disc space-y-0.5 pl-4 text-warn-fg/90">
           {lines.map((line, i) => (
             <li key={i} className="break-words">
               {line.includes('https://') ? (
@@ -47,7 +47,7 @@ export default function RevisionDeprecationBanner({
                         href={part}
                         target="_blank"
                         rel="noreferrer"
-                        className="font-medium text-amber-800 underline underline-offset-2 hover:text-amber-950 dark:text-amber-200 dark:hover:text-white"
+                        className="font-medium text-warn-fg underline underline-offset-2 hover:text-warn-fg"
                       >
                         {part}
                       </a>

@@ -62,7 +62,7 @@ export interface RepositoryFileQualityBadge {
 }
 
 /** Class pair used whenever a row has no score to show, so every non-scored state matches. */
-const NEUTRAL_CLASS = 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400';
+const NEUTRAL_CLASS = 'bg-subtle text-fg-muted';
 
 /**
  * Human explanations for the machine reasons REST records on a skipped/errored row.
@@ -99,7 +99,7 @@ export function repositoryFileQualityBadge(
     return {
       label: String(Math.round(score)),
       title: `Quality ${Math.round(score)}/100${grade} — ${tier.shortLabel}: ${tier.detailLabel}. Informational only; it does not gate import or sync.`,
-      className: `bg-gray-100 dark:bg-gray-700 ${tier.textClass}`,
+      className: `bg-subtle ${tier.textClass}`,
       tone: QUALITY_BAND_TONE[tier.band],
       tier,
     };

@@ -143,7 +143,7 @@ export default function MigrationSidebar() {
       }
       toolbar={
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+          <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-subtle" />
           <input
             type="text"
             value={filter}
@@ -205,7 +205,7 @@ export default function MigrationSidebar() {
                     >
                       {isSelected && (
                         <span
-                          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-indigo-500"
+                          className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.5 rounded-r bg-accent"
                           aria-hidden
                         />
                       )}
@@ -213,8 +213,8 @@ export default function MigrationSidebar() {
                         className={[
                           'shrink-0 mr-2 flex items-center justify-center w-4 h-4',
                           hasDifference
-                            ? 'text-amber-500 dark:text-amber-400'
-                            : 'text-emerald-500 dark:text-emerald-400',
+                            ? 'text-warn-fg'
+                            : 'text-ok-fg',
                         ].join(' ')}
                         title={hasDifference ? 'Schema differs between versions' : 'Schemas match'}
                       >
@@ -228,10 +228,10 @@ export default function MigrationSidebar() {
                       {count > 0 && (
                         <span
                           className={[
-                            'shrink-0 ml-2 px-1.5 py-0.5 rounded text-2xs font-semibold tabular-nums',
+                            'shrink-0 ml-2 px-1.5 py-0.5 rounded-xs text-2xs font-semibold tabular-nums',
                             isSelected
-                              ? 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300',
+                              ? 'bg-accent-soft text-accent-fg'
+                              : 'bg-subtle text-fg-muted',
                           ].join(' ')}
                           title={`${count} rule${count === 1 ? '' : 's'} for this class`}
                         >

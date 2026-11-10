@@ -307,12 +307,12 @@ export const PREVIEW_COVERAGE_LABEL: Record<PreviewCoverageClass, string> = {
  * survive purging; distinct hues so the classes are told apart at a glance.
  */
 export const PREVIEW_COVERAGE_TONE: Record<PreviewCoverageClass, string> = {
-  mapped: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
-  'partially-mapped': 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  inferred: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
+  mapped: 'bg-ok-soft text-ok-fg',
+  'partially-mapped': 'bg-warn-soft text-warn-fg',
+  inferred: 'bg-accent-soft text-accent-fg',
   'unsupported-by-canonical-model':
-    'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
-  'not-parsed-by-adapter': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+    'bg-violet-soft text-violet-fg',
+  'not-parsed-by-adapter': 'bg-danger-soft text-danger-fg',
 };
 
 /**
@@ -590,16 +590,16 @@ export const REIMPORT_CHANGE_SYMBOL: Record<ReimportChangeKind, string> = {
 
 /** Tone classes per change kind (full Tailwind literals so they survive purging). */
 export const REIMPORT_CHANGE_TONE: Record<ReimportChangeKind, string> = {
-  added: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  removed: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
-  changed: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  added: 'bg-ok-soft text-ok-fg',
+  removed: 'bg-danger-soft text-danger-fg',
+  changed: 'bg-warn-soft text-warn-fg',
 };
 
 /** Tone classes per breaking-change severity (matches the version-diff vocabulary). */
 export const REIMPORT_SEVERITY_TONE: Record<ReimportSeverity, string> = {
-  safe: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  dangerous: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
-  breaking: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+  safe: 'bg-ok-soft text-ok-fg',
+  dangerous: 'bg-warn-soft text-warn-fg',
+  breaking: 'bg-danger-soft text-danger-fg',
 };
 
 /** The entity families in presentation order, with their headings. */
