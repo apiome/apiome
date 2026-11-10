@@ -93,8 +93,8 @@ export function ProjectClient({
           subtitle={`/${tenantSlug}/${project.slug}`}
           description={project.description}
           badges={
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg">
+              <span className="h-1.5 w-1.5 rounded-full bg-ok"></span>
               Public
             </span>
           }
@@ -113,7 +113,7 @@ export function ProjectClient({
               value: (
                 <Link
                   href={`/tenant/${tenantSlug}`}
-                  className="text-[var(--brand-soft-text)] hover:underline"
+                  className="text-accent-fg hover:underline"
                 >
                   {project.tenant_name || tenantSlug}
                 </Link>
@@ -125,7 +125,7 @@ export function ProjectClient({
               {latest && (
                 <Link
                   href={`/tenant/${tenantSlug}/${projectSlug}/${latest.version_id}`}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[var(--brand-hover)]"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-base font-medium text-fg-on-accent transition-colors hover:bg-accent-hover"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -137,7 +137,7 @@ export function ProjectClient({
               {versions.length > 1 && (
                 <Link
                   href={`/tenant/${tenantSlug}/${projectSlug}/compare`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-base font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
@@ -148,12 +148,12 @@ export function ProjectClient({
               <button
                 type="button"
                 onClick={onCopyShareUrl}
-                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-base font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                 aria-label="Copy share URL"
               >
                 {copied ? (
                   <>
-                    <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-ok-fg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                     Copied
@@ -170,17 +170,17 @@ export function ProjectClient({
               {/* Subscribe links: plain anchors (route handlers, not pages), basePath-prefixed. */}
               <a
                 href={`${basePath}/tenant/${tenantSlug}/${projectSlug}/changelog.xml`}
-                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-base font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                 title="Subscribe to the changelog RSS feed"
               >
-                <svg className="h-4 w-4 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-honey-fg" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6.18 15.64a2.18 2.18 0 110 4.36 2.18 2.18 0 010-4.36zM4 10.1a9.9 9.9 0 019.9 9.9h-2.83A7.07 7.07 0 004 12.93V10.1zM4 4a16 16 0 0116 16h-2.83A13.17 13.17 0 004 6.83V4z" />
                 </svg>
                 RSS
               </a>
               <a
                 href={`${basePath}/tenant/${tenantSlug}/${projectSlug}/changelog.json`}
-                className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-base font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                 title="Subscribe to the changelog JSON Feed"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -195,10 +195,10 @@ export function ProjectClient({
         <section className="space-y-4">
           <header className="flex items-end justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              <h2 className="text-xl font-semibold text-fg">
                 Version history
               </h2>
-              <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-sm text-fg-muted">
                 {versions.length === 0
                   ? 'No published versions yet.'
                   : `${versions.length} published ${versions.length === 1 ? 'version' : 'versions'}, newest first.`}

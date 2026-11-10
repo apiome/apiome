@@ -166,13 +166,13 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
         />
 
         {/* Agentic-web manifests (MFX-32.3, #4297; links from lib, MFX-32.5): plain anchors to route handlers. */}
-        <div className="flex flex-wrap items-center gap-2 text-[13px] text-zinc-500 dark:text-zinc-400">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-fg-muted">
           <span>For agents:</span>
           {siteManifestLinks(tenantSlug, basePath).map((link) => (
             <a
               key={link.kind}
               href={link.href}
-              className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2.5 py-1 font-mono text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="inline-flex items-center rounded-md border border-border bg-surface px-2.5 py-1 font-mono text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
               title={link.title}
             >
               {link.kind}
@@ -181,7 +181,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
           {/* The read-only xRegistry over the same public artifacts (MFX-34.2): for CloudEvents tooling. */}
           <a
             href={xregistryRegistryUrl(tenantSlug, process.env.NEXT_PUBLIC_REST_API_BASE_URL)}
-            className="inline-flex items-center rounded-md border border-zinc-200 bg-white px-2.5 py-1 font-mono text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center rounded-md border border-border bg-surface px-2.5 py-1 font-mono text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
             title="Read-only xRegistry of every published schema and CloudEvents message definition"
           >
             xRegistry
@@ -191,10 +191,10 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
         <section className="space-y-4">
           <header className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              <h2 className="text-xl font-semibold text-fg">
                 Projects
               </h2>
-              <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+              <p className="mt-0.5 text-sm text-fg-muted">
                 {facetsActive
                   ? `${facetedProjects.length} of ${projects.length} project${
                       projects.length === 1 ? '' : 's'
@@ -209,7 +209,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
               {projects.length > 0 && (
                 <div className="relative max-w-xs">
                   <svg
-                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth={1.75}
@@ -223,14 +223,14 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                     onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
                     pattern={SAFE_SEARCH_HTML_PATTERN}
                     placeholder="Filter projects..."
-                    className="h-9 w-64 rounded-md border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder-zinc-400 shadow-xs transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+                    className="control w-64 pl-9 pr-3"
                   />
                 </div>
               )}
               <div
                 role="tablist"
                 aria-label="Layout"
-                className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white p-0.5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900"
+                className="flex items-center gap-1 rounded-md border border-border bg-surface p-0.5 shadow-xs"
               >
                 <LayoutToggle
                   active={layout === 'grid'}
@@ -266,14 +266,14 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
           )}
 
           {projects.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-10 text-center">
+              <p className="text-base text-fg-muted">
                 No projects with published versions available.
               </p>
             </div>
           ) : layout === 'grid' ? (
             filteredProjects.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-500">
+              <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-6 text-center text-base text-fg-muted">
                 No projects match {emptyFilterSummary || 'the current filters'}.
               </div>
             ) : (
@@ -321,16 +321,16 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   sortable: true,
                   render: (project) => (
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500/15 to-blue-500/5 text-blue-700 ring-1 ring-inset ring-blue-500/30 dark:text-blue-300">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500/15 to-blue-500/5 text-accent-fg ring-1 ring-inset ring-accent/30">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate font-medium text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">
+                        <div className="truncate font-medium text-fg group-hover:text-accent-fg">
                           {project.name}
                         </div>
-                        <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="truncate text-xs text-fg-muted">
                           /{project.slug}
                         </div>
                       </div>
@@ -341,7 +341,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   key: 'description',
                   header: 'Description',
                   render: (project) => (
-                    <span className="line-clamp-2 text-zinc-600 dark:text-zinc-400">
+                    <span className="line-clamp-2 text-fg-muted">
                       {project.description || '—'}
                     </span>
                   ),
@@ -360,7 +360,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   width: 'w-32',
                   sortable: true,
                   render: (project) => (
-                    <span className="text-zinc-500 dark:text-zinc-400">
+                    <span className="text-fg-muted">
                       {project.created_at
                         ? new Date(project.created_at).toLocaleDateString()
                         : '—'}
@@ -373,7 +373,7 @@ export function TenantClient({ tenant, projects, tenantSlug }: TenantClientProps
                   width: 'w-12',
                   render: () => (
                     <svg
-                      className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-[var(--brand)]"
+                      className="h-4 w-4 text-fg-subtle transition-colors group-hover:text-accent-fg"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth={2}
@@ -410,10 +410,10 @@ function LayoutToggle({
       aria-selected={active}
       aria-label={label}
       onClick={onClick}
-      className={`flex h-7 w-7 items-center justify-center rounded transition-colors ${
+      className={`flex h-7 w-7 items-center justify-center rounded-xs transition-colors ${
         active
-          ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
-          : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-50'
+          ? 'bg-subtle text-fg'
+          : 'text-fg-muted hover:bg-subtle hover:text-fg'
       }`}
     >
       {children}

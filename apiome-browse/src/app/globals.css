@@ -3,226 +3,288 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Apiome brand palette — derived from the logo:
- *   navy ink #102050 · azure #1080D0 · honey gold #F2C41C
- * Neutrals are navy-tinted (see the zinc overrides in @theme) so the whole
- * surface system carries the brand cast in both themes.
+ * Hive tokens — the same palette, radii, shadows and type scale as the Control Panel
+ * (`apiome-ui/src/app/globals.css`, "HIVE DESIGN TOKENS"), so the public catalog and the app
+ * read as one product. The values below are copies: `lib/__tests__/hive-tokens.test.ts` holds
+ * them against apiome-ui's stylesheet and fails when the two drift.
+ *
+ * Colour is a role, not a hue: components write `bg-surface`, `text-fg-muted`, `border-border`,
+ * `bg-accent`, and a theme swaps the values under them. There is no `dark:` pair to keep in step.
  */
 :root {
-  --app-font-sans: "Aptos", "Inter", "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --app-font-sans: "Inter", "Aptos", "Segoe UI", "Segoe UI Variable", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --app-font-mono: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-geist-sans: var(--app-font-sans);
   --font-geist-mono: var(--app-font-mono);
 
-  /* Surfaces */
-  --background: #f8fafd;
-  --foreground: #101b3e;
-  --surface: #ffffff;
-  --surface-muted: #eef2f8;
-  --surface-sunken: #f4f7fb;
+  /* ---- Hive: light ---------------------------------------------------- */
+  --bg-canvas: #F6F5F2;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #F3F2EE;
+  --bg-inset: #E9E8E3;
+  --overlay: rgba(24, 22, 18, 0.42);
+  --fg: #1B1A17;
+  --fg-muted: #625F59;
+  --fg-subtle: #6E6B65;
+  --fg-faint: #B8B4AC;
+  --fg-on-accent: #FFFFFF;
+  --border: rgba(28, 25, 20, 0.09);
+  --border-strong: rgba(28, 25, 20, 0.18);
+  --accent: #1B72C1;
+  --accent-hover: #1864A9;
+  --accent-soft: #E7F1FC;
+  --accent-fg: #12539A;
+  --ink: #16265C;
+  --ink-hover: #1F347A;
+  --ink-fg: #FFFFFF;
+  --honey: #F5B301;
+  --honey-soft: #FFF3C4;
+  --honey-fg: #6B4E00;
+  --ok: #0E8A5F;
+  --ok-soft: #E1F5EC;
+  --ok-fg: #0B6B4A;
+  --warn: #C77700;
+  --warn-soft: #FDF0D5;
+  --warn-fg: #8A5300;
+  --danger: #D43F3A;
+  --danger-soft: #FCE8E6;
+  --danger-fg: #A62F2A;
+  --violet: #6D4FD6;
+  --violet-soft: #EEE9FB;
+  --violet-fg: #4F35A8;
+  --orange: #DE6B1F;
+  --orange-soft: #FDECDF;
+  --orange-fg: #A34A0E;
+  --shadow-xs: 0 1px 1px rgba(20, 18, 14, 0.04), 0 0 0 1px rgba(20, 18, 14, 0.05);
+  --shadow-sm: 0 1px 2px rgba(20, 18, 14, 0.06), 0 0 0 1px rgba(20, 18, 14, 0.05);
+  --shadow-md: 0 6px 16px -6px rgba(20, 18, 14, 0.12), 0 0 0 1px rgba(20, 18, 14, 0.06);
+  --shadow-lg: 0 16px 40px -12px rgba(20, 18, 14, 0.22), 0 0 0 1px rgba(20, 18, 14, 0.06);
+  --shadow-card: 0 1px 2px rgba(20, 18, 14, 0.05), 0 6px 18px -10px rgba(20, 18, 14, 0.14);
 
-  /* Hairlines */
-  --border-subtle: #e4e9f2;
-  --border-default: #dde4ef;
-  --border-strong: #c4cfe0;
+  /* ---- Radii — controls `md`, cards `lg`, dialogs `xl` ---------------- */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
 
-  /* Text (navy ink) */
-  --text-primary: #101b3e;
-  --text-secondary: #46536f;
-  --text-tertiary: #8b96b1;
-  --text-inverse: #ffffff;
+  /* ---- Control metrics -------------------------------------------------- */
+  --control-h: 2.25rem;      /* 36px */
+  --control-h-sm: 1.875rem;  /* 30px */
+  --control-height: var(--control-h);
 
-  /* Brand — logo azure */
-  --brand: #0f76c2;
-  --brand-hover: #0d63a5;
-  --brand-pressed: #0a5188;
-  --brand-soft: #e8f3fb;
-  --brand-soft-hover: #d8ebf8;
-  --brand-soft-text: #0b5e9c;
-  --brand-ring: #3d9ad9;
-
-  /* Brand — logo navy (deep counterpart for gradients/headers) */
-  --brand-navy: #102050;
-  --brand-navy-soft: #e9edf7;
-
-  /* Accent — logo honey gold (highlights only, never body text) */
-  --gold: #efbe13;
-  --gold-strong: #d9a90a;
-  --gold-soft: #fbf3d3;
-  --gold-soft-text: #7d6407;
-
-  /* Semantic */
-  --success: #16a34a;
-  --success-soft: #dcfce7;
-  --success-soft-text: #166534;
-  --warning: #d97706;
-  --warning-soft: #fef3c7;
-  --danger: #dc2626;
-  --danger-soft: #fee2e2;
-  --danger-soft-text: #991b1b;
-
-  /* Radius scale */
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-
-  /* Elevation (navy-tinted shadows) */
-  --shadow-xs: 0 1px 1px rgb(16 32 80 / 0.05);
-  --shadow-sm: 0 1px 2px rgb(16 32 80 / 0.07), 0 1px 1px rgb(16 32 80 / 0.04);
-  --shadow-md: 0 4px 8px -2px rgb(16 32 80 / 0.09), 0 2px 4px -2px rgb(16 32 80 / 0.05);
-  --shadow-lg: 0 12px 24px -8px rgb(16 32 80 / 0.14), 0 4px 8px -4px rgb(16 32 80 / 0.07);
-
-  /* Focus */
-  --focus-ring: var(--brand-ring);
-
-  /* Layout */
-  --control-height: 2.25rem;
+  /* ---- Layout ----------------------------------------------------------- */
   --shell-max-width: 1280px;
   --shell-max-width-wide: 1480px;
   --shell-sidebar-width: 280px;
+
+  /* ---- Names this app used before Hive, kept as aliases -----------------
+     Declared on the same element as the tokens, so a theme that restates a token above
+     moves its alias with it; nothing below is restated per theme. */
+  --background: var(--bg-canvas);
+  --foreground: var(--fg);
+  --surface: var(--bg-surface);
+  --surface-muted: var(--bg-subtle);
+  --surface-sunken: var(--bg-inset);
+  --border-subtle: var(--border);
+  --border-default: var(--border);
+  --text-primary: var(--fg);
+  --text-secondary: var(--fg-muted);
+  --text-tertiary: var(--fg-subtle);
+  --text-inverse: var(--fg-on-accent);
+  --brand: var(--accent);
+  --brand-hover: var(--accent-hover);
+  --brand-pressed: var(--accent-hover);
+  --brand-soft: var(--accent-soft);
+  --brand-soft-hover: color-mix(in srgb, var(--accent) 18%, var(--bg-surface));
+  --brand-soft-text: var(--accent-fg);
+  --brand-ring: var(--accent);
+  --brand-navy: #16265C;
+  --brand-navy-soft: color-mix(in srgb, #16265C 10%, var(--bg-surface));
+  --gold: var(--honey);
+  --gold-strong: color-mix(in srgb, var(--honey) 88%, black);
+  --gold-soft: var(--honey-soft);
+  --gold-soft-text: var(--honey-fg);
+  --success: var(--ok);
+  --success-soft: var(--ok-soft);
+  --success-soft-text: var(--ok-fg);
+  --warning: var(--warn);
+  --warning-soft: var(--warn-soft);
+  --danger-soft-text: var(--danger-fg);
+  --focus-ring: var(--accent);
 }
 
+/* The role names as Tailwind colours: `bg-surface`, `text-fg-muted`, `border-border`, … */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-surface-muted: var(--surface-muted);
-  --color-border-subtle: var(--border-subtle);
-  --color-text-muted: var(--text-secondary);
-  --color-brand: var(--brand);
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-subtle: var(--bg-subtle);
+  --color-inset: var(--bg-inset);
+  --color-overlay: var(--overlay);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-faint: var(--fg-faint);
+  --color-fg-on-accent: var(--fg-on-accent);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-fg: var(--accent-fg);
+  --color-ink: var(--ink);
+  --color-ink-hover: var(--ink-hover);
+  --color-ink-fg: var(--ink-fg);
+  --color-honey: var(--honey);
+  --color-honey-soft: var(--honey-soft);
+  --color-honey-fg: var(--honey-fg);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-ok-fg: var(--ok-fg);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-fg: var(--warn-fg);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-fg: var(--danger-fg);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-fg: var(--violet-fg);
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-orange-fg: var(--orange-fg);
+  --shadow-card: var(--shadow-card);
+  /* pre-Hive colour names still referenced by a few utilities */
+  --color-background: var(--bg-canvas);
+  --color-foreground: var(--fg);
+  --color-surface-muted: var(--bg-subtle);
+  --color-border-subtle: var(--border);
+  --color-text-muted: var(--fg-muted);
+  --color-brand: var(--accent);
   --font-sans: var(--app-font-sans);
   --font-mono: var(--app-font-mono);
 }
 
 /*
- * Navy-tinted neutral scale: every zinc-* utility in the app now carries the
- * logo's ink hue instead of stock gray. Sky is pinned to the logo azure and
- * amber-400/500 to the logo gold so utility classes match the brand exactly.
+ * The Hive type scale, re-pointed at Tailwind's `text-*` names exactly as apiome-ui does:
+ * `text-sm` is 13 px and `text-base` the 14 px body. `text-2xs` (11 px) is the floor — nothing
+ * in the interface is smaller.
  */
 @theme {
-  --color-zinc-50: #f6f8fb;
-  --color-zinc-100: #edf1f7;
-  --color-zinc-200: #dfe5f0;
-  --color-zinc-300: #c7d1e2;
-  --color-zinc-400: #93a0bd;
-  --color-zinc-500: #647192;
-  --color-zinc-600: #49567b;
-  --color-zinc-700: #333f63;
-  --color-zinc-800: #202b52;
-  --color-zinc-900: #131c3e;
-  --color-zinc-950: #0b1129;
-
-  --color-sky-50: #eaf4fc;
-  --color-sky-100: #d8ebf8;
-  --color-sky-200: #b4d9f2;
-  --color-sky-300: #7fc0e9;
-  --color-sky-400: #3d9ad9;
-  --color-sky-500: #1583d3;
-  --color-sky-600: #0f76c2;
-  --color-sky-700: #0b5e9c;
-  --color-sky-800: #0a4a7b;
-  --color-sky-900: #0b3d63;
-  --color-sky-950: #082a46;
-
-  --color-amber-300: #f7d868;
-  --color-amber-400: #f2c41c;
-  --color-amber-500: #efbe13;
-  --color-amber-600: #c9990b;
-  --color-amber-700: #9c760a;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.35;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.35;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 0.875rem;
+  --text-base--line-height: 1.5;
+  --text-lg: 0.9375rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.0625rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.25rem;
+  --text-2xl--line-height: 1.35;
+  --text-3xl: 1.5rem;
+  --text-3xl--line-height: 1.2;
+  --text-4xl: 1.875rem;
+  --text-4xl--line-height: 1.2;
+  --text-5xl: 2.375rem;
+  --text-5xl--line-height: 1.2;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
-    --background: #0a1026;
-    --foreground: #e6ebf7;
-    --surface: #101734;
-    --surface-muted: #1a2349;
-    --surface-sunken: #060b1d;
-    --border-subtle: #1d2750;
-    --border-default: #202b52;
-    --border-strong: #2e3a68;
-    --text-primary: #eef2fa;
-    --text-secondary: #9aa7cc;
-    --text-tertiary: #6b7699;
-    --brand: #2e97dd;
-    --brand-hover: #55aae4;
-    --brand-pressed: #1583d3;
-    --brand-soft: rgb(46 151 221 / 0.14);
-    --brand-soft-hover: rgb(46 151 221 / 0.22);
-    --brand-soft-text: #8cc8f0;
-    --brand-ring: #3d9ad9;
-    --brand-navy-soft: rgb(63 92 191 / 0.18);
-    --gold: #f2c41c;
-    --gold-soft: rgb(242 196 28 / 0.13);
-    --gold-soft-text: #f0d472;
-    --success-soft: rgb(22 163 74 / 0.15);
-    --success-soft-text: #86efac;
-    --warning-soft: rgb(217 119 6 / 0.15);
-    --danger-soft: rgb(220 38 38 / 0.15);
-    --danger-soft-text: #fca5a5;
-    --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.25);
-    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 1px rgb(0 0 0 / 0.22);
-    --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.22);
-    --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.5), 0 4px 8px -4px rgb(0 0 0 / 0.28);
+    color-scheme: dark;
+    --bg-canvas: #0C0F1F;
+    --bg-surface: #141931;
+    --bg-subtle: #1A203C;
+    --bg-inset: #0E1226;
+    --overlay: rgba(2, 4, 14, 0.66);
+    --fg: #EEF0FA;
+    --fg-muted: #AAB1CF;
+    --fg-subtle: #828BAE;
+    --fg-faint: #4C5478;
+    --fg-on-accent: #0B0B0C;
+    --border: rgba(176, 190, 255, 0.10);
+    --border-strong: rgba(176, 190, 255, 0.22);
+    --accent: #74B6FF;
+    --accent-hover: #93C6FF;
+    --accent-soft: rgba(116, 182, 255, 0.14);
+    --accent-fg: #ADD3FF;
+    --ink: #F5B301;
+    --ink-hover: #FFC32E;
+    --ink-fg: #1A1200;
+    --honey: #F5B301;
+    --honey-soft: rgba(245, 179, 1, 0.16);
+    --honey-fg: #FFD35C;
+    --ok: #34C08A;
+    --ok-soft: rgba(52, 192, 138, 0.14);
+    --ok-fg: #6FDDB0;
+    --warn: #F0A02F;
+    --warn-soft: rgba(240, 160, 47, 0.14);
+    --warn-fg: #F7C36F;
+    --danger: #F26A63;
+    --danger-soft: rgba(242, 106, 99, 0.14);
+    --danger-fg: #FF9A94;
+    --violet: #9C84EE;
+    --violet-soft: rgba(156, 132, 238, 0.16);
+    --violet-fg: #C1B0FA;
+    --orange: #F0873F;
+    --orange-soft: rgba(240, 135, 63, 0.14);
+    --orange-fg: #F8B085;
+    --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(176, 190, 255, 0.06);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(176, 190, 255, 0.08);
+    --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(176, 190, 255, 0.09);
+    --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(176, 190, 255, 0.10);
+    --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
   }
 }
 
 html.dark {
-  --background: #0a1026;
-  --foreground: #e6ebf7;
-  --surface: #101734;
-  --surface-muted: #1a2349;
-  --surface-sunken: #060b1d;
-  --border-subtle: #1d2750;
-  --border-default: #202b52;
-  --border-strong: #2e3a68;
-  --text-primary: #eef2fa;
-  --text-secondary: #9aa7cc;
-  --text-tertiary: #6b7699;
-  --brand: #2e97dd;
-  --brand-hover: #55aae4;
-  --brand-pressed: #1583d3;
-  --brand-soft: rgb(46 151 221 / 0.14);
-  --brand-soft-hover: rgb(46 151 221 / 0.22);
-  --brand-soft-text: #8cc8f0;
-  --brand-ring: #3d9ad9;
-  --brand-navy-soft: rgb(63 92 191 / 0.18);
-  --gold: #f2c41c;
-  --gold-soft: rgb(242 196 28 / 0.13);
-  --gold-soft-text: #f0d472;
-  --success-soft: rgb(22 163 74 / 0.15);
-  --success-soft-text: #86efac;
-  --warning-soft: rgb(217 119 6 / 0.15);
-  --danger-soft: rgb(220 38 38 / 0.15);
-  --danger-soft-text: #fca5a5;
-  --shadow-xs: 0 1px 1px rgb(0 0 0 / 0.25);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35), 0 1px 1px rgb(0 0 0 / 0.22);
-  --shadow-md: 0 4px 8px -2px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.22);
-  --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.5), 0 4px 8px -4px rgb(0 0 0 / 0.28);
-}
-
-html.light {
-  --background: #f8fafd;
-  --foreground: #101b3e;
-  --surface: #ffffff;
-  --surface-muted: #eef2f8;
-  --surface-sunken: #f4f7fb;
-  --border-subtle: #e4e9f2;
-  --border-default: #dde4ef;
-  --border-strong: #c4cfe0;
-  --text-primary: #101b3e;
-  --text-secondary: #46536f;
-  --text-tertiary: #8b96b1;
-  --brand: #0f76c2;
-  --brand-hover: #0d63a5;
-  --brand-pressed: #0a5188;
-  --brand-soft: #e8f3fb;
-  --brand-soft-hover: #d8ebf8;
-  --brand-soft-text: #0b5e9c;
-  --gold-soft: #fbf3d3;
-  --gold-soft-text: #7d6407;
+  color-scheme: dark;
+  --bg-canvas: #0C0F1F;
+  --bg-surface: #141931;
+  --bg-subtle: #1A203C;
+  --bg-inset: #0E1226;
+  --overlay: rgba(2, 4, 14, 0.66);
+  --fg: #EEF0FA;
+  --fg-muted: #AAB1CF;
+  --fg-subtle: #828BAE;
+  --fg-faint: #4C5478;
+  --fg-on-accent: #0B0B0C;
+  --border: rgba(176, 190, 255, 0.10);
+  --border-strong: rgba(176, 190, 255, 0.22);
+  --accent: #74B6FF;
+  --accent-hover: #93C6FF;
+  --accent-soft: rgba(116, 182, 255, 0.14);
+  --accent-fg: #ADD3FF;
+  --ink: #F5B301;
+  --ink-hover: #FFC32E;
+  --ink-fg: #1A1200;
+  --honey: #F5B301;
+  --honey-soft: rgba(245, 179, 1, 0.16);
+  --honey-fg: #FFD35C;
+  --ok: #34C08A;
+  --ok-soft: rgba(52, 192, 138, 0.14);
+  --ok-fg: #6FDDB0;
+  --warn: #F0A02F;
+  --warn-soft: rgba(240, 160, 47, 0.14);
+  --warn-fg: #F7C36F;
+  --danger: #F26A63;
+  --danger-soft: rgba(242, 106, 99, 0.14);
+  --danger-fg: #FF9A94;
+  --violet: #9C84EE;
+  --violet-soft: rgba(156, 132, 238, 0.16);
+  --violet-fg: #C1B0FA;
+  --orange: #F0873F;
+  --orange-soft: rgba(240, 135, 63, 0.14);
+  --orange-fg: #F8B085;
+  --shadow-xs: 0 1px 1px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(176, 190, 255, 0.06);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(176, 190, 255, 0.08);
+  --shadow-md: 0 8px 20px -8px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(176, 190, 255, 0.09);
+  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(176, 190, 255, 0.10);
+  --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -12px rgba(0, 0, 0, 0.7);
 }
 
 html {
@@ -287,22 +349,11 @@ input, textarea, select, button {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #93a0bd;
+  background: var(--fg-subtle);
   background-clip: padding-box;
   border: 2px solid transparent;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #2e3a68;
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #3d4c82;
-  background-clip: padding-box;
-  border: 2px solid transparent;
-}
 
 pre, code, .font-mono {
   font-family: var(--app-font-mono) !important;
@@ -375,12 +426,81 @@ a.table-row:hover {
 
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--focus-ring);
+  /* The Hive focus ring: a solid 1 px accent edge inside a 3 px halo. */
+  box-shadow: 0 0 0 1px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
   border-radius: 4px;
 }
 
 ::selection {
-  background-color: rgb(21 131 211 / 0.25);
+  background-color: color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+/*
+ * The form control — one box for every text field and select, at one of two heights.
+ * A surface with a hairline drawn *inside* it (so the box keeps its full height), which
+ * darkens on hover and turns accent with a halo on focus. `control` is 36 px; add
+ * `control-sm` for the 30 px one used in toolbars and dense panels.
+ *
+ * In `@layer components`, so a utility on the element (`w-64`, `pl-9`, `font-mono`) still wins.
+ */
+@layer components {
+  .control {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: var(--control-h);
+    padding: 0 0.75rem;
+    border: 0;
+    border-radius: var(--radius-md);
+    background-color: var(--bg-surface);
+    color: var(--fg);
+    font-size: var(--text-sm);
+    box-shadow: inset 0 0 0 1px var(--border-strong), 0 1px 1px rgba(20, 18, 14, 0.04);
+    transition: box-shadow 120ms ease, background-color 120ms ease;
+  }
+
+  .control::placeholder {
+    color: var(--fg-faint);
+  }
+
+  .control:hover {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 30%, transparent), 0 1px 1px rgba(20, 18, 14, 0.04);
+  }
+
+  .control:focus,
+  .control:focus-visible {
+    outline: none;
+    border-radius: var(--radius-md);
+    box-shadow: inset 0 0 0 1px var(--accent), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+
+  .control-invalid,
+  .control[aria-invalid="true"] {
+    box-shadow: inset 0 0 0 1px var(--danger), 0 1px 1px rgba(20, 18, 14, 0.04);
+  }
+
+  .control:disabled {
+    cursor: not-allowed;
+    background-color: var(--bg-subtle);
+    color: var(--fg-subtle);
+  }
+
+  textarea.control {
+    height: auto;
+    padding-block: 0.5rem;
+  }
+
+  .control-sm {
+    height: var(--control-h-sm);
+    padding-inline: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+  }
+
+  .control-sm:focus,
+  .control-sm:focus-visible {
+    border-radius: var(--radius-sm);
+  }
 }
 
 /* Utility classes for consistency */
@@ -388,7 +508,7 @@ a.table-row:hover {
   background-color: var(--surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xs);
+  box-shadow: var(--shadow-card);
 }
 
 .hairline {
@@ -443,7 +563,7 @@ a.table-row:hover {
   gap: 0.25rem;
   border-radius: var(--radius-xs);
   padding: 0.125rem 0.375rem;
-  font-size: 10px;
+  font-size: var(--text-2xs);
   font-weight: 600;
   letter-spacing: 0.025em;
   text-transform: uppercase;
@@ -477,7 +597,7 @@ a.table-row:hover {
 
 /* Brand signature: navy → azure → gold, echoing the logo */
 .brand-hairline {
-  background: linear-gradient(90deg, var(--brand-navy) 0%, #1080d0 55%, var(--gold) 100%);
+  background: linear-gradient(90deg, var(--brand-navy) 0%, #1E90E8 55%, var(--gold) 100%);
 }
 
 /* Hexagon (honeycomb) shape from the logo mark */

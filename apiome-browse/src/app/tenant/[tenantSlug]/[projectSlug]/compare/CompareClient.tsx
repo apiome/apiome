@@ -128,15 +128,15 @@ function diffLineStats(changes: Change[]): { added: number; removed: number } {
 
 /** Diff mockup (`mockups/diff/side-by-side.html`): gradient fills + 3px accent border. */
 const DIFF_ADDED =
-  'bg-gradient-to-r from-emerald-500/10 via-emerald-500/[0.06] to-emerald-500/[0.02] dark:from-emerald-500/15 dark:via-emerald-500/8 dark:to-transparent border-l-[3px] border-l-emerald-500/70';
+  'bg-gradient-to-r from-emerald-500/10 via-emerald-500/[0.06] to-emerald-500/[0.02] dark:from-emerald-500/15 dark:via-emerald-500/8 dark:to-transparent border-l-[3px] border-l-ok/70';
 
 const DIFF_REMOVED =
-  'bg-gradient-to-r from-rose-500/10 via-rose-500/[0.06] to-rose-500/[0.02] dark:from-rose-500/15 dark:via-rose-500/8 dark:to-transparent border-l-[3px] border-l-rose-500/70';
+  'bg-gradient-to-r from-rose-500/10 via-rose-500/[0.06] to-rose-500/[0.02] dark:from-rose-500/15 dark:via-rose-500/8 dark:to-transparent border-l-[3px] border-l-danger/70';
 
 const DIFF_PLACEHOLDER =
   'bg-[repeating-linear-gradient(45deg,transparent_0_6px,rgba(148,163,184,0.08)_6px_12px)] dark:bg-[repeating-linear-gradient(45deg,transparent_0_6px,rgba(71,85,105,0.18)_6px_12px)]';
 
-const DIFF_ROWMono = 'font-mono text-[12px] leading-6';
+const DIFF_ROWMono = 'font-mono text-xs leading-6';
 
 export function CompareClient({
   project,
@@ -244,16 +244,16 @@ export function CompareClient({
               { label: 'Compare' },
             ]}
           />
-          <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-12 text-center dark:border-zinc-700 dark:bg-zinc-900/30">
-            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+          <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-12 text-center">
+            <h3 className="text-xl font-semibold text-fg">
               Not enough versions
             </h3>
-            <p className="mt-1 text-[13px] text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fg-muted">
               At least two published versions are required to compare.
             </p>
             <Link
               href={`/tenant/${tenantSlug}/${projectSlug}`}
-              className="mt-4 inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--brand-soft-text)] hover:text-[var(--brand-hover)]"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-accent-fg hover:text-accent-hover"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -277,9 +277,9 @@ export function CompareClient({
           ]}
         />
 
-        <header className="border-b border-zinc-200 pb-4 dark:border-zinc-700">
-          <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--brand)] to-blue-600 shadow-xs">
+        <header className="border-b border-border pb-4">
+          <h1 className="flex flex-wrap items-center gap-2 text-3xl font-bold tracking-tight text-fg">
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-blue-600 shadow-xs">
               <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -290,23 +290,23 @@ export function CompareClient({
             </span>
             Compare versions
           </h1>
-          <p className="mt-2 text-[14px] text-zinc-600 dark:text-zinc-400">
-            Schema diff for <span className="font-medium text-zinc-800 dark:text-zinc-200">{project.name}</span> —
+          <p className="mt-2 text-base text-fg-muted">
+            Schema diff for <span className="font-medium text-fg">{project.name}</span> —
             aligned side-by-side rows match additions and removals line-for-line.
           </p>
         </header>
 
-        <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-lg border border-border bg-surface p-4 shadow-xs">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50/50 px-3 py-1.5 dark:border-rose-800/60 dark:bg-rose-900/10">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 rounded-md border border-danger/30 bg-danger-soft/50 px-3 py-1.5">
+                <span className="text-2xs font-semibold uppercase tracking-wider text-danger-fg">
                   Source
                 </span>
                 <select
                   value={version1}
                   onChange={(e) => setVersion1(e.target.value)}
-                  className="max-w-[12rem] cursor-pointer bg-transparent font-mono text-[13px] font-semibold text-zinc-900 focus:outline-none dark:text-zinc-100"
+                  className="max-w-[12rem] cursor-pointer bg-transparent font-mono text-sm font-semibold text-fg focus:outline-none"
                   aria-label="Source version"
                 >
                   {versions.map((v) => (
@@ -317,18 +317,18 @@ export function CompareClient({
                 </select>
               </div>
 
-              <svg className="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <svg className="h-4 w-4 shrink-0 text-fg-subtle" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
 
-              <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/50 px-3 py-1.5 dark:border-emerald-800/60 dark:bg-emerald-900/10">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-2 rounded-md border border-ok/30 bg-ok-soft/50 px-3 py-1.5">
+                <span className="text-2xs font-semibold uppercase tracking-wider text-ok-fg">
                   Target
                 </span>
                 <select
                   value={version2}
                   onChange={(e) => setVersion2(e.target.value)}
-                  className="max-w-[12rem] cursor-pointer bg-transparent font-mono text-[13px] font-semibold text-zinc-900 focus:outline-none dark:text-zinc-100"
+                  className="max-w-[12rem] cursor-pointer bg-transparent font-mono text-sm font-semibold text-fg focus:outline-none"
                   aria-label="Target version"
                 >
                   {versions.map((v) => (
@@ -341,7 +341,7 @@ export function CompareClient({
 
               {!loading && !error && diffResult.length > 0 && (
                 <>
-                  <span className="hidden h-6 w-px bg-zinc-200 sm:inline-block dark:bg-zinc-700" />
+                  <span className="hidden h-6 w-px bg-inset sm:inline-block" />
                   <DiffSummaryChip icon="plus" label="added" count={diffStats.added} variant="emerald" />
                   <DiffSummaryChip icon="minus" label="removed" count={diffStats.removed} variant="rose" />
                 </>
@@ -352,7 +352,7 @@ export function CompareClient({
                 <>
                   {(storedChangelog.changelog?.counts?.breaking ?? 0) > 0 && (
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses('breaking')}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${severityBadgeClasses('breaking')}`}
                     >
                       <span className={`h-1.5 w-1.5 rounded-full ${severityDotClasses('breaking')}`}></span>
                       {storedChangelog.changelog?.counts?.breaking} breaking
@@ -360,7 +360,7 @@ export function CompareClient({
                   )}
                   {storedChangelog.maxSeverity && (
                     <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(storedChangelog.maxSeverity)}`}
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${severityBadgeClasses(storedChangelog.maxSeverity)}`}
                     >
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(storedChangelog.maxSeverity)}`}
@@ -399,23 +399,23 @@ export function CompareClient({
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center rounded-xl border border-zinc-200 bg-white p-16 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="flex items-center justify-center rounded-lg border border-border bg-surface p-16 shadow-xs">
             <div className="flex items-center gap-3">
-              <svg className="h-5 w-5 animate-spin text-[var(--brand)]" fill="none" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 animate-spin text-accent-fg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading specifications...</span>
+              <span className="text-base text-fg-muted">Loading specifications...</span>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-5 dark:border-rose-900/50 dark:bg-rose-950/20">
-            <h3 className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+          <div className="rounded-lg border border-danger/30 bg-danger-soft/60 p-5">
+            <h3 className="text-base font-semibold text-danger-fg">
               Could not load specifications
             </h3>
-            <p className="mt-1 text-[13px] text-rose-800 dark:text-rose-300/90">{error}</p>
+            <p className="mt-1 text-sm text-danger-fg">{error}</p>
           </div>
         )}
 
@@ -446,7 +446,7 @@ export function CompareClient({
 }
 
 /** Ring drawn over the row a ?focus deep link resolved to, cleared after a short beat. */
-const DIFF_FOCUS_RING = 'ring-2 ring-inset ring-amber-400 dark:ring-amber-500';
+const DIFF_FOCUS_RING = 'ring-2 ring-inset ring-honey';
 
 function SideBySideDiffPanel({
   pairedLines,
@@ -471,34 +471,34 @@ function SideBySideDiffPanel({
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-700 dark:bg-zinc-900/30">
+    <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-xs">
       <div className="max-h-[min(70vh,720px)] min-h-[420px] overflow-auto">
-        <div className="sticky top-0 z-10 grid grid-cols-2 border-b border-zinc-200 bg-zinc-50 text-xs dark:border-zinc-700 dark:bg-zinc-800/60">
-          <div className="flex items-center gap-2 border-r border-zinc-200 px-4 py-2 dark:border-zinc-700">
-            <svg className="h-3.5 w-3.5 shrink-0 text-rose-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <div className="sticky top-0 z-10 grid grid-cols-2 border-b border-border bg-subtle text-xs">
+          <div className="flex items-center gap-2 border-r border-border px-4 py-2">
+            <svg className="h-3.5 w-3.5 shrink-0 text-danger-fg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
               />
             </svg>
-            <span className="font-semibold font-mono text-zinc-800 dark:text-zinc-100">v{version1}</span>
-            <span className="text-zinc-400">·</span>
-            <span className="font-semibold uppercase tracking-wider text-[10px] text-rose-600 dark:text-rose-400">
+            <span className="font-semibold font-mono text-fg">v{version1}</span>
+            <span className="text-fg-subtle">·</span>
+            <span className="font-semibold uppercase tracking-wider text-2xs text-danger-fg">
               Source
             </span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2">
-            <svg className="h-3.5 w-3.5 shrink-0 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="h-3.5 w-3.5 shrink-0 text-ok-fg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
               />
             </svg>
-            <span className="font-semibold font-mono text-zinc-800 dark:text-zinc-100">v{version2}</span>
-            <span className="text-zinc-400">·</span>
-            <span className="font-semibold uppercase tracking-wider text-[10px] text-emerald-600 dark:text-emerald-400">
+            <span className="font-semibold font-mono text-fg">v{version2}</span>
+            <span className="text-fg-subtle">·</span>
+            <span className="font-semibold uppercase tracking-wider text-2xs text-ok-fg">
               Target
             </span>
           </div>
@@ -514,22 +514,22 @@ function SideBySideDiffPanel({
             <div
               key={i}
               id={`diff-row-${i}`}
-              className={`grid grid-cols-2 border-b border-zinc-100 dark:border-zinc-800/80 ${
+              className={`grid grid-cols-2 border-b border-border ${
                 i === highlightIndex ? DIFF_FOCUS_RING : ''
               }`}
               style={{ minHeight: '1.5rem' }}
             >
               <div
-                className={`flex min-h-[1.5rem] min-w-0 border-r border-zinc-200 dark:border-zinc-700 ${leftTone}`}
+                className={`flex min-h-[1.5rem] min-w-0 border-r border-border ${leftTone}`}
                 style={leftNeutral ? neutralStyle : undefined}
               >
                 <div
-                  className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-[11px] tabular-nums ${
+                  className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-2xs tabular-nums ${
                     row.leftKind === 'removed'
-                      ? 'border-rose-400/25 bg-rose-500/5 text-rose-700/80 dark:border-rose-500/20 dark:text-rose-300/90'
+                      ? 'border-danger/25 bg-danger/5 text-danger-fg/80'
                       : row.leftKind === 'gap'
-                      ? 'border-zinc-300/40 bg-black/[0.02] text-zinc-400 dark:border-zinc-600/40 dark:bg-white/[0.03]'
-                      : 'border-zinc-200/80 bg-zinc-100/40 text-zinc-500 dark:border-zinc-700/80 dark:bg-zinc-800/40 dark:text-zinc-400'
+                      ? 'border-border-strong/40 bg-overlay text-fg-subtle'
+                      : 'border-border/80 bg-subtle/40 text-fg-muted'
                   }`}
                 >
                   {row.leftNum ?? ''}
@@ -539,7 +539,7 @@ function SideBySideDiffPanel({
                   style={leftNeutral ? neutralStyle : undefined}
                 >
                   {row.leftKind === 'removed' && (
-                    <span className="mr-2 inline-block w-2 font-semibold text-rose-600 dark:text-rose-400">−</span>
+                    <span className="mr-2 inline-block w-2 font-semibold text-danger-fg">−</span>
                   )}
                   {row.leftKind === 'unchanged' && <span className="mr-3 inline-block opacity-0">·</span>}
                   {row.leftKind === 'gap' ? '\u00A0' : row.leftText || '\u00A0'}
@@ -551,12 +551,12 @@ function SideBySideDiffPanel({
                 style={rightNeutral ? neutralStyle : undefined}
               >
                 <div
-                  className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-[11px] tabular-nums ${
+                  className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-2xs tabular-nums ${
                     row.rightKind === 'added'
-                      ? 'border-emerald-400/25 bg-emerald-500/5 text-emerald-800/90 dark:border-emerald-500/20 dark:text-emerald-300/90'
+                      ? 'border-ok/25 bg-ok/5 text-ok-fg/90'
                       : row.rightKind === 'gap'
-                      ? 'border-zinc-300/40 bg-black/[0.02] text-zinc-400 dark:border-zinc-600/40 dark:bg-white/[0.03]'
-                      : 'border-zinc-200/80 bg-zinc-100/40 text-zinc-500 dark:border-zinc-700/80 dark:bg-zinc-800/40 dark:text-zinc-400'
+                      ? 'border-border-strong/40 bg-overlay text-fg-subtle'
+                      : 'border-border/80 bg-subtle/40 text-fg-muted'
                   }`}
                 >
                   {row.rightNum ?? ''}
@@ -566,7 +566,7 @@ function SideBySideDiffPanel({
                   style={rightNeutral ? neutralStyle : undefined}
                 >
                   {row.rightKind === 'added' && (
-                    <span className="mr-2 inline-block w-2 font-semibold text-emerald-600 dark:text-emerald-400">+</span>
+                    <span className="mr-2 inline-block w-2 font-semibold text-ok-fg">+</span>
                   )}
                   {row.rightKind === 'unchanged' && <span className="mr-3 inline-block opacity-0">·</span>}
                   {row.rightKind === 'gap' ? '\u00A0' : row.rightText || '\u00A0'}
@@ -611,12 +611,12 @@ function UnifiedDiffPanel({
         oldNum += 1;
         oldGutter = String(oldNum);
         rowClass = DIFF_REMOVED;
-        prefix = <span className="mr-2 font-semibold text-rose-600 dark:text-rose-400">−</span>;
+        prefix = <span className="mr-2 font-semibold text-danger-fg">−</span>;
       } else if (part.added) {
         newNum += 1;
         newGutter = String(newNum);
         rowClass = DIFF_ADDED;
-        prefix = <span className="mr-2 font-semibold text-emerald-600 dark:text-emerald-400">+</span>;
+        prefix = <span className="mr-2 font-semibold text-ok-fg">+</span>;
       } else {
         oldNum += 1;
         newNum += 1;
@@ -629,25 +629,25 @@ function UnifiedDiffPanel({
         <div
           key={key}
           id={`diff-row-${thisRowIndex}`}
-          className={`flex min-h-[1.5rem] border-b border-zinc-100 dark:border-zinc-800/80 ${rowClass} ${
+          className={`flex min-h-[1.5rem] border-b border-border ${rowClass} ${
             thisRowIndex === highlightIndex ? DIFF_FOCUS_RING : ''
           }`}
           style={!part.added && !part.removed ? neutralStyle : undefined}
         >
           <div
-            className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-[11px] tabular-nums ${
+            className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-2xs tabular-nums ${
               part.removed
-                ? 'border-rose-400/25 bg-rose-500/5 text-rose-800/90 dark:text-rose-300/90'
-                : 'border-zinc-200/80 bg-zinc-100/40 text-zinc-500 dark:border-zinc-700/80 dark:bg-zinc-800/40 dark:text-zinc-400'
+                ? 'border-danger/25 bg-danger/5 text-danger-fg/90'
+                : 'border-border/80 bg-subtle/40 text-fg-muted'
             }`}
           >
             {oldGutter}
           </div>
           <div
-            className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-[11px] tabular-nums ${
+            className={`w-[2.75rem] shrink-0 select-none border-r py-0.5 pr-2 text-right text-2xs tabular-nums ${
               part.added
-                ? 'border-emerald-400/25 bg-emerald-500/5 text-emerald-900/90 dark:text-emerald-300/90'
-                : 'border-zinc-200/80 bg-zinc-100/40 text-zinc-500 dark:border-zinc-700/80 dark:bg-zinc-800/40 dark:text-zinc-400'
+                ? 'border-ok/25 bg-ok/5 text-ok-fg/90'
+                : 'border-border/80 bg-subtle/40 text-fg-muted'
             }`}
           >
             {newGutter}
@@ -665,10 +665,10 @@ function UnifiedDiffPanel({
   });
 
   return (
-    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-700 dark:bg-zinc-900/30">
-      <div className="sticky top-0 z-10 flex border-b border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-400">
-        <div className="w-[2.75rem] shrink-0 border-r border-zinc-200 px-2 py-2 dark:border-zinc-700">Old</div>
-        <div className="w-[2.75rem] shrink-0 border-r border-zinc-200 px-2 py-2 dark:border-zinc-700">New</div>
+    <div className="overflow-hidden rounded-lg border border-border bg-surface shadow-xs">
+      <div className="sticky top-0 z-10 flex border-b border-border bg-subtle text-2xs font-semibold uppercase tracking-wider text-fg-muted">
+        <div className="w-[2.75rem] shrink-0 border-r border-border px-2 py-2">Old</div>
+        <div className="w-[2.75rem] shrink-0 border-r border-border px-2 py-2">New</div>
         <div className="flex-1 px-3 py-2">Unified</div>
       </div>
       <div className="max-h-[min(70vh,720px)] min-h-[420px] overflow-auto">{rows}</div>
@@ -678,17 +678,17 @@ function UnifiedDiffPanel({
 
 function DiffLegend() {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-6 text-[12px] text-zinc-600 dark:text-zinc-400">
+    <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-fg-muted">
       <div className="flex items-center gap-2">
-        <span className={`h-6 w-10 rounded border border-rose-300/70 dark:border-rose-700/60 ${DIFF_REMOVED}`} />
+        <span className={`h-6 w-10 rounded-xs border border-danger/70 ${DIFF_REMOVED}`} />
         <span>Removed</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className={`h-6 w-10 rounded border border-emerald-300/70 dark:border-emerald-700/60 ${DIFF_ADDED}`} />
+        <span className={`h-6 w-10 rounded-xs border border-ok/70 ${DIFF_ADDED}`} />
         <span>Added</span>
       </div>
       <div className="flex items-center gap-2">
-        <span className={`h-6 w-10 rounded border border-zinc-200 dark:border-zinc-600 ${DIFF_PLACEHOLDER}`} />
+        <span className={`h-6 w-10 rounded-xs border border-border ${DIFF_PLACEHOLDER}`} />
         <span>Padding (other side)</span>
       </div>
     </div>
@@ -708,8 +708,8 @@ function DiffSummaryChip({
 }) {
   const cls =
     variant === 'emerald'
-      ? 'border-emerald-200/70 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-900/20 dark:text-emerald-300'
-      : 'border-rose-200/70 bg-rose-50 text-rose-800 dark:border-rose-800/60 dark:bg-rose-900/20 dark:text-rose-300';
+      ? 'border-ok/70 bg-ok-soft text-ok-fg'
+      : 'border-danger/70 bg-danger-soft text-danger-fg';
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium ${cls}`}
@@ -732,7 +732,7 @@ function DiffSummaryChip({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+      <span className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
         {label}
       </span>
       {children}
@@ -750,16 +750,16 @@ function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex h-8 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700">
+    <div className="inline-flex h-8 overflow-hidden rounded-md border border-border">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`border-l border-zinc-200 px-3 py-1 text-[12px] font-medium transition-colors first:border-l-0 dark:border-zinc-700 ${
+          className={`border-l border-border px-3 py-1 text-xs font-medium transition-colors first:border-l-0 ${
             value === opt.value
-              ? 'bg-[var(--brand)] text-white'
-              : 'bg-white text-zinc-600 hover:bg-zinc-50 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+              ? 'bg-accent text-fg-on-accent'
+              : 'bg-surface text-fg-muted hover:bg-subtle'
           }`}
         >
           {opt.label}

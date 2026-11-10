@@ -66,13 +66,13 @@ export function PublicFidelityWarningPanel({
   const ring = ringGeometry(fidelity.preserved_percent, RING_RADIUS);
 
   return (
-    <div className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="rounded-lg border border-border p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+          <div className="text-base font-semibold text-fg">
             Exporting to {targetLabel}
           </div>
-          <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{targetDescription}</div>
+          <div className="mt-1 text-xs text-fg-muted">{targetDescription}</div>
         </div>
         <span
           className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${tierBadgeClass(fidelity.tier)}`}
@@ -82,9 +82,9 @@ export function PublicFidelityWarningPanel({
       </div>
 
       {previewLoading && (
-        <div className="mt-4 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-300">
+        <div className="mt-4 flex items-center gap-2 text-base text-fg-muted">
           <svg
-            className="h-4 w-4 animate-spin text-[var(--brand)]"
+            className="h-4 w-4 animate-spin text-accent-fg"
             fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
@@ -98,7 +98,7 @@ export function PublicFidelityWarningPanel({
       {!previewLoading && previewError && (
         <div
           data-testid="export-advisory-error"
-          className="mt-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          className="mt-4 rounded-lg border border-honey/30 bg-honey-soft p-3 text-base text-honey-fg"
         >
           The detailed fidelity report could not be loaded — the summary below still reflects
           this conversion.
@@ -124,20 +124,20 @@ export function PublicFidelityWarningPanel({
                 d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
               />
             </svg>
-            <span className="text-sm font-semibold">{advisory.headline}</span>
+            <span className="text-base font-semibold">{advisory.headline}</span>
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${advisorySeverityPillClass(advisory.severity)}`}
+              className={`rounded-full px-2 py-0.5 text-2xs font-semibold uppercase ${advisorySeverityPillClass(advisory.severity)}`}
             >
               {advisory.severity ?? 'info'}
             </span>
           </div>
-          <p className="mt-1.5 text-sm">{advisory.message}</p>
+          <p className="mt-1.5 text-base">{advisory.message}</p>
         </div>
       )}
       {advisory && !advisory.show && (
         <p
           data-testid="export-advisory"
-          className="mt-4 text-sm text-emerald-700 dark:text-emerald-300"
+          className="mt-4 text-base text-ok-fg"
         >
           {advisory.headline}
         </p>
@@ -157,7 +157,7 @@ export function PublicFidelityWarningPanel({
               r={RING_RADIUS}
               fill="none"
               strokeWidth="8"
-              className="stroke-zinc-200 dark:stroke-zinc-700"
+              className="stroke-border-strong"
             />
             <circle
               cx="48"
@@ -174,11 +174,11 @@ export function PublicFidelityWarningPanel({
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div
               data-testid="export-preserved-percent"
-              className="text-xl font-bold text-zinc-900 dark:text-zinc-50"
+              className="text-2xl font-bold text-fg"
             >
               {fidelity.preserved_percent}%
             </div>
-            <div className="text-[9px] uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <div className="text-2xs uppercase tracking-wide text-fg-muted">
               preserved
             </div>
           </div>
@@ -195,7 +195,7 @@ export function PublicFidelityWarningPanel({
               </span>
             ))}
           </div>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          <p className="text-xs text-fg-muted">
             {fidelity.total} construct{fidelity.total === 1 ? '' : 's'} considered for this source.
           </p>
         </div>
@@ -207,7 +207,7 @@ export function PublicFidelityWarningPanel({
             type="button"
             data-testid="export-report-toggle"
             onClick={() => setReportOpen((open) => !open)}
-            className="flex items-center gap-1 text-xs font-medium text-[var(--brand)] hover:opacity-80"
+            className="flex items-center gap-1 text-xs font-medium text-accent-fg hover:opacity-80"
           >
             <svg
               className={`h-3.5 w-3.5 transition-transform ${reportOpen ? 'rotate-180' : ''}`}
@@ -225,7 +225,7 @@ export function PublicFidelityWarningPanel({
           {reportOpen && (
             <ul
               data-testid="export-fidelity-report"
-              className="mt-2 max-h-60 divide-y divide-zinc-100 overflow-y-auto rounded-lg border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800"
+              className="mt-2 max-h-60 divide-y divide-border overflow-y-auto rounded-lg border border-border"
             >
               {reportItems.map((item) => (
                 <FidelityReportRow
@@ -241,13 +241,13 @@ export function PublicFidelityWarningPanel({
       {needsAck && (
         <label
           data-testid="export-ack"
-          className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          className="mt-4 flex cursor-pointer items-start gap-3 rounded-lg border border-honey/30 bg-honey-soft p-3 text-base text-honey-fg"
         >
           <input
             type="checkbox"
             checked={acknowledged}
             onChange={(e) => onAcknowledgedChange(e.target.checked)}
-            className="mt-0.5 h-3.5 w-3.5 rounded border-amber-300 accent-amber-600"
+            className="mt-0.5 h-3.5 w-3.5 rounded-xs border-honey/30 accent-honey"
           />
           <span>
             <span className="font-medium">
@@ -265,28 +265,28 @@ export function PublicFidelityWarningPanel({
 
 function FidelityReportRow({ item }: { item: LossItem }) {
   return (
-    <li className="flex items-start gap-3 p-2.5 text-sm">
+    <li className="flex items-start gap-3 p-2.5 text-base">
       <span
-        className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${kindBadgeClass(item.kind)}`}
+        className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-2xs font-semibold ${kindBadgeClass(item.kind)}`}
       >
         {kindLabel(item.kind)}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex flex-wrap items-center gap-2">
-          <code className="break-all font-mono text-xs font-medium text-zinc-900 dark:text-zinc-100">
+          <code className="break-all font-mono text-xs font-medium text-fg">
             {item.construct}
           </code>
           {item.severity !== 'info' && (
             <span
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase ${advisorySeverityPillClass(item.severity)}`}
+              className={`rounded-full px-1.5 py-0.5 text-2xs font-semibold uppercase ${advisorySeverityPillClass(item.severity)}`}
             >
               {item.severity}
             </span>
           )}
         </span>
-        <span className="mt-0.5 block text-xs text-zinc-600 dark:text-zinc-300">{item.message}</span>
+        <span className="mt-0.5 block text-xs text-fg-muted">{item.message}</span>
         {item.target_mapping && (
-          <span className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="mt-0.5 block text-xs text-fg-muted">
             In the target: {item.target_mapping}
           </span>
         )}

@@ -39,28 +39,28 @@ export interface SpecVisualCanvasProps {
 function SchemaNode({ data }: NodeProps) {
   const d = data as { label: string; subtitle?: string; mono?: boolean };
   return (
-    <div className="min-w-[180px] max-w-[280px] rounded-xl border border-zinc-300 bg-white px-3 py-2.5 shadow-sm dark:border-zinc-600 dark:bg-zinc-900">
+    <div className="min-w-[180px] max-w-[280px] rounded-lg border border-border-strong bg-surface px-3 py-2.5 shadow-sm">
       <Handle
         type="target"
         position={Position.Top}
-        className="!size-2 !border !border-zinc-400 !bg-zinc-200 dark:!border-zinc-500 dark:!bg-zinc-600"
+        className="!size-2 !border !border-border-strong !bg-inset"
       />
       <div
-        className={`break-words text-[13px] font-semibold text-zinc-900 dark:text-zinc-50 ${
+        className={`break-words text-sm font-semibold text-fg ${
           d.mono ? 'font-mono' : ''
         }`}
       >
         {d.label}
       </div>
       {d.subtitle && d.subtitle !== d.label && (
-        <div className="mt-0.5 line-clamp-3 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+        <div className="mt-0.5 line-clamp-3 text-2xs leading-snug text-fg-muted">
           {d.subtitle}
         </div>
       )}
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!size-2 !border !border-zinc-400 !bg-zinc-200 dark:!border-zinc-500 dark:!bg-zinc-600"
+        className="!size-2 !border !border-border-strong !bg-inset"
       />
     </div>
   );
@@ -121,16 +121,16 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
 
   if (graph.unavailableReason) {
     return (
-      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/80 px-6 py-16 text-center dark:border-zinc-800 dark:bg-zinc-950/60">
-        <p className="max-w-md text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">{graph.unavailableReason}</p>
+      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-lg border border-border bg-subtle/80 px-6 py-16 text-center">
+        <p className="max-w-md text-sm leading-relaxed text-fg-muted">{graph.unavailableReason}</p>
       </div>
     );
   }
 
   if (graph.nodes.length === 0) {
     return (
-      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50/80 px-6 py-16 text-center dark:border-zinc-800 dark:bg-zinc-950/60">
-        <p className="max-w-md text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+      <div className="flex min-h-[560px] flex-col items-center justify-center rounded-lg border border-border bg-subtle/80 px-6 py-16 text-center">
+        <p className="max-w-md text-sm leading-relaxed text-fg-muted">
           {graph.unavailableReason ?? 'No schema shapes or local references to draw.'}
         </p>
       </div>
@@ -145,7 +145,7 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
   };
 
   return (
-    <div className="h-[min(70vh,640px)] min-h-[520px] w-full overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="h-[min(70vh,640px)] min-h-[520px] w-full overflow-hidden rounded-lg border border-border bg-subtle">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -168,15 +168,15 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
           variant={BackgroundVariant.Dots}
           gap={20}
           size={1}
-          className="!bg-zinc-50 dark:!bg-zinc-950"
+          className="!bg-subtle"
           color={isDark ? '#3f3f46' : '#d4d4d8'}
         />
         <Controls
           showInteractive={false}
-          className="!m-3 !overflow-hidden !rounded-lg !border !border-zinc-200 !bg-white !shadow-sm dark:!border-zinc-700 dark:!bg-zinc-900"
+          className="!m-3 !overflow-hidden !rounded-lg !border !border-border !bg-surface !shadow-sm"
         />
         <MiniMap
-          className="!m-3 !overflow-hidden !rounded-lg !border !border-zinc-200 dark:!border-zinc-700"
+          className="!m-3 !overflow-hidden !rounded-lg !border !border-border"
           pannable
           zoomable
           maskColor={isDark ? 'rgba(24,24,27,0.88)' : 'rgba(244,244,245,0.9)'}
@@ -184,15 +184,15 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
         />
         <Panel
           position="top-left"
-          className="m-3 max-w-[min(100%,380px)] rounded-lg border border-zinc-200 bg-white/95 px-3 py-2 text-[11px] text-zinc-600 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/95 dark:text-zinc-300"
+          className="m-3 max-w-[min(100%,380px)] rounded-lg border border-border bg-surface/95 px-3 py-2 text-2xs text-fg-muted shadow-sm backdrop-blur-sm"
         >
-          <div className="font-semibold text-zinc-800 dark:text-zinc-100">Relationships</div>
+          <div className="font-semibold text-fg">Relationships</div>
           <p className="mt-1 leading-snug">
             Drag nodes, pan and zoom. Edge labels show{' '}
-            <code className="rounded bg-zinc-100 px-1 py-px font-mono text-[10px] dark:bg-zinc-800">allOf</code>,{' '}
-            <code className="rounded bg-zinc-100 px-1 py-px font-mono text-[10px] dark:bg-zinc-800">anyOf</code>,{' '}
-            <code className="rounded bg-zinc-100 px-1 py-px font-mono text-[10px] dark:bg-zinc-800">oneOf</code>, or
-            property paths for <code className="rounded bg-zinc-100 px-1 py-px font-mono text-[10px] dark:bg-zinc-800">$ref</code>.
+            <code className="rounded-xs bg-subtle px-1 py-px font-mono text-2xs">allOf</code>,{' '}
+            <code className="rounded-xs bg-subtle px-1 py-px font-mono text-2xs">anyOf</code>,{' '}
+            <code className="rounded-xs bg-subtle px-1 py-px font-mono text-2xs">oneOf</code>, or
+            property paths for <code className="rounded-xs bg-subtle px-1 py-px font-mono text-2xs">$ref</code>.
           </p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
             <li className="flex items-center gap-1.5">
@@ -212,7 +212,7 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
               <span>$ref</span>
             </li>
           </ul>
-          <p className="mt-2 border-t border-zinc-200 pt-2 leading-snug dark:border-zinc-700">
+          <p className="mt-2 border-t border-border pt-2 leading-snug">
             Clusters are packed into rows. Adjust <span className="font-semibold">flow</span> and{' '}
             <span className="font-semibold">spacing</span> (top right) for readability, then{' '}
             <span className="font-semibold">Auto-layout</span> to refit the view after dragging nodes.
@@ -220,17 +220,17 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
         </Panel>
         <Panel
           position="top-right"
-          className="m-3 flex max-w-[200px] flex-col gap-2 rounded-lg border border-zinc-200 bg-white/95 p-2 shadow-sm backdrop-blur-sm dark:border-zinc-700 dark:bg-zinc-900/95"
+          className="m-3 flex max-w-[200px] flex-col gap-2 rounded-lg border border-border bg-surface/95 p-2 shadow-sm backdrop-blur-sm"
         >
           <div className="flex flex-col gap-1">
-            <label htmlFor="browse-visual-flow" className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <label htmlFor="browse-visual-flow" className="text-2xs font-semibold uppercase tracking-wide text-fg-muted">
               Flow
             </label>
             <select
               id="browse-visual-flow"
               value={layoutDirection}
               onChange={(e) => setLayoutDirection(e.target.value as BrowseLayoutDirection)}
-              className="w-full rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-800 shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="control control-sm font-medium"
             >
               {LAYOUT_DIRECTIONS.map((d) => (
                 <option key={d} value={d}>
@@ -240,14 +240,14 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
             </select>
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="browse-visual-density" className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            <label htmlFor="browse-visual-density" className="text-2xs font-semibold uppercase tracking-wide text-fg-muted">
               Spacing
             </label>
             <select
               id="browse-visual-density"
               value={layoutDensity}
               onChange={(e) => setLayoutDensity(e.target.value as BrowseLayoutDensity)}
-              className="w-full rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-800 shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+              className="control control-sm font-medium"
             >
               {LAYOUT_DENSITIES.map((d) => (
                 <option key={d} value={d}>
@@ -259,7 +259,7 @@ function FlowInner({ spec, format, isDark }: SpecVisualCanvasProps) {
           <button
             type="button"
             onClick={runAutoLayout}
-            className="rounded-md bg-zinc-100 px-3 py-1.5 text-[11px] font-semibold text-zinc-800 transition-colors hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+            className="rounded-md bg-subtle px-3 py-1.5 text-2xs font-semibold text-fg transition-colors hover:bg-inset"
             title="Re-run layout with the current flow and spacing, then zoom to fit"
           >
             Auto-layout

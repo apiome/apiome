@@ -251,22 +251,22 @@ export function SpecSidebar({
   const totalOps = groups.reduce((sum, g) => sum + g.operations.length, 0);
 
   return (
-    <nav className="space-y-5 text-[13px]" aria-label="Specification navigation">
+    <nav className="space-y-5 text-sm" aria-label="Specification navigation">
       {/* Versions */}
-      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="rounded-lg border border-border bg-surface">
         <button
           type="button"
           onClick={() => setVersionsOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="flex w-full items-center justify-between px-3 py-2 text-left text-2xs font-semibold uppercase tracking-wider text-fg-muted hover:text-fg"
           aria-expanded={versionsOpen}
         >
           <span>Versions ({versions.length})</span>
           <Chevron open={versionsOpen} />
         </button>
         {versionsOpen && (
-          <ul className="border-t border-zinc-100 py-1 dark:border-zinc-800/80">
+          <ul className="border-t border-border py-1">
             {versions.length === 0 && (
-              <li className="px-3 py-2 text-xs text-zinc-500 dark:text-zinc-400">
+              <li className="px-3 py-2 text-xs text-fg-muted">
                 No other versions.
               </li>
             )}
@@ -276,22 +276,22 @@ export function SpecSidebar({
                 <li key={v.id}>
                   <Link
                     href={`/tenant/${tenantSlug}/${projectSlug}/${v.version_id}`}
-                    className={`flex items-center justify-between gap-2 px-3 py-1.5 text-[13px] transition-colors ${
+                    className={`flex items-center justify-between gap-2 px-3 py-1.5 text-sm transition-colors ${
                       active
-                        ? 'bg-[var(--brand-soft)] font-medium text-[var(--brand-soft-text)]'
-                        : 'text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-50'
+                        ? 'bg-accent-soft font-medium text-accent-fg'
+                        : 'text-fg-muted hover:bg-subtle hover:text-fg'
                     }`}
                   >
                     <span className="flex items-center gap-2">
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
-                          active ? 'bg-[var(--brand)]' : 'bg-zinc-300 dark:bg-zinc-700'
+                          active ? 'bg-accent' : 'bg-inset'
                         }`}
                       ></span>
                       <span className="font-mono">v{v.version_id}</span>
                     </span>
                     {idx === 0 && (
-                      <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      <span className="rounded-full bg-ok-soft px-1.5 py-0.5 text-2xs font-medium text-ok-fg">
                         Latest
                       </span>
                     )}
@@ -304,11 +304,11 @@ export function SpecSidebar({
       </div>
 
       {/* Contents (TOC) */}
-      <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="rounded-lg border border-border bg-surface">
         <button
           type="button"
           onClick={() => setTocOpen((v) => !v)}
-          className="flex w-full items-center justify-between px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="flex w-full items-center justify-between px-3 py-2 text-left text-2xs font-semibold uppercase tracking-wider text-fg-muted hover:text-fg"
           aria-expanded={tocOpen}
         >
           <span>Contents{totalOps > 0 ? ` (${totalOps})` : ''}</span>
@@ -316,7 +316,7 @@ export function SpecSidebar({
         </button>
 
         {tocOpen && (
-          <div className="border-t border-zinc-100 dark:border-zinc-800/80">
+          <div className="border-t border-border">
             {!spec ? (
               <div className="space-y-2 px-3 py-3">
                 <div className="skeleton h-3 w-3/4"></div>
@@ -324,7 +324,7 @@ export function SpecSidebar({
                 <div className="skeleton h-3 w-2/3"></div>
               </div>
             ) : groups.length === 0 ? (
-              <p className="px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="px-3 py-3 text-xs text-fg-muted">
                 No outline available for this document.
               </p>
             ) : (
@@ -335,13 +335,13 @@ export function SpecSidebar({
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
                     placeholder="Filter paths & schemas..."
-                    className="h-7 w-full rounded-md border border-zinc-200 bg-white px-2 text-[12px] text-zinc-900 placeholder-zinc-400 focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+                    className="control control-sm"
                     aria-label="Filter table of contents"
                   />
                 </div>
                 <ul className="max-h-[60vh] overflow-y-auto py-1">
                   {filteredGroups.length === 0 ? (
-                    <li className="px-3 py-3 text-xs text-zinc-500 dark:text-zinc-400">
+                    <li className="px-3 py-3 text-xs text-fg-muted">
                       No matches.
                     </li>
                   ) : (
@@ -352,17 +352,17 @@ export function SpecSidebar({
                           <button
                             type="button"
                             onClick={() => toggleTag(group.tag)}
-                            className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-[12px] font-semibold text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800/60"
+                            className="flex w-full items-center gap-1.5 px-3 py-1.5 text-left text-xs font-semibold text-fg-muted hover:bg-subtle"
                             aria-expanded={!collapsed}
                           >
                             <Chevron open={!collapsed} small />
                             <span className="truncate">{group.tag}</span>
-                            <span className="ml-auto text-[10px] tabular-nums text-zinc-400 dark:text-zinc-500">
+                            <span className="ml-auto text-2xs tabular-nums text-fg-subtle">
                               {group.operations.length}
                             </span>
                           </button>
                           {!collapsed && (
-                            <ul className="border-l border-zinc-100 ml-[18px] dark:border-zinc-800/80">
+                            <ul className="border-l border-border ml-[18px]">
                               {group.operations.map((op, i) => {
                                 const active = activeAnchorId === op.anchorId;
                                 return (
@@ -370,14 +370,14 @@ export function SpecSidebar({
                                     <a
                                       href={`#${op.anchorId}`}
                                       onClick={(e) => handleAnchorClick(e, op.anchorId)}
-                                      className={`flex items-center gap-2 rounded-r-md py-1 pl-3 pr-2 text-[12px] transition-colors ${
+                                      className={`flex items-center gap-2 rounded-r-md py-1 pl-3 pr-2 text-xs transition-colors ${
                                         active
-                                          ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-                                          : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100'
+                                          ? 'bg-accent-soft text-accent-fg'
+                                          : 'text-fg-muted hover:bg-subtle hover:text-fg'
                                       }`}
                                     >
                                       <span
-                                        className={`shrink-0 rounded px-1 py-0 font-mono text-[10px] font-semibold uppercase tracking-wide ${
+                                        className={`shrink-0 rounded-xs px-1 py-0 font-mono text-2xs font-semibold uppercase tracking-wide ${
                                           HTTP_METHOD_TONE[op.method.toLowerCase()] ?? HTTP_METHOD_TONE.options
                                         }`}
                                       >
@@ -413,7 +413,7 @@ function Chevron({ open, small }: { open: boolean; small?: boolean }) {
   const size = small ? 'h-3 w-3' : 'h-3.5 w-3.5';
   return (
     <svg
-      className={`${size} text-zinc-400 transition-transform ${open ? '' : '-rotate-90'}`}
+      className={`${size} text-fg-subtle transition-transform ${open ? '' : '-rotate-90'}`}
       fill="none"
       stroke="currentColor"
       strokeWidth={2}

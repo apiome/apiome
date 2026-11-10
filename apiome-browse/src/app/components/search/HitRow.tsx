@@ -11,16 +11,16 @@ import { MethodBadge } from './httpMethodTone';
 
 /** The icon tile tone per kind: what a visitor scans first. */
 const KIND_TONE: Record<HitKind, string> = {
-  organization: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
-  project: 'bg-blue-700/10 text-blue-800 dark:text-blue-300',
-  version: 'bg-amber-400/15 text-amber-700 dark:text-amber-300',
-  tag: 'bg-amber-400/15 text-amber-700 dark:text-amber-300',
-  operation: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  parameter: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
-  request_body: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300',
-  response: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300',
-  schema: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
-  property: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  organization: 'bg-accent/10 text-accent-fg',
+  project: 'bg-accent/10 text-accent-fg',
+  version: 'bg-honey/15 text-honey-fg',
+  tag: 'bg-honey/15 text-honey-fg',
+  operation: 'bg-ok/10 text-ok-fg',
+  parameter: 'bg-ok/10 text-ok-fg',
+  request_body: 'bg-accent/10 text-accent-fg',
+  response: 'bg-accent/10 text-accent-fg',
+  schema: 'bg-violet/10 text-violet-fg',
+  property: 'bg-violet/10 text-violet-fg',
 };
 
 function KindIcon({ kind }: { kind: HitKind }) {
@@ -115,12 +115,12 @@ export function HitRow({
         href={href}
         onClick={onSelect}
         aria-current={active ? 'true' : undefined}
-        className={`group block rounded-xl border bg-white transition-colors dark:bg-zinc-950 ${
+        className={`group block rounded-lg border bg-surface transition-colors ${
           compact ? 'px-3 py-2' : 'p-4'
         } ${
           active
-            ? 'border-[var(--brand)] shadow-sm ring-1 ring-[var(--brand)]/30'
-            : 'border-zinc-200 hover:border-sky-300 dark:border-zinc-800 dark:hover:border-sky-700'
+            ? 'border-accent shadow-sm ring-1 ring-accent/30'
+            : 'border-border hover:border-accent/30'
         }`}
       >
         <div className="flex items-start gap-3">
@@ -131,14 +131,14 @@ export function HitRow({
             <KindIcon kind={hit.hit_type} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-              <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-2xs text-fg-muted">
+              <span className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-fg-muted">
                 {hitKindLabel(hit.hit_type)}
               </span>
               <span className="flex min-w-0 items-center gap-1 truncate">
                 {crumbs.map((crumb, i) => (
                   <Fragment key={crumb.href}>
-                    {i > 0 && <span aria-hidden="true" className="text-zinc-300 dark:text-zinc-700">›</span>}
+                    {i > 0 && <span aria-hidden="true" className="text-fg-faint">›</span>}
                     <span className="truncate">{crumb.label}</span>
                   </Fragment>
                 ))}
@@ -148,33 +148,33 @@ export function HitRow({
             <div className={`mt-1 flex items-center gap-2 ${compact ? '' : 'flex-wrap'}`}>
               {isOperation && <MethodBadge method={hit.method as string} size={compact ? 'sm' : 'md'} />}
               {isOperation ? (
-                <code className={`min-w-0 truncate font-mono font-medium text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50 ${compact ? 'text-[13px]' : 'text-[14px]'}`}>
+                <code className={`min-w-0 truncate font-mono font-medium text-fg group-hover:text-accent-fg ${compact ? 'text-sm' : 'text-base'}`}>
                   <Highlight text={hit.path as string} needles={needles} />
                 </code>
               ) : (
-                <h3 className={`min-w-0 truncate font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50 ${compact ? 'text-[13px]!' : 'text-[15px]!'}`}>
+                <h3 className={`min-w-0 truncate font-semibold text-fg group-hover:text-accent-fg ${compact ? 'text-sm!' : 'text-lg!'}`}>
                   <Highlight text={hit.title} needles={needles} />
                 </h3>
               )}
             </div>
 
             {isOperation && hit.title !== `${hit.method} ${hit.path}` && (
-              <p className={`mt-0.5 truncate text-zinc-700 dark:text-zinc-300 ${compact ? 'text-[12px]' : 'text-[13px]'}`}>
+              <p className={`mt-0.5 truncate text-fg-muted ${compact ? 'text-xs' : 'text-sm'}`}>
                 <Highlight text={hit.title} needles={needles} />
               </p>
             )}
 
             {snippet && !(compact && isOperation) && (
-              <p className={`mt-1 text-zinc-600 dark:text-zinc-400 ${compact ? 'line-clamp-1 text-[12px]' : 'line-clamp-2 text-[13px] leading-relaxed'}`}>
+              <p className={`mt-1 text-fg-muted ${compact ? 'line-clamp-1 text-xs' : 'line-clamp-2 text-sm leading-relaxed'}`}>
                 <Highlight text={snippet} needles={needles} />
               </p>
             )}
 
             {!compact && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-fg-muted">
                 {hit.subtitle && !isOperation && <span className="truncate">{hit.subtitle}</span>}
                 {facetChips.map((chip) => (
-                  <span key={chip} className="rounded-full bg-zinc-100 px-2 py-0.5 text-[10.5px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span key={chip} className="rounded-full bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted">
                     {chip}
                   </span>
                 ))}
@@ -187,7 +187,7 @@ export function HitRow({
                   </span>
                 )}
                 {(hit.hit_type === 'operation' || hit.hit_type === 'schema' || hit.hit_type === 'property') && (
-                  <span className="ml-auto hidden text-[var(--brand-soft-text)] group-hover:inline">Open in spec →</span>
+                  <span className="ml-auto hidden text-accent-fg group-hover:inline">Open in spec →</span>
                 )}
               </div>
             )}

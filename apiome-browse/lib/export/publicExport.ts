@@ -189,11 +189,11 @@ export function tierLabel(tier: ExportFidelityTier): string {
 export function tierBadgeClass(tier: ExportFidelityTier): string {
   switch (tier) {
     case 'lossless':
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/30';
+      return 'bg-ok-soft text-ok-fg ring-ok/20';
     case 'lossy':
-      return 'bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/30';
+      return 'bg-warn-soft text-warn-fg ring-warn/20';
     case 'types-only':
-      return 'bg-rose-50 text-rose-700 ring-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300 dark:ring-rose-500/30';
+      return 'bg-danger-soft text-danger-fg ring-danger/20';
   }
 }
 

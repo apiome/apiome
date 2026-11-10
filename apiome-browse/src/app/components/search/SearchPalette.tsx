@@ -222,15 +222,15 @@ export function SearchPalette() {
 
   return (
     <div className="fixed inset-0 z-[60]" role="presentation">
-      <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={close} aria-hidden="true" />
+      <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={close} aria-hidden="true" />
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Search the catalog"
-        className="animate-fade-in absolute left-1/2 top-[10vh] w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-950"
+        className="animate-fade-in absolute left-1/2 top-[10vh] w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-lg"
       >
-        <div className="flex items-center gap-3 border-b border-zinc-200 px-4 dark:border-zinc-800">
-          <svg className="h-5 w-5 shrink-0 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+        <div className="flex items-center gap-3 border-b border-border px-4">
+          <svg className="h-5 w-5 shrink-0 text-fg-subtle" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -247,15 +247,15 @@ export function SearchPalette() {
             onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
             onKeyDown={onKeyDown}
             placeholder="Search operations, schemas, projects… try method:POST path:/orders"
-            className="h-14 min-w-0 flex-1 bg-transparent text-[15px] text-zinc-900 placeholder-zinc-400 focus:outline-none dark:text-zinc-100 dark:placeholder-zinc-500"
+            className="h-14 min-w-0 flex-1 bg-transparent text-lg text-fg placeholder:text-fg-faint focus:outline-none"
           />
           {loading ? (
-            <svg className="h-4 w-4 animate-spin text-[var(--brand)]" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <svg className="h-4 w-4 animate-spin text-accent-fg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
           ) : (
-            <kbd className="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 font-mono text-[10px] text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+            <kbd className="rounded-xs border border-border bg-subtle px-1.5 py-0.5 font-mono text-2xs text-fg-muted">
               esc
             </kbd>
           )}
@@ -269,11 +269,11 @@ export function SearchPalette() {
           className="max-h-[min(60vh,560px)] overflow-y-auto p-2"
         >
           {!q && recent.length > 0 && (
-            <li className="flex items-center justify-between px-2 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400" role="presentation">
+            <li className="flex items-center justify-between px-2 pb-1 pt-1 text-2xs font-semibold uppercase tracking-wider text-fg-subtle" role="presentation">
               Recent
               <button
                 type="button"
-                className="font-normal normal-case text-[var(--brand)] hover:underline"
+                className="font-normal normal-case text-accent-fg hover:underline"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
                   clearRecentSearches();
@@ -293,23 +293,23 @@ export function SearchPalette() {
                 </div>
               );
             }
-            const baseRow = `flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[13px] transition-colors ${
-              isActive ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]' : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-900'
+            const baseRow = `flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+              isActive ? 'bg-accent-soft text-accent-fg' : 'text-fg-muted hover:bg-subtle'
             }`;
             return (
               <li key={item.id} data-index={index} role="option" aria-selected={isActive} id={`palette-${item.id}`} onMouseEnter={() => setActive(index)}>
                 {item.kind === 'link' && index === items.findIndex((i) => i.kind === 'link') && (
-                  <div className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Go to</div>
+                  <div className="px-2 pb-1 pt-2 text-2xs font-semibold uppercase tracking-wider text-fg-subtle">Go to</div>
                 )}
                 <Link href={item.href} onClick={(e) => { e.preventDefault(); go(item); }} className={baseRow}>
                   {item.kind === 'search' && (
                     <>
-                      <span aria-hidden="true" className="text-[var(--brand)]">↵</span>
+                      <span aria-hidden="true" className="text-accent-fg">↵</span>
                       <span className="min-w-0 flex-1 truncate">
                         Search the catalog for <span className="font-mono font-medium">&ldquo;{item.label}&rdquo;</span>
                       </span>
                       {result && !loading && (
-                        <span className="shrink-0 text-[11px] tabular-nums text-zinc-400">
+                        <span className="shrink-0 text-2xs tabular-nums text-fg-subtle">
                           {result.totalAllKinds.toLocaleString()} {result.totalAllKinds === 1 ? 'match' : 'matches'}
                         </span>
                       )}
@@ -317,27 +317,27 @@ export function SearchPalette() {
                   )}
                   {item.kind === 'more' && (
                     <>
-                      <span aria-hidden="true" className="text-zinc-400">→</span>
+                      <span aria-hidden="true" className="text-fg-subtle">→</span>
                       <span className="min-w-0 flex-1 truncate">
                         All <span className="font-medium">{item.label.toLowerCase()}</span> matching &ldquo;{q}&rdquo;
                       </span>
-                      <span className="shrink-0 font-mono text-[11px] tabular-nums text-zinc-400">{item.count.toLocaleString()}</span>
+                      <span className="shrink-0 font-mono text-2xs tabular-nums text-fg-subtle">{item.count.toLocaleString()}</span>
                     </>
                   )}
                   {item.kind === 'recent' && (
                     <>
-                      <svg className="h-4 w-4 shrink-0 text-zinc-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="h-4 w-4 shrink-0 text-fg-subtle" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]">{item.query}</span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-sm">{item.query}</span>
                     </>
                   )}
                   {item.kind === 'link' && (
                     <>
-                      <span aria-hidden="true" className="hex inline-block h-2 w-2 shrink-0 bg-[var(--gold)]" />
+                      <span aria-hidden="true" className="hex inline-block h-2 w-2 shrink-0 bg-honey" />
                       <span className="min-w-0 flex-1 truncate">
                         {item.label}
-                        {item.hint && <span className="ml-2 text-[11px] text-zinc-400">{item.hint}</span>}
+                        {item.hint && <span className="ml-2 text-2xs text-fg-subtle">{item.hint}</span>}
                       </span>
                     </>
                   )}
@@ -346,13 +346,13 @@ export function SearchPalette() {
             );
           })}
           {q && !loading && result && result.rows.length === 0 && (
-            <li className="px-3 py-6 text-center text-[13px] text-zinc-500 dark:text-zinc-400" role="presentation">
+            <li className="px-3 py-6 text-center text-sm text-fg-muted" role="presentation">
               Nothing in the latest versions matches <span className="font-mono">&ldquo;{q}&rdquo;</span>. Press Enter to search every version and filter.
             </li>
           )}
         </ul>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200 px-4 py-2 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-4 py-2 text-2xs text-fg-muted">
           <span><kbd className="font-mono">↑↓</kbd> move</span>
           <span><kbd className="font-mono">↵</kbd> open</span>
           <span><kbd className="font-mono">esc</kbd> close</span>

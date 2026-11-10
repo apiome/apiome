@@ -73,14 +73,14 @@ export function kindLabel(kind: LossinessKind): string {
 export function kindBadgeClass(kind: LossinessKind): string {
   switch (kind) {
     case 'drop':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300';
+      return 'bg-danger-soft text-danger-fg';
     case 'approx':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300';
+      return 'bg-warn-soft text-warn-fg';
     case 'synth':
-      return 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300';
+      return 'bg-violet-soft text-violet-fg';
     case 'ok':
     default:
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300';
+      return 'bg-ok-soft text-ok-fg';
   }
 }
 
@@ -111,12 +111,12 @@ export function ringGeometry(percent: number, radius: number): RingGeometry {
 export function ringStrokeClass(tier: ExportFidelityTier): string {
   switch (tier) {
     case 'lossless':
-      return 'stroke-emerald-500 dark:stroke-emerald-400';
+      return 'stroke-ok';
     case 'lossy':
-      return 'stroke-amber-500 dark:stroke-amber-400';
+      return 'stroke-warn';
     case 'types-only':
     default:
-      return 'stroke-rose-500 dark:stroke-rose-400';
+      return 'stroke-danger';
   }
 }
 
@@ -130,19 +130,19 @@ export function fidelityChips(fidelity: TargetFidelitySummary): FidelityChip[] {
       key: 'dropped',
       label: 'dropped',
       count: fidelity.dropped,
-      className: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+      className: 'bg-danger-soft text-danger-fg',
     },
     {
       key: 'approximated',
       label: 'approximated',
       count: fidelity.approximated,
-      className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+      className: 'bg-warn-soft text-warn-fg',
     },
     {
       key: 'synthesized',
       label: 'synthesized',
       count: fidelity.synthesized,
-      className: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
+      className: 'bg-violet-soft text-violet-fg',
     },
   ];
   const chips = lossChips.filter((chip) => chip.count > 0);
@@ -150,7 +150,7 @@ export function fidelityChips(fidelity: TargetFidelitySummary): FidelityChip[] {
     key: 'preserved',
     label: 'clean',
     count: fidelity.preserved,
-    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+    className: 'bg-ok-soft text-ok-fg',
   });
   return chips;
 }

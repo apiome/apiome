@@ -27,34 +27,34 @@ export function MockCallout({ mockBaseUrl, curlCommand }: MockCalloutProps) {
   };
 
   return (
-    <section className="rounded-xl border border-emerald-200 bg-emerald-50/40 shadow-xs dark:border-emerald-900/50 dark:bg-emerald-950/20">
-      <header className="flex flex-wrap items-center gap-2 border-b border-emerald-100 px-4 py-2.5 dark:border-emerald-900/40">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+    <section className="rounded-lg border border-ok/30 bg-ok-soft/40 shadow-xs">
+      <header className="flex flex-wrap items-center gap-2 border-b border-ok/30 px-4 py-2.5">
+        <h2 className="text-2xs font-semibold uppercase tracking-wider text-ok-fg">
           Mock server
         </h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg">
+          <span className="h-1.5 w-1.5 rounded-full bg-ok"></span>
           Live
         </span>
       </header>
       <div className="space-y-3 p-4">
-        <p className="text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="text-sm leading-relaxed text-fg-muted">
           This version serves mock responses generated from its specification — no API key
           required.
         </p>
 
         <div>
-          <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <div className="mb-1 text-2xs font-medium uppercase tracking-wider text-fg-muted">
             Base URL
           </div>
           <div className="flex items-stretch gap-2">
-            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-white p-3 font-mono text-xs text-zinc-700 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800">
+            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-surface p-3 font-mono text-xs text-fg-muted ring-1 ring-inset ring-border">
               {mockBaseUrl}
             </code>
             <button
               type="button"
               onClick={() => copy(mockBaseUrl, setUrlCopied)}
-              className="shrink-0 self-start rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="shrink-0 self-start rounded-lg bg-ink px-3 py-2 text-xs font-medium text-ink-fg transition-colors hover:bg-ink-hover"
             >
               {urlCopied ? 'Copied' : 'Copy'}
             </button>
@@ -62,17 +62,17 @@ export function MockCallout({ mockBaseUrl, curlCommand }: MockCalloutProps) {
         </div>
 
         <div>
-          <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <div className="mb-1 text-2xs font-medium uppercase tracking-wider text-fg-muted">
             Try it
           </div>
           <div className="flex items-stretch gap-2">
-            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-white p-3 font-mono text-xs text-zinc-700 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800">
+            <code className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-surface p-3 font-mono text-xs text-fg-muted ring-1 ring-inset ring-border">
               {curlCommand}
             </code>
             <button
               type="button"
               onClick={() => copy(curlCommand, setCurlCopied)}
-              className="shrink-0 self-start rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="shrink-0 self-start rounded-lg bg-ink px-3 py-2 text-xs font-medium text-ink-fg transition-colors hover:bg-ink-hover"
             >
               {curlCopied ? 'Copied' : 'Copy'}
             </button>

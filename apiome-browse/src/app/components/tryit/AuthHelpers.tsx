@@ -43,10 +43,10 @@ export function AuthHelpers({ auth, credentials, onChange, isCustomHost }: AuthH
   return (
     <div>
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <span className="text-2xs font-medium uppercase tracking-wider text-fg-muted">
           Authentication
         </span>
-        <span className="text-[10px] text-zinc-400 dark:text-zinc-500">
+        <span className="text-2xs text-fg-subtle">
           Session only — cleared when the browser closes
         </span>
       </div>
@@ -54,7 +54,7 @@ export function AuthHelpers({ auth, credentials, onChange, isCustomHost }: AuthH
       {showProxyWarning && (
         <p
           role="alert"
-          className="mb-2 rounded-md border border-rose-300 bg-rose-50 px-2.5 py-2 text-[12px] font-medium text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+          className="mb-2 rounded-md border border-danger/30 bg-danger-soft px-2.5 py-2 text-xs font-medium text-danger-fg"
         >
           Credentials leave via proxy — this custom host is relayed through Apiome&apos;s Try It
           proxy (cookies stripped; credentials are not logged). Prefer a mock or spec server when
@@ -100,15 +100,15 @@ function SchemeFields({
   const descriptionId = `${idBase}-${scheme.name}-desc`;
 
   return (
-    <fieldset className="rounded-md border border-zinc-200 bg-white/60 p-2.5 dark:border-zinc-800 dark:bg-zinc-950/40">
-      <legend className="px-1 font-mono text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+    <fieldset className="rounded-md border border-border bg-surface/60 p-2.5">
+      <legend className="px-1 font-mono text-2xs font-medium text-fg-muted">
         {scheme.name}
-        <span className="ml-1.5 font-sans font-normal text-zinc-400 dark:text-zinc-500">
+        <span className="ml-1.5 font-sans font-normal text-fg-subtle">
           ({label})
         </span>
       </legend>
       {scheme.description && (
-        <p id={descriptionId} className="mb-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+        <p id={descriptionId} className="mb-2 text-2xs text-fg-muted">
           {scheme.description}
         </p>
       )}
@@ -135,7 +135,7 @@ function SchemeFields({
             describedBy={scheme.description ? descriptionId : undefined}
           />
           {scheme.location === 'cookie' && (
-            <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+            <p className="mt-1.5 text-2xs text-honey-fg">
               Cookie credentials are stripped by the Try It proxy — they only reach same-origin
               targets.
             </p>
@@ -190,7 +190,7 @@ function MaskedField({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-0.5 block text-[11px] text-zinc-500 dark:text-zinc-400">
+      <label htmlFor={id} className="mb-0.5 block text-2xs text-fg-muted">
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -203,14 +203,14 @@ function MaskedField({
           autoComplete={autoComplete ?? 'off'}
           spellCheck={false}
           aria-describedby={describedBy}
-          className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+          className="control control-sm min-w-0 flex-1 font-mono"
         />
         <button
           type="button"
           onClick={toggle}
           aria-pressed={revealed}
           aria-label={revealed ? `Hide ${label}` : `Show ${label}`}
-          className="shrink-0 rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-[11px] font-medium text-zinc-600 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800"
+          className="shrink-0 rounded-md border border-border bg-surface px-2 py-1.5 text-2xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
         >
           {revealed ? 'Hide' : 'Show'}
         </button>
@@ -237,7 +237,7 @@ function TextField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-0.5 block text-[11px] text-zinc-500 dark:text-zinc-400">
+      <label htmlFor={id} className="mb-0.5 block text-2xs text-fg-muted">
         {label}
       </label>
       <input
@@ -248,7 +248,7 @@ function TextField({
         autoComplete={autoComplete ?? 'off'}
         spellCheck={false}
         aria-describedby={describedBy}
-        className="w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+        className="control control-sm font-mono"
       />
     </div>
   );
@@ -260,7 +260,7 @@ function UnsupportedNotice({ schemes }: { schemes: UnsupportedAuthScheme[] }) {
   schemes.forEach((s, i) => {
     if (i > 0) names.push(i === schemes.length - 1 ? ' and ' : ', ');
     names.push(
-      <span key={s.name} className="font-mono text-zinc-600 dark:text-zinc-300">
+      <span key={s.name} className="font-mono text-fg-muted">
         {s.name}
       </span>
     );
@@ -268,7 +268,7 @@ function UnsupportedNotice({ schemes }: { schemes: UnsupportedAuthScheme[] }) {
   const types = schemes.map((s) => (s.detail ? `${s.type}/${s.detail}` : s.type)).join(', ');
 
   return (
-    <p className="mt-2 text-[11px] text-zinc-500 dark:text-zinc-400">
+    <p className="mt-2 text-2xs text-fg-muted">
       This operation also references {names} ({types}), which is not supported by Try It auth
       helpers yet. Use Additional headers if you need to send credentials manually.
     </p>

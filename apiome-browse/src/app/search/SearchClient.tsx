@@ -76,7 +76,7 @@ interface ActiveChip {
 
 function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
   return (
-    <svg className={`${className} animate-spin text-[var(--brand)]`} fill="none" viewBox="0 0 24 24" aria-hidden>
+    <svg className={`${className} animate-spin text-accent-fg`} fill="none" viewBox="0 0 24 24" aria-hidden>
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
@@ -244,14 +244,14 @@ export function SearchClient({
   return (
     <>
       {/* Search band */}
-      <section className="border-b border-zinc-200/80 bg-white dark:border-zinc-800/80 dark:bg-zinc-950">
+      <section className="border-b border-border/80 bg-surface">
         <AppShell containerSize="wide">
           <div className="space-y-3 py-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h1 className="text-[1.5rem]! font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <h1 className="text-[1.5rem]! font-semibold tracking-tight text-fg">
                 Search the public catalog
               </h1>
-              <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs text-fg-muted">
                 Published public specifications only — private projects never appear here.
               </p>
             </div>
@@ -269,10 +269,10 @@ export function SearchClient({
             />
             <div className="flex flex-wrap items-center justify-between gap-2">
               <OperatorChips onInsert={insertOperator} compact />
-              <span className="hidden text-[11px] text-zinc-400 lg:inline">
-                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">/</kbd> focus ·{' '}
-                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">j</kbd>/<kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">k</kbd> move ·{' '}
-                <kbd className="rounded border border-zinc-200 px-1 font-mono dark:border-zinc-700">↵</kbd> open
+              <span className="hidden text-2xs text-fg-subtle lg:inline">
+                <kbd className="rounded-xs border border-border px-1 font-mono">/</kbd> focus ·{' '}
+                <kbd className="rounded-xs border border-border px-1 font-mono">j</kbd>/<kbd className="rounded-xs border border-border px-1 font-mono">k</kbd> move ·{' '}
+                <kbd className="rounded-xs border border-border px-1 font-mono">↵</kbd> open
               </span>
             </div>
 
@@ -283,7 +283,7 @@ export function SearchClient({
                     key={`${chip.key}:${chip.value}`}
                     type="button"
                     onClick={() => go(chip.remove())}
-                    className="inline-flex items-center gap-1 rounded-full border border-[var(--brand)]/40 bg-[var(--brand-soft)] py-0.5 pl-2.5 pr-1.5 text-[12px] font-medium text-[var(--brand-soft-text)] transition-colors hover:bg-[var(--brand-soft-hover)]"
+                    className="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent-soft py-0.5 pl-2.5 pr-1.5 text-xs font-medium text-accent-fg transition-colors hover:bg-accent/20"
                     title={`Remove ${chip.label}: ${chip.value}`}
                   >
                     <span className="opacity-70">{chip.label}</span>
@@ -293,7 +293,7 @@ export function SearchClient({
                     </svg>
                   </button>
                 ))}
-                <button type="button" onClick={rail.clearAll} className="ml-1 text-[12px] text-zinc-500 hover:underline dark:text-zinc-400">
+                <button type="button" onClick={rail.clearAll} className="ml-1 text-xs text-fg-muted hover:underline">
                   Clear all
                 </button>
               </div>
@@ -314,15 +314,15 @@ export function SearchClient({
                     aria-selected={active}
                     disabled={disabled}
                     onClick={() => go(patchSearchRequest(request, { scope: scope === 'all' ? null : scope, type: null }))}
-                    className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-[13px] font-medium transition-colors ${
+                    className={`inline-flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
                       active
-                        ? 'border-[var(--brand)] text-[var(--brand)]'
-                        : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-900 disabled:opacity-40 dark:text-zinc-400 dark:hover:text-zinc-100'
+                        ? 'border-accent text-accent-fg'
+                        : 'border-transparent text-fg-muted hover:border-border-strong hover:text-fg disabled:opacity-40'
                     }`}
                     title={disabled ? 'Type a word to search MCP servers' : undefined}
                   >
                     {SEARCH_SCOPE_LABELS[scope]}
-                    <span className={`rounded-full px-1.5 text-[10.5px] tabular-nums ${active ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'}`}>
+                    <span className={`rounded-full px-1.5 text-2xs tabular-nums ${active ? 'bg-accent-soft text-accent-fg' : 'bg-subtle text-fg-muted'}`}>
                       {count.toLocaleString()}
                       {scope === 'all' && response.truncated ? '+' : ''}
                     </span>
@@ -353,7 +353,7 @@ export function SearchClient({
               <button
                 type="button"
                 onClick={() => setFiltersOpen(true)}
-                className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+                className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-base font-medium text-fg-muted shadow-xs"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
@@ -362,11 +362,11 @@ export function SearchClient({
               </button>
               {filtersOpen && (
                 <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Filters">
-                  <div className="absolute inset-0 bg-zinc-900/50 backdrop-blur-sm" onClick={() => setFiltersOpen(false)} />
-                  <div className="absolute inset-y-0 left-0 w-[320px] max-w-[90vw] overflow-y-auto bg-[var(--background)] p-4 shadow-lg">
+                  <div className="absolute inset-0 bg-overlay backdrop-blur-sm" onClick={() => setFiltersOpen(false)} />
+                  <div className="absolute inset-y-0 left-0 w-[320px] max-w-[90vw] overflow-y-auto bg-canvas p-4 shadow-lg">
                     <div className="mb-3 flex items-center justify-between">
-                      <span className="text-sm font-semibold">Filters</span>
-                      <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close filters" className="rounded-md p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+                      <span className="text-base font-semibold">Filters</span>
+                      <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close filters" className="rounded-md p-1.5 text-fg-muted hover:bg-subtle">
                         <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden="true">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -390,36 +390,36 @@ export function SearchClient({
               ) : (
                 <>
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
+                    <p className="text-sm text-fg-muted">
                       {isPending ? (
                         <span className="inline-flex items-center gap-2"><Spinner className="h-4 w-4" /> Searching…</span>
                       ) : (
                         <>
-                          <span className="font-semibold text-zinc-900 dark:text-zinc-50">
+                          <span className="font-semibold text-fg">
                             {response.truncated && request.scope === 'all' ? 'More than ' : ''}
                             {response.total.toLocaleString()} {response.total === 1 ? 'result' : 'results'}
                           </span>
                           {hasText && (
                             <>
-                              <span className="text-zinc-400"> for </span>
-                              <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{needles.join(' ')}&rdquo;</span>
+                              <span className="text-fg-subtle"> for </span>
+                              <span className="font-mono text-accent-fg">&ldquo;{needles.join(' ')}&rdquo;</span>
                             </>
                           )}
                           {response.total > 0 && (
-                            <span className="text-zinc-400"> · {pageStart.toLocaleString()}–{pageEnd.toLocaleString()}</span>
+                            <span className="text-fg-subtle"> · {pageStart.toLocaleString()}–{pageEnd.toLocaleString()}</span>
                           )}
-                          {response.tookMs > 0 && <span className="text-zinc-400"> · {response.tookMs} ms</span>}
-                          {!request.allVersions && <span className="text-zinc-400"> · latest versions</span>}
+                          {response.tookMs > 0 && <span className="text-fg-subtle"> · {response.tookMs} ms</span>}
+                          {!request.allVersions && <span className="text-fg-subtle"> · latest versions</span>}
                         </>
                       )}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
-                      <label className="flex items-center gap-1.5 text-[11px] text-zinc-500">
+                      <label className="flex items-center gap-1.5 text-2xs text-fg-muted">
                         Sort
                         <select
                           value={request.sort}
                           onChange={(e) => go(patchSearchRequest(request, { sort: e.target.value as SearchSort }))}
-                          className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-800 shadow-xs dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                          className="control control-sm w-auto"
                         >
                           {SEARCH_SORTS.map((s) => (
                             <option key={s} value={s} disabled={s === 'relevance' && !hasText}>
@@ -428,7 +428,7 @@ export function SearchClient({
                           ))}
                         </select>
                       </label>
-                      <div className="inline-flex overflow-hidden rounded-md border border-zinc-200 text-[11px] font-medium dark:border-zinc-700" role="group" aria-label="Layout">
+                      <div className="inline-flex overflow-hidden rounded-md border border-border text-2xs font-medium" role="group" aria-label="Layout">
                         {[
                           { value: true, label: 'Grouped' },
                           { value: false, label: 'Flat' },
@@ -438,8 +438,8 @@ export function SearchClient({
                             type="button"
                             aria-pressed={grouped === opt.value}
                             onClick={() => setGrouped(opt.value)}
-                            className={`px-2 py-1 ${i > 0 ? 'border-l border-zinc-200 dark:border-zinc-700' : ''} ${
-                              grouped === opt.value ? 'bg-[var(--brand)] text-white' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                            className={`px-2 py-1 ${i > 0 ? 'border-l border-border' : ''} ${
+                              grouped === opt.value ? 'bg-accent text-fg-on-accent' : 'text-fg-muted hover:bg-subtle'
                             }`}
                           >
                             {opt.label}
@@ -449,7 +449,7 @@ export function SearchClient({
                       <button
                         type="button"
                         onClick={copyLink}
-                        className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-600 shadow-xs hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                        className="rounded-md border border-border bg-surface px-2 py-1 text-2xs font-medium text-fg-muted shadow-xs hover:bg-subtle"
                         title="Copy a link to this search"
                       >
                         {copied ? 'Copied' : 'Copy link'}
@@ -471,15 +471,15 @@ export function SearchClient({
                           <div key={group.kind ?? 'flat'}>
                             {group.kind && (
                               <div className="mb-2 flex items-center gap-2">
-                                <h2 className="text-[11px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                <h2 className="text-2xs! font-semibold uppercase tracking-wider text-fg-muted">
                                   {HIT_KIND_LABELS[group.kind].many}
                                 </h2>
-                                <span className="text-[11px] tabular-nums text-zinc-400">{group.rows.length} on this page</span>
+                                <span className="text-2xs tabular-nums text-fg-subtle">{group.rows.length} on this page</span>
                                 {!request.types.includes(group.kind) && (
                                   <button
                                     type="button"
                                     onClick={() => go(toggleUrlValue(request, 'type', group.kind as string))}
-                                    className="ml-auto text-[11px] font-medium text-[var(--brand)] hover:underline"
+                                    className="ml-auto text-2xs font-medium text-accent-fg hover:underline"
                                   >
                                     Only {HIT_KIND_LABELS[group.kind].many.toLowerCase()}
                                   </button>
@@ -508,23 +508,23 @@ export function SearchClient({
             <aside className="hidden xl:block">
               <div className="sticky top-20 space-y-4">
                 {response.facets.projects.length > 0 && request.scope !== 'mcp' && (
-                  <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-                    <div className="border-b border-zinc-200 px-4 py-2.5 dark:border-zinc-800">
-                      <h3 className="text-[13px]! font-semibold text-zinc-900 dark:text-zinc-50">Top projects</h3>
-                      <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">Where the matches concentrate.</p>
+                  <div className="rounded-lg border border-border bg-surface">
+                    <div className="border-b border-border px-4 py-2.5">
+                      <h3 className="text-sm! font-semibold text-fg">Top projects</h3>
+                      <p className="mt-0.5 text-xs text-fg-muted">Where the matches concentrate.</p>
                     </div>
-                    <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                    <ul className="divide-y divide-border">
                       {response.facets.projects.map((p) => (
                         <li key={`${p.tenant_slug}/${p.project_slug}`}>
                           <Link
                             href={`/tenant/${encodeURIComponent(p.tenant_slug)}/${encodeURIComponent(p.project_slug)}`}
-                            className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                            className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-subtle"
                           >
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-[13px] font-medium text-zinc-900 dark:text-zinc-50">{p.project_name}</div>
-                              <div className="truncate text-[11px] text-zinc-500 dark:text-zinc-400">{p.tenant_name}</div>
+                              <div className="truncate text-sm font-medium text-fg">{p.project_name}</div>
+                              <div className="truncate text-2xs text-fg-muted">{p.tenant_name}</div>
                             </div>
-                            <span className="font-mono text-[11px] tabular-nums text-zinc-400">{p.count}</span>
+                            <span className="font-mono text-2xs tabular-nums text-fg-subtle">{p.count}</span>
                           </Link>
                         </li>
                       ))}
@@ -630,33 +630,33 @@ function Landing({
     <div className="grid gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-8">
         <section>
-          <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Try a search</h2>
+          <h2 className="text-xs! font-semibold uppercase tracking-wider text-fg-muted">Try a search</h2>
           <div className="mt-3 flex flex-wrap gap-2">
             {EXAMPLE_QUERIES.map((ex) => (
               <button
                 key={ex.q}
                 type="button"
                 onClick={() => onPick(ex.q)}
-                className="group rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-[12.5px] text-zinc-700 shadow-xs transition-colors hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                className="group rounded-full border border-border bg-surface px-3 py-1.5 text-sm text-fg-muted shadow-xs transition-colors hover:border-accent hover:text-accent-fg"
               >
-                {ex.label} <code className="ml-1 font-mono text-[11px] text-zinc-400 group-hover:text-[var(--brand)]">{ex.q}</code>
+                {ex.label} <code className="ml-1 font-mono text-2xs text-fg-subtle group-hover:text-accent-fg">{ex.q}</code>
               </button>
             ))}
           </div>
         </section>
 
         <section>
-          <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Browse everything</h2>
+          <h2 className="text-xs! font-semibold uppercase tracking-wider text-fg-muted">Browse everything</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {BROWSE_TILES.map((tile) => (
               <button
                 key={tile.title}
                 type="button"
                 onClick={() => onBrowse(tile.state)}
-                className="group flex flex-col items-start gap-1 rounded-xl border border-zinc-200 bg-white p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-800"
+                className="group flex flex-col items-start gap-1 rounded-lg border border-border bg-surface p-4 text-left shadow-xs transition-all hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-md"
               >
-                <span className="text-[14px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">{tile.title}</span>
-                <span className="text-[12px] text-zinc-500 dark:text-zinc-400">{tile.hint}</span>
+                <span className="text-base font-semibold text-fg group-hover:text-accent-fg">{tile.title}</span>
+                <span className="text-xs text-fg-muted">{tile.hint}</span>
               </button>
             ))}
           </div>
@@ -665,8 +665,8 @@ function Landing({
         {recent.length > 0 && (
           <section>
             <div className="flex items-center justify-between">
-              <h2 className="text-[12px]! font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Recent searches</h2>
-              <button type="button" onClick={onClearRecent} className="text-[12px] text-[var(--brand)] hover:underline">
+              <h2 className="text-xs! font-semibold uppercase tracking-wider text-fg-muted">Recent searches</h2>
+              <button type="button" onClick={onClearRecent} className="text-xs text-accent-fg hover:underline">
                 Clear
               </button>
             </div>
@@ -676,7 +676,7 @@ function Landing({
                   <button
                     type="button"
                     onClick={() => onPick(r)}
-                    className="rounded-full border border-zinc-200 bg-white px-3 py-1.5 font-mono text-[12px] text-zinc-700 shadow-xs hover:border-[var(--brand)] hover:text-[var(--brand)] dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                    className="rounded-full border border-border bg-surface px-3 py-1.5 font-mono text-xs text-fg-muted shadow-xs hover:border-accent hover:text-accent-fg"
                   >
                     {r}
                   </button>
@@ -704,20 +704,20 @@ function NoResults({
 }) {
   const needles = textNeedles(request.parsed);
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-zinc-950">
-      <h2 className="text-[15px]! font-semibold text-zinc-900 dark:text-zinc-50">
+    <div className="rounded-lg border border-border bg-surface p-8">
+      <h2 className="text-lg! font-semibold text-fg">
         No {request.scope === 'all' ? 'results' : SEARCH_SCOPE_LABELS[request.scope].toLowerCase()}
         {needles.length > 0 && (
           <>
-            {' '}for <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{needles.join(' ')}&rdquo;</span>
+            {' '}for <span className="font-mono text-accent-fg">&ldquo;{needles.join(' ')}&rdquo;</span>
           </>
         )}
         {!request.allVersions && ' in the latest versions'}
       </h2>
-      <ul className="mt-4 space-y-2 text-[13px] text-zinc-600 dark:text-zinc-300">
+      <ul className="mt-4 space-y-2 text-sm text-fg-muted">
         {!request.allVersions && (
           <li>
-            <button type="button" onClick={() => onGo(patchSearchRequest(request, { all: '1' }))} className="font-medium text-[var(--brand)] hover:underline">
+            <button type="button" onClick={() => onGo(patchSearchRequest(request, { all: '1' }))} className="font-medium text-accent-fg hover:underline">
               Search every published version
             </button>{' '}
             — older versions may still mention it.
@@ -726,7 +726,7 @@ function NoResults({
         {request.scope !== 'all' && response_hint(request, onGo)}
         {chips.map((chip) => (
           <li key={`${chip.key}:${chip.value}`}>
-            <button type="button" onClick={() => onGo(chip.remove())} className="font-medium text-[var(--brand)] hover:underline">
+            <button type="button" onClick={() => onGo(chip.remove())} className="font-medium text-accent-fg hover:underline">
               Drop {chip.label.toLowerCase()} {chip.value}
             </button>
           </li>
@@ -734,14 +734,14 @@ function NoResults({
         {needles.length > 1 && <li>Try fewer words — every word must match.</li>}
         {needles.length > 0 && mcpCount > 0 && (
           <li>
-            <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: 'mcp', type: null }))} className="font-medium text-[var(--brand)] hover:underline">
+            <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: 'mcp', type: null }))} className="font-medium text-accent-fg hover:underline">
               {mcpCount} MCP server {mcpCount === 1 ? 'capability matches' : 'capabilities match'}
             </button>{' '}
             in the MCP catalog.
           </li>
         )}
         <li>
-          <Link href="/" className="font-medium text-[var(--brand)] hover:underline">
+          <Link href="/" className="font-medium text-accent-fg hover:underline">
             Browse the directory
           </Link>{' '}
           by organization instead.
@@ -754,7 +754,7 @@ function NoResults({
 function response_hint(request: SearchRequest, onGo: (state: SearchUrlState) => void) {
   return (
     <li>
-      <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: null, type: null }))} className="font-medium text-[var(--brand)] hover:underline">
+      <button type="button" onClick={() => onGo(patchSearchRequest(request, { scope: null, type: null }))} className="font-medium text-accent-fg hover:underline">
         Search all kinds
       </button>{' '}
       — the match may be a different kind of item.
@@ -765,9 +765,9 @@ function response_hint(request: SearchRequest, onGo: (state: SearchUrlState) => 
 function McpResults({ hits, query, needles }: { hits: McpPublicSearchHit[]; query: string; needles: string[] }) {
   if (hits.length === 0) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-8 text-[13px] text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+      <div className="rounded-lg border border-border bg-surface p-8 text-sm text-fg-muted">
         No public MCP server capability matches <span className="font-mono">&ldquo;{query}&rdquo;</span>.{' '}
-        <Link href="/mcp" className="font-medium text-[var(--brand)] hover:underline">
+        <Link href="/mcp" className="font-medium text-accent-fg hover:underline">
           Browse the MCP catalog
         </Link>
         .
@@ -777,12 +777,12 @@ function McpResults({ hits, query, needles }: { hits: McpPublicSearchHit[]; quer
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[13px] text-zinc-600 dark:text-zinc-300">
-          <span className="font-semibold text-zinc-900 dark:text-zinc-50">{hits.length} {hits.length === 1 ? 'capability' : 'capabilities'}</span>
-          <span className="text-zinc-400"> across public MCP servers for </span>
-          <span className="font-mono text-[var(--brand-soft-text)]">&ldquo;{query}&rdquo;</span>
+        <p className="text-sm text-fg-muted">
+          <span className="font-semibold text-fg">{hits.length} {hits.length === 1 ? 'capability' : 'capabilities'}</span>
+          <span className="text-fg-subtle"> across public MCP servers for </span>
+          <span className="font-mono text-accent-fg">&ldquo;{query}&rdquo;</span>
         </p>
-        <Link href={`/mcp/search?q=${encodeURIComponent(query)}`} className="text-[12px] font-medium text-[var(--brand)] hover:underline">
+        <Link href={`/mcp/search?q=${encodeURIComponent(query)}`} className="text-xs font-medium text-accent-fg hover:underline">
           Open in the MCP catalog →
         </Link>
       </div>
@@ -791,22 +791,22 @@ function McpResults({ hits, query, needles }: { hits: McpPublicSearchHit[]; quer
           <li key={hit.item_id} className="list-none">
             <Link
               href={`/mcp/${hit.tenant_slug}/${hit.endpoint_slug}`}
-              className="group block rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-sky-300 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-sky-700"
+              className="group block rounded-lg border border-border bg-surface p-4 transition-colors hover:border-accent/30"
             >
               <div className="flex items-start gap-3">
                 <GradeBadge grade={hit.grade} score={hit.score} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-zinc-500 dark:text-zinc-400">
-                    <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  <div className="flex flex-wrap items-center gap-2 text-2xs text-fg-muted">
+                    <span className="rounded-xs bg-subtle px-1.5 py-0.5 text-2xs font-semibold uppercase tracking-wide text-fg-muted">
                       {hit.item_type.replace(/_/g, ' ')}
                     </span>
                     <span className="truncate">{hit.endpoint_name}{hit.host ? ` · ${hit.host}` : ''}</span>
                   </div>
-                  <h3 className="mt-1 truncate text-[15px]! font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">
+                  <h3 className="mt-1 truncate text-lg! font-semibold text-fg group-hover:text-accent-fg">
                     <Highlight text={hit.item_title || hit.item_name} needles={needles} />
                   </h3>
                   {hit.description && (
-                    <p className="mt-1 line-clamp-2 text-[13px] text-zinc-600 dark:text-zinc-400">
+                    <p className="mt-1 line-clamp-2 text-sm text-fg-muted">
                       <Highlight text={hit.description} needles={needles} />
                     </p>
                   )}
@@ -827,30 +827,30 @@ function Pagination({ page, pageCount, onPage }: { page: number; pageCount: numb
     if (p === 1 || p === pageCount || Math.abs(p - page) <= window) pages.push(p);
     else if (pages[pages.length - 1] !== '…') pages.push('…');
   }
-  const btn = 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-[12px] font-medium transition-colors';
+  const btn = 'inline-flex h-8 min-w-8 items-center justify-center rounded-md border px-2 text-xs font-medium transition-colors';
   return (
-    <nav className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800" aria-label="Pagination">
-      <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className={`${btn} border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`}>
+    <nav className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4" aria-label="Pagination">
+      <button type="button" disabled={page <= 1} onClick={() => onPage(page - 1)} className={`${btn} border-border bg-surface text-fg-muted hover:bg-subtle disabled:opacity-40`}>
         ← Previous
       </button>
       <div className="flex items-center gap-1">
         {pages.map((p, i) =>
           p === '…' ? (
-            <span key={`gap-${i}`} className="px-1 text-zinc-400">…</span>
+            <span key={`gap-${i}`} className="px-1 text-fg-subtle">…</span>
           ) : (
             <button
               key={p}
               type="button"
               aria-current={p === page ? 'page' : undefined}
               onClick={() => onPage(p)}
-              className={`${btn} ${p === page ? 'border-[var(--brand)] bg-[var(--brand)] text-white' : 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300'}`}
+              className={`${btn} ${p === page ? 'border-accent bg-accent text-fg-on-accent' : 'border-border bg-surface text-fg-muted hover:bg-subtle'}`}
             >
               {p}
             </button>
           )
         )}
       </div>
-      <button type="button" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className={`${btn} border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300`}>
+      <button type="button" disabled={page >= pageCount} onClick={() => onPage(page + 1)} className={`${btn} border-border bg-surface text-fg-muted hover:bg-subtle disabled:opacity-40`}>
         Next →
       </button>
     </nav>

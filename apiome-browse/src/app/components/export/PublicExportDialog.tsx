@@ -196,20 +196,20 @@ export function PublicExportDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Export this version">
       <div
-        className="absolute inset-0 bg-zinc-950/40 backdrop-blur-xs dark:bg-zinc-950/60"
+        className="absolute inset-0 bg-overlay backdrop-blur-xs"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-zinc-950">
-        <header className="flex items-start justify-between gap-3 border-b border-zinc-100 px-5 py-4 dark:border-zinc-800/80">
+      <div className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-xl">
+        <header className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-xl font-semibold text-fg">
               Export this version
             </h2>
-            <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 text-sm text-fg-muted">
               Convert{' '}
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">
+              <span className="font-medium text-fg-muted">
                 {projectSlug} v{versionSlug}
               </span>{' '}
               to another API description format.
@@ -218,7 +218,7 @@ export function PublicExportDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="rounded-md p-1.5 text-fg-muted transition-colors hover:bg-subtle hover:text-fg-muted"
             aria-label="Close export dialog"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -230,15 +230,15 @@ export function PublicExportDialog({
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {!targets && !loadError && (
             <div className="flex items-center justify-center gap-3 py-10">
-              <svg className="h-5 w-5 animate-spin text-[var(--brand)]" fill="none" viewBox="0 0 24 24">
+              <svg className="h-5 w-5 animate-spin text-accent-fg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading export targets...</span>
+              <span className="text-base text-fg-muted">Loading export targets...</span>
             </div>
           )}
           {loadError && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+            <div className="rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-sm text-danger-fg">
               {loadError}
             </div>
           )}
@@ -259,24 +259,24 @@ export function PublicExportDialog({
                     onClick={() => selectTarget(target)}
                     className={`rounded-lg border p-3 text-left transition-colors ${
                       isSelected
-                        ? 'border-[var(--brand)] bg-[var(--brand-soft)] ring-1 ring-[var(--brand)]'
-                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700 dark:hover:bg-zinc-900'
+                        ? 'border-accent bg-accent-soft ring-1 ring-accent'
+                        : 'border-border bg-surface hover:border-border-strong hover:bg-subtle'
                     } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[13.5px] font-semibold text-zinc-900 dark:text-zinc-50">
+                      <span className="text-base font-semibold text-fg">
                         {descriptor.label}
                       </span>
                       <span
-                        className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${tierBadgeClass(fidelity.tier)}`}
+                        className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-2xs font-medium ring-1 ring-inset ${tierBadgeClass(fidelity.tier)}`}
                       >
                         {tierLabel(fidelity.tier)}
                       </span>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-[12.5px] leading-snug text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-1 line-clamp-2 text-sm leading-snug text-fg-muted">
                       {descriptor.description}
                     </p>
-                    <p className="mt-1.5 text-[11.5px] text-zinc-400 dark:text-zinc-500">
+                    <p className="mt-1.5 text-2xs text-fg-subtle">
                       {disabled
                         ? descriptor.unavailable_reason || 'Unavailable in this environment'
                         : `${fidelity.preserved_percent}% preserved`}
@@ -301,14 +301,14 @@ export function PublicExportDialog({
           )}
 
           {exportError && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+            <div className="rounded-lg border border-danger/30 bg-danger-soft px-3.5 py-2.5 text-sm text-danger-fg">
               {exportError}
             </div>
           )}
         </div>
 
-        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3.5 dark:border-zinc-800/80">
-          <div className="inline-flex rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 dark:border-zinc-800 dark:bg-zinc-900">
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3.5">
+          <div className="inline-flex rounded-lg border border-border bg-subtle p-0.5">
             {(['json', 'yaml'] as const).map((value) => (
               <button
                 key={value}
@@ -316,8 +316,8 @@ export function PublicExportDialog({
                 onClick={() => setSerialization(value)}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   serialization === value
-                    ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-800 dark:text-zinc-50'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    ? 'bg-surface text-fg shadow-xs'
+                    : 'text-fg-muted hover:text-fg-muted'
                 }`}
                 aria-pressed={serialization === value}
               >
@@ -330,7 +330,7 @@ export function PublicExportDialog({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
             >
               Cancel
             </button>
@@ -338,7 +338,7 @@ export function PublicExportDialog({
               type="button"
               onClick={runExport}
               disabled={!canExport}
-              className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-fg-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {exporting ? (
                 <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">

@@ -32,19 +32,19 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className="border-b border-zinc-100 py-3 last:border-b-0 dark:border-zinc-800/80">
+    <section className="border-b border-border py-3 last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2 text-left"
       >
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <span className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
           {title}
-          {count ? <span className="ml-1.5 rounded-full bg-[var(--brand-soft)] px-1.5 text-[10px] text-[var(--brand-soft-text)]">{count}</span> : null}
+          {count ? <span className="ml-1.5 rounded-full bg-accent-soft px-1.5 text-2xs text-accent-fg">{count}</span> : null}
         </span>
         <svg
-          className={`h-3.5 w-3.5 text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 text-fg-subtle transition-transform ${open ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -81,12 +81,12 @@ function CheckRow({
         id={id}
         checked={checked}
         onChange={onChange}
-        className="h-3.5 w-3.5 shrink-0 rounded border-zinc-300 accent-[var(--brand)]"
+        className="h-3.5 w-3.5 shrink-0 rounded-xs border-border-strong accent-accent"
       />
-      <label htmlFor={id} className={`min-w-0 flex-1 cursor-pointer truncate text-[13px] text-zinc-700 dark:text-zinc-300 ${mono ? 'font-mono text-[12px]' : ''}`}>
+      <label htmlFor={id} className={`min-w-0 flex-1 cursor-pointer truncate text-sm text-fg-muted ${mono ? 'font-mono text-xs' : ''}`}>
         {label}
       </label>
-      <span className="font-mono text-[11px] tabular-nums text-zinc-400">{count.toLocaleString()}</span>
+      <span className="font-mono text-2xs tabular-nums text-fg-subtle">{count.toLocaleString()}</span>
     </li>
   );
 }
@@ -115,14 +115,14 @@ export function FacetRail({
   const dateDirty = (after || '') !== (request.after ?? '') || (before || '') !== (request.before ?? '');
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <div className="flex items-center gap-2 rounded-t-xl border-b border-zinc-200 bg-zinc-50/80 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <svg className="h-4 w-4 text-[var(--brand)]" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
+    <div className="rounded-lg border border-border bg-surface">
+      <div className="flex items-center gap-2 rounded-t-xl border-b border-border bg-subtle/80 px-4 py-2.5">
+        <svg className="h-4 w-4 text-accent-fg" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z" />
         </svg>
-        <h2 className="flex-1 text-[13px]! font-semibold text-zinc-900 dark:text-zinc-50">Filters</h2>
+        <h2 className="flex-1 text-sm! font-semibold text-fg">Filters</h2>
         {activeCount > 0 && (
-          <button type="button" onClick={actions.clearAll} className="text-[11px] font-medium text-[var(--brand)] hover:underline">
+          <button type="button" onClick={actions.clearAll} className="text-2xs font-medium text-accent-fg hover:underline">
             Clear all ({activeCount})
           </button>
         )}
@@ -130,7 +130,7 @@ export function FacetRail({
 
       <div className="px-4">
         <Section title="Versions">
-          <div role="radiogroup" aria-label="Which versions to search" className="flex rounded-md border border-zinc-200 p-0.5 text-[12px] dark:border-zinc-700">
+          <div role="radiogroup" aria-label="Which versions to search" className="flex rounded-md border border-border p-0.5 text-xs">
             {[
               { value: false, label: 'Latest only' },
               { value: true, label: 'All published' },
@@ -141,17 +141,17 @@ export function FacetRail({
                 role="radio"
                 aria-checked={request.allVersions === opt.value}
                 onClick={() => actions.setAllVersions(opt.value)}
-                className={`flex-1 rounded px-2 py-1 font-medium transition-colors ${
+                className={`flex-1 rounded-xs px-2 py-1 font-medium transition-colors ${
                   request.allVersions === opt.value
-                    ? 'bg-[var(--brand)] text-white'
-                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                    ? 'bg-accent text-fg-on-accent'
+                    : 'text-fg-muted hover:bg-subtle'
                 }`}
               >
                 {opt.label}
               </button>
             ))}
           </div>
-          <p className="mt-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1.5 text-2xs text-fg-muted">
             {request.allVersions
               ? 'Every published version of every project; the same item may appear once per version.'
               : "Each project's most recently published version."}
@@ -186,7 +186,7 @@ export function FacetRail({
                     type="button"
                     aria-pressed={active}
                     onClick={() => actions.toggleMethod(m.value)}
-                    className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-[11px] font-semibold uppercase ring-1 ring-inset transition-opacity ${methodTone(m.value)} ${
+                    className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-2xs font-semibold uppercase ring-1 ring-inset transition-opacity ${methodTone(m.value)} ${
                       active ? 'opacity-100 ring-2' : 'opacity-70 hover:opacity-100'
                     }`}
                   >
@@ -257,22 +257,22 @@ export function FacetRail({
 
         <Section title="Published" count={(request.after ? 1 : 0) + (request.before ? 1 : 0)} defaultOpen={Boolean(request.after || request.before)}>
           <div className="grid grid-cols-2 gap-2">
-            <label className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+            <label className="block text-2xs text-fg-muted">
               From
               <input
                 type="date"
                 value={after}
                 onChange={(e) => setAfter(e.target.value)}
-                className="mt-0.5 h-8 w-full rounded-md border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className="control control-sm mt-0.5"
               />
             </label>
-            <label className="block text-[11px] text-zinc-500 dark:text-zinc-400">
+            <label className="block text-2xs text-fg-muted">
               Before
               <input
                 type="date"
                 value={before}
                 onChange={(e) => setBefore(e.target.value)}
-                className="mt-0.5 h-8 w-full rounded-md border border-zinc-200 bg-white px-2 text-[12px] text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className="control control-sm mt-0.5"
               />
             </label>
           </div>
@@ -281,7 +281,7 @@ export function FacetRail({
               type="button"
               disabled={!dateDirty}
               onClick={() => actions.setDates(after || null, before || null)}
-              className="btn-brand-soft px-2.5 py-1 text-[11px] disabled:opacity-50"
+              className="btn-brand-soft px-2.5 py-1 text-2xs disabled:opacity-50"
             >
               Apply dates
             </button>
@@ -293,7 +293,7 @@ export function FacetRail({
                   setBefore('');
                   actions.setDates(null, null);
                 }}
-                className="text-[11px] text-zinc-500 hover:underline dark:text-zinc-400"
+                className="text-2xs text-fg-muted hover:underline"
               >
                 Clear
               </button>

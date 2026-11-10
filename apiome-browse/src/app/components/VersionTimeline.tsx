@@ -70,8 +70,8 @@ export function VersionTimeline({
 
   if (versions.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-10 text-center">
+        <p className="text-base text-fg-muted">
           No published versions available.
         </p>
       </div>
@@ -84,7 +84,7 @@ export function VersionTimeline({
         <div className="flex items-center gap-3">
           <div className="relative max-w-md flex-1">
             <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
               fill="none"
               stroke="currentColor"
               strokeWidth={1.75}
@@ -98,16 +98,16 @@ export function VersionTimeline({
               onChange={(e) => setQuery(sanitizeSearchInput(e.target.value))}
               pattern={SAFE_SEARCH_HTML_PATTERN}
               placeholder="Filter versions..."
-              className="h-9 w-full rounded-md border border-zinc-200 bg-white pl-9 pr-3 text-sm text-zinc-900 placeholder-zinc-400 shadow-xs transition-colors focus-visible:border-[var(--brand)] focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className="control pl-9 pr-3"
             />
           </div>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+          <span className="text-xs text-fg-muted">
             {filtered.length} of {versions.length}
           </span>
         </div>
       )}
 
-      <ol className="relative space-y-3 before:absolute before:left-[15px] before:top-1 before:bottom-1 before:w-px before:bg-zinc-200 before:dark:bg-zinc-800">
+      <ol className="relative space-y-3 before:absolute before:left-[15px] before:top-1 before:bottom-1 before:w-px before:bg-inset">
         {filtered.map((v, idx) => {
           const isLatest = latestVersionId
             ? v.version_id === latestVersionId
@@ -117,40 +117,40 @@ export function VersionTimeline({
               <div
                 className={`absolute left-0 top-3 flex h-8 w-8 items-center justify-center rounded-full border-2 ${
                   isLatest
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                    : 'border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-950'
+                    ? 'border-ok bg-ok-soft'
+                    : 'border-border-strong bg-surface'
                 }`}
                 aria-hidden="true"
               >
                 <span
                   className={`h-2 w-2 rounded-full ${
-                    isLatest ? 'bg-emerald-500' : 'bg-zinc-400 dark:bg-zinc-600'
+                    isLatest ? 'bg-ok' : 'bg-fg-faint'
                   }`}
                 />
               </div>
 
               <Link
                 href={`/tenant/${tenantSlug}/${projectSlug}/${v.version_id}`}
-                className="group block rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-950 dark:hover:border-zinc-700"
+                className="group block rounded-lg border border-border bg-surface p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-[15px] font-semibold text-zinc-900 group-hover:text-[var(--brand)] dark:text-zinc-50">
+                      <span className="font-mono text-lg font-semibold text-fg group-hover:text-accent-fg">
                         v{v.version_id}
                       </span>
                       {isLatest && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg">
+                          <span className="h-1.5 w-1.5 rounded-full bg-ok"></span>
                           Latest
                         </span>
                       )}
-                      <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted">
                         Published
                       </span>
                       {changelogSeverities?.[v.version_id] && (
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(changelogSeverities[v.version_id])}`}
+                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${severityBadgeClasses(changelogSeverities[v.version_id])}`}
                         >
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(changelogSeverities[v.version_id])}`}
@@ -160,15 +160,15 @@ export function VersionTimeline({
                       )}
                     </div>
                     {v.description && (
-                      <p className="mt-1 line-clamp-1 text-[13px] text-zinc-600 dark:text-zinc-400">
+                      <p className="mt-1 line-clamp-1 text-sm text-fg-muted">
                         {v.description}
                       </p>
                     )}
                   </div>
-                  <div className="text-right text-xs text-zinc-500 dark:text-zinc-400">
+                  <div className="text-right text-xs text-fg-muted">
                     {v.published_at && (
                       <>
-                        <div className="font-medium text-zinc-700 dark:text-zinc-300">
+                        <div className="font-medium text-fg-muted">
                           {relativeTime(v.published_at)}
                         </div>
                         <div className="mt-0.5 tabular-nums">
@@ -180,11 +180,11 @@ export function VersionTimeline({
                 </div>
 
                 {v.change_log && (
-                  <div className="mt-3 rounded-md bg-zinc-50 p-3 dark:bg-zinc-900/60">
-                    <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                  <div className="mt-3 rounded-md bg-subtle p-3">
+                    <div className="mb-1 text-2xs font-medium uppercase tracking-wider text-fg-muted">
                       Changelog
                     </div>
-                    <p className="line-clamp-3 whitespace-pre-wrap text-[13px] leading-relaxed text-zinc-700 dark:text-zinc-300">
+                    <p className="line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed text-fg-muted">
                       {v.change_log}
                     </p>
                   </div>
@@ -196,7 +196,7 @@ export function VersionTimeline({
       </ol>
 
       {searchable && query && filtered.length === 0 && (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-500">
+        <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-6 text-center text-base text-fg-muted">
           No versions match {`"${query}"`}.
         </div>
       )}

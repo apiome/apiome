@@ -36,16 +36,16 @@ const SEVERITY_LABELS: Record<Severity, string> = {
  * the version page: rose = breaking, amber = non-breaking, sky = docs-only.
  */
 const SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
-  breaking: 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300',
-  'non-breaking': 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300',
-  'docs-only': 'bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300',
+  breaking: 'bg-danger-soft text-danger-fg',
+  'non-breaking': 'bg-warn-soft text-warn-fg',
+  'docs-only': 'bg-accent-soft text-accent-fg',
 };
 
 /** Dot color per severity, for the `h-1.5 w-1.5 rounded-full` marker inside a pill. */
 const SEVERITY_DOT_CLASSES: Record<Severity, string> = {
-  breaking: 'bg-rose-500',
-  'non-breaking': 'bg-amber-500',
-  'docs-only': 'bg-sky-500',
+  breaking: 'bg-danger',
+  'non-breaking': 'bg-warn',
+  'docs-only': 'bg-accent',
 };
 
 /** Coerce an unknown severity string to a known one (unknown values degrade to `docs-only`). */

@@ -20,7 +20,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/85 backdrop-blur supports-[backdrop-filter]:bg-white/70 dark:border-zinc-800/80 dark:bg-zinc-950/85 dark:supports-[backdrop-filter]:bg-zinc-950/70">
+    <nav className="sticky top-0 z-40 border-b border-border/80 bg-surface/85 backdrop-blur supports-[backdrop-filter]:bg-surface/70">
       <div aria-hidden="true" className="brand-hairline h-0.5 w-full" />
       <div className="mx-auto flex h-14 max-w-[1480px] items-center gap-3 px-4 sm:px-6 lg:gap-4 lg:px-8">
         {/* Left: Logo + Nav */}
@@ -53,10 +53,10 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-3 py-1.5 text-base font-medium transition-colors ${
                     active
-                      ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-                      : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-50'
+                      ? 'bg-accent-soft text-accent-fg'
+                      : 'text-fg-muted hover:bg-subtle hover:text-fg'
                   }`}
                 >
                   {item.label}
@@ -74,20 +74,20 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
           <button
             type="button"
             onClick={() => openSearchPalette()}
-            className="hidden h-9 w-72 items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/80 px-3 text-sm text-zinc-500 transition-colors hover:border-sky-300 hover:bg-sky-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-sky-800 dark:hover:bg-zinc-800 lg:flex xl:w-80"
+            className="hidden h-9 w-72 items-center gap-2 rounded-md border border-border bg-subtle/80 px-3 text-base text-fg-muted transition-colors hover:border-accent/30 hover:bg-accent-soft lg:flex xl:w-80"
             aria-label="Search the catalog"
             aria-keyshortcuts="Meta+K Control+K /"
           >
             <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span className="min-w-0 flex-1 truncate text-left text-[13px]">Search operations, schemas, projects…</span>
-            <kbd className="rounded border border-zinc-300 bg-white px-1.5 text-[10px] font-medium text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950">⌘K</kbd>
+            <span className="min-w-0 flex-1 truncate text-left text-sm">Search operations, schemas, projects…</span>
+            <kbd className="rounded-xs border border-border-strong bg-surface px-1.5 text-2xs font-medium text-fg-muted">⌘K</kbd>
           </button>
           <button
             type="button"
             onClick={() => openSearchPalette()}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 lg:hidden"
+            className="flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-subtle hover:text-fg lg:hidden"
             aria-label="Search the catalog"
           >
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24" aria-hidden="true">
@@ -100,7 +100,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
             href="https://www.youtube.com/@apiomedev/"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 sm:flex"
+            className="hidden items-center gap-1.5 rounded-md px-2.5 py-1.5 text-base font-medium text-fg-muted transition-colors hover:bg-subtle hover:text-fg sm:flex"
             title="Watch Apiome tutorials on YouTube"
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -112,20 +112,20 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
           {/* Login / Sign Up */}
           <a
             href="https://app.apiome.dev/"
-            className="flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[var(--brand-hover)] focus-visible:outline-none"
+            className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-base font-medium text-fg-on-accent transition-colors hover:bg-accent-hover focus-visible:outline-none"
           >
             <span className="hidden sm:inline">Sign in</span>
             <span className="sm:hidden">Sign in</span>
           </a>
 
           {/* Separator */}
-          <div className="hidden h-5 w-px bg-zinc-200 dark:bg-zinc-800 sm:block"></div>
+          <div className="hidden h-5 w-px bg-inset sm:block"></div>
 
           {/* Settings */}
           <div className="relative">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="flex h-8 w-8 items-center justify-center rounded-md text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+              className="flex h-8 w-8 items-center justify-center rounded-md text-fg-muted transition-colors hover:bg-subtle hover:text-fg"
               aria-label="Settings"
               aria-expanded={showSettings}
               aria-haspopup="true"
@@ -143,13 +143,13 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                   onClick={() => setShowSettings(false)}
                   aria-hidden="true"
                 />
-                <div className="animate-fade-in absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <div className="animate-fade-in absolute right-0 top-full z-50 mt-2 w-72 rounded-lg border border-border bg-surface p-4 shadow-lg">
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-fg-muted">
                     Appearance
                   </h3>
 
                   <div className="mb-4">
-                    <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <label className="block text-2xs font-medium uppercase tracking-wider text-fg-muted">
                       App Theme
                     </label>
                     <div className="mt-2 flex gap-1">
@@ -159,8 +159,8 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                           onClick={() => setTheme(t)}
                           className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                             theme === t
-                              ? 'bg-[var(--brand)] text-white'
-                              : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                              ? 'bg-accent text-fg-on-accent'
+                              : 'bg-subtle text-fg-muted hover:bg-inset'
                           }`}
                         >
                           {t}
@@ -170,7 +170,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                   </div>
 
                   <div>
-                    <label className="block text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <label className="block text-2xs font-medium uppercase tracking-wider text-fg-muted">
                       Code Theme
                     </label>
                     <div className="mt-2 grid grid-cols-2 gap-1">
@@ -181,8 +181,8 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
                             onClick={() => setSpecTheme(key)}
                             className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                               specTheme === key
-                                ? 'bg-[var(--brand)] text-white'
-                                : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                                ? 'bg-accent text-fg-on-accent'
+                                : 'bg-subtle text-fg-muted hover:bg-inset'
                             }`}
                           >
                             {value.name}
@@ -197,7 +197,7 @@ export function Navbar({ stats }: { stats: DirectoryStats }) {
           </div>
         </div>
       </div>
-      <div className="border-t border-zinc-200/80 px-4 py-2 dark:border-zinc-800/80 lg:hidden">
+      <div className="border-t border-border/80 px-4 py-2 lg:hidden">
         <DirectoryStatPills stats={stats} />
       </div>
     </nav>

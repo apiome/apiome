@@ -51,10 +51,10 @@ describe('kindLabel and kindBadgeClass', () => {
   });
 
   it('maps kinds to distinct palette classes', () => {
-    expect(kindBadgeClass('drop')).toContain('rose');
-    expect(kindBadgeClass('approx')).toContain('amber');
+    expect(kindBadgeClass('drop')).toContain('danger');
+    expect(kindBadgeClass('approx')).toContain('warn');
     expect(kindBadgeClass('synth')).toContain('violet');
-    expect(kindBadgeClass('ok')).toContain('emerald');
+    expect(kindBadgeClass('ok')).toContain('ok');
   });
 });
 
@@ -77,10 +77,10 @@ describe('ringGeometry', () => {
 });
 
 describe('ringStrokeClass', () => {
-  it('maps tiers to emerald/amber/rose strokes', () => {
-    expect(ringStrokeClass('lossless')).toContain('emerald');
-    expect(ringStrokeClass('lossy')).toContain('amber');
-    expect(ringStrokeClass('types-only')).toContain('rose');
+  it('maps tiers to ok/warn/danger strokes', () => {
+    expect(ringStrokeClass('lossless')).toContain('ok');
+    expect(ringStrokeClass('lossy')).toContain('warn');
+    expect(ringStrokeClass('types-only')).toContain('danger');
   });
 });
 

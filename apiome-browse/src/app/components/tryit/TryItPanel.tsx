@@ -48,7 +48,7 @@ import { ResponseViewer } from './ResponseViewer';
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[180px] items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-[12px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+    <div className="flex h-[180px] items-center justify-center rounded-lg border border-border bg-subtle text-xs text-fg-muted">
       Loading editor...
     </div>
   ),
@@ -405,7 +405,7 @@ export function TryItPanel({
 
   if (!model) {
     return (
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[12px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+      <div className="rounded-lg border border-border bg-subtle p-3 text-xs text-fg-muted">
         This operation could not be read from the specification.
       </div>
     );
@@ -416,12 +416,12 @@ export function TryItPanel({
   const headerParams = model.params.filter((p) => p.location === 'header');
 
   return (
-    <div className="space-y-4 rounded-lg border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div className="space-y-4 rounded-lg border border-border bg-subtle/60 p-4">
       {/* Server picker */}
       <div>
         <label
           htmlFor={`${idBase}-server`}
-          className="mb-1 block text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+          className="mb-1 block text-2xs font-medium uppercase tracking-wider text-fg-muted"
         >
           Server
         </label>
@@ -429,7 +429,7 @@ export function TryItPanel({
           id={`${idBase}-server`}
           value={serverChoice}
           onChange={(e) => setServerChoice(e.target.value)}
-          className="w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+          className="control control-sm font-mono"
         >
           {servers.map((server, i) => (
             <option key={`${server.kind}-${server.url}`} value={String(i)}>
@@ -447,14 +447,14 @@ export function TryItPanel({
               onChange={(e) => setCustomUrl(e.target.value)}
               placeholder="https://api.example.com/v1"
               aria-label="Custom server URL"
-              className="w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+              className="control control-sm font-mono"
             />
-            <label className="flex items-start gap-2 text-[12px] text-zinc-600 dark:text-zinc-400">
+            <label className="flex items-start gap-2 text-xs text-fg-muted">
               <input
                 type="checkbox"
                 checked={customConfirmed}
                 onChange={(e) => setCustomConfirmed(e.target.checked)}
-                className="mt-0.5 h-3.5 w-3.5 rounded border-zinc-300 text-[var(--brand)] dark:border-zinc-700"
+                className="mt-0.5 h-3.5 w-3.5 rounded-xs border-border-strong text-accent-fg"
               />
               <span>
                 I trust this host — requests are relayed with the headers and body entered above.
@@ -485,13 +485,13 @@ export function TryItPanel({
       {/* User-added headers */}
       <div>
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <span className="text-2xs font-medium uppercase tracking-wider text-fg-muted">
             Additional headers
           </span>
           <button
             type="button"
             onClick={() => setExtraHeaders((prev) => [...prev, { name: '', value: '' }])}
-            className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="rounded-md border border-border bg-surface px-2 py-1 text-2xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
           >
             + Add header
           </button>
@@ -510,7 +510,7 @@ export function TryItPanel({
                   }
                   placeholder="Header name"
                   aria-label={`Additional header ${i + 1} name`}
-                  className="w-2/5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+                  className="control control-sm w-2/5 font-mono"
                 />
                 <input
                   type="text"
@@ -522,13 +522,13 @@ export function TryItPanel({
                   }
                   placeholder="Value"
                   aria-label={`Additional header ${i + 1} value`}
-                  className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:border-[var(--brand)] focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200"
+                  className="control control-sm min-w-0 flex-1 font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setExtraHeaders((prev) => prev.filter((_, j) => j !== i))}
                   aria-label={`Remove additional header ${i + 1}`}
-                  className="rounded-md border border-zinc-200 bg-white px-2 py-1.5 text-[11px] text-zinc-500 shadow-xs transition-colors hover:bg-zinc-50 hover:text-rose-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  className="rounded-md border border-border bg-surface px-2 py-1.5 text-2xs text-fg-muted shadow-xs transition-colors hover:bg-subtle hover:text-danger-fg"
                 >
                   Remove
                 </button>
@@ -545,12 +545,12 @@ export function TryItPanel({
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <label
                 htmlFor={`${idBase}-body`}
-                className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                className="text-2xs font-medium uppercase tracking-wider text-fg-muted"
               >
                 Request body{model.bodyRequired ? ' (required)' : ''}
               </label>
               {bodySourceLabel && (
-                <span className="rounded-md bg-zinc-200/80 px-2 py-0.5 font-mono text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                <span className="rounded-md bg-inset/80 px-2 py-0.5 font-mono text-2xs text-fg-muted">
                   {bodySourceLabel}
                 </span>
               )}
@@ -561,7 +561,7 @@ export function TryItPanel({
                   value={selectedExampleName ?? ''}
                   onChange={(e) => onExampleSelect(e.target.value)}
                   aria-label="Request body example"
-                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono text-[11px] text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                  className="control control-sm font-mono w-auto"
                 >
                   {bodyExamples.map((example) => (
                     <option key={example.name} value={example.name}>
@@ -576,7 +576,7 @@ export function TryItPanel({
                   type="button"
                   onClick={onGenerateSample}
                   disabled={generatingSample}
-                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 text-[11px] font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="rounded-md border border-border bg-surface px-2 py-1 text-2xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {generatingSample ? 'Generating…' : 'Generate sample'}
                 </button>
@@ -586,7 +586,7 @@ export function TryItPanel({
                   value={String(contentTypeIdx)}
                   onChange={(e) => setContentTypeIdx(Number(e.target.value))}
                   aria-label="Request body content type"
-                  className="rounded-md border border-zinc-200 bg-white px-2 py-1 font-mono text-[11px] text-zinc-700 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+                  className="control control-sm font-mono w-auto"
                 >
                   {model.bodyVariants.map((variant, i) => (
                     <option key={variant.contentType} value={String(i)}>
@@ -596,20 +596,20 @@ export function TryItPanel({
                 </select>
               )}
               {model.bodyVariants.length === 1 && (
-                <span className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                <span className="font-mono text-2xs text-fg-muted">
                   {model.bodyVariants[0].contentType}
                 </span>
               )}
             </div>
           </div>
           {sampleError && (
-            <p role="alert" className="mb-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+            <p role="alert" className="mb-1 text-2xs font-medium text-danger-fg">
               {sampleError}
             </p>
           )}
           <div
             id={`${idBase}-body`}
-            className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"
+            className="overflow-hidden rounded-lg border border-border"
           >
             <Editor
               height="180px"
@@ -668,12 +668,12 @@ export function TryItPanel({
           type="button"
           onClick={onSend}
           disabled={sending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[var(--brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-fg-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           {sending ? 'Sending…' : 'Send'}
         </button>
         {formError && (
-          <p role="alert" className="text-[12px] font-medium text-rose-600 dark:text-rose-400">
+          <p role="alert" className="text-xs font-medium text-danger-fg">
             {formError}
           </p>
         )}
@@ -682,15 +682,15 @@ export function TryItPanel({
       {/* Outcome — the SIM-3.3 response viewer, or a distinct card per send-failure kind */}
       <div aria-live="polite">
         {sendError && (
-          <div className="rounded-lg border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/50 dark:bg-rose-950/20">
-            <p className="text-[12px] font-semibold text-rose-800 dark:text-rose-300">
+          <div className="rounded-lg border border-danger/30 bg-danger-soft/60 p-3">
+            <p className="text-xs font-semibold text-danger-fg">
               {sendError.kind ? describeSendFailure(sendError.kind).title : 'Request failed'}
             </p>
-            <p className="mt-1 text-[12px] text-rose-800/90 dark:text-rose-300/90">
+            <p className="mt-1 text-xs text-danger-fg/90">
               {sendError.message}
             </p>
             {sendError.kind && (
-              <p className="mt-1 text-[12px] text-rose-700/80 dark:text-rose-300/70">
+              <p className="mt-1 text-xs text-danger-fg/80">
                 {describeSendFailure(sendError.kind).hint}
               </p>
             )}
@@ -720,7 +720,7 @@ function ParamGroup({
 }) {
   return (
     <fieldset>
-      <legend className="mb-1 text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+      <legend className="mb-1 text-2xs font-medium uppercase tracking-wider text-fg-muted">
         {label}
       </legend>
       <div className="space-y-2">
@@ -760,22 +760,18 @@ function ParamField({
 
   const meta = [type, format].filter(Boolean).join(' · ');
   const labelEl = (
-    <label htmlFor={inputId} className="flex items-center gap-1.5 font-mono text-[12px] text-zinc-800 dark:text-zinc-200">
+    <label htmlFor={inputId} className="flex items-center gap-1.5 font-mono text-xs text-fg">
       {param.name}
       {param.required && (
-        <span className="text-rose-600 dark:text-rose-400" title="Required">
+        <span className="text-danger-fg" title="Required">
           *
         </span>
       )}
-      {meta && <span className="font-sans text-[11px] text-zinc-400 dark:text-zinc-500">({meta})</span>}
+      {meta && <span className="font-sans text-2xs text-fg-subtle">({meta})</span>}
     </label>
   );
 
-  const inputClass = `w-full rounded-md border bg-white px-2.5 py-1.5 font-mono text-[12px] text-zinc-800 shadow-xs focus:outline-none dark:bg-zinc-950 dark:text-zinc-200 ${
-    error
-      ? 'border-rose-400 focus:border-rose-500 dark:border-rose-700'
-      : 'border-zinc-200 focus:border-[var(--brand)] dark:border-zinc-800'
-  }`;
+  const inputClass = `control control-sm font-mono ${error ? 'control-invalid' : ''}`;
 
   return (
     <div className="grid gap-1 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)] sm:items-center sm:gap-3">
@@ -805,7 +801,7 @@ function ParamField({
             onChange={(e) => onChange(key, e.target.checked ? 'true' : '')}
             aria-invalid={error ? true : undefined}
             aria-describedby={error ? errorId : undefined}
-            className="h-4 w-4 rounded border-zinc-300 text-[var(--brand)] dark:border-zinc-700"
+            className="h-4 w-4 rounded-xs border-border-strong text-accent-fg"
           />
         ) : (
           <input
@@ -821,7 +817,7 @@ function ParamField({
           />
         )}
         {error && (
-          <p id={errorId} role="alert" className="mt-0.5 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+          <p id={errorId} role="alert" className="mt-0.5 text-2xs font-medium text-danger-fg">
             {error}
           </p>
         )}

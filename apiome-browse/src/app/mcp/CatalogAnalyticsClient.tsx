@@ -22,21 +22,21 @@ import {
 
 /** Bar fill classes per breakdown tone — token/utility classes only, light + dark. */
 const BAR_TONE: Record<McpGradeTone | 'accent', string> = {
-  good: 'bg-emerald-500 dark:bg-emerald-400',
-  ok: 'bg-amber-500 dark:bg-amber-400',
-  poor: 'bg-red-500 dark:bg-red-400',
-  accent: 'bg-[var(--brand)]',
+  good: 'bg-ok',
+  ok: 'bg-honey',
+  poor: 'bg-danger',
+  accent: 'bg-accent',
 };
 
 /** One labelled bar: the label, a proportional fill, and the count + share. */
 function BarRow({ row, tone }: { row: McpCatalogBucketView; tone: McpGradeTone | 'accent' }) {
   return (
-    <li className="flex items-center gap-3 text-sm">
-      <span className="w-28 shrink-0 truncate text-zinc-700 dark:text-zinc-300" title={row.label}>
+    <li className="flex items-center gap-3 text-base">
+      <span className="w-28 shrink-0 truncate text-fg-muted" title={row.label}>
         {row.label}
       </span>
       <span
-        className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+        className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-subtle"
         aria-hidden="true"
       >
         <span
@@ -44,9 +44,9 @@ function BarRow({ row, tone }: { row: McpCatalogBucketView; tone: McpGradeTone |
           style={{ width: `${Math.max(row.percent, row.count > 0 ? 3 : 0)}%` }}
         />
       </span>
-      <span className="w-20 shrink-0 text-right tabular-nums text-zinc-500 dark:text-zinc-400">
+      <span className="w-20 shrink-0 text-right tabular-nums text-fg-muted">
         {row.count}
-        <span className="ml-1 text-zinc-400 dark:text-zinc-500">({row.percent}%)</span>
+        <span className="ml-1 text-fg-subtle">({row.percent}%)</span>
       </span>
     </li>
   );
@@ -63,10 +63,10 @@ function BreakdownCard({
   toneFor: (row: McpCatalogBucketView) => McpGradeTone | 'accent';
 }) {
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white/60 p-5 dark:border-zinc-800 dark:bg-zinc-900/40">
-      <h2 className="mb-4 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
+    <section className="rounded-lg border border-border bg-surface/60 p-5">
+      <h2 className="mb-4 text-base font-semibold text-fg">{title}</h2>
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">No data yet.</p>
+        <p className="text-base text-fg-muted">No data yet.</p>
       ) : (
         <ul className="space-y-2.5">
           {rows.map((row) => (
@@ -89,31 +89,31 @@ export function CatalogAnalyticsClient({ insight }: { insight: McpPublicCatalogI
 
   return (
     <AppShell containerSize="wide">
-      <header className="border-b border-zinc-200 py-8 dark:border-zinc-800">
-        <p className="text-[13px] font-semibold uppercase tracking-wider text-[var(--brand)]">
+      <header className="border-b border-border py-8">
+        <p className="text-sm font-semibold uppercase tracking-wider text-accent-fg">
           MCP Catalog
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+        <h1 className="mt-1 text-3xl font-bold tracking-tight text-fg">
           Catalog analytics
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 max-w-2xl text-base text-fg-muted">
           How the published, public MCP servers in this directory break down by category, transport,
           and quality grade. Private and unpublished servers are never counted here.
         </p>
         <Link
           href="/mcp"
-          className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--brand)] hover:underline"
+          className="mt-4 inline-flex items-center gap-1 text-base font-medium text-accent-fg hover:underline"
         >
           ← Back to the catalog
         </Link>
       </header>
 
       {isEmpty ? (
-        <div className="my-10 rounded-xl border border-dashed border-zinc-300 bg-white/50 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="my-10 rounded-lg border border-dashed border-border-strong bg-surface/50 p-10 text-center">
+          <h2 className="text-xl font-semibold text-fg">
             No public MCP servers yet
           </h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mx-auto mt-2 max-w-lg text-base text-fg-muted">
             Once servers are published publicly, catalog-wide analytics — category and transport mix
             and the grade distribution — appear here.
           </p>
@@ -122,19 +122,19 @@ export function CatalogAnalyticsClient({ insight }: { insight: McpPublicCatalogI
         <div className="my-8 space-y-6">
           {/* Headline tallies. */}
           <div className="flex flex-wrap gap-3">
-            <div className="rounded-xl border border-zinc-200 bg-white/60 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <div className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
+            <div className="rounded-lg border border-border bg-surface/60 px-5 py-3">
+              <div className="text-3xl font-bold tabular-nums text-fg">
                 {insight.endpoint_count.toLocaleString()}
               </div>
-              <div className="mt-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <div className="mt-0.5 text-xs font-medium uppercase tracking-wider text-fg-muted">
                 Public servers
               </div>
             </div>
-            <div className="rounded-xl border border-zinc-200 bg-white/60 px-5 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-              <div className="text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-50">
+            <div className="rounded-lg border border-border bg-surface/60 px-5 py-3">
+              <div className="text-3xl font-bold tabular-nums text-fg">
                 {insight.average_score !== null ? insight.average_score.toFixed(1) : '—'}
               </div>
-              <div className="mt-0.5 text-xs font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <div className="mt-0.5 text-xs font-medium uppercase tracking-wider text-fg-muted">
                 Average score
               </div>
             </div>

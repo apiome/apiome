@@ -10,7 +10,7 @@ export function Highlight({ text, needles }: { text: string; needles: readonly s
     <>
       {segments.map((segment, i) =>
         segment.hit ? (
-          <mark key={i} className="rounded-sm bg-[var(--gold-soft)] px-0.5 text-inherit dark:bg-amber-400/25">
+          <mark key={i} className="rounded-sm bg-honey-soft px-0.5 text-inherit">
             {segment.text}
           </mark>
         ) : (

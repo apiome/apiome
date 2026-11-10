@@ -12,10 +12,10 @@ import { OperationSnippetTabs } from './sdk/OperationSnippetTabs';
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[600px] items-center justify-center bg-zinc-50 dark:bg-zinc-900">
+    <div className="flex h-[600px] items-center justify-center bg-subtle">
       <div className="flex items-center gap-3">
         <Spinner />
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading editor...</span>
+        <span className="text-base text-fg-muted">Loading editor...</span>
       </div>
     </div>
   ),
@@ -24,10 +24,10 @@ const Editor = dynamic(() => import('@monaco-editor/react'), {
 const SpecVisualCanvas = dynamic(() => import('./SpecVisualCanvas').then((m) => m.SpecVisualCanvas), {
   ssr: false,
   loading: () => (
-    <div className="flex min-h-[520px] items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="flex min-h-[520px] items-center justify-center rounded-lg border border-border bg-surface">
       <div className="flex items-center gap-3">
         <Spinner />
-        <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading visual canvas...</span>
+        <span className="text-base text-fg-muted">Loading visual canvas...</span>
       </div>
     </div>
   ),
@@ -89,7 +89,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
 
 function Spinner() {
   return (
-    <svg className="h-5 w-5 animate-spin text-[var(--brand)]" fill="none" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 animate-spin text-accent-fg" fill="none" viewBox="0 0 24 24">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
     </svg>
@@ -201,7 +201,7 @@ export function SpecViewer({
   return (
     <div className="space-y-3">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-2 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface p-2 shadow-xs">
         <div className="flex flex-wrap items-center gap-2">
           {/* Format tabs */}
           <SegmentedControl
@@ -269,12 +269,12 @@ export function SpecViewer({
                 <button
                   type="button"
                   onClick={() => setShowThemePicker(!showThemePicker)}
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                   aria-label="Code theme"
                   aria-expanded={showThemePicker}
                 >
                   <div
-                    className="h-3.5 w-3.5 rounded-sm border border-zinc-300 dark:border-zinc-700"
+                    className="h-3.5 w-3.5 rounded-sm border border-border-strong"
                     style={{ backgroundColor: specThemes[specTheme].bgColor }}
                   ></div>
                   <span>{specThemes[specTheme].name}</span>
@@ -285,7 +285,7 @@ export function SpecViewer({
                 {showThemePicker && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowThemePicker(false)} aria-hidden="true" />
-                    <div className="animate-fade-in absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
+                    <div className="animate-fade-in absolute right-0 top-full z-50 mt-1 w-44 rounded-lg border border-border bg-surface p-1 shadow-lg">
                       {(Object.entries(specThemes) as [SpecTheme, typeof specThemes.default][]).map(([key, value]) => (
                         <button
                           key={key}
@@ -294,14 +294,14 @@ export function SpecViewer({
                             setSpecTheme(key);
                             setShowThemePicker(false);
                           }}
-                          className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-[12px] ${
+                          className={`flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-xs ${
                             specTheme === key
-                              ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-                              : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                              ? 'bg-accent-soft text-accent-fg'
+                              : 'text-fg-muted hover:bg-subtle'
                           }`}
                         >
                           <div
-                            className="h-3.5 w-3.5 rounded-sm border border-zinc-200 dark:border-zinc-700"
+                            className="h-3.5 w-3.5 rounded-sm border border-border"
                             style={{ backgroundColor: value.bgColor }}
                           ></div>
                           {value.name}
@@ -320,7 +320,7 @@ export function SpecViewer({
             href={`${restApiBaseUrl}/swagger/${tenantSlug}/${projectSlug}/${versionSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
           >
             Swagger UI
             <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -350,7 +350,7 @@ export function SpecViewer({
             type="button"
             onClick={downloadSpec}
             disabled={!spec}
-            className="inline-flex items-center gap-1.5 rounded-md bg-[var(--brand)] px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--brand-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1.5 text-xs font-medium text-fg-on-accent transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Download specification"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -363,25 +363,25 @@ export function SpecViewer({
 
       {/* Content */}
       {loading && (
-        <div className="flex items-center justify-center rounded-xl border border-zinc-200 bg-white p-16 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="flex items-center justify-center rounded-lg border border-border bg-surface p-16 shadow-xs">
           <div className="flex items-center gap-3">
             <Spinner />
-            <span className="text-sm text-zinc-600 dark:text-zinc-400">Loading specification...</span>
+            <span className="text-base text-fg-muted">Loading specification...</span>
           </div>
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-5 dark:border-rose-900/50 dark:bg-rose-950/20">
+        <div className="rounded-lg border border-danger/30 bg-danger-soft/60 p-5">
           <div className="flex items-start gap-3">
-            <svg className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
+            <svg className="mt-0.5 h-5 w-5 shrink-0 text-danger-fg" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div>
-              <h3 className="text-sm font-semibold text-rose-900 dark:text-rose-200">
+              <h3 className="text-base font-semibold text-danger-fg">
                 Could not load specification
               </h3>
-              <p className="mt-1 text-[13px] text-rose-800 dark:text-rose-300/90">{error}</p>
+              <p className="mt-1 text-sm text-danger-fg">{error}</p>
             </div>
           </div>
         </div>
@@ -405,17 +405,17 @@ export function SpecViewer({
       )}
 
       {!loading && !error && spec != null && viewMode === 'code' && (
-        <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-50/80 px-3 py-1.5 dark:border-zinc-800 dark:bg-zinc-900/40">
-            <div className="flex items-center gap-3 text-[12px]">
-              <span className="font-mono font-medium text-zinc-700 dark:text-zinc-300">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <div className="flex items-center justify-between border-b border-border bg-subtle/80 px-3 py-1.5">
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-mono font-medium text-fg-muted">
                 {format === 'openapi'
                   ? `openapi.${viewFormat}`
                   : format === 'arazzo'
                   ? `arazzo.${viewFormat}`
                   : `schema.${viewFormat}`}
               </span>
-              <span className="text-zinc-500 dark:text-zinc-400 tabular-nums">{lineCount} lines</span>
+              <span className="text-fg-muted tabular-nums">{lineCount} lines</span>
             </div>
             <SpecMetaSummary spec={spec} format={format} />
           </div>
@@ -453,7 +453,7 @@ function SpecMetaSummary({ spec, format }: { spec: unknown; format: SpecFormat }
     const ver = info && typeof info.version === 'string' ? info.version : undefined;
     const oapi = typeof spec.openapi === 'string' ? spec.openapi : undefined;
     return (
-      <div className="text-[11px] text-zinc-500 dark:text-zinc-400">
+      <div className="text-2xs text-fg-muted">
         {ver && <span>v{ver}</span>}
         {oapi && <span> &middot; OpenAPI {oapi}</span>}
       </div>
@@ -541,14 +541,14 @@ function SpecOverview({
     return (
       <div className="space-y-5">
         {/* Info card */}
-        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="rounded-lg border border-border bg-surface p-5 shadow-xs">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+              <h3 className="text-xl font-semibold text-fg">
                 {info && typeof info.title === 'string' ? info.title : 'API'}
               </h3>
               {info && typeof info.description === 'string' && (
-                <p className="mt-1 max-w-3xl text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+                <p className="mt-1 max-w-3xl text-sm leading-relaxed text-fg-muted">
                   {info.description}
                 </p>
               )}
@@ -570,28 +570,28 @@ function SpecOverview({
 
         {/* Servers */}
         {(servers.length > 0 || mockBaseUrl) && (
-          <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
-            <h4 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <section className="rounded-lg border border-border bg-surface p-5 shadow-xs">
+            <h4 className="mb-3 text-2xs font-semibold uppercase tracking-wider text-fg-muted">
               Servers
             </h4>
             <ul className="space-y-2">
               {mockBaseUrl && (
                 <li className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-xs bg-ok-soft text-ok-fg">
                     <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <code className="block break-all rounded bg-zinc-50 px-2 py-1 font-mono text-[12px] text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+                      <code className="block break-all rounded-xs bg-subtle px-2 py-1 font-mono text-xs text-fg">
                         {mockBaseUrl}
                       </code>
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                      <span className="inline-flex items-center rounded-full bg-ok-soft px-1.5 py-0.5 text-2xs font-medium text-ok-fg">
                         Mock
                       </span>
                     </div>
-                    <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-1 text-xs text-fg-muted">
                       Mock server — responses generated from this specification.
                     </p>
                   </div>
@@ -603,16 +603,16 @@ function SpecOverview({
                 const desc = typeof s.description === 'string' ? s.description : undefined;
                 return (
                   <li key={i} className="flex items-start gap-3">
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-xs bg-subtle text-fg-muted">
                       <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <code className="block break-all rounded bg-zinc-50 px-2 py-1 font-mono text-[12px] text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+                      <code className="block break-all rounded-xs bg-subtle px-2 py-1 font-mono text-xs text-fg">
                         {url}
                       </code>
-                      {desc && <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">{desc}</p>}
+                      {desc && <p className="mt-1 text-xs text-fg-muted">{desc}</p>}
                     </div>
                   </li>
                 );
@@ -624,28 +624,28 @@ function SpecOverview({
         {/* Operations grouped by tag */}
         {orderedGroups.length > 0 && (
           <section className="space-y-3">
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <h4 className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
               Operations
             </h4>
             {orderedGroups.map((group) => (
               <div
                 key={group.tag}
-                className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950"
+                className="overflow-hidden rounded-lg border border-border bg-surface shadow-xs"
               >
-                <div className="border-b border-zinc-200 bg-zinc-50/60 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+                <div className="border-b border-border bg-subtle/60 px-4 py-2">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <h5 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">{group.tag}</h5>
+                      <h5 className="text-base font-semibold text-fg">{group.tag}</h5>
                       {group.description && (
-                        <p className="mt-0.5 text-[12px] text-zinc-500 dark:text-zinc-400">{group.description}</p>
+                        <p className="mt-0.5 text-xs text-fg-muted">{group.description}</p>
                       )}
                     </div>
-                    <span className="text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                    <span className="text-2xs tabular-nums text-fg-muted">
                       {group.ops.length} {group.ops.length === 1 ? 'operation' : 'operations'}
                     </span>
                   </div>
                 </div>
-                <ul className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+                <ul className="divide-y divide-border">
                   {group.ops.map((op, idx) => (
                     <OperationRow
                       key={`${operationAnchorId(op.method, op.path)}-${idx}`}
@@ -667,7 +667,7 @@ function SpecOverview({
 
         {schemaNames.length > 0 && (
           <section className="space-y-3">
-            <h4 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <h4 className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
               Schemas
             </h4>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -686,21 +686,21 @@ function SpecOverview({
                   <div
                     key={schemaName}
                     id={anchor}
-                    className="scroll-mt-24 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs dark:border-zinc-800 dark:bg-zinc-950"
+                    className="scroll-mt-24 rounded-lg border border-border bg-surface p-4 shadow-xs"
                   >
                     <div className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0 rounded bg-fuchsia-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-fuchsia-800 dark:bg-fuchsia-500/10 dark:text-fuchsia-300">
+                      <span className="mt-0.5 shrink-0 rounded-xs bg-violet-soft px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase text-violet-fg">
                         CLS
                       </span>
                       <div className="min-w-0 flex-1">
-                        <code className="break-all font-mono text-[13px] font-semibold text-zinc-900 dark:text-zinc-50">
+                        <code className="break-all font-mono text-sm font-semibold text-fg">
                           {schemaName}
                         </code>
                         {title && (
-                          <p className="mt-1 text-[12px] font-medium text-zinc-700 dark:text-zinc-300">{title}</p>
+                          <p className="mt-1 text-xs font-medium text-fg-muted">{title}</p>
                         )}
                         {description && (
-                          <p className="mt-1 line-clamp-4 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+                          <p className="mt-1 line-clamp-4 text-xs leading-relaxed text-fg-muted">
                             {description}
                           </p>
                         )}
@@ -719,9 +719,9 @@ function SpecOverview({
   if (format === 'arazzo') {
     const workflows = Array.isArray(spec.workflows) ? spec.workflows : [];
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
-        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Arazzo workflows</h3>
-        <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
+      <div className="rounded-lg border border-border bg-surface p-5 shadow-xs">
+        <h3 className="text-xl font-semibold text-fg">Arazzo workflows</h3>
+        <p className="mt-1 text-sm text-fg-muted">
           {workflows.length} workflow{workflows.length === 1 ? '' : 's'} declared.
         </p>
         {workflows.length > 0 && (
@@ -734,15 +734,15 @@ function SpecOverview({
                 <li
                   key={id}
                   id={`wf-${id}`}
-                  className="scroll-mt-24 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800"
+                  className="scroll-mt-24 rounded-lg border border-border p-3"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-blue-700 dark:bg-blue-500/10 dark:text-blue-300">
+                    <span className="rounded-xs bg-accent-soft px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase text-accent-fg">
                       WF
                     </span>
-                    <code className="font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">{id}</code>
+                    <code className="font-mono text-sm font-medium text-fg">{id}</code>
                   </div>
-                  {summary && <p className="mt-1 text-[12px] text-zinc-500 dark:text-zinc-400">{summary}</p>}
+                  {summary && <p className="mt-1 text-xs text-fg-muted">{summary}</p>}
                 </li>
               );
             })}
@@ -759,9 +759,9 @@ function SpecOverview({
     null;
   const defNames = defs ? Object.keys(defs) : [];
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
-      <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">JSON Schema</h3>
-      <p className="mt-1 text-[13px] text-zinc-500 dark:text-zinc-400">
+    <div className="rounded-lg border border-border bg-surface p-5 shadow-xs">
+      <h3 className="text-xl font-semibold text-fg">JSON Schema</h3>
+      <p className="mt-1 text-sm text-fg-muted">
         {defNames.length} top-level definition{defNames.length === 1 ? '' : 's'}.
       </p>
       {defNames.length > 0 && (
@@ -770,7 +770,7 @@ function SpecOverview({
             <li
               key={name}
               id={`def-${name.replace(/[^a-z0-9]+/gi, '-')}`}
-              className="scroll-mt-24 rounded border border-zinc-100 px-3 py-2 font-mono text-[12px] text-zinc-800 dark:border-zinc-800 dark:text-zinc-200"
+              className="scroll-mt-24 rounded-xs border border-border px-3 py-2 font-mono text-xs text-fg"
             >
               {name}
             </li>
@@ -821,7 +821,7 @@ function OperationRow({
     <li id={anchor} className="scroll-mt-24">
       <div className="flex items-start gap-3 px-4 py-2.5">
         <span
-          className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset ${
+          className={`shrink-0 rounded-xs px-1.5 py-0.5 font-mono text-2xs font-semibold uppercase tracking-wide ring-1 ring-inset ${
             HTTP_METHOD_TONE[op.method.toLowerCase()] ?? HTTP_METHOD_TONE.options
           }`}
         >
@@ -829,17 +829,17 @@ function OperationRow({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <code className="break-all font-mono text-[13px] font-medium text-zinc-900 dark:text-zinc-50">
+            <code className="break-all font-mono text-sm font-medium text-fg">
               {op.path}
             </code>
             {op.deprecated && (
-              <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+              <span className="inline-flex items-center rounded-full bg-honey-soft px-1.5 py-0.5 text-2xs font-medium text-honey-fg">
                 deprecated
               </span>
             )}
           </div>
           {op.summary && (
-            <p className="mt-0.5 text-[12px] text-zinc-600 dark:text-zinc-400">{op.summary}</p>
+            <p className="mt-0.5 text-xs text-fg-muted">{op.summary}</p>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -905,10 +905,10 @@ function DisclosureButton({
       onClick={onClick}
       aria-expanded={open}
       aria-controls={controls}
-      className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+      className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2.5 py-1 text-2xs font-medium transition-colors ${
         open
-          ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-          : 'border border-zinc-200 bg-white text-zinc-700 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+          ? 'bg-accent-soft text-accent-fg'
+          : 'border border-border bg-surface text-fg-muted shadow-xs hover:bg-subtle'
       }`}
     >
       {label}
@@ -928,11 +928,11 @@ function DisclosureButton({
 
 function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-md bg-zinc-50 px-3 py-2 dark:bg-zinc-900/60">
-      <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+    <div className="rounded-md bg-subtle px-3 py-2">
+      <div className="text-2xs font-medium uppercase tracking-wider text-fg-muted">
         {label}
       </div>
-      <div className="mt-0.5 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+      <div className="mt-0.5 text-xl font-semibold tabular-nums text-fg">
         {value.toLocaleString()}
       </div>
     </div>
@@ -942,10 +942,10 @@ function Metric({ label, value }: { label: string; value: number }) {
 function Pill({ children, tone }: { children: React.ReactNode; tone: 'brand' | 'neutral' }) {
   const cls =
     tone === 'brand'
-      ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-      : 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
+      ? 'bg-accent-soft text-accent-fg'
+      : 'bg-subtle text-fg-muted';
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium ${cls}`}>
       {children}
     </span>
   );
@@ -961,16 +961,16 @@ function SegmentedControl<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex items-center gap-0.5 rounded-md bg-zinc-100 p-0.5 dark:bg-zinc-800/80">
+    <div className="inline-flex items-center gap-0.5 rounded-md bg-subtle p-0.5">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
-          className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+          className={`rounded-xs px-2.5 py-1 text-xs font-medium transition-colors ${
             value === opt.value
-              ? 'bg-white text-zinc-900 shadow-xs dark:bg-zinc-700 dark:text-zinc-50'
-              : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50'
+              ? 'bg-surface text-fg shadow-xs'
+              : 'text-fg-muted hover:text-fg'
           }`}
         >
           {opt.label}
@@ -981,7 +981,7 @@ function SegmentedControl<T extends string>({
 }
 
 function Divider() {
-  return <span className="hidden h-5 w-px bg-zinc-200 dark:bg-zinc-700 sm:inline-block" />;
+  return <span className="hidden h-5 w-px bg-inset sm:inline-block" />;
 }
 
 function ToolbarButton({
@@ -1006,8 +1006,8 @@ function ToolbarButton({
       title={label}
       className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
         active
-          ? 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-          : 'border border-zinc-200 bg-white text-zinc-600 shadow-xs hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800'
+          ? 'bg-accent-soft text-accent-fg'
+          : 'border border-border bg-surface text-fg-muted shadow-xs hover:bg-subtle'
       }`}
     >
       {children}
@@ -1017,7 +1017,7 @@ function ToolbarButton({
 
 function CheckIcon() {
   return (
-    <svg className="h-4 w-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <svg className="h-4 w-4 text-ok-fg" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );

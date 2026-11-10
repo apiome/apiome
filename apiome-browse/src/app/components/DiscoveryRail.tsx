@@ -53,9 +53,9 @@ export function DiscoveryRail({
     <section className="space-y-3">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">{title}</h2>
+          <h2 className="text-xl font-semibold text-fg">{title}</h2>
           {description && (
-            <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">{description}</p>
+            <p className="mt-0.5 text-sm text-fg-muted">{description}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -66,7 +66,7 @@ export function DiscoveryRail({
                 onClick={() => scroll(-1)}
                 disabled={!canScrollLeft}
                 aria-label={`Scroll ${title} left`}
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 shadow-xs transition-opacity hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-fg-muted shadow-xs transition-opacity hover:bg-subtle disabled:opacity-40"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -77,7 +77,7 @@ export function DiscoveryRail({
                 onClick={() => scroll(1)}
                 disabled={!canScrollRight}
                 aria-label={`Scroll ${title} right`}
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-200 bg-white text-zinc-600 shadow-xs transition-opacity hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-surface text-fg-muted shadow-xs transition-opacity hover:bg-subtle disabled:opacity-40"
               >
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -88,7 +88,7 @@ export function DiscoveryRail({
           {seeAllHref && (
             <Link
               href={seeAllHref}
-              className="text-xs font-medium text-[var(--brand-soft-text)] hover:text-[var(--brand-hover)]"
+              className="text-xs font-medium text-accent-fg hover:text-accent-hover"
             >
               {seeAllLabel}
               <span aria-hidden="true"> &rarr;</span>
@@ -98,7 +98,7 @@ export function DiscoveryRail({
       </div>
 
       {itemCount === 0 ? (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/40 dark:text-zinc-500">
+        <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-6 text-center text-base text-fg-muted">
           {emptyMessage}
         </div>
       ) : (

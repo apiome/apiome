@@ -132,7 +132,7 @@ export function CodeSnippetPanel({
   return (
     <div>
       <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+        <span className="text-2xs font-medium uppercase tracking-wider text-fg-muted">
           Copy as code
         </span>
         <div className="inline-flex gap-1" role="group" aria-label="Snippet format">
@@ -142,10 +142,10 @@ export function CodeSnippetPanel({
               type="button"
               onClick={() => setTarget(entry)}
               aria-pressed={target === entry}
-              className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              className={`rounded-md px-2.5 py-1 text-2xs font-medium transition-colors ${
                 target === entry
-                  ? 'bg-[var(--brand)] text-white'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                  ? 'bg-accent text-fg-on-accent'
+                  : 'bg-subtle text-fg-muted hover:bg-inset'
               }`}
             >
               {TARGET_LABELS[entry]}
@@ -155,19 +155,19 @@ export function CodeSnippetPanel({
       </div>
 
       {!composed ? (
-        <p className="text-[12px] text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs text-fg-muted">
           Pick a server to generate a code snippet for this request.
         </p>
       ) : (
         <div className="relative">
           <div className="flex items-stretch gap-2">
-            <pre className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg border border-zinc-200 bg-white p-3 font-mono text-[11px] leading-relaxed text-zinc-700 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            <pre className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg border border-border bg-surface p-3 font-mono text-2xs leading-relaxed text-fg-muted">
               <code>{snippet}</code>
             </pre>
             <button
               type="button"
               onClick={onCopy}
-              className="shrink-0 self-start rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="shrink-0 self-start rounded-lg bg-ink px-3 py-2 text-xs font-medium text-ink-fg transition-colors hover:bg-ink-hover"
             >
               {copied ? 'Copied' : 'Copy'}
             </button>
@@ -175,7 +175,7 @@ export function CodeSnippetPanel({
           <p
             role="status"
             aria-live="polite"
-            className={`pointer-events-none absolute bottom-3 right-16 rounded-md bg-zinc-900 px-2.5 py-1 text-[11px] font-medium text-white shadow-md transition-opacity dark:bg-zinc-100 dark:text-zinc-900 ${
+            className={`pointer-events-none absolute bottom-3 right-16 rounded-md bg-ink px-2.5 py-1 text-2xs font-medium text-ink-fg shadow-md transition-opacity ${
               toastVisible ? 'opacity-100' : 'opacity-0'
             }`}
           >

@@ -14,10 +14,10 @@ interface BreadcrumbProps {
 
 export function Breadcrumb({ items }: BreadcrumbProps) {
   return (
-    <nav className="flex items-center gap-2 text-[13px]" aria-label="Breadcrumb">
+    <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
       <Link
         href="/"
-        className="flex items-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+        className="flex items-center text-fg-muted transition-colors hover:text-fg"
         aria-label="Home"
       >
         <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
@@ -30,20 +30,20 @@ export function Breadcrumb({ items }: BreadcrumbProps) {
       </Link>
       {items.map((item, index) => (
         <Fragment key={index}>
-          <span className="text-zinc-300 dark:text-zinc-700 font-light select-none" aria-hidden="true">
+          <span className="text-fg-faint font-light select-none" aria-hidden="true">
             /
           </span>
           {item.href ? (
             <Link
               href={item.href}
-              className="max-w-[160px] truncate text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              className="max-w-[160px] truncate text-fg-muted transition-colors hover:text-fg"
               title={item.label}
             >
               {item.label}
             </Link>
           ) : (
             <span
-              className="max-w-[240px] truncate font-medium text-zinc-900 dark:text-zinc-50"
+              className="max-w-[240px] truncate font-medium text-fg"
               title={item.label}
               aria-current="page"
             >

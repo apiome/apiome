@@ -17,17 +17,17 @@ interface EntityHeaderProps {
 
 const monogramTone: Record<Variant, string> = {
   tenant:
-    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-sky-700 dark:text-sky-300',
+    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-accent-fg',
   project:
-    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-blue-800 dark:text-blue-300',
+    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-accent-fg',
   version:
-    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300',
+    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-honey-fg',
 };
 
 const metaTone: Record<NonNullable<EntityHeaderProps['meta']>[number]['tone'] & string, string> = {
-  neutral: 'text-zinc-700 dark:text-zinc-200',
-  success: 'text-emerald-700 dark:text-emerald-400',
-  brand: 'text-[var(--brand-soft-text)]',
+  neutral: 'text-fg-muted',
+  success: 'text-ok-fg',
+  brand: 'text-accent-fg',
 };
 
 function VariantIcon({ variant }: { variant: Variant }) {
@@ -63,7 +63,7 @@ export function EntityHeader({
   badges,
 }: EntityHeaderProps) {
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-950 sm:p-6">
+    <section className="rounded-lg border border-border bg-surface p-5 shadow-xs sm:p-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4 min-w-0">
           <div
@@ -71,23 +71,23 @@ export function EntityHeader({
             aria-hidden="true"
           >
             {monogram ? (
-              <span className="text-lg font-semibold tabular-nums">{monogram}</span>
+              <span className="text-xl font-semibold tabular-nums">{monogram}</span>
             ) : (
               <VariantIcon variant={variant} />
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h1 className="truncate text-[1.5rem] font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+              <h1 className="truncate text-[1.5rem] font-semibold tracking-tight text-fg">
                 {title}
               </h1>
               {badges}
             </div>
             {subtitle && (
-              <p className="mt-1 font-mono text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+              <p className="mt-1 font-mono text-xs text-fg-muted">{subtitle}</p>
             )}
             {description && (
-              <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-zinc-600 dark:text-zinc-400">
+              <p className="mt-2 max-w-2xl text-base leading-relaxed text-fg-muted">
                 {description}
               </p>
             )}
@@ -99,13 +99,13 @@ export function EntityHeader({
       </div>
 
       {meta && meta.length > 0 && (
-        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-zinc-100 pt-4 sm:grid-cols-4 dark:border-zinc-800/80">
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border pt-4 sm:grid-cols-4">
           {meta.map((m, i) => (
             <div key={i} className="flex flex-col gap-0.5">
-              <dt className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">
+              <dt className="text-2xs font-medium uppercase tracking-wider text-fg-muted">
                 {m.label}
               </dt>
-              <dd className={`text-sm font-medium ${metaTone[m.tone ?? 'neutral']}`}>
+              <dd className={`text-base font-medium ${metaTone[m.tone ?? 'neutral']}`}>
                 {m.value ?? '—'}
               </dd>
             </div>

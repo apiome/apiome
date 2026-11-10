@@ -148,11 +148,11 @@ describe('tier presentation', () => {
     expect(tierLabel('types-only')).toBe('Types only');
   });
 
-  it('maps tiers to emerald/amber/rose badge classes with dark variants', () => {
-    expect(tierBadgeClass('lossless')).toContain('emerald');
-    expect(tierBadgeClass('lossy')).toContain('amber');
-    expect(tierBadgeClass('types-only')).toContain('rose');
-    expect(tierBadgeClass('lossless')).toContain('dark:');
+  it('maps tiers to ok/warn/danger badge classes with no dark: pair', () => {
+    expect(tierBadgeClass('lossless')).toContain('ok');
+    expect(tierBadgeClass('lossy')).toContain('warn');
+    expect(tierBadgeClass('types-only')).toContain('danger');
+    expect(tierBadgeClass('lossless')).not.toContain('dark:');
   });
 });
 

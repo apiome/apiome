@@ -22,7 +22,7 @@ export function methodTone(method: string): string {
 
 /** The method pill. */
 export function MethodBadge({ method, size = 'md' }: { method: string; size?: 'sm' | 'md' }) {
-  const dims = size === 'sm' ? 'min-w-[2.75rem] px-1.5 py-0.5 text-[10px]' : 'min-w-[3.25rem] px-2 py-0.5 text-[11px]';
+  const dims = size === 'sm' ? 'min-w-[2.75rem] px-1.5 py-0.5 text-2xs' : 'min-w-[3.25rem] px-2 py-0.5 text-2xs';
   return (
     <span
       className={`inline-flex shrink-0 items-center justify-center rounded font-mono font-semibold uppercase tracking-wide ring-1 ring-inset ${dims} ${methodTone(method)}`}

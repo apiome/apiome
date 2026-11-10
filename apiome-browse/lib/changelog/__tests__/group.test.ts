@@ -87,16 +87,16 @@ describe('severityLabel', () => {
 });
 
 describe('severityBadgeClasses', () => {
-  it('uses rose for breaking, amber for non-breaking, sky for docs-only', () => {
-    expect(severityBadgeClasses('breaking')).toContain('bg-rose-50');
-    expect(severityBadgeClasses('non-breaking')).toContain('bg-amber-50');
-    expect(severityBadgeClasses('docs-only')).toContain('bg-sky-50');
+  it('uses danger for breaking, warn for non-breaking, accent for docs-only', () => {
+    expect(severityBadgeClasses('breaking')).toContain('bg-danger-soft');
+    expect(severityBadgeClasses('non-breaking')).toContain('bg-warn-soft');
+    expect(severityBadgeClasses('docs-only')).toContain('bg-accent-soft');
   });
 
-  it('always includes dark: variants', () => {
+  it('uses role tokens, which follow the theme without a dark: pair', () => {
     for (const sev of ['breaking', 'non-breaking', 'docs-only']) {
-      expect(severityBadgeClasses(sev)).toMatch(/dark:bg-/);
-      expect(severityBadgeClasses(sev)).toMatch(/dark:text-/);
+      expect(severityBadgeClasses(sev)).toMatch(/bg-[a-z]+-soft/);
+      expect(severityBadgeClasses(sev)).not.toMatch(/dark:/);
     }
   });
 
@@ -107,9 +107,9 @@ describe('severityBadgeClasses', () => {
 
 describe('severityDotClasses', () => {
   it('matches each severity hue', () => {
-    expect(severityDotClasses('breaking')).toBe('bg-rose-500');
-    expect(severityDotClasses('non-breaking')).toBe('bg-amber-500');
-    expect(severityDotClasses('docs-only')).toBe('bg-sky-500');
-    expect(severityDotClasses('mystery')).toBe('bg-sky-500');
+    expect(severityDotClasses('breaking')).toBe('bg-danger');
+    expect(severityDotClasses('non-breaking')).toBe('bg-warn');
+    expect(severityDotClasses('docs-only')).toBe('bg-accent');
+    expect(severityDotClasses('mystery')).toBe('bg-accent');
   });
 });

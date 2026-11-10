@@ -75,11 +75,11 @@ export function McpBadgeSnippet({
   }
 
   return (
-    <section className="mt-8 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <section className="mt-8 rounded-lg border border-border bg-surface p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">Status badge</h2>
-          <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-base font-semibold text-fg">Status badge</h2>
+          <p className="mt-0.5 text-xs text-fg-muted">
             Embed this endpoint&apos;s catalog assessment in a README.
           </p>
         </div>
@@ -94,7 +94,7 @@ export function McpBadgeSnippet({
 
       <div className="mt-4 flex flex-wrap gap-4">
         <div>
-          <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <span className="mb-1 block text-2xs font-medium uppercase tracking-wide text-fg-muted">
             Metric
           </span>
           <div className="inline-flex gap-1" role="group" aria-label="Badge metric">
@@ -106,8 +106,8 @@ export function McpBadgeSnippet({
                 aria-pressed={metric === m}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   metric === m
-                    ? 'bg-[var(--brand)] text-white'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                    ? 'bg-accent text-fg-on-accent'
+                    : 'bg-subtle text-fg-muted hover:bg-inset'
                 }`}
               >
                 {BADGE_METRIC_LABELS[m]}
@@ -117,7 +117,7 @@ export function McpBadgeSnippet({
         </div>
 
         <div>
-          <span className="mb-1 block text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <span className="mb-1 block text-2xs font-medium uppercase tracking-wide text-fg-muted">
             Theme
           </span>
           <div className="inline-flex gap-1" role="group" aria-label="Badge theme">
@@ -129,8 +129,8 @@ export function McpBadgeSnippet({
                 aria-pressed={theme === t}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
                   theme === t
-                    ? 'bg-[var(--brand)] text-white'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700'
+                    ? 'bg-accent text-fg-on-accent'
+                    : 'bg-subtle text-fg-muted hover:bg-inset'
                 }`}
               >
                 {t}
@@ -140,7 +140,7 @@ export function McpBadgeSnippet({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-1 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="mt-4 flex items-center gap-1 border-b border-border">
         {FORMAT_ORDER.map((f) => (
           <button
             key={f}
@@ -148,8 +148,8 @@ export function McpBadgeSnippet({
             onClick={() => setFormat(f)}
             className={`-mb-px border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               format === f
-                ? 'border-[var(--brand)] text-[var(--brand)]'
-                : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                ? 'border-accent text-accent-fg'
+                : 'border-transparent text-fg-muted hover:text-fg'
             }`}
           >
             {FORMAT_LABELS[f]}
@@ -160,14 +160,14 @@ export function McpBadgeSnippet({
       <div className="mt-3 flex items-stretch gap-2">
         <code
           suppressHydrationWarning
-          className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-zinc-50 p-3 font-mono text-xs text-zinc-700 ring-1 ring-inset ring-zinc-200 dark:bg-zinc-950 dark:text-zinc-300 dark:ring-zinc-800"
+          className="min-w-0 flex-1 overflow-x-auto whitespace-pre rounded-lg bg-subtle p-3 font-mono text-xs text-fg-muted ring-1 ring-inset ring-border"
         >
           {snippet}
         </code>
         <button
           type="button"
           onClick={handleCopy}
-          className="shrink-0 self-start rounded-lg bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className="shrink-0 self-start rounded-lg bg-ink px-3 py-2 text-xs font-medium text-ink-fg transition-colors hover:bg-ink-hover"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>

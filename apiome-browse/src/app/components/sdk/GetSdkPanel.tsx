@@ -66,10 +66,10 @@ export function GetSdkPanel({ info, coords, restApiBaseUrl }: GetSdkPanelProps) 
 
   return (
     <section className="surface-card overflow-hidden" data-testid="get-sdk-panel">
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800/80">
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">Get SDK</h2>
-          <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-xl font-semibold text-fg">Get SDK</h2>
+          <p className="mt-0.5 text-sm text-fg-muted">
             {coverageSummary(info)}
           </p>
         </div>
@@ -104,16 +104,16 @@ export function GetSdkPanel({ info, coords, restApiBaseUrl }: GetSdkPanelProps) 
       <div className="space-y-4 p-4">
         {hasPackages(info) && (
           <div className="space-y-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+            <h3 className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
               Packages
             </h3>
             <ul className="space-y-2">
               {info.packages.map((pkg) => (
                 <li key={pkg.ecosystem} className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-subtle px-2 py-0.5 text-2xs font-medium uppercase tracking-wide text-fg-muted">
                     {pkg.ecosystem}
                   </span>
-                  <code className="min-w-0 break-all font-mono text-[12.5px] text-zinc-800 dark:text-zinc-200">
+                  <code className="min-w-0 break-all font-mono text-sm text-fg">
                     {pkg.name}
                   </code>
                   {pkg.install && <CopyableCommand command={pkg.install} />}
@@ -124,16 +124,16 @@ export function GetSdkPanel({ info, coords, restApiBaseUrl }: GetSdkPanelProps) 
         )}
 
         <div className="space-y-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+          <h3 className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
             What you get
           </h3>
-          <ul className="space-y-1 text-[13px] text-zinc-600 dark:text-zinc-400">
+          <ul className="space-y-1 text-sm text-fg-muted">
             <li>
               Runnable examples in{' '}
               {info.languages.map((language, index) => (
                 <span key={language.lang}>
                   {index > 0 && (index === info.languages.length - 1 ? ' and ' : ', ')}
-                  <span className="font-medium text-zinc-800 dark:text-zinc-200">
+                  <span className="font-medium text-fg">
                     {language.label}
                   </span>
                 </span>
@@ -149,14 +149,14 @@ export function GetSdkPanel({ info, coords, restApiBaseUrl }: GetSdkPanelProps) 
         </div>
 
         {info.truncated && (
-          <p className="text-[12px] text-amber-700 dark:text-amber-300">
+          <p className="text-xs text-honey-fg">
             This API declares {info.total_operation_count} operations; the download carries the
             first {info.operation_count}.
           </p>
         )}
 
         {error && (
-          <p role="alert" className="text-[12.5px] text-rose-700 dark:text-rose-300">
+          <p role="alert" className="text-sm text-danger-fg">
             {error}
           </p>
         )}
@@ -182,18 +182,18 @@ function CopyableCommand({ command }: { command: string }) {
 
   return (
     <span className="inline-flex min-w-0 items-center gap-1.5">
-      <code className="min-w-0 break-all rounded bg-zinc-50 px-2 py-1 font-mono text-[11.5px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+      <code className="min-w-0 break-all rounded-xs bg-subtle px-2 py-1 font-mono text-2xs text-fg-muted">
         {command}
       </code>
       <button
         type="button"
         onClick={copy}
         aria-label={`Copy "${command}"`}
-        className="shrink-0 rounded p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+        className="shrink-0 rounded-xs p-1 text-fg-subtle transition-colors hover:bg-subtle hover:text-fg-muted"
       >
         {copied ? (
           <svg
-            className="h-3.5 w-3.5 text-[var(--success)]"
+            className="h-3.5 w-3.5 text-ok"
             fill="none"
             stroke="currentColor"
             strokeWidth={2}

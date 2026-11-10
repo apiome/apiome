@@ -29,7 +29,7 @@ export function FacetValueChips({
   ].filter(Boolean);
 
   if (chips.length === 0) {
-    return <span className="text-zinc-400 dark:text-zinc-500">—</span>;
+    return <span className="text-fg-subtle">—</span>;
   }
 
   return (
@@ -37,7 +37,7 @@ export function FacetValueChips({
       {chips.map((chip) => (
         <span
           key={chip}
-          className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+          className="inline-flex items-center rounded-full bg-subtle px-2 py-0.5 text-2xs font-medium text-fg-muted"
         >
           {chip}
         </span>
@@ -70,7 +70,7 @@ function FacetGroup({ title, axis, options, selected, onToggle }: FacetGroupProp
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[12px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+      <span className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
         {title}
       </span>
       <div role="radiogroup" aria-label={title} className="flex flex-wrap items-center gap-1.5">
@@ -83,16 +83,16 @@ function FacetGroup({ title, axis, options, selected, onToggle }: FacetGroupProp
               role="radio"
               aria-checked={active}
               onClick={() => onToggle(axis, option.value)}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
                 active
-                  ? 'border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand-soft-text)]'
-                  : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100'
+                  ? 'border-accent bg-accent-soft text-accent-fg'
+                  : 'border-border bg-surface text-fg-muted hover:border-border-strong hover:text-fg'
               }`}
             >
               {option.label}
               <span
                 className={`tabular-nums ${
-                  active ? 'opacity-80' : 'text-zinc-400 dark:text-zinc-500'
+                  active ? 'opacity-80' : 'text-fg-subtle'
                 }`}
               >
                 {option.count}
@@ -143,7 +143,7 @@ export function FacetFilter({
   return (
     <div
       aria-label={`Filter ${entityLabel} by paradigm and format`}
-      className="flex flex-col gap-2.5 rounded-xl border border-zinc-200 bg-zinc-50/60 p-3 dark:border-zinc-800 dark:bg-zinc-900/40"
+      className="flex flex-col gap-2.5 rounded-lg border border-border bg-subtle/60 p-3"
     >
       <FacetGroup
         title="Paradigm"
@@ -164,7 +164,7 @@ export function FacetFilter({
           <button
             type="button"
             onClick={onClear}
-            className="text-[12px] font-medium text-[var(--brand)] transition-colors hover:underline"
+            className="text-xs font-medium text-accent-fg transition-colors hover:underline"
           >
             Clear filters
           </button>

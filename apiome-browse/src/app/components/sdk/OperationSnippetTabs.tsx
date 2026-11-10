@@ -105,8 +105,8 @@ export function OperationSnippetTabs({
   }, [state]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-zinc-50/60 px-2 dark:border-zinc-800 dark:bg-zinc-900/40">
+    <div className="overflow-hidden rounded-lg border border-border">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-subtle/60 px-2">
         <div role="tablist" aria-label="Example language" className="flex flex-wrap">
           {SNIPPET_LANGS.map((value) => (
             <button
@@ -115,10 +115,10 @@ export function OperationSnippetTabs({
               role="tab"
               aria-selected={lang === value}
               onClick={() => setLang(value)}
-              className={`-mb-px border-b-2 px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
+              className={`-mb-px border-b-2 px-2.5 py-1.5 text-2xs font-medium transition-colors ${
                 lang === value
-                  ? 'border-[var(--brand)] text-[var(--brand)]'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  ? 'border-accent text-accent-fg'
+                  : 'border-transparent text-fg-muted hover:text-fg'
               }`}
             >
               {SNIPPET_LANG_LABELS[value]}
@@ -129,7 +129,7 @@ export function OperationSnippetTabs({
           <button
             type="button"
             onClick={copy}
-            className="shrink-0 rounded px-2 py-1 text-[11px] font-medium text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="shrink-0 rounded-xs px-2 py-1 text-2xs font-medium text-fg-muted transition-colors hover:bg-subtle hover:text-fg"
           >
             {copied ? 'Copied' : 'Copy'}
           </button>
@@ -138,28 +138,28 @@ export function OperationSnippetTabs({
 
       <div className="p-3">
         {state.status === 'loading' && (
-          <p className="text-[12px] text-zinc-500 dark:text-zinc-400">Loading example…</p>
+          <p className="text-xs text-fg-muted">Loading example…</p>
         )}
 
         {state.status === 'error' && (
-          <p className="text-[12px] text-zinc-500 dark:text-zinc-400">{state.message}</p>
+          <p className="text-xs text-fg-muted">{state.message}</p>
         )}
 
         {state.status === 'ready' && (
           <div className="space-y-2">
             {state.snippet.install && (
-              <pre className="overflow-x-auto rounded bg-zinc-50 px-3 py-2 font-mono text-[11.5px] text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              <pre className="overflow-x-auto rounded-xs bg-subtle px-3 py-2 font-mono text-2xs text-fg-muted">
                 {state.snippet.install}
               </pre>
             )}
-            <pre className="overflow-x-auto rounded bg-zinc-50 px-3 py-2 font-mono text-[11.5px] leading-relaxed text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200">
+            <pre className="overflow-x-auto rounded-xs bg-subtle px-3 py-2 font-mono text-2xs leading-relaxed text-fg">
               {state.snippet.code}
             </pre>
             {state.snippet.placeholders.length > 0 && (
-              <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+              <ul className="flex flex-wrap gap-x-3 gap-y-1 text-2xs text-fg-muted">
                 {state.snippet.placeholders.map((placeholder) => (
                   <li key={placeholder.token}>
-                    <code className="font-mono text-zinc-700 dark:text-zinc-300">
+                    <code className="font-mono text-fg-muted">
                       {placeholder.token}
                     </code>{' '}
                     — {placeholder.kind === 'secret' ? 'your ' : ''}

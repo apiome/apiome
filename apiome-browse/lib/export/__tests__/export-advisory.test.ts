@@ -76,17 +76,17 @@ describe('advisoryChips', () => {
 
 describe('advisoryBannerClass', () => {
   it('maps strengths to distinct palettes', () => {
-    expect(advisoryBannerClass('critical')).toContain('rose');
-    expect(advisoryBannerClass('warning')).toContain('amber');
-    expect(advisoryBannerClass('info')).toContain('sky');
+    expect(advisoryBannerClass('critical')).toContain('danger');
+    expect(advisoryBannerClass('warning')).toContain('warn');
+    expect(advisoryBannerClass('info')).toContain('accent');
   });
 });
 
 describe('advisorySeverityPillClass', () => {
   it('maps severities to distinct palettes', () => {
-    expect(advisorySeverityPillClass('critical')).toContain('rose');
-    expect(advisorySeverityPillClass('warn')).toContain('amber');
-    expect(advisorySeverityPillClass('info')).toContain('sky');
-    expect(advisorySeverityPillClass(null)).toContain('sky');
+    expect(advisorySeverityPillClass('critical')).toContain('danger');
+    expect(advisorySeverityPillClass('warn')).toContain('warn');
+    expect(advisorySeverityPillClass('info')).toContain('accent');
+    expect(advisorySeverityPillClass(null)).toContain('accent');
   });
 });

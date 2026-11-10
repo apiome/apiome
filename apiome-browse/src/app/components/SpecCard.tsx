@@ -17,17 +17,17 @@ interface SpecCardProps {
 
 const monogramTone: Record<Variant, string> = {
   tenant:
-    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-sky-700 dark:text-sky-300',
+    'bg-gradient-to-br from-sky-500/25 to-sky-500/5 text-accent-fg',
   project:
-    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-blue-800 dark:text-blue-300',
+    'bg-gradient-to-br from-blue-700/25 to-blue-700/5 text-accent-fg',
   version:
-    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-amber-700 dark:text-amber-300',
+    'bg-gradient-to-br from-amber-400/35 to-amber-400/10 text-honey-fg',
 };
 
 const badgeTone: Record<NonNullable<SpecCardProps['badge']>['tone'] & string, string> = {
-  neutral: 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300',
-  brand: 'bg-[var(--brand-soft)] text-[var(--brand-soft-text)]',
+  neutral: 'bg-subtle text-fg-muted',
+  success: 'bg-ok-soft text-ok-fg',
+  brand: 'bg-accent-soft text-accent-fg',
 };
 
 function VariantIcon({ variant }: { variant: Variant }) {
@@ -65,19 +65,19 @@ export function SpecCard({
   return (
     <Link
       href={href}
-      className="group flex h-full flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:hover:border-sky-800 focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-950"
+      className="group flex h-full flex-col gap-3 rounded-lg border border-border bg-surface p-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-md focus-visible:outline-none"
     >
       <div className="flex items-start justify-between gap-3">
         <div className={`hex flex h-10 w-10 shrink-0 items-center justify-center ${monogramTone[variant]}`}>
           {monogram ? (
-            <span className="text-sm font-semibold tabular-nums">{monogram}</span>
+            <span className="text-base font-semibold tabular-nums">{monogram}</span>
           ) : (
             <VariantIcon variant={variant} />
           )}
         </div>
         {badge && (
           <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium ${
               badgeTone[badge.tone ?? 'neutral']
             }`}
           >
@@ -88,25 +88,25 @@ export function SpecCard({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">
-          <h3 className="truncate text-[15px] font-semibold text-zinc-900 transition-colors group-hover:text-[var(--brand)] dark:text-zinc-50">
+          <h3 className="truncate text-lg font-semibold text-fg transition-colors group-hover:text-accent-fg">
             {title}
           </h3>
           {subtitle && (
-            <span className="truncate text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</span>
+            <span className="truncate text-xs text-fg-muted">{subtitle}</span>
           )}
         </div>
         {description && (
-          <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-zinc-600 dark:text-zinc-400">
+          <p className="mt-1 line-clamp-2 text-sm leading-snug text-fg-muted">
             {description}
           </p>
         )}
       </div>
 
       {meta && meta.length > 0 && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-zinc-100 pt-2.5 text-[11px] text-zinc-500 dark:border-zinc-800/80 dark:text-zinc-400">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-2.5 text-2xs text-fg-muted">
           {meta.map((m, i) => (
             <span key={i} className="flex items-center gap-1">
-              <span className="font-medium text-zinc-600 dark:text-zinc-300">{m.label}</span>
+              <span className="font-medium text-fg-muted">{m.label}</span>
               {m.value && <span>{m.value}</span>}
             </span>
           ))}

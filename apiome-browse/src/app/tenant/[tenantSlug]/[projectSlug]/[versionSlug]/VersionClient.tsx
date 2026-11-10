@@ -171,19 +171,19 @@ export function VersionClient({
           monogram={`v${(version.version_id.split('.')[0] || '0').slice(0, 2)}`}
           badges={
             <>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-ok-soft px-2 py-0.5 text-2xs font-medium text-ok-fg">
+                <span className="h-1.5 w-1.5 rounded-full bg-ok"></span>
                 Published
               </span>
               {mockBaseUrl && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
-                  <span className="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-accent-soft px-2 py-0.5 text-2xs font-medium text-accent-fg">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent"></span>
                   Mock available
                 </span>
               )}
               {changelog?.maxSeverity && (
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(changelog.maxSeverity)}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${severityBadgeClasses(changelog.maxSeverity)}`}
                 >
                   <span
                     className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(changelog.maxSeverity)}`}
@@ -216,22 +216,22 @@ export function VersionClient({
           />
         )}
 
-        <div className="flex flex-wrap gap-1 border-b border-zinc-200 dark:border-zinc-800">
+        <div className="flex flex-wrap gap-1 border-b border-border">
           {tabs.map((tab) => (
             <button
               key={tab.value}
               type="button"
               data-testid={`version-tab-${tab.value}`}
               onClick={() => setActiveTab(tab.value)}
-              className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+              className={`-mb-px border-b-2 px-3 py-2 text-base font-medium transition-colors ${
                 activeTab === tab.value
-                  ? 'border-[var(--brand)] text-[var(--brand)]'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                  ? 'border-accent text-accent-fg'
+                  : 'border-transparent text-fg-muted hover:text-fg'
               }`}
             >
               {tab.label}
               {tab.count !== undefined && (
-                <span className="ml-1.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                <span className="ml-1.5 rounded-full bg-subtle px-1.5 py-0.5 text-2xs text-fg-muted">
                   {tab.count}
                 </span>
               )}
@@ -242,14 +242,14 @@ export function VersionClient({
         {activeTab === 'specification' && (
           <>
             {version.change_log && (
-              <section className="rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950">
-                <header className="border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80">
-                  <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <section className="rounded-lg border border-border bg-surface shadow-xs">
+                <header className="border-b border-border px-4 py-2.5">
+                  <h2 className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
                     Changelog
                   </h2>
                 </header>
                 <div className="p-4">
-                  <p className="whitespace-pre-wrap text-[13.5px] leading-relaxed text-zinc-700 dark:text-zinc-300">
+                  <p className="whitespace-pre-wrap text-base leading-relaxed text-fg-muted">
                     {version.change_log}
                   </p>
                 </div>
@@ -267,17 +267,17 @@ export function VersionClient({
             <section className="space-y-3">
               <header className="flex items-end justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
+                  <h2 className="text-xl font-semibold text-fg">
                     Specification
                   </h2>
-                  <p className="mt-0.5 text-[13px] text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-0.5 text-sm text-fg-muted">
                     Browse the structured overview or view the raw document.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowExport(true)}
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 shadow-xs transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-fg-muted shadow-xs transition-colors hover:bg-subtle"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.75} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
@@ -323,7 +323,7 @@ export function VersionClient({
 function SeverityPill({ severity, label }: { severity: Severity | string; label: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${severityBadgeClasses(severity)}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-medium ${severityBadgeClasses(severity)}`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${severityDotClasses(severity)}`}></span>
       {label}
@@ -334,8 +334,8 @@ function SeverityPill({ severity, label }: { severity: Severity | string; label:
 /** Dashed empty-state note used for the pending / initial / failed changelog states. */
 function ChangesNote({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-zinc-300 bg-white/40 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/40">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{text}</p>
+    <div className="rounded-lg border border-dashed border-border-strong bg-surface/40 p-10 text-center">
+      <p className="text-base text-fg-muted">{text}</p>
     </div>
   );
 }
@@ -394,7 +394,7 @@ function ChangesPanel({
                 />
               )
           )}
-        <span className="font-mono text-xs text-zinc-500 dark:text-zinc-400">
+        <span className="font-mono text-xs text-fg-muted">
           {fromLabel ? `v${fromLabel} → ` : ''}v{toLabel}
         </span>
       </div>
@@ -405,21 +405,21 @@ function ChangesPanel({
         sections.map((section) => (
           <section
             key={section.severity}
-            className="rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-zinc-950"
+            className="rounded-lg border border-border bg-surface shadow-xs"
           >
-            <header className="flex items-center gap-2 border-b border-zinc-100 px-4 py-2.5 dark:border-zinc-800/80">
+            <header className="flex items-center gap-2 border-b border-border px-4 py-2.5">
               <SeverityPill
                 severity={section.severity}
                 label={`${severityLabel(section.severity)}`}
               />
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              <span className="text-2xs font-semibold uppercase tracking-wider text-fg-muted">
                 {section.count} {section.count === 1 ? 'change' : 'changes'}
               </span>
             </header>
-            <div className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
+            <div className="divide-y divide-border">
               {section.groups.map((group) => (
                 <div key={group.pathGroup} className="px-4 py-3">
-                  <h3 className="font-mono text-xs font-semibold text-zinc-600 dark:text-zinc-300">
+                  <h3 className="font-mono text-xs font-semibold text-fg-muted">
                     {group.pathGroup}
                   </h3>
                   <ul className="mt-2 space-y-2">
@@ -432,11 +432,11 @@ function ChangesPanel({
                               severity={entry.severity}
                               label={severityLabel(entry.severity)}
                             />
-                            <span className="text-[13px] text-zinc-700 dark:text-zinc-300">
+                            <span className="text-sm text-fg-muted">
                               {entry.summary}
                             </span>
                           </div>
-                          <code className="mt-1 block truncate font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
+                          <code className="mt-1 block truncate font-mono text-2xs text-fg-muted">
                             {entry.pointer}
                           </code>
                         </>
@@ -446,7 +446,7 @@ function ChangesPanel({
                           {href ? (
                             <Link
                               href={href}
-                              className="block rounded-md border border-transparent p-2 transition-colors hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-800 dark:hover:bg-zinc-900"
+                              className="block rounded-md border border-transparent p-2 transition-colors hover:border-border hover:bg-subtle"
                               title="View in compare"
                             >
                               {body}
