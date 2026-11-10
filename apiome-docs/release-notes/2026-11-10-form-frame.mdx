@@ -1,0 +1,20 @@
+---
+slug: form-frame
+title: One container and one spacing rule for forms
+description: "FormFrame gives forms shared spacing, three widths and a sticky footer."
+authors: [apiome]
+---
+
+The design system has a new container for forms. With `FormFrame`, sections are 24 px apart and
+fields 16 px apart, the buttons sit in a footer that stays visible while the form scrolls, and a
+form is one of three widths. See [Forms](/reference/design-tokens#forms).
+
+{/* truncate */}
+
+- **Opt-in.** Forms in the web app look the same as before; none of them uses it yet.
+- **Keyboard.** **Enter** in a single-line field submits, and **⌘S** or **Ctrl+S** saves the form
+  instead of opening the browser's **Save page**.
+- **For contributors.** `FormFrame` takes `header`, `submitLabel`, `secondaryActions`, `dirty`,
+  `error` and `width` (`narrow`, `default` or `wide`); `FormSection` groups `FormField`s under a
+  title. It works on a page and inside `DialogContent`. The design-system gallery shows both under
+  **Forms**.

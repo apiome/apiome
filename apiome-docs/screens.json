@@ -1981,6 +1981,18 @@
         "apiome-ui/src/app/components/ui/Segmented.tsx",
         "apiome-ui/src/app/components/ui/Button.tsx"
       ]
+    },
+    {
+      "id": "design-system-form-frame",
+      "route": "/design-system",
+      "waitFor": "[data-testid=\"design-system-form-frame\"]",
+      "data": "signed-out",
+      "scrollTo": "[data-testid=\"design-system-form-frame\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ui/FormFrame.tsx",
+        "apiome-ui/src/app/components/ui/FormField.tsx",
+        "apiome-ui/src/app/design-system/galleries/FormFrameShowcase.tsx"
+      ]
     }
   ]
 }
