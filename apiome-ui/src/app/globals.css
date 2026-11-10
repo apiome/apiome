@@ -497,42 +497,6 @@
   --table-head-pad-y: calc(var(--table-cell-pad-y) * 0.6);
 }
 
-/* Radix Themes resets typography inside <Theme> to its own
-   --default-font-family stack, which would bypass the app fonts everywhere
-   the layout wraps content in RadixTheme (i.e. the whole app). Point the
-   Radix font tokens at the app tokens instead. `html` prefix: layouts import
-   this file before @radix-ui/themes/styles.css, so a bare `.radix-themes`
-   would lose the cascade to Radix's own token declarations. */
-html .radix-themes {
-  --default-font-family: var(--app-font-sans);
-  --heading-font-family: var(--app-font-sans);
-  --code-font-family: var(--app-font-mono);
-
-  /* ---- Token-name collisions (HIVE-2.1, #5280) ------------------------
-     `@radix-ui/themes` declares three names of its own on `.radix-themes`:
-     `--color-background`, `--color-overlay` and `--color-surface`. The last two
-     are also `@theme` token names here (`--color-background` was too, until
-     HIVE-10.6 retired the legacy `bg-background` utility; it is still restated
-     so Radix's own surfaces stay on the canvas), and Tailwind compiles `bg-surface` to
-     `background-color: var(--color-surface)` — so inside `<Theme>` (which is
-     the whole app: both layouts wrap their tree in it) every Hive component
-     would inherit Radix's translucent panel white instead of the theme's
-     surface, in all nine themes alike.
-
-     A custom property is inherited from the *nearest declaring ancestor*, so
-     specificity on `:root` cannot help: the value has to be restated on the
-     same element Radix declares it on. Re-pointing rather than renaming keeps
-     Radix's own components (`Card variant="surface"`, its dialog scrim) on the
-     Hive palette too, which is what DESIGN.md §11 asks for.
-
-     `tests/hive-primitive-tokens.test.ts` re-derives the collision set from the
-     installed stylesheet, so a Radix upgrade that adds a fourth name fails
-     rather than silently repainting a component. */
-  --color-surface: var(--bg-surface);
-  --color-overlay: var(--bg-overlay);
-  --color-background: var(--bg-canvas);
-}
-
 /* ==========================================================================
    PER-THEME TOKEN SWAPS (HIVE-1.2, #5275)
    --------------------------------------------------------------------------
@@ -3037,6 +3001,12 @@ html[data-kbd-hints="off"] .kbd-group {
   animation: fadeOut var(--dur-fast) var(--ease-out);
 }
 
+/* The page's base type and surface. Until SUX-1.3 (#2877) the whole app sat inside
+   Radix Themes' `<Theme>` wrapper, which restated type on its own element — a fixed 16 px /
+   24 px, no tracking — so the values here never reached anything. They do now, and the
+   font-size preference reaches inherited copy too. `overflow-wrap` is the one wrapper rule
+   kept: it inherits, and long ids and URLs rely on it to wrap instead of forcing a phone
+   sideways. */
 body {
   background: var(--bg-canvas);
   color: var(--fg);
@@ -3044,6 +3014,7 @@ body {
   line-height: 1.45;
   letter-spacing: 0.002em;
   text-rendering: optimizeLegibility;
+  overflow-wrap: break-word;
 }
 
 /* `button { text-transform: none }` used to live here too. Nothing in Tailwind's
@@ -15074,7 +15045,7 @@ button.tfa-reset-notice__close > svg {
 .vt__row {
   position: relative;
   display: grid;
-  grid-template-columns: calc(var(--space-7) + var(--space-3)) minmax(0, 13.75rem) minmax(0, 1fr) minmax(0, 12.5rem) auto;
+  grid-template-columns: calc(var(--space-10) + var(--space-3)) minmax(0, 13.75rem) minmax(0, 1fr) minmax(0, 12.5rem) auto;
   gap: 0 var(--space-3);
   align-items: start;
   padding: var(--space-3) var(--space-4) var(--space-3) var(--space-2);
@@ -15114,7 +15085,7 @@ button.tfa-reset-notice__close > svg {
 
 .vt__row:last-child .vt__spine::before {
   inset-block-end: auto;
-  block-size: var(--space-7);
+  block-size: var(--space-10);
 }
 
 .vt__node {
@@ -15275,7 +15246,7 @@ button.tfa-reset-notice__close > svg {
 
 @media (max-width: 64rem) {
   .vt__row {
-    grid-template-columns: calc(var(--space-7) + var(--space-3)) minmax(0, 1fr) auto;
+    grid-template-columns: calc(var(--space-10) + var(--space-3)) minmax(0, 1fr) auto;
   }
 
   .vt__body,
@@ -41141,8 +41112,8 @@ a.tm-list__name {
 }
 /* The nav fades out at the bottom rather than stopping dead. */
 .rail .rail-nav {
-  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--space-7)), transparent);
-  mask-image: linear-gradient(to bottom, black calc(100% - var(--space-7)), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--space-10)), transparent);
+  mask-image: linear-gradient(to bottom, black calc(100% - var(--space-10)), transparent);
 }
 /* The collapse handle and every menu are page surfaces, not rail ink. */
 .rail .rail-handle,
@@ -41216,7 +41187,7 @@ a.tm-list__name {
   content: "";
   position: absolute;
   right: calc(var(--space-6) * -1);
-  top: calc(var(--space-7) * -1);
+  top: calc(var(--space-10) * -1);
   width: calc(var(--space-12) * 2);
   height: calc(var(--space-12) * 2.2);
   background: color-mix(in srgb, var(--fmtc) 9%, transparent);

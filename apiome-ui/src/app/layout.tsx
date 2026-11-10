@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
 import { interSans, jetbrainsMono, manropeDisplay } from "./fonts";
 import "./globals.css";
-import "@radix-ui/themes/styles.css";
 import SessionWrapper from "@/app/components/auth/SessionWrapper";
 import ThemeRegistry from "@/app/components/theme/ThemeRegistry";
 import { DialogProvider } from "@/app/components/providers/DialogProvider";
 import { Toaster } from "@/app/components/ui/Toaster";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { Theme as RadixTheme } from "@radix-ui/themes";
 import PreferencesScript from "@/app/providers/PreferencesScript";
 import { PreferencesProvider } from "@/app/providers/PreferencesProvider";
 
@@ -46,25 +44,14 @@ export default function RootLayout({
             enableSystem
             storageKey="theme"
           >
-            {/* Hive design language (HIVE-1.1, #5274): azure accent, warm "sand" grey
-                and the 14 px card radius, so Radix primitives sit on the same
-                palette and geometry as the token layer in globals.css. */}
-            <RadixTheme
-              accentColor="blue"
-              grayColor="sand"
-              panelBackground="solid"
-              radius="large"
-              scaling="100%"
-            >
-              <ThemeRegistry>
-                <SessionWrapper>
-                  <DialogProvider>
-                    {children}
-                    <Toaster />
-                  </DialogProvider>
-                </SessionWrapper>
-              </ThemeRegistry>
-            </RadixTheme>
+            <ThemeRegistry>
+              <SessionWrapper>
+                <DialogProvider>
+                  {children}
+                  <Toaster />
+                </DialogProvider>
+              </SessionWrapper>
+            </ThemeRegistry>
           </NextThemesProvider>
         </PreferencesProvider>
       </body>

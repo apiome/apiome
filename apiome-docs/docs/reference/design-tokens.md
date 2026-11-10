@@ -19,8 +19,29 @@ place.
 | Type | `--text-*`, `--font-sans`, `--font-mono` | `text-sm`, `font-mono` … |
 | Radius and elevation | `--radius-*`, `--shadow-*` | `rounded-md`, `shadow-lg` … |
 | Motion | `--dur-*`, `--ease-*` | `transition`, `duration-*` |
+| Spacing | `--space-1` … `--space-6`, `--space-8`, `--space-10`, `--space-12` | `var(--space-4)` in a stylesheet; `p-4`, `gap-4` … |
 | Density and layout | `--control-h`, `--page-pad`, `--rail-w` … | `h-control`, `p-page` … |
 | Stacking | `--z-*` | `z-chrome`, `z-modal` … (see below) |
+
+### Spacing
+
+Spacing is a 4 px grid in `rem`, so it grows with the **Font size** preference:
+
+| Step | Value | Step | Value |
+| --- | --- | --- | --- |
+| `--space-1` | 4 px | `--space-6` | 24 px (20 px at **Compact** density) |
+| `--space-2` | 8 px | `--space-8` | 32 px (24 px at **Compact** density) |
+| `--space-3` | 12 px | `--space-10` | 40 px |
+| `--space-4` | 16 px | `--space-12` | 48 px |
+| `--space-5` | 20 px | | |
+
+There is no `--space-7`, `--space-9` or `--space-11`. A stylesheet that names one gets no
+value, and a unit test fails.
+
+Until SUX-1.3 (apiome#6750), a wrapper from the Radix Themes package sat around the whole app
+and declared its own `--space-*` values, so every page used 24, 32 and 48 px where this table
+says 20, 24 and 32 px. The **Compact** density setting also left spacing unchanged. The wrapper
+is gone, and pages now use the values above.
 
 ### Stacking (z-index)
 
