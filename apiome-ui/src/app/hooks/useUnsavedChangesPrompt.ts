@@ -17,8 +17,8 @@ import { useEffect } from 'react';
  * `beforeunload` fires for a reload, a close, and a navigation that leaves the document. It
  * does **not** fire for an in-app route change, because the App Router never leaves the
  * document — there is no supported interception point for that in Next 16. A screen that
- * needs to guard an in-app move has to guard the move itself, which is what the roles page's
- * own switch confirm does.
+ * needs to guard in-app links and Back as well should use `useUnsavedChangesGuard`
+ * (SUX-2.6), which calls this hook and adds both, with a Save / Discard / Cancel confirm.
  *
  * Modern browsers ignore any custom message and show their own, so none is offered here; the
  * two lines below are the pair every engine still recognises as "please ask".

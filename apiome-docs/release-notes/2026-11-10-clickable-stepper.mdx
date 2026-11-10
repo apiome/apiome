@@ -1,0 +1,17 @@
+---
+slug: clickable-stepper
+title: Steps you can click
+description: "The shared Stepper can make each step a button that jumps to it."
+authors: [apiome]
+---
+
+The shared `Stepper` has a new option: pass `onStepSelect` and every step becomes a button that
+jumps to that step. See [Stepped dialogs](/reference/design-tokens#stepped-dialogs).
+
+{/* truncate */}
+
+- **Opt-in.** Steppers in the web app look and behave as before; none of them uses the option.
+- **Studio.** The class, property and class-property editors use it in **Guided** mode, so a
+  click on a step still opens it after they moved to the shared stepper.
+- **For contributors.** `onStepSelect` is called with the step's `id` and index. The button is
+  `type="button"`, keeps the step's look, and is named by the label and its state ("Step 2 of 3").

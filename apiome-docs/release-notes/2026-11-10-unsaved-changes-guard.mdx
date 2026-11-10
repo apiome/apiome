@@ -1,0 +1,20 @@
+---
+slug: unsaved-changes-guard
+title: Forms ask before you lose unsaved changes
+description: "A shared guard asks Save, Discard or Cancel before a dirty form is left."
+authors: [apiome]
+---
+
+The design system has a shared guard for forms with unsaved changes. With
+`useUnsavedChangesGuard`, closing the tab, clicking a link to another page or pressing **Back**
+asks first: **Save**, **Discard** or **Cancel**. See
+[Unsaved changes](/reference/design-tokens#unsaved-changes).
+
+{/* truncate */}
+
+- **Opt-in.** Screens in the web app keep their current behaviour; the design-system gallery's
+  **Forms** page-form uses the guard so you can try it.
+- **Clean forms never ask.** Nothing is registered until the form is dirty.
+- **For contributors.** Pass `dirty`, and `onSave` / `onDiscard` when the form has them; render
+  the returned `dialog` and pass its `dirty` to `FormFrame`. Use `confirmLeave` for a move the
+  screen makes itself.

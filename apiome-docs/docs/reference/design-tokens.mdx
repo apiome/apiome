@@ -172,6 +172,39 @@ width.
 
 <Screenshot id="design-system-form-frame" alt="The form frame specimen: a Project settings form with a Basics and an Access section, scrolled inside a well with its footer of Discard and Save project still visible, and an Open the form in a dialog button under it" />
 
+#### Unsaved changes
+
+`useUnsavedChangesGuard` (in `@/app/hooks/useUnsavedChangesGuard`) asks before a dirty form is
+left. Pass the form's `dirty` flag and, when the form can save, `onSave`; render the `dialog` it
+returns once, and pass its `dirty` to `FormFrame` so the footer and the guard always agree.
+
+```tsx
+const guard = useUnsavedChangesGuard({ dirty, onSave: save, onDiscard: reset });
+
+return (
+  <>
+    <FormFrame dirty={guard.dirty} onSubmit={save}>{/* sections */}</FormFrame>
+    {guard.dialog}
+  </>
+);
+```
+
+| While `dirty` is… | What happens |
+| --- | --- |
+| `false` | Nothing. A clean form never asks. |
+| `true`, the tab is closed or reloaded | The browser asks to confirm (its own wording). |
+| `true`, a link to another page in the app is clicked, or **Back** is pressed | A dialog asks **Leave without saving?** with **Save**, **Discard** and **Cancel**. |
+
+- **Save** runs `onSave`, then leaves. If `onSave` returns `false` or throws, the page stays so its
+  own error is visible. Without `onSave`, the dialog offers only **Discard** and **Cancel**.
+- **Discard** runs `onDiscard`, then leaves. **Cancel** (or **Esc**) stays on the page.
+- Links that open a new tab or window, download a file, go to another site or only jump to a
+  `#section` are not stopped. Add `data-unsaved-guard="ignore"` to let one other link through.
+- A move the screen makes itself, such as `router.push` from a button, cannot be seen from
+  outside: wrap it in `guard.confirmLeave(() => router.push(href))`.
+- `useUnsavedChangesPrompt(dirty)` is still there for a screen that wants only the browser's
+  tab-close prompt. The gallery's **Forms** page-form uses the full guard.
+
 ### Type helpers
 
 Four classes cover the secondary text used on every screen. Use one of them instead of writing
@@ -223,6 +256,9 @@ to a longer or shorter step moves both edges, and the buttons move with them. Pa
 - `steps` is opt-in. A dialog without it is unchanged, and no screen in the web app uses it yet.
   Studio uses it for its class import, class and property editors, canvas settings and export
   dialogs (SUX-2.3).
+- `Stepper` takes an optional `onStepSelect(id, index)`. With it, every step is a button that
+  jumps to that step; without it, the row only shows progress. Studio's class and property
+  editors use it in **Guided** mode (SUX-2.5).
 
 ## Where to see them
 

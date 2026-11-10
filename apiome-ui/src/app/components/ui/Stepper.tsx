@@ -36,6 +36,13 @@ import { cn } from '../../../../lib/utils';
  * `role="list"` is stated explicitly: Safari drops list semantics from an `<ol>` whose
  * marker is removed, and the marker is removed here by the app's own reset.
  *
+ * ### Clickable steps (SUX-2.5, apiome#6766)
+ *
+ * Pass `onStepSelect` and each step's badge, label and note sit in a
+ * `<button type="button" class="step__button">`, so the reader can jump straight to a step
+ * (Studio's Guided editors do). The button's name is the label plus its state note, and
+ * `aria-current` stays on the list item. Without it the row is display-only, as before.
+ *
  * ### Sizing and colour
  *
  * Everything visual is in the `STEPPER` section of `globals.css` and every value there
@@ -109,12 +116,49 @@ export interface StepperProps extends Omit<React.OlHTMLAttributes<HTMLOListEleme
   complete?: boolean;
   /** Stretch the connectors so the row fills its container (`hive.css` `.stepper--fill`). */
   fill?: boolean;
+  /**
+   * Make every step a button that jumps to it. Called with the step's `id` and zero-based
+   * index. Omit it for a display-only row (the default).
+   */
+  onStepSelect?: (id: string, index: number) => void;
+}
+
+/**
+ * One step's badge, label and visually-hidden state note.
+ *
+ * @param props.step The step being drawn.
+ * @param props.status Where it sits relative to the reader.
+ * @param props.index Its zero-based position.
+ * @param props.total How many steps the row has.
+ * @returns The step's contents, without the list item around them.
+ */
+function StepContent({
+  step,
+  status,
+  index,
+  total,
+}: {
+  step: StepperStep;
+  status: StepperStatus;
+  index: number;
+  total: number;
+}) {
+  return (
+    <>
+      <span aria-hidden="true" className="step__num">
+        {status === 'done' ? <Check /> : index + 1}
+      </span>
+      {step.label}
+      <span className="sr-only">{STATUS_NOTE[status](index + 1, total)}</span>
+    </>
+  );
 }
 
 /**
  * The numbered progress row.
  *
- * @param props The steps, the current one, and the two layout flags — see
+ * @param props The steps, the current one, the two layout flags and the optional
+ *   `onStepSelect` — see
  *   {@link StepperProps}. Pass `aria-label` to name the list; every other `<ol>`
  *   attribute is forwarded.
  * @returns An ordered list of steps with a connector between each pair.
@@ -124,6 +168,7 @@ export function Stepper({
   current,
   complete = false,
   fill = false,
+  onStepSelect,
   className,
   ...props
 }: StepperProps) {
@@ -151,11 +196,17 @@ export function Stepper({
               data-status={status}
               className={cn('step', STATUS_CLASS[status])}
             >
-              <span aria-hidden="true" className="step__num">
-                {status === 'done' ? <Check /> : index + 1}
-              </span>
-              {step.label}
-              <span className="sr-only">{STATUS_NOTE[status](index + 1, steps.length)}</span>
+              {onStepSelect ? (
+                <button
+                  type="button"
+                  className="step__button hit-target"
+                  onClick={() => onStepSelect(step.id, index)}
+                >
+                  <StepContent step={step} status={status} index={index} total={steps.length} />
+                </button>
+              ) : (
+                <StepContent step={step} status={status} index={index} total={steps.length} />
+              )}
             </li>
           </React.Fragment>
         );
