@@ -20,6 +20,8 @@ export * from './RadioGroup';
 export * from './FormField';
 // The page-level form container and its spacing rule (SUX-2.4, #6752).
 export * from './FormFrame';
+// Resizable two- or three-pane layout with keyboard handles (SUX-3.4, #6754).
+export * from './SplitPane';
 export * from './Spinner';
 
 // The feedback set (HIVE-2.5, #5284): the four states every screen is in when it has no

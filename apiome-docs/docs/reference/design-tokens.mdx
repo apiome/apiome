@@ -205,6 +205,45 @@ return (
 - `useUnsavedChangesPrompt(dirty)` is still there for a screen that wants only the browser's
   tab-close prompt. The gallery's **Forms** page-form uses the full guard.
 
+### Split pane
+
+`SplitPane` puts two or three panes side by side with a drag handle between neighbours. Use it
+for a form beside a preview, or a tree, a canvas and an inspector.
+
+```tsx
+<SplitPane
+  aria-label="Theme editor"
+  storageKey="slate-theme"
+  panes={[
+    { id: 'form', label: 'Form', defaultSize: 360, minSize: 280, maxSize: 520, collapsible: true },
+    { id: 'preview', label: 'Preview' },
+  ]}
+>
+  <ThemeForm />
+  <ThemePreview />
+</SplitPane>
+```
+
+<Screenshot id="design-system-split-pane" alt="The split pane specimen: a Site title form beside a preview frame with a drag line between them, and under it a three-pane Structure, Canvas and Inspector layout" />
+
+- **One flexible pane.** Exactly one pane has no `defaultSize` and takes the width that is left.
+  Every other pane has a width in px, kept between `minSize` (default 120) and `maxSize` (default
+  960). Each handle resizes the fixed pane next to it.
+- **Keyboard.** A handle is a `role="separator"` that takes focus. Press **←** or **→** to move it
+  16 px, with **Shift** 64 px. **Home** goes to the minimum, **End** to the maximum. **Enter**
+  collapses or restores a `collapsible` pane. Double-click a handle to go back to the default width.
+- **Mouse.** Drag a handle. Dragging a collapsible pane below half its minimum collapses it.
+  While you drag, iframes stop taking the pointer, so you can drag across a preview.
+- **Persisted widths.** With `storageKey`, the widths and collapsed panes are kept in the
+  browser under `apiome:split-pane:<storageKey>` and restored on the next visit. Use one key per
+  page. Storage that is blocked or holds bad data is ignored.
+- **Nothing reloads.** Resizing changes only the grid's columns. A pane's content is not
+  remounted, so an iframe in it does not reload.
+- **Narrow screens.** In a container narrower than 40 rem (640 px) the panes stack in one column
+  and the handles hide.
+- `onLayoutChange(layout)` is called after every change, with `{ sizes, collapsed }` keyed by pane
+  id. `paneClassNames` adds classes to a pane's wrapper.
+
 ### Type helpers
 
 Four classes cover the secondary text used on every screen. Use one of them instead of writing
@@ -268,4 +307,6 @@ a select inside that. It is the case the stacking scale exists for, and
 `apiome-ui/e2e/hive-z-index-scale.spec.ts` checks it in a browser. **Forms** ends with the control
 sizes: a row for each size, which `apiome-ui/e2e/hive-control-sizes.spec.ts` measures in a browser
 at both densities. After them comes the form frame: the same two-section form on the page and, from
-**Open the form in a dialog**, inside a dialog.
+**Open the form in a dialog**, inside a dialog. **Split pane** has a form beside a
+preview that keeps its width after a reload, and a three-pane layout whose side panes both
+collapse.

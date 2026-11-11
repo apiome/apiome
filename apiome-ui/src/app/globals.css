@@ -2357,6 +2357,101 @@ html[data-kbd-hints="off"] .kbd-group {
 }
 
 /* ==========================================================================
+   SPLIT PANE (SUX-3.4, apiome#6754)
+   --------------------------------------------------------------------------
+   `components/ui/SplitPane.tsx`: two or three panes with drag handles. The
+   component writes the column template into `--split-pane-columns` (pane
+   widths in px, `auto` for each handle, `minmax(0, 1fr)` for the flexible
+   pane); these rules draw the handle and stack the panes in a narrow
+   container. `tests/split-pane.test.tsx` loads this section.
+   ========================================================================== */
+
+.hive-split-pane {
+  container: split-pane / inline-size;
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+.hive-split-pane__grid {
+  display: grid;
+  grid-template-columns: var(--split-pane-columns);
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.hive-split-pane__pane {
+  min-inline-size: 0;
+  min-block-size: 0;
+  overflow: auto;
+}
+
+.hive-split-pane__pane[data-collapsed] {
+  overflow: hidden;
+  visibility: hidden;
+}
+
+/* A 9px hit area around a 1px hairline; the hairline turns accent on hover,
+   focus and drag. */
+.hive-split-pane__handle {
+  position: relative;
+  inline-size: 0.5625rem;
+  margin-inline: -0.25rem;
+  z-index: var(--z-raised);
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.hive-split-pane__handle::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  inline-size: 1px;
+  transform: translateX(-50%);
+  background: var(--border);
+  transition: background var(--dur-fast) var(--ease-out), inline-size var(--dur-fast) var(--ease-out);
+}
+
+.hive-split-pane__handle:hover::before,
+.hive-split-pane__grid[data-dragging] .hive-split-pane__handle:active::before {
+  inline-size: 3px;
+  background: var(--accent);
+}
+
+.hive-split-pane__handle:focus-visible::before {
+  inline-size: 3px;
+  background: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* While dragging, iframes and text must not take the pointer or selection. */
+.hive-split-pane__grid[data-dragging] {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.hive-split-pane__grid[data-dragging] iframe {
+  pointer-events: none;
+}
+
+/* Narrow containers (under 640px) stack the panes and hide the handles, so
+   the layout reflows at 320px. A collapsed pane stays hidden. */
+@container split-pane (max-width: 40rem) {
+  .hive-split-pane__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .hive-split-pane__handle {
+    display: none;
+  }
+
+  .hive-split-pane__pane[data-collapsed] {
+    display: none;
+  }
+}
+
+/* ==========================================================================
    FEEDBACK SET (HIVE-2.5, #5284)
    --------------------------------------------------------------------------
    Authority: `docs/mockups/assets/hive.css` §14 (`.empty`, `.empty__art`,

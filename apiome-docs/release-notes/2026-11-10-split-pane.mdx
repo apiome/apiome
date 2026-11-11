@@ -1,0 +1,22 @@
+---
+slug: split-pane
+title: A resizable split pane
+description: "SplitPane puts two or three panes side by side with keyboard-operable handles."
+authors: [apiome]
+---
+
+The design system has a split pane. With `SplitPane`, a form sits beside a preview, or a tree,
+canvas and inspector sit side by side, and you drag the line between them to resize. See
+[Split pane](/reference/design-tokens#split-pane).
+
+{/* truncate */}
+
+- **Opt-in.** Screens in the web app look the same as before; none of them uses it yet. Apiome
+  Suite's Slate editors and README generator are the first to use it.
+- **Keyboard.** Focus a handle and press **←** or **→** (with **Shift** for larger steps), **Home**
+  or **End**. **Enter** collapses or restores a side pane.
+- **Remembered widths.** A page can keep its widths in the browser, so they are the same on the
+  next visit. Resizing never reloads a preview.
+- **For contributors.** `SplitPane` takes `panes` (`id`, `label`, `defaultSize`, `minSize`,
+  `maxSize`, `collapsible`), one child per pane, and an optional `storageKey`. The design-system
+  gallery shows it under **Split pane**.
