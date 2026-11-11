@@ -1,0 +1,21 @@
+---
+slug: command-palette-providers
+title: Products can add commands to the one palette
+description: "A product adds its own sections to the ⌘ K command palette instead of mounting a second palette."
+authors: [apiome]
+---
+
+The command palette (`⌘ K`) takes **providers**. A product built on the shell can add its own
+sections and commands to the palette instead of opening a second one on the same key. See
+[Command palette providers](/reference/design-tokens#command-palette-providers).
+
+{/* truncate */}
+
+- **Nothing changes in the web app.** The palette looks and works as before. Apiome Suite's
+  Designer is the first product to use providers: its workspace search, git commands, canvas
+  actions and inspector tabs are now sections of the one palette.
+- **Search as you type.** A provider can read what is typed and answer from its own search. Rows
+  it found that way stay in the list even when their name does not contain what you typed.
+- **For contributors.** Call `useCommandPaletteProvider(id, groups)` from a mounted component.
+  Group and command ids are prefixed with the provider id. A group with `keepInCommandsMode`
+  stays when you type `>`.
