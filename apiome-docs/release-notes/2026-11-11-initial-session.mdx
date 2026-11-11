@@ -1,0 +1,21 @@
+---
+slug: initial-session
+title: Pages can render signed in from the first response
+description: "The session provider accepts the server's session, so signed-in pages skip the loading placeholder."
+authors: [apiome]
+---
+
+`AuthSessionProvider` takes an optional **`initialSession`**. A layout that has already read the
+session on the server passes it in, and the signed-in page renders in the first HTML response
+instead of a "Loading session…" placeholder.
+
+{/* truncate */}
+
+- **Nothing changes in the web app.** Without `initialSession` the provider behaves as before: it
+  reports `loading` until the browser's first session read answers.
+- **The browser still has the last word.** The server's session is used only while that first read
+  is pending. When it answers, its result replaces the server's — including "signed out", which
+  sends the visitor to sign in as usual.
+- **For contributors.** Pass the request's own session (for example the result of
+  `getAuthSession()` in the layout), never a cached or shared one. Apiome Suite's Designer is the
+  first product to use it, so the Authoring scope menus arrive filled in.
