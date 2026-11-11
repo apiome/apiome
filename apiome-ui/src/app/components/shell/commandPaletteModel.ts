@@ -27,14 +27,32 @@ import type { PinnedProject } from '@lib/db/dashboard-home-model';
  * | **Actions** | {@link PALETTE_ACTIONS}, declared here | `requiresTenant` |
  * | **Recent** | `commandPaletteRecents.ts`, per workspace | nothing — it is history |
  *
+ * Surfaces add groups of their own through providers (`commandPaletteProviders.ts`,
+ * SUX-4.5); {@link buildCommandGroups} merges them by {@link PaletteCommandGroup.order}.
+ *
  * Nothing in Jump to is written down twice: the palette is handed the *same*
  * `ResolvedPlatformNavGroup[]` the rail draws, so a destination that arrives from a
  * commercial host (or leaves) is in both surfaces at once, and a workspace-gated row is
  * disabled in the palette for exactly the reason the rail says it is.
  */
 
-/** Which group a command belongs to. */
-export type PaletteCommandGroupId = 'favorite' | 'jump' | 'action' | 'recent';
+/** The groups the host builds itself. */
+export type BuiltInPaletteCommandGroupId = 'favorite' | 'jump' | 'action' | 'recent';
+
+/**
+ * Which group a command belongs to: a built-in one, or a provider's namespaced group id
+ * (`<provider>:<group>`, SUX-4.5 — see `commandPaletteProviders.ts`).
+ */
+export type PaletteCommandGroupId = BuiltInPaletteCommandGroupId | (string & {});
+
+/**
+ * A glyph component for a provider row — a Lucide icon, typically.
+ *
+ * Typed structurally rather than as `LucideIcon` on purpose: a product that consumes this
+ * module (the commercial Designer) resolves its own copies of `react` and `lucide-react` types,
+ * and two copies of `LucideIcon` are not assignable to each other. Any callable component fits.
+ */
+export type PaletteIconComponent = (props: never) => unknown;
 
 /** A single row of the palette. */
 export interface PaletteCommand {
@@ -48,6 +66,12 @@ export interface PaletteCommand {
   meta?: string;
   /** Lucide icon name, resolved by `lib/platform-nav-icons.ts`. */
   icon: string;
+  /**
+   * The glyph itself, for a provider row whose icon the navigation registry does not carry
+   * (SUX-4.5). Drawn in preference to {@link icon}, which stays the name a recent is stored
+   * under.
+   */
+  iconComponent?: PaletteIconComponent;
   /** Where the row goes. Exactly one of `href` and `run` is set. */
   href?: string;
   /** What the row does in place — opening another overlay, say. */
@@ -60,6 +84,14 @@ export interface PaletteCommand {
   disabledReason?: string;
   /** Extra words the fuzzy filter scores against: the title *and* the section. */
   keywords: readonly string[];
+  /**
+   * True when a provider already matched this row against the query — a server search, say
+   * (SUX-4.5). The palette then shows it whatever the fuzzy filter would score it: a schema
+   * listed because it *relates* to what was typed rarely contains what was typed.
+   */
+  prematched?: boolean;
+  /** A sentence explaining what the row will do, shown on hover. */
+  detail?: string;
 }
 
 /** A headed run of commands. */
@@ -68,10 +100,40 @@ export interface PaletteCommandGroup {
   /** The heading, in the sentence case `DESIGN.md` §10 asks for. */
   heading: string;
   commands: readonly PaletteCommand[];
+  /**
+   * Where the group sits; lower comes first. The built-ins use {@link PALETTE_GROUP_ORDER};
+   * a provider group without one sits at {@link DEFAULT_PROVIDER_GROUP_ORDER}.
+   */
+  order?: number;
+  /**
+   * True when the group holds *commands* rather than destinations or results, so it is kept
+   * when the reader types `>` (SUX-4.5). The built-in Actions group is one.
+   */
+  keepInCommandsMode?: boolean;
 }
 
+/**
+ * Where each built-in group sits (SUX-4.5).
+ *
+ * Spaced by a hundred so a provider can place a group between any two of them.
+ */
+export const PALETTE_GROUP_ORDER: Readonly<Record<BuiltInPaletteCommandGroupId, number>> = {
+  favorite: 100,
+  recent: 200,
+  jump: 300,
+  action: 400,
+};
+
+/**
+ * Where a provider group sits when it names no order: after Recent, before Jump to.
+ *
+ * A surface's own rows are the most specific thing the palette can offer on that surface, so
+ * they lead the platform-wide destinations — but what the reader just did still comes first.
+ */
+export const DEFAULT_PROVIDER_GROUP_ORDER = 250;
+
 /** Headings, in the order `DESIGN.md` §5.4 lists the groups. */
-export const PALETTE_GROUP_HEADINGS: Readonly<Record<PaletteCommandGroupId, string>> = {
+export const PALETTE_GROUP_HEADINGS: Readonly<Record<BuiltInPaletteCommandGroupId, string>> = {
   favorite: 'Favorites',
   jump: 'Jump to',
   action: 'Actions',
@@ -339,6 +401,11 @@ export interface CommandGroupsOptions {
   currentTenantId?: string | null;
   /** True when only the Actions group should be offered — the reader typed `>`. */
   commandsOnly?: boolean;
+  /**
+   * Groups contributed by providers (SUX-4.5), already namespaced by
+   * `commandPaletteProviders.ts`. Merged by {@link PaletteCommandGroup.order}.
+   */
+  providerGroups?: readonly PaletteCommandGroup[];
 }
 
 /**
@@ -363,16 +430,24 @@ export function buildCommandGroups({
   favorites = [],
   currentTenantId,
   commandsOnly = false,
+  providerGroups = [],
 }: CommandGroupsOptions): PaletteCommandGroup[] {
   const actions: PaletteCommandGroup = {
     id: 'action',
     heading: PALETTE_GROUP_HEADINGS.action,
     commands: buildActionCommands(currentTenantId),
+    order: PALETTE_GROUP_ORDER.action,
+    keepInCommandsMode: true,
   };
 
   // `>` means "commands only" (`DESIGN.md` §5.4): destinations and history are not
-  // commands, so they are not narrowed — they are gone.
-  if (commandsOnly) return [actions].filter((group) => group.commands.length > 0);
+  // commands, so they are not narrowed — they are gone. A provider's command groups stay.
+  if (commandsOnly) {
+    return orderGroups([
+      actions,
+      ...providerGroups.filter((group) => group.keepInCommandsMode),
+    ]);
+  }
 
   // A favorite already listed above is not repeated under Recent.
   const favoriteHrefs = new Set(buildFavoriteCommands(favorites).map((command) => command.href));
@@ -382,21 +457,46 @@ export function buildCommandGroups({
       id: 'favorite',
       heading: PALETTE_GROUP_HEADINGS.favorite,
       commands: buildFavoriteCommands(favorites),
+      order: PALETTE_GROUP_ORDER.favorite,
     },
     {
       id: 'recent',
       heading: PALETTE_GROUP_HEADINGS.recent,
       commands: buildRecentCommands(recents).filter((command) => !favoriteHrefs.has(command.href)),
+      order: PALETTE_GROUP_ORDER.recent,
     },
     {
       id: 'jump',
       heading: PALETTE_GROUP_HEADINGS.jump,
       commands: buildJumpCommands(navGroups, currentTenantId),
+      order: PALETTE_GROUP_ORDER.jump,
     },
     actions,
+    ...providerGroups,
   ];
 
-  return groups.filter((group) => group.commands.length > 0);
+  return orderGroups(groups);
+}
+
+/**
+ * Drop empty groups and sort the rest by {@link PaletteCommandGroup.order}.
+ *
+ * The sort is stable, so groups with the same order keep the order they were given in —
+ * built-ins first, then providers in registration order.
+ *
+ * @param groups Every candidate group.
+ * @returns The non-empty groups, in render order.
+ */
+function orderGroups(groups: readonly PaletteCommandGroup[]): PaletteCommandGroup[] {
+  return groups
+    .filter((group) => group.commands.length > 0)
+    .map((group, index) => ({ group, index }))
+    .sort(
+      (left, right) =>
+        (left.group.order ?? DEFAULT_PROVIDER_GROUP_ORDER) -
+          (right.group.order ?? DEFAULT_PROVIDER_GROUP_ORDER) || left.index - right.index
+    )
+    .map(({ group }) => group);
 }
 
 /* -------------------------------------------------------------------------

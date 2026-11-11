@@ -20,6 +20,10 @@ import {
   type PaletteCommand,
 } from './commandPaletteModel';
 import { useCommandPaletteRecents } from './commandPaletteRecents';
+import {
+  publishCommandPaletteSession,
+  useCommandPaletteProviderGroups,
+} from './commandPaletteProviders';
 import { listPinnedProjectsForSession } from '@lib/db/project-pins';
 import type { PinnedProject } from '@lib/db/dashboard-home-model';
 
@@ -63,6 +67,13 @@ import type { PinnedProject } from '@lib/db/dashboard-home-model';
  * can be handed in by a chrome that has already fetched its entitlements —
  * {@link CommandPaletteHostProps.groups}), and Recent rows come from `localStorage`, scoped
  * to it.
+ *
+ * ### What surfaces add — providers (SUX-4.5)
+ *
+ * A surface with commands of its own registers a provider (`commandPaletteProviders.ts`)
+ * rather than mounting a second palette, and its groups are merged into this one list. The
+ * host publishes its open flag and query back through the same module, so a provider can
+ * answer from a server search while the palette is open.
  */
 
 /** Props for {@link CommandPaletteHost}. */
@@ -124,6 +135,14 @@ export default function CommandPaletteHost({
     [groups, currentTenantId]
   );
 
+  // Every surface's own rows (SUX-4.5), and what they need to know to produce them.
+  const providerGroups = useCommandPaletteProviderGroups();
+  React.useEffect(() => {
+    publishCommandPaletteSession({ open, query });
+  }, [open, query]);
+  // A host that unmounts leaves no open palette behind for a provider to keep searching for.
+  React.useEffect(() => () => publishCommandPaletteSession({ open: false, query: '' }), []);
+
   const { commandsOnly } = parseCommandQuery(query);
   const commandGroups = React.useMemo(
     () =>
@@ -133,8 +152,9 @@ export default function CommandPaletteHost({
         favorites: currentTenantId ? favorites : [],
         currentTenantId,
         commandsOnly,
+        providerGroups,
       }),
-    [derivedGroups, recents, favorites, currentTenantId, commandsOnly]
+    [derivedGroups, recents, favorites, currentTenantId, commandsOnly, providerGroups]
   );
 
   /**

@@ -50,8 +50,10 @@ export {
 export type { CommandPaletteRequest } from './commandPaletteBus';
 export {
   COMMANDS_ONLY_PREFIX,
+  DEFAULT_PROVIDER_GROUP_ORDER,
   PALETTE_ACTIONS,
   PALETTE_GROUP_HEADINGS,
+  PALETTE_GROUP_ORDER,
   buildActionCommands,
   buildCommandGroups,
   buildJumpCommands,
@@ -59,12 +61,27 @@ export {
   parseCommandQuery,
 } from './commandPaletteModel';
 export type {
+  BuiltInPaletteCommandGroupId,
   CommandGroupsOptions,
   PaletteCommand,
   PaletteCommandGroup,
   PaletteCommandGroupId,
+  PaletteIconComponent,
   ParsedCommandQuery,
 } from './commandPaletteModel';
+export {
+  getCommandPaletteProviderGroups,
+  getCommandPaletteSession,
+  registerCommandPaletteProvider,
+  subscribeCommandPaletteProviders,
+  subscribeCommandPaletteSession,
+  useCommandPaletteProvider,
+  useCommandPaletteSession,
+} from './commandPaletteProviders';
+export type {
+  CommandPaletteProviderEntry,
+  CommandPaletteSession,
+} from './commandPaletteProviders';
 export {
   PALETTE_RECENTS_LIMIT,
   PALETTE_RECENTS_STORAGE_KEY,

@@ -244,6 +244,56 @@ for a form beside a preview, or a tree, a canvas and an inspector.
 - `onLayoutChange(layout)` is called after every change, with `{ sizes, collapsed }` keyed by pane
   id. `paneClassNames` adds classes to a pane's wrapper.
 
+### Command palette providers
+
+The shell has one command palette (`⌘ K`). A product with commands of its own adds them to that
+palette with a **provider**. It does not mount a second palette. Apiome Suite's Designer uses
+providers for its workspace search, git verbs, canvas actions and inspector tabs.
+
+```tsx
+import { useCommandPaletteProvider } from '@/app/components/shell/commandPaletteProviders';
+
+const groups = React.useMemo(
+  () => [
+    {
+      id: 'canvas',
+      heading: 'Canvas',
+      keepInCommandsMode: true,
+      commands: [
+        {
+          id: 'auto-layout',
+          group: 'canvas',
+          label: 'Auto-layout the canvas',
+          icon: 'network',
+          keywords: ['layout', 'arrange'],
+          disabled: false,
+          run: () => requestAutoLayout(),
+        },
+      ],
+    },
+  ],
+  [requestAutoLayout]
+);
+useCommandPaletteProvider('designer-canvas', groups);
+```
+
+- **One list.** A provider's groups are drawn in the same list as **Favorites**, **Recent**,
+  **Jump to** and **Actions**, with the same keyboard, filter and footer. `order` places a group
+  (the built-ins are 100, 200, 300 and 400; a group with no order sits at 250, after **Recent**).
+- **Ids are namespaced.** Group and command ids become `<provider id>:<id>`, so two providers
+  cannot collide. Registering again under the same provider id replaces the groups.
+- **Commands only.** A group with `keepInCommandsMode` stays when the reader types `>`. Other
+  provider groups are hidden, like **Jump to**.
+- **Searching as the reader types.** `useCommandPaletteSession()` returns `{ open, query }`. A
+  provider can search its own API while the palette is open. Mark the rows it returns
+  `prematched: true`: the palette then shows them even when the label does not contain the query.
+- **Rows.** A command has a `label`, an optional `meta` line, `keys` for a shortcut chip, a
+  `detail` sentence shown on hover, and `disabled` with a `disabledReason`. Set `icon` to a name
+  from the navigation icon set, or pass `iconComponent` for any other Lucide icon. A row either
+  goes to an `href` (remembered under **Recent**) or calls `run`.
+- **Opening it.** Any entry point calls `openCommandPalette({ query })`. For example, a `⌘ G`
+  binding can open the palette with `git` already typed.
+
 ### Type helpers
 
 Four classes cover the secondary text used on every screen. Use one of them instead of writing

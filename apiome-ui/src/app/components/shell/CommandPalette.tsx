@@ -3,7 +3,7 @@
 import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Command, defaultFilter, useCommandState } from 'cmdk';
-import { Search } from 'lucide-react';
+import { Search, type LucideIcon } from 'lucide-react';
 import { Kbd } from '@/app/components/ui/Kbd';
 import { LiveRegion } from '@/app/components/ui/LiveRegion';
 import { resultCountAnnouncement } from '@lib/a11y/announcements';
@@ -118,7 +118,10 @@ function CommandRow({
 }) {
   // A lookup, not a component definition — `React.createElement` is the honest spelling
   // (the same reason `RailNav` uses it).
-  const icon = React.createElement(resolvePlatformNavIcon(command.icon), {
+  // A provider's own glyph wins; it is typed loosely (see `PaletteIconComponent`) and drawn
+  // with the same props a navigation icon takes.
+  const Glyph = (command.iconComponent ?? resolvePlatformNavIcon(command.icon)) as LucideIcon;
+  const icon = React.createElement(Glyph, {
     size: ICON_SIZE.dense,
     strokeWidth: ICON_STROKE_WIDTH,
     'aria-hidden': true,
@@ -132,6 +135,7 @@ function CommandRow({
       disabled={command.disabled}
       onSelect={() => onSelect(command)}
       className="palette__item"
+      title={command.disabled ? undefined : command.detail}
       data-testid={`palette-item-${command.id}`}
     >
       {icon}
@@ -191,12 +195,29 @@ export default function CommandPalette({
    * cmdk hands the filter the raw input, which in commands mode still carries the `>`; left
    * alone it would score every command against a character none of them contain and empty
    * the list the prefix was meant to reveal.
+   *
+   * A row a provider marked {@link PaletteCommand.prematched} always scores: the provider
+   * matched it already, often on something the row does not spell (SUX-4.5).
    */
-  const filter = React.useCallback((value: string, raw: string, keywords?: string[]) => {
-    const needle = parseCommandQuery(raw).search;
-    if (!needle) return 1;
-    return defaultFilter(value, needle, keywords);
-  }, []);
+  const prematched = React.useMemo(
+    () =>
+      new Set(
+        groups.flatMap((group) =>
+          group.commands.filter((command) => command.prematched).map((command) => command.id)
+        )
+      ),
+    [groups]
+  );
+  const filter = React.useCallback(
+    (value: string, raw: string, keywords?: string[]) => {
+      // A provider's server-matched row (SUX-4.5) is already the answer to this query.
+      if (prematched.has(value)) return 1;
+      const needle = parseCommandQuery(raw).search;
+      if (!needle) return 1;
+      return defaultFilter(value, needle, keywords);
+    },
+    [prematched]
+  );
 
   /**
    * Tab switches to the Actions group, as the footer legend says it does; shift+tab (or Tab
