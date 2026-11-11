@@ -127,6 +127,7 @@ import { ControlSizesShowcase } from './ControlSizesShowcase';
 import { FormFrameShowcase } from './FormFrameShowcase';
 import { LayeringShowcase } from './LayeringShowcase';
 import { QuietListShowcase } from './QuietListShowcase';
+import { SplitPaneShowcase } from './SplitPaneShowcase';
 import { StatusStripShowcase } from './StatusStripShowcase';
 import { TablesShowcase } from './TablesShowcase';
 
@@ -867,6 +868,14 @@ export function HiveGallery() {
           description="Several statuses about one object in one row of chips, with at most one detail open. The most severe chip opens first (danger › warn › accent › ok); clicking the open chip, Collapse or Escape hides the detail. A page never stacks more than one banner."
         >
           <StatusStripShowcase />
+        </Section>
+
+        <Section
+          id="split-pane"
+          title="Split pane"
+          description="Two or three panes with a drag handle between neighbours. One pane is flexible; the others have a width, a minimum and a maximum, and may collapse. A handle is a separator you can focus: arrow keys, Home, End, and Enter to collapse. Widths can persist per page, and resizing never reloads an iframe."
+        >
+          <SplitPaneShowcase />
         </Section>
 
         <Section

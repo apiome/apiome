@@ -1993,6 +1993,17 @@
         "apiome-ui/src/app/components/ui/FormField.tsx",
         "apiome-ui/src/app/design-system/galleries/FormFrameShowcase.tsx"
       ]
+    },
+    {
+      "id": "design-system-split-pane",
+      "route": "/design-system",
+      "waitFor": "[data-testid=\"design-system-split-pane\"]",
+      "data": "signed-out",
+      "scrollTo": "[data-testid=\"design-system-split-pane\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ui/SplitPane.tsx",
+        "apiome-ui/src/app/design-system/galleries/SplitPaneShowcase.tsx"
+      ]
     }
   ]
 }
