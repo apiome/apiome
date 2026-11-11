@@ -9,6 +9,7 @@
  * The Better Auth transport, the reactive session hook, and the tenant-switch server action are mocked.
  */
 
+import * as React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import {
   useAuthSession,
@@ -59,6 +60,47 @@ describe('session-client (Better Auth)', () => {
     const { result } = renderHook(() => useAuthSession(), { wrapper: AuthSessionProvider });
 
     expect(result.current.status).toBe('loading');
+  });
+
+  describe('initialSession (SUX-5.6)', () => {
+    const initial = {
+      user: { user_id: 'u1', email: 'a@b.co', current_tenant_id: 't1', twoFactorEnabled: false },
+      expires: '',
+      twoFactorElevated: false,
+    };
+    const withInitial = ({ children }: { children: React.ReactNode }) => (
+      <AuthSessionProvider initialSession={initial}>{children}</AuthSessionProvider>
+    );
+
+    it('reports the server session as authenticated while the client read is pending', () => {
+      mockUseSession.mockReturnValue({ data: null, isPending: true, refetch: jest.fn() });
+      mockMapBetterAuthSession.mockReturnValue(null);
+
+      const { result } = renderHook(() => useAuthSession(), { wrapper: withInitial });
+
+      expect(result.current.status).toBe('authenticated');
+      expect(result.current.data).toEqual(initial);
+    });
+
+    it('lets the settled client answer win over the initial session', () => {
+      const fresh = { ...initial, user: { ...initial.user, current_tenant_id: 't2' } };
+      mockUseSession.mockReturnValue({ data: { user: {} }, isPending: false, refetch: jest.fn() });
+      mockMapBetterAuthSession.mockReturnValue(fresh);
+
+      const { result } = renderHook(() => useAuthSession(), { wrapper: withInitial });
+
+      expect(result.current.data).toEqual(fresh);
+    });
+
+    it('reports unauthenticated once the client read settles with no session', () => {
+      mockUseSession.mockReturnValue({ data: null, isPending: false, refetch: jest.fn() });
+      mockMapBetterAuthSession.mockReturnValue(null);
+
+      const { result } = renderHook(() => useAuthSession(), { wrapper: withInitial });
+
+      expect(result.current.status).toBe('unauthenticated');
+      expect(result.current.data).toBeNull();
+    });
   });
 
   it('reports unauthenticated when there is no session', () => {

@@ -73,12 +73,29 @@ const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
  * Reads the reactive `authClient.useSession()` store and shares it (with an on-demand refetch) through
  * the context {@link useAuthSession} consumes.
  *
- * @param children The app subtree that consumes {@link useAuthSession}.
+ * Better Auth's store always starts pending — on the server, and in the browser until its first
+ * `/get-session` answers — so a provider given no `initialSession` reports `loading` for the whole
+ * server render. A layout that has already read the session on the server passes it as
+ * `initialSession`: while the store is still pending that session is reported as `authenticated`,
+ * so the subtree renders in the first HTML response instead of a placeholder. Once the store
+ * settles its answer wins — including "no session", which reports `unauthenticated` even though
+ * an initial session was given.
+ *
+ * @param props.children The app subtree that consumes {@link useAuthSession}.
+ * @param props.initialSession The session the server already resolved for this request, if any.
+ *   Must be the request's own session (never a cached or shared one).
  */
-export function AuthSessionProvider({ children }: { children: React.ReactNode }): React.ReactElement {
+export function AuthSessionProvider({
+  children,
+  initialSession = null,
+}: {
+  children: React.ReactNode;
+  initialSession?: AppSession | null;
+}): React.ReactElement {
   const { data, isPending, refetch } = authClient.useSession();
-  const session = useMemo(() => mapBetterAuthSession(data as never), [data]);
-  const status: AuthStatus = isPending ? 'loading' : session ? 'authenticated' : 'unauthenticated';
+  const mapped = useMemo(() => mapBetterAuthSession(data as never), [data]);
+  const session = isPending ? (mapped ?? initialSession) : mapped;
+  const status: AuthStatus = session ? 'authenticated' : isPending ? 'loading' : 'unauthenticated';
   const value = useMemo<AuthSessionContextValue>(
     () => ({ data: session, status, refetch: async () => void (await refetch()) }),
     [session, status, refetch]
