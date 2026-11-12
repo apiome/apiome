@@ -13,9 +13,13 @@ POST, …) with parameters, request bodies, and responses. Paths are authored **
 
 ## In the UI
 
-1. Open the **Designer** and go to **Paths** at `/ade/studio/paths`.
+1. In the **Designer** menu, choose **Workspace · Paths**. It opens Designer's workspace on its
+   **Paths** lens (`/ade/studio/workspace?lens=paths`).
 2. Add or select a path template, then edit its summary, tags, and description.
 3. Add operations and wire their parameters, request bodies, and responses to your classes.
+
+Designer's separate Paths editor was removed. An older link to `/ade/studio/paths` opens the same
+place.
 
 ## With the REST API
 

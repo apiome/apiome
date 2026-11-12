@@ -14,11 +14,13 @@ gates in [Publish a version](../ship/publish-a-version.md)).
 
 ## In the UI
 
-1. Open the **Designer** at `/ade/studio`.
-2. Select a class on the canvas (or **Add a class → Browse templates** to start from one of the
-   built-in starter templates).
+1. In the **Designer** menu, choose **Workspace** (`/ade/studio/workspace`).
+2. Select a class in the tree, or add one. Starter templates are under the workspace's **Tools**.
 3. Edit the class name and description, then add or edit properties — type, description, required.
 4. Changes are saved through the same REST endpoints listed below.
+
+Designer's separate class editor was removed. An older link to `/ade/studio` or
+`/ade/studio/editor` opens the workspace.
 
 ## With the REST API
 
