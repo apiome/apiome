@@ -1,4 +1,5 @@
-import { Palette } from 'lucide-react';
+import { Code2, LayoutPanelLeft, Palette } from 'lucide-react';
+import { contributeSuiteMenu, resetSuiteMenuContribution } from '../../lib/suite-contract';
 import {
   buildDesignerCatalogPreviewHref,
   buildDesignerEditorHref,
@@ -72,11 +73,12 @@ describe('external-links (commercial products)', () => {
     const suiteMenu = getCommercialNavItems(entitled)[0]?.menuItems ?? [];
     expect(suiteMenu.filter((item) => item.entitled).map((item) => item.id)).toEqual([
       'suite-home',
-      'suite-designer',
+      'suite-workspace',
+      'suite-code',
       'authoring-overview',
     ]);
     // No paths flag → the destination stays visible but carries no resource URL.
-    const paths = suiteMenu.find((item) => item.id === 'suite-paths');
+    const paths = suiteMenu.find((item) => item.id === 'suite-workspace-paths');
     expect(paths?.entitled).toBe(false);
     expect(paths?.href).toBe('');
     expect(paths?.accessNote).toBeTruthy();
@@ -90,7 +92,7 @@ describe('external-links (commercial products)', () => {
       getCommercialNavItems(pathsOnly)[0]
         ?.menuItems?.filter((item) => item.entitled)
         .map((item) => item.id)
-    ).toEqual(['suite-home', 'suite-paths', 'authoring-overview']);
+    ).toEqual(['suite-home', 'suite-workspace-paths', 'suite-code', 'authoring-overview']);
 
     expect(getCommercialHomeCards(new Set()).map((card) => card.id)).toEqual(['developer-suite']);
     expect(getCommercialNavItems(new Set()).map((item) => item.id)).toEqual(['developer-suite']);
@@ -146,6 +148,43 @@ describe('external-links (commercial products)', () => {
     expect(getStudioWorkspaceRoute()).toBe('/workspace');
   });
 
+  it('gives a paths-only tenant the paths door and the code view, not the designer door (private-suite#2713)', () => {
+    const menu = getCommercialNavItems(new Set(['paths']))[0]?.menuItems ?? [];
+    const byId = Object.fromEntries(menu.map((item) => [item.id, item]));
+    expect(byId['suite-workspace-paths']?.entitled).toBe(true);
+    expect(byId['suite-code']?.entitled).toBe(true);
+    // Unentitled destinations stay listed but carry no resource URL.
+    expect(byId['suite-workspace']?.entitled).toBe(false);
+    expect(byId['suite-workspace']?.href).toBe('');
+    expect(byId['suite-workspace']?.accessNote).toBeTruthy();
+  });
+
+  it('never lists a contributed destination that doubles a builtin one (private-suite#2713)', () => {
+    contributeSuiteMenu({
+      menuItems: [
+        // A host that still contributes the workspace, as it did before the builtin named it.
+        { id: 'suite-workspace', label: 'Workspace', href: '/workspace', group: 'design', badge: 'Preview' },
+        { id: 'host-extra', label: 'Extra', href: '/extra', group: 'design' },
+      ],
+    });
+    const menu = getCommercialNavItems(new Set(['designer', 'paths']))[0]?.menuItems ?? [];
+    expect(menu.map((item) => item.id)).toEqual([
+      'suite-home',
+      'suite-workspace',
+      'suite-workspace-paths',
+      'suite-code',
+      'host-extra',
+    ]);
+    // The builtin wins: no Preview chip rides in from the duplicate.
+    expect(menu.find((item) => item.id === 'suite-workspace')?.badge).toBeUndefined();
+    resetSuiteMenuContribution();
+  });
+
+  it('resolves the icons the Design destinations name', () => {
+    expect(resolveExternalLinkIcon('LayoutPanelLeft')).toBe(LayoutPanelLeft);
+    expect(resolveExternalLinkIcon('Code2')).toBe(Code2);
+  });
+
   it('resolves known lucide icon names', () => {
     expect(resolveExternalLinkIcon('Palette')).toBe(Palette);
   });
@@ -159,8 +198,9 @@ describe('external-links (commercial products)', () => {
       expect(groups.map((group) => group.label)).toEqual(['Design', 'Authoring']);
       expect(groups[0].items.map((item) => item.id)).toEqual([
         'suite-home',
-        'suite-designer',
-        'suite-paths',
+        'suite-workspace',
+        'suite-workspace-paths',
+        'suite-code',
       ]);
       expect(groups[1].items.map((item) => item.id)).toEqual([
         'authoring-overview',
@@ -189,7 +229,7 @@ describe('external-links (commercial products)', () => {
       const suite = getCommercialNavItems(new Set(['designer', 'paths']))[0]!;
       const groups = groupNavMenuItems(suite);
       expect(groups.map((group) => group.label)).toEqual(['Design']);
-      expect(groups[0].items).toHaveLength(3);
+      expect(groups[0].items).toHaveLength(4);
     });
 
     it('keeps ungrouped destinations in one unlabeled leading group', () => {

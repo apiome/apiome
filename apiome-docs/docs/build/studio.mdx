@@ -12,8 +12,19 @@ Classes, properties, paths and operations are edited in **Studio**, the editing 
 An administrator gives each person access to it with
 [Suite Access](../admin/users.mdx#give-a-user-suite-access). With Suite Access, **Designer** and
 **Developer** appear in the **Build** section of the sidebar, and the launcher shows a
-**Designer Suite** card with **Suite Home**, **Designer** and **Paths Editor**. Without it, neither
-appears; ask an administrator.
+**Designer Suite** card. The **Designer** menu lists **Suite Home**, **Workspace**,
+**Workspace · Paths** and **Code & exports**. Without Suite Access, none of these appears; ask an
+administrator.
+
+| Menu entry | Opens | Needs |
+| --- | --- | --- |
+| **Suite Home** | Designer's home page | Suite Access |
+| **Workspace** | Schemas and paths in one workspace | The Designer plan |
+| **Workspace · Paths** | The same workspace, on its **Paths** lens | The Paths plan |
+| **Code & exports** | The generated code and exports for a version | The Designer or the Paths plan |
+
+An entry your plan does not include stays in the menu with a note on how to get it, but does not
+open.
 
 Links into Studio from the Control Panel use these routes, which open the same place in Designer:
 
@@ -22,6 +33,7 @@ Links into Studio from the Control Panel use these routes, which open the same p
 | `/ade/studio`, `/ade/studio/editor` | The class and property editor |
 | `/ade/studio/paths` | The paths and operations editor |
 | `/ade/studio/code` | The code view |
+| `/ade/studio/workspace` | The workspace |
 
 **Catalog items open read-only.** An item in the [Catalog](../bring-in/catalog.mdx) is not a
 project yet, so its **“Open in Designer”** button opens Designer's `/catalog/{id}` page: the item's
