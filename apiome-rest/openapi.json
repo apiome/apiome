@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.543.1",
+    "version": "1.544.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -39803,7 +39803,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-08T23:29:29Z"
+                          "example": "2026-11-11T23:55:51Z"
                         },
                         "method": {
                           "type": "string",
@@ -83071,6 +83071,1320 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for retry preview buildresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "List Components",
+        "description": "List the tenant's live library components with publication summary.",
+        "operationId": "list_components_v1_component_library__tenant_slug__components_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Componentskind schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Componentskind schema."
+                }
+              ],
+              "title": "Kind",
+              "description": "Kind schema."
+            },
+            "description": "Query parameter: kind."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Componentsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Componentsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Components Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Components Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list components.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentListResponse",
+                  "description": "Response payload for list componentsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list componentsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Create Component",
+        "description": "Create a component and its initial draft revision (TYPES/CREATE).",
+        "operationId": "create_component_v1_component_library__tenant_slug__components_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Componentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Componentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Component Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Component Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComponentCreateRequest",
+                "description": "Request body for create componentrequest."
+              }
+            }
+          },
+          "description": "Request body for create component."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentCreateResponse",
+                  "description": "Response payload for create componentresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create componentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Get Component",
+        "description": "One component with its revisions, highest semver first.",
+        "operationId": "get_component_v1_component_library__tenant_slug__components__component_id__get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Componentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Componentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Component Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Component Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComponentDetailBody",
+                  "description": "Response payload for get componentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get componentresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Delete Component",
+        "description": "Soft-delete a component (TYPES/DELETE); blocked while pinned (409).",
+        "operationId": "delete_component_v1_component_library__tenant_slug__components__component_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Componentauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Componentauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Component Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Component Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete component.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedResponse",
+                  "description": "Response payload for delete componentresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete componentresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/revisions": {
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Create Revision",
+        "description": "Add a draft revision to a component (TYPES/EDIT).",
+        "operationId": "create_revision_v1_component_library__tenant_slug__components__component_id__revisions_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Revisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Revisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Revision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Revision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionCreateRequest",
+                "description": "Request body for create revisionrequest."
+              }
+            }
+          },
+          "description": "Request body for create revision."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionMutationResponse",
+                  "description": "Response payload for create revisionresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create revisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}": {
+      "put": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Update Revision",
+        "description": "Replace a draft revision's payload (TYPES/EDIT); published answers 409.",
+        "operationId": "update_revision_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__put",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Revisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Revisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Update Revision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Update Revision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisionUpdateRequest",
+                "description": "Request body for update revisionrequest."
+              }
+            }
+          },
+          "description": "Request body for update revision."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for update revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionMutationResponse",
+                  "description": "Response payload for update revisionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for update revisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Delete Revision",
+        "description": "Delete a draft revision (TYPES/DELETE); published or pinned answers 409.",
+        "operationId": "delete_revision_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Revisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Revisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Revision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Revision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedResponse",
+                  "description": "Response payload for delete revisionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete revisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/publish": {
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Publish Revision",
+        "description": "Publish a draft revision (TYPES/PUBLISH) \u2014 immutable from then on.\n\nEnforces the no-unsafe-downgrade rule inside the transaction: the revision\nmust be strictly greater than the highest already-published revision.\nRepublishing a published revision is an idempotent no-op.",
+        "operationId": "publish_revision_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__publish_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish Revisionauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish Revisionauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Publish Revision Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Publish Revision Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for publish revision.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishResponse",
+                  "description": "Response payload for publish revisionresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for publish revisionresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/projects/{project_id}/versions/{version_record_id}/pins": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "List Pins",
+        "description": "The version's live pins with component/revision identity.",
+        "operationId": "list_pins_v1_component_library__tenant_slug__projects__project_id__versions__version_record_id__pins_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Pinsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Pinsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Pins Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Pins Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list pins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PinListResponse",
+                  "description": "Response payload for list pinsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list pinsresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Create Pin",
+        "description": "Pin a published library revision to the draft version (VERSIONS/EDIT).",
+        "operationId": "create_pin_v1_component_library__tenant_slug__projects__project_id__versions__version_record_id__pins_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Pinauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Pinauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Create Pin Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Create Pin Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinCreateRequest",
+                "description": "Request body for create pinrequest."
+              }
+            }
+          },
+          "description": "Request body for create pin."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for create pin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PinCreateResponse",
+                  "description": "Response payload for create pinresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for create pinresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/projects/{project_id}/versions/{version_record_id}/pins/{pin_id}": {
+      "delete": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Delete Pin",
+        "description": "Unpin one live pin from the draft version (VERSIONS/EDIT).",
+        "operationId": "delete_pin_v1_component_library__tenant_slug__projects__project_id__versions__version_record_id__pins__pin_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "pin_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pin Id",
+              "description": "Pin Id schema."
+            },
+            "description": "Path parameter identifying the pin id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Pinauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Pinauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Delete Pin Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Delete Pin Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for delete pin.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedResponse",
+                  "description": "Response payload for delete pinresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for delete pinresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/projects/{project_id}/versions/{version_record_id}/materialization": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Materialization Preview",
+        "description": "Deterministic preview of materializing the version's pins.\n\nRuns the same materializer export uses against the version's generated\ndocument (with pins excluded from generation so nothing double-counts),\nreporting the final local component names and every collision-safe\nrename. Never mutates anything; local components are never overwritten.",
+        "operationId": "materialization_preview_v1_component_library__tenant_slug__projects__project_id__versions__version_record_id__materialization_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id",
+              "description": "Project Id schema."
+            },
+            "description": "Project identifier that scopes the request."
+          },
+          {
+            "name": "version_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Version Record Id",
+              "description": "Version Record Id schema."
+            },
+            "description": "Version row identifier (``versions.id`` UUID)."
+          },
+          {
+            "name": "includeOrigin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Includeorigin",
+              "description": "Includeorigin schema."
+            },
+            "description": "Query parameter: include origin."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Materialization Previewauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Materialization Previewauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Materialization Preview Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Materialization Preview Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for materialization preview.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterializationPreviewResponse",
+                  "description": "Response payload for materialization previewresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for materialization previewresponse422."
                 }
               }
             }
@@ -128316,7 +129630,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "completed_at": {
             "anyOf": [
@@ -129912,7 +131226,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           }
         },
         "type": "object",
@@ -129968,7 +131282,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "workspaces": {
             "items": {
@@ -130572,7 +131886,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -130800,7 +132114,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "comment_count": {
             "type": "integer",
@@ -131229,6 +132543,179 @@
         "title": "CompiledToolsetOut",
         "description": "The toolset as agents are served it: enabled tools, accepted descriptions applied.\n\nAttributes:\n    schema_version: The projection's shape.\n    toolset_id: The toolset.\n    version_id: Its published version.\n    enabled: Whether the toolset serves agents (a disabled one compiles to no tools).\n    description_enrichment: Whether accepted proposals were applied.\n    enriched_targets: The target keys whose accepted text was applied.\n    fingerprint: The compiled toolset's content hash.\n    tools: The MCP ``tools/list`` entries, in canonical order."
       },
+      "ComponentCreateRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Stable library name (component-key safe).",
+            "example": "Pet"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "parameter | header | requestBody | response | securityBundle | schema",
+            "example": "example"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component create."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "ownerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component create."
+              }
+            ],
+            "title": "Ownerid",
+            "description": "Accountable member; defaults to the creator."
+          },
+          "initialRevision": {
+            "$ref": "#/components/schemas/InitialRevisionBody",
+            "description": "Initial Revision."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind"
+        ],
+        "title": "ComponentCreateRequest",
+        "description": "Create a component plus its initial draft revision."
+      },
+      "ComponentCreateResponse": {
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "title": "Componentid",
+            "description": "Component ID.",
+            "example": "example"
+          },
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "componentId",
+          "revisionId"
+        ],
+        "title": "ComponentCreateResponse",
+        "description": "ComponentCreateResponse schema."
+      },
+      "ComponentDetailBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component detail."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component detail."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "ownerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component detail."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component detail."
+              }
+            ],
+            "title": "Ownerid",
+            "description": "Owner ID."
+          },
+          "revisionCount": {
+            "type": "integer",
+            "title": "Revisioncount",
+            "default": 0,
+            "description": "Number of revision.",
+            "example": 1
+          },
+          "publishedCount": {
+            "type": "integer",
+            "title": "Publishedcount",
+            "default": 0,
+            "description": "Number of published.",
+            "example": 1
+          },
+          "headRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component detail."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component detail."
+              }
+            ],
+            "title": "Headrevision",
+            "description": "Highest published semver, or null while draft-only."
+          },
+          "revisions": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentLibraryRevisionBody"
+            },
+            "type": "array",
+            "title": "Revisions",
+            "description": "Revisions.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "title": "ComponentDetailBody",
+        "description": "Component detail: the summary plus its revisions, highest semver first."
+      },
       "ComponentLink": {
         "properties": {
           "type": {
@@ -131273,6 +132760,22 @@
         ],
         "title": "ComponentLink",
         "description": "A component's link."
+      },
+      "ComponentListResponse": {
+        "properties": {
+          "components": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentSummaryBody"
+            },
+            "type": "array",
+            "title": "Components",
+            "description": "Components.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "ComponentListResponse",
+        "description": "ComponentListResponse schema."
       },
       "ComponentOut": {
         "properties": {
@@ -131439,6 +132942,92 @@
         "title": "ComponentOut",
         "description": "An accepted component (the ``component`` entity kind)."
       },
+      "ComponentSummaryBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component summary."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component summary."
+              }
+            ],
+            "title": "Description",
+            "description": "Free-text description."
+          },
+          "ownerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component summary."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component summary."
+              }
+            ],
+            "title": "Ownerid",
+            "description": "Owner ID."
+          },
+          "revisionCount": {
+            "type": "integer",
+            "title": "Revisioncount",
+            "default": 0,
+            "description": "Number of revision.",
+            "example": 1
+          },
+          "publishedCount": {
+            "type": "integer",
+            "title": "Publishedcount",
+            "default": 0,
+            "description": "Number of published.",
+            "example": 1
+          },
+          "headRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component summary."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component summary."
+              }
+            ],
+            "title": "Headrevision",
+            "description": "Highest published semver, or null while draft-only."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ],
+        "title": "ComponentSummaryBody",
+        "description": "One component in the list response."
+      },
       "ConformanceFailure": {
         "properties": {
           "instance_id": {
@@ -131567,14 +133156,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -134968,7 +136557,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "7cd9ed2e-c91b-4a54-a747-dbcc87043668"
+            "example": "e2d4f304-50bf-47ef-bc0c-b7d51069da9b"
           },
           "method": {
             "type": "string",
@@ -137499,6 +139088,22 @@
         "title": "DeleteVariantResponse",
         "description": "The outcome of removing a variant."
       },
+      "DeletedResponse": {
+        "properties": {
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted",
+            "description": "Deleted.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "title": "DeletedResponse",
+        "description": "DeletedResponse schema."
+      },
       "DeliveryAttestation": {
         "properties": {
           "predicate_type": {
@@ -137531,7 +139136,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -139578,7 +141183,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "browse_url": {
             "anyOf": [
@@ -147501,7 +149106,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "reports": {
             "items": {
@@ -147801,7 +149406,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           }
         },
         "additionalProperties": false,
@@ -155358,6 +156963,38 @@
         "title": "ImportSourceListResponse",
         "description": "The list of registered import sources, for source-card / CLI enumeration."
       },
+      "InitialRevisionBody": {
+        "properties": {
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Initial semver revision.",
+            "default": "0.1.0",
+            "example": "example"
+          },
+          "payload": {
+            "title": "Payload",
+            "description": "Canonical OAS fragment (ignored for schema kind \u2014 the pinned Type Registry schema is snapshotted server-side)."
+          },
+          "schemaPrimitiveId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for initial revision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for initial revision."
+              }
+            ],
+            "title": "Schemaprimitiveid",
+            "description": "Schema kind: the Type Registry row to pin."
+          }
+        },
+        "type": "object",
+        "title": "InitialRevisionBody",
+        "description": "The initial draft revision created with a new component."
+      },
       "InputKind": {
         "type": "string",
         "enum": [
@@ -160012,6 +161649,105 @@
         ],
         "title": "MatchedDiff",
         "description": "One empirical diff entry paired with the fidelity finding that explains it."
+      },
+      "MaterializationEntryBody": {
+        "properties": {
+          "section": {
+            "type": "string",
+            "title": "Section",
+            "description": "Section.",
+            "example": "example"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name.",
+            "example": "Pet"
+          },
+          "requestedName": {
+            "type": "string",
+            "title": "Requestedname",
+            "description": "Requested Name.",
+            "example": "Example"
+          },
+          "collided": {
+            "type": "boolean",
+            "title": "Collided",
+            "description": "Collided.",
+            "example": false
+          },
+          "componentId": {
+            "type": "string",
+            "title": "Componentid",
+            "description": "Component ID.",
+            "example": "example"
+          },
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "componentName": {
+            "type": "string",
+            "title": "Componentname",
+            "description": "Component Name.",
+            "example": "Example"
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Revision.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "section",
+          "name",
+          "requestedName",
+          "collided",
+          "componentId",
+          "revisionId",
+          "componentName",
+          "revision"
+        ],
+        "title": "MaterializationEntryBody",
+        "description": "One deterministic materialization entry (final name + collision flag)."
+      },
+      "MaterializationPreviewResponse": {
+        "properties": {
+          "includeOrigin": {
+            "type": "boolean",
+            "title": "Includeorigin",
+            "description": "Include Origin.",
+            "example": false
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/MaterializationEntryBody"
+            },
+            "type": "array",
+            "title": "Entries",
+            "description": "Entries.",
+            "maxItems": 100
+          },
+          "collisions": {
+            "items": {
+              "$ref": "#/components/schemas/MaterializationEntryBody"
+            },
+            "type": "array",
+            "title": "Collisions",
+            "description": "Collisions.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "includeOrigin"
+        ],
+        "title": "MaterializationPreviewResponse",
+        "description": "The deterministic preview of materializing the version's pins."
       },
       "MatrixCellStatus": {
         "type": "string",
@@ -167348,7 +169084,7 @@
             "format": "date-time",
             "title": "Checked At",
             "description": "Checked At timestamp (ISO 8601).",
-            "example": "2026-11-09T02:33:58Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "status": {
             "type": "string",
@@ -168618,7 +170354,7 @@
             "type": "string",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-09T00:10:31Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "client_id": {
             "type": "string",
@@ -179116,6 +180852,140 @@
         "title": "PermissionCell",
         "description": "A single allowed ``resource:action`` grant in a role's matrix."
       },
+      "PinBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "componentId": {
+            "type": "string",
+            "title": "Componentid",
+            "description": "Component ID.",
+            "example": "example"
+          },
+          "componentName": {
+            "type": "string",
+            "title": "Componentname",
+            "description": "Component Name.",
+            "example": "Example"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "description": "Kind.",
+            "example": "example"
+          },
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Revision.",
+            "example": "example"
+          },
+          "payloadDigest": {
+            "type": "string",
+            "title": "Payloaddigest",
+            "description": "Payload Digest.",
+            "example": "example"
+          },
+          "localName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pin."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pin."
+              }
+            ],
+            "title": "Localname",
+            "description": "Local Name."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "componentId",
+          "componentName",
+          "kind",
+          "revisionId",
+          "revision",
+          "payloadDigest"
+        ],
+        "title": "PinBody",
+        "description": "One live pin joined to its component/revision identity."
+      },
+      "PinCreateRequest": {
+        "properties": {
+          "componentRevisionId": {
+            "type": "string",
+            "title": "Componentrevisionid",
+            "description": "Component Revision ID.",
+            "example": "example"
+          },
+          "localName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for pin create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for pin create."
+              }
+            ],
+            "title": "Localname",
+            "description": "Optional preferred local components key; collisions still resolve deterministically and never overwrite local components."
+          }
+        },
+        "type": "object",
+        "required": [
+          "componentRevisionId"
+        ],
+        "title": "PinCreateRequest",
+        "description": "Pin one published library revision to the draft version."
+      },
+      "PinCreateResponse": {
+        "properties": {
+          "pinId": {
+            "type": "string",
+            "title": "Pinid",
+            "description": "Pin ID.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pinId"
+        ],
+        "title": "PinCreateResponse",
+        "description": "PinCreateResponse schema."
+      },
+      "PinListResponse": {
+        "properties": {
+          "pins": {
+            "items": {
+              "$ref": "#/components/schemas/PinBody"
+            },
+            "type": "array",
+            "title": "Pins",
+            "description": "Pins.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "PinListResponse",
+        "description": "PinListResponse schema."
+      },
       "PinnedProject": {
         "properties": {
           "id": {
@@ -184995,6 +186865,36 @@
         ],
         "title": "PublicSdkInfoResponse",
         "description": "Everything the browse Get SDK panel needs, in one anonymous call."
+      },
+      "PublishResponse": {
+        "properties": {
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "description": "Published.",
+            "example": false
+          },
+          "alreadyPublished": {
+            "type": "boolean",
+            "title": "Alreadypublished",
+            "description": "Already Published.",
+            "example": false
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Revision.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "published",
+          "alreadyPublished",
+          "revision"
+        ],
+        "title": "PublishResponse",
+        "description": "PublishResponse schema."
       },
       "PurgeEstimateBody": {
         "properties": {
@@ -193901,7 +195801,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           }
         },
         "additionalProperties": false,
@@ -194496,6 +196396,40 @@
         "title": "ReviewerDecisionRecord",
         "description": "One reviewer's row in one round of a review."
       },
+      "RevisionCreateRequest": {
+        "properties": {
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Semver revision string, unique per component.",
+            "example": "example"
+          },
+          "payload": {
+            "title": "Payload",
+            "description": "Payload."
+          },
+          "schemaPrimitiveId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for revision create."
+              },
+              {
+                "type": "null",
+                "description": "Request body for revision create."
+              }
+            ],
+            "title": "Schemaprimitiveid",
+            "description": "Schema Primitive ID."
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision"
+        ],
+        "title": "RevisionCreateRequest",
+        "description": "Create a new draft revision of an existing component."
+      },
       "RevisionDeprecationWarningOut": {
         "properties": {
           "revisionId": {
@@ -194800,6 +196734,47 @@
         ],
         "title": "RevisionMergeBaseResponse",
         "description": "``mergeBase(revA, revB)`` \u2014 the best common ancestor of two revisions (#2593)."
+      },
+      "RevisionMutationResponse": {
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revisionId"
+        ],
+        "title": "RevisionMutationResponse",
+        "description": "RevisionMutationResponse schema."
+      },
+      "RevisionUpdateRequest": {
+        "properties": {
+          "payload": {
+            "title": "Payload",
+            "description": "Payload."
+          },
+          "schemaPrimitiveId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for revision update."
+              },
+              {
+                "type": "null",
+                "description": "Request body for revision update."
+              }
+            ],
+            "title": "Schemaprimitiveid",
+            "description": "Schema Primitive ID."
+          }
+        },
+        "type": "object",
+        "title": "RevisionUpdateRequest",
+        "description": "Replace a draft revision's canonical payload."
       },
       "RoleDuplicateRequest": {
         "properties": {
@@ -206912,13 +208887,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           }
         },
         "additionalProperties": false,
@@ -208422,7 +210397,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "detected_by": {
             "anyOf": [
@@ -217246,14 +219221,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-08T23:29:29Z"
+            "example": "2026-11-11T23:55:51Z"
           },
           "outcome": {
             "anyOf": [
@@ -226685,6 +228660,89 @@
         ],
         "title": "MockScenarioRuleSpec",
         "description": "One declarative rule: request predicates plus the response(s) they select (#4744 PMR-2.1)."
+      },
+      "ComponentLibraryRevisionBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Semver revision string (MAJOR.MINOR.PATCH).",
+            "example": "example"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "draft | published (published is immutable).",
+            "example": "example"
+          },
+          "canonicalPayload": {
+            "title": "Canonicalpayload",
+            "description": "The canonical OAS fragment this revision materializes."
+          },
+          "schemaPrimitiveId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component library revision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component library revision."
+              }
+            ],
+            "title": "Schemaprimitiveid",
+            "description": "Schema kind: the pinned Type Registry (primitives) row."
+          },
+          "payloadDigest": {
+            "type": "string",
+            "title": "Payloaddigest",
+            "description": "sha256:<hex> of the canonical payload.",
+            "example": "example"
+          },
+          "publishedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component library revision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component library revision."
+              }
+            ],
+            "title": "Publishedat",
+            "description": "Published At."
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for component library revision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for component library revision."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "revision",
+          "state",
+          "payloadDigest"
+        ],
+        "title": "RevisionBody",
+        "description": "One component revision on the wire."
       },
       "ConsumerBindingBindingListResponse": {
         "properties": {

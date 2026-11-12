@@ -278,6 +278,7 @@ def generate_openapi_spec(
     paths_data: Optional[List[Dict[str, Any]]] = None,
     security_scheme_rows: Optional[List[Dict[str, Any]]] = None,
     server_rows: Optional[List[Dict[str, Any]]] = None,
+    component_pin_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Generate a complete OpenAPI 3.1.0 specification for all classes in a version."""
 
@@ -338,6 +339,28 @@ def generate_openapi_spec(
     components: Dict[str, Any] = {"schemas": schemas}
     if security_schemes:
         components["securitySchemes"] = security_schemes
+
+    # Materialize pinned library revisions (DCW-3.1, private-suite#2353) into
+    # standard local components sections. Pins are immutable published
+    # snapshots, so generation stays deterministic; with no pins the document
+    # is untouched. Collision-safe naming never overwrites a local component.
+    resolved_pin_rows: List[Dict[str, Any]] = []
+    if component_pin_rows is not None:
+        resolved_pin_rows = component_pin_rows
+    elif version_db_id:
+        try:
+            from .database import db
+            if db:
+                resolved_pin_rows = db.get_materializable_pins_for_version(version_db_id)
+        except Exception as e:
+            print(f"Warning: Could not load component pins for version {version_id}: {e}")
+    if resolved_pin_rows:
+        from .component_library import materialize_pinned_components
+
+        materialized = materialize_pinned_components(
+            {"components": components}, resolved_pin_rows, include_origin=True
+        )
+        components = materialized.document["components"]
 
     # Build the OpenAPI specification
     info_block: Dict[str, Any] = {
