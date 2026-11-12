@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.685.0] - 2026-11-11
+
+### Added
+- **Advanced component governance and lifecycle (DCW-3.4, private-suite#2364)** — approval,
+  deprecation, bulk upgrade, and audit export for the DCW-3.1 component library:
+  - **Policy on the governing style guide.** `PUT /v1/style-guides/{tenant}/{guide}/policy`
+    takes `componentApprovalStages` (up to five ordered stages, each with `requiredApprovals`
+    and an optional `requiredReviewerRole`, the COL-2.3 semantics) and
+    `componentDeprecationNoticeDays` (0–365). `GET /v1/component-library/{tenant}/governance/policy`
+    returns the policy resolved for the tenant. No stages means no gate.
+  - **Multi-stage approval.** `GET/POST …/components/{id}/revisions/{rid}/approval` reads the
+    assessment and records `approve` / `request_changes` on the current stage. Decisions are
+    bound to the payload digest, so editing a draft makes earlier approvals stale. Publishing
+    answers 409 `APPROVAL_REQUIRED` until every stage is satisfied, and 409 `APPROVAL_STALE`
+    when the draft changed after it was assessed. The gate fails closed when the policy cannot
+    be read.
+  - **Scheduled deprecation.** `POST …/revisions/{rid}/deprecation` (sunset date honouring the
+    notice window, optional higher published replacement, migration guide) returns the affected
+    pinned projects and migration guidance; `GET …/deprecations` lists them; `DELETE
+    …/deprecations/{id}` withdraws one. After the sunset, new pins answer 409
+    `REVISION_SUNSET`; existing pins keep working and published revisions are never modified.
+  - **Bulk consumer upgrade.** `POST …/components/{id}/upgrades/preview` lists every live pin,
+    skips published project versions, classifies each eligible version's document before and
+    after with the CTG classifier, and returns a confirmation token. `POST …/upgrades` needs
+    `confirm: true` and that token (422 `CONFIRMATION_REQUIRED`, 409 `UPGRADE_PLAN_STALE`).
+  - **Audit export.** `GET …/audit/export?format=json|csv` (tenant administrators) — actor,
+    policy, old/new revision, affected projects, decision, and timestamp per ledger row.
+  - `apiome-db` V367: `style_guides.component_approval_stages` /
+    `component_deprecation_notice_days`, `apiome.component_revision_approvals`, and
+    `apiome.component_revision_deprecations`. OpenAPI 1.544.0 → 1.545.0.
+
 ## [1.684.0] - 2026-11-11
 
 ### Added

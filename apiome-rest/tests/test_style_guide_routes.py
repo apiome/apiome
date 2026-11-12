@@ -1172,3 +1172,121 @@ def test_put_policy_rejects_an_unknown_breaking_publish_level():
         )
 
     assert r.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Component-library policy (DCW-3.4, private-suite#2364)
+# ---------------------------------------------------------------------------
+
+
+def test_get_policy_reports_the_component_library_policy():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id",
+        return_value=_custom_row(
+            component_approval_stages=[
+                {"name": "Platform", "requiredApprovals": 2, "requiredReviewerRole": None}
+            ],
+            component_deprecation_notice_days=30,
+        ),
+    ):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy")
+
+    assert r.status_code == 200
+    body = r.json()
+    assert body["componentApprovalStages"] == [
+        {"name": "Platform", "requiredApprovals": 2, "requiredReviewerRole": None}
+    ]
+    assert body["componentDeprecationNoticeDays"] == 30
+
+
+def test_get_policy_defaults_the_component_policy_off():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ):
+        body = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/policy").json()
+
+    assert body["componentApprovalStages"] == []
+    assert body["componentDeprecationNoticeDays"] == 0
+
+
+def test_put_policy_persists_component_stages_and_notice(governance):
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={
+                "componentApprovalStages": [
+                    {"name": " Platform ", "requiredApprovals": 2},
+                    {"name": "Security", "requiredApprovals": 1, "requiredReviewerRole": "Admin"},
+                ],
+                "componentDeprecationNoticeDays": 30,
+                "snapshot": False,
+            },
+        )
+
+    assert r.status_code == 200
+    assert update.call_args.kwargs["component_approval_stages"] == [
+        {"name": "Platform", "requiredApprovals": 2, "requiredReviewerRole": None},
+        {"name": "Security", "requiredApprovals": 1, "requiredReviewerRole": "admin"},
+    ]
+    assert update.call_args.kwargs["component_deprecation_notice_days"] == 30
+
+
+def test_put_policy_leaves_the_component_policy_unchanged_when_omitted():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings",
+        return_value=_custom_row(),
+    ) as update, patch("app.style_guide_routes.snapshot_style_guide_policy"):
+        client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"requiredCoverage": ["quality"], "snapshot": False},
+        )
+
+    assert update.call_args.kwargs["component_approval_stages"] is None
+    assert update.call_args.kwargs["component_deprecation_notice_days"] is None
+
+
+def test_put_policy_rejects_invalid_component_stages():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.update_style_guide_policy_settings"
+    ) as update:
+        r = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={
+                "componentApprovalStages": [
+                    {"name": "A", "requiredApprovals": 1},
+                    {"name": "a", "requiredApprovals": 1},
+                ],
+                "snapshot": False,
+            },
+        )
+
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "COMPONENT_APPROVAL_STAGES_INVALID"
+    update.assert_not_called()
+
+
+def test_put_policy_rejects_out_of_range_component_values():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.update_style_guide_policy_settings") as update:
+        too_many = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"componentApprovalStages": [{"name": "A", "requiredApprovals": 0}]},
+        )
+        notice = client.put(
+            f"/v1/style-guides/acme/{GUIDE_ID}/policy",
+            json={"componentDeprecationNoticeDays": 400},
+        )
+
+    assert too_many.status_code == 422
+    assert notice.status_code == 422
+    update.assert_not_called()

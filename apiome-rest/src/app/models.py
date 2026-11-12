@@ -7098,6 +7098,29 @@ class StyleGuideCiOutcomesOut(BaseModel):
     )
 
 
+class ComponentApprovalStageModel(BaseModel):
+    """One component-library approval stage (DCW-3.4, private-suite#2364)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(min_length=1, max_length=64, description="Stage name, unique per guide.")
+    required_approvals: int = Field(
+        default=1,
+        ge=1,
+        le=20,
+        validation_alias=AliasChoices("requiredApprovals", "required_approvals"),
+        serialization_alias="requiredApprovals",
+        description="Approvals the stage needs.",
+    )
+    required_reviewer_role: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        validation_alias=AliasChoices("requiredReviewerRole", "required_reviewer_role"),
+        serialization_alias="requiredReviewerRole",
+        description="Role slug at least one of the stage's approvals must come from.",
+    )
+
+
 class StyleGuidePolicySettingsOut(BaseModel):
     """Draft policy gate settings on a live style guide (CLX-1.3, #4850)."""
 
@@ -7142,6 +7165,24 @@ class StyleGuidePolicySettingsOut(BaseModel):
         description=(
             "Role slug at least one of those approvals must come from (COL-2.3); "
             "null means any approver counts."
+        ),
+    )
+    component_approval_stages: List[ComponentApprovalStageModel] = Field(
+        default_factory=list,
+        serialization_alias="componentApprovalStages",
+        description=(
+            "Ordered approval stages a component-library revision must pass before it can be "
+            "published (DCW-3.4); empty (default) means no component approval gate."
+        ),
+    )
+    component_deprecation_notice_days: int = Field(
+        default=0,
+        ge=0,
+        le=365,
+        serialization_alias="componentDeprecationNoticeDays",
+        description=(
+            "Minimum days between scheduling a component revision deprecation and its "
+            "sunset (DCW-3.4)."
         ),
     )
 
@@ -7192,6 +7233,25 @@ class StyleGuidePolicySettingsPutRequest(BaseModel):
             "Role slug at least one approval must come from (COL-2.3); send null to clear "
             "it, omit to leave unchanged."
         ),
+    )
+    component_approval_stages: Optional[List[ComponentApprovalStageModel]] = Field(
+        default=None,
+        validation_alias=AliasChoices("componentApprovalStages", "component_approval_stages"),
+        serialization_alias="componentApprovalStages",
+        description=(
+            "Ordered component-library approval stages (DCW-3.4), at most 5; send [] to turn "
+            "the gate off, omit to leave unchanged."
+        ),
+    )
+    component_deprecation_notice_days: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=365,
+        validation_alias=AliasChoices(
+            "componentDeprecationNoticeDays", "component_deprecation_notice_days"
+        ),
+        serialization_alias="componentDeprecationNoticeDays",
+        description="Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged.",
     )
     snapshot: bool = Field(
         default=True,

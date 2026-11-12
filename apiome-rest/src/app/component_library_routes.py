@@ -29,7 +29,7 @@ its audit row commit in one transaction (DCW-0.2
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
@@ -43,6 +43,11 @@ from .component_library import (
     payload_digest,
     validate_component_name,
     validate_component_payload,
+)
+from .component_governance_service import (
+    assess_revision_approval,
+    find_revision,
+    resolve_component_policy,
 )
 from .database import ComponentLibraryConflictError, db
 from .openapi_generator import generate_openapi_spec
@@ -239,6 +244,18 @@ _CONFLICT_MESSAGES = {
     "revision_in_use": "The revision is pinned by project versions and cannot be deleted.",
     "published_version": "Published project revisions are immutable; pin changes target "
     "an authorized draft.",
+    # DCW-3.4 (private-suite#2364) governance and lifecycle.
+    "approval_required": "The component approval policy is not satisfied yet.",
+    "approval_stale": "The draft changed after it was assessed; review the new payload.",
+    "approval_not_required": "No component approval policy applies.",
+    "stage_not_current": "Decisions are recorded on the current approval stage only.",
+    "duplicate_decision": "You already recorded a decision on this stage for this payload.",
+    "revision_sunset": "This revision is deprecated and past its sunset; pin a newer revision.",
+    "replacement_invalid": "The replacement must be a published, higher revision of the same "
+    "component.",
+    "deprecation_exists": "This revision already has a scheduled deprecation.",
+    "upgrade_plan_stale": "The upgrade plan changed since it was previewed; preview it again.",
+    "upgrade_pin_ineligible": "Some selected pins cannot be upgraded.",
 }
 
 _NOT_FOUND_CODES = {
@@ -246,6 +263,7 @@ _NOT_FOUND_CODES = {
     "revision_not_found": "Component revision not found",
     "version_not_found": "Version not found",
     "pin_not_found": "Pin not found",
+    "deprecation_not_found": "Deprecation not found",
 }
 
 
@@ -336,6 +354,47 @@ def _summary_body(row: Dict[str, Any]) -> ComponentSummaryBody:
         published_count=int(row.get("published_count") or 0),
         head_revision=row.get("head_revision"),
     )
+
+
+def _approval_gate(
+    tenant_id: str, component_id: str, revision_id: str
+) -> Tuple[Optional[str], Optional[Dict[str, Any]]]:
+    """Apply the DCW-3.4 component approval policy before a publish.
+
+    Args:
+        tenant_id: The tenant.
+        component_id: The component.
+        revision_id: The draft revision about to be published.
+
+    Returns:
+        ``(expected_digest, approval_payload)`` for the publish transaction — both ``None``
+        when no policy applies or the revision is already published (republishing stays an
+        idempotent no-op).
+
+    Raises:
+        HTTPException: 404 for a revision outside the tenant; 409 ``APPROVAL_REQUIRED`` with
+            the assessment when a stage is unsatisfied.
+    """
+    policy = resolve_component_policy(tenant_id)
+    if not policy.approval_active:
+        return None, None
+    revision = find_revision(tenant_id, component_id, revision_id)
+    if not revision:
+        raise HTTPException(status_code=404, detail="Component revision not found")
+    if revision.get("state") == "published":
+        return None, None
+    assessment = assess_revision_approval(tenant_id, revision, policy)
+    payload = assessment.as_payload()
+    if assessment.blocked:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "APPROVAL_REQUIRED",
+                "message": assessment.message(),
+                "approval": payload,
+            },
+        )
+    return str(revision.get("payload_digest") or ""), payload
 
 
 # ===========================================================================
@@ -551,12 +610,24 @@ async def publish_revision(
     Enforces the no-unsafe-downgrade rule inside the transaction: the revision
     must be strictly greater than the highest already-published revision.
     Republishing a published revision is an idempotent no-op.
+
+    DCW-3.4: when the governing style guide defines component approval stages,
+    a draft whose stages are not all satisfied answers 409 ``APPROVAL_REQUIRED``
+    with the assessment, and the publish transaction rechecks that the payload
+    is still the one the approvers judged (409 ``APPROVAL_STALE`` otherwise).
     """
     enforce_permission(db, auth_data, Resource.TYPES, Action.PUBLISH)
     actor_id = get_authenticated_user_id(auth_data)
+    tenant_id = auth_data["tenant_id"]
+    expected_digest, approval = _approval_gate(tenant_id, component_id, revision_id)
     try:
         result = db.publish_component_revision(
-            auth_data["tenant_id"], component_id, revision_id, actor_id
+            tenant_id,
+            component_id,
+            revision_id,
+            actor_id,
+            expected_digest=expected_digest,
+            approval=approval,
         )
     except ComponentLibraryConflictError as error:
         _raise_conflict(error)

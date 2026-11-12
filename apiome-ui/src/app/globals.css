@@ -11403,6 +11403,53 @@ button.tfa-reset-notice__close > svg {
   }
 }
 
+/* Component-library approval stages (DCW-3.4): one row per ordered stage. */
+.gd-stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.gd-stage-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+}
+
+.gd-stage-row__index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--control-h);
+  block-size: var(--control-h);
+  border-radius: var(--radius-xl);
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+.gd-stage-problems {
+  margin: 0 0 var(--space-3);
+  padding-inline-start: var(--space-4);
+  color: var(--danger-fg);
+  font-size: var(--fs-xs);
+}
+
+@media (max-width: 46rem) {
+  .gd-stage-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gd-stage-row__index {
+    display: none;
+  }
+}
+
 /* A `legend` takes the label's type, so a fieldset and a field read the same. */
 .gd-legend {
   font-size: var(--fs-xs);

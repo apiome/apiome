@@ -127,6 +127,7 @@ from .provider_verification_routes import router as provider_verification_router
 from .public_types_routes import router as public_types_router
 from .push_webhook_crypto import validate_webhook_signing_key
 from .component_library_routes import router as component_library_router
+from .component_governance_routes import router as component_governance_router
 from .push_webhook_delivery import process_due_push_webhook_deliveries
 from .push_webhook_subscriptions_routes import router as push_webhook_subscriptions_router
 from .quality_policy_routes import router as quality_policy_router
@@ -216,7 +217,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.544.0",
+    version="1.545.0",
 )
 
 
@@ -534,6 +535,7 @@ app.include_router(slate_domains_router)
 # (APX-3.3, private-suite#2458).
 app.include_router(slate_git_preview_router)
 app.include_router(component_library_router)
+app.include_router(component_governance_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)
 app.include_router(version_change_report_router)

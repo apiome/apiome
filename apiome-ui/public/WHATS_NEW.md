@@ -36,6 +36,8 @@ We continue to improve the platform based on your feedback with improvements and
   - Every docs link in the app — **Help & docs**, lint rule references, governance panels, What's new — opens **docs.apiome.dev** instead of GitHub
 - Suite Access:
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
+- Style guides:
+  - A style guide's **Policy** tab has a **Component library** section: add up to five ordered **approval stages** (a name, how many approvals, and an optional reviewer role) that a shared Designer component revision must pass before it can be published, and a **Deprecation notice (days)** that sets how far ahead a component deprecation must announce its sunset. With no stages, component revisions publish as before
 - Tools:
   - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:

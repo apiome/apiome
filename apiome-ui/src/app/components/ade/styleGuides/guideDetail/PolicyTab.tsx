@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { History, ShieldCheck } from 'lucide-react';
+import { History, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
@@ -17,6 +17,10 @@ import { buildGovernanceDocsHref, POLICY_DOCS_PAGE } from '@/app/utils/lint-axis
 
 import {
   BREAKING_PUBLISH_POLICY_OPTIONS,
+  componentStageProblems,
+  MAX_COMPONENT_APPROVAL_STAGES,
+  MAX_COMPONENT_DEPRECATION_NOTICE_DAYS,
+  MAX_COMPONENT_STAGE_NAME_LENGTH,
   MAX_REQUIRED_APPROVALS,
   POLICY_COVERAGE_AXES,
   POLICY_GRADE_OPTIONS,
@@ -128,6 +132,8 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
   // on its own — which is also what the REST gate does with the pair.
   const approvalGateArmed = draft.requiredApprovals >= 1;
   const roleOptions = reviewerRoleOptions(state.roles, draft.requiredReviewerRole);
+  const componentStages = draft.componentApprovalStages;
+  const stageProblems = componentStageProblems(componentStages);
 
   return (
     <div className="gd-policy" data-testid="guide-policy-panel">
@@ -286,6 +292,149 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
             </div>
           </div>
 
+          <div data-testid="guide-policy-component-library">
+            <h4 className="sg-section-title">Component library</h4>
+            <p className="sg-section-desc">
+              The approval stages a shared component revision must pass before it can be
+              published, in order, and the notice a deprecation must give its consumers
+              (DCW-3.4). With no stages, component revisions publish without approval.
+            </p>
+            {componentStages.length === 0 ? (
+              <p className="hive-quiet">No approval stages — component publishes never wait.</p>
+            ) : (
+              <ol className="gd-stage-list" aria-label="Component approval stages">
+                {componentStages.map((stage, index) => {
+                  const stageRoles = reviewerRoleOptions(state.roles, stage.requiredReviewerRole);
+                  const id = `component-stage-${index}`;
+                  return (
+                    <li key={index} className="gd-stage-row" data-testid={id}>
+                      <span className="gd-stage-row__index" aria-hidden>
+                        {index + 1}
+                      </span>
+                      <div className="sg-field">
+                        <Label htmlFor={`${id}-name`}>Stage name</Label>
+                        <Input
+                          id={`${id}-name`}
+                          aria-label={`Stage ${index + 1} name`}
+                          maxLength={MAX_COMPONENT_STAGE_NAME_LENGTH}
+                          value={stage.name}
+                          disabled={disabled}
+                          onChange={(event) =>
+                            state.updateComponentStage(index, { name: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="sg-field">
+                        <Label htmlFor={`${id}-approvals`}>Approvals</Label>
+                        <Input
+                          id={`${id}-approvals`}
+                          type="number"
+                          inputMode="numeric"
+                          min={1}
+                          max={MAX_REQUIRED_APPROVALS}
+                          step={1}
+                          className="sg-num gd-policy-number"
+                          aria-label={`Stage ${index + 1} required approvals`}
+                          value={stage.requiredApprovals}
+                          disabled={disabled}
+                          onChange={(event) =>
+                            state.updateComponentStage(index, {
+                              requiredApprovals: Number.parseInt(event.target.value, 10),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="sg-field">
+                        <Label htmlFor={`${id}-role`}>
+                          Reviewer role <span className="sg-field__optional">(optional)</span>
+                        </Label>
+                        <select
+                          id={`${id}-role`}
+                          aria-label={`Stage ${index + 1} required reviewer role`}
+                          className="hive-control sg-select gd-policy-select"
+                          value={stage.requiredReviewerRole ?? ''}
+                          disabled={disabled}
+                          onChange={(event) =>
+                            state.updateComponentStage(index, {
+                              requiredReviewerRole: event.target.value,
+                            })
+                          }
+                        >
+                          <option value="">Any approver</option>
+                          {stageRoles.map((option) => (
+                            <option key={option.slug} value={option.slug}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {!readOnly && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gd-stage-row__remove"
+                          aria-label={`Remove stage ${index + 1}`}
+                          disabled={disabled}
+                          onClick={() => state.removeComponentStage(index)}
+                        >
+                          <Trash2 aria-hidden />
+                        </Button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+            {stageProblems.length > 0 && (
+              <ul className="gd-stage-problems" role="alert" data-testid="component-stage-problems">
+                {stageProblems.map((problem) => (
+                  <li key={problem}>{problem}</li>
+                ))}
+              </ul>
+            )}
+            <div className="gd-policy-grid">
+              <div className="sg-field">
+                {!readOnly && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={disabled || componentStages.length >= MAX_COMPONENT_APPROVAL_STAGES}
+                    onClick={state.addComponentStage}
+                    data-testid="component-stage-add"
+                  >
+                    <Plus aria-hidden />
+                    Add stage
+                  </Button>
+                )}
+                <p className="sg-field__hint">
+                  Up to {MAX_COMPONENT_APPROVAL_STAGES} stages. A stage collects decisions only
+                  after every stage before it is satisfied.
+                </p>
+              </div>
+              <div className="sg-field">
+                <Label htmlFor="component-deprecation-notice">Deprecation notice (days)</Label>
+                <Input
+                  id="component-deprecation-notice"
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={MAX_COMPONENT_DEPRECATION_NOTICE_DAYS}
+                  step={1}
+                  className="sg-num gd-policy-number"
+                  aria-describedby="component-deprecation-notice-hint"
+                  value={draft.componentDeprecationNoticeDays}
+                  disabled={disabled}
+                  onChange={(event) => state.setComponentDeprecationNoticeDays(event.target.value)}
+                />
+                <p className="sg-field__hint" id="component-deprecation-notice-hint">
+                  {draft.componentDeprecationNoticeDays > 0
+                    ? `A deprecation's sunset must be at least ${draft.componentDeprecationNoticeDays} day(s) after it is scheduled.`
+                    : 'Zero means a deprecation may set any future sunset date.'}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <h4 className="sg-section-title">CI outcomes</h4>
             <p className="sg-section-desc">
@@ -318,7 +467,7 @@ export default function PolicyTab({ state, readOnly }: PolicyTabProps) {
           <span className="hive-quiet">Saving creates an immutable policy version.</span>
           {!readOnly && (
             <Button
-              disabled={state.saving || !state.dirty}
+              disabled={state.saving || !state.dirty || stageProblems.length > 0}
               onClick={() => void state.save()}
               data-testid="guide-policy-save"
             >

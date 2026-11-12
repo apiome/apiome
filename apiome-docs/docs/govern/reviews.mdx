@@ -102,6 +102,35 @@ When the gate is not met, publishing is refused with the reason, for example:
 Collect the approvals, relax the policy, or — as a last resort — tick **Force publish (ignore
 validation errors)** and give a **Force publish reason**, which is recorded in the audit trail.
 
+## Component library approvals
+
+The same policy governs the Designer's shared **component library**: reusable parameters, headers,
+request bodies, responses and security bundles that many projects pin. Two more settings sit beside
+the approval gate, on the style guide's **Policy** tab under **Component library**, or over the API:
+
+```http
+PUT /v1/style-guides/{tenant}/{guide}/policy
+X-API-Key: <your-api-key>
+
+{
+  "componentApprovalStages": [
+    { "name": "Platform review", "requiredApprovals": 2 },
+    { "name": "Security", "requiredApprovals": 1, "requiredReviewerRole": "<role-slug>" }
+  ],
+  "componentDeprecationNoticeDays": 30
+}
+```
+
+- **`componentApprovalStages`** — up to five stages, in order. A component revision is published only
+  when every stage has its approvals; a stage takes decisions only once the stages before it are
+  satisfied. Editing a draft revision makes the approvals it had stale. Send `[]` to turn the
+  component gate off.
+- **`componentDeprecationNoticeDays`** — the least notice, in days, a component deprecation must give
+  before its sunset. Zero allows any future date.
+
+The component library itself — approving, deprecating and upgrading components — is described in
+the [Apiome Suite documentation](https://docs.suite.apiome.dev/design/contract-inspector).
+
 ## With the API
 
 `GET` / `POST /v1/tenants/{tenant}/projects/{project}/reviews`, `GET …/reviews/{id}`,

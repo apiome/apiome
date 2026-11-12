@@ -218,6 +218,8 @@ describe('PolicyTab', () => {
       breakingPublishPolicy: 'warn',
       requiredApprovals: 0,
       requiredReviewerRole: null,
+      componentApprovalStages: [],
+      componentDeprecationNoticeDays: 0,
       snapshot: true,
     });
   });
@@ -373,5 +375,108 @@ describe('PolicyTab', () => {
     expect(screen.getByTestId('guide-policy-save')).not.toBeDisabled();
     // Nothing was re-read: the draft is the page's, not the panel's.
     expect(calls.filter((c) => c.url.includes('/policy-versions')).length).toBe(1);
+  });
+});
+
+/** DCW-3.4 (private-suite#2364): the component-library policy on the same tab. */
+describe('PolicyTab — component library', () => {
+  it('shows no stages by default and a zero notice window', async () => {
+    await renderPolicyTab();
+
+    const section = screen.getByTestId('guide-policy-component-library');
+    expect(section).toHaveTextContent('No approval stages — component publishes never wait.');
+    expect(screen.getByLabelText('Deprecation notice (days)')).toHaveValue(0);
+  });
+
+  it('adds ordered stages and saves them with the notice window', async () => {
+    await renderPolicyTab();
+
+    fireEvent.click(screen.getByTestId('component-stage-add'));
+    fireEvent.click(screen.getByTestId('component-stage-add'));
+    fireEvent.change(screen.getByLabelText('Stage 1 name'), { target: { value: ' Platform ' } });
+    fireEvent.change(screen.getByLabelText('Stage 1 required approvals'), {
+      target: { value: '2' },
+    });
+    fireEvent.change(screen.getByLabelText('Stage 2 name'), { target: { value: 'Release' } });
+    fireEvent.change(screen.getByLabelText('Stage 2 required reviewer role'), {
+      target: { value: 'release-manager' },
+    });
+    fireEvent.change(screen.getByLabelText('Deprecation notice (days)'), {
+      target: { value: '30' },
+    });
+    fireEvent.click(screen.getByTestId('guide-policy-save'));
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const put = calls.find((c) => c.method === 'PUT')!.body as Record<string, unknown>;
+    expect(put.componentApprovalStages).toEqual([
+      { name: 'Platform', requiredApprovals: 2, requiredReviewerRole: null },
+      { name: 'Release', requiredApprovals: 1, requiredReviewerRole: 'release-manager' },
+    ]);
+    expect(put.componentDeprecationNoticeDays).toBe(30);
+  });
+
+  it('blocks Save while a stage is invalid and says why', async () => {
+    await renderPolicyTab();
+
+    fireEvent.click(screen.getByTestId('component-stage-add'));
+    fireEvent.click(screen.getByTestId('component-stage-add'));
+    fireEvent.change(screen.getByLabelText('Stage 2 name'), { target: { value: 'stage 1' } });
+
+    expect(screen.getByTestId('component-stage-problems')).toHaveTextContent(
+      "Stage 2 repeats the name 'stage 1'."
+    );
+    expect(screen.getByTestId('guide-policy-save')).toBeDisabled();
+
+    fireEvent.click(screen.getByLabelText('Remove stage 2'));
+    expect(screen.queryByTestId('component-stage-problems')).not.toBeInTheDocument();
+    expect(screen.getByTestId('guide-policy-save')).not.toBeDisabled();
+  });
+
+  it('caps the list at five stages and clamps the notice window', async () => {
+    await renderPolicyTab();
+
+    const add = screen.getByTestId('component-stage-add');
+    for (let i = 0; i < 6; i += 1) fireEvent.click(add);
+    expect(screen.getAllByRole('listitem').filter((li) => li.dataset.testid?.startsWith('component-stage-'))).toHaveLength(5);
+    expect(add).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Deprecation notice (days)'), {
+      target: { value: '900' },
+    });
+    expect(screen.getByLabelText('Deprecation notice (days)')).toHaveValue(365);
+  });
+
+  it('loads stored stages', async () => {
+    const original = global.fetch;
+    // @ts-expect-error - wrapping the test double
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.endsWith(`/api/style-guides/${GUIDE_ID}/policy`) && (init?.method ?? 'GET') === 'GET') {
+        return jsonResponse({
+          success: true,
+          data: {
+            ...POLICY,
+            componentApprovalStages: [
+              { name: 'Security', requiredApprovals: 1, requiredReviewerRole: 'owner' },
+            ],
+            componentDeprecationNoticeDays: 14,
+          },
+        });
+      }
+      return (original as typeof fetch)(input, init);
+    });
+    await renderPolicyTab();
+
+    expect(screen.getByLabelText('Stage 1 name')).toHaveValue('Security');
+    expect(screen.getByLabelText('Stage 1 required reviewer role')).toHaveValue('owner');
+    expect(screen.getByLabelText('Deprecation notice (days)')).toHaveValue(14);
+    expect(screen.getByTestId('guide-policy-save')).toBeDisabled();
+  });
+
+  it('hides the stage controls when read-only', async () => {
+    isAdmin = false;
+    await renderPolicyTab();
+
+    expect(screen.queryByTestId('component-stage-add')).not.toBeInTheDocument();
   });
 });

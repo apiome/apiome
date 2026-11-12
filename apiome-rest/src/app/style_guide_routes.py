@@ -43,6 +43,11 @@ from .approval_policy import (
     normalize_required_reviewer_role,
 )
 from .breaking_publish_policy import normalize_breaking_publish_policy
+from .component_governance import (
+    normalize_approval_stages,
+    normalize_deprecation_notice_days,
+    validate_approval_stages,
+)
 from .compatibility_engine import openapi_for_revision
 from .custom_rule_dsl import (
     CustomRuleValidationError,
@@ -850,6 +855,13 @@ def _policy_settings_out(guide: Dict[str, Any]) -> StyleGuidePolicySettingsOut:
         required_reviewer_role=normalize_required_reviewer_role(
             guide.get("required_reviewer_role")
         ),
+        component_approval_stages=[
+            stage.as_payload()
+            for stage in normalize_approval_stages(guide.get("component_approval_stages"))
+        ],
+        component_deprecation_notice_days=normalize_deprecation_notice_days(
+            guide.get("component_deprecation_notice_days")
+        ),
     )
 
 
@@ -885,6 +897,10 @@ async def put_style_guide_policy_settings(
     (#4519) approval policy, both of which the publish flow reads through the same
     guide-resolution chain.
 
+    DCW-3.4 (private-suite#2364) adds the component-library policy: ordered
+    ``componentApprovalStages`` (validated strictly — a bad stage is a 422, never silently
+    dropped) and ``componentDeprecationNoticeDays``.
+
     ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the
     stored role alone, sending ``null`` clears it. Every other field keeps the
     omit-to-leave-unchanged rule the endpoint has always had.
@@ -901,6 +917,18 @@ async def put_style_guide_policy_settings(
             "failOnRequiredCoverage": body.ci_outcomes.fail_on_required_coverage,
             "failOnAxisGates": body.ci_outcomes.fail_on_axis_gates,
         }
+
+    component_stages = None
+    if body.component_approval_stages is not None:
+        stages, errors = validate_approval_stages(
+            [stage.model_dump(by_alias=True) for stage in body.component_approval_stages]
+        )
+        if errors:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "COMPONENT_APPROVAL_STAGES_INVALID", "errors": errors},
+            )
+        component_stages = [stage.as_payload() for stage in stages]
 
     _capture_before_edit(str(guide["id"]), tenant_id)
     updated = db.update_style_guide_policy_settings(
@@ -923,6 +951,8 @@ async def put_style_guide_policy_settings(
             body.required_reviewer_role
         ),
         set_required_reviewer_role="required_reviewer_role" in body.model_fields_set,
+        component_approval_stages=component_stages,
+        component_deprecation_notice_days=body.component_deprecation_notice_days,
     )
     if not updated:
         raise HTTPException(status_code=404, detail="Style guide not found")
