@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.544.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.545.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `style-guides` · 19 operations
 
@@ -324,6 +324,10 @@ Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850)
 Also carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3
 (#4519) approval policy, both of which the publish flow reads through the same
 guide-resolution chain.
+
+DCW-3.4 (private-suite#2364) adds the component-library policy: ordered
+``componentApprovalStages`` (validated strictly — a bad stage is a 422, never silently
+dropped) and ``componentDeprecationNoticeDays``.
 
 ``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the
 stored role alone, sending ``null`` clears it. Every other field keeps the
@@ -664,6 +668,8 @@ Draft policy gate settings on a live style guide (CLX-1.3, #4850).
 | `breakingPublishPolicy` | enum `"off"`, `"warn"`, `"block"` | no | Guardrail applied when a publish is breaking without a semver major bump (CTG-3.4): off, warn (default), or block. |
 | `requiredApprovals` | integer | no | Review approvals a draft must carry before it can be published (COL-2.3); 0 (default) disables the approval gate. |
 | `requiredReviewerRole` | string or null | no | Role slug at least one of those approvals must come from (COL-2.3); null means any approver counts. |
+| `componentApprovalStages` | array of `ComponentApprovalStageModel` | no | Ordered approval stages a component-library revision must pass before it can be published (DCW-3.4); empty (default) means no component approval gate. |
+| `componentDeprecationNoticeDays` | integer | no | Minimum days between scheduling a component revision deprecation and its sunset (DCW-3.4). |
 
 ### `StyleGuidePolicySettingsPutRequest` {#schema-styleguidepolicysettingsputrequest}
 
@@ -677,6 +683,8 @@ Replace draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 | `breakingPublishPolicy` | enum `"off"`, `"warn"`, `"block"` or null | no | Breaking-publish guardrail level (CTG-3.4); omit to leave unchanged. |
 | `requiredApprovals` | integer or null | no | Approvals required before publish (COL-2.3); 0 disables the gate, omit to leave unchanged. |
 | `requiredReviewerRole` | string or null | no | Role slug at least one approval must come from (COL-2.3); send null to clear it, omit to leave unchanged. |
+| `componentApprovalStages` | array of `ComponentApprovalStageModel` or null | no | Ordered component-library approval stages (DCW-3.4), at most 5; send [] to turn the gate off, omit to leave unchanged. |
+| `componentDeprecationNoticeDays` | integer or null | no | Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged. |
 | `snapshot` | boolean | no | When true (default), also append an immutable policy pack version. |
 
 ### `StyleGuidePolicyVersionListResponse` {#schema-styleguidepolicyversionlistresponse}

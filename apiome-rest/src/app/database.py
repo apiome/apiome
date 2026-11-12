@@ -3,7 +3,7 @@ import json
 import logging
 import secrets
 from datetime import date, datetime, timezone
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence, Set, Tuple
 
 import bcrypt
 import numpy as np
@@ -4184,6 +4184,8 @@ class Database:
         required_approvals: Optional[int] = None,
         required_reviewer_role: Optional[str] = None,
         set_required_reviewer_role: bool = False,
+        component_approval_stages: Optional[List[Dict[str, Any]]] = None,
+        component_deprecation_notice_days: Optional[int] = None,
     ) -> Optional[Dict[str, Any]]:
         """Update draft policy gate settings on a custom style guide (CLX-1.3, #4850).
 
@@ -4206,6 +4208,11 @@ class Database:
                 true, because ``None`` here means "clear", not "leave alone".
             set_required_reviewer_role: Whether ``required_reviewer_role`` is being written
                 at all — the one field where omitted and null are different requests.
+            component_approval_stages: DCW-3.4 (private-suite#2364) ordered component-library
+                approval stages (already validated, camelCase payloads), or ``None`` to leave
+                unchanged. ``[]`` turns the component approval gate off.
+            component_deprecation_notice_days: DCW-3.4 minimum deprecation notice in days, or
+                ``None`` to leave unchanged.
 
         Returns:
             The updated guide row (subset of columns), or ``None`` when no custom guide matched.
@@ -4223,12 +4230,17 @@ class Database:
                     WHEN %s::boolean THEN %s::varchar
                     ELSE required_reviewer_role
                 END,
+                component_approval_stages = COALESCE(%s::jsonb, component_approval_stages),
+                component_deprecation_notice_days = COALESCE(
+                    %s::integer, component_deprecation_notice_days
+                ),
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = %s AND tenant_id = %s AND source <> 'builtin'
             RETURNING id, name, description, source, is_default,
                       axis_gates, required_coverage, ci_outcomes,
                       breaking_publish_policy, required_approvals,
-                      required_reviewer_role, created_at, updated_at
+                      required_reviewer_role, component_approval_stages,
+                      component_deprecation_notice_days, created_at, updated_at
         """
         rows = self.execute_query(
             query,
@@ -4240,6 +4252,8 @@ class Database:
                 required_approvals,
                 bool(set_required_reviewer_role),
                 required_reviewer_role,
+                Json(component_approval_stages) if component_approval_stages is not None else None,
+                component_deprecation_notice_days,
                 guide_id,
                 tenant_id,
             ),
@@ -6755,7 +6769,8 @@ class Database:
         )
         query = """
             SELECT g.id, g.name, g.source, g.breaking_publish_policy,
-                   g.required_approvals, g.required_reviewer_role
+                   g.required_approvals, g.required_reviewer_role,
+                   g.component_approval_stages, g.component_deprecation_notice_days
             FROM (
                 SELECT a.guide_id, 0 AS precedence
                 FROM apiome.style_guide_assignments a
@@ -6901,6 +6916,7 @@ class Database:
             SELECT id, name, description, source, is_default,
                    axis_gates, required_coverage, ci_outcomes,
                    breaking_publish_policy, required_approvals, required_reviewer_role,
+                   component_approval_stages, component_deprecation_notice_days,
                    external_lint_profile,
                    created_at, updated_at
             FROM apiome.style_guides
@@ -43339,7 +43355,7 @@ class Database:
         cursor.execute(
             """
             SELECT r.id, r.component_id, r.revision, r.state, r.schema_primitive_id,
-                   c.name AS component_name, c.kind
+                   r.payload_digest, c.name AS component_name, c.kind
             FROM apiome.operational_component_revisions r
             JOIN apiome.operational_components c ON r.component_id = c.id
             WHERE r.id = %s::uuid AND r.component_id = %s::uuid
@@ -43784,6 +43800,9 @@ class Database:
         component_id: str,
         revision_id: str,
         actor_id: Optional[str],
+        *,
+        expected_digest: Optional[str] = None,
+        approval: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Publish a draft revision (immutable from then on) in one transaction.
 
@@ -43792,9 +43811,21 @@ class Database:
         revision. Republishing an already-published revision is an idempotent
         no-op.
 
+        Args:
+            tenant_id: Owning tenant.
+            component_id: The component.
+            revision_id: The draft revision to publish.
+            actor_id: Who publishes.
+            expected_digest: DCW-3.4 — the payload digest the approval policy was
+                assessed against; a draft edited since then is refused, so a
+                revision can never publish content its approvers did not see.
+            approval: DCW-3.4 — the approval assessment payload, recorded on the
+                audit row (policy and decision).
+
         Raises:
-            ComponentLibraryConflictError: ``revision_not_found`` or
-                ``revision_downgrade`` (payload carries ``headRevision``).
+            ComponentLibraryConflictError: ``revision_not_found``,
+                ``revision_downgrade`` (payload carries ``headRevision``), or
+                ``approval_stale``.
         """
         conn = self.connect()
         prev_autocommit = self._begin_tx(conn)
@@ -43812,6 +43843,12 @@ class Database:
                         "alreadyPublished": True,
                         "revision": row.get("revision"),
                     }
+                if expected_digest is not None and str(row.get("payload_digest") or "") != (
+                    expected_digest
+                ):
+                    raise ComponentLibraryConflictError(
+                        "approval_stale", {"payloadDigest": row.get("payload_digest")}
+                    )
                 cursor.execute(
                     """
                     SELECT revision FROM apiome.operational_component_revisions
@@ -43848,7 +43885,23 @@ class Database:
                     component_id=component_id,
                     revision_id=revision_id,
                     actor_id=actor_id,
-                    detail={"revision": row.get("revision"), "previousHead": head},
+                    detail={
+                        "revision": row.get("revision"),
+                        "previousHead": head,
+                        "componentName": row.get("component_name"),
+                        **(
+                            {
+                                "policy": approval.get("policy"),
+                                "decision": "published",
+                                "approval": {
+                                    "status": approval.get("status"),
+                                    "stages": approval.get("stages"),
+                                },
+                            }
+                            if approval
+                            else {}
+                        ),
+                    },
                 )
                 conn.commit()
                 return {
@@ -44037,7 +44090,8 @@ class Database:
         Raises:
             ComponentLibraryConflictError: ``version_not_found``,
                 ``published_version``, ``revision_not_found``,
-                ``revision_not_published``, or ``duplicate_pin``.
+                ``revision_not_published``, ``revision_sunset`` (DCW-3.4), or
+                ``duplicate_pin``.
         """
         conn = self.connect()
         prev_autocommit = self._begin_tx(conn)
@@ -44065,6 +44119,12 @@ class Database:
                 if revision.get("state") != "published":
                     raise ComponentLibraryConflictError(
                         "revision_not_published", {"revision": revision.get("revision")}
+                    )
+                # DCW-3.4: a deprecated revision past its sunset takes no new pins;
+                # existing pins keep working.
+                if self._cursor_revision_sunset(cursor, component_revision_id):
+                    raise ComponentLibraryConflictError(
+                        "revision_sunset", {"revision": revision.get("revision")}
                     )
                 cursor.execute(
                     """
@@ -44231,6 +44291,651 @@ class Database:
             """,
             (version_db_id,),
         )
+
+    # ------------------------------------------------------------------
+    # Component governance and lifecycle — DCW-3.4 (private-suite#2364)
+    # ------------------------------------------------------------------
+
+    def _component_tx(self, work: Callable[[Any], Dict[str, Any]]) -> Dict[str, Any]:
+        """Run ``work(cursor)`` in one transaction: commit on return, roll back on raise.
+
+        Every DCW-3.4 mutation writes its audit row on the same cursor, so the mutation and
+        its ledger entry commit or roll back together, like the DCW-3.1 transactions.
+
+        Args:
+            work: Receives the cursor and returns the result to hand back.
+
+        Returns:
+            Whatever ``work`` returned.
+        """
+        conn = self.connect()
+        prev_autocommit = self._begin_tx(conn)
+        try:
+            with conn.cursor() as cursor:
+                result = work(cursor)
+            conn.commit()
+            return result
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            raise
+        finally:
+            try:
+                conn.autocommit = prev_autocommit
+            except Exception:
+                pass
+
+    @staticmethod
+    def _component_consumers_query(
+        tenant_id: str, component_id: str, revision_ids: Optional[List[str]] = None
+    ) -> Tuple[str, Tuple[Any, ...]]:
+        """The query behind :meth:`get_component_consumers` and the in-transaction reads.
+
+        Args:
+            tenant_id: Owning tenant; pins of another tenant are never returned.
+            component_id: The component.
+            revision_ids: Restrict to pins of these revisions; ``None`` for every revision.
+
+        Returns:
+            ``(sql, params)``. Rows are ordered by project name, version label, then pin id.
+        """
+        query = """
+            SELECT p.id AS pin_id, p.local_name, p.version_id,
+                   v.version_id AS version_label, v.published,
+                   pr.id AS project_id, pr.name AS project_name, pr.slug AS project_slug,
+                   r.id AS revision_id, r.revision
+            FROM apiome.version_component_pins p
+            JOIN apiome.operational_component_revisions r ON p.component_revision_id = r.id
+            JOIN apiome.versions v ON p.version_id = v.id
+            JOIN apiome.projects pr ON v.project_id = pr.id
+            WHERE p.tenant_id = %s AND r.component_id = %s::uuid
+              AND p.deleted_at IS NULL AND v.deleted_at IS NULL
+        """
+        params: List[Any] = [tenant_id, component_id]
+        if revision_ids is not None:
+            query += " AND r.id = ANY(%s::uuid[])"
+            params.append(list(revision_ids))
+        query += " ORDER BY pr.name, v.version_id, p.id"
+        return query, tuple(params)
+
+    def _cursor_component_consumers(
+        self, cursor, tenant_id: str, component_id: str, revision_ids: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """:meth:`get_component_consumers` on the caller's cursor (inside its transaction)."""
+        cursor.execute(*self._component_consumers_query(tenant_id, component_id, revision_ids))
+        return list(cursor.fetchall())
+
+    @staticmethod
+    def _affected_projects(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """The ``affectedProjects`` audit/API shape for consumer rows."""
+        return [
+            {
+                "projectId": str(row["project_id"]),
+                "projectName": row.get("project_name"),
+                "versionId": str(row["version_id"]),
+                "version": row.get("version_label"),
+                "published": bool(row.get("published")),
+                "revision": row.get("revision"),
+            }
+            for row in rows
+        ]
+
+    def get_component_consumers(
+        self, tenant_id: str, component_id: str, revision_ids: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Live pins of a component (optionally of some revisions) with project/version.
+
+        Args:
+            tenant_id: Owning tenant.
+            component_id: The component.
+            revision_ids: Restrict to these revisions, or ``None`` for all.
+
+        Returns:
+            See :meth:`_component_consumers_query`.
+        """
+        return self.execute_query(
+            *self._component_consumers_query(tenant_id, component_id, revision_ids)
+        )
+
+    def list_component_revision_approvals(
+        self, tenant_id: str, revision_id: str
+    ) -> List[Dict[str, Any]]:
+        """Every decision recorded on a revision, oldest first, with the reviewer's email.
+
+        Args:
+            tenant_id: Owning tenant.
+            revision_id: The revision.
+
+        Returns:
+            Rows: ``id, stage_index, stage_name, user_id, user_email, decision, note,
+            payload_digest, created_at``.
+        """
+        return self.execute_query(
+            """
+            SELECT a.id, a.stage_index, a.stage_name, a.user_id, u.email AS user_email,
+                   a.decision, a.note, a.payload_digest, a.created_at
+            FROM apiome.component_revision_approvals a
+            LEFT JOIN apiome.users u ON a.user_id = u.id
+            WHERE a.tenant_id = %s AND a.revision_id = %s::uuid
+            ORDER BY a.created_at, a.id
+            """,
+            (tenant_id, revision_id),
+        )
+
+    def record_component_revision_approval(
+        self,
+        tenant_id: str,
+        component_id: str,
+        revision_id: str,
+        *,
+        stage_index: int,
+        stage_name: str,
+        decision: str,
+        note: Optional[str],
+        expected_digest: str,
+        actor_id: Optional[str],
+        policy: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Record one reviewer decision on a draft revision, transactionally.
+
+        Rechecked under the revision lock: the revision exists in the tenant, is still a draft
+        (published revisions are immutable and take no decisions), and still carries the
+        payload digest the caller assessed — otherwise the decision would judge content the
+        reviewer never saw.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found``, ``published_immutable``,
+                ``approval_stale``, or ``duplicate_decision``.
+        """
+
+        def work(cursor) -> Dict[str, Any]:
+            row = self._cursor_component_revision_row(
+                cursor, tenant_id, component_id, revision_id, for_update=True
+            )
+            if not row:
+                raise ComponentLibraryConflictError("revision_not_found")
+            if row.get("state") == "published":
+                raise ComponentLibraryConflictError(
+                    "published_immutable", {"revision": row.get("revision")}
+                )
+            if str(row.get("payload_digest") or "") != expected_digest:
+                raise ComponentLibraryConflictError(
+                    "approval_stale", {"payloadDigest": row.get("payload_digest")}
+                )
+            cursor.execute(
+                """
+                SELECT id FROM apiome.component_revision_approvals
+                WHERE revision_id = %s::uuid AND stage_index = %s AND user_id = %s
+                  AND payload_digest = %s
+                """,
+                (revision_id, stage_index, actor_id, expected_digest),
+            )
+            if cursor.fetchone():
+                raise ComponentLibraryConflictError("duplicate_decision")
+            cursor.execute(
+                """
+                INSERT INTO apiome.component_revision_approvals
+                  (tenant_id, component_id, revision_id, stage_index, stage_name, user_id,
+                   decision, note, payload_digest)
+                VALUES (%s, %s::uuid, %s::uuid, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    tenant_id,
+                    component_id,
+                    revision_id,
+                    stage_index,
+                    stage_name,
+                    actor_id,
+                    decision,
+                    note,
+                    expected_digest,
+                ),
+            )
+            approval_id = str(cursor.fetchone()["id"])
+            self._component_audit(
+                cursor,
+                tenant_id,
+                action="revision.approval",
+                component_id=component_id,
+                revision_id=revision_id,
+                actor_id=actor_id,
+                detail={
+                    "decision": decision,
+                    "stage": stage_index,
+                    "stageName": stage_name,
+                    "policy": policy,
+                    "newRevision": row.get("revision"),
+                    "payloadDigest": expected_digest,
+                    "componentName": row.get("component_name"),
+                },
+            )
+            return {"approvalId": approval_id}
+
+        return self._component_tx(work)
+
+    def list_component_deprecations(
+        self, tenant_id: str, component_id: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Live (not cancelled) deprecations, soonest sunset first.
+
+        Args:
+            tenant_id: Owning tenant.
+            component_id: Restrict to one component, or ``None`` for the whole tenant.
+
+        Returns:
+            Rows with the component name/kind and the deprecated and replacement semvers.
+        """
+        query = """
+            SELECT d.id, d.component_id, d.revision_id, d.replacement_revision_id,
+                   d.sunset_at, d.migration_guide, d.policy, d.scheduled_by, d.created_at,
+                   c.name AS component_name, c.kind,
+                   r.revision, rr.revision AS replacement_revision
+            FROM apiome.component_revision_deprecations d
+            JOIN apiome.operational_components c ON d.component_id = c.id
+            JOIN apiome.operational_component_revisions r ON d.revision_id = r.id
+            LEFT JOIN apiome.operational_component_revisions rr
+              ON d.replacement_revision_id = rr.id
+            WHERE d.tenant_id = %s AND d.cancelled_at IS NULL AND c.deleted_at IS NULL
+        """
+        params: List[Any] = [tenant_id]
+        if component_id:
+            query += " AND d.component_id = %s::uuid"
+            params.append(component_id)
+        query += " ORDER BY d.sunset_at, c.name, r.revision"
+        return self.execute_query(query, tuple(params))
+
+    def schedule_component_deprecation(
+        self,
+        tenant_id: str,
+        component_id: str,
+        revision_id: str,
+        *,
+        sunset_at: datetime,
+        replacement_revision_id: Optional[str],
+        migration_guide: Optional[str],
+        policy: Dict[str, Any],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Schedule the deprecation of a published revision, transactionally.
+
+        The revision row is never modified — deprecation is metadata beside it. A replacement,
+        when named, must be a published revision of the same component with a higher semver.
+
+        Returns:
+            ``{deprecationId, revision, replacementRevision, affected}`` — ``affected`` is the
+            consumer rows read inside the transaction.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found``, ``revision_not_published``,
+                ``replacement_invalid``, or ``deprecation_exists``.
+        """
+        from .component_library import semver_greater
+
+        def work(cursor) -> Dict[str, Any]:
+            row = self._cursor_component_revision_row(
+                cursor, tenant_id, component_id, revision_id, for_update=True
+            )
+            if not row:
+                raise ComponentLibraryConflictError("revision_not_found")
+            if row.get("state") != "published":
+                raise ComponentLibraryConflictError(
+                    "revision_not_published", {"revision": row.get("revision")}
+                )
+            replacement: Optional[Dict[str, Any]] = None
+            if replacement_revision_id:
+                replacement = self._cursor_component_revision_row(
+                    cursor, tenant_id, component_id, replacement_revision_id
+                )
+                if (
+                    not replacement
+                    or replacement.get("state") != "published"
+                    or not semver_greater(
+                        str(replacement.get("revision")), str(row.get("revision"))
+                    )
+                ):
+                    raise ComponentLibraryConflictError(
+                        "replacement_invalid", {"revision": row.get("revision")}
+                    )
+            cursor.execute(
+                """
+                SELECT id FROM apiome.component_revision_deprecations
+                WHERE revision_id = %s::uuid AND cancelled_at IS NULL
+                """,
+                (revision_id,),
+            )
+            if cursor.fetchone():
+                raise ComponentLibraryConflictError("deprecation_exists")
+            cursor.execute(
+                """
+                INSERT INTO apiome.component_revision_deprecations
+                  (tenant_id, component_id, revision_id, replacement_revision_id, sunset_at,
+                   migration_guide, policy, scheduled_by)
+                VALUES (%s, %s::uuid, %s::uuid, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                (
+                    tenant_id,
+                    component_id,
+                    revision_id,
+                    replacement_revision_id,
+                    sunset_at,
+                    migration_guide,
+                    Json(policy),
+                    actor_id,
+                ),
+            )
+            deprecation_id = str(cursor.fetchone()["id"])
+            affected = self._cursor_component_consumers(
+                cursor, tenant_id, component_id, [revision_id]
+            )
+            self._component_audit(
+                cursor,
+                tenant_id,
+                action="deprecation.schedule",
+                component_id=component_id,
+                revision_id=revision_id,
+                actor_id=actor_id,
+                detail={
+                    "deprecationId": deprecation_id,
+                    "componentName": row.get("component_name"),
+                    "policy": policy,
+                    "oldRevision": row.get("revision"),
+                    "newRevision": replacement.get("revision") if replacement else None,
+                    "sunsetAt": sunset_at.isoformat(),
+                    "affectedProjects": self._affected_projects(affected),
+                },
+            )
+            return {
+                "deprecationId": deprecation_id,
+                "revision": row.get("revision"),
+                "replacementRevision": replacement.get("revision") if replacement else None,
+                "componentName": row.get("component_name"),
+                "affected": affected,
+            }
+
+        return self._component_tx(work)
+
+    def cancel_component_deprecation(
+        self,
+        tenant_id: str,
+        component_id: str,
+        deprecation_id: str,
+        *,
+        policy: Dict[str, Any],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Withdraw a live deprecation, transactionally.
+
+        Raises:
+            ComponentLibraryConflictError: ``deprecation_not_found``.
+        """
+
+        def work(cursor) -> Dict[str, Any]:
+            cursor.execute(
+                """
+                SELECT d.id, d.revision_id, r.revision, c.name AS component_name
+                FROM apiome.component_revision_deprecations d
+                JOIN apiome.operational_component_revisions r ON d.revision_id = r.id
+                JOIN apiome.operational_components c ON d.component_id = c.id
+                WHERE d.id = %s::uuid AND d.component_id = %s::uuid AND d.tenant_id = %s
+                  AND d.cancelled_at IS NULL
+                FOR UPDATE OF d
+                """,
+                (deprecation_id, component_id, tenant_id),
+            )
+            row = cursor.fetchone()
+            if not row:
+                raise ComponentLibraryConflictError("deprecation_not_found")
+            cursor.execute(
+                """
+                UPDATE apiome.component_revision_deprecations
+                SET cancelled_at = CURRENT_TIMESTAMP, cancelled_by = %s
+                WHERE id = %s::uuid
+                """,
+                (actor_id, deprecation_id),
+            )
+            self._component_audit(
+                cursor,
+                tenant_id,
+                action="deprecation.cancel",
+                component_id=component_id,
+                revision_id=str(row["revision_id"]),
+                actor_id=actor_id,
+                detail={
+                    "deprecationId": deprecation_id,
+                    "componentName": row.get("component_name"),
+                    "policy": policy,
+                    "oldRevision": row.get("revision"),
+                },
+            )
+            return {"cancelled": True}
+
+        return self._component_tx(work)
+
+    def execute_component_bulk_upgrade(
+        self,
+        tenant_id: str,
+        component_id: str,
+        target_revision_id: str,
+        pin_ids: List[str],
+        *,
+        confirmation_token: str,
+        policy: Dict[str, Any],
+        actor_id: Optional[str],
+    ) -> Dict[str, Any]:
+        """Move the selected pins to a target revision, transactionally.
+
+        The plan is rebuilt under lock and its token compared with the one the caller previewed,
+        so a pin added, removed, moved, or a version published since the preview refuses the
+        whole upgrade. Each upgraded pin is soft-deleted and replaced by a pin of the target
+        with the same local name — pins stay immutable identity, and published versions are
+        never touched (they are never eligible).
+
+        Returns:
+            ``{upgraded: [{pinId, newPinId, versionId, projectId, oldRevision}], targetRevision,
+            affected}``.
+
+        Raises:
+            ComponentLibraryConflictError: ``revision_not_found``, ``revision_not_published``,
+                ``revision_sunset``, ``upgrade_plan_stale``, or ``upgrade_pin_ineligible``.
+        """
+        from .component_governance import (
+            UPGRADE_ELIGIBLE,
+            plan_bulk_upgrade,
+            upgrade_confirmation_token,
+        )
+
+        def work(cursor) -> Dict[str, Any]:
+            target = self._cursor_component_revision_row(
+                cursor, tenant_id, component_id, target_revision_id, for_update=True
+            )
+            if not target:
+                raise ComponentLibraryConflictError("revision_not_found")
+            if target.get("state") != "published":
+                raise ComponentLibraryConflictError(
+                    "revision_not_published", {"revision": target.get("revision")}
+                )
+            if self._cursor_revision_sunset(cursor, target_revision_id):
+                raise ComponentLibraryConflictError(
+                    "revision_sunset", {"revision": target.get("revision")}
+                )
+            cursor.execute(
+                """
+                SELECT p.id FROM apiome.version_component_pins p
+                JOIN apiome.operational_component_revisions r ON p.component_revision_id = r.id
+                WHERE p.tenant_id = %s AND r.component_id = %s::uuid AND p.deleted_at IS NULL
+                FOR UPDATE OF p
+                """,
+                (tenant_id, component_id),
+            )
+            consumers = self._cursor_component_consumers(cursor, tenant_id, component_id)
+            plan = plan_bulk_upgrade(consumers, target_revision_id)
+            if upgrade_confirmation_token(component_id, target_revision_id, plan) != (
+                confirmation_token
+            ):
+                raise ComponentLibraryConflictError("upgrade_plan_stale")
+            by_pin = {str(entry["pin_id"]): entry for entry in plan}
+            selected = [by_pin.get(str(pin_id)) for pin_id in pin_ids]
+            ineligible = [
+                str(pin_id)
+                for pin_id, entry in zip(pin_ids, selected)
+                if not entry or entry.get("status") != UPGRADE_ELIGIBLE
+            ]
+            if ineligible:
+                raise ComponentLibraryConflictError(
+                    "upgrade_pin_ineligible", {"pinIds": ineligible}
+                )
+            upgraded: List[Dict[str, Any]] = []
+            for entry in selected:
+                assert entry is not None  # narrowed by the ineligible check above
+                # Lock the version too: a publish racing the upgrade must not see its
+                # pins rewritten after it froze the version.
+                cursor.execute(
+                    "SELECT published FROM apiome.versions WHERE id = %s::uuid FOR UPDATE",
+                    (entry["version_id"],),
+                )
+                locked = cursor.fetchone()
+                if not locked or locked.get("published"):
+                    raise ComponentLibraryConflictError("upgrade_plan_stale")
+                cursor.execute(
+                    """
+                    UPDATE apiome.version_component_pins
+                    SET deleted_at = CURRENT_TIMESTAMP
+                    WHERE id = %s::uuid
+                    """,
+                    (entry["pin_id"],),
+                )
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.version_component_pins
+                      (tenant_id, version_id, component_revision_id, local_name, created_by)
+                    VALUES (%s, %s::uuid, %s::uuid, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        tenant_id,
+                        entry["version_id"],
+                        target_revision_id,
+                        entry.get("local_name"),
+                        actor_id,
+                    ),
+                )
+                new_pin_id = str(cursor.fetchone()["id"])
+                project = self._affected_projects([entry])
+                self._component_audit(
+                    cursor,
+                    tenant_id,
+                    action="pin.upgrade",
+                    component_id=component_id,
+                    revision_id=target_revision_id,
+                    version_id=str(entry["version_id"]),
+                    actor_id=actor_id,
+                    detail={
+                        "pinId": str(entry["pin_id"]),
+                        "newPinId": new_pin_id,
+                        "componentName": target.get("component_name"),
+                        "policy": policy,
+                        "oldRevision": entry.get("revision"),
+                        "newRevision": target.get("revision"),
+                        "affectedProjects": project,
+                    },
+                )
+                upgraded.append(
+                    {
+                        "pinId": str(entry["pin_id"]),
+                        "newPinId": new_pin_id,
+                        "versionId": str(entry["version_id"]),
+                        "projectId": str(entry["project_id"]),
+                        "oldRevision": entry.get("revision"),
+                    }
+                )
+            affected = self._affected_projects([e for e in selected if e is not None])
+            self._component_audit(
+                cursor,
+                tenant_id,
+                action="upgrade.bulk",
+                component_id=component_id,
+                revision_id=target_revision_id,
+                actor_id=actor_id,
+                detail={
+                    "componentName": target.get("component_name"),
+                    "policy": policy,
+                    "oldRevision": sorted(
+                        {str(e.get("revision")) for e in selected if e is not None}
+                    ),
+                    "newRevision": target.get("revision"),
+                    "affectedProjects": affected,
+                    "confirmationToken": confirmation_token,
+                    "pinCount": len(upgraded),
+                },
+            )
+            return {
+                "upgraded": upgraded,
+                "targetRevision": target.get("revision"),
+                "affected": affected,
+            }
+
+        return self._component_tx(work)
+
+    @staticmethod
+    def _cursor_revision_sunset(cursor, revision_id: str) -> bool:
+        """Whether a revision has a live deprecation whose sunset has passed."""
+        cursor.execute(
+            """
+            SELECT 1 FROM apiome.component_revision_deprecations
+            WHERE revision_id = %s::uuid AND cancelled_at IS NULL
+              AND sunset_at <= CURRENT_TIMESTAMP
+            """,
+            (revision_id,),
+        )
+        return cursor.fetchone() is not None
+
+    def list_component_library_audit(
+        self,
+        tenant_id: str,
+        *,
+        since: Optional[datetime] = None,
+        until: Optional[datetime] = None,
+        component_id: Optional[str] = None,
+        limit: int = 10000,
+    ) -> List[Dict[str, Any]]:
+        """Read the tenant's component-library ledger for export, oldest first.
+
+        Args:
+            tenant_id: Owning tenant; other tenants' rows are never returned.
+            since: Only rows at or after this instant.
+            until: Only rows before this instant.
+            component_id: Only rows about this component.
+            limit: Row cap.
+
+        Returns:
+            Ledger rows joined to the actor's email and the component's name.
+        """
+        query = """
+            SELECT a.id, a.created_at, a.action, a.outcome, a.detail, a.actor_id,
+                   u.email AS actor_email, a.component_id, c.name AS component_name,
+                   a.revision_id, a.version_id
+            FROM apiome.component_library_audit a
+            LEFT JOIN apiome.users u ON a.actor_id = u.id
+            LEFT JOIN apiome.operational_components c ON a.component_id = c.id
+            WHERE a.tenant_id = %s
+        """
+        params: List[Any] = [tenant_id]
+        if since is not None:
+            query += " AND a.created_at >= %s"
+            params.append(since)
+        if until is not None:
+            query += " AND a.created_at < %s"
+            params.append(until)
+        if component_id:
+            query += " AND a.component_id = %s::uuid"
+            params.append(component_id)
+        query += " ORDER BY a.created_at, a.id LIMIT %s"
+        params.append(int(limit))
+        return self.execute_query(query, tuple(params))
 
 
 def _preset_profile_ids(profile_ids: Optional[List[str]], profile_id: Optional[str]) -> List[str]:

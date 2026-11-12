@@ -31,11 +31,14 @@ import {
   DEFAULT_REQUIRED_APPROVALS,
   fetchProjectOptions,
   fetchVersionOptions,
+  MAX_COMPONENT_APPROVAL_STAGES,
+  normalizeComponentDeprecationNoticeDays,
   normalizeRequiredApprovals,
   normalizeRequiredReviewerRole,
   styleGuidesApi,
   styleGuidesApiWithValidation,
   type BreakingPublishPolicyLevel,
+  type ComponentApprovalStage,
   type CustomRulesPreviewResult,
   type GuideCiOutcomes,
   type GuideCustomRulesView,
@@ -484,6 +487,10 @@ export interface PolicyDraft {
   requiredApprovals: number;
   /** Role slug at least one of those approvals must come from, or `null` for any (COL-2.3). */
   requiredReviewerRole: string | null;
+  /** Ordered component-library approval stages; empty is no component gate (DCW-3.4). */
+  componentApprovalStages: ComponentApprovalStage[];
+  /** Minimum days between scheduling a component deprecation and its sunset (DCW-3.4). */
+  componentDeprecationNoticeDays: number;
 }
 
 /**
@@ -502,6 +509,14 @@ export function toPolicyDraft(settings: GuidePolicySettings): PolicyDraft {
       settings.requiredApprovals ?? DEFAULT_REQUIRED_APPROVALS
     ),
     requiredReviewerRole: normalizeRequiredReviewerRole(settings.requiredReviewerRole),
+    componentApprovalStages: (settings.componentApprovalStages ?? []).map((stage) => ({
+      name: stage.name,
+      requiredApprovals: Math.max(1, normalizeRequiredApprovals(stage.requiredApprovals)),
+      requiredReviewerRole: normalizeRequiredReviewerRole(stage.requiredReviewerRole),
+    })),
+    componentDeprecationNoticeDays: normalizeComponentDeprecationNoticeDays(
+      settings.componentDeprecationNoticeDays
+    ),
   };
 }
 
@@ -523,6 +538,12 @@ export function isPolicyDirty(draft: PolicyDraft, baseline: PolicyDraft): boolea
   if (draft.breakingPublishPolicy !== baseline.breakingPublishPolicy) return true;
   if (draft.requiredApprovals !== baseline.requiredApprovals) return true;
   if (draft.requiredReviewerRole !== baseline.requiredReviewerRole) return true;
+  if (draft.componentDeprecationNoticeDays !== baseline.componentDeprecationNoticeDays) {
+    return true;
+  }
+  if (JSON.stringify(draft.componentApprovalStages) !== JSON.stringify(baseline.componentApprovalStages)) {
+    return true;
+  }
   const coverage = [...draft.requiredCoverage].sort();
   const savedCoverage = [...baseline.requiredCoverage].sort();
   if (coverage.length !== savedCoverage.length) return true;
@@ -568,6 +589,14 @@ export interface GuidePolicyState {
   setRequiredReviewerRole: (slug: string) => void;
   /** Change one CI outcome switch. */
   setCiOutcome: (key: keyof GuideCiOutcomes, fail: boolean) => void;
+  /** Append a component approval stage (no-op at the five-stage cap) (DCW-3.4). */
+  addComponentStage: () => void;
+  /** Edit one component approval stage (DCW-3.4). */
+  updateComponentStage: (index: number, patch: Partial<ComponentApprovalStage>) => void;
+  /** Remove one component approval stage (DCW-3.4). */
+  removeComponentStage: (index: number) => void;
+  /** Change the component deprecation notice window, in days (DCW-3.4). */
+  setComponentDeprecationNoticeDays: (days: number | string) => void;
   /** Throw the draft away. */
   discard: () => void;
   /** PUT the settings, snapshotting a new immutable version. */
@@ -695,6 +724,68 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
     [patch]
   );
 
+  const addComponentStage = React.useCallback(
+    () =>
+      patch((prev) =>
+        prev.componentApprovalStages.length >= MAX_COMPONENT_APPROVAL_STAGES
+          ? prev
+          : {
+              ...prev,
+              componentApprovalStages: [
+                ...prev.componentApprovalStages,
+                {
+                  name: `Stage ${prev.componentApprovalStages.length + 1}`,
+                  requiredApprovals: 1,
+                  requiredReviewerRole: null,
+                },
+              ],
+            }
+      ),
+    [patch]
+  );
+
+  const updateComponentStage = React.useCallback(
+    (index: number, change: Partial<ComponentApprovalStage>) =>
+      patch((prev) => ({
+        ...prev,
+        componentApprovalStages: prev.componentApprovalStages.map((stage, at) =>
+          at === index
+            ? {
+                ...stage,
+                ...change,
+                requiredApprovals:
+                  change.requiredApprovals === undefined
+                    ? stage.requiredApprovals
+                    : Math.max(1, normalizeRequiredApprovals(change.requiredApprovals)),
+                requiredReviewerRole:
+                  change.requiredReviewerRole === undefined
+                    ? stage.requiredReviewerRole
+                    : normalizeRequiredReviewerRole(change.requiredReviewerRole),
+              }
+            : stage
+        ),
+      })),
+    [patch]
+  );
+
+  const removeComponentStage = React.useCallback(
+    (index: number) =>
+      patch((prev) => ({
+        ...prev,
+        componentApprovalStages: prev.componentApprovalStages.filter((_, at) => at !== index),
+      })),
+    [patch]
+  );
+
+  const setComponentDeprecationNoticeDays = React.useCallback(
+    (days: number | string) =>
+      patch((prev) => ({
+        ...prev,
+        componentDeprecationNoticeDays: normalizeComponentDeprecationNoticeDays(days),
+      })),
+    [patch]
+  );
+
   const save = React.useCallback(async () => {
     if (!draft) return false;
     setSaving(true);
@@ -710,6 +801,11 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
           breakingPublishPolicy: draft.breakingPublishPolicy,
           requiredApprovals: draft.requiredApprovals,
           requiredReviewerRole: draft.requiredReviewerRole,
+          componentApprovalStages: draft.componentApprovalStages.map((stage) => ({
+            ...stage,
+            name: stage.name.trim(),
+          })),
+          componentDeprecationNoticeDays: draft.componentDeprecationNoticeDays,
           snapshot: true,
         }),
       });
@@ -745,6 +841,10 @@ export function useGuidePolicy(guideId: string, active: boolean): GuidePolicySta
     setRequiredApprovals,
     setRequiredReviewerRole,
     setCiOutcome,
+    addComponentStage,
+    updateComponentStage,
+    removeComponentStage,
+    setComponentDeprecationNoticeDays,
     discard: () => setDraft(baseline),
     save,
     clearError: () => setError(''),

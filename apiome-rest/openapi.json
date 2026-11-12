@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.544.0",
+    "version": "1.545.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -39803,7 +39803,7 @@
                           "type": "string",
                           "format": "date-time",
                           "description": "Observed At timestamp (ISO 8601).",
-                          "example": "2026-11-11T23:55:51Z"
+                          "example": "2026-11-12T01:06:50Z"
                         },
                         "method": {
                           "type": "string",
@@ -51020,7 +51020,7 @@
           "style-guides"
         ],
         "summary": "Put Style Guide Policy Settings",
-        "description": "Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).\n\nAlso carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3\n(#4519) approval policy, both of which the publish flow reads through the same\nguide-resolution chain.\n\n``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the\nstored role alone, sending ``null`` clears it. Every other field keeps the\nomit-to-leave-unchanged rule the endpoint has always had.",
+        "description": "Update draft policy gates and optionally snapshot a policy pack (CLX-1.3, #4850).\n\nAlso carries the CTG-3.4 (#4478) breaking-publish guardrail level and the COL-2.3\n(#4519) approval policy, both of which the publish flow reads through the same\nguide-resolution chain.\n\nDCW-3.4 (private-suite#2364) adds the component-library policy: ordered\n``componentApprovalStages`` (validated strictly \u2014 a bad stage is a 422, never silently\ndropped) and ``componentDeprecationNoticeDays``.\n\n``requiredReviewerRole`` distinguishes *omitted* from *null*: omitting it leaves the\nstored role alone, sending ``null`` clears it. Every other field keeps the\nomit-to-leave-unchanged rule the endpoint has always had.",
         "operationId": "put_style_guide_policy_settings_v1_style_guides__tenant_slug___guide_id__policy_put",
         "parameters": [
           {
@@ -83820,7 +83820,7 @@
           "component-library"
         ],
         "summary": "Publish Revision",
-        "description": "Publish a draft revision (TYPES/PUBLISH) \u2014 immutable from then on.\n\nEnforces the no-unsafe-downgrade rule inside the transaction: the revision\nmust be strictly greater than the highest already-published revision.\nRepublishing a published revision is an idempotent no-op.",
+        "description": "Publish a draft revision (TYPES/PUBLISH) \u2014 immutable from then on.\n\nEnforces the no-unsafe-downgrade rule inside the transaction: the revision\nmust be strictly greater than the highest already-published revision.\nRepublishing a published revision is an idempotent no-op.\n\nDCW-3.4: when the governing style guide defines component approval stages,\na draft whose stages are not all satisfied answers 409 ``APPROVAL_REQUIRED``\nwith the assessment, and the publish transaction rechecks that the payload\nis still the one the approvers judged (409 ``APPROVAL_STALE`` otherwise).",
         "operationId": "publish_revision_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__publish_post",
         "parameters": [
           {
@@ -84385,6 +84385,1048 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for materialization previewresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/governance/policy": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Get Governance Policy",
+        "description": "The component policy of the tenant's governing style guide (any tenant member).",
+        "operationId": "get_governance_policy_v1_component_library__tenant_slug__governance_policy_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Governance Policyauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Governance Policyauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Governance Policy Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Governance Policy Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get governance policy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GovernancePolicyResponse",
+                  "description": "Response payload for get governance policyresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get governance policyresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/approval": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Get Revision Approval",
+        "description": "A revision's multi-stage approval assessment and decision history.",
+        "operationId": "get_revision_approval_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__approval_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Approvalauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Approvalauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Get Revision Approval Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Get Revision Approval Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for get revision approval.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalResponse",
+                  "description": "Response payload for get revision approvalresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for get revision approvalresponse422."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Record Revision Approval",
+        "description": "Record a decision on the draft's current approval stage (TYPES/EDIT).\n\nDecisions are immutable and bound to the payload digest they judged. Only the current stage\ntakes decisions: later stages wait until every earlier one is satisfied.",
+        "operationId": "record_revision_approval_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__approval_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Record Revision Approvalauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Record Revision Approvalauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Record Revision Approval Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Record Revision Approval Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovalDecisionRequest",
+                "description": "Request body for record revision approvalrequest."
+              }
+            }
+          },
+          "description": "Request body for record revision approval."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for record revision approval.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalResponse",
+                  "description": "Response payload for record revision approvalresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for record revision approvalresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/deprecation": {
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Schedule Deprecation",
+        "description": "Schedule the deprecation of a published revision (TYPES/PUBLISH).\n\nThe sunset must honour the policy's notice window. The revision itself is never modified;\nafter the sunset new pins to it are refused (409 ``REVISION_SUNSET``) and existing pins keep\nworking.",
+        "operationId": "schedule_deprecation_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__deprecation_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "revision_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Revision Id",
+              "description": "Revision Id schema."
+            },
+            "description": "Revision UUID (``versions.id``)."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Schedule Deprecationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Schedule Deprecationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Schedule Deprecation Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Schedule Deprecation Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeprecationRequest",
+                "description": "Request body for schedule deprecationrequest."
+              }
+            }
+          },
+          "description": "Request body for schedule deprecation."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for schedule deprecation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeprecationBody",
+                  "description": "Response payload for schedule deprecationresponse201."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for schedule deprecationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/deprecations/{deprecation_id}": {
+      "delete": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Cancel Deprecation",
+        "description": "Withdraw a live deprecation (TYPES/PUBLISH).",
+        "operationId": "cancel_deprecation_v1_component_library__tenant_slug__components__component_id__deprecations__deprecation_id__delete",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "deprecation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Deprecation Id",
+              "description": "Deprecation Id schema."
+            },
+            "description": "Path parameter identifying the deprecation id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Cancel Deprecationauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Cancel Deprecationauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Cancel Deprecation Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Cancel Deprecation Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for cancel deprecation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Cancel Deprecation V1 Component Library  Tenant Slug  Components  Component Id  Deprecations  Deprecation Id  Delete",
+                  "description": "Response Cancel Deprecation V1 Component Library  Tenant Slug  Components  Component Id  Deprecations  Deprecation Id  Delete schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for cancel deprecationresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/deprecations": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "List Deprecations",
+        "description": "Live deprecations with their affected pinned projects and migration guidance.",
+        "operationId": "list_deprecations_v1_component_library__tenant_slug__deprecations_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "componentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Deprecationscomponent ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Deprecationscomponent ID schema."
+                }
+              ],
+              "title": "Componentid",
+              "description": "Componentid schema."
+            },
+            "description": "Query parameter: component id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Deprecationsauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Deprecationsauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Deprecations Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Deprecations Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list deprecations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeprecationListResponse",
+                  "description": "Response payload for list deprecationsresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list deprecationsresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/upgrades/preview": {
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Preview Upgrade",
+        "description": "Preview moving every consumer of the component to a published target revision.\n\nLists every live pin with its status and, for eligible pins, the compatibility impact on\nthe version's document. Nothing is written; the returned token is what the upgrade call must\nsend back.",
+        "operationId": "preview_upgrade_v1_component_library__tenant_slug__components__component_id__upgrades_preview_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Upgradeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Upgradeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Preview Upgrade Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Preview Upgrade Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradePreviewRequest",
+                "description": "Request body for preview upgraderequest."
+              }
+            }
+          },
+          "description": "Request body for preview upgrade."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for preview upgrade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradePreviewResponse",
+                  "description": "Response payload for preview upgraderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for preview upgraderesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/components/{component_id}/upgrades": {
+      "post": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Execute Upgrade",
+        "description": "Run a previewed bulk upgrade (VERSIONS/EDIT).\n\nRefused with 422 ``CONFIRMATION_REQUIRED`` unless ``confirm`` is true, and with 409\n``UPGRADE_PLAN_STALE`` when the plan changed since the preview that issued the token.",
+        "operationId": "execute_upgrade_v1_component_library__tenant_slug__components__component_id__upgrades_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "component_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Component Id",
+              "description": "Component Id schema."
+            },
+            "description": "Path parameter identifying the component id segment."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Execute Upgradeauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Execute Upgradeauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Execute Upgrade Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Execute Upgrade Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeRequest",
+                "description": "Request body for execute upgraderequest."
+              }
+            }
+          },
+          "description": "Request body for execute upgrade."
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response for execute upgrade.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpgradeResponse",
+                  "description": "Response payload for execute upgraderesponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for execute upgraderesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/component-library/{tenant_slug}/audit/export": {
+      "get": {
+        "tags": [
+          "component-library"
+        ],
+        "summary": "Export Audit",
+        "description": "Export the component-library ledger (tenant administrators).\n\nEach row carries the actor, the policy in force, the old and new revision, the affected\nprojects, the decision, and the timestamp. ``format=csv`` returns ``text/csv`` with\n``policy`` and ``affectedProjects`` as compact JSON cells.",
+        "operationId": "export_audit_v1_component_library__tenant_slug__audit_export_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "json",
+                "csv"
+              ],
+              "type": "string",
+              "default": "json",
+              "title": "Format",
+              "description": "Format schema."
+            },
+            "description": "Requested output format."
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Export Auditsince schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Auditsince schema."
+                }
+              ],
+              "title": "Since",
+              "description": "Since schema."
+            },
+            "description": "Query parameter: since."
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Export Audituntil schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Audituntil schema."
+                }
+              ],
+              "title": "Until",
+              "description": "Until schema."
+            },
+            "description": "Query parameter: until."
+          },
+          {
+            "name": "componentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Export Auditcomponent ID schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Auditcomponent ID schema."
+                }
+              ],
+              "title": "Componentid",
+              "description": "Componentid schema."
+            },
+            "description": "Query parameter: component id."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Export Auditauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Auditauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Export Audit Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Audit Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for export audit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditExportResponse",
+                  "description": "Response payload for export auditresponse200."
+                }
+              },
+              "text/csv": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for export auditresponse422."
                 }
               }
             }
@@ -116979,6 +118021,78 @@
         "title": "AffectedEntity",
         "description": "One entity a change reaches."
       },
+      "AffectedProjectBody": {
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for affected project."
+              },
+              {
+                "type": "null",
+                "description": "Request body for affected project."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for affected project."
+              },
+              {
+                "type": "null",
+                "description": "Request body for affected project."
+              }
+            ],
+            "title": "Version",
+            "description": "Version."
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "default": false,
+            "description": "Published.",
+            "example": false
+          },
+          "revision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for affected project."
+              },
+              {
+                "type": "null",
+                "description": "Request body for affected project."
+              }
+            ],
+            "title": "Revision",
+            "description": "Revision."
+          }
+        },
+        "type": "object",
+        "required": [
+          "projectId",
+          "versionId"
+        ],
+        "title": "AffectedProjectBody",
+        "description": "A project version that pins the subject revision."
+      },
       "AgentConsumerRef": {
         "properties": {
           "consumerId": {
@@ -119590,6 +120704,208 @@
         "title": "ApiParadigm",
         "description": "The high-level interaction style a format belongs to.\n\nA format declares exactly one paradigm; it selects which canonical fields\nare load-bearing (for example ``channels`` matter for ``EVENT`` but not for\n``REST``) and drives browse/search facets."
       },
+      "ApprovalDecisionBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "stageIndex": {
+            "type": "integer",
+            "title": "Stageindex",
+            "description": "Stage Index.",
+            "example": 1
+          },
+          "stageName": {
+            "type": "string",
+            "title": "Stagename",
+            "description": "Stage Name.",
+            "example": "Example"
+          },
+          "userId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Userid",
+            "description": "User ID."
+          },
+          "userEmail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Useremail",
+            "description": "User Email."
+          },
+          "decision": {
+            "type": "string",
+            "title": "Decision",
+            "description": "Decision.",
+            "example": "example"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Note",
+            "description": "Note."
+          },
+          "payloadDigest": {
+            "type": "string",
+            "title": "Payloaddigest",
+            "description": "Payload Digest.",
+            "example": "example"
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "description": "Given to an earlier payload; no longer counts.",
+            "example": false
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Createdat",
+            "description": "Created At."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "stageIndex",
+          "stageName",
+          "decision",
+          "payloadDigest",
+          "stale"
+        ],
+        "title": "ApprovalDecisionBody",
+        "description": "One recorded decision."
+      },
+      "ApprovalDecisionRequest": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "request_changes"
+            ],
+            "title": "Decision",
+            "description": "Decision.",
+            "example": "approve"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000,
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Note",
+            "description": "Note."
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "description": "Request body for approval decision."
+              },
+              {
+                "type": "null",
+                "description": "Request body for approval decision."
+              }
+            ],
+            "title": "Stage",
+            "description": "The stage the reviewer was shown; refused with 409 STAGE_NOT_CURRENT when another stage is current."
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ApprovalDecisionRequest",
+        "description": "Record a decision on the current stage."
+      },
+      "ApprovalResponse": {
+        "properties": {
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Revision.",
+            "example": "example"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "State.",
+            "example": "example"
+          },
+          "assessment": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Assessment",
+            "description": "Assessment."
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/ApprovalDecisionBody"
+            },
+            "type": "array",
+            "title": "Decisions",
+            "description": "Decisions.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "revisionId",
+          "revision",
+          "state",
+          "assessment"
+        ],
+        "title": "ApprovalResponse",
+        "description": "A revision's assessment plus its decision history."
+      },
       "ArtifactEntityLocation": {
         "properties": {
           "file": {
@@ -120122,6 +121438,30 @@
         ],
         "title": "AttachRequest",
         "description": "An existing catalog item to back an empty subject."
+      },
+      "AuditExportResponse": {
+        "properties": {
+          "rows": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rows",
+            "description": "Rows.",
+            "maxItems": 100
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false,
+            "description": "Truncated.",
+            "example": false
+          }
+        },
+        "type": "object",
+        "title": "AuditExportResponse",
+        "description": "AuditExportResponse schema."
       },
       "AuthEventAccepted": {
         "properties": {
@@ -129630,7 +130970,7 @@
             "format": "date-time",
             "title": "Started At",
             "description": "Started At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "completed_at": {
             "anyOf": [
@@ -131226,7 +132566,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           }
         },
         "type": "object",
@@ -131282,7 +132622,7 @@
             "format": "date-time",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "workspaces": {
             "items": {
@@ -131886,7 +133226,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "comment_count": {
             "type": "integer",
@@ -132114,7 +133454,7 @@
             "format": "date-time",
             "title": "Last Activity At",
             "description": "The latest reply or status change.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "comment_count": {
             "type": "integer",
@@ -132542,6 +133882,48 @@
         ],
         "title": "CompiledToolsetOut",
         "description": "The toolset as agents are served it: enabled tools, accepted descriptions applied.\n\nAttributes:\n    schema_version: The projection's shape.\n    toolset_id: The toolset.\n    version_id: Its published version.\n    enabled: Whether the toolset serves agents (a disabled one compiles to no tools).\n    description_enrichment: Whether accepted proposals were applied.\n    enriched_targets: The target keys whose accepted text was applied.\n    fingerprint: The compiled toolset's content hash.\n    tools: The MCP ``tools/list`` entries, in canonical order."
+      },
+      "ComponentApprovalStageModel": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Stage name, unique per guide.",
+            "example": "Pet"
+          },
+          "requiredApprovals": {
+            "type": "integer",
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Requiredapprovals",
+            "description": "Approvals the stage needs.",
+            "default": 1,
+            "example": 1
+          },
+          "requiredReviewerRole": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "description": "Component Approval Stage Model schema."
+              },
+              {
+                "type": "null",
+                "description": "Component Approval Stage Model schema."
+              }
+            ],
+            "title": "Requiredreviewerrole",
+            "description": "Role slug at least one of the stage's approvals must come from."
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ComponentApprovalStageModel",
+        "description": "One component-library approval stage (DCW-3.4, private-suite#2364)."
       },
       "ComponentCreateRequest": {
         "properties": {
@@ -133156,14 +134538,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "duration_ms": {
             "type": "integer",
@@ -136557,7 +137939,7 @@
             "type": "string",
             "title": "Operation Uuid",
             "description": "The apiome.path_operation UUID.",
-            "example": "e2d4f304-50bf-47ef-bc0c-b7d51069da9b"
+            "example": "e64f5dd9-5828-43d2-abcf-c6c8ab48d87e"
           },
           "method": {
             "type": "string",
@@ -139136,7 +140518,7 @@
             "type": "string",
             "title": "Generated At",
             "description": "Statement timestamp (ISO-8601, UTC).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "envelope": {
             "additionalProperties": true,
@@ -140076,6 +141458,197 @@
         "type": "object",
         "title": "DeployGateThresholds",
         "description": "The complete ``ctg.gate-policy.v1`` body: one threshold group per signal."
+      },
+      "DeprecationBody": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Stable resource identifier.",
+            "example": "res_01h2xcejqtf3fz5y5j0v8k9m2p"
+          },
+          "componentId": {
+            "type": "string",
+            "title": "Componentid",
+            "description": "Component ID.",
+            "example": "example"
+          },
+          "componentName": {
+            "type": "string",
+            "title": "Componentname",
+            "description": "Component Name.",
+            "example": "Example"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Kind",
+            "description": "Kind."
+          },
+          "revisionId": {
+            "type": "string",
+            "title": "Revisionid",
+            "description": "Revision ID.",
+            "example": "example"
+          },
+          "revision": {
+            "type": "string",
+            "title": "Revision",
+            "description": "Revision.",
+            "example": "example"
+          },
+          "replacementRevisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Replacementrevisionid",
+            "description": "Replacement Revision ID."
+          },
+          "replacementRevision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Replacementrevision",
+            "description": "Replacement Revision."
+          },
+          "sunsetAt": {
+            "type": "string",
+            "title": "Sunsetat",
+            "description": "Sunset At.",
+            "example": "example"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "scheduled | sunset",
+            "example": "active"
+          },
+          "migrationGuide": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Migrationguide",
+            "description": "Migration Guide."
+          },
+          "affectedProjects": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedProjectBody"
+            },
+            "type": "array",
+            "title": "Affectedprojects",
+            "description": "Affected Projects.",
+            "maxItems": 1000
+          },
+          "guidance": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Guidance",
+            "description": "Guidance."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "componentId",
+          "componentName",
+          "revisionId",
+          "revision",
+          "sunsetAt",
+          "status"
+        ],
+        "title": "DeprecationBody",
+        "description": "One live deprecation with its consumers and guidance."
+      },
+      "DeprecationListResponse": {
+        "properties": {
+          "deprecations": {
+            "items": {
+              "$ref": "#/components/schemas/DeprecationBody"
+            },
+            "type": "array",
+            "title": "Deprecations",
+            "description": "Deprecations.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "title": "DeprecationListResponse",
+        "description": "DeprecationListResponse schema."
+      },
+      "DeprecationRequest": {
+        "properties": {
+          "sunsetAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Sunsetat",
+            "description": "When new pins to the revision stop (ISO 8601).",
+            "example": "example"
+          },
+          "replacementRevisionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Replacementrevisionid",
+            "description": "A published, higher revision of the same component."
+          },
+          "migrationGuide": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10000,
+                "description": "Request body for deprecation."
+              },
+              {
+                "type": "null",
+                "description": "Request body for deprecation."
+              }
+            ],
+            "title": "Migrationguide",
+            "description": "Migration Guide."
+          }
+        },
+        "type": "object",
+        "required": [
+          "sunsetAt"
+        ],
+        "title": "DeprecationRequest",
+        "description": "Schedule the deprecation of a published revision."
       },
       "DestinationAvailability": {
         "type": "string",
@@ -141183,7 +142756,7 @@
             "format": "date-time",
             "title": "Synchronized At",
             "description": "When `commit_sha` / `source_digest` last moved.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "browse_url": {
             "anyOf": [
@@ -149106,7 +150679,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "reports": {
             "items": {
@@ -149406,7 +150979,7 @@
             "format": "date-time",
             "title": "Finished At",
             "description": "Finished At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           }
         },
         "additionalProperties": false,
@@ -154063,6 +155636,58 @@
         ],
         "title": "GitSourceLocator",
         "description": "Locator for the ``git`` import method \u2014 a single file in a Git repository (#3460).\n\nMVP supports public ``github.com`` repositories; the file is fetched via the\nGitHub contents API."
+      },
+      "GovernancePolicyResponse": {
+        "properties": {
+          "guideId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for governance policy."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for governance policy."
+              }
+            ],
+            "title": "Guideid",
+            "description": "Guide ID."
+          },
+          "guideName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for governance policy."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for governance policy."
+              }
+            ],
+            "title": "Guidename",
+            "description": "Guide Name."
+          },
+          "approvalStages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Approvalstages",
+            "description": "Approval Stages.",
+            "maxItems": 1000
+          },
+          "deprecationNoticeDays": {
+            "type": "integer",
+            "title": "Deprecationnoticedays",
+            "default": 0,
+            "description": "Deprecation Notice Days.",
+            "example": 1
+          }
+        },
+        "type": "object",
+        "title": "GovernancePolicyResponse",
+        "description": "The resolved component policy (see ``ComponentGovernancePolicy.as_payload``)."
       },
       "GrantCapabilityRequest": {
         "properties": {
@@ -169084,7 +170709,7 @@
             "format": "date-time",
             "title": "Checked At",
             "description": "Checked At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "status": {
             "type": "string",
@@ -170354,7 +171979,7 @@
             "type": "string",
             "title": "Expires At",
             "description": "Expires At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "client_id": {
             "type": "string",
@@ -195801,7 +197426,7 @@
             "format": "date-time",
             "title": "Resolved At",
             "description": "When the target was resolved.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           }
         },
         "additionalProperties": false,
@@ -207635,6 +209260,24 @@
             ],
             "title": "Requiredreviewerrole",
             "description": "Role slug at least one of those approvals must come from (COL-2.3); null means any approver counts."
+          },
+          "componentApprovalStages": {
+            "items": {
+              "$ref": "#/components/schemas/ComponentApprovalStageModel"
+            },
+            "type": "array",
+            "title": "Componentapprovalstages",
+            "description": "Ordered approval stages a component-library revision must pass before it can be published (DCW-3.4); empty (default) means no component approval gate.",
+            "maxItems": 1000
+          },
+          "componentDeprecationNoticeDays": {
+            "type": "integer",
+            "maximum": 365.0,
+            "minimum": 0.0,
+            "title": "Componentdeprecationnoticedays",
+            "description": "Minimum days between scheduling a component revision deprecation and its sunset (DCW-3.4).",
+            "default": 0,
+            "example": 1
           }
         },
         "type": "object",
@@ -207739,6 +209382,39 @@
             ],
             "title": "Requiredreviewerrole",
             "description": "Role slug at least one approval must come from (COL-2.3); send null to clear it, omit to leave unchanged."
+          },
+          "componentApprovalStages": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ComponentApprovalStageModel"
+                },
+                "type": "array",
+                "description": "Request body for style guide policy settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "title": "Componentapprovalstages",
+            "description": "Ordered component-library approval stages (DCW-3.4), at most 5; send [] to turn the gate off, omit to leave unchanged."
+          },
+          "componentDeprecationNoticeDays": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 365.0,
+                "minimum": 0.0,
+                "description": "Request body for style guide policy settings put."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide policy settings put."
+              }
+            ],
+            "title": "Componentdeprecationnoticedays",
+            "description": "Minimum deprecation notice in days (DCW-3.4); omit to leave unchanged."
           },
           "snapshot": {
             "type": "boolean",
@@ -208887,13 +210563,13 @@
             "type": "string",
             "title": "First Seen At",
             "description": "First Seen At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "last_seen_at": {
             "type": "string",
             "title": "Last Seen At",
             "description": "Last Seen At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           }
         },
         "additionalProperties": false,
@@ -210397,7 +212073,7 @@
             "format": "date-time",
             "title": "Detected At",
             "description": "Detected At timestamp (ISO 8601).",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "detected_by": {
             "anyOf": [
@@ -216681,6 +218357,277 @@
         "title": "UnresolvedRefsResponse",
         "description": "Tenant-wide unresolved-``$ref`` summary for the type registry (#3457).\n\n``unresolved_ref_count`` (every unresolved edge) and ``affected_primitive_count``\n(distinct primitives carrying at least one) are the KPIs consumed by the registry\ncoverage/stats endpoint (#3454); ``primitives`` is the per-primitive breakdown the\nresolver UI lists (#3470)."
       },
+      "UpgradeEntryBody": {
+        "properties": {
+          "pinId": {
+            "type": "string",
+            "title": "Pinid",
+            "description": "Pin ID.",
+            "example": "example"
+          },
+          "projectId": {
+            "type": "string",
+            "title": "Projectid",
+            "description": "Project ID.",
+            "example": "example"
+          },
+          "projectName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade entry."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade entry."
+              }
+            ],
+            "title": "Projectname",
+            "description": "Project Name."
+          },
+          "versionId": {
+            "type": "string",
+            "title": "Versionid",
+            "description": "Version ID.",
+            "example": "1.0.0"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade entry."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade entry."
+              }
+            ],
+            "title": "Version",
+            "description": "Version."
+          },
+          "published": {
+            "type": "boolean",
+            "title": "Published",
+            "default": false,
+            "description": "Published.",
+            "example": false
+          },
+          "fromRevisionId": {
+            "type": "string",
+            "title": "Fromrevisionid",
+            "description": "From Revision ID.",
+            "example": "example"
+          },
+          "fromRevision": {
+            "type": "string",
+            "title": "Fromrevision",
+            "description": "From Revision.",
+            "example": "example"
+          },
+          "localName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Request body for upgrade entry."
+              },
+              {
+                "type": "null",
+                "description": "Request body for upgrade entry."
+              }
+            ],
+            "title": "Localname",
+            "description": "Local Name."
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "eligible | published-version | already-on-target | target-already-pinned",
+            "example": "active"
+          },
+          "compatibility": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Compatibility",
+            "description": "status (classified | no-changes | not-evaluated | unavailable | not-applicable), maxSeverity, counts, changes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pinId",
+          "projectId",
+          "versionId",
+          "fromRevisionId",
+          "fromRevision",
+          "status"
+        ],
+        "title": "UpgradeEntryBody",
+        "description": "One pin of the plan."
+      },
+      "UpgradePreviewRequest": {
+        "properties": {
+          "targetRevisionId": {
+            "type": "string",
+            "title": "Targetrevisionid",
+            "description": "Target Revision ID.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "targetRevisionId"
+        ],
+        "title": "UpgradePreviewRequest",
+        "description": "UpgradePreviewRequest schema."
+      },
+      "UpgradePreviewResponse": {
+        "properties": {
+          "componentId": {
+            "type": "string",
+            "title": "Componentid",
+            "description": "Component ID.",
+            "example": "example"
+          },
+          "targetRevisionId": {
+            "type": "string",
+            "title": "Targetrevisionid",
+            "description": "Target Revision ID.",
+            "example": "example"
+          },
+          "targetRevision": {
+            "type": "string",
+            "title": "Targetrevision",
+            "description": "Target Revision.",
+            "example": "example"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/UpgradeEntryBody"
+            },
+            "type": "array",
+            "title": "Entries",
+            "description": "Entries.",
+            "maxItems": 100
+          },
+          "eligible": {
+            "type": "integer",
+            "title": "Eligible",
+            "default": 0,
+            "description": "Eligible.",
+            "example": 1
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped",
+            "default": 0,
+            "description": "Skipped.",
+            "example": 1
+          },
+          "breaking": {
+            "type": "integer",
+            "title": "Breaking",
+            "description": "Eligible versions with a breaking change.",
+            "default": 0,
+            "example": 1
+          },
+          "confirmationToken": {
+            "type": "string",
+            "title": "Confirmationtoken",
+            "description": "Confirmation Token.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+          },
+          "policy": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Policy",
+            "description": "Policy."
+          }
+        },
+        "type": "object",
+        "required": [
+          "componentId",
+          "targetRevisionId",
+          "targetRevision",
+          "confirmationToken"
+        ],
+        "title": "UpgradePreviewResponse",
+        "description": "UpgradePreviewResponse schema."
+      },
+      "UpgradeRequest": {
+        "properties": {
+          "targetRevisionId": {
+            "type": "string",
+            "title": "Targetrevisionid",
+            "description": "Target Revision ID.",
+            "example": "example"
+          },
+          "pinIds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Pinids",
+            "description": "Pin IDs."
+          },
+          "confirmationToken": {
+            "type": "string",
+            "title": "Confirmationtoken",
+            "description": "Confirmation Token.",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example"
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Confirm",
+            "description": "Must be true: the caller confirms the previewed impact.",
+            "default": false,
+            "example": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "targetRevisionId",
+          "pinIds",
+          "confirmationToken"
+        ],
+        "title": "UpgradeRequest",
+        "description": "Run a previewed plan."
+      },
+      "UpgradeResponse": {
+        "properties": {
+          "targetRevision": {
+            "type": "string",
+            "title": "Targetrevision",
+            "description": "Target Revision.",
+            "example": "example"
+          },
+          "upgraded": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Upgraded",
+            "description": "Upgraded.",
+            "maxItems": 1000
+          },
+          "affectedProjects": {
+            "items": {
+              "$ref": "#/components/schemas/AffectedProjectBody"
+            },
+            "type": "array",
+            "title": "Affectedprojects",
+            "description": "Affected Projects.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "targetRevision"
+        ],
+        "title": "UpgradeResponse",
+        "description": "UpgradeResponse schema."
+      },
       "UpstreamCredentialCreate": {
         "properties": {
           "serverUrl": {
@@ -219221,14 +221168,14 @@
             "format": "date-time",
             "title": "Started At",
             "description": "When the run began.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "finished_at": {
             "type": "string",
             "format": "date-time",
             "title": "Finished At",
             "description": "When the run ended.",
-            "example": "2026-11-11T23:55:51Z"
+            "example": "2026-11-12T01:06:50Z"
           },
           "outcome": {
             "anyOf": [

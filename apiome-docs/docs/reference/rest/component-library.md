@@ -1,6 +1,6 @@
 ---
 title: "Component library"
-description: "REST endpoints tagged component-library: 12 operations."
+description: "REST endpoints tagged component-library: 21 operations."
 sidebar_position: 24
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,40 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.544.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.545.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `component-library` · 12 operations
+Tag: `component-library` · 21 operations
+
+## `GET /v1/component-library/{tenant_slug}/audit/export` {#export-audit-v1-component-library-tenant-slug-audit-export-get}
+
+**Export Audit**
+
+Export the component-library ledger (tenant administrators).
+
+Each row carries the actor, the policy in force, the old and new revision, the affected
+projects, the decision, and the timestamp. ``format=csv`` returns ``text/csv`` with
+``policy`` and ``affectedProjects`` as compact JSON cells.
+
+Operation id: `export_audit_v1_component_library__tenant_slug__audit_export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `format` | query | enum `"json"`, `"csv"` | no | Requested output format. |
+| `since` | query | string (date-time) or null | no | Query parameter: since. |
+| `until` | query | string (date-time) or null | no | Query parameter: until. |
+| `componentId` | query | string or null | no | Query parameter: component id. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export audit. | `application/json` [`AuditExportResponse`](#schema-auditexportresponse); `text/csv` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/component-library/{tenant_slug}/components` {#list-components-v1-component-library-tenant-slug-components-get}
 
@@ -114,6 +145,31 @@ Operation id: `delete_component_v1_component_library__tenant_slug__components__c
 | 200 | Successful response for delete component. | `application/json` [`DeletedResponse`](#schema-deletedresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `DELETE /v1/component-library/{tenant_slug}/components/{component_id}/deprecations/{deprecation_id}` {#cancel-deprecation-v1-component-library-tenant-slug-components-component-id-deprecations-deprecation-id-delete}
+
+**Cancel Deprecation**
+
+Withdraw a live deprecation (TYPES/PUBLISH).
+
+Operation id: `cancel_deprecation_v1_component_library__tenant_slug__components__component_id__deprecations__deprecation_id__delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `deprecation_id` | path | string | yes | Path parameter identifying the deprecation id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for cancel deprecation. | `application/json` map of boolean |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/component-library/{tenant_slug}/components/{component_id}/revisions` {#create-revision-v1-component-library-tenant-slug-components-component-id-revisions-post}
 
 **Create Revision**
@@ -200,6 +256,100 @@ Operation id: `delete_revision_v1_component_library__tenant_slug__components__co
 | 200 | Successful response for delete revision. | `application/json` [`DeletedResponse`](#schema-deletedresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/approval` {#get-revision-approval-v1-component-library-tenant-slug-components-component-id-revisions-revision-id-approval-get}
+
+**Get Revision Approval**
+
+A revision's multi-stage approval assessment and decision history.
+
+Operation id: `get_revision_approval_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__approval_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `revision_id` | path | string | yes | Revision UUID (``versions.id``). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get revision approval. | `application/json` [`ApprovalResponse`](#schema-approvalresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/approval` {#record-revision-approval-v1-component-library-tenant-slug-components-component-id-revisions-revision-id-approval-post}
+
+**Record Revision Approval**
+
+Record a decision on the draft's current approval stage (TYPES/EDIT).
+
+Decisions are immutable and bound to the payload digest they judged. Only the current stage
+takes decisions: later stages wait until every earlier one is satisfied.
+
+Operation id: `record_revision_approval_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__approval_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `revision_id` | path | string | yes | Revision UUID (``versions.id``). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for record revision approval.
+
+- `application/json` — [`ApprovalDecisionRequest`](#schema-approvaldecisionrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for record revision approval. | `application/json` [`ApprovalResponse`](#schema-approvalresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/deprecation` {#schedule-deprecation-v1-component-library-tenant-slug-components-component-id-revisions-revision-id-deprecation-post}
+
+**Schedule Deprecation**
+
+Schedule the deprecation of a published revision (TYPES/PUBLISH).
+
+The sunset must honour the policy's notice window. The revision itself is never modified;
+after the sunset new pins to it are refused (409 ``REVISION_SUNSET``) and existing pins keep
+working.
+
+Operation id: `schedule_deprecation_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__deprecation_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `revision_id` | path | string | yes | Revision UUID (``versions.id``). |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for schedule deprecation.
+
+- `application/json` — [`DeprecationRequest`](#schema-deprecationrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for schedule deprecation. | `application/json` [`DeprecationBody`](#schema-deprecationbody) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `POST /v1/component-library/{tenant_slug}/components/{component_id}/revisions/{revision_id}/publish` {#publish-revision-v1-component-library-tenant-slug-components-component-id-revisions-revision-id-publish-post}
 
 **Publish Revision**
@@ -209,6 +359,11 @@ Publish a draft revision (TYPES/PUBLISH) — immutable from then on.
 Enforces the no-unsafe-downgrade rule inside the transaction: the revision
 must be strictly greater than the highest already-published revision.
 Republishing a published revision is an idempotent no-op.
+
+DCW-3.4: when the governing style guide defines component approval stages,
+a draft whose stages are not all satisfied answers 409 ``APPROVAL_REQUIRED``
+with the assessment, and the publish transaction rechecks that the payload
+is still the one the approvers judged (409 ``APPROVAL_STALE`` otherwise).
 
 Operation id: `publish_revision_v1_component_library__tenant_slug__components__component_id__revisions__revision_id__publish_post`
 
@@ -227,6 +382,120 @@ Operation id: `publish_revision_v1_component_library__tenant_slug__components__c
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for publish revision. | `application/json` [`PublishResponse`](#schema-publishresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/component-library/{tenant_slug}/components/{component_id}/upgrades` {#execute-upgrade-v1-component-library-tenant-slug-components-component-id-upgrades-post}
+
+**Execute Upgrade**
+
+Run a previewed bulk upgrade (VERSIONS/EDIT).
+
+Refused with 422 ``CONFIRMATION_REQUIRED`` unless ``confirm`` is true, and with 409
+``UPGRADE_PLAN_STALE`` when the plan changed since the preview that issued the token.
+
+Operation id: `execute_upgrade_v1_component_library__tenant_slug__components__component_id__upgrades_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for execute upgrade.
+
+- `application/json` — [`UpgradeRequest`](#schema-upgraderequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for execute upgrade. | `application/json` [`UpgradeResponse`](#schema-upgraderesponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/component-library/{tenant_slug}/components/{component_id}/upgrades/preview` {#preview-upgrade-v1-component-library-tenant-slug-components-component-id-upgrades-preview-post}
+
+**Preview Upgrade**
+
+Preview moving every consumer of the component to a published target revision.
+
+Lists every live pin with its status and, for eligible pins, the compatibility impact on
+the version's document. Nothing is written; the returned token is what the upgrade call must
+send back.
+
+Operation id: `preview_upgrade_v1_component_library__tenant_slug__components__component_id__upgrades_preview_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for preview upgrade.
+
+- `application/json` — [`UpgradePreviewRequest`](#schema-upgradepreviewrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for preview upgrade. | `application/json` [`UpgradePreviewResponse`](#schema-upgradepreviewresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/component-library/{tenant_slug}/deprecations` {#list-deprecations-v1-component-library-tenant-slug-deprecations-get}
+
+**List Deprecations**
+
+Live deprecations with their affected pinned projects and migration guidance.
+
+Operation id: `list_deprecations_v1_component_library__tenant_slug__deprecations_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `componentId` | query | string or null | no | Query parameter: component id. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list deprecations. | `application/json` [`DeprecationListResponse`](#schema-deprecationlistresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/component-library/{tenant_slug}/governance/policy` {#get-governance-policy-v1-component-library-tenant-slug-governance-policy-get}
+
+**Get Governance Policy**
+
+The component policy of the tenant's governing style guide (any tenant member).
+
+Operation id: `get_governance_policy_v1_component_library__tenant_slug__governance_policy_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get governance policy. | `application/json` [`GovernancePolicyResponse`](#schema-governancepolicyresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/component-library/{tenant_slug}/projects/{project_id}/versions/{version_record_id}/materialization` {#materialization-preview-v1-component-library-tenant-slug-projects-project-id-versions-version-record-id-materialization-get}
@@ -344,6 +613,37 @@ Operation id: `delete_pin_v1_component_library__tenant_slug__projects__project_i
 
 ## Schemas used {#schemas-used}
 
+### `ApprovalDecisionRequest` {#schema-approvaldecisionrequest}
+
+Record a decision on the current stage.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `decision` | enum `"approve"`, `"request_changes"` | yes | Decision. |
+| `note` | string or null | no | Note. |
+| `stage` | integer or null | no | The stage the reviewer was shown; refused with 409 STAGE_NOT_CURRENT when another stage is current. |
+
+### `ApprovalResponse` {#schema-approvalresponse}
+
+A revision's assessment plus its decision history.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `revisionId` | string | yes | Revision ID. |
+| `revision` | string | yes | Revision. |
+| `state` | string | yes | State. |
+| `assessment` | object | yes | Assessment. |
+| `decisions` | array of `ApprovalDecisionBody` | no | Decisions. |
+
+### `AuditExportResponse` {#schema-auditexportresponse}
+
+AuditExportResponse schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `rows` | array of object | no | Rows. |
+| `truncated` | boolean | no | Truncated. |
+
 ### `ComponentCreateRequest` {#schema-componentcreaterequest}
 
 Create a component plus its initial draft revision.
@@ -396,6 +696,55 @@ DeletedResponse schema.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `deleted` | boolean | yes | Deleted. |
+
+### `DeprecationBody` {#schema-deprecationbody}
+
+One live deprecation with its consumers and guidance.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `id` | string | yes | Stable resource identifier. |
+| `componentId` | string | yes | Component ID. |
+| `componentName` | string | yes | Component Name. |
+| `kind` | string or null | no | Kind. |
+| `revisionId` | string | yes | Revision ID. |
+| `revision` | string | yes | Revision. |
+| `replacementRevisionId` | string or null | no | Replacement Revision ID. |
+| `replacementRevision` | string or null | no | Replacement Revision. |
+| `sunsetAt` | string | yes | Sunset At. |
+| `status` | string | yes | scheduled \| sunset |
+| `migrationGuide` | string or null | no | Migration Guide. |
+| `affectedProjects` | array of `AffectedProjectBody` | no | Affected Projects. |
+| `guidance` | object | no | Guidance. |
+
+### `DeprecationListResponse` {#schema-deprecationlistresponse}
+
+DeprecationListResponse schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `deprecations` | array of [`DeprecationBody`](#schema-deprecationbody) | no | Deprecations. |
+
+### `DeprecationRequest` {#schema-deprecationrequest}
+
+Schedule the deprecation of a published revision.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sunsetAt` | string (date-time) | yes | When new pins to the revision stop (ISO 8601). |
+| `replacementRevisionId` | string or null | no | A published, higher revision of the same component. |
+| `migrationGuide` | string or null | no | Migration Guide. |
+
+### `GovernancePolicyResponse` {#schema-governancepolicyresponse}
+
+The resolved component policy (see ``ComponentGovernancePolicy.as_payload``).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `guideId` | string or null | no | Guide ID. |
+| `guideName` | string or null | no | Guide Name. |
+| `approvalStages` | array of object | no | Approval Stages. |
+| `deprecationNoticeDays` | integer | no | Deprecation Notice Days. |
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
 
@@ -476,3 +825,48 @@ Replace a draft revision's canonical payload.
 | --- | --- | --- | --- |
 | `payload` | any | no | Payload. |
 | `schemaPrimitiveId` | string or null | no | Schema Primitive ID. |
+
+### `UpgradePreviewRequest` {#schema-upgradepreviewrequest}
+
+UpgradePreviewRequest schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `targetRevisionId` | string | yes | Target Revision ID. |
+
+### `UpgradePreviewResponse` {#schema-upgradepreviewresponse}
+
+UpgradePreviewResponse schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `componentId` | string | yes | Component ID. |
+| `targetRevisionId` | string | yes | Target Revision ID. |
+| `targetRevision` | string | yes | Target Revision. |
+| `entries` | array of `UpgradeEntryBody` | no | Entries. |
+| `eligible` | integer | no | Eligible. |
+| `skipped` | integer | no | Skipped. |
+| `breaking` | integer | no | Eligible versions with a breaking change. |
+| `confirmationToken` | string | yes | Confirmation Token. |
+| `policy` | object | no | Policy. |
+
+### `UpgradeRequest` {#schema-upgraderequest}
+
+Run a previewed plan.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `targetRevisionId` | string | yes | Target Revision ID. |
+| `pinIds` | array of string | yes | Pin IDs. |
+| `confirmationToken` | string | yes | Confirmation Token. |
+| `confirm` | boolean | no | Must be true: the caller confirms the previewed impact. |
+
+### `UpgradeResponse` {#schema-upgraderesponse}
+
+UpgradeResponse schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `targetRevision` | string | yes | Target Revision. |
+| `upgraded` | array of object | no | Upgraded. |
+| `affectedProjects` | array of `AffectedProjectBody` | no | Affected Projects. |

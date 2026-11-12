@@ -91,6 +91,54 @@ DELETE /projects/{pid}/versions/{vid}/pins/{pin}
 GET    /projects/{pid}/versions/{vid}/materialization?includeOrigin=
 ```
 
+## Governance and lifecycle (DCW-3.4, private-suite#2364)
+
+Administrators configure the component policy on the governing style guide
+(`PUT /v1/style-guides/{tenant}/{guide}/policy`), resolved for the tenant
+through the GOV-1.4 chain (tenant assignment, else the tenant default):
+
+- `componentApprovalStages` — up to five ordered stages, each
+  `{name, requiredApprovals (1–20), requiredReviewerRole}` with the COL-2.3
+  meaning. Stages are sequential: only the first unsatisfied stage takes
+  decisions. `[]` (default) means no approval gate.
+- `componentDeprecationNoticeDays` — the minimum notice (0–365) between
+  scheduling a deprecation and its sunset.
+
+Decisions (`approve` | `request_changes`, the COL-2.1 vocabulary) are
+immutable and bound to the revision's payload digest; editing a draft makes
+them stale. Publishing answers 409 `APPROVAL_REQUIRED` with the assessment
+until every stage is satisfied, and the publish transaction rechecks the
+digest (409 `APPROVAL_STALE`). Unlike the COL-2.3 version gate, a policy that
+cannot be read fails closed — the library is a shared dependency.
+
+A deprecation never modifies the published revision. After `sunsetAt`, new
+pins answer 409 `REVISION_SUNSET`; existing pins keep materializing.
+
+A bulk upgrade replaces pins (soft delete + insert with the same local name)
+on **draft** versions only; published versions are listed and skipped. The
+preview classifies each eligible version's materialized document before and
+after with `classify_openapi_changes` (at most 25 versions per preview; the
+rest read `not-evaluated`), and returns a token over the eligible plan. The
+upgrade needs `confirm: true` and the same token, rebuilt under lock.
+
+```
+GET    /governance/policy
+GET    /components/{id}/revisions/{rid}/approval
+POST   /components/{id}/revisions/{rid}/approval        {decision, note?, stage?}
+POST   /components/{id}/revisions/{rid}/deprecation     {sunsetAt, replacementRevisionId?, migrationGuide?}
+DELETE /components/{id}/deprecations/{did}
+GET    /deprecations?componentId=
+POST   /components/{id}/upgrades/preview                {targetRevisionId}
+POST   /components/{id}/upgrades                        {targetRevisionId, pinIds, confirmationToken, confirm}
+GET    /audit/export?format=json|csv&since=&until=&componentId=
+```
+
+Approvals need `types:edit`, deprecations `types:publish`, the preview
+`versions:view`, the upgrade `versions:edit`, and the audit export a tenant
+administrator. Every export row carries `timestamp`, `action`, `decision`,
+`actorId`/`actorEmail`, `componentId`/`componentName`, `policy`,
+`oldRevision`, `newRevision`, `affectedProjects`, and `outcome`.
+
 ## Tests
 
 - `tests/test_component_library.py` — validation, semver, digests, and the
@@ -101,3 +149,11 @@ GET    /projects/{pid}/versions/{vid}/materialization?includeOrigin=
 - `tests/test_component_library_routes.py` — authorization matrix
   (403 permission denials, 404 scope misses), lifecycle conflicts, and the
   materialization preview.
+- `tests/test_component_governance.py` — stage validation, the sequential
+  assessment, notice windows, guidance, upgrade planning/token, and the
+  export shape.
+- `tests/test_component_governance_db.py` — in-tx rechecks and single-commit
+  audits for approvals, deprecations, and bulk upgrades.
+- `tests/test_component_governance_routes.py` — the publish gate, permission
+  matrix, notice enforcement, preview classification, explicit confirmation,
+  and the admin-only export.

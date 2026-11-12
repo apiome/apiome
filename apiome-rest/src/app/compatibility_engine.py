@@ -134,12 +134,22 @@ def compat_audit_detail(
     }
 
 
-def openapi_for_revision(version: Dict[str, Any], tenant_slug: str, tenant_id: str) -> Dict[str, Any]:
+def openapi_for_revision(
+    version: Dict[str, Any],
+    tenant_slug: str,
+    tenant_id: str,
+    *,
+    component_pin_rows: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     """
     Build the OpenAPI spec for a persisted revision.
 
     Shared helper used by the compatibility API and push/merge audit pipelines.
     Extracted from ``compatibility_routes`` to avoid cross-router coupling.
+
+    ``component_pin_rows`` replaces the version's stored component-library pins when given
+    (DCW-3.4: the bulk-upgrade preview builds the document as it would read after the upgrade);
+    ``None`` reads the stored pins, as before.
     """
     project = db.get_project_by_id(version["project_id"], tenant_id)
     if not project:
@@ -158,4 +168,5 @@ def openapi_for_revision(version: Dict[str, Any], tenant_slug: str, tenant_id: s
         version_db_id=version["id"],
         revision_metadata=version.get("metadata"),
         project_metadata=project.get("metadata"),
+        component_pin_rows=component_pin_rows,
     )

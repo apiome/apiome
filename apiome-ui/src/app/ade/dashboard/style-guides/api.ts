@@ -126,6 +126,23 @@ export interface GuidePolicySettings {
   requiredApprovals: number;
   /** Role slug at least one approval must come from; `null` means any approver (COL-2.3). */
   requiredReviewerRole: string | null;
+  /**
+   * Ordered approval stages a component-library revision must pass before publish
+   * (DCW-3.4, private-suite#2364); empty means no component approval gate.
+   */
+  componentApprovalStages?: ComponentApprovalStage[];
+  /** Minimum days between scheduling a component deprecation and its sunset (DCW-3.4). */
+  componentDeprecationNoticeDays?: number;
+}
+
+/** One component-library approval stage (DCW-3.4, private-suite#2364). */
+export interface ComponentApprovalStage {
+  /** Stage name, unique within the guide. */
+  name: string;
+  /** Approvals the stage needs, `1..MAX_REQUIRED_APPROVALS`. */
+  requiredApprovals: number;
+  /** Role slug at least one of the stage's approvals must come from, or `null`. */
+  requiredReviewerRole: string | null;
 }
 
 /** One immutable policy pack version (CLX-1.3, #4850). */
@@ -224,6 +241,67 @@ export function normalizeRequiredReviewerRole(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
   const slug = raw.trim().toLowerCase();
   return slug ? slug : null;
+}
+
+/** At most this many component approval stages (DCW-3.4; mirrors the V367 constraint). */
+export const MAX_COMPONENT_APPROVAL_STAGES = 5;
+
+/** Longest component approval stage name (DCW-3.4). */
+export const MAX_COMPONENT_STAGE_NAME_LENGTH = 64;
+
+/** Longest component deprecation notice window, in days (DCW-3.4). */
+export const MAX_COMPONENT_DEPRECATION_NOTICE_DAYS = 365;
+
+/**
+ * Coerce a component deprecation notice field into `0..365` days.
+ *
+ * @param raw What the control reported.
+ * @returns Whole days; unusable input reads as no notice window.
+ */
+export function normalizeComponentDeprecationNoticeDays(raw: unknown): number {
+  const value = typeof raw === 'number' ? raw : Number.parseInt(String(raw ?? ''), 10);
+  if (!Number.isFinite(value) || value < 0) return 0;
+  return Math.min(Math.trunc(value), MAX_COMPONENT_DEPRECATION_NOTICE_DAYS);
+}
+
+/**
+ * What is wrong with a list of component approval stages, in the API's own words.
+ *
+ * The REST route validates the same rules (a bad stage is a 422, never silently dropped);
+ * checking them here lets the editor say so before Save instead of after.
+ *
+ * @param stages The stages being edited.
+ * @returns One sentence per problem; empty when the list can be saved.
+ */
+export function componentStageProblems(stages: readonly ComponentApprovalStage[]): string[] {
+  const problems: string[] = [];
+  if (stages.length > MAX_COMPONENT_APPROVAL_STAGES) {
+    problems.push(`At most ${MAX_COMPONENT_APPROVAL_STAGES} approval stages are supported.`);
+  }
+  const seen = new Set<string>();
+  stages.forEach((stage, index) => {
+    const label = `Stage ${index + 1}`;
+    const name = stage.name.trim();
+    if (!name) {
+      problems.push(`${label} needs a name.`);
+      return;
+    }
+    if (name.length > MAX_COMPONENT_STAGE_NAME_LENGTH) {
+      problems.push(`${label} name is longer than ${MAX_COMPONENT_STAGE_NAME_LENGTH} characters.`);
+      return;
+    }
+    if (seen.has(name.toLowerCase())) {
+      problems.push(`${label} repeats the name '${name}'.`);
+      return;
+    }
+    seen.add(name.toLowerCase());
+    if (stage.requiredApprovals < 1 || stage.requiredApprovals > MAX_REQUIRED_APPROVALS) {
+      problems.push(
+        `${label} requiredApprovals must be a whole number from 1 to ${MAX_REQUIRED_APPROVALS}.`
+      );
+    }
+  });
+  return problems;
 }
 
 /** Truncate a content fingerprint for list display. */
