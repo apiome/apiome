@@ -3,7 +3,15 @@ export const UI_STUDIO_ROUTES = {
   editor: '/ade/studio/editor',
   paths: '/ade/studio/paths',
   code: '/ade/studio/code',
+  /** The unified workspace; redirects to the Studio's `/workspace` like its siblings. */
+  workspace: '/ade/studio/workspace',
 } as const;
+
+/**
+ * The workspace's lens query parameter (`?lens=schemas|paths|combined`), which the
+ * Studio reads on landing. Named here so a link built in this app cannot misspell it.
+ */
+export const STUDIO_WORKSPACE_LENS_PARAM = 'lens';
 
 export const STUDIO_APP_ROUTES = {
   root: '/',

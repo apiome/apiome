@@ -1,6 +1,6 @@
 import { getStudioAppUrl } from './app-urls';
 import type { ExternalLinkEntry, ExternalNavMenuGroup } from './external-links';
-import { STUDIO_APP_ROUTES } from './studio-routes';
+import { STUDIO_APP_ROUTES, STUDIO_WORKSPACE_LENS_PARAM } from './studio-routes';
 import { getSuiteMenuContribution, tryLoadOptionalSuiteHost } from './suite-contract';
 
 /**
@@ -85,7 +85,10 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
   const editorHref = resolveStudioEditorHref();
   const workspaceHref = resolveStudioWorkspaceHref();
   const catalogHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.catalog);
-  const pathsHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.paths);
+  const workspacePathsHref = resolveStudioSurfaceHref(
+    `${STUDIO_APP_ROUTES.workspace}?${STUDIO_WORKSPACE_LENS_PARAM}=paths`
+  );
+  const codeHref = resolveStudioSurfaceHref(STUDIO_APP_ROUTES.code);
 
   return [
     {
@@ -121,27 +124,45 @@ export function getBuiltinCommercialProducts(): ExternalLinkEntry[] {
           group: 'design',
           external: isAbsoluteHref(suiteHref),
         },
+        // DWX-8.2 (private-suite#2713): the Design group names the surfaces the
+        // Studio offers today — the unified workspace and the code view — rather
+        // than the classic `/editor` and `/paths`, which the Studio retires into
+        // the workspace. The two workspace doors keep the `designer` and `paths`
+        // gates their predecessors (`suite-designer`, `suite-paths`) had, so no
+        // tenant gains or loses an entry. Old `/editor` and `/paths` links still
+        // resolve; this changes what is offered, not what is accepted.
         {
-          id: 'suite-designer',
-          label: 'Designer',
-          description: 'Model schemas and reusable types',
-          href: editorHref,
-          icon: 'Palette',
+          id: 'suite-workspace',
+          label: 'Workspace',
+          description: 'Schemas and paths in one domain-scoped workspace',
+          href: workspaceHref,
+          icon: 'LayoutPanelLeft',
           group: 'design',
           featureFlag: 'designer',
           accessNote: 'Included with the Designer plan. Ask a tenant admin to enable it.',
-          external: isAbsoluteHref(editorHref),
+          external: isAbsoluteHref(workspaceHref),
         },
         {
-          id: 'suite-paths',
-          label: 'Paths Editor',
-          description: 'Design operations and contracts',
-          href: pathsHref,
+          id: 'suite-workspace-paths',
+          label: 'Workspace · Paths',
+          description: 'Design operations and contracts on the Paths lens',
+          href: workspacePathsHref,
           icon: 'Route',
           group: 'design',
           featureFlag: 'paths',
           accessNote: 'Included with the Paths plan. Ask a tenant admin to enable it.',
-          external: isAbsoluteHref(pathsHref),
+          external: isAbsoluteHref(workspacePathsHref),
+        },
+        {
+          id: 'suite-code',
+          label: 'Code & exports',
+          description: 'Generated OpenAPI, AsyncAPI, GraphQL and SQL exports',
+          href: codeHref,
+          icon: 'Code2',
+          group: 'design',
+          anyFeatureFlags: ['designer', 'paths'],
+          accessNote: 'Included with the Designer and Paths plans. Ask a tenant admin to enable it.',
+          external: isAbsoluteHref(codeHref),
         },
       ],
     },

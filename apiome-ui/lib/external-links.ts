@@ -2,9 +2,11 @@ import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
   Box,
+  Code2,
   Compass,
   Globe,
   LayoutDashboard,
+  LayoutPanelLeft,
   Palette,
   Rocket,
   Route,
@@ -154,9 +156,11 @@ export type ExternalHomeCard = {
 const KNOWN_ICONS: Record<string, LucideIcon> = {
   BarChart3,
   Box,
+  Code2,
   Compass,
   Globe,
   LayoutDashboard,
+  LayoutPanelLeft,
   Palette,
   Rocket,
   Route,
@@ -189,7 +193,14 @@ function applySuiteContribution(entry: ExternalLinkEntry): ExternalLinkEntry {
   const contrib = getSuiteMenuContribution();
   if (!contrib || entry.id !== 'suite') return entry;
 
-  const contributedItems = (contrib.menuItems ?? []) as SuiteNavMenuItem[];
+  // A contributed destination never doubles a builtin one: the builtin wins on
+  // a shared id. A commercial host that still contributes `suite-workspace`
+  // (as it did before the builtin named the workspace, private-suite#2713)
+  // therefore adds nothing, rather than listing Workspace twice.
+  const builtinIds = new Set((entry.menuItems ?? []).map((item) => item.id));
+  const contributedItems = ((contrib.menuItems ?? []) as SuiteNavMenuItem[]).filter(
+    (item) => !builtinIds.has(item.id)
+  );
   return {
     ...entry,
     menuGroups: [...(entry.menuGroups ?? []), ...(contrib.menuGroups ?? [])],

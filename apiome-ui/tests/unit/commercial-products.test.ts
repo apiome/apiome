@@ -39,8 +39,9 @@ describe('commercial-products', () => {
     expect(products[0]?.name).toBe('Designer Suite');
     expect(products[0]?.menuItems?.map((item) => item.id)).toEqual([
       'suite-home',
-      'suite-designer',
-      'suite-paths',
+      'suite-workspace',
+      'suite-workspace-paths',
+      'suite-code',
     ]);
     expect(products[0]?.menuGroups).toEqual([{ id: 'design', label: 'Design' }]);
     expect(SUITE_MENU_GROUPS).toBe(products[0]?.menuGroups);
@@ -131,8 +132,9 @@ describe('commercial-products', () => {
       products[0]?.menuItems?.filter((item) => item.group === 'design').map((item) => item.href)
     ).toEqual([
       'http://localhost:3003/',
-      'http://localhost:3003/editor',
-      'http://localhost:3003/paths',
+      'http://localhost:3003/workspace',
+      'http://localhost:3003/workspace?lens=paths',
+      'http://localhost:3003/code',
     ]);
   });
 
@@ -146,7 +148,7 @@ describe('commercial-products', () => {
     expect(products[0]?.external).toBe(false);
     expect(
       products[0]?.menuItems?.filter((item) => item.group === 'design').map((item) => item.href)
-    ).toEqual(['/', '/editor', '/paths']);
+    ).toEqual(['/', '/workspace', '/workspace?lens=paths', '/code']);
   });
 
   it('resolves contributed destinations in-app on the studio surface', () => {
@@ -164,5 +166,60 @@ describe('commercial-products', () => {
       '/authoring/insights',
     ]);
     expect(authoring?.every((item) => item.external === false)).toBe(true);
+  });
+
+  describe('Design destinations name the workspace and the code view (private-suite#2713)', () => {
+    const suiteMenu = () => getBuiltinCommercialProducts()[0]?.menuItems ?? [];
+
+    it('names no retired surface', () => {
+      expect(suiteMenu().map((item) => item.label)).toEqual([
+        'Suite Home',
+        'Workspace',
+        'Workspace · Paths',
+        'Code & exports',
+      ]);
+      for (const item of suiteMenu()) {
+        expect(item.label).not.toMatch(/Designer|Paths Editor/);
+        expect(item.href).not.toMatch(/\/(editor|paths)(\?|$)/);
+      }
+    });
+
+    it('points every destination at a route the Studio serves', () => {
+      process.env.NEXT_PUBLIC_APP_SURFACE = 'studio';
+      expect(Object.fromEntries(suiteMenu().map((item) => [item.id, item.href]))).toEqual({
+        'suite-home': '/',
+        'suite-workspace': '/workspace',
+        'suite-workspace-paths': '/workspace?lens=paths',
+        'suite-code': '/code',
+      });
+      expect(suiteMenu().every((item) => item.external === false)).toBe(true);
+    });
+
+    it('builds absolute Studio URLs from the main surface', () => {
+      delete process.env.NEXT_PUBLIC_APP_SURFACE;
+      process.env.NEXT_PUBLIC_STUDIO_URL = 'https://studio.example.com';
+      expect(suiteMenu().map((item) => item.href)).toEqual([
+        'https://studio.example.com/',
+        'https://studio.example.com/workspace',
+        'https://studio.example.com/workspace?lens=paths',
+        'https://studio.example.com/code',
+      ]);
+      expect(suiteMenu().every((item) => item.external === true)).toBe(true);
+    });
+
+    it('keeps the designer and paths gates the classic entries had', () => {
+      const gate = (id: string) => {
+        const item = suiteMenu().find((entry) => entry.id === id);
+        return { featureFlag: item?.featureFlag, anyFeatureFlags: item?.anyFeatureFlags };
+      };
+      // `suite-designer` was gated on `designer`, `suite-paths` on `paths`.
+      expect(gate('suite-workspace')).toEqual({ featureFlag: 'designer', anyFeatureFlags: undefined });
+      expect(gate('suite-workspace-paths')).toEqual({ featureFlag: 'paths', anyFeatureFlags: undefined });
+      // The code view serves both plans, so either flag opens it.
+      expect(gate('suite-code')).toEqual({ featureFlag: undefined, anyFeatureFlags: ['designer', 'paths'] });
+      for (const id of ['suite-workspace', 'suite-workspace-paths', 'suite-code']) {
+        expect(suiteMenu().find((entry) => entry.id === id)?.accessNote).toBeTruthy();
+      }
+    });
   });
 });
