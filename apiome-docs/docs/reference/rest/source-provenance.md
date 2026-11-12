@@ -1,7 +1,7 @@
 ---
 title: "Source provenance"
 description: "REST endpoints tagged source-provenance: 1 operation."
-sidebar_position: 93
+sidebar_position: 94
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
 ---
@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.543.1**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.544.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `source-provenance` · 1 operation
 
