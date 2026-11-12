@@ -89,6 +89,7 @@ GET    /projects/{pid}/versions/{vid}/pins    list live pins
 POST   /projects/{pid}/versions/{vid}/pins    pin a published revision
 DELETE /projects/{pid}/versions/{vid}/pins/{pin}
 GET    /projects/{pid}/versions/{vid}/materialization?includeOrigin=
+GET    /components/{id}/usage                 dependents + tenant-wide pins (DCW-3.3)
 ```
 
 ## Governance and lifecycle (DCW-3.4, private-suite#2364)
@@ -157,3 +158,5 @@ administrator. Every export row carries `timestamp`, `action`, `decision`,
 - `tests/test_component_governance_routes.py` — the publish gate, permission
   matrix, notice enforcement, preview classification, explicit confirmation,
   and the admin-only export.
+- `tests/test_component_usage.py` — the usage report's dependency rule
+  (canonical refs, published heads, transitive depth, cycles) and route.
