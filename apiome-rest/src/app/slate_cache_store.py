@@ -22,12 +22,12 @@ narrowing in particular is done in Python rather than with SQL ``LIKE``, because
 ``_`` in a stored route is a single-character wildcard — during an incident, the difference
 between purging one section and purging the site.
 
-**Nothing here evicts anything.** ``deploy/`` is a single Caddyfile with no CDN behind it.
-:func:`record_purge` writes evidence: the scope, the estimate, the basis of that estimate, the
-actor and the reason. ``edge_attached`` is snapshotted onto the row so that attaching a delivery
-tier later cannot make historical records look like flushes, and V187's
-``outcome <> 'dispatched' OR edge_attached`` CHECK makes that a database guarantee rather than a
-convention this module is trusted to keep.
+**Nothing here evicts anything.** Eviction is the CDN's job (Slate 10.2,
+:mod:`app.slate_cdn_dispatch`); :func:`record_purge` writes evidence: the scope, the estimate,
+the basis of that estimate, the actor and the reason. ``edge_attached`` is snapshotted onto the
+row so that attaching a delivery tier later cannot make historical records look like flushes,
+and V187's ``outcome <> 'dispatched' OR edge_attached`` CHECK makes that a database guarantee
+rather than a convention this module is trusted to keep.
 """
 
 from __future__ import annotations
@@ -754,10 +754,11 @@ def record_purge(
 ) -> Dict[str, Any]:
     """Persist a purge record.
 
-    ``outcome`` is never ``dispatched`` today: no delivery tier is attached, and V187's
-    ``outcome <> 'dispatched' OR edge_attached`` CHECK refuses the row if it were. What this
-    writes is real and auditable — who asked, for what scope, with what estimated blast radius,
-    and why — and the API response says in as many words that nothing was evicted.
+    ``outcome`` is ``dispatched`` only when the lane's CDN provider (Slate 10.2) accepted the
+    purge; V187's ``outcome <> 'dispatched' OR edge_attached`` CHECK refuses the row on a lane
+    with no provider attached. What this writes is real and auditable — who asked, for what
+    scope, with what estimated blast radius, and why — and the API response says in words
+    whether anything was evicted.
 
     Args:
         db: Database handle exposing ``connect()``.
@@ -774,7 +775,7 @@ def record_purge(
         estimate_basis: Which table produced it.
         sample_routes: A bounded sample of what is in scope.
         dry_run: Whether this was an estimate only.
-        outcome: ``estimated``, ``recorded`` or ``refused``.
+        outcome: ``estimated``, ``recorded``, ``dispatched`` or ``refused``.
         refusal_reason: The named reason when refused, and None otherwise.
         edge_attached: Whether a delivery tier was attached, snapshotted onto the row.
 

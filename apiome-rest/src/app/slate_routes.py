@@ -32,6 +32,10 @@ The deployment control plane the Release Center (UXE-2.4) consumes:
 * ``POST /v1/slate/environments/{environment_id}/rollback``
   — route the lane back to the most recent retained artifact.
 
+  After a promotion or rollback commits, the lane's CDN (Slate 10.2, :mod:`app.slate_cdn_routes`)
+  is purged for the changed pages, and the response's ``cdnPurge`` says what happened. A CDN
+  failure never fails or undoes the activation.
+
 * ``POST /v1/slate/sites/{site_id}/retention``
   — run the retention sweep, reaping artifacts outside the site's rollback window.
 
@@ -63,6 +67,8 @@ from .config import settings
 from .database import db
 from .permissions import Action, Resource, enforce_permission
 from .slate_artifacts import ArtifactDigests, SlateArtifactError, verify_signature
+from .slate_cdn_dispatch import CdnClientFactory, dispatch_deploy_purge, get_cdn_client_factory
+from .slate_cdn_routes import CdnPurgeSummaryBody, purge_summary
 from .slate_deployment_store import (
     SlateActivationConflictError,
     activate,
@@ -218,6 +224,8 @@ class ActivationResponse(_CamelModel):
     activation_id: Optional[str] = None
     routing_version: Optional[int] = None
     activated_at: Optional[str] = None
+    #: What the post-activation CDN purge did; None when the lane has no CDN or on a dry run.
+    cdn_purge: Optional[CdnPurgeSummaryBody] = None
 
 
 class EnvironmentResponse(_CamelModel):
@@ -734,17 +742,20 @@ async def get_environment_state(
     )
 
 
-def _run_activation(
+async def _run_activation(
     *,
     tenant_id: str,
     auth_data: Dict[str, Any],
     environment: Dict[str, Any],
     plan: Any,
     dry_run: bool,
+    cdn_client_factory: CdnClientFactory,
 ) -> ActivationResponse:
     """Apply an activation plan, or return it unapplied for a dry run.
 
-    Shared by promote and rollback so the two cannot drift in how they record outcomes.
+    Shared by promote and rollback so the two cannot drift in how they record outcomes. Once
+    the activation has committed, the lane's CDN is purged (Slate 10.2); that step reports its
+    outcome on the response and never raises, so the routing change stands either way.
 
     Args:
         tenant_id: Owning tenant.
@@ -752,6 +763,7 @@ def _run_activation(
         environment: The lane.
         plan: The validated activation plan.
         dry_run: When true, nothing is written and the plan is returned as-is.
+        cdn_client_factory: Builds the HTTP client the CDN purge is sent with.
 
     Returns:
         The activation outcome.
@@ -785,6 +797,17 @@ def _run_activation(
             },
         ) from exc
 
+    cdn_outcome = await dispatch_deploy_purge(
+        db,
+        tenant_id=tenant_id,
+        environment_id=str(plan.environment_id),
+        release_id=str(plan.release_id),
+        replaced_release_id=plan.replaces_release_id,
+        actor_id=actor_id,
+        actor_name=actor_name,
+        client_factory=cdn_client_factory,
+    )
+
     return ActivationResponse(
         applied=True,
         dry_run=False,
@@ -792,6 +815,7 @@ def _run_activation(
         activation_id=result.get("activationId"),
         routing_version=result.get("routingVersion"),
         activated_at=_iso(result.get("activatedAt")),
+        cdn_purge=purge_summary(cdn_outcome),
     )
 
 
@@ -804,6 +828,7 @@ async def promote_release(
     environment_id: str,
     request: ActivationRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
+    cdn_client_factory: CdnClientFactory = Depends(get_cdn_client_factory),
 ) -> ActivationResponse:
     """Route a lane to an already-built artifact. Never rebuilds.
 
@@ -853,12 +878,13 @@ async def promote_release(
             )
         raise _refusal_http(exc) from exc
 
-    return _run_activation(
+    return await _run_activation(
         tenant_id=tenant_id,
         auth_data=auth_data,
         environment=environment,
         plan=plan,
         dry_run=request.dry_run,
+        cdn_client_factory=cdn_client_factory,
     )
 
 
@@ -871,6 +897,7 @@ async def rollback_environment(
     environment_id: str,
     request: ActivationRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
+    cdn_client_factory: CdnClientFactory = Depends(get_cdn_client_factory),
 ) -> ActivationResponse:
     """Route a lane back to its most recent retained artifact.
 
@@ -902,12 +929,13 @@ async def rollback_environment(
             )
         raise _refusal_http(exc) from exc
 
-    return _run_activation(
+    return await _run_activation(
         tenant_id=tenant_id,
         auth_data=auth_data,
         environment=environment,
         plan=plan,
         dry_run=request.dry_run,
+        cdn_client_factory=cdn_client_factory,
     )
 
 

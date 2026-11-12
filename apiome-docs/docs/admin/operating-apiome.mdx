@@ -159,6 +159,7 @@ closed — without the key the secret is not stored, never stored unencrypted.
 | `APIOME_MCP_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials for protected MCP servers |
 | `APIOME_SDK_REGISTRY_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | npm and PyPI publish tokens |
 | `APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | Credentials a managed MCP toolset presents to your API |
+| `APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS` | `apiome-rest` | CDN purge credentials (Cloudflare, Fastly, custom) for hosted Slate sites |
 
 Each `…_ENCRYPTION_KEYS` value is a JSON object that maps a key version to a base64-encoded
 32-byte key. Single-quote it in a `.env` file:

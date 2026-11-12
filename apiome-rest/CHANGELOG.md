@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.687.0] - 2026-11-11
+
+### Added
+- **Slate CDN / edge provider (Slate 10.2, private-suite#120)** — a lane's hosted site can sit
+  behind Cloudflare, Fastly or a custom purge endpoint, and the CDN is purged when a release goes
+  live:
+  - `GET/POST/DELETE /v1/slate/environments/{id}/cdn` read, attach/update and detach the lane's
+    provider: Cloudflare zone id + API token, Fastly service id + API key, or a custom https purge
+    URL + auth header. The credential is write-only, sealed at rest under its own vault
+    (`APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS`, magic `OSCV`) and never returned; saving with
+    no key configured is refused with 409 `cdn-vault-not-configured`. Blank keeps the stored
+    credential unless the provider changes.
+  - **Purge on deploy.** A committed promotion or rollback purges the changed pages of both
+    releases on the lane's verified hosts (`POST …/promote` and `…/rollback` carry `cdnPurge`).
+    Over the provider's per-purge cap, or with no changed-page record, the whole CDN cache is
+    purged and the response says so. A CDN failure is reported and logged; it never fails the
+    activation.
+  - **Manual purges dispatch.** `POST …/cache/purge` on a lane with a provider sends every
+    in-scope URL to the CDN and records `outcome: dispatched` when the CDN accepted it (V187's
+    CHECK now has an attached edge to allow it); a refusal stays `recorded` with an error code such
+    as `cdn-auth-rejected` or `cdn-rate-limited`. `GET …/cache` no longer claims its rules shape
+    responses at the CDN: the origin does not emit them as headers.
+  - `GET …/cdn/dispatches` lists every purge sent, with mode, URL count, status and a redacted
+    provider message. Purges are sent by URL through the SSRF-guarded client with fixed vendor
+    hosts; a custom URL that resolves to a private address is refused before the credential is
+    sent.
+  - V368 adds `apiome.slate_cdn_providers` and `apiome.slate_cdn_purge_dispatches`, and widens the
+    cache audit to record provider changes. OpenAPI 1.546.0 → 1.547.0.
+
 ## [1.686.0] - 2026-11-11
 
 ### Added

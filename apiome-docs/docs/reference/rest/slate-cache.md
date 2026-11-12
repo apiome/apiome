@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.546.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.547.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `slate-cache` · 10 operations
 
@@ -125,12 +125,13 @@ Request body for set cache preset.
 
 **Purge Cache**
 
-Estimate a purge's scope and record it.
+Estimate a purge's scope, record it, and send it to the lane's CDN when one is attached.
 
-**Nothing is evicted.** No delivery tier is attached to this environment, so what this
-writes is evidence: who asked, for what scope, with what estimated blast radius computed
-from which table, and why. The response says so in ``delivery``, and V187 refuses at the
-database any row claiming otherwise.
+Without a CDN provider nothing is evicted: what this writes is evidence — who asked, for
+what scope, with what estimated blast radius computed from which table, and why — and V187
+refuses at the database any row claiming a dispatch. With a provider, every in-scope route
+on the lane's verified hosts is purged at the CDN; the record is ``dispatched`` only when the
+CDN accepted it, and the response's ``delivery`` and ``cdnPurge`` say what happened.
 
 A refused purge still writes a purge record and an audit entry when it is not a dry run:
 refusing to purge during an incident is precisely the event that needs to be in the
@@ -372,12 +373,13 @@ The outcome of a purge.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
-| `outcome` | string | yes | estimated (dry run) or recorded. |
+| `outcome` | string | yes | estimated (dry run), recorded or dispatched. |
 | `dryRun` | boolean | yes | Whether this was a preview. |
 | `estimate` | `PurgeEstimateBody` | yes | The scope and its provenance. |
 | `purgeId` | string or null | no | Purge ID. |
-| `edgeAttached` | boolean | yes | Whether a delivery tier serves this lane. |
+| `edgeAttached` | boolean | yes | Whether a CDN provider fronts this lane. |
 | `delivery` | `DeliveryBody` | yes | Whether anything was evicted. |
+| `cdnPurge` | `CdnPurgeSummaryBody` or null | no | What the CDN answered; None when no purge was sent. |
 
 ### `SetPresetRequest` {#schema-setpresetrequest}
 

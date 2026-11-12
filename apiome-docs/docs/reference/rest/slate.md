@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.546.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.547.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `slate` · 17 operations
 
@@ -531,6 +531,7 @@ Outcome of a promotion or rollback.
 | `activationId` | string or null | no | Activation ID. |
 | `routingVersion` | integer or null | no | Routing Version. |
 | `activatedAt` | string or null | no | Activated At. |
+| `cdnPurge` | `CdnPurgeSummaryBody` or null | no | Cdn Purge. |
 
 ### `AttachDomainRequest` {#schema-attachdomainrequest}
 
