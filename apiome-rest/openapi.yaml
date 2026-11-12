@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.546.0
+  version: 1.547.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -29282,7 +29282,7 @@ paths:
                         type: string
                         format: date-time
                         description: Observed At timestamp (ISO 8601).
-                        example: '2026-11-12T01:44:52Z'
+                        example: '2026-11-12T03:38:37Z'
                       method:
                         type: string
                         example: GET
@@ -51819,19 +51819,24 @@ paths:
       tags:
       - slate-cache
       summary: Purge Cache
-      description: 'Estimate a purge''s scope and record it.
+      description: 'Estimate a purge''s scope, record it, and send it to the lane''s
+        CDN when one is attached.
 
 
-        **Nothing is evicted.** No delivery tier is attached to this environment,
-        so what this
+        Without a CDN provider nothing is evicted: what this writes is evidence —
+        who asked, for
 
-        writes is evidence: who asked, for what scope, with what estimated blast radius
-        computed
+        what scope, with what estimated blast radius computed from which table, and
+        why — and V187
 
-        from which table, and why. The response says so in ``delivery``, and V187
-        refuses at the
+        refuses at the database any row claiming a dispatch. With a provider, every
+        in-scope route
 
-        database any row claiming otherwise.
+        on the lane''s verified hosts is purged at the CDN; the record is ``dispatched``
+        only when the
+
+        CDN accepted it, and the response''s ``delivery`` and ``cdnPurge`` say what
+        happened.
 
 
         A refused purge still writes a purge record and an audit entry when it is
@@ -60709,6 +60714,323 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for retry preview buildresponse422.
+  /v1/slate/environments/{environment_id}/cdn:
+    get:
+      tags:
+      - slate-cdn
+      summary: Get Cdn Config
+      description: Return a lane's CDN provider (never its credential) and the last
+        purge sent to it.
+      operationId: get_cdn_config_v1_slate_environments__environment_id__cdn_get
+      parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment Id
+          description: Environment Id schema.
+        description: Path parameter identifying the environment id segment.
+      - name: tenantSlug
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Configtenant Slug schema.
+          - type: 'null'
+            description: Get Cdn Configtenant Slug schema.
+          description: 'Tenant slug. Optional: the Slate routes read tenancy from
+            the credential, so a browser call carrying a session JWT does not need
+            to name a tenant in the URL.'
+          title: Tenantslug
+        description: 'Tenant slug. Optional: the Slate routes read tenancy from the
+          credential, so a browser call carrying a session JWT does not need to name
+          a tenant in the URL.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Configauthorization schema.
+          - type: 'null'
+            description: Get Cdn Configauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Config Xapikey schema.
+          - type: 'null'
+            description: Get Cdn Config Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get cdn config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdnConfigResponse'
+                description: Response payload for get cdn configresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get cdn configresponse422.
+    post:
+      tags:
+      - slate-cdn
+      summary: Save Cdn Config
+      description: 'Attach or update a lane''s CDN provider, sealing the credential
+        before it is stored.
+
+
+        Refusals: 422 ``cdn-config-invalid`` (every bad field listed in ``errors``),
+        422
+
+        ``cdn-credential-required``, 409 ``cdn-vault-not-configured`` when this deployment
+        has no
+
+        key to seal credentials with — a credential is never stored in plaintext as
+        a fallback.'
+      operationId: save_cdn_config_v1_slate_environments__environment_id__cdn_post
+      parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment Id
+          description: Environment Id schema.
+        description: Path parameter identifying the environment id segment.
+      - name: tenantSlug
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Save Cdn Configtenant Slug schema.
+          - type: 'null'
+            description: Save Cdn Configtenant Slug schema.
+          description: 'Tenant slug. Optional: the Slate routes read tenancy from
+            the credential, so a browser call carrying a session JWT does not need
+            to name a tenant in the URL.'
+          title: Tenantslug
+        description: 'Tenant slug. Optional: the Slate routes read tenancy from the
+          credential, so a browser call carrying a session JWT does not need to name
+          a tenant in the URL.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Save Cdn Configauthorization schema.
+          - type: 'null'
+            description: Save Cdn Configauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Save Cdn Config Xapikey schema.
+          - type: 'null'
+            description: Save Cdn Config Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveCdnProviderRequest'
+              description: Request body for save cdn configrequest.
+        description: Request body for save cdn config.
+      responses:
+        '200':
+          description: Successful response for save cdn config.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdnConfigResponse'
+                description: Response payload for save cdn configresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for save cdn configresponse422.
+    delete:
+      tags:
+      - slate-cdn
+      summary: Detach Cdn
+      description: Detach a lane's CDN provider and delete its stored credential.
+      operationId: detach_cdn_v1_slate_environments__environment_id__cdn_delete
+      parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment Id
+          description: Environment Id schema.
+        description: Path parameter identifying the environment id segment.
+      - name: tenantSlug
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Detach Cdntenant Slug schema.
+          - type: 'null'
+            description: Detach Cdntenant Slug schema.
+          description: 'Tenant slug. Optional: the Slate routes read tenancy from
+            the credential, so a browser call carrying a session JWT does not need
+            to name a tenant in the URL.'
+          title: Tenantslug
+        description: 'Tenant slug. Optional: the Slate routes read tenancy from the
+          credential, so a browser call carrying a session JWT does not need to name
+          a tenant in the URL.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Detach Cdnauthorization schema.
+          - type: 'null'
+            description: Detach Cdnauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Detach Cdn Xapikey schema.
+          - type: 'null'
+            description: Detach Cdn Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for detach cdn.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdnDetachResponse'
+                description: Response payload for detach cdnresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for detach cdnresponse422.
+  /v1/slate/environments/{environment_id}/cdn/dispatches:
+    get:
+      tags:
+      - slate-cdn
+      summary: Get Cdn Dispatches
+      description: Return the purges sent to a lane's CDN, most recent first.
+      operationId: get_cdn_dispatches_v1_slate_environments__environment_id__cdn_dispatches_get
+      parameters:
+      - name: environment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Environment Id
+          description: Environment Id schema.
+        description: Path parameter identifying the environment id segment.
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 100
+          minimum: 1
+          default: 20
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: tenantSlug
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Dispatchestenant Slug schema.
+          - type: 'null'
+            description: Get Cdn Dispatchestenant Slug schema.
+          description: 'Tenant slug. Optional: the Slate routes read tenancy from
+            the credential, so a browser call carrying a session JWT does not need
+            to name a tenant in the URL.'
+          title: Tenantslug
+        description: 'Tenant slug. Optional: the Slate routes read tenancy from the
+          credential, so a browser call carrying a session JWT does not need to name
+          a tenant in the URL.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Dispatchesauthorization schema.
+          - type: 'null'
+            description: Get Cdn Dispatchesauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Get Cdn Dispatches Xapikey schema.
+          - type: 'null'
+            description: Get Cdn Dispatches Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for get cdn dispatches.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CdnDispatchHistoryResponse'
+                description: Response payload for get cdn dispatchesresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for get cdn dispatchesresponse422.
   /v1/component-library/{tenant_slug}/components:
     get:
       tags:
@@ -86611,6 +86933,12 @@ components:
             description: Response payload for activation.
           title: Activatedat
           description: Activated At.
+        cdnPurge:
+          anyOf:
+          - $ref: '#/components/schemas/CdnPurgeSummaryBody'
+          - type: 'null'
+            description: Response payload for activation.
+          description: Cdn Purge.
       type: object
       required:
       - applied
@@ -96103,6 +96431,317 @@ components:
       - sourceKind
       title: CatalogUploadSpec
       description: The import spec an upload recorded, replayed by a re-upload.
+    CdnConfigResponse:
+      properties:
+        environmentId:
+          type: string
+          title: Environmentid
+          description: Environment ID.
+          example: example
+        configured:
+          type: boolean
+          title: Configured
+          description: A provider is attached.
+          example: false
+        vaultConfigured:
+          type: boolean
+          title: Vaultconfigured
+          description: This deployment can seal credentials. False means saving is
+            refused.
+          example: false
+        edgeAttached:
+          type: boolean
+          title: Edgeattached
+          description: Purges on this lane are dispatched to the CDN.
+          example: false
+        provider:
+          anyOf:
+          - $ref: '#/components/schemas/CdnProviderBody'
+          - type: 'null'
+            description: Response payload for cdn config.
+          description: Provider.
+        lastDispatch:
+          anyOf:
+          - $ref: '#/components/schemas/CdnDispatchBody'
+          - type: 'null'
+            description: Response payload for cdn config.
+          description: Last Dispatch.
+      type: object
+      required:
+      - environmentId
+      - configured
+      - vaultConfigured
+      - edgeAttached
+      title: CdnConfigResponse
+      description: A lane's CDN configuration.
+    CdnDetachResponse:
+      properties:
+        environmentId:
+          type: string
+          title: Environmentid
+          description: Environment ID.
+          example: example
+        detached:
+          type: boolean
+          title: Detached
+          description: Detached.
+          example: false
+      type: object
+      required:
+      - environmentId
+      - detached
+      title: CdnDetachResponse
+      description: The outcome of detaching a provider.
+    CdnDispatchBody:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        trigger:
+          type: string
+          title: Trigger
+          description: deploy or manual.
+          example: example
+        provider:
+          type: string
+          title: Provider
+          description: Provider.
+          example: example
+        mode:
+          type: string
+          title: Mode
+          description: urls or purge-all.
+          example: example
+        urlCount:
+          type: integer
+          title: Urlcount
+          description: Number of url.
+          example: 1
+        sampleUrls:
+          items:
+            type: string
+          type: array
+          title: Sampleurls
+          description: Sample Urls.
+          maxItems: 1000
+        status:
+          type: string
+          title: Status
+          description: succeeded, failed or skipped.
+          example: active
+        httpStatus:
+          anyOf:
+          - type: integer
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Httpstatus
+          description: HTTP Status.
+        errorCode:
+          anyOf:
+          - type: string
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Errorcode
+          description: Error Code.
+        errorMessage:
+          anyOf:
+          - type: string
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Errormessage
+          description: Error Message.
+        sentence:
+          type: string
+          title: Sentence
+          description: What happened, in words.
+          example: example
+        releaseId:
+          anyOf:
+          - type: string
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Releaseid
+          description: Release ID.
+        cachePurgeId:
+          anyOf:
+          - type: string
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Cachepurgeid
+          description: Cache Purge ID.
+        actorName:
+          type: string
+          title: Actorname
+          default: ''
+          description: Actor Name.
+          example: Example
+        dispatchedAt:
+          anyOf:
+          - type: string
+            description: Request body for cdn dispatch.
+          - type: 'null'
+            description: Request body for cdn dispatch.
+          title: Dispatchedat
+          description: Dispatched At.
+      type: object
+      required:
+      - id
+      - trigger
+      - provider
+      - mode
+      - urlCount
+      - status
+      - sentence
+      title: CdnDispatchBody
+      description: One purge sent to the provider.
+    CdnDispatchHistoryResponse:
+      properties:
+        environmentId:
+          type: string
+          title: Environmentid
+          description: Environment ID.
+          example: example
+        dispatches:
+          items:
+            $ref: '#/components/schemas/CdnDispatchBody'
+          type: array
+          title: Dispatches
+          description: Dispatches.
+          maxItems: 1000
+      type: object
+      required:
+      - environmentId
+      - dispatches
+      title: CdnDispatchHistoryResponse
+      description: A lane's CDN purge log.
+    CdnProviderBody:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: cloudflare, fastly or custom.
+          example: example
+        target:
+          type: string
+          title: Target
+          description: Zone id, service id or purge URL.
+          example: example
+        authHeaderName:
+          anyOf:
+          - type: string
+            description: Request body for cdn provider.
+          - type: 'null'
+            description: Request body for cdn provider.
+          title: Authheadername
+          description: Auth Header Name.
+        credentialSet:
+          type: boolean
+          title: Credentialset
+          description: A credential is stored.
+          example: false
+        credentialReadable:
+          type: boolean
+          title: Credentialreadable
+          description: The stored credential opens with this deployment's keys.
+          example: false
+        purgeOnDeploy:
+          type: boolean
+          title: Purgeondeploy
+          description: Whether a deploy purges the CDN.
+          example: false
+        updatedAt:
+          anyOf:
+          - type: string
+            description: Request body for cdn provider.
+          - type: 'null'
+            description: Request body for cdn provider.
+          title: Updatedat
+          description: Updated At.
+        updatedBy:
+          anyOf:
+          - type: string
+            description: Request body for cdn provider.
+          - type: 'null'
+            description: Request body for cdn provider.
+          title: Updatedby
+          description: Updated By.
+      type: object
+      required:
+      - provider
+      - target
+      - credentialSet
+      - credentialReadable
+      - purgeOnDeploy
+      title: CdnProviderBody
+      description: A lane's provider. Never carries the credential.
+    CdnPurgeSummaryBody:
+      properties:
+        status:
+          type: string
+          title: Status
+          description: succeeded, failed or skipped.
+          example: active
+        provider:
+          type: string
+          title: Provider
+          description: Provider.
+          example: example
+        mode:
+          type: string
+          title: Mode
+          description: urls or purge-all.
+          example: example
+        urlCount:
+          type: integer
+          title: Urlcount
+          description: Number of url.
+          example: 1
+        errorCode:
+          anyOf:
+          - type: string
+            description: Request body for cdn purge summary.
+          - type: 'null'
+            description: Request body for cdn purge summary.
+          title: Errorcode
+          description: Error Code.
+        errorMessage:
+          anyOf:
+          - type: string
+            description: Request body for cdn purge summary.
+          - type: 'null'
+            description: Request body for cdn purge summary.
+          title: Errormessage
+          description: Error Message.
+        sentence:
+          type: string
+          title: Sentence
+          description: What happened, in words.
+          example: example
+        dispatchId:
+          anyOf:
+          - type: string
+            description: Request body for cdn purge summary.
+          - type: 'null'
+            description: Request body for cdn purge summary.
+          title: Dispatchid
+          description: Dispatch ID.
+      type: object
+      required:
+      - status
+      - provider
+      - mode
+      - urlCount
+      - sentence
+      title: CdnPurgeSummaryBody
+      description: What a purge sent to the CDN did, carried on activation and cache-purge
+        responses.
     CertificateBody:
       properties:
         known:
@@ -96785,7 +97424,7 @@ components:
           format: date-time
           title: Started At
           description: Started At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         completed_at:
           anyOf:
           - type: string
@@ -98003,7 +98642,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
       type: object
       required:
       - api_key
@@ -98046,7 +98685,7 @@ components:
           format: date-time
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         workspaces:
           items:
             $ref: '#/components/schemas/CliLoginWorkspace'
@@ -98507,7 +99146,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -98680,7 +99319,7 @@ components:
           format: date-time
           title: Last Activity At
           description: The latest reply or status change.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         comment_count:
           type: integer
           minimum: 0.0
@@ -99539,13 +100178,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         duration_ms:
           type: integer
           minimum: 0.0
@@ -102160,7 +102799,7 @@ components:
           type: string
           title: Operation Uuid
           description: The apiome.path_operation UUID.
-          example: f4de4cba-bff3-4cbb-948f-e729d94e5d49
+          example: 4c97d776-9b87-4e00-bcab-22a6e3cd3aa4
         method:
           type: string
           title: Method
@@ -104343,7 +104982,7 @@ components:
           type: string
           title: Generated At
           description: Statement timestamp (ISO-8601, UTC).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         envelope:
           additionalProperties: true
           type: object
@@ -104365,7 +105004,7 @@ components:
         dispatched:
           type: boolean
           title: Dispatched
-          description: 'False: no delivery tier is attached.'
+          description: True only when the attached CDN accepted the purge.
           example: false
         sentence:
           type: string
@@ -106061,7 +106700,7 @@ components:
           format: date-time
           title: Synchronized At
           description: When `commit_sha` / `source_digest` last moved.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         browse_url:
           anyOf:
           - type: string
@@ -112306,7 +112945,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         reports:
           items:
             $ref: '#/components/schemas/ExportRunTargetReport'
@@ -112514,7 +113153,7 @@ components:
           format: date-time
           title: Finished At
           description: Finished At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
       additionalProperties: false
       type: object
       required:
@@ -127915,7 +128554,7 @@ components:
           format: date-time
           title: Checked At
           description: Checked At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         status:
           type: string
           title: Status
@@ -129016,7 +129655,7 @@ components:
           type: string
           title: Expires At
           description: Expires At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         client_id:
           type: string
           title: Client Id
@@ -141942,7 +142581,7 @@ components:
         outcome:
           type: string
           title: Outcome
-          description: estimated (dry run) or recorded.
+          description: estimated (dry run), recorded or dispatched.
           example: example
         dryRun:
           type: boolean
@@ -141963,11 +142602,17 @@ components:
         edgeAttached:
           type: boolean
           title: Edgeattached
-          description: Whether a delivery tier serves this lane.
+          description: Whether a CDN provider fronts this lane.
           example: false
         delivery:
           $ref: '#/components/schemas/DeliveryBody'
           description: Whether anything was evicted.
+        cdnPurge:
+          anyOf:
+          - $ref: '#/components/schemas/CdnPurgeSummaryBody'
+          - type: 'null'
+            description: Response payload for purge.
+          description: What the CDN answered; None when no purge was sent.
       type: object
       required:
       - outcome
@@ -148604,7 +149249,7 @@ components:
           format: date-time
           title: Resolved At
           description: When the target was resolved.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
       additionalProperties: false
       type: object
       required:
@@ -149637,6 +150282,49 @@ components:
       - runtimes
       title: RuntimesResponse
       description: The execution runtime catalog.
+    SaveCdnProviderRequest:
+      properties:
+        provider:
+          type: string
+          title: Provider
+          description: cloudflare, fastly or custom.
+          example: example
+        target:
+          type: string
+          title: Target
+          description: Cloudflare zone id, Fastly service id, or the custom https
+            purge URL.
+          example: example
+        authHeaderName:
+          anyOf:
+          - type: string
+            description: Request body for save cdn provider.
+          - type: 'null'
+            description: Request body for save cdn provider.
+          title: Authheadername
+          description: Header a custom endpoint reads its credential from.
+        credential:
+          anyOf:
+          - type: string
+            description: Request body for save cdn provider.
+          - type: 'null'
+            description: Request body for save cdn provider.
+          title: Credential
+          description: Write-only. API token (Cloudflare), API key (Fastly) or header
+            value (custom). Blank keeps the stored credential when the provider is
+            unchanged.
+        purgeOnDeploy:
+          type: boolean
+          title: Purgeondeploy
+          description: Purge the CDN when a release is promoted or rolled back.
+          default: true
+          example: false
+      type: object
+      required:
+      - provider
+      - target
+      title: SaveCdnProviderRequest
+      description: Attach or update a lane's CDN provider.
     SchemaByIdOut:
       properties:
         id:
@@ -158719,12 +159407,12 @@ components:
           type: string
           title: First Seen At
           description: First Seen At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         last_seen_at:
           type: string
           title: Last Seen At
           description: Last Seen At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
       additionalProperties: false
       type: object
       required:
@@ -159853,7 +160541,7 @@ components:
           format: date-time
           title: Detected At
           description: Detected At timestamp (ISO 8601).
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         detected_by:
           anyOf:
           - type: string
@@ -166890,13 +167578,13 @@ components:
           format: date-time
           title: Started At
           description: When the run began.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         finished_at:
           type: string
           format: date-time
           title: Finished At
           description: When the run ended.
-          example: '2026-11-12T01:44:52Z'
+          example: '2026-11-12T03:38:37Z'
         outcome:
           anyOf:
           - type: string

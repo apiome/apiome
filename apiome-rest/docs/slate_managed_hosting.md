@@ -166,6 +166,30 @@ no longer a rollback target. The sweep is therefore conservative:
 cannot plan successfully and then fail at activation — the worst possible moment to discover
 the bytes are gone.
 
+## A CDN in front of a lane (Slate 10.2)
+
+A lane can be fronted by the tenant's own CDN — Cloudflare, Fastly or a custom purge endpoint —
+configured at `GET/POST/DELETE /v1/slate/environments/{id}/cdn` (`app/slate_cdn_routes.py`,
+V368). Once a promotion or rollback has committed, `_run_activation()` purges the changed pages of
+both the new and the replaced release on the lane's verified hosts
+(`app/slate_cdn_dispatch.dispatch_deploy_purge`) and reports the result as `cdnPurge` on the
+activation response.
+
+- **The activation never depends on the CDN.** The purge runs after the commit and never raises:
+  a refusal, timeout or unreachable CDN is an error code on the response and a row in
+  `slate_cdn_purge_dispatches`, and the lane keeps serving the new release.
+- **Purges go by URL.** The origin emits no `Cache-Tag` / `Surrogate-Key` headers, so a tag
+  purge would match nothing. Past the provider's per-purge cap (Cloudflare 500, Fastly 50, custom
+  1000 URLs), or when the release recorded no changed pages, the whole CDN cache is purged and
+  the dispatch says `purge-all`.
+- **The credential is sealed** under `APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS` (magic
+  `OSCV`, `app/slate_cdn_crypto.py`), never returned, and sent only in the provider's auth header;
+  provider messages are redacted before they are stored. Vendor API hosts are constants, and a
+  custom purge URL goes through the SSRF guard on every call.
+- **Attaching a provider attaches the edge.** `slate_cache_policies.edge_attached` is set in the
+  same transaction, which is what lets a manual purge from the cache plane reach
+  `outcome = 'dispatched'` — only when the CDN accepted it.
+
 ## Immutability is enforced by the database
 
 `release-model.ts` declares which fields a release may never change. That list is

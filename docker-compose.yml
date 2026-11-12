@@ -144,6 +144,9 @@ services:
       # master key is "add a higher version". The ACTIVE_KEY_VERSION override is deliberately not
       # passed through: an empty value would fail integer parsing at startup.
       APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_UPSTREAM_CREDENTIAL_ENCRYPTION_KEYS:-}
+      # Slate 10.2 (private-suite#120): seals CDN purge credentials. Empty ⇒ attaching a CDN is a
+      # 409 naming this variable.
+      APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS: ${APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS:-}
       # ── Linked-account token encryption (#4960) ─────────────────────────────────────────────
       # Master-key map that seals the OAuth tokens and personal access tokens of linked accounts
       # (external_auth_providers). apiome-ui seals them when a user links an account or saves a

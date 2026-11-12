@@ -164,6 +164,7 @@ from .shadow_api_routes import router as shadow_api_router
 from .signup_policy_routes import router as signup_policy_router
 from .slate_agent_outputs_routes import router as slate_agent_outputs_router
 from .slate_cache_routes import router as slate_cache_router
+from .slate_cdn_routes import router as slate_cdn_router
 from .slate_domains_routes import router as slate_domains_router
 from .slate_functions_routes import router as slate_functions_router
 from .slate_git_preview_routes import router as slate_git_preview_router
@@ -189,6 +190,7 @@ from .type_namespaces_routes import router as type_namespaces_router
 from .unowned_findings_routes import router as unowned_findings_router
 from .upstream_credential_routes import router as upstream_credential_router
 from .upstream_credentials import validate_upstream_credential_keys
+from .slate_cdn_crypto import validate_slate_cdn_credential_keys
 from .usage_ingest_routes import router as usage_ingest_router
 from .verification_evidence_routes import router as verification_evidence_router
 from .verification_policy_routes import router as verification_policy_router
@@ -217,7 +219,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.546.0",
+    version="1.547.0",
 )
 
 
@@ -534,6 +536,9 @@ app.include_router(slate_domains_router)
 # the same /v1/slate prefix, disjoint from the /environments and /sites surfaces above
 # (APX-3.3, private-suite#2458).
 app.include_router(slate_git_preview_router)
+# CDN / edge provider: /environments/{id}/cdn* sits alongside the cache plane whose purges it
+# dispatches (Slate 10.2, private-suite#120).
+app.include_router(slate_cdn_router)
 app.include_router(component_library_router)
 app.include_router(component_governance_router)
 app.include_router(push_webhook_subscriptions_router)
@@ -684,6 +689,7 @@ async def startup_event():
     validate_credential_encryption_keys()
     validate_registry_credential_keys()
     validate_upstream_credential_keys()
+    validate_slate_cdn_credential_keys()
     validate_linked_account_token_keys()
     validate_auth_config_encryption_keys()
 

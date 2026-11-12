@@ -1216,6 +1216,8 @@ class PurgePlan:
         sample_routes: A bounded sample of what is in scope.
         truncated: Whether the sample is shorter than the scope.
         coverage: A sentence stating what the basis does and does not include.
+        routes: Every route in scope, so a CDN purge (Slate 10.2) can be sent for all of them,
+            not only the sample.
     """
 
     scope_kind: str
@@ -1225,6 +1227,7 @@ class PurgePlan:
     sample_routes: List[str]
     truncated: bool
     coverage: str
+    routes: Tuple[str, ...] = ()
 
 
 def plan_purge_scope(
@@ -1280,6 +1283,7 @@ def plan_purge_scope(
         sample_routes=ordered[:_SAMPLE_LIMIT],
         truncated=len(ordered) > _SAMPLE_LIMIT,
         coverage=_coverage_sentence(basis),
+        routes=tuple(ordered),
     )
 
 

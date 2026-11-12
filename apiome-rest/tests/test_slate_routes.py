@@ -9,7 +9,7 @@ rule that a refused action still leaves an audit entry.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -24,6 +24,7 @@ from app.slate_artifacts import (
     compute_source_digest,
     sign_digests,
 )
+from app.slate_cdn_dispatch import CdnPurgeOutcome
 from app.slate_deployment_store import SlateActivationConflictError
 
 client = TestClient(app)
@@ -134,6 +135,13 @@ def _permissions():
     """Allow by default; individual tests re-patch to assert the required permission."""
     with patch("app.slate_routes.enforce_permission") as enforce:
         yield enforce
+
+
+@pytest.fixture(autouse=True)
+def _cdn():
+    """No lane has a CDN unless a test says so; the deploy purge never reaches a database."""
+    with patch("app.slate_routes.dispatch_deploy_purge", new=AsyncMock(return_value=None)) as purge:
+        yield purge
 
 
 class TestAuthorization:
@@ -438,6 +446,67 @@ class TestPromotion:
             )
         assert response.status_code == 409
         assert response.json()["detail"]["reason"] == "partial-region"
+
+
+class TestCdnPurgeOnDeploy:
+    """Slate 10.2 (private-suite#120): a committed activation purges the lane's CDN."""
+
+    promote = TestPromotion.promote
+
+    def test_a_promotion_purges_the_cdn_for_the_new_and_replaced_release(self, _cdn):
+        _cdn.return_value = CdnPurgeOutcome(
+            status="succeeded", provider="cloudflare", mode="urls", url_count=4, dispatch_id="d-1"
+        )
+        with patch("app.slate_routes.activate", return_value=ACTIVATED):
+            response = self.promote(
+                **{"app.slate_routes.get_environment": environment_row(active_release_id="rel-0")}
+            )
+        assert response.status_code == 200
+        kwargs = _cdn.call_args.kwargs
+        assert kwargs["release_id"] == "rel-1"
+        assert kwargs["replaced_release_id"] == "rel-0"
+        assert kwargs["environment_id"] == ENV
+        purge = response.json()["cdnPurge"]
+        assert purge["status"] == "succeeded"
+        assert purge["sentence"] == "4 URLs purged at Cloudflare."
+        assert purge["dispatchId"] == "d-1"
+
+    def test_a_failed_purge_is_reported_and_the_activation_stands(self, _cdn):
+        _cdn.return_value = CdnPurgeOutcome(
+            status="failed", provider="fastly", mode="urls", error_code="cdn-auth-rejected"
+        )
+        with patch("app.slate_routes.activate", return_value=ACTIVATED):
+            response = self.promote()
+        assert response.status_code == 200
+        body = response.json()
+        assert body["applied"] is True
+        assert body["cdnPurge"]["errorCode"] == "cdn-auth-rejected"
+        assert "rejected the credential" in body["cdnPurge"]["sentence"]
+
+    def test_a_lane_without_a_cdn_carries_no_purge(self, _cdn):
+        with patch("app.slate_routes.activate", return_value=ACTIVATED):
+            body = self.promote().json()
+        assert body["cdnPurge"] is None
+
+    def test_a_dry_run_sends_no_purge(self, _cdn):
+        with patch("app.slate_routes.activate"):
+            self.promote(body={"releaseId": "rel-1", "dryRun": True})
+        _cdn.assert_not_called()
+
+    def test_a_concurrent_activation_sends_no_purge(self, _cdn):
+        with patch(
+            "app.slate_routes.activate", side_effect=SlateActivationConflictError(ENV, 3, 5)
+        ):
+            self.promote()
+        _cdn.assert_not_called()
+
+    def test_a_rollback_purges_the_cdn_too(self, _cdn):
+        with patch("app.slate_routes.get_environment", return_value=environment_row(active_release_id="rel-2")), \
+             patch("app.slate_routes.find_rollback_target", return_value=release_row(status="superseded")), \
+             patch("app.slate_routes.activate", return_value=ACTIVATED):
+            response = client.post(f"/v1/slate/environments/{ENV}/rollback", json={})
+        assert response.status_code == 200
+        assert _cdn.call_args.kwargs["replaced_release_id"] == "rel-2"
 
 
 class TestRollback:

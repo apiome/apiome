@@ -368,6 +368,30 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Envelope encryption-at-rest for Slate CDN purge credentials (Slate 10.2, private-suite#120):
+    # the Cloudflare API token, Fastly API key or custom purge-endpoint secret stored in
+    # apiome.slate_cdn_providers (V368). A separate map from the vaults above because a CDN token
+    # can flush a tenant's production cache — a different blast radius — and it seals under its
+    # own magic. Unset is allowed: the server starts and attaching a provider is refused with
+    # `cdn-vault-not-configured`. Generate a key with:
+    #   python -c "import base64, os; print(base64.b64encode(os.urandom(32)).decode())"
+    slate_cdn_credential_encryption_keys: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_CDN_CREDENTIAL_ENCRYPTION_KEYS",
+            "slate_cdn_credential_encryption_keys",
+        ),
+    )
+    # Which key-version new CDN credentials are sealed under. Defaults to the highest version
+    # present in slate_cdn_credential_encryption_keys when unset.
+    slate_cdn_credential_active_key_version: Optional[int] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "APIOME_SLATE_CDN_CREDENTIAL_ACTIVE_KEY_VERSION",
+            "slate_cdn_credential_active_key_version",
+        ),
+    )
+
     # Envelope encryption-at-rest for server-global OAuth provider secrets (OLO-8.3, #4969). The
     # key-encryption-key (KEK) that seals the client secret stored in
     # apiome.auth_provider_config.client_secret_encrypted (V196, OLO-8.2). The KEK lives in the

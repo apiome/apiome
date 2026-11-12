@@ -36,13 +36,21 @@ the UI show an accurate impact sheet before an operator confirms rather than des
 action it has not validated. A *refused* action still writes audit — but only when it is not a
 dry run, because a rejected preview is not an event.
 
-**What a purge does, stated plainly.** ``deploy/`` is a single Caddyfile with no CDN behind it,
-so there is nothing to evict. A purge records who asked, for what scope, with what estimated
-blast radius computed from which table, and why. Its ``outcome`` is ``estimated`` or
-``recorded``, never ``dispatched``; V187's ``outcome <> 'dispatched' OR edge_attached`` CHECK
-makes that a database guarantee. Every purge response carries a ``delivery`` block saying so in
-words, and ``GET .../cache`` carries an ``enforcement`` block saying the rules shape no response
-headers yet. The delivery tier is APX-3.2; this is the control plane it will report into.
+**What a purge does, stated plainly.** A purge records who asked, for what scope, with what
+estimated blast radius computed from which table, and why. Whether it also evicts anything depends
+on whether the lane has a CDN provider attached (Slate 10.2, :mod:`app.slate_cdn_routes`):
+
+* **No provider.** ``deploy/`` is a single Caddyfile, so there is nothing to evict. The
+  ``outcome`` is ``estimated`` or ``recorded``, never ``dispatched``, and V187's
+  ``outcome <> 'dispatched' OR edge_attached`` CHECK makes that a database guarantee.
+* **A provider is attached.** Every in-scope route on the lane's verified hosts is sent to the
+  CDN (:mod:`app.slate_cdn_dispatch`). A purge the CDN accepted is ``dispatched``; one it refused
+  stays ``recorded``, and ``cdnPurge`` names the error code. Either way the dispatch is in the
+  lane's CDN purge log.
+
+Every purge response carries a ``delivery`` block saying in words which of these happened, and
+``GET .../cache`` carries an ``enforcement`` block: the rules are recorded policy that the origin
+does not yet emit as response headers, with or without a CDN in front of it.
 
 Authorization: reads require VERSIONS/VIEW; preset, rule and purge writes require
 VERSIONS/PUBLISH. As in :mod:`app.slate_routes` there is no separate ``cache`` resource,
@@ -95,6 +103,17 @@ from .slate_cache_store import (
     set_preset,
     upsert_rule,
 )
+from .slate_cdn import plan_cdn_purge
+from .slate_cdn_dispatch import (
+    CdnClientFactory,
+    CdnPurgeOutcome,
+    get_cdn_client_factory,
+    send_purge,
+)
+from .slate_cdn_routes import CdnPurgeSummaryBody, purge_summary
+from .slate_cdn_store import get_provider as get_cdn_provider
+from .slate_cdn_store import record_dispatch as record_cdn_dispatch
+from .slate_cdn_store import verified_hosts
 from .slate_deployment_store import get_environment
 
 router = APIRouter(prefix="/v1/slate", tags=["slate-cache"])
@@ -116,6 +135,14 @@ _NO_DELIVERY_SENTENCE = (
 _NO_ENFORCEMENT_SENTENCE = (
     "These rules are recorded policy. No delivery tier is attached to this environment, so "
     "they do not yet shape response headers."
+)
+
+#: Stated on a policy read when a CDN fronts the lane. The CDN receives purges; it does not
+#: receive these rules, because the origin does not emit them as headers.
+_CDN_ENFORCEMENT_SENTENCE = (
+    "Purges on this environment are dispatched to the attached CDN. These rules are recorded "
+    "policy: the origin does not yet emit them as response headers, so the CDN caches by its own "
+    "configuration."
 )
 
 
@@ -370,7 +397,7 @@ class PurgeRequest(_CamelModel):
 class DeliveryBody(_CamelModel):
     """Whether anything was actually evicted."""
 
-    dispatched: bool = Field(description="False: no delivery tier is attached.")
+    dispatched: bool = Field(description="True only when the attached CDN accepted the purge.")
     sentence: str = Field(description="What that means, in words.")
 
 
@@ -389,12 +416,15 @@ class PurgeEstimateBody(_CamelModel):
 class PurgeResponse(_CamelModel):
     """The outcome of a purge."""
 
-    outcome: str = Field(description="estimated (dry run) or recorded.")
+    outcome: str = Field(description="estimated (dry run), recorded or dispatched.")
     dry_run: bool = Field(description="Whether this was a preview.")
     estimate: PurgeEstimateBody = Field(description="The scope and its provenance.")
     purge_id: Optional[str] = Field(default=None)
-    edge_attached: bool = Field(description="Whether a delivery tier serves this lane.")
+    edge_attached: bool = Field(description="Whether a CDN provider fronts this lane.")
     delivery: DeliveryBody = Field(description="Whether anything was evicted.")
+    cdn_purge: Optional[CdnPurgeSummaryBody] = Field(
+        default=None, description="What the CDN answered; None when no purge was sent."
+    )
 
 
 class PurgeRecordBody(_CamelModel):
@@ -655,9 +685,11 @@ async def get_cache_policy(
         edge_attached=bool(policy.get("edge_attached")),
         edge_provider=policy.get("edge_provider"),
         enforcement=EnforcementBody(
-            enforced=bool(policy.get("edge_attached")),
+            # A CDN in front of the lane receives purges, not these rules: nothing emits them as
+            # headers yet, so the policy is enforced nowhere either way.
+            enforced=False,
             sentence=(
-                "These rules shape responses at the attached delivery tier."
+                _CDN_ENFORCEMENT_SENTENCE
                 if policy.get("edge_attached")
                 else _NO_ENFORCEMENT_SENTENCE
             ),
@@ -1176,13 +1208,15 @@ async def purge_cache(
     environment_id: str,
     request: PurgeRequest,
     auth_data: Dict[str, Any] = Depends(validate_slate_authentication),
+    cdn_client_factory: CdnClientFactory = Depends(get_cdn_client_factory),
 ) -> PurgeResponse:
-    """Estimate a purge's scope and record it.
+    """Estimate a purge's scope, record it, and send it to the lane's CDN when one is attached.
 
-    **Nothing is evicted.** No delivery tier is attached to this environment, so what this
-    writes is evidence: who asked, for what scope, with what estimated blast radius computed
-    from which table, and why. The response says so in ``delivery``, and V187 refuses at the
-    database any row claiming otherwise.
+    Without a CDN provider nothing is evicted: what this writes is evidence — who asked, for
+    what scope, with what estimated blast radius computed from which table, and why — and V187
+    refuses at the database any row claiming a dispatch. With a provider, every in-scope route
+    on the lane's verified hosts is purged at the CDN; the record is ``dispatched`` only when the
+    CDN accepted it, and the response's ``delivery`` and ``cdnPurge`` say what happened.
 
     A refused purge still writes a purge record and an audit entry when it is not a dry run:
     refusing to purge during an incident is precisely the event that needs to be in the
@@ -1248,7 +1282,40 @@ async def purge_cache(
             )
         raise _refusal_http(exc) from exc
 
-    outcome = "estimated" if request.dry_run else "recorded"
+    cdn_outcome: Optional[CdnPurgeOutcome] = None
+    provider_row = (
+        get_cdn_provider(db, tenant_id=tenant_id, environment_id=environment_id)
+        if edge_attached and not request.dry_run
+        else None
+    )
+    if provider_row:
+        hosts = verified_hosts(db, tenant_id=tenant_id, environment_id=environment_id)
+        if plan.scope_kind == "host":
+            hosts = [host for host in hosts if host == plan.scope_value.strip().lower()]
+        cdn_outcome = await send_purge(
+            provider_row,
+            plan_cdn_purge(
+                provider=str(provider_row["provider"]),
+                hosts=hosts,
+                paths=plan.routes,
+                purge_all_if_empty=False,
+            ),
+            context={
+                "trigger": "manual",
+                "environmentId": environment_id,
+                "releaseId": basis_release,
+                "scopeKind": plan.scope_kind,
+                "scopeValue": plan.scope_value,
+            },
+            client_factory=cdn_client_factory,
+        )
+
+    if request.dry_run:
+        outcome = "estimated"
+    elif cdn_outcome is not None and cdn_outcome.status == "succeeded":
+        outcome = "dispatched"
+    else:
+        outcome = "recorded"
     written = record_purge(
         db,
         tenant_id=tenant_id,
@@ -1269,6 +1336,30 @@ async def purge_cache(
         edge_attached=edge_attached,
     )
 
+    purge_id = str(written["id"]) if written.get("id") else None
+    if cdn_outcome is not None and provider_row:
+        dispatch = record_cdn_dispatch(
+            db,
+            tenant_id=tenant_id,
+            environment_id=environment_id,
+            release_id=basis_release,
+            cache_purge_id=purge_id,
+            trigger="manual",
+            provider=str(provider_row["provider"]),
+            mode=cdn_outcome.mode,
+            url_count=cdn_outcome.url_count,
+            sample_urls=cdn_outcome.sample_urls,
+            status=cdn_outcome.status,
+            http_status=cdn_outcome.http_status,
+            error_code=cdn_outcome.error_code,
+            error_message=cdn_outcome.error_message,
+            actor_id=actor_id,
+            actor_name=actor_name,
+        )
+        cdn_outcome = cdn_outcome.with_dispatch_id(
+            str(dispatch["id"]) if dispatch.get("id") else None
+        )
+
     if not request.dry_run:
         append_audit(
             db,
@@ -1278,11 +1369,12 @@ async def purge_cache(
             actor_name=actor_name,
             actor_kind="user",
             subject_kind="purge",
-            subject_id=str(written["id"]) if written.get("id") else None,
+            subject_id=purge_id,
             summary=f"Purged by {plan.scope_kind}: {plan.scope_value}",
             detail=(
                 f"{plan.estimated_objects} objects estimated from {plan.estimate_basis}. "
-                f"{request.reason}"
+                + (f"CDN: {cdn_outcome.sentence} " if cdn_outcome else "")
+                + request.reason
             ),
         )
 
@@ -1298,10 +1390,39 @@ async def purge_cache(
             truncated=plan.truncated,
             coverage=plan.coverage,
         ),
-        purge_id=str(written["id"]) if written.get("id") else None,
+        purge_id=purge_id,
         edge_attached=edge_attached,
-        delivery=DeliveryBody(dispatched=False, sentence=_NO_DELIVERY_SENTENCE),
+        delivery=_delivery(dry_run=request.dry_run, edge_attached=edge_attached, cdn=cdn_outcome),
+        cdn_purge=purge_summary(cdn_outcome),
     )
+
+
+def _delivery(
+    *, dry_run: bool, edge_attached: bool, cdn: Optional[CdnPurgeOutcome]
+) -> DeliveryBody:
+    """Say in words whether a purge evicted anything.
+
+    Args:
+        dry_run: Whether the purge was an estimate only.
+        edge_attached: Whether a CDN fronts the lane.
+        cdn: What the CDN answered, when a purge was sent.
+
+    Returns:
+        The delivery block.
+    """
+    if cdn is not None:
+        if cdn.status == "succeeded":
+            return DeliveryBody(dispatched=True, sentence=cdn.sentence)
+        return DeliveryBody(
+            dispatched=False,
+            sentence=f"The purge was recorded, but nothing was evicted at the CDN: {cdn.sentence}",
+        )
+    if edge_attached and dry_run:
+        return DeliveryBody(
+            dispatched=False,
+            sentence="This is an estimate. Confirming it sends the purge to the attached CDN.",
+        )
+    return DeliveryBody(dispatched=False, sentence=_NO_DELIVERY_SENTENCE)
 
 
 @router.get(
