@@ -44399,6 +44399,73 @@ class Database:
             *self._component_consumers_query(tenant_id, component_id, revision_ids)
         )
 
+    def get_component_graph_rows(
+        self, tenant_id: str
+    ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        """The tenant's live components and their published revisions, for the usage graph.
+
+        DCW-3.3 (private-suite#2361): the usage report builds the dependency graph from each
+        component's published head; the head is picked in Python because semver does not sort
+        as text.
+
+        Args:
+            tenant_id: Owning tenant; other tenants' components are never read.
+
+        Returns:
+            ``(components, published_revisions)`` — components carry ``id, name, kind``;
+            revisions carry ``component_id, revision, canonical_payload``.
+        """
+        components = self.execute_query(
+            """
+            SELECT c.id, c.name, c.kind
+            FROM apiome.operational_components c
+            WHERE c.tenant_id = %s AND c.deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        revisions = self.execute_query(
+            """
+            SELECT r.component_id, r.revision, r.canonical_payload
+            FROM apiome.operational_component_revisions r
+            JOIN apiome.operational_components c ON r.component_id = c.id
+            WHERE r.tenant_id = %s AND r.state = 'published' AND c.deleted_at IS NULL
+            """,
+            (tenant_id,),
+        )
+        return components, revisions
+
+    def get_component_usage_pins(
+        self, tenant_id: str, component_ids: List[str]
+    ) -> List[Dict[str, Any]]:
+        """Live pins of the given components across the tenant, with project and version.
+
+        Args:
+            tenant_id: Owning tenant.
+            component_ids: The analyzed component and its dependents.
+
+        Returns:
+            Pin rows (``id, local_name, revision_id, revision, payload_digest, component_id,
+            component_name, kind, version_id, project_id``), ordered by component, project and
+            version.
+        """
+        if not component_ids:
+            return []
+        return self.execute_query(
+            """
+            SELECT p.id, p.local_name, r.id AS revision_id, r.revision, r.payload_digest,
+                   c.id AS component_id, c.name AS component_name, c.kind,
+                   p.version_id, v.project_id
+            FROM apiome.version_component_pins p
+            JOIN apiome.operational_component_revisions r ON p.component_revision_id = r.id
+            JOIN apiome.operational_components c ON r.component_id = c.id
+            JOIN apiome.versions v ON p.version_id = v.id
+            WHERE p.tenant_id = %s AND c.id = ANY(%s::uuid[])
+              AND p.deleted_at IS NULL AND v.deleted_at IS NULL AND c.deleted_at IS NULL
+            ORDER BY c.name, v.project_id, p.version_id, p.id
+            """,
+            (tenant_id, list(component_ids)),
+        )
+
     def list_component_revision_approvals(
         self, tenant_id: str, revision_id: str
     ) -> List[Dict[str, Any]]:

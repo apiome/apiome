@@ -15,6 +15,8 @@ schemas) with the minimal MVP lifecycle:
 * ``GET/POST /…/projects/{project_id}/versions/{version_record_id}/pins`` and
   ``DELETE …/pins/{pin_id}`` — a draft version pins one published revision;
   library-head changes never mutate pinned versions.
+* ``GET …/components/{component_id}/usage`` — DCW-3.3 usage report: direct and
+  transitive dependents plus every live pin of the component and its dependents.
 * ``GET …/materialization`` — the deterministic single-file materialization
   preview: final local component names, requested names, and collisions.
   Collisions never overwrite local components.
@@ -49,6 +51,7 @@ from .component_governance_service import (
     find_revision,
     resolve_component_policy,
 )
+from .component_usage import head_payloads, transitive_dependents
 from .database import ComponentLibraryConflictError, db
 from .openapi_generator import generate_openapi_spec
 from .permissions import Action, Resource, enforce_permission
@@ -659,6 +662,80 @@ async def delete_revision(
     except ComponentLibraryConflictError as error:
         _raise_conflict(error)
     return DeletedResponse(deleted=True)
+
+
+class UsagePinBody(PinBody):
+    """A live pin of the component or a dependent, with the version that holds it."""
+
+    project_id: str
+    version_id: str
+
+
+class UsageDependentBody(_CamelModel):
+    """A library component that reaches the analyzed one through references."""
+
+    component_id: str
+    name: str
+    kind: str
+    depth: int = Field(description="Reference distance from the component (1 = direct).")
+
+
+class ComponentUsageResponse(_CamelModel):
+    """DCW-3.3 usage report: tenant-wide pins and direct/transitive dependents."""
+
+    component_id: str
+    pins: List[UsagePinBody] = Field(default_factory=list)
+    dependents: List[UsageDependentBody] = Field(default_factory=list)
+
+
+@router.get(
+    "/{tenant_slug}/components/{component_id}/usage",
+    response_model=ComponentUsageResponse,
+    response_model_by_alias=True,
+)
+async def component_usage(
+    tenant_slug: str,
+    component_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> ComponentUsageResponse:
+    """Who uses a component: dependents and every live pin (DCW-3.3, private-suite#2361).
+
+    Dependents are the library components whose published head references this one, directly
+    or transitively (:mod:`app.component_usage`); pins are every live pin of the component and
+    of those dependents, across all of the tenant's projects. Computed server-side in one pass
+    over the tenant's library so latency stays flat for a tenant-scale graph.
+    """
+    tenant_id = auth_data["tenant_id"]
+    _component_or_404(tenant_id, component_id)
+    components, revisions = db.get_component_graph_rows(tenant_id)
+    dependents = transitive_dependents(components, head_payloads(revisions), component_id)
+    pin_rows = db.get_component_usage_pins(
+        tenant_id, [component_id, *[d["componentId"] for d in dependents]]
+    )
+    return ComponentUsageResponse(
+        component_id=component_id,
+        dependents=[
+            UsageDependentBody(
+                component_id=d["componentId"], name=d["name"], kind=d["kind"], depth=d["depth"]
+            )
+            for d in dependents
+        ],
+        pins=[
+            UsagePinBody(
+                id=str(row["id"]),
+                component_id=str(row["component_id"]),
+                component_name=str(row["component_name"]),
+                kind=str(row["kind"]),
+                revision_id=str(row["revision_id"]),
+                revision=str(row["revision"]),
+                payload_digest=str(row.get("payload_digest") or ""),
+                local_name=row.get("local_name"),
+                project_id=str(row["project_id"]),
+                version_id=str(row["version_id"]),
+            )
+            for row in pin_rows
+        ],
+    )
 
 
 # ===========================================================================

@@ -1,6 +1,6 @@
 ---
 title: "Component library"
-description: "REST endpoints tagged component-library: 21 operations."
+description: "REST endpoints tagged component-library: 22 operations."
 sidebar_position: 24
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.545.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.546.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `component-library` · 21 operations
+Tag: `component-library` · 22 operations
 
 ## `GET /v1/component-library/{tenant_slug}/audit/export` {#export-audit-v1-component-library-tenant-slug-audit-export-get}
 
@@ -451,6 +451,35 @@ Request body for preview upgrade.
 | 200 | Successful response for preview upgrade. | `application/json` [`UpgradePreviewResponse`](#schema-upgradepreviewresponse) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `GET /v1/component-library/{tenant_slug}/components/{component_id}/usage` {#component-usage-v1-component-library-tenant-slug-components-component-id-usage-get}
+
+**Component Usage**
+
+Who uses a component: dependents and every live pin (DCW-3.3, private-suite#2361).
+
+Dependents are the library components whose published head references this one, directly
+or transitively (:mod:`app.component_usage`); pins are every live pin of the component and
+of those dependents, across all of the tenant's projects. Computed server-side in one pass
+over the tenant's library so latency stays flat for a tenant-scale graph.
+
+Operation id: `component_usage_v1_component_library__tenant_slug__components__component_id__usage_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `component_id` | path | string | yes | Path parameter identifying the component id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for component usage. | `application/json` [`ComponentUsageResponse`](#schema-componentusageresponse) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## `GET /v1/component-library/{tenant_slug}/deprecations` {#list-deprecations-v1-component-library-tenant-slug-deprecations-get}
 
 **List Deprecations**
@@ -688,6 +717,16 @@ ComponentListResponse schema.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `components` | array of `ComponentSummaryBody` | no | Components. |
+
+### `ComponentUsageResponse` {#schema-componentusageresponse}
+
+DCW-3.3 usage report: tenant-wide pins and direct/transitive dependents.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `componentId` | string | yes | Component ID. |
+| `pins` | array of `UsagePinBody` | no | Pins. |
+| `dependents` | array of `UsageDependentBody` | no | Reverse index of ``refs``: the visible types that reference this one, one entry per referencing edge. |
 
 ### `DeletedResponse` {#schema-deletedresponse}
 

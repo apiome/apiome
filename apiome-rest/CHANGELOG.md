@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.686.0] - 2026-11-11
+
+### Added
+- **Component usage report (DCW-3.3, private-suite#2361; DCW-EPIC-3 #2349)** —
+  `GET /v1/component-library/{tenant}/components/{id}/usage` returns the component's direct and
+  transitive dependents (library components whose published head references it, with their
+  reference distance; cycle-safe) and every live pin of the component and its dependents across
+  the tenant's projects, with the project and version that hold each one. It is the server form of
+  the rule the Designer mirrors, computed in one pass so the usage & impact panel no longer falls
+  back to the current draft's pins. OpenAPI 1.545.0 → 1.546.0.
+
 ## [1.685.0] - 2026-11-11
 
 ### Added
