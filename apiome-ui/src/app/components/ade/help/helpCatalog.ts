@@ -1796,6 +1796,15 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     ],
   },
   {
+    id: 'primitives-and-types',
+    title: 'Primitives and types',
+    summary:
+      'The JSON Schema type registry: create, import and deprecate types, namespaces and version roots, the $ref resolver and settings.',
+    page: 'apiome-docs/docs/build/primitives-and-types.mdx',
+    section: 'reference',
+    keywords: ['json schema', 'registry', 'namespace', 'resolver', '$ref', 'sunset', 'draft root'],
+  },
+  {
     id: 'README',
     title: 'User guide index',
     summary: 'The documentation site home, grouped by job: build, bring in, ship, govern and reference.',
@@ -1837,14 +1846,6 @@ export const UNRELEASED_GUIDE_ENTRIES: readonly GuideEntry[] = [
     page: 'apiome-docs/unreleased/docs/govern/style-guide-revisions.md',
     section: 'reference',
     keywords: ['history', 'immutable', 'compliance', 'pinned', 'trail'],
-  },
-  {
-    id: 'primitives-and-types',
-    title: 'Primitives and types',
-    summary: 'The JSON Schema type registry: create and import types, namespaces, the $ref resolver and settings.',
-    page: 'apiome-docs/unreleased/docs/build/primitives-and-types.mdx',
-    section: 'reference',
-    keywords: ['json schema', 'registry', 'namespace', 'resolver', '$ref', 'import'],
   },
   {
     id: 'sdk-settings',

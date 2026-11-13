@@ -115,7 +115,7 @@ AREA_PAGES: tuple[tuple[str, str], ...] = (
     (r"MOCK", "reference/mock-runtime/one-mock-engine"),
     (r"MCP", "bring-in/mcp-servers"),
     (r"REPOSITOR|GITLAB|GITHUB|WEBHOOK", "bring-in/repositories"),
-    (r"PRIMITIVE|NAMESPACE|SYSTEM_TYPE", "build/edit-classes-and-properties"),
+    (r"PRIMITIVE|NAMESPACE|SYSTEM_TYPE", "build/primitives-and-types"),
     (r"LINT|STYLE_GUIDE|SPECTRAL|RULESET|QUALITY|SCORE", "build/lint-and-quality"),
     (r"EXPORT|GENERATE|CODE_FORMAT|CODEGEN|SDK", "ship/export-a-spec"),
     (r"PUBLISH|SUNSET", "ship/publish-a-version"),
