@@ -1,9 +1,10 @@
-"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490).
+"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490), SDK-4.4 (#4498).
 
 A consumer who lands on a published spec in the browse portal wants one thing: something they
 can unzip and run. This module builds it — a deterministic ``sdk.client-kit.v1`` archive holding
 the contract, a README, one runnable snippet per operation per language, a complete Go client
-module under ``go/``, and two runnable server skeletons under ``server/``.
+module under ``go/``, two runnable server skeletons under ``server/``, and a buildable Terraform
+provider under ``terraform/``.
 
 **Why the kit is built rather than stored.** The original SDK-3.3 scope served "the latest
 generated artifact" from the SDK-1.1 artifact store. That ticket, the generator SPI (SDK-1.2),
@@ -13,14 +14,16 @@ What did ship reads the persisted canonical model directly — the SDK-2.3 snipp
 renders runnable per-operation code, and the SDK-2.4 Go client generator
 (:mod:`app.go_client_generator`), which emits a compilable, dependency-free Go module, and the
 SDK-2.5 server stub generators (:mod:`app.server_stub_generator`), which emit a FastAPI and an
-Express project from the same contract. This module packages all three, at request time, from one
-revision.
+Express project from the same contract, and the SDK-4.4 Terraform provider generator
+(:mod:`app.terraform_provider_generator`), which emits a Plugin Framework provider whose resources
+come from the contract's CRUD conventions. This module packages all four, at request time, from
+one revision.
 
 **The generated projects are planned separately** (:func:`plan_go_client`,
-:func:`plan_server_stubs`) for two reasons: a route can report what a consumer would get — the
-module path they will ``go get``, the package the server stub declares — without paying to
-generate it, and a generator failure degrades the kit to its snippets rather than taking the
-download down.
+:func:`plan_server_stubs`, :func:`plan_terraform_provider`) for two reasons: a route can report
+what a consumer would get — the module path they will ``go get``, the package the server stub
+declares — without paying to generate it, and a generator failure degrades the kit to its
+snippets rather than taking the download down.
 
 Three properties are load-bearing.
 
@@ -71,6 +74,15 @@ from .server_stub_generator import (
     ServerStubBundle,
     generate_server_stubs,
 )
+from .terraform_provider_generator import (
+    TERRAFORM_PROVIDER_SCHEMA_VERSION,
+    TerraformProviderPackage,
+    generate_terraform_provider,
+    terraform_module_path,
+    terraform_namespace,
+    terraform_provider_name,
+    terraform_registry_address,
+)
 from .snippet_render import (
     INSTALL_LINES,
     SUPPORTED_LANGS,
@@ -89,19 +101,24 @@ __all__ = [
     "MAX_KIT_OPERATIONS",
     "PACKAGE_INSTALL_COMMANDS",
     "SERVER_STUB_DIRECTORY",
+    "TERRAFORM_PROVIDER_DIRECTORY",
     "ClientKit",
     "GoClientPlan",
     "KitCoordinates",
     "KitSummary",
     "RenderedOperation",
     "ServerStubPlanResult",
+    "TerraformProviderCoordinates",
+    "TerraformProviderPlanResult",
     "build_client_kit",
     "go_client_coordinates",
     "operation_identifier",
     "render_kit_operations",
     "plan_go_client",
     "plan_server_stubs",
+    "plan_terraform_provider",
     "server_stub_coordinates",
+    "terraform_provider_coordinates",
     "summarize_kit",
     "kit_filename",
     "package_install_command",
@@ -145,6 +162,11 @@ GO_CLIENT_DIRECTORY = "go"
 #: a consumer looking for something to call and a consumer looking for something to implement are
 #: two different readers, and mixing the two under one root would serve neither.
 SERVER_STUB_DIRECTORY = "server"
+
+#: The archive directory the generated Terraform provider lives in (SDK-4.4). Its own root because
+#: it is its own Go module, built and released on its own (``terraform-provider-<name>``), and a
+#: consumer copies that one directory into the repository the registry publishes from.
+TERRAFORM_PROVIDER_DIRECTORY = "terraform"
 
 #: How a resolved package name is installed, per ecosystem (SDK-3.4 reports the names).
 PACKAGE_INSTALL_COMMANDS: Dict[str, str] = {
@@ -472,6 +494,101 @@ def plan_server_stubs(
     )
 
 
+@dataclass(frozen=True)
+class TerraformProviderCoordinates:
+    """What a kit's Terraform provider is called, without generating it.
+
+    Attributes:
+        provider_name: The provider type name every resource type is prefixed with.
+        namespace: The registry namespace (the tenant slug).
+        address: The registry address a configuration's ``required_providers`` names.
+        module_path: The ``go.mod`` module path.
+    """
+
+    provider_name: str
+    namespace: str
+    address: str
+    module_path: str
+
+
+@dataclass(frozen=True)
+class TerraformProviderPlanResult:
+    """The generated Terraform provider a kit carries, or the reason it carries none.
+
+    Planned separately for the same reasons as the Go client: a route can name the provider without
+    generating it, and a generator failure degrades the kit rather than taking the download down.
+
+    Attributes:
+        coordinates: The provider's names.
+        package: The generated provider, or ``None`` when generation failed.
+        error: Why there is no provider, when there is none.
+    """
+
+    coordinates: TerraformProviderCoordinates
+    package: Optional[TerraformProviderPackage] = None
+    error: Optional[str] = None
+
+
+def terraform_provider_coordinates(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> TerraformProviderCoordinates:
+    """Return the names a kit's Terraform provider would use.
+
+    The provider is named after the project (``acme-widgets`` → ``acmewidgets``), published under the
+    tenant's namespace, and — when the tenant configured a ``gomod`` path for its Go client — kept
+    as a sibling module of that client, under the owner it already publishes from.
+
+    Args:
+        api: The revision's canonical model, for the name fallbacks.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding.
+
+    Returns:
+        The :class:`TerraformProviderCoordinates`.
+    """
+    provider_name = terraform_provider_name(
+        coordinates.project_slug, api.identity.name if api.identity else None, api.title
+    )
+    namespace = terraform_namespace(coordinates.tenant_slug)
+    return TerraformProviderCoordinates(
+        provider_name=provider_name,
+        namespace=namespace,
+        address=terraform_registry_address(namespace, provider_name),
+        module_path=terraform_module_path(branding.package_names.get(GO_ECOSYSTEM), namespace, provider_name),
+    )
+
+
+def plan_terraform_provider(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> TerraformProviderPlanResult:
+    """Generate the kit's Terraform provider, degrading to a reason rather than failing the kit.
+
+    Args:
+        api: The revision's canonical model.
+        coordinates: The revision the kit is for; its revision id is recorded in the provider README.
+        branding: The tenant's resolved SDK-3.4 branding — its licence header, user-agent and Go
+            module path all reach the generated provider.
+
+    Returns:
+        The :class:`TerraformProviderPlanResult`.
+    """
+    names = terraform_provider_coordinates(api, coordinates, branding)
+    try:
+        package = generate_terraform_provider(
+            api,
+            provider_name=names.provider_name,
+            namespace=names.namespace,
+            module_path=names.module_path,
+            license_header=branding.license_header,
+            user_agent=branding.user_agent,
+            revision=coordinates.version_record_id,
+            max_operations=MAX_KIT_OPERATIONS,
+        )
+    except Exception as exc:  # noqa: BLE001 - a kit ships its snippets even when codegen cannot.
+        return TerraformProviderPlanResult(coordinates=names, error=f"{type(exc).__name__}: {exc}")
+    return TerraformProviderPlanResult(coordinates=names, package=package)
+
+
 def package_install_command(ecosystem: str, name: str) -> Optional[str]:
     """Return the shell command that installs ``name`` from ``ecosystem``.
 
@@ -684,6 +801,7 @@ def _build_readme(
     summary: KitSummary,
     go_client: GoClientPlan,
     server_stubs: ServerStubPlanResult,
+    terraform: TerraformProviderPlanResult,
 ) -> str:
     """Compose the kit's ``README.md``.
 
@@ -697,6 +815,7 @@ def _build_readme(
         summary: The kit's operation counts, for the truncation note.
         go_client: The generated Go client (SDK-2.4), or the reason there is none.
         server_stubs: The generated server stubs (SDK-2.5), or the reason there are none.
+        terraform: The generated Terraform provider (SDK-4.4), or the reason there is none.
 
     Returns:
         The README's Markdown text.
@@ -758,6 +877,11 @@ def _build_readme(
         lines.append(
             f"- `{SERVER_STUB_DIRECTORY}/` — two runnable server skeletons for implementing this "
             "contract: a FastAPI project and an Express/TypeScript one, each with its own README.",
+        )
+    if terraform.package is not None:
+        lines.append(
+            f"- `{TERRAFORM_PROVIDER_DIRECTORY}/` — a buildable Terraform provider "
+            f"(`{terraform.coordinates.address}`), with its own README, docs and examples.",
         )
     lines.append("")
 
@@ -831,6 +955,40 @@ def _build_readme(
             "## Server stubs",
             "",
             f"No server stubs are included for this revision: {server_stubs.error}. The snippets "
+            "below are unaffected.",
+            "",
+        ]
+
+    if terraform.package is not None:
+        provider = terraform.package
+        coverage = [warning for warning in provider.warnings if warning.severity == "warning"]
+        lines += [
+            "## Terraform provider",
+            "",
+            f"`{TERRAFORM_PROVIDER_DIRECTORY}/` is a Terraform provider for this revision on the Terraform "
+            f"Plugin Framework — {len(provider.resource_types)} "
+            + ("resource" if len(provider.resource_types) == 1 else "resources")
+            + f" and {len(provider.data_source_types)} "
+            + ("data source" if len(provider.data_source_types) == 1 else "data sources")
+            + ", derived from the contract's create/read/update/delete operation groups.",
+            "",
+            "```bash",
+            f"cd {TERRAFORM_PROVIDER_DIRECTORY} && go build -o bin/ .",
+            "```",
+            "",
+        ]
+        if coverage:
+            lines += [
+                f"{len(coverage)} "
+                + ("operation or construct is" if len(coverage) == 1 else "operations or constructs are")
+                + f" not covered; `{TERRAFORM_PROVIDER_DIRECTORY}/README.md` lists each one and why.",
+                "",
+            ]
+    elif terraform.error:
+        lines += [
+            "## Terraform provider",
+            "",
+            f"No Terraform provider is included for this revision: {terraform.error}. The snippets "
             "below are unaffected.",
             "",
         ]
@@ -997,6 +1155,76 @@ def _server_stub_manifest(plan: ServerStubPlanResult) -> Dict[str, Any]:
     return block
 
 
+def _terraform_manifest(plan: TerraformProviderPlanResult) -> Dict[str, Any]:
+    """Describe the kit's Terraform provider for ``manifest.json``.
+
+    The block is always present, so a consumer never has to tell "this kit predates the provider"
+    apart from "this revision could not produce one" — ``included`` says which. ``warnings`` is
+    the generator's readiness report: every operation the provider does not call, and why.
+
+    Args:
+        plan: The planned provider.
+
+    Returns:
+        The manifest block.
+    """
+    names = plan.coordinates
+    block: Dict[str, Any] = {
+        "schema_version": TERRAFORM_PROVIDER_SCHEMA_VERSION,
+        "directory": TERRAFORM_PROVIDER_DIRECTORY,
+        "provider_name": names.provider_name,
+        "address": names.address,
+        "module_path": names.module_path,
+        "included": plan.package is not None,
+    }
+    if plan.package is None or plan.package.plan is None:
+        block["error"] = plan.error
+        return block
+    package = plan.package
+    provider = package.plan
+    assert provider is not None
+    block.update(
+        {
+            "go_version": package.go_version,
+            "framework_version": package.framework_version,
+            "resources": [
+                {
+                    "type": f"{package.provider_name}_{resource.name}",
+                    "schema": resource.schema_name,
+                    "collection_path": resource.collection_path,
+                    "item_path": resource.item_path,
+                    "operations": {role: ref.operation_id for role, ref in resource.operations},
+                    "importable": bool(resource.import_parts),
+                }
+                for resource in provider.resources
+            ],
+            "data_sources": [
+                {
+                    "type": f"{package.provider_name}_{source.name}",
+                    "schema": source.schema_name,
+                    "operation_id": source.operation.operation_id,
+                }
+                for source in (*provider.item_data_sources, *provider.list_data_sources)
+            ],
+            "auth": [
+                {"scheme": setting.scheme, "kind": setting.kind, "attributes": list(setting.attributes)}
+                for setting in provider.auth
+            ],
+            "warnings": [
+                {
+                    "code": warning.code,
+                    "severity": warning.severity,
+                    "message": warning.message,
+                    "operation_id": warning.operation_id,
+                    "key": warning.key,
+                }
+                for warning in provider.warnings
+            ],
+        }
+    )
+    return block
+
+
 def build_client_kit(
     api: CanonicalApi,
     *,
@@ -1028,6 +1256,7 @@ def build_client_kit(
     spec_name = spec_filename(source_format, source_text)
     go_client = plan_go_client(api, coordinates, branding)
     server_stubs = plan_server_stubs(api, coordinates, branding)
+    terraform = plan_terraform_provider(api, coordinates, branding)
 
     entries: List[_Entry] = []
     if go_client.package is not None:
@@ -1046,6 +1275,15 @@ def build_client_kit(
                     path=f"{SERVER_STUB_DIRECTORY}/{stub_file.path}",
                     text=stub_file.text,
                     subject="server-stub",
+                )
+            )
+    if terraform.package is not None:
+        for provider_file in terraform.package.files:
+            entries.append(
+                _Entry(
+                    path=f"{TERRAFORM_PROVIDER_DIRECTORY}/{provider_file.path}",
+                    text=provider_file.text,
+                    subject="terraform-provider",
                 )
             )
     for entry in rendered:
@@ -1073,6 +1311,7 @@ def build_client_kit(
         summary,
         go_client,
         server_stubs,
+        terraform,
     )
     entries.append(_Entry(path="README.md", text=readme, subject="readme"))
     entries.sort(key=lambda item: item.path)
@@ -1106,6 +1345,7 @@ def build_client_kit(
         "skipped": skipped,
         "go_client": _go_client_manifest(go_client),
         "server_stubs": _server_stub_manifest(server_stubs),
+        "terraform_provider": _terraform_manifest(terraform),
         "provenance": {
             "version_record_id": coordinates.version_record_id,
             "version_label": coordinates.version_label,
@@ -1113,6 +1353,7 @@ def build_client_kit(
             "renderer": f"app.snippet_render/{KIT_SCHEMA_VERSION}",
             "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
             "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
+            "terraform_generator": f"app.terraform_provider_generator/{TERRAFORM_PROVIDER_SCHEMA_VERSION}",
             "apiome_version": apiome_version,
             "settings_fingerprint": settings_fingerprint,
         },

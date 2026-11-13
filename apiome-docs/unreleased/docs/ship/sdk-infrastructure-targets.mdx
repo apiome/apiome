@@ -1,0 +1,125 @@
+---
+title: Terraform provider
+description: Manage your API's resources as code with a generated Terraform provider.
+sidebar_position: 6.6
+tags: [sdk, terraform]
+---
+
+The **client kit** — the zip behind **“Download SDK”** on a published version
+([SDK settings](./sdk-settings.mdx)) — carries a **Terraform provider** for the API under
+`terraform/`. It is generated from the published specification on the Terraform Plugin Framework,
+so platform teams can manage your API's resources with `terraform plan` and `terraform apply`
+instead of scripts.
+
+Nothing needs switching on: every kit has one. Which resources it holds depends on how the
+specification's operations are laid out, and the provider's own `README.md` lists everything it
+could not cover, and why.
+
+## What becomes a resource
+
+Operations are grouped by path, the way REST APIs are usually laid out:
+
+| Operation | Becomes |
+| --- | --- |
+| `POST /widgets` | the resource's **create** |
+| `GET /widgets/{id}` | its **read**, and a `<provider>_widget` data source |
+| `PUT /widgets/{id}` (or `PATCH` if there is no `PUT`) | its **update** |
+| `DELETE /widgets/{id}` | its **delete** |
+| `GET /widgets` | a `<provider>_widget_list` data source |
+
+- A path with a create, a read and a delete is a **resource**. One with only a read is a **data
+  source** only.
+- The read's response schema becomes the resource's attributes. A member the create body requires is
+  **Required**; one it accepts but does not require is **Optional**; a `readOnly` member, or one the
+  create body does not carry, is **Read-Only** — the API sets it.
+- A nested path such as `/orgs/{orgId}/projects` adds a required `org_id` attribute. Changing it
+  creates a new resource.
+- Without an update operation, changing any attribute creates a new resource.
+- `terraform import` takes the instance's identifier, with any parent identifiers first:
+  `terraform import acme_project.web "my-org/42"`.
+
+The provider is named after the project (`acme-widgets` becomes `acmewidgets`), and resource types
+after their schema (`acmewidgets_widget`).
+
+## Steer it with `x-terraform`
+
+Add `x-terraform` to the specification and publish a new version.
+
+On an **operation**:
+
+| Hint | Effect |
+| --- | --- |
+| `{"resource": "widget", "operation": "create"}` | Use this operation as the widget's create (or `read`, `update`, `delete`, `list`), whatever its path |
+| `false` | Leave the operation out of the provider |
+
+On a **schema**:
+
+| Hint | Effect |
+| --- | --- |
+| `"resource": "widget"` | Name the resource |
+| `"resource": false` | Data sources only, no resource |
+| `"id": "uuid"` | The member that identifies an instance |
+| `"ignore": ["etag"]` | Members to leave out |
+| `"forceNew": ["region"]` | Members whose change creates a new resource |
+| `"import": false` | Turn off `terraform import` |
+| `"dataSource": false` | No data sources for this schema |
+
+```yaml
+components:
+  schemas:
+    Widget:
+      type: object
+      x-terraform:
+        forceNew: [region]
+        ignore: [etag]
+```
+
+## Credentials and the endpoint
+
+The provider takes one setting per security scheme in the specification, each with an environment
+variable fallback named `<PROVIDER>_<SETTING>`:
+
+| Scheme | Setting |
+| --- | --- |
+| Bearer, OAuth 2, OpenID Connect | `token` |
+| HTTP Basic | `username`, `password` |
+| API key (header, query or cookie) | `api_key` |
+
+`endpoint` defaults to the specification's first server, and `headers` adds headers to every
+request.
+
+## Build and try it
+
+1. **Download the kit** and unzip it.
+2. **Build the provider:** `cd terraform && go build -o bin/ .` (Go 1.24 or later).
+3. **Point Terraform at it** with a development override in `~/.terraformrc`, using the address the
+   provider's `README.md` names:
+
+   ```hcl
+   provider_installation {
+     dev_overrides {
+       "registry.terraform.io/acme/acmewidgets" = "/absolute/path/to/terraform/bin"
+     }
+     direct {}
+   }
+   ```
+
+4. **Write a configuration** — `terraform/examples/` has one per resource and data source — and run
+   `terraform plan`, then `terraform apply`.
+
+To try it against your API's [mock](./mock-try-out.mdx), set `endpoint` to the mock's URL and send a
+session header so the mock remembers what you create:
+`headers = { "X-Mock-Session" = "terraform" }`.
+
+## What it does not cover
+
+The provider's `README.md` has a **Readiness** section, and the kit's `manifest.json` a
+`terraform_provider.warnings` list, naming each operation the provider does not call — an action
+such as `POST /widgets/{id}/restart`, a path with no read, a create whose response does not carry
+the identifier — and each member it holds as a JSON string because the schema types it loosely.
+Add an `x-terraform` hint, or reshape the operation, and publish again.
+
+## Where next
+
+- [SDK settings](./sdk-settings.mdx)
+- [Mock try-out](./mock-try-out.mdx)

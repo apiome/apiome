@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.548.0",
+    "version": "1.549.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -189525,6 +189525,10 @@
             "$ref": "#/components/schemas/SdkServerStubsModel",
             "description": "The generated server stubs the download carries (SDK-2.5)."
           },
+          "terraform_provider": {
+            "$ref": "#/components/schemas/SdkTerraformProviderModel",
+            "description": "The generated Terraform provider the download carries (SDK-4.4)."
+          },
           "download": {
             "$ref": "#/components/schemas/SdkDownloadModel",
             "description": "Download."
@@ -189542,6 +189546,7 @@
           "truncated",
           "go_client",
           "server_stubs",
+          "terraform_provider",
           "download"
         ],
         "title": "PublicSdkInfoResponse",
@@ -202527,6 +202532,51 @@
         ],
         "title": "SdkServerStubsModel",
         "description": "The generated server stubs the download carries \u2014 SDK-2.5 (#4490).\n\nReported alongside the Go client because it answers the opposite question: the client is what a\nconsumer *calls* this API with, the stubs are what a team *implements* it with. A panel that\noffered only one of the two would hide half of what the same archive contains."
+      },
+      "SdkTerraformProviderModel": {
+        "properties": {
+          "directory": {
+            "type": "string",
+            "title": "Directory",
+            "description": "The directory the provider sits in inside the archive.",
+            "example": "example"
+          },
+          "provider_name": {
+            "type": "string",
+            "title": "Provider Name",
+            "description": "The provider type name every resource type is prefixed with.",
+            "example": "Example"
+          },
+          "address": {
+            "type": "string",
+            "title": "Address",
+            "description": "The registry address a configuration's `required_providers` names (`registry.terraform.io/<namespace>/<name>`).",
+            "example": "example"
+          },
+          "module_path": {
+            "type": "string",
+            "title": "Module Path",
+            "description": "The `go.mod` module path the provider declares.",
+            "example": "example"
+          },
+          "framework_version": {
+            "type": "string",
+            "title": "Framework Version",
+            "description": "The Terraform Plugin Framework release it is built on.",
+            "example": "1.0.0"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "directory",
+          "provider_name",
+          "address",
+          "module_path",
+          "framework_version"
+        ],
+        "title": "SdkTerraformProviderModel",
+        "description": "The generated Terraform provider the download carries \u2014 SDK-4.4 (#4498).\n\nNamed, not described: which resources it has depends on the contract's CRUD conventions, and\nworking that out is the generator's job, so the download's ``manifest.json`` lists the\nresources, data sources and readiness warnings instead."
       },
       "SecretRefBody": {
         "properties": {

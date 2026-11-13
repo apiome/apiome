@@ -1,0 +1,381 @@
+openapi: 3.0.3
+info:
+  title: Widget Platform API
+  version: 1.0.0
+  description: >-
+    An infrastructure-style API laid out by CRUD conventions, for the Terraform provider
+    generator (SDK-4.4). Widgets are a plain collection, projects are nested under an
+    organization, regions are read-only, gadgets are assembled from `x-terraform` hints,
+    and two operations are deliberately not CRUD-shaped.
+servers:
+  - url: https://api.example.com/v1
+security:
+  - bearerAuth: []
+paths:
+  /widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      responses:
+        '200':
+          description: Every widget, in an envelope.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WidgetPage'
+    post:
+      operationId: createWidget
+      summary: Create a widget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+      responses:
+        '201':
+          description: The created widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+  /widgets/{widgetId}:
+    parameters:
+      - name: widgetId
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      operationId: getWidget
+      summary: Get a widget
+      responses:
+        '200':
+          description: The widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+        '404':
+          description: No such widget.
+    put:
+      operationId: replaceWidget
+      summary: Replace a widget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Widget'
+      responses:
+        '200':
+          description: The replaced widget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+    delete:
+      operationId: deleteWidget
+      summary: Delete a widget
+      responses:
+        '204':
+          description: Deleted.
+  /widgets/{widgetId}/restart:
+    post:
+      operationId: restartWidget
+      summary: Restart a widget (an action, not CRUD)
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '202':
+          description: Restart accepted.
+  /orgs/{orgId}/projects:
+    parameters:
+      - name: orgId
+        in: path
+        required: true
+        description: The organization that owns the project.
+        schema:
+          type: string
+    get:
+      operationId: listProjects
+      responses:
+        '200':
+          description: Every project of the organization.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      operationId: createProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '201':
+          description: The created project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+  /orgs/{orgId}/projects/{projectId}:
+    parameters:
+      - name: orgId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: projectId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getProject
+      responses:
+        '200':
+          description: The project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    patch:
+      operationId: updateProject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectInput'
+      responses:
+        '200':
+          description: The updated project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+    delete:
+      operationId: deleteProject
+      responses:
+        '204':
+          description: Deleted.
+  /regions:
+    get:
+      operationId: listRegions
+      responses:
+        '200':
+          description: Every region.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Region'
+  /regions/{regionId}:
+    get:
+      operationId: getRegion
+      parameters:
+        - name: regionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The region.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Region'
+  /gadget-orders:
+    post:
+      operationId: orderGadget
+      summary: Order a gadget (a create at a non-conventional path, assigned by hint)
+      x-terraform:
+        resource: gadget
+        operation: create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gadget'
+      responses:
+        '201':
+          description: The ordered gadget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gadget'
+  /gadgets/{serial}:
+    parameters:
+      - name: serial
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getGadget
+      responses:
+        '200':
+          description: The gadget.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gadget'
+    delete:
+      operationId: scrapGadget
+      responses:
+        '204':
+          description: Scrapped.
+  /health:
+    get:
+      operationId: getHealth
+      x-terraform: false
+      responses:
+        '200':
+          description: The service is up.
+  /search:
+    post:
+      operationId: search
+      summary: Search everything (not CRUD-shaped)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+      responses:
+        '200':
+          description: Matches.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: A platform access token.
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Platform-Key
+  schemas:
+    Widget:
+      type: object
+      description: A deployable widget.
+      x-terraform:
+        resource: widget
+        forceNew: [region]
+        ignore: [etag]
+      required: [name, region]
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: The widget's identifier.
+        name:
+          type: string
+          description: A human-readable name.
+        region:
+          type: string
+          enum: [us-east, eu-west]
+          description: Where the widget runs.
+        size:
+          type: integer
+          minimum: 1
+          description: How many replicas to run.
+        enabled:
+          type: boolean
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        settings:
+          $ref: '#/components/schemas/WidgetSettings'
+        quotas:
+          $ref: '#/components/schemas/WidgetQuotas'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        etag:
+          type: string
+          readOnly: true
+    WidgetSettings:
+      type: object
+      properties:
+        color:
+          type: string
+        retries:
+          type: integer
+    WidgetQuotas:
+      type: object
+      description: Per-resource limits, by resource name.
+      additionalProperties:
+        type: integer
+    WidgetPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+        next:
+          type: string
+    ProjectInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    Project:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+    Region:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    Gadget:
+      type: object
+      x-terraform:
+        id: serial
+        import: false
+      required: [model]
+      properties:
+        serial:
+          type: string
+          readOnly: true
+        model:
+          type: string
+        options:
+          oneOf:
+            - type: string
+            - type: integer

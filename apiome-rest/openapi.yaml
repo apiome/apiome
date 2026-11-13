@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.548.0
+  version: 1.549.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -142356,6 +142356,9 @@ components:
         server_stubs:
           $ref: '#/components/schemas/SdkServerStubsModel'
           description: The generated server stubs the download carries (SDK-2.5).
+        terraform_provider:
+          $ref: '#/components/schemas/SdkTerraformProviderModel'
+          description: The generated Terraform provider the download carries (SDK-4.4).
         download:
           $ref: '#/components/schemas/SdkDownloadModel'
           description: Download.
@@ -142371,6 +142374,7 @@ components:
       - truncated
       - go_client
       - server_stubs
+      - terraform_provider
       - download
       title: PublicSdkInfoResponse
       description: Everything the browse Get SDK panel needs, in one anonymous call.
@@ -152450,6 +152454,54 @@ components:
         with. A panel that
 
         offered only one of the two would hide half of what the same archive contains.'
+    SdkTerraformProviderModel:
+      properties:
+        directory:
+          type: string
+          title: Directory
+          description: The directory the provider sits in inside the archive.
+          example: example
+        provider_name:
+          type: string
+          title: Provider Name
+          description: The provider type name every resource type is prefixed with.
+          example: Example
+        address:
+          type: string
+          title: Address
+          description: The registry address a configuration's `required_providers`
+            names (`registry.terraform.io/<namespace>/<name>`).
+          example: example
+        module_path:
+          type: string
+          title: Module Path
+          description: The `go.mod` module path the provider declares.
+          example: example
+        framework_version:
+          type: string
+          title: Framework Version
+          description: The Terraform Plugin Framework release it is built on.
+          example: 1.0.0
+      additionalProperties: false
+      type: object
+      required:
+      - directory
+      - provider_name
+      - address
+      - module_path
+      - framework_version
+      title: SdkTerraformProviderModel
+      description: 'The generated Terraform provider the download carries — SDK-4.4
+        (#4498).
+
+
+        Named, not described: which resources it has depends on the contract''s CRUD
+        conventions, and
+
+        working that out is the generator''s job, so the download''s ``manifest.json``
+        lists the
+
+        resources, data sources and readiness warnings instead.'
     SecretRefBody:
       properties:
         id:

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.548.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.549.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `browse` · 11 operations
 
@@ -468,4 +468,5 @@ Everything the browse Get SDK panel needs, in one anonymous call.
 | `settings_fingerprint` | string or null | no | Fingerprint of the merged SDK settings the kit was branded with (SDK-3.4). |
 | `go_client` | `SdkGoClientModel` | yes | The generated Go client the download carries (SDK-2.4). |
 | `server_stubs` | `SdkServerStubsModel` | yes | The generated server stubs the download carries (SDK-2.5). |
+| `terraform_provider` | `SdkTerraformProviderModel` | yes | The generated Terraform provider the download carries (SDK-4.4). |
 | `download` | `SdkDownloadModel` | yes | Download. |

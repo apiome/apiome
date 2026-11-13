@@ -31,6 +31,7 @@ do not point any of them at `unreleased/`.
 | Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
 | SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
+| Terraform provider | SDK settings (the Get SDK kit) | `docs/ship/sdk-infrastructure-targets.mdx` | `sdk-settings` |
 | Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
 | Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
 | Dependency graph | Dependency graph (and the Dependencies tabs) | `docs/govern/dependency-graph.mdx` | `dependency-graph` |

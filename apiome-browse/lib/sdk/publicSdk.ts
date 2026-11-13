@@ -73,6 +73,20 @@ export interface PublicSdkServerStubs {
   route_count: number;
 }
 
+/**
+ * The generated Terraform provider the download carries — SDK-4.4.
+ *
+ * Named only: which resources it holds depends on the contract's CRUD conventions, so the
+ * download's `manifest.json` lists them along with the generator's readiness warnings.
+ */
+export interface PublicSdkTerraformProvider {
+  directory: string;
+  provider_name: string;
+  address: string;
+  module_path: string;
+  framework_version: string;
+}
+
 /** What the download will be, so the button can be labelled before it is fetched. */
 export interface PublicSdkDownload {
   filename: string;
@@ -99,6 +113,8 @@ export interface PublicSdkInfoResponse {
   go_client?: PublicSdkGoClient | null;
   /** Optional so a panel keeps rendering against a REST build older than SDK-2.5. */
   server_stubs?: PublicSdkServerStubs | null;
+  /** Optional so a panel keeps rendering against a REST build older than SDK-4.4. */
+  terraform_provider?: PublicSdkTerraformProvider | null;
   download: PublicSdkDownload;
 }
 

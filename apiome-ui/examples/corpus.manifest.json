@@ -22039,6 +22039,28 @@
       "fileset_role": "member"
     },
     {
+      "path": "openapi/38-terraform-crud-conventions.yaml",
+      "format": "openapi",
+      "adapter_key": "openapi",
+      "validity_class": "valid",
+      "expected_detection": {
+        "format": "openapi-3.0",
+        "min_confidence": 0.95
+      },
+      "features": [
+        "terraform-crud",
+        "x-terraform",
+        "x-extensions",
+        "readOnly",
+        "securitySchemes"
+      ],
+      "expected_outcome": "imports",
+      "source": "hand-authored",
+      "license": "Apache-2.0",
+      "provenance": "Authored in-repo for the Terraform provider generator (SDK-4.4, #4498).",
+      "rung": "typical"
+    },
+    {
       "path": "openapi/negative/01-syntactic-unclosed-flow-sequence.yaml",
       "format": "openapi",
       "adapter_key": "openapi",
