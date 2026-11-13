@@ -20,7 +20,7 @@ import 'jest-axe/extend-expect';
 
 const mockUsePathname = jest.fn<string, []>();
 const mockUseSession = jest.fn<{ data: unknown }, []>();
-const mockCommercialAccess = jest.fn<Promise<{ navItems: unknown[] }>, []>();
+const mockCommercialAccess = jest.fn<Promise<{ navItems: unknown[]; suiteHref?: string | null }>, []>();
 const mockTenantContext = jest.fn<
   Promise<{
     tenants: { id: string; name: string; role?: string; licenseName?: string }[];
@@ -314,6 +314,30 @@ describe('AppShell — navigation from the model', () => {
     const build = document.getElementById('rail-group-build');
     expect(build).not.toBeNull();
     expect(build).toContainElement(contributed);
+  });
+});
+
+describe('AppShell — the Suite link under Home', () => {
+  it('links a licensed user to the commercial suite, right under Home', async () => {
+    mockCommercialAccess.mockResolvedValue({ navItems: [], suiteHref: 'https://suite.apiome.dev/' });
+    await renderShell();
+
+    const suite = await screen.findByTestId('rail-nav-suite-link');
+    expect(suite).toHaveTextContent('Suite');
+    expect(suite).toHaveAttribute('href', 'https://suite.apiome.dev/');
+    expect(suite).toHaveAttribute('target', '_blank');
+    // The Home group is the leading, unlabelled run: Home first, then Suite.
+    const home = screen.getByTestId('rail-nav-home');
+    expect(home.compareDocumentPosition(suite)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(document.getElementById('rail-group-build')).not.toContainElement(suite);
+  });
+
+  it('draws no Suite link without the entitlement', async () => {
+    mockCommercialAccess.mockResolvedValue({ navItems: [], suiteHref: null });
+    await renderShell();
+
+    await waitFor(() => expect(mockCommercialAccess).toHaveBeenCalled());
+    expect(screen.queryByTestId('rail-nav-suite-link')).not.toBeInTheDocument();
   });
 });
 

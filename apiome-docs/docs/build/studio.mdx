@@ -45,6 +45,22 @@ normalized model and raw source, with no edit, save or publish. Convert it in th
 Designer's address comes from `NEXT_PUBLIC_STUDIO_URL` (default `https://suite.apiome.dev`).
 Because Designer is not part of this installation, this site has no screenshots of it.
 
+## The Suite link
+
+A user licensed for the suite also gets a **Suite** link right under **Home** in the sidebar. It
+opens the suite's home at the same address (`NEXT_PUBLIC_STUDIO_URL`, default
+`https://suite.apiome.dev`) in a new tab.
+
+The link appears only when the user's licence flags include `designer` or `paths` once
+[Suite Access](../admin/users.mdx#give-a-user-suite-access) is applied. That is the same check that
+shows **Designer** in **Build**. Without it, no link is drawn.
+
+:::info Commercial application
+The Apiome Suite is a commercial application. It is **not** part of the open-source Apiome project,
+and none of its code ships in this repository. The open-source Control Panel only links to it, and
+only when the right licensing flags are present.
+:::
+
 To edit without Designer, use the REST API or an import — the guides below show both.
 
 - [Edit classes and properties](./edit-classes-and-properties.md)

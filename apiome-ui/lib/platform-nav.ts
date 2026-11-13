@@ -767,3 +767,24 @@ export function toPlatformNavInjections(
     },
   }));
 }
+
+/** Id of the rail's **Suite** link, the second row of the Home group. */
+export const PLATFORM_NAV_SUITE_LINK_ID = 'suite-link';
+
+/**
+ * The **Suite** link that sits under Home for a user entitled to the commercial suite.
+ *
+ * The suite is a separate, commercially licensed application — it is not part of this
+ * open-source project, and this repository ships none of it. All the open-source app does
+ * is link to it, and only when the host's entitlement check produced an href
+ * (`CommercialAccessSnapshot.suiteHref`); without one, no link is drawn.
+ *
+ * @param href - Absolute URL of the suite (by default `https://suite.apiome.dev/`).
+ * @returns An injection for the Home group, ready for {@link PlatformNavOptions.injected}.
+ */
+export function toSuiteLinkInjection(href: string): PlatformNavInjection {
+  return {
+    group: 'home',
+    item: { id: PLATFORM_NAV_SUITE_LINK_ID, label: 'Suite', href, icon: 'layers', external: true },
+  };
+}

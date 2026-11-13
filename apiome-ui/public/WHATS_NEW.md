@@ -35,6 +35,7 @@ We continue to improve the platform based on your feedback with improvements and
 - Documentation:
   - Every docs link in the app — **Help & docs**, lint rule references, governance panels, What's new — opens **docs.apiome.dev** instead of GitHub
 - Suite Access:
+  - A **Suite** link now sits right under **Home** in the sidebar for a user licensed for the Apiome Suite (the same Suite Access that shows **Designer**). It opens the suite at `suite.apiome.dev` in a new tab. The Suite is a separate commercial application, not part of the open-source project; Apiome only links to it, and the link is hidden without the license
   - **Designer** and **Developer** now show in the **Build** section and on the launcher only for a user an administrator gives **Suite Access** (admin console → **Users** → ⋮ → **Grant Suite Access**). A license, including the free plan, no longer shows them
   - The **Designer** menu's **Design** group now lists **Workspace**, **Workspace · Paths** and **Code & exports** in place of **Designer** and **Paths Editor**. **Workspace** needs the Designer plan and **Workspace · Paths** the Paths plan, as the entries they replace did; **Code & exports** opens with either. Old Designer and Paths Editor links still open
   - Designer's separate **Designer** and **Paths Editor** screens are removed; the **Workspace** is where schemas and paths are edited. Links to `/ade/studio`, `/ade/studio/editor` and `/ade/studio/paths` still open — in the Workspace, with a paths link on its **Paths** lens

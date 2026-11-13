@@ -72,6 +72,7 @@ describe('getCommercialAccessForSession', () => {
       expect(ids(access.homeCards)).not.toContain(id);
     }
     expect(access.entitledFlags).not.toContain('designer');
+    expect(access.suiteHref).toBeNull();
   });
 
   it('shows both suites to a user with Suite Access, even with no license', async () => {
@@ -80,11 +81,17 @@ describe('getCommercialAccessForSession', () => {
     expect(ids(access.navItems)).toEqual(expect.arrayContaining(['suite', 'developer-suite']));
     expect(ids(access.homeCards)).toEqual(expect.arrayContaining(['suite', 'developer-suite']));
     expect(access.entitledFlags).toEqual(expect.arrayContaining(['designer', 'paths']));
+    expect(access.suiteHref).toBe('https://suite.apiome.dev/');
   });
 
   it('shows nothing to a signed-out visitor', async () => {
     mockGetAuthSession.mockResolvedValue(null);
-    expect(await getCommercialAccessForSession()).toEqual({ entitledFlags: [], homeCards: [], navItems: [] });
+    expect(await getCommercialAccessForSession()).toEqual({
+      entitledFlags: [],
+      homeCards: [],
+      navItems: [],
+      suiteHref: null,
+    });
     expect(mockQuery).not.toHaveBeenCalled();
   });
 });

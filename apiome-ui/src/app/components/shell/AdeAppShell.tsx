@@ -6,6 +6,7 @@ import { useAuthSession } from '@lib/auth/session-client';
 import {
   getPlatformNavGroups,
   toPlatformNavInjections,
+  toSuiteLinkInjection,
   type PlatformNavInjection,
 } from '@lib/platform-nav';
 import { getCommercialAccessForSession } from '@lib/db/commercial-access';
@@ -31,6 +32,9 @@ import WorkspaceSwitcher from './WorkspaceSwitcher';
  * - `getCommercialAccessForSession()` → entitlement-filtered suite destinations, injected
  *   into the model's reserved Build slot (`toPlatformNavInjections`, HIVE-3.2). This
  *   repository still names no commercial route.
+ * - The same call's `suiteHref` → the **Suite** link under Home. The suite is a separate,
+ *   commercially licensed application; the open-source app only links to it, and only for a
+ *   user the entitlement check let through.
  *
  * Failure is non-fatal by design: a rail without suite entries is still a working rail, and
  * it is not worth a broken page.
@@ -89,8 +93,12 @@ export default function AdeAppShell({ children }: AdeAppShellProps) {
 
     let cancelled = false;
     getCommercialAccessForSession()
-      .then(({ navItems }) => {
-        if (!cancelled) setInjected(toPlatformNavInjections(navItems));
+      .then(({ navItems, suiteHref }) => {
+        if (cancelled) return;
+        setInjected([
+          ...(suiteHref ? [toSuiteLinkInjection(suiteHref)] : []),
+          ...toPlatformNavInjections(navItems),
+        ]);
       })
       .catch((error: unknown) => {
         console.error('Failed to load commercial nav entitlements:', error);
