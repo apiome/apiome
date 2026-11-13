@@ -1,0 +1,922 @@
+{
+  "mappingVersion": 1,
+  "tools": [
+    {
+      "description": "Returns HTTP 204 with no body: Scrapped.",
+      "inputSchema": {
+        "properties": {
+          "serial": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serial"
+        ],
+        "type": "object"
+      },
+      "name": "scrapGadget",
+      "operation": "DELETE /gadgets/{serial}",
+      "output": {
+        "description": "Scrapped.",
+        "status": "204"
+      }
+    },
+    {
+      "description": "Returns HTTP 204 with no body: Deleted.",
+      "inputSchema": {
+        "properties": {
+          "orgId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orgId",
+          "projectId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteProject",
+      "operation": "DELETE /orgs/{orgId}/projects/{projectId}",
+      "output": {
+        "description": "Deleted.",
+        "status": "204"
+      }
+    },
+    {
+      "description": "Delete a widget\n\nReturns HTTP 204 with no body: Deleted.",
+      "inputSchema": {
+        "properties": {
+          "widgetId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "widgetId"
+        ],
+        "type": "object"
+      },
+      "name": "deleteWidget",
+      "operation": "DELETE /widgets/{widgetId}",
+      "output": {
+        "description": "Deleted.",
+        "status": "204"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Gadget): The gadget.",
+      "inputSchema": {
+        "properties": {
+          "serial": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "serial"
+        ],
+        "type": "object"
+      },
+      "name": "getGadget",
+      "operation": "GET /gadgets/{serial}",
+      "output": {
+        "description": "The gadget.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "model": {
+              "type": "string"
+            },
+            "options": {},
+            "serial": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "model"
+          ],
+          "type": "object"
+        },
+        "shape": "Gadget",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 with no body: The service is up.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "getHealth",
+      "operation": "GET /health",
+      "output": {
+        "description": "The service is up.",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (array of Project): Every project of the organization.",
+      "inputSchema": {
+        "properties": {
+          "orgId": {
+            "description": "The organization that owns the project.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orgId"
+        ],
+        "type": "object"
+      },
+      "name": "listProjects",
+      "operation": "GET /orgs/{orgId}/projects",
+      "output": {
+        "description": "Every project of the organization.",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Project",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Project): The project.",
+      "inputSchema": {
+        "properties": {
+          "orgId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orgId",
+          "projectId"
+        ],
+        "type": "object"
+      },
+      "name": "getProject",
+      "operation": "GET /orgs/{orgId}/projects/{projectId}",
+      "output": {
+        "description": "The project.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Project",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (array of Region): Every region.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listRegions",
+      "operation": "GET /regions",
+      "output": {
+        "description": "Every region.",
+        "mediaType": "application/json",
+        "schema": {
+          "items": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "shape": "array of Region",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Region): The region.",
+      "inputSchema": {
+        "properties": {
+          "regionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "regionId"
+        ],
+        "type": "object"
+      },
+      "name": "getRegion",
+      "operation": "GET /regions/{regionId}",
+      "output": {
+        "description": "The region.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Region",
+        "status": "200"
+      }
+    },
+    {
+      "description": "List widgets\n\nReturns HTTP 200 application/json (WidgetPage): Every widget, in an envelope.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object"
+      },
+      "name": "listWidgets",
+      "operation": "GET /widgets",
+      "output": {
+        "description": "Every widget, in an envelope.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "items": {
+              "items": {
+                "description": "A deployable widget.",
+                "properties": {
+                  "created_at": {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "etag": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "description": "The widget's identifier.",
+                    "type": "integer"
+                  },
+                  "labels": {},
+                  "name": {
+                    "description": "A human-readable name.",
+                    "type": "string"
+                  },
+                  "quotas": {
+                    "additionalProperties": {
+                      "type": "integer"
+                    },
+                    "description": "Per-resource limits, by resource name.",
+                    "type": "object"
+                  },
+                  "region": {
+                    "description": "Where the widget runs.",
+                    "enum": [
+                      "us-east",
+                      "eu-west"
+                    ],
+                    "type": "string"
+                  },
+                  "settings": {
+                    "properties": {
+                      "color": {
+                        "type": "string"
+                      },
+                      "retries": {
+                        "type": "integer"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "size": {
+                    "description": "How many replicas to run.",
+                    "minimum": 1.0,
+                    "type": "integer"
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "name",
+                  "region"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "next": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "shape": "WidgetPage",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Get a widget\n\nReturns HTTP 200 application/json (Widget): The widget.",
+      "inputSchema": {
+        "properties": {
+          "widgetId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "widgetId"
+        ],
+        "type": "object"
+      },
+      "name": "getWidget",
+      "operation": "GET /widgets/{widgetId}",
+      "output": {
+        "description": "The widget.",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A deployable widget.",
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "etag": {
+              "type": "string"
+            },
+            "id": {
+              "description": "The widget's identifier.",
+              "type": "integer"
+            },
+            "labels": {},
+            "name": {
+              "description": "A human-readable name.",
+              "type": "string"
+            },
+            "quotas": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "description": "Per-resource limits, by resource name.",
+              "type": "object"
+            },
+            "region": {
+              "description": "Where the widget runs.",
+              "enum": [
+                "us-east",
+                "eu-west"
+              ],
+              "type": "string"
+            },
+            "settings": {
+              "properties": {
+                "color": {
+                  "type": "string"
+                },
+                "retries": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "size": {
+              "description": "How many replicas to run.",
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "name",
+            "region"
+          ],
+          "type": "object"
+        },
+        "shape": "Widget",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Returns HTTP 200 application/json (Project): The updated project.",
+      "inputSchema": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "orgId",
+          "projectId",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "updateProject",
+      "operation": "PATCH /orgs/{orgId}/projects/{projectId}",
+      "output": {
+        "description": "The updated project.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Project",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Order a gadget (a create at a non-conventional path, assigned by hint)\n\nReturns HTTP 201 application/json (Gadget): The ordered gadget.",
+      "inputSchema": {
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "options": {},
+          "serial": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "type": "object"
+      },
+      "name": "orderGadget",
+      "operation": "POST /gadget-orders",
+      "output": {
+        "description": "The ordered gadget.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "model": {
+              "type": "string"
+            },
+            "options": {},
+            "serial": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "model"
+          ],
+          "type": "object"
+        },
+        "shape": "Gadget",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Returns HTTP 201 application/json (Project): The created project.",
+      "inputSchema": {
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "orgId": {
+            "description": "The organization that owns the project.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orgId",
+          "name"
+        ],
+        "type": "object"
+      },
+      "name": "createProject",
+      "operation": "POST /orgs/{orgId}/projects",
+      "output": {
+        "description": "The created project.",
+        "mediaType": "application/json",
+        "schema": {
+          "properties": {
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ],
+          "type": "object"
+        },
+        "shape": "Project",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Search everything (not CRUD-shaped)\n\nReturns HTTP 200 with no body: Matches.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "search",
+      "operation": "POST /search",
+      "output": {
+        "description": "Matches.",
+        "status": "200"
+      }
+    },
+    {
+      "description": "Create a widget\n\nReturns HTTP 201 application/json (Widget): The created widget.",
+      "inputSchema": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "etag": {
+            "type": "string"
+          },
+          "id": {
+            "description": "The widget's identifier.",
+            "type": "integer"
+          },
+          "labels": {},
+          "name": {
+            "description": "A human-readable name.",
+            "type": "string"
+          },
+          "quotas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Per-resource limits, by resource name.",
+            "type": "object"
+          },
+          "region": {
+            "description": "Where the widget runs.",
+            "enum": [
+              "us-east",
+              "eu-west"
+            ],
+            "type": "string"
+          },
+          "settings": {
+            "properties": {
+              "color": {
+                "type": "string"
+              },
+              "retries": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "size": {
+            "description": "How many replicas to run.",
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "region"
+        ],
+        "type": "object"
+      },
+      "name": "createWidget",
+      "operation": "POST /widgets",
+      "output": {
+        "description": "The created widget.",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A deployable widget.",
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "etag": {
+              "type": "string"
+            },
+            "id": {
+              "description": "The widget's identifier.",
+              "type": "integer"
+            },
+            "labels": {},
+            "name": {
+              "description": "A human-readable name.",
+              "type": "string"
+            },
+            "quotas": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "description": "Per-resource limits, by resource name.",
+              "type": "object"
+            },
+            "region": {
+              "description": "Where the widget runs.",
+              "enum": [
+                "us-east",
+                "eu-west"
+              ],
+              "type": "string"
+            },
+            "settings": {
+              "properties": {
+                "color": {
+                  "type": "string"
+                },
+                "retries": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "size": {
+              "description": "How many replicas to run.",
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "name",
+            "region"
+          ],
+          "type": "object"
+        },
+        "shape": "Widget",
+        "status": "201"
+      }
+    },
+    {
+      "description": "Restart a widget (an action, not CRUD)\n\nReturns HTTP 202 with no body: Restart accepted.",
+      "inputSchema": {
+        "properties": {
+          "widgetId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "widgetId"
+        ],
+        "type": "object"
+      },
+      "name": "restartWidget",
+      "operation": "POST /widgets/{widgetId}/restart",
+      "output": {
+        "description": "Restart accepted.",
+        "status": "202"
+      }
+    },
+    {
+      "description": "Replace a widget\n\nReturns HTTP 200 application/json (Widget): The replaced widget.",
+      "inputSchema": {
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "etag": {
+            "type": "string"
+          },
+          "id": {
+            "description": "The widget's identifier.",
+            "type": "integer"
+          },
+          "labels": {},
+          "name": {
+            "description": "A human-readable name.",
+            "type": "string"
+          },
+          "quotas": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Per-resource limits, by resource name.",
+            "type": "object"
+          },
+          "region": {
+            "description": "Where the widget runs.",
+            "enum": [
+              "us-east",
+              "eu-west"
+            ],
+            "type": "string"
+          },
+          "settings": {
+            "properties": {
+              "color": {
+                "type": "string"
+              },
+              "retries": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "size": {
+            "description": "How many replicas to run.",
+            "minimum": 1.0,
+            "type": "integer"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "widgetId": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "widgetId",
+          "name",
+          "region"
+        ],
+        "type": "object"
+      },
+      "name": "replaceWidget",
+      "operation": "PUT /widgets/{widgetId}",
+      "output": {
+        "description": "The replaced widget.",
+        "mediaType": "application/json",
+        "schema": {
+          "description": "A deployable widget.",
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "etag": {
+              "type": "string"
+            },
+            "id": {
+              "description": "The widget's identifier.",
+              "type": "integer"
+            },
+            "labels": {},
+            "name": {
+              "description": "A human-readable name.",
+              "type": "string"
+            },
+            "quotas": {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "description": "Per-resource limits, by resource name.",
+              "type": "object"
+            },
+            "region": {
+              "description": "Where the widget runs.",
+              "enum": [
+                "us-east",
+                "eu-west"
+              ],
+              "type": "string"
+            },
+            "settings": {
+              "properties": {
+                "color": {
+                  "type": "string"
+                },
+                "retries": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "size": {
+              "description": "How many replicas to run.",
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "name",
+            "region"
+          ],
+          "type": "object"
+        },
+        "shape": "Widget",
+        "status": "200"
+      }
+    }
+  ]
+}

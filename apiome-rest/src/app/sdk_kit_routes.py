@@ -4,9 +4,10 @@ Two anonymous, slug-addressed routes behind the browse portal's Get SDK panel:
 
 * **``GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk``** — what the panel needs to draw
   itself: the resolved package names (SDK-3.4), the install line per language, the generated Go
-  client's module path (SDK-2.4), how many operations the kit covers, and the download's filename.
-  The Go client is *named* here, never generated: its module path and package name are pure
-  functions of the coordinates and the branding.
+  client's module path (SDK-2.4), the Terraform provider's registry address (SDK-4.4), how many
+  operations the kit covers, and the download's filename. The Go client and the provider are
+  *named* here, never generated: their names are pure functions of the coordinates and the
+  branding.
 * **``GET …/sdk/download``** — the kit itself (:mod:`app.sdk_kit`) as ``application/zip``.
 
 **One gate, one answer.** Both routes resolve the revision through
@@ -36,6 +37,7 @@ from .export_artifact_store import content_sha256_hex, content_sha256_hex_only, 
 from .export_source import ExportSource, ExportSourceError, load_public_export_source
 from .go_client_generator import DEFAULT_GO_VERSION, GO_ECOSYSTEM
 from .server_stub_generator import EXPRESS_DIRECTORY, FASTAPI_DIRECTORY
+from .terraform_provider_runtime import PLUGIN_FRAMEWORK_VERSION
 from .public_export_guards import (
     enforce_public_export_rate_limit,
     public_export_document_max_bytes,
@@ -45,6 +47,7 @@ from .sdk_generation_settings_store import load_settings, public_sdk_enabled_fro
 from .sdk_kit import (
     GO_CLIENT_DIRECTORY,
     SERVER_STUB_DIRECTORY,
+    TERRAFORM_PROVIDER_DIRECTORY,
     KIT_MEDIA_TYPE,
     KIT_SCHEMA_VERSION,
     LANGUAGE_FILE_EXTENSIONS,
@@ -54,6 +57,7 @@ from .sdk_kit import (
     build_client_kit,
     go_client_coordinates,
     server_stub_coordinates,
+    terraform_provider_coordinates,
     kit_filename,
     package_install_command,
     summarize_kit,
@@ -153,6 +157,26 @@ class SdkServerStubsModel(BaseModel):
     )
 
 
+class SdkTerraformProviderModel(BaseModel):
+    """The generated Terraform provider the download carries — SDK-4.4 (#4498).
+
+    Named, not described: which resources it has depends on the contract's CRUD conventions, and
+    working that out is the generator's job, so the download's ``manifest.json`` lists the
+    resources, data sources and readiness warnings instead.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    directory: str = Field(description="The directory the provider sits in inside the archive.")
+    provider_name: str = Field(description="The provider type name every resource type is prefixed with.")
+    address: str = Field(
+        description="The registry address a configuration's `required_providers` names "
+        "(`registry.terraform.io/<namespace>/<name>`)."
+    )
+    module_path: str = Field(description="The `go.mod` module path the provider declares.")
+    framework_version: str = Field(description="The Terraform Plugin Framework release it is built on.")
+
+
 class SdkDownloadModel(BaseModel):
     """What the download will be, so a client can label its button before fetching."""
 
@@ -202,6 +226,9 @@ class PublicSdkInfoResponse(BaseModel):
     )
     server_stubs: SdkServerStubsModel = Field(
         description="The generated server stubs the download carries (SDK-2.5)."
+    )
+    terraform_provider: SdkTerraformProviderModel = Field(
+        description="The generated Terraform provider the download carries (SDK-4.4)."
     )
     download: SdkDownloadModel
 
@@ -390,6 +417,9 @@ async def get_public_sdk_info(
     # coordinates and the branding, so the panel can label the server stubs without emitting two
     # whole projects for a call that would throw them away.
     python_package, npm_package = server_stub_coordinates(source.api, gated.coordinates, branding)
+    # Named, not generated: the provider's name, address and module path are pure functions of the
+    # coordinates and the branding; which resources it holds is the download manifest's to say.
+    terraform = terraform_provider_coordinates(source.api, gated.coordinates, branding)
 
     return PublicSdkInfoResponse(
         tenant_slug=tenant_slug,
@@ -434,6 +464,13 @@ async def get_public_sdk_info(
             python_package=python_package,
             npm_package=npm_package,
             route_count=summary.operation_count,
+        ),
+        terraform_provider=SdkTerraformProviderModel(
+            directory=TERRAFORM_PROVIDER_DIRECTORY,
+            provider_name=terraform.provider_name,
+            address=terraform.address,
+            module_path=terraform.module_path,
+            framework_version=PLUGIN_FRAMEWORK_VERSION,
         ),
         download=SdkDownloadModel(
             filename=kit_filename(gated.coordinates),

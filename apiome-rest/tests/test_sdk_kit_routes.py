@@ -32,6 +32,7 @@ from app.go_client_generator import DEFAULT_GO_VERSION
 from app.main import app
 from app.sdk_generation_settings import ResolvedBranding, SdkGenerationSettingsOut
 from app.sdk_kit import KIT_SCHEMA_VERSION
+from app.terraform_provider_runtime import PLUGIN_FRAMEWORK_VERSION
 
 client = TestClient(app)
 
@@ -280,6 +281,31 @@ def test_info_names_the_server_stubs_the_download_carries() -> None:
         "npm_package": "widgets-server",
         "route_count": 1,
     }
+
+
+def test_info_names_the_terraform_provider_the_download_carries() -> None:
+    """SDK-4.4 (#4498): the provider is named from the coordinates; the manifest lists its resources."""
+    with patch(_LOADER, return_value=_source()):
+        body = client.get(_BASE).json()
+
+    assert body["terraform_provider"] == {
+        "directory": "terraform",
+        "provider_name": "widgets",
+        "address": "registry.terraform.io/acme/widgets",
+        "module_path": "example.com/acme/terraform-provider-widgets",
+        "framework_version": PLUGIN_FRAMEWORK_VERSION,
+    }
+
+
+def test_info_puts_the_terraform_provider_beside_a_configured_go_module() -> None:
+    """A tenant publishing `github.com/acme/widgets-go` publishes the provider from the same owner."""
+    branding = ResolvedBranding(package_names={"gomod": "github.com/acme/widgets-go"})
+    with patch(_LOADER, return_value=_source()), patch(
+        _SETTINGS, return_value=_settings_out(branding=branding)
+    ):
+        body = client.get(_BASE).json()
+
+    assert body["terraform_provider"]["module_path"] == "github.com/acme/terraform-provider-widgets"
 
 
 def test_info_never_offers_a_server_stub_under_the_client_packages_name() -> None:

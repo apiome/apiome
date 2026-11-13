@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.689.0] - 2026-11-12
+
+### Added
+- **Terraform provider generator (SDK-4.4, #4498)** — the public client kit
+  (`GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk/download`) now carries a buildable
+  Terraform provider under `terraform/`, written in Go on the Terraform Plugin Framework v1.18.0
+  (`app.terraform_provider_generator`, planned by `app.terraform_provider_plan`, fixed Go in
+  `app.terraform_provider_runtime`):
+  - **Resources from CRUD conventions** — `POST /x` + `GET /x/{id}` + `DELETE /x/{id}` (+ `PUT`, or
+    `PATCH`, `/x/{id}`) is a resource whose schema is the read's response; a parent path
+    (`/orgs/{orgId}/projects`) becomes a required, replace-on-change attribute; without an update
+    every configurable attribute replaces. Required/optional/computed come from the create body
+    and `readOnly`; import IDs are the parents and the identifier, slash-separated.
+  - **Data sources** — one per read (`<name>`) and one per list (`<name>_list`, a bare array or an
+    `{"items": [...]}` envelope).
+  - **`x-terraform` hints** on operations (`resource` + `operation`, or `false`) and schemas
+    (`resource`, `id`, `ignore`, `forceNew`, `import`, `dataSource`) override the mapping.
+  - **Auth from `securitySchemes`** — `token` (bearer, OAuth 2, OpenID Connect), `username` /
+    `password` (Basic), `api_key` (header, query or cookie), each with a `<PROVIDER>_<SETTING>`
+    environment fallback, plus `endpoint` and `headers` (e.g. `X-Mock-Session` for the SIM mock).
+  - **Readiness warnings** — every operation that is not CRUD-shaped, an incomplete group, a
+    missing identifier, an invalid hint, a loosely typed member and an unsupported scheme is
+    reported in the provider README and in the kit manifest's new `terraform_provider` block,
+    never guessed.
+  - Registry-layout `docs/`, `examples/` (`terraform validate`- and `terraform fmt`-clean), a
+    pinned `go.mod` + `go.sum`, and `terraform-registry-manifest.json`. Byte-deterministic; the
+    kit's `provenance.terraform_generator` names the generator schema (`sdk.terraform-provider.v1`).
+- `GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk` returns a `terraform_provider` block
+  (`directory`, `provider_name`, `address`, `module_path`, `framework_version`). OpenAPI
+  1.548.0 → 1.549.0.
+
 ## [1.688.0] - 2026-11-12
 
 ### Added

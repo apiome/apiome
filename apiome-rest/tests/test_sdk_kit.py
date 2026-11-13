@@ -33,11 +33,13 @@ from app.canonical_model import (
 )
 from app.go_client_generator import GO_CLIENT_SCHEMA_VERSION
 from app.server_stub_generator import SERVER_STUB_SCHEMA_VERSION
+from app.terraform_provider_generator import TERRAFORM_PROVIDER_SCHEMA_VERSION
 from app.sdk_generation_settings import ResolvedBranding
 from app.sdk_kit import (
     KIT_SCHEMA_VERSION,
     MAX_KIT_OPERATIONS,
     SERVER_STUB_DIRECTORY,
+    TERRAFORM_PROVIDER_DIRECTORY,
     KitCoordinates,
     build_client_kit,
     kit_filename,
@@ -192,6 +194,18 @@ def test_the_kit_carries_a_readme_manifest_spec_and_one_snippet_per_language() -
         "snippets/python/getWidget.py",
         "snippets/ts/getWidget.ts",
         "spec.json",
+        # SDK-4.4 (#4498): the Terraform provider, under `terraform/`. This fixture's one operation
+        # is a read that answers with no record, so the provider is the skeleton plus its report.
+        "terraform/README.md",
+        "terraform/docs/index.md",
+        "terraform/examples/provider/provider.tf",
+        "terraform/go.mod",
+        "terraform/go.sum",
+        "terraform/internal/client/client.go",
+        "terraform/internal/provider/provider.go",
+        "terraform/internal/provider/runtime.go",
+        "terraform/main.go",
+        "terraform/terraform-registry-manifest.json",
     ]
 
 
@@ -295,6 +309,7 @@ def test_the_manifest_carries_the_revision_and_settings_provenance() -> None:
         "renderer": f"app.snippet_render/{KIT_SCHEMA_VERSION}",
         "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
         "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
+        "terraform_generator": f"app.terraform_provider_generator/{TERRAFORM_PROVIDER_SCHEMA_VERSION}",
         "apiome_version": "1.180.0",
         "settings_fingerprint": "sha256:" + "a" * 64,
     }
@@ -428,6 +443,170 @@ def test_a_server_stub_failure_degrades_the_kit_rather_than_failing_it() -> None
     assert "snippets/ts/getWidget.ts" in _entries(kit.content)
     assert "go/client.go" in _entries(kit.content)
     assert "No server stubs are included" in _read(kit.content, "README.md")
+
+
+# ===========================================================================
+# The Terraform provider (SDK-4.4)
+# ===========================================================================
+
+
+def _crud_api() -> CanonicalApi:
+    """A model whose widgets form a create/read/update/delete group — one Terraform resource."""
+    from app.canonical_model import CanonicalField, Message, MessageRole, Type, TypeKind
+
+    widget = Type(
+        key="Widget",
+        name="Widget",
+        kind=TypeKind.RECORD,
+        fields=[
+            CanonicalField(key="Widget.id", name="id", type=TypeRef(name="string")),
+            CanonicalField(key="Widget.name", name="name", type=TypeRef(name="string", nullable=False)),
+        ],
+    )
+
+    def op(method: str, path: str, name: str, *, body: bool = False, answer: Optional[str] = "200") -> Operation:
+        payload = TypeRef(name="Widget")
+        media = ["application/json"]
+        messages = []
+        if body:
+            messages.append(Message(key=f"{name}.in", role=MessageRole.REQUEST, payload=payload, content_types=media))
+        if answer is not None:
+            messages.append(
+                Message(
+                    key=f"{name}.out",
+                    role=MessageRole.RESPONSE,
+                    payload=payload,
+                    status_code=answer,
+                    content_types=media,
+                )
+            )
+        id_param = []
+        if "{id}" in path:
+            id_param.append(
+                Parameter(
+                    key=f"{name}.id",
+                    name="id",
+                    location=ParameterLocation.PATH,
+                    type=TypeRef(name="string"),
+                    required=True,
+                )
+            )
+        return Operation(
+            key=f"{method.upper()} {path}",
+            name=name,
+            kind=OperationKind.REQUEST_RESPONSE,
+            http_method=method,
+            http_path=path,
+            extras={"operationId": name},
+            parameters=id_param,
+            messages=messages,
+        )
+
+    return CanonicalApi(
+        paradigm=ApiParadigm.REST,
+        format="openapi-3.1",
+        title="Widgets API",
+        version="1.0.0",
+        identity=ApiIdentity(name="widgets"),
+        servers=[Server(url="https://api.widgets.dev")],
+        types=[widget],
+        services=[
+            Service(
+                key="widgets",
+                name="widgets",
+                operations=[
+                    op("post", "/widgets", "createWidget", body=True, answer="201"),
+                    op("get", "/widgets/{id}", "getWidget"),
+                    op("put", "/widgets/{id}", "replaceWidget", body=True),
+                    op("delete", "/widgets/{id}", "deleteWidget", answer=None),
+                ],
+            )
+        ],
+    )
+
+
+def test_the_archive_carries_a_terraform_provider() -> None:
+    entries = _entries(_build(_crud_api()).content)
+    for path in (
+        "go.mod",
+        "go.sum",
+        "main.go",
+        "internal/provider/provider.go",
+        "internal/provider/runtime.go",
+        "internal/provider/resource_widget.go",
+        "internal/provider/data_source_widget.go",
+        "docs/resources/widget.md",
+        "examples/resources/widgets_widget/resource.tf",
+    ):
+        assert f"{TERRAFORM_PROVIDER_DIRECTORY}/{path}" in entries
+
+
+def test_the_manifest_describes_the_terraform_provider() -> None:
+    manifest = _manifest(_build(_crud_api()).content)["terraform_provider"]
+    assert manifest["included"] is True
+    assert manifest["schema_version"] == TERRAFORM_PROVIDER_SCHEMA_VERSION
+    assert manifest["directory"] == TERRAFORM_PROVIDER_DIRECTORY
+    assert manifest["provider_name"] == "widgets"
+    assert manifest["address"] == "registry.terraform.io/acme/widgets"
+    assert manifest["module_path"] == "example.com/acme/terraform-provider-widgets"
+    assert [resource["type"] for resource in manifest["resources"]] == ["widgets_widget"]
+    assert manifest["resources"][0]["operations"] == {
+        "create": "createWidget",
+        "read": "getWidget",
+        "update": "replaceWidget",
+        "delete": "deleteWidget",
+    }
+    assert [source["type"] for source in manifest["data_sources"]] == ["widgets_widget"]
+    assert manifest["warnings"] == []
+
+
+def test_the_manifest_carries_the_terraform_readiness_warnings() -> None:
+    """The fixture's one read answers with no record: nothing to manage, and the manifest says so."""
+    manifest = _manifest(_build().content)["terraform_provider"]
+    assert manifest["included"] is True
+    assert manifest["resources"] == []
+    codes = {warning["code"] for warning in manifest["warnings"]}
+    assert "terraform.no-resource-schema" in codes
+    assert "terraform.no-http-binding" in codes  # the GraphQL-style query
+
+
+def test_the_terraform_module_is_a_sibling_of_a_configured_go_module() -> None:
+    branding = ResolvedBranding(package_names={"gomod": "github.com/acme/widgets-go"})
+    content = _build(_crud_api(), branding=branding).content
+    go_mod = _read(content, f"{TERRAFORM_PROVIDER_DIRECTORY}/go.mod")
+    assert "module github.com/acme/terraform-provider-widgets" in go_mod
+
+
+def test_the_terraform_provider_inherits_the_tenants_branding() -> None:
+    content = _build(_crud_api(), branding=_BRANDED).content
+    provider = _read(content, f"{TERRAFORM_PROVIDER_DIRECTORY}/internal/provider/provider.go")
+    assert provider.startswith("// Copyright (c) 2026 Acme, Inc.")
+    assert 'const userAgent = "acme-sdk/1.0.0"' in provider
+    assert "revision `rev-uuid-1`" in _read(content, f"{TERRAFORM_PROVIDER_DIRECTORY}/README.md")
+
+
+def test_the_kit_readme_points_at_the_terraform_provider() -> None:
+    readme = _read(_build(_crud_api()).content, "README.md")
+    assert "## Terraform provider" in readme
+    assert f"cd {TERRAFORM_PROVIDER_DIRECTORY} && go build -o bin/ ." in readme
+    assert "1 resource and 1 data source" in readme
+
+
+def test_a_terraform_generator_failure_degrades_the_kit_rather_than_failing_it() -> None:
+    """A kit's snippets are worth shipping even when the provider cannot be generated."""
+    with patch("app.sdk_kit.generate_terraform_provider", side_effect=RuntimeError("boom")):
+        kit = _build(_crud_api())
+    assert not [name for name in _entries(kit.content) if name.startswith(f"{TERRAFORM_PROVIDER_DIRECTORY}/")]
+    block = _manifest(kit.content)["terraform_provider"]
+    assert block["included"] is False
+    assert block["error"] == "RuntimeError: boom"
+    assert block["address"] == "registry.terraform.io/acme/widgets"
+    assert "go/client.go" in _entries(kit.content)
+    assert "No Terraform provider is included" in _read(kit.content, "README.md")
+
+
+def test_a_kit_with_a_terraform_provider_is_still_byte_deterministic() -> None:
+    assert _build(_crud_api()).content == _build(_crud_api()).content
 
 
 def test_the_manifest_digests_every_entry_but_never_itself() -> None:
