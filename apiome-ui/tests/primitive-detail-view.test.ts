@@ -31,6 +31,10 @@ import {
   dependentLabel,
   dependentScope,
   dependentsFootLabel,
+  propertyDependentLabel,
+  propertyDependentLocation,
+  propertyDependentsFootLabel,
+  NO_PROPERTY_DEPENDENTS_TITLE,
   describeFieldType,
   detailBreadcrumb,
   editAffordance,
@@ -208,6 +212,47 @@ describe('dependents', () => {
 
   it('teaches how a dependent would get here', () => {
     expect(NO_DEPENDENTS_TITLE).toMatch(/no type in view references this one/i);
+  });
+});
+
+describe('used by properties', () => {
+  const bound = {
+    class_property_id: 'cp-1',
+    class_id: 'c-1',
+    version_id: 'v-1',
+    project_id: 'p-1',
+  };
+
+  it('names a bound property as Class.property', () => {
+    expect(propertyDependentLabel({ ...bound, class_name: 'Customer', property: 'email' })).toBe(
+      'Customer.email'
+    );
+  });
+
+  it('falls back to the class alone, then an em dash', () => {
+    expect(propertyDependentLabel({ ...bound, class_name: 'Customer' })).toBe('Customer');
+    expect(propertyDependentLabel({ ...bound, property: 'email' })).toBe(`${EMPTY_VALUE}.email`);
+    expect(propertyDependentLabel(bound)).toBe(EMPTY_VALUE);
+  });
+
+  it('places a bound property in its project and version', () => {
+    expect(
+      propertyDependentLocation({ ...bound, project_name: 'Billing', version_label: '1.0.0' })
+    ).toBe('Billing · 1.0.0');
+    expect(propertyDependentLocation({ ...bound, project_name: 'Billing' })).toBe('Billing');
+    expect(propertyDependentLocation({ ...bound, project_name: '', version_label: null })).toBe(
+      EMPTY_VALUE
+    );
+  });
+
+  it('counts bound properties in the singular when there is one', () => {
+    expect(propertyDependentsFootLabel(1)).toBe('1 property');
+    expect(propertyDependentsFootLabel(0)).toBe('0 properties');
+    expect(propertyDependentsFootLabel(3)).toBe('3 properties');
+  });
+
+  it('says the list is the reader’s own projects', () => {
+    expect(NO_PROPERTY_DEPENDENTS_TITLE).toMatch(/no property in your projects uses this type/i);
   });
 });
 

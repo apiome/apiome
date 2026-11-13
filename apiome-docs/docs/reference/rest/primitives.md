@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.547.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.548.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `primitives` · 12 operations
 
@@ -421,7 +421,8 @@ Args:
 Returns:
     The primitive details, its ``refs`` edges each carrying the target type's
     ``target_id`` / ``target_name`` so the detail view can link through to it, and
-    its ``dependents`` — the reverse index of types referencing it (#3477).
+    its ``dependents`` — the reverse index of types referencing it — and its
+    ``property_dependents``, the caller's class properties bound to it (#3477).
 
 Operation id: `get_primitive_v1_primitives__tenant_slug___primitive_id__get`
 
@@ -629,6 +630,7 @@ A tenant-scoped primitive type definition in the registry, including its JSON Sc
 | `base_uri` | string or null | no | Base URI used to resolve relative ``$ref`` values. |
 | `refs` | array of object | no | Resolved and unresolved ``$ref`` edges for the primitive schema. |
 | `dependents` | array of object | no | Reverse index of ``refs``: the visible types that reference this one, one entry per referencing edge. |
+| `property_dependents` | array of object | no | The caller's class properties bound to this type through ``class_properties.primitive_id``, one entry per property. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
 | `enabled` | boolean | no | Whether the resource is active. |

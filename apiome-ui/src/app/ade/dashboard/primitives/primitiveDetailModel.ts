@@ -65,6 +65,30 @@ export interface DependentRef {
   tenant_label?: string | null;
 }
 
+/**
+ * A class property bound to this primitive, from the "Used by properties" reverse index the
+ * single-type GET computes (#3477) over `class_properties.primitive_id` (#3475). One entry per
+ * bound property, always in the caller's own tenant.
+ */
+export interface PropertyDependentRef {
+  /** The bound `class_properties` row. */
+  class_property_id: string;
+  /** The property's name. */
+  property?: string | null;
+  /** The enclosing property when this one is nested; `null` at the class's top level. */
+  parent_id?: string | null;
+  /** The registry `$ref` the Designer stored with the binding. */
+  primitive_ref?: string | null;
+  class_id: string;
+  class_name?: string | null;
+  /** The version row id, for the Designer deep link. */
+  version_id: string;
+  /** The version's label (e.g. `1.0.0`). */
+  version_label?: string | null;
+  project_id: string;
+  project_name?: string | null;
+}
+
 /** The dashboard route for a dependent type, or `null` when it carries no id. */
 export function dependentHref(dep: Pick<DependentRef, 'id'>): string | null {
   return refEdgeTargetHref({ target_id: dep.id });
