@@ -22013,6 +22013,123 @@ html[data-motion='reduce'] .prm-spin {
   gap: var(--space-2);
 }
 
+/* ---- Change report: review bar and audit log (#2705) ----------------------
+   The strip above a publication change report — its review state, the
+   reviewer's note, the last PDF's hash and the review buttons — and the list
+   inside the audit-log dialog. */
+.crv-bar {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--bg-inset);
+}
+
+.crv-bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.crv-bar__status {
+  display: flex;
+  min-inline-size: 0;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.crv-bar__summary {
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+}
+
+.crv-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.crv-bar__note,
+.crv-bar__export {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.crv-bar__note-label {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.crv-audit__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.crv-audit__filter {
+  display: flex;
+  min-inline-size: 12rem;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.crv-audit__list {
+  display: flex;
+  max-block-size: 22rem;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  list-style: none;
+}
+
+.crv-audit__entry {
+  display: grid;
+  grid-template-columns: minmax(0, 10.5rem) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-sm);
+}
+
+.crv-audit__entry + .crv-audit__entry {
+  border-block-start: 1px solid var(--border);
+}
+
+.crv-audit__when,
+.crv-audit__who {
+  color: var(--fg-muted);
+  font-size: var(--fs-xs);
+}
+
+.crv-audit__what {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+}
+
+.crv-audit__action {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.crv-audit__detail {
+  color: var(--fg-muted);
+  overflow-wrap: anywhere;
+}
+
 /* ---- Deprecation notice (#3482) -----------------------------------------
    The banner above the schema of a deprecated type: title, message, and the
    replacement link on a line of its own. */

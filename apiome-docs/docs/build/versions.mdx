@@ -241,6 +241,66 @@ A **Change report** tab with the publication change report and its templates app
 `FEATURE_GITLIKE` is on and `NEXT_PUBLIC_CHANGE_REPORT_UI` is not `0`. `FEATURE_GITLIKE` is a
 constant in `apiome-ui/lib/feature-flags.ts` and is `false`, so shipped builds do not show it.
 
+### Review, approve and export a change report
+
+A change report can be reviewed before it goes to people outside your organisation. Its review
+state is shown above the report:
+
+| State | Meaning | What you can do |
+| --- | --- | --- |
+| **Draft** | Not reviewed yet. | **“Submit for review”** — the version's creator or a tenant administrator. |
+| **Pending review** | Waiting for a decision. | **“Approve”** or **“Reject”** — a tenant administrator. The person who submitted the report cannot approve it. |
+| **Approved** | Ready to hand out. | **“Download PDF”** — anyone who can see the version. |
+
+1. Open the **Change report** tab and choose the **Published revision**.
+2. **Click “Submit for review”.** The badge reads **Pending review**.
+3. A tenant administrator opens the same report and **clicks “Approve”**. To send it back
+   instead, **click “Reject”**, write a **Note** saying what needs to change (optional) and
+   **click “Reject report”**; the report returns to **Draft** and shows the reviewer's note.
+4. Once the badge reads **Approved**, **click “Download PDF”**.
+
+<Screenshot id="change-report-approval" alt="An approved change report: the Approved badge, the reviewer's note, the last PDF's SHA-256, Download PDF, and the Audit log button" />
+
+Editing the report or **regenerating** it returns it to **Draft**, so the PDF is always the text
+that was approved. **“Download PDF”** is disabled until the report is approved.
+
+The PDF has the report's header, body and footnote, with your edits. Its typography is plain: it
+is the same content as the screen, not a copy of its styling. Downloading the same approved report
+again gives an identical file, and the bar shows the last file's **SHA-256** so you can check a
+copy against the record.
+
+### Change report audit log
+
+Tenant administrators have an **“Audit log”** button on the **Change report** tab. It lists, newest
+first, who edited, regenerated, submitted, approved, rejected or exported a report, and who created
+a template or changed a default template. **Show** switches between this report and all reports and
+templates; **Action** narrows the list to one kind of event; **“Load older”** shows the next page.
+
+<Screenshot id="change-report-audit" alt="The Change report audit log dialog: Show and Action filters and a list of events with their time, detail and user" />
+
+The audit log cannot be edited or cleared.
+
+### Who can use it
+
+Review, PDF export and the audit log belong to the **Enterprise change reports** entitlement
+(`change-report-enterprise`). It is only enforced when the REST API runs with
+`APIOME_CHANGE_REPORT_ENTERPRISE_GATING=true`; by default every tenant has them. See
+[Feature flags](../admin/feature-flags.mdx).
+
+Over the REST API:
+
+| Call | What it does |
+| --- | --- |
+| `POST /v1/versions/{tenant}/{project}/{version}/change-report/submit` | Draft to pending review. |
+| `POST …/change-report/approve` | Pending review to approved. Optional body `{"note": "…"}`. |
+| `POST …/change-report/reject` | Pending review back to draft. Optional body `{"note": "…"}`. |
+| `GET …/change-report/pdf` | The approved report as a PDF; `X-Content-SHA256` carries its hash. **409** unless approved. |
+| `GET /v1/tenants/{tenant}/change-report-audit` | The audit log. Filters: `action`, `actorId`, `projectId`, `versionId`, `since`, `until`, `limit`, `cursor`. |
+
+A call made in the wrong state returns **409**; one made by the wrong person returns **403**. See
+the [Version change report](../reference/rest/version-change-report.md) and
+[Change report audit](../reference/rest/change-report-audit.md) REST references.
+
 ## With the CLI or the API
 
 - CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome mock status|enable|disable` — see

@@ -43,3 +43,6 @@ xmlschema>=3.4
 # Thrift export validation (MFX-25.4): structural spot-checks with an independent Thrift parser.
 thriftpy2>=0.7.1
 pyiceberg>=0.12.0
+# Change-report PDF export (#2705): Markdown -> HTML -> PDF, pure Python, no system packages.
+fpdf2>=2.8.1
+markdown-it-py>=3.0.0

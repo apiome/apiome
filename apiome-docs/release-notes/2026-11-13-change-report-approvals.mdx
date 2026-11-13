@@ -1,0 +1,36 @@
+---
+slug: change-report-approvals
+title: Review, approve and export change reports as PDF
+description: "Change reports gain a review step, a PDF export for approved reports, and an audit log."
+authors: [apiome]
+---
+
+A publication change report can now be reviewed before it leaves your organisation, exported as a
+PDF once it is approved, and every change to it is recorded.
+
+{/* truncate */}
+
+- **Review.** A report is a draft until its creator or a tenant administrator submits it
+  ([`POST …/change-report/submit`](/reference/rest/version-change-report)). A tenant administrator
+  other than the submitter approves it, or rejects it with a note.
+- **PDF export.** [`GET …/change-report/pdf`](/reference/rest/version-change-report) returns an
+  approved report as a PDF: its header, body and footnote, with your edits. The same report always
+  gives the same file, and its SHA-256 is returned in `X-Content-SHA256` and stored on the report
+  as `lastPdfSha256`.
+- **Approval covers the text.** Editing or regenerating a report returns it to draft, so the PDF
+  is always what was approved. A report that is not approved cannot be exported (**409**).
+- **Audit log.** Report edits, regenerations, submissions, approvals, rejections and PDF exports,
+  and template creation and default changes, are written to an append-only log. Tenant
+  administrators read it at
+  [`GET /v1/tenants/{tenant}/change-report-audit`](/reference/rest/change-report-audit), filtered
+  by action, user, project, version and date.
+- **Entitlement.** These belong to the `change-report-enterprise` feature flag. It is enforced
+  only when the REST API runs with `APIOME_CHANGE_REPORT_ENTERPRISE_GATING=true`; by default every
+  tenant has them. See [Feature flags](/admin/feature-flags).
+
+In the app, the **Change report** tab of [Versions](/build/versions#review-approve-and-export-a-change-report) shows the review
+state, the buttons and the **Audit log**. That tab is behind `FEATURE_GITLIKE`, which is off in
+shipped builds.
+
+Apply migration `V370__change_report_enterprise_2705.sql` before running this version of the REST
+API.

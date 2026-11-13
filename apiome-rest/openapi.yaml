@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.551.0
+  version: 1.552.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -63609,7 +63609,16 @@ paths:
         diff). Sending
 
         ``null`` for a field clears that user override. ``clearEdits: true`` removes
-        all overrides.'
+        all overrides.
+
+
+        **Approval (#2705):** an edit returns a submitted or approved report to ``draft``
+        — the new
+
+        content needs a new review before it can be exported as PDF — and is written
+        to the audit
+
+        trail.'
       operationId: patch_version_change_report_v1_versions__tenant_slug___project_id___version_record_id__change_report_patch
       parameters:
       - name: tenant_slug
@@ -63699,7 +63708,13 @@ paths:
         default, then the system template (**1.0.0**).
 
 
-        **Authorization:** Same as PATCH (creator or tenant admin, JWT required).'
+        **Authorization:** Same as PATCH (creator or tenant admin, JWT required).
+
+
+        **Approval (#2705):** like an edit, a regeneration returns the report to ``draft``
+        and is
+
+        written to the audit trail.'
       operationId: regenerate_version_change_report_v1_versions__tenant_slug___project_id___version_record_id__change_report_regenerate_post
       parameters:
       - name: tenant_slug
@@ -63773,6 +63788,358 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for regenerate version change reportresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/submit:
+    post:
+      tags:
+      - version-change-report
+      summary: Submit Change Report For Review
+      description: 'Submit a **draft** change report for review (``draft`` → ``pending_review``).
+
+
+        **Authorization:** JWT required. The revision **creator** or a **tenant administrator**
+        —
+
+        the same people who may edit the report.
+
+
+        Returns **409** when the report is not a draft.'
+      operationId: submit_change_report_for_review_v1_versions__tenant_slug___project_id___version_record_id__change_report_submit_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Submit Change Report For Reviewauthorization schema.
+          - type: 'null'
+            description: Submit Change Report For Reviewauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Submit Change Report For Review Xapikey schema.
+          - type: 'null'
+            description: Submit Change Report For Review Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for submit change report for review.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionChangeReportOut'
+                description: Response payload for submit change report for reviewresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for submit change report for reviewresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/approve:
+    post:
+      tags:
+      - version-change-report
+      summary: Approve Change Report
+      description: 'Approve a change report that is pending review (``pending_review``
+        → ``approved``).
+
+
+        An approved report can be exported as PDF. Editing or regenerating it afterwards
+        returns
+
+        it to ``draft``.
+
+
+        **Authorization:** JWT required. A **tenant administrator** who did **not**
+        submit the
+
+        report.
+
+
+        Returns **409** when the report is not pending review, **403** for the submitter.'
+      operationId: approve_change_report_v1_versions__tenant_slug___project_id___version_record_id__change_report_approve_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Approve Change Reportauthorization schema.
+          - type: 'null'
+            description: Approve Change Reportauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Approve Change Report Xapikey schema.
+          - type: 'null'
+            description: Approve Change Report Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReportReviewRequest'
+              description: Request body for approve change reportrequest.
+        description: Request body for approve change report.
+      responses:
+        '200':
+          description: Successful response for approve change report.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionChangeReportOut'
+                description: Response payload for approve change reportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for approve change reportresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/reject:
+    post:
+      tags:
+      - version-change-report
+      summary: Reject Change Report
+      description: 'Send a change report that is pending review back to ``draft``,
+        with an optional note.
+
+
+        **Authorization:** JWT required. A **tenant administrator**.
+
+
+        Returns **409** when the report is not pending review.'
+      operationId: reject_change_report_v1_versions__tenant_slug___project_id___version_record_id__change_report_reject_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reject Change Reportauthorization schema.
+          - type: 'null'
+            description: Reject Change Reportauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Reject Change Report Xapikey schema.
+          - type: 'null'
+            description: Reject Change Report Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReportReviewRequest'
+              description: Request body for reject change reportrequest.
+        description: Request body for reject change report.
+      responses:
+        '200':
+          description: Successful response for reject change report.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionChangeReportOut'
+                description: Response payload for reject change reportresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for reject change reportresponse422.
+  /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/pdf:
+    get:
+      tags:
+      - version-change-report
+      summary: Export Change Report Pdf
+      description: 'Download an **approved** change report as a PDF.
+
+
+        The PDF is rendered from the report''s effective header, body and footnote
+        (your edits
+
+        where you made any). Exporting the same report twice gives the same bytes,
+        so the
+
+        ``X-Content-SHA256`` header — also stored on the report as ``lastPdfSha256``
+        — identifies
+
+        the file that was handed out. Each export is written to the audit trail.
+
+
+        **Authorization:** JWT or API key; read access to versions.
+
+
+        Returns **409** unless the report is ``approved``.'
+      operationId: export_change_report_pdf_v1_versions__tenant_slug___project_id___version_record_id__change_report_pdf_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: project_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Project Id
+          description: Project Id schema.
+        description: Project identifier that scopes the request.
+      - name: version_record_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Version Record Id
+          description: Version Record Id schema.
+        description: Version row identifier (``versions.id`` UUID).
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Export Change Report Pdfauthorization schema.
+          - type: 'null'
+            description: Export Change Report Pdfauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Export Change Report Pdf Xapikey schema.
+          - type: 'null'
+            description: Export Change Report Pdf Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: The approved change report as a PDF. `X-Content-SHA256` carries
+            the file's SHA-256, which is also stored as `lastPdfSha256`.
+          content:
+            application/pdf: {}
+        '409':
+          description: The report is not approved.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for export change report pdfresponse422.
   /v1/versions/{tenant_slug}/{project_id}/{version_record_id}/change-report/publish-preview:
     post:
       tags:
@@ -64063,6 +64430,169 @@ paths:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for put tenant change report template
                   defaultresponse422.
+  /v1/tenants/{tenant_slug}/change-report-audit:
+    get:
+      tags:
+      - change-report-audit
+      summary: List Change Report Audit
+      description: 'List the tenant''s change-report audit trail, newest first.
+
+
+        One entry per report edit, regeneration, submission, approval, rejection and
+        PDF export,
+
+        and per template creation or default change.
+
+
+        **Authorization:** JWT required; **tenant administrators only**.'
+      operationId: list_change_report_audit_v1_tenants__tenant_slug__change_report_audit_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: action
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              type: string
+            description: List Change Report Auditaction schema.
+          - type: 'null'
+            description: List Change Report Auditaction schema.
+          description: Only these audit verbs (repeat for several, e.g. report.approve).
+          title: Action
+        description: Only these audit verbs (repeat for several, e.g. report.approve).
+      - name: actorId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditactor ID schema.
+          - type: 'null'
+            description: List Change Report Auditactor ID schema.
+          description: Only events by this user (UUID).
+          title: Actorid
+        description: Only events by this user (UUID).
+      - name: projectId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditproject ID schema.
+          - type: 'null'
+            description: List Change Report Auditproject ID schema.
+          description: Only events of this project (UUID).
+          title: Projectid
+        description: Only events of this project (UUID).
+      - name: versionId
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditversion ID schema.
+          - type: 'null'
+            description: List Change Report Auditversion ID schema.
+          description: Only events of this published version's report (UUID).
+          title: Versionid
+        description: Only events of this published version's report (UUID).
+      - name: since
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditsince schema.
+          - type: 'null'
+            description: List Change Report Auditsince schema.
+          description: Inclusive lower bound on createdAt (ISO 8601).
+          title: Since
+        description: Inclusive lower bound on createdAt (ISO 8601).
+      - name: until
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Audituntil schema.
+          - type: 'null'
+            description: List Change Report Audituntil schema.
+          description: Inclusive upper bound on createdAt (ISO 8601).
+          title: Until
+        description: Inclusive upper bound on createdAt (ISO 8601).
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          maximum: 200
+          minimum: 1
+          default: 50
+          title: Limit
+          description: Limit schema.
+        description: Maximum number of rows to return.
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditcursor schema.
+          - type: 'null'
+            description: List Change Report Auditcursor schema.
+          description: The `nextCursor` of the previous page, for the next (older)
+            one.
+          title: Cursor
+        description: The `nextCursor` of the previous page, for the next (older) one.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Auditauthorization schema.
+          - type: 'null'
+            description: List Change Report Auditauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: List Change Report Audit Xapikey schema.
+          - type: 'null'
+            description: List Change Report Audit Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for list change report audit.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangeReportAuditPageOut'
+                description: Response payload for list change report auditresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for list change report auditresponse422.
   /v1/tenants/{tenant_slug}/projects/{project_id}/change-report-template-default:
     put:
       tags:
@@ -170484,6 +171014,68 @@ components:
             description: Response payload for version change report.
           title: Regeneratedat
           description: Regenerated At.
+        approvalState:
+          type: string
+          title: Approvalstate
+          default: draft
+          description: Approval State.
+          example: example
+        submittedBy:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Submittedby
+          description: Submitted By.
+        submittedAt:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Submittedat
+          description: Submitted At.
+        approvedBy:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Approvedby
+          description: Approved By.
+        approvedAt:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Approvedat
+          description: Approved At.
+        reviewNote:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Reviewnote
+          description: Review Note.
+        lastPdfSha256:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Lastpdfsha256
+          description: Last Pdf Sha256.
+        lastPdfExportedAt:
+          anyOf:
+          - type: string
+            description: Response payload for version change report.
+          - type: 'null'
+            description: Response payload for version change report.
+          title: Lastpdfexportedat
+          description: Last Pdf Exported At.
         createdAt:
           anyOf:
           - type: string
@@ -170510,6 +171102,131 @@ components:
       title: VersionChangeReportOut
       description: Stored change report row plus effective (edited-over-rendered)
         snapshots.
+    ChangeReportReviewRequest:
+      properties:
+        note:
+          anyOf:
+          - type: string
+            maxLength: 1000
+            description: Request body for change report review.
+          - type: 'null'
+            description: Request body for change report review.
+          title: Note
+          description: The reviewer's note, kept with the report and written to the
+            audit trail.
+      type: object
+      title: ChangeReportReviewRequest
+      description: Body of an approve / reject call on a change report (#2705). The
+        note is optional.
+    ChangeReportAuditEntryOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Stable resource identifier.
+          example: res_01h2xcejqtf3fz5y5j0v8k9m2p
+        tenantId:
+          type: string
+          title: Tenantid
+          description: Tenant ID.
+          example: example
+        projectId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Projectid
+          description: Project ID.
+        changeReportId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Changereportid
+          description: Change Report ID.
+        publishedRevisionId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Publishedrevisionid
+          description: Published Revision ID.
+        templateVersionId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Templateversionid
+          description: Template Version ID.
+        action:
+          type: string
+          title: Action
+          description: 'Audit verb: report.edit, report.regenerate, report.submit,
+            report.approve, report.reject, report.export_pdf, template.create, template.default_tenant
+            or template.default_project.'
+          example: example
+        actorId:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Actorid
+          description: Actor ID.
+        detail:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Response payload for change report audit entry.
+          - type: 'null'
+            description: Response payload for change report audit entry.
+          title: Detail
+          description: Detail.
+        createdAt:
+          type: string
+          title: Createdat
+          description: Created At.
+          example: example
+      type: object
+      required:
+      - id
+      - tenantId
+      - action
+      - createdAt
+      title: ChangeReportAuditEntryOut
+      description: One row of the change-report audit trail (#2705).
+    ChangeReportAuditPageOut:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/ChangeReportAuditEntryOut'
+          type: array
+          title: Items
+          description: Items.
+          maxItems: 100
+        limit:
+          type: integer
+          title: Limit
+          description: The page size that was applied.
+          example: 50
+        nextCursor:
+          anyOf:
+          - type: string
+            description: Response payload for change report audit page.
+          - type: 'null'
+            description: Response payload for change report audit page.
+          title: Nextcursor
+          description: Pass as `cursor` for the next (older) page; null on the last
+            page.
+      type: object
+      required:
+      - limit
+      title: ChangeReportAuditPageOut
+      description: One page of the change-report audit trail, newest first (#2705).
     VersionChangeReportPatch:
       properties:
         editedRenderedBody:

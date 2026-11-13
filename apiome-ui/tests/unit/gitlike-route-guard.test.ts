@@ -10,6 +10,10 @@ describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
       ['/api/versions/abc-123/change-report', 'GET'],
       ['/api/versions/abc-123/change-report/regenerate', 'POST'],
       ['/api/versions/abc-123/change-report/publish-preview', 'POST'],
+      ['/api/versions/abc-123/change-report/submit', 'POST'],
+      ['/api/versions/abc-123/change-report/approve', 'POST'],
+      ['/api/versions/abc-123/change-report/reject', 'POST'],
+      ['/api/versions/abc-123/change-report/pdf', 'GET'],
       ['/api/projects/proj-1/version-branches', 'GET'],
       ['/api/projects/proj-1/version-branches/branch-2', 'PUT'],
       ['/api/projects/proj-1/version-branches/merge', 'POST'],
@@ -25,6 +29,7 @@ describe('isGitlikePath (FEATURE_GITLIKE=false guard)', () => {
       ['/api/projects/proj-1/versions/ver-1/revision-lock', 'POST'],
       ['/api/change-report-template-versions', 'GET'],
       ['/api/change-report-template-default', 'GET'],
+      ['/api/change-report-audit', 'GET'],
     ];
 
     it.each(cases)('blocks %s %s', (path, method) => {

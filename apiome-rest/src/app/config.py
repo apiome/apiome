@@ -640,6 +640,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    # Enterprise change reports (#2705): approvals, PDF export and the audit list. When False
+    # (default) every authenticated tenant reaches those routes; when True the caller must hold
+    # the ``change-report-enterprise`` feature flag (per-user override > per-tenant override >
+    # license default), and non-entitled callers get 403.
+    change_report_enterprise_gating_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "APIOME_CHANGE_REPORT_ENTERPRISE_GATING",
+            "change_report_enterprise_gating_enabled",
+        ),
+    )
+
     # License seat/capacity enforcement (OLO-5.3, #4213). When True (default), the
     # member-invite route and the suspended-member reinstate path refuse to exceed the
     # tenant license's ``seats.max_users_per_tenant`` (structured 403, code

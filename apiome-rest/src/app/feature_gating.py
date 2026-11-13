@@ -82,3 +82,15 @@ require_primitives_registry = require_feature_flag(
     PRIMITIVES_REGISTRY_FLAG,
     gating_enabled=lambda: settings.primitives_registry_gating_enabled,
 )
+
+
+# Canonical feature-flag slug for enterprise change reports (matches the seed in apiome-db
+# migration V370 and the admin Feature-Flag panel).
+CHANGE_REPORT_ENTERPRISE_FLAG = "change-report-enterprise"
+
+# Gate for the enterprise change-report routes (#2705): submit / approve / reject, PDF export
+# and the audit list. Pass-through unless ``change_report_enterprise_gating_enabled`` is set.
+require_change_report_enterprise = require_feature_flag(
+    CHANGE_REPORT_ENTERPRISE_FLAG,
+    gating_enabled=lambda: settings.change_report_enterprise_gating_enabled,
+)

@@ -71,6 +71,8 @@ dependencies = [
     "thriftpy2>=0.7.1",
     "sqlglot==30.23.0",
     "pyiceberg>=0.12.0",
+    "fpdf2>=2.8.1",
+    "markdown-it-py>=3.0.0",
 ]
 
 [project.optional-dependencies]

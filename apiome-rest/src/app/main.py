@@ -42,6 +42,8 @@ from .catalog_routes import router as catalog_router
 from .catalog_upload_routes import router as catalog_upload_router
 from .model_search_routes import router as model_search_router
 from .change_report_routes import router as change_report_router
+from .change_report_enterprise_routes import audit_router as change_report_audit_router
+from .change_report_enterprise_routes import router as change_report_enterprise_router
 from .change_report_template_routes import router as change_report_template_router
 from .classes_routes import router as classes_router
 from .classified_diff_routes import router as classified_diff_router
@@ -220,7 +222,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.551.0",
+    version="1.552.0",
 )
 
 
@@ -547,6 +549,9 @@ app.include_router(component_governance_router)
 app.include_router(push_webhook_subscriptions_router)
 app.include_router(change_report_router)
 app.include_router(version_change_report_router)
+# Enterprise change reports (#2705): approvals, PDF export and the audit trail.
+app.include_router(change_report_enterprise_router)
+app.include_router(change_report_audit_router)
 app.include_router(change_report_template_router)
 app.include_router(tenants_session_router)
 app.include_router(license_router)
