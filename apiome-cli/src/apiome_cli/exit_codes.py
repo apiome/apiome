@@ -142,6 +142,12 @@ EXIT_PROPERTY_INVALID = 7
 #: primitives first. Another per-command use of 7.
 EXIT_PRIMITIVE_MISSING = 7
 
+#: ``apiome primitives import`` (CLI 5.6): at least one **row failed** — it is not a valid
+#: primitive, or the server refused it; each failed row is listed. Without
+#: ``--continue-on-error`` nothing was written when the failure was found before the import.
+#: Another per-command use of 7.
+EXIT_PRIMITIVE_IMPORT_FAILED = 7
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the suite has **no verdict yet** — a
 #: required component is waiting on evidence (a contract run of this draft), or the commit is ahead
 #: of the draft the suite judges. Neither a pass nor a failure, so neither ``0`` nor ``7``: a

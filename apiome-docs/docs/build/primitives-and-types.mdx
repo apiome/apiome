@@ -147,7 +147,7 @@ To add a single new type by hand, [create it](#create-a-type) instead.
 | Keep references working | Done for you when the types are saved | [How references are kept](#how-references-are-kept) |
 | Settle clashes with existing types | **Review** step | [Review and conflicts](#review-and-conflicts) |
 | Read what happened | **Result** step | [The result](#the-result) |
-| Do it without the screen | REST API | [Import with the API](#import-types-with-the-api) |
+| Do it without the screen | CLI or REST API | [Import with the CLI](#import-primitives-with-the-cli), [Import with the API](#import-types-with-the-api) |
 
 ### Source types
 
@@ -296,7 +296,8 @@ settings”**, or **“Reset to defaults”**.
 
 ## With the CLI or the API
 
-- CLI: `apiome types list|show|search` — see the [CLI quick-start](../reference/cli-quickstart.md).
+- CLI: `apiome types list|show|search` — see the [CLI quick-start](../reference/cli-quickstart.md) —
+  and `apiome primitives import` — see [Import primitives with the CLI](#import-primitives-with-the-cli).
 - REST: `GET` / `POST /v1/primitives/{tenant}`, `GET /v1/primitives/{tenant}/{id}` (with
   `dependents` and `property_dependents`), `GET` / `POST /v1/types/{tenant}/namespaces`,
   `GET` / `PUT /v1/types/{tenant}/settings`, `POST /v1/types/{tenant}/resolve` — see the
@@ -318,6 +319,95 @@ found, is the type itself or is deprecated; **403** for a core system type. The 
 [Type registry](../reference/rest/type-registry.md) REST references, and the audit entries
 (`primitive.deprecate`, `primitive.restore`) on the
 [Registry audit](../reference/rest/registry-audit.md) reference.
+
+### Import primitives with the CLI
+
+`apiome primitives import <file>` adds a file of primitives to your tenant in one go — for example
+the loyalty IDs, SKU formats and region codes a new tenant starts with. All flags are on the
+[`apiome primitives` reference](../reference/cli/primitives.md).
+
+1. Write the file, in JSON or YAML: one primitive, or a list of them. Each has a `name`, a `base`
+   (a JSON Schema type: `string`, `number`, `integer`, `boolean`, `object`, `array` or `null`) and
+   any other JSON Schema keyword, such as `pattern`, `format`, `enum`, `description` or `examples`.
+
+   ```yaml title="acme-primitives.yaml"
+   - name: acme-loyalty-id
+     base: string
+     pattern: ^LM-[0-9]{8}$
+     examples: [LM-00000001, LM-12345678]
+   - name: acme-region-code
+     base: string
+     pattern: ^(EU|US|APAC)$
+   - name: acme-internal-sku
+     base: string
+     pattern: ^SKU-[A-Z0-9]{10}$
+   ```
+
+2. See what the import would do. Nothing is saved:
+
+   ```bash
+   apiome primitives import ./acme-primitives.yaml --dry-run
+   ```
+
+   ```text
+     Would import 2 primitives:
+       + acme-region-code   (string, pattern ^(EU|US|APAC)$)
+       + acme-internal-sku  (string, pattern ^SKU-[A-Z0-9]{10}$)
+     Conflicts (skipped without --update):
+       ~ acme-loyalty-id  (already exists, would be overwritten with --update)
+   ```
+
+3. Import. In a terminal the command shows the same plan and asks before it saves; `--yes` skips
+   the question:
+
+   ```bash
+   apiome primitives import ./acme-primitives.yaml --yes
+   ```
+
+   ```text
+     ✔ Imported 2 new, updated 0 existing primitives.
+     Skipped 1 conflict (pass --update to overwrite).
+   ```
+
+Without a terminal — in a script or a CI job — nothing is saved unless you pass `--yes`.
+
+| To | Pass |
+| --- | --- |
+| Overwrite a primitive that already exists with a different schema | `--update` |
+| Leave existing primitives alone (the default) | `--skip-conflicts` |
+| Import the good rows when others fail | `--continue-on-error` |
+| Keep a JSON record of every row | `--report report.json` |
+| Read the primitives from stdin | No file, or `-` |
+
+**What is checked.** Before anything is sent, each row is checked on your machine: it has a name
+no other row uses, `base` is a JSON Schema type, `pattern` is a regular expression, the schema is
+valid JSON Schema 2020-12 and every example matches it. A file with more than 50 rows shows a
+progress bar while it is checked. Apiome then reviews the rows the same way the **Import
+primitives** dialog does — see [Review and conflicts](#review-and-conflicts). A primitive identical
+to an existing one is left as it is.
+
+**When a row fails.** Each failed row is listed with its row number and the reason. Nothing is
+imported and the command exits with code **7**. With `--continue-on-error` the other rows are
+imported and the command exits with **0**. The rows go to Apiome in one request and are saved one
+by one, so a row that fails while saving does not undo the rows saved before it.
+
+**The report.** `--report <path>` writes one entry for each row — `row`, `name`, `status` and
+`message` — and a `summary` that counts the rows by status. After a dry run the statuses are `new`,
+`overwrite`, `conflict` and `unchanged`; after an import they are `imported`, `updated`, `skipped`
+and `unchanged`. A row that was not imported is `invalid`, `failed`, `system` (a read-only core
+system type) or `aborted` (left out because another row failed). `apiome --json primitives
+import …` prints the same report.
+
+**Copy primitives back in.** A row can also be a primitive as `apiome types list --json` prints it
+— a `name` and a `schema` — so the list can be saved, edited and imported again:
+
+```bash
+apiome --json types list | apiome primitives import --update --yes
+```
+
+Core system types in the list are skipped. Each row keeps the `$id` in its schema, so it updates
+the primitive it came from; to copy a primitive to another tenant as a new type, remove `$id` from
+its schema first.
 
 ### Import types with the API
 

@@ -1,7 +1,7 @@
 ---
 title: "apiome schemas"
 description: "List and fetch tenant schemas."
-sidebar_position: 33
+sidebar_position: 34
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
