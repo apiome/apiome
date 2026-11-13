@@ -18,6 +18,8 @@ export { default as PrimitiveMetadataCard } from './PrimitiveMetadataCard';
 export { default as PrimitiveUsageCard } from './PrimitiveUsageCard';
 export { default as BaseChainCard } from './BaseChainCard';
 export { PrimitiveTestForm } from './PrimitiveTestForm';
+export { default as DeprecateTypeDialog } from './DeprecateTypeDialog';
+export { default as DeprecationNotice } from './DeprecationNotice';
 
 export type { PrimitiveSchemaCardProps } from './PrimitiveSchemaCard';
 export type { ReferenceResolutionCardProps } from './ReferenceResolutionCard';
@@ -28,6 +30,8 @@ export type { PrimitiveMetadataCardProps } from './PrimitiveMetadataCard';
 export type { PrimitiveUsageCardProps } from './PrimitiveUsageCard';
 export type { BaseChainCardProps } from './BaseChainCard';
 export type { PrimitiveTestFormProps } from './PrimitiveTestForm';
+export type { DeprecateTypeDialogProps } from './DeprecateTypeDialog';
+export type { DeprecationNoticeProps } from './DeprecationNotice';
 export type { FieldContext } from './testFormFields';
 
 export * from './primitiveDetailView';

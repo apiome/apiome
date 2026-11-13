@@ -1,6 +1,6 @@
 ---
 title: "Primitives"
-description: "REST endpoints tagged primitives: 12 operations."
+description: "REST endpoints tagged primitives: 14 operations."
 sidebar_position: 69
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.550.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.551.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `primitives` · 12 operations
+Tag: `primitives` · 14 operations
 
 ## `GET /v1/primitives/health` {#registry-health-v1-primitives-health-get}
 
@@ -422,7 +422,8 @@ Returns:
     The primitive details, its ``refs`` edges each carrying the target type's
     ``target_id`` / ``target_name`` so the detail view can link through to it, and
     its ``dependents`` — the reverse index of types referencing it — and its
-    ``property_dependents``, the caller's class properties bound to it (#3477).
+    ``property_dependents``, the caller's class properties bound to it (#3477). A
+    deprecated type also carries ``replacement``, the type to use instead (#3482).
 
 Operation id: `get_primitive_v1_primitives__tenant_slug___primitive_id__get`
 
@@ -517,6 +518,92 @@ Operation id: `delete_primitive_v1_primitives__tenant_slug___primitive_id__delet
 | 200 | Successful response for delete primitive. | `application/json` map of string |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
+## `POST /v1/primitives/{tenant_slug}/{primitive_id}/deprecate` {#deprecate-primitive-v1-primitives-tenant-slug-primitive-id-deprecate-post}
+
+**Deprecate Primitive**
+
+Deprecate a type, optionally with a sunset date, a message and a replacement type.
+
+Deprecation is advisory: existing and new bindings and ``$ref``s keep working. Calling this
+on an already-deprecated type replaces its sunset date, message and replacement (an omitted
+field is cleared) and keeps the original ``deprecated_at``.
+
+Args:
+    tenant_slug: The tenant slug.
+    primitive_id: The primitive id.
+    request: The deprecation details (all optional).
+    auth_data: Authentication data (injected by dependency).
+
+Returns:
+    The deprecated primitive, with ``replacement`` resolved.
+
+Raises:
+    HTTPException: 404 when the type is not found; 403 for a system type; 422 when the
+        sunset date is in the past or the replacement is missing, the type itself, or
+        itself deprecated.
+
+Operation id: `deprecate_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `primitive_id` | path | string | yes | Primitive type identifier in the registry. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for deprecate primitive.
+
+- `application/json` — [`PrimitiveDeprecateRequest`](#schema-primitivedeprecaterequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for deprecate primitive. | `application/json` [`PrimitiveSchema`](#schema-primitiveschema) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `DELETE /v1/primitives/{tenant_slug}/{primitive_id}/deprecate` {#restore-primitive-v1-primitives-tenant-slug-primitive-id-deprecate-delete}
+
+**Restore Primitive**
+
+Restore a deprecated type: clear its deprecation, sunset date, message and replacement.
+
+Restoring a type that is not deprecated is a no-op that returns the type unchanged (and
+writes no audit row), so the call is safe to repeat.
+
+Args:
+    tenant_slug: The tenant slug.
+    primitive_id: The primitive id.
+    auth_data: Authentication data (injected by dependency).
+
+Returns:
+    The restored primitive.
+
+Raises:
+    HTTPException: 404 when the type is not found; 403 for a system type.
+
+Operation id: `restore_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_delete`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `primitive_id` | path | string | yes | Primitive type identifier in the registry. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for restore primitive. | `application/json` [`PrimitiveSchema`](#schema-primitiveschema) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
 ## Schemas used {#schemas-used}
 
 ### `HTTPValidationError` {#schema-httpvalidationerror}
@@ -540,6 +627,18 @@ Request body for registering a new primitive type in the tenant registry.
 | `tags` | array of string or null | no | Associated tag labels. |
 | `namespace` | string or null | no | Registry namespace segment for the primitive. |
 | `base_uri` | string or null | no | Base URI used to resolve relative ``$ref`` values. |
+
+### `PrimitiveDeprecateRequest` {#schema-primitivedeprecaterequest}
+
+Request model for deprecating a type, or changing a deprecated type's details (#3482).
+
+Every field is optional: a type can be deprecated with no retirement date decided yet.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `sunset_date` | string (date) or null | no | Date after which the type should no longer be used (YYYY-MM-DD). May not be in the past. |
+| `message` | string or null | no | Why the type is deprecated and what to do instead. |
+| `replacement_id` | string or null | no | Id of the type to use instead. Must be visible to the tenant, not this type, and not itself deprecated. |
 
 ### `PrimitiveImportRecord` {#schema-primitiveimportrecord}
 
@@ -631,6 +730,12 @@ A tenant-scoped primitive type definition in the registry, including its JSON Sc
 | `refs` | array of object | no | Resolved and unresolved ``$ref`` edges for the primitive schema. |
 | `dependents` | array of object | no | Reverse index of ``refs``: the visible types that reference this one, one entry per referencing edge. |
 | `property_dependents` | array of object | no | The caller's class properties bound to this type through ``class_properties.primitive_id``, one entry per property. |
+| `deprecated` | boolean | no | Deprecated. |
+| `deprecated_at` | string (date-time) or string or null | no | Deprecated At timestamp (ISO 8601). |
+| `sunset_date` | string (date) or null | no | Sunset Date. |
+| `deprecation_message` | string or null | no | Deprecation Message. |
+| `replacement_id` | string or null | no | Replacement ID. |
+| `replacement` | object or null | no | Replacement. |
 | `created_at` | string (date-time) or string or null | no | Creation timestamp (ISO 8601). |
 | `updated_at` | string (date-time) or string or null | no | Last update timestamp (ISO 8601). |
 | `enabled` | boolean | no | Whether the resource is active. |

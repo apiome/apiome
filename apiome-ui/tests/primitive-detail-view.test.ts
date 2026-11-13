@@ -15,7 +15,8 @@
 import {
   COPY_ACK_MS,
   DEFAULT_DRAFT,
-  DEPRECATE_REASON,
+  DEFAULT_DEPRECATION_MESSAGE,
+  DEPRECATION_ADVISORY,
   EMPTY_OBJECT_NOTE,
   EMPTY_VALUE,
   LIVE_VALIDATION_NOTE,
@@ -53,6 +54,11 @@ import {
   schemaPaneHeight,
   usageTiles,
   verdict,
+  SYSTEM_DEPRECATE_REASON,
+  deprecateAffordance,
+  deprecationNotice,
+  isDeprecated,
+  lifecycleLabel,
 } from '../src/app/components/ade/primitives/detail/primitiveDetailView';
 import {
   buildTestField,
@@ -99,8 +105,44 @@ describe('the header', () => {
     expect(edit.href).toBe('/ade/dashboard/primitives?edit=p-2');
   });
 
-  it('names the ticket that will make Deprecate work', () => {
-    expect(DEPRECATE_REASON).toContain('#3482');
+  it('offers Deprecate on an active tenant type', () => {
+    const lifecycle = deprecateAffordance({ is_system: false });
+
+    expect(lifecycle).toMatchObject({ action: 'deprecate', label: 'Deprecate', disabled: false });
+    expect(lifecycle.title).toContain('sunset date');
+  });
+
+  it('offers Restore once the type is deprecated', () => {
+    expect(deprecateAffordance({ is_system: false, deprecated: true })).toMatchObject({
+      action: 'restore',
+      label: 'Restore',
+      disabled: false,
+    });
+    // The timestamp alone is enough: `deprecated` is derived from it.
+    expect(
+      deprecateAffordance({ is_system: false, deprecated_at: '2026-11-13T12:00:00Z' }).action
+    ).toBe('restore');
+  });
+
+  it('refuses to deprecate a system type, and says why', () => {
+    const lifecycle = deprecateAffordance({ is_system: true });
+
+    expect(lifecycle.disabled).toBe(true);
+    expect(lifecycle.title).toBe(SYSTEM_DEPRECATE_REASON);
+  });
+
+  it('adds the deprecated badge last, and only to a deprecated type', () => {
+    const active = headerBadges({ is_system: false, category: 'object', draft: '2020-12' });
+    const deprecated = headerBadges({
+      is_system: false,
+      category: 'object',
+      draft: '2020-12',
+      deprecated: true,
+    });
+
+    expect(active.map((badge) => badge.id)).not.toContain('deprecated');
+    expect(deprecated.map((badge) => badge.id)).toEqual(['scope', 'category', 'draft', 'deprecated']);
+    expect(deprecated[deprecated.length - 1]).toMatchObject({ label: 'deprecated', tone: 'warn' });
   });
 
   it('ends the breadcrumb at the namespace, not at the type the h1 already names', () => {
@@ -257,7 +299,7 @@ describe('used by properties', () => {
 });
 
 describe('the metadata aside', () => {
-  it('lists all eight rows in the mockup’s order, Scope second', () => {
+  it('lists all nine rows in the mockup’s order, Scope second', () => {
     const rows = metadataRows({
       isSystem: false,
       schemaId: 'https://api.apiome.dev/types/tenant/acme/v1/types/money',
@@ -276,8 +318,21 @@ describe('the metadata aside', () => {
       ['owner', 'acme'],
       ['source', 'human'],
       ['created', '2026-06-18'],
+      ['lifecycle', 'active'],
       ['mutability', 'editable · tenant'],
     ]);
+  });
+
+  it('prints the lifecycle it is given', () => {
+    const rows = metadataRows({
+      isSystem: false,
+      namespace: null,
+      versionRoot: null,
+      owner: 'acme',
+      lifecycle: 'deprecated · sunset 2027-01-31',
+    });
+
+    expect(rows.find((row) => row.id === 'lifecycle')?.value).toBe('deprecated · sunset 2027-01-31');
   });
 
   it('says how each row is drawn, so the two that are not printed keep their place', () => {
@@ -525,5 +580,84 @@ describe('coercion errors', () => {
     };
 
     expect(collectCoercionErrors(field, state).size).toBe(0);
+  });
+});
+
+describe('the deprecation lifecycle (#3482)', () => {
+  const TODAY = '2026-11-13';
+
+  it('reads deprecated from the flag or from the timestamp behind it', () => {
+    expect(isDeprecated({})).toBe(false);
+    expect(isDeprecated({ deprecated: false, deprecated_at: null })).toBe(false);
+    expect(isDeprecated({ deprecated: true })).toBe(true);
+    expect(isDeprecated({ deprecated_at: '2026-11-13T12:00:00Z' })).toBe(true);
+  });
+
+  it('shows no notice on an active type', () => {
+    expect(deprecationNotice({ deprecated: false }, TODAY)).toBeNull();
+  });
+
+  it('words a bare deprecation with the default message and the advisory', () => {
+    expect(deprecationNotice({ deprecated: true }, TODAY)).toEqual({
+      title: 'Deprecated',
+      message: DEFAULT_DEPRECATION_MESSAGE,
+      advisory: DEPRECATION_ADVISORY,
+      sunsetPassed: false,
+      replacement: null,
+    });
+  });
+
+  it('carries the sunset date, the author’s message and the replacement link', () => {
+    const notice = deprecationNotice(
+      {
+        deprecated: true,
+        sunset_date: '2027-01-31',
+        deprecation_message: '  Use money-v2.  ',
+        replacement: { id: 'prim-9', name: 'money-v2', schema_id: 'https://x/money-v2' },
+      },
+      TODAY
+    );
+
+    expect(notice).toMatchObject({
+      title: 'Deprecated — sunset on 2027-01-31',
+      message: 'Use money-v2.',
+      sunsetPassed: false,
+      replacement: { label: 'money-v2', href: '/ade/dashboard/primitives/prim-9' },
+    });
+  });
+
+  it('says so in words once the sunset date has passed', () => {
+    const notice = deprecationNotice({ deprecated: true, sunset_date: '2026-11-12' }, TODAY);
+
+    expect(notice?.sunsetPassed).toBe(true);
+    expect(notice?.title).toBe('Deprecated — sunset passed on 2026-11-12');
+  });
+
+  it('does not count today as passed', () => {
+    expect(deprecationNotice({ deprecated: true, sunset_date: TODAY }, TODAY)?.sunsetPassed).toBe(
+      false
+    );
+  });
+
+  it('labels a nameless replacement by its $id, then its id', () => {
+    const byId = deprecationNotice(
+      { deprecated: true, replacement: { id: 'prim-9', name: null, schema_id: 'https://x/m' } },
+      TODAY
+    );
+    const bare = deprecationNotice(
+      { deprecated: true, replacement: { id: 'prim-9', name: null } },
+      TODAY
+    );
+
+    expect(byId?.replacement?.label).toBe('https://x/m');
+    expect(bare?.replacement?.label).toBe('prim-9');
+  });
+
+  it('labels the lifecycle for the metadata aside', () => {
+    expect(lifecycleLabel({})).toBe('active');
+    expect(lifecycleLabel({ deprecated: true })).toBe('deprecated');
+    expect(lifecycleLabel({ deprecated: true, sunset_date: '2027-01-31' })).toBe(
+      'deprecated · sunset 2027-01-31'
+    );
   });
 });

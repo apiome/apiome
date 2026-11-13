@@ -24,6 +24,11 @@ import {
   buildUpdateRequestBody,
   visibilityLabel,
   type NamespaceFormData,
+  ROOT_STATUS_FILTERS,
+  ROOT_STATUS_OPTIONS,
+  countDraftRoots,
+  filterByRootStatus,
+  rootStatusOf,
 } from '../src/app/ade/dashboard/primitives/namespaceModel';
 import type { TypeNamespaceCollection } from '../src/app/ade/dashboard/primitives/primitivesRegistryTypes';
 
@@ -102,6 +107,7 @@ describe('formFromNamespace', () => {
       namespace: 'tenant/acme/v1/types',
       baseUri: 'https://api.apiome.dev/types/tenant/acme/v1/',
       versionRoot: 'v1',
+      rootStatus: 'stable',
       description: 'Acme core types',
       isDefault: true,
     });
@@ -180,6 +186,7 @@ describe('buildCreateRequestBody', () => {
     expect(body).toEqual({
       namespace: 'tenant/acme/v1/types',
       scope: 'tenant',
+      root_status: 'stable',
       is_default: true,
     });
   });
@@ -223,6 +230,7 @@ describe('buildUpdateRequestBody', () => {
     );
     expect(body).toEqual({
       description: 'updated',
+      root_status: 'stable',
       is_default: true,
       base_uri: 'https://example.com/types/',
       version_root: 'v2',
@@ -314,5 +322,53 @@ describe('unassigned + unregistered namespace detection', () => {
         { namespace: 'b/ns', typeCount: 1 },
       ]);
     });
+  });
+});
+
+describe('version-root status (#3482)', () => {
+  const stable: TypeNamespaceCollection = { ...tenantNs, id: 'a', root_status: 'stable' };
+  const draft: TypeNamespaceCollection = { ...tenantNs, id: 'b', root_status: 'draft' };
+  // An older API build sends no status at all.
+  const legacy: TypeNamespaceCollection = { ...tenantNs, id: 'c' };
+
+  it('reads a missing or unknown status as stable', () => {
+    expect(rootStatusOf(stable)).toBe('stable');
+    expect(rootStatusOf(draft)).toBe('draft');
+    expect(rootStatusOf(legacy)).toBe('stable');
+    expect(rootStatusOf({ root_status: null })).toBe('stable');
+  });
+
+  it('lists draft roots apart from stable ones', () => {
+    const all = [stable, draft, legacy];
+    expect(filterByRootStatus(all, 'all').map((ns) => ns.id)).toEqual(['a', 'b', 'c']);
+    expect(filterByRootStatus(all, 'draft').map((ns) => ns.id)).toEqual(['b']);
+    expect(filterByRootStatus(all, 'stable').map((ns) => ns.id)).toEqual(['a', 'c']);
+  });
+
+  it('does not hand back the caller’s own array', () => {
+    const all = [stable];
+    expect(filterByRootStatus(all, 'all')).not.toBe(all);
+  });
+
+  it('counts the draft roots', () => {
+    expect(countDraftRoots([stable, draft, legacy, draft])).toBe(2);
+    expect(countDraftRoots([])).toBe(0);
+  });
+
+  it('offers Stable before Draft in the form, and All first in the filter', () => {
+    expect(ROOT_STATUS_OPTIONS.map((o) => o.value)).toEqual(['stable', 'draft']);
+    expect(ROOT_STATUS_FILTERS.map((o) => o.value)).toEqual(['all', 'stable', 'draft']);
+  });
+
+  it('starts a new namespace as stable and keeps a draft one draft when editing', () => {
+    expect(emptyNamespaceForm().rootStatus).toBe('stable');
+    expect(formFromNamespace(draft).rootStatus).toBe('draft');
+    expect(formFromNamespace(legacy).rootStatus).toBe('stable');
+  });
+
+  it('sends the status on create and on update', () => {
+    const form = { ...emptyNamespaceForm(), namespace: 'tenant/acme/v2/types', rootStatus: 'draft' as const };
+    expect(buildCreateRequestBody(form).root_status).toBe('draft');
+    expect(buildUpdateRequestBody({ ...form, rootStatus: 'stable' }).root_status).toBe('stable');
   });
 });

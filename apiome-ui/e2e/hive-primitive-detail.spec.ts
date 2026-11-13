@@ -72,10 +72,21 @@ const WIDTHS = [1440, DESKTOP_WIDTH, 1100, 1024, 900, 768, 640, 420];
 const FIXTURES = path.join(__dirname, 'fixtures', 'hive-primitive-detail');
 
 /** The surfaces the jsdom suite dumps. */
-type Fixture = 'detail' | 'detail-testing' | 'detail-array' | 'detail-system';
+type Fixture =
+  | 'detail'
+  | 'detail-testing'
+  | 'detail-array'
+  | 'detail-system'
+  | 'detail-deprecated';
 
-/** All four, for the sweeps that do not care which. */
-const ALL_FIXTURES: Fixture[] = ['detail', 'detail-testing', 'detail-array', 'detail-system'];
+/** All five, for the sweeps that do not care which. `detail-deprecated` is #3482's. */
+const ALL_FIXTURES: Fixture[] = [
+  'detail',
+  'detail-testing',
+  'detail-array',
+  'detail-system',
+  'detail-deprecated',
+];
 
 /**
  * One rendered surface, as the jsdom suite wrote it.

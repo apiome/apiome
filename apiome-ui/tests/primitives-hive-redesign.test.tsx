@@ -658,6 +658,35 @@ describe('the primitive editor', () => {
   });
 });
 
+describe('deprecated types in the registry table (#3482)', () => {
+  afterEach(() => {
+    PAYLOADS['/api/primitives'] = { success: true, primitives: PRIMITIVES };
+    jest.restoreAllMocks();
+  });
+
+  it('marks a deprecated type beside its name, with the sunset date in the tooltip', async () => {
+    PAYLOADS['/api/primitives'] = {
+      success: true,
+      primitives: PRIMITIVES.map((primitive, index) =>
+        index === 0 ? { ...primitive, deprecated: true, sunset_date: '2027-01-31' } : primitive
+      ),
+    };
+    await renderScreen();
+
+    const marker = within(typeRow(PRIMITIVES[0].id)).getByTestId(
+      `primitive-deprecated-${PRIMITIVES[0].id}`
+    );
+    expect(marker).toHaveTextContent('deprecated');
+    expect(marker).toHaveAttribute('title', 'Deprecated — sunset on 2027-01-31');
+  });
+
+  it('draws no marker on an active type', async () => {
+    await renderScreen();
+
+    expect(document.querySelector('[data-testid^="primitive-deprecated-"]')).toBeNull();
+  });
+});
+
 /**
  * `e2e/hive-primitives-registry.spec.ts` measures this screen in a real browser — no horizontal
  * document scroll across the nine themes, both densities and all six font scales, and axe —
@@ -694,13 +723,42 @@ describe('the browser fixtures', () => {
     await screen.findByTestId('primitives-fact-unresolved');
     write('registry', page().outerHTML);
 
-    fireEvent.click(screen.getByTestId('primitives-tab-namespaces'));
-    await screen.findByRole('table', { name: 'Namespaces' });
-    write('namespaces', page().outerHTML);
-
     fireEvent.click(screen.getByTestId('primitives-tab-settings'));
     await screen.findByRole('heading', { name: 'Registry storage' });
     write('settings', page().outerHTML);
+  });
+
+  it('renders the namespaces tab with a stable and a draft root (#3482)', async () => {
+    // A draft root beside the stable ones, so the fixture carries the marker the filter sorts by.
+    PAYLOADS['/api/types/namespaces'] = {
+      success: true,
+      namespaces: [
+        ...NAMESPACES,
+        {
+          id: 'ns-acme-v2',
+          tenant_id: 'tenant-1',
+          namespace: 'tenant/acme/v2/types',
+          base_uri: 'https://api.apiome.dev/types/tenant/acme/v2/types/',
+          version_root: 'v2',
+          root_status: 'draft',
+          description: 'Acme business types, next version',
+          scope: 'tenant',
+          is_system: false,
+          is_public: false,
+          is_default: false,
+          type_count: 3,
+        },
+      ],
+    };
+    try {
+      await renderScreen();
+      fireEvent.click(screen.getByTestId('primitives-tab-namespaces'));
+      await screen.findByRole('table', { name: 'Namespaces' });
+      await screen.findByTestId('namespace-draft-tenant/acme/v2/types');
+      write('namespaces', page().outerHTML);
+    } finally {
+      PAYLOADS['/api/types/namespaces'] = { success: true, namespaces: NAMESPACES };
+    }
   });
 
   it('renders the resolver with edges to draw', async () => {

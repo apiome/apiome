@@ -77,6 +77,25 @@ export interface PrimitiveDetail {
   usage_count: number;
   tags?: string[];
   created_at?: string | null;
+  /** Whether the type is deprecated (#3482). Derived by the API from `deprecated_at`. */
+  deprecated?: boolean;
+  /** When it was deprecated, or `null` while it is active. */
+  deprecated_at?: string | null;
+  /** `YYYY-MM-DD` after which the type should no longer be used, when one was set. */
+  sunset_date?: string | null;
+  /** Why it is deprecated and what to do instead, when someone said. */
+  deprecation_message?: string | null;
+  /** Id of the type to use instead, when one was named. */
+  replacement_id?: string | null;
+  /** The replacement type, resolved by the API so the notice can link to it. */
+  replacement?: PrimitiveReplacement | null;
+}
+
+/** The type a deprecated type points its readers at. */
+export interface PrimitiveReplacement {
+  id: string;
+  name: string | null;
+  schema_id?: string | null;
 }
 
 /** The JSON Schema dialect a type is read under when the row does not name one. */
@@ -89,7 +108,7 @@ export const DEFAULT_DRAFT = '2020-12';
 /** One badge beside the page title. */
 export interface DetailBadge {
   /** Stable key, and the `data-testid` suffix. */
-  id: 'scope' | 'category' | 'draft' | 'immutable';
+  id: 'scope' | 'category' | 'draft' | 'immutable' | 'deprecated';
   /** The badge's text. */
   label: string;
   /** Its tone in the shared vocabulary. */
@@ -101,7 +120,8 @@ export interface DetailBadge {
 /**
  * The badges the header draws beside the type's name.
  *
- * Scope, JSON type and dialect always; the immutability lock only for a system type, which is
+ * Scope, JSON type and dialect always; `deprecated` for a deprecated type (#3482); the
+ * immutability lock only for a system type, which is
  * the *visible* half of the acceptance criterion "system types show the immutable badge and
  * disabled edit with its reason" — {@link editAffordance} is the other half.
  *
@@ -109,7 +129,7 @@ export interface DetailBadge {
  * @returns The badges, in the mockup's order.
  */
 export function headerBadges(
-  primitive: Pick<PrimitiveDetail, 'is_system' | 'category' | 'draft'>
+  primitive: Pick<PrimitiveDetail, 'is_system' | 'category' | 'draft' | 'deprecated' | 'deprecated_at'>
 ): DetailBadge[] {
   const badges: DetailBadge[] = [
     {
@@ -128,6 +148,11 @@ export function headerBadges(
 
   if (primitive.is_system) {
     badges.push({ id: 'immutable', label: 'immutable (core)', tone: 'warn' });
+  }
+
+  // Last, so the three badges that say what the type *is* keep their mockup order (#3482).
+  if (isDeprecated(primitive)) {
+    badges.push({ id: 'deprecated', label: 'deprecated', tone: 'warn' });
   }
 
   return badges;
@@ -168,9 +193,148 @@ export function editAffordance(primitive: Pick<PrimitiveDetail, 'id' | 'is_syste
   };
 }
 
-/** Why Deprecate is inert, worded once. Lifecycle arrives with version roots. */
-export const DEPRECATE_REASON =
-  'Deprecation lifecycle (sunset dates) arrives with version roots — see #3482';
+// ---------------------------------------------------------------------------------------
+// Deprecation lifecycle (#3482)
+// ---------------------------------------------------------------------------------------
+
+/** The lifecycle fields of a type, as every rule below reads them. */
+type LifecycleFields = Pick<
+  PrimitiveDetail,
+  'deprecated' | 'deprecated_at' | 'sunset_date' | 'deprecation_message' | 'replacement'
+>;
+
+/**
+ * Whether a type is deprecated.
+ *
+ * Reads the API's `deprecated` flag and falls back to the timestamp it is derived from, so a
+ * row that carries only one of the two is still read correctly.
+ *
+ * @param primitive The type on screen.
+ * @returns `true` for a deprecated type.
+ */
+export function isDeprecated(primitive: Pick<PrimitiveDetail, 'deprecated' | 'deprecated_at'>): boolean {
+  return primitive.deprecated === true || Boolean(primitive.deprecated_at);
+}
+
+/** Why a system type refuses to be deprecated, worded once. */
+export const SYSTEM_DEPRECATE_REASON =
+  'System primitives are governed by the platform and cannot be deprecated';
+
+/** What the header's lifecycle button does, and whether it can. */
+export interface DeprecateAffordance {
+  /** `deprecate` opens the dialog; `restore` clears the deprecation. */
+  action: 'deprecate' | 'restore';
+  /** The button's words. */
+  label: 'Deprecate' | 'Restore';
+  /** `true` for a system type, which no tenant may deprecate. */
+  disabled: boolean;
+  /** The tooltip — the reason, when disabled; what the button does, when not. */
+  title: string;
+}
+
+/**
+ * The header's lifecycle action.
+ *
+ * A tenant type offers Deprecate while it is active and Restore once it is deprecated; a system
+ * type offers neither, and says why.
+ *
+ * @param primitive The type on screen.
+ * @returns The action, its label, and whether it acts.
+ */
+export function deprecateAffordance(
+  primitive: Pick<PrimitiveDetail, 'is_system' | 'deprecated' | 'deprecated_at'>
+): DeprecateAffordance {
+  if (primitive.is_system) {
+    return { action: 'deprecate', label: 'Deprecate', disabled: true, title: SYSTEM_DEPRECATE_REASON };
+  }
+  if (isDeprecated(primitive)) {
+    return {
+      action: 'restore',
+      label: 'Restore',
+      disabled: false,
+      title: 'Clear the deprecation and make this type active again',
+    };
+  }
+  return {
+    action: 'deprecate',
+    label: 'Deprecate',
+    disabled: false,
+    title: 'Mark this type as deprecated, with an optional sunset date',
+  };
+}
+
+/** What the notice says when nobody wrote a message. */
+export const DEFAULT_DEPRECATION_MESSAGE = 'This type is being retired.';
+
+/** What deprecation does and does not do, said once under every notice. */
+export const DEPRECATION_ADVISORY =
+  'It still resolves and validates, and existing bindings keep working.';
+
+/** The deprecation notice above the schema. */
+export interface DeprecationNoticeView {
+  /** `Deprecated`, with the sunset date when there is one. */
+  title: string;
+  /** The author's message, or {@link DEFAULT_DEPRECATION_MESSAGE}. */
+  message: string;
+  /** {@link DEPRECATION_ADVISORY}. */
+  advisory: string;
+  /** `true` once the sunset date is behind us — the notice turns from a warning to an error. */
+  sunsetPassed: boolean;
+  /** The replacement type's name and where it lives, when one was named and is still visible. */
+  replacement: { label: string; href: string } | null;
+}
+
+/**
+ * The notice a deprecated type shows above its schema.
+ *
+ * @param primitive The type on screen.
+ * @param today Today's UTC date, `YYYY-MM-DD` (injected so the rule stays pure).
+ * @returns The notice, or `null` for an active type.
+ */
+export function deprecationNotice(
+  primitive: LifecycleFields,
+  today: string
+): DeprecationNoticeView | null {
+  if (!isDeprecated(primitive)) return null;
+
+  const sunset = primitive.sunset_date || null;
+  // ISO dates order as strings.
+  const sunsetPassed = sunset !== null && sunset < today;
+  const title =
+    sunset === null
+      ? 'Deprecated'
+      : sunsetPassed
+        ? `Deprecated — sunset passed on ${sunset}`
+        : `Deprecated — sunset on ${sunset}`;
+
+  const replacement = primitive.replacement?.id
+    ? {
+        label: primitive.replacement.name || primitive.replacement.schema_id || primitive.replacement.id,
+        href: `/ade/dashboard/primitives/${primitive.replacement.id}`,
+      }
+    : null;
+
+  return {
+    title,
+    message: primitive.deprecation_message?.trim() || DEFAULT_DEPRECATION_MESSAGE,
+    advisory: DEPRECATION_ADVISORY,
+    sunsetPassed,
+    replacement,
+  };
+}
+
+/**
+ * The metadata aside's lifecycle value.
+ *
+ * @param primitive The type on screen.
+ * @returns `active`, `deprecated`, or `deprecated · sunset YYYY-MM-DD`.
+ */
+export function lifecycleLabel(
+  primitive: Pick<PrimitiveDetail, 'deprecated' | 'deprecated_at' | 'sunset_date'>
+): string {
+  if (!isDeprecated(primitive)) return 'active';
+  return primitive.sunset_date ? `deprecated · sunset ${primitive.sunset_date}` : 'deprecated';
+}
 
 /**
  * The breadcrumb above the title.
@@ -400,7 +564,16 @@ export type MetadataRowKind =
 /** One row of the metadata aside. */
 export interface MetadataRow {
   /** Stable key, and the `data-testid` suffix. */
-  id: 'id' | 'scope' | 'namespace' | 'version-root' | 'owner' | 'source' | 'created' | 'mutability';
+  id:
+    | 'id'
+    | 'scope'
+    | 'namespace'
+    | 'version-root'
+    | 'owner'
+    | 'source'
+    | 'created'
+    | 'lifecycle'
+    | 'mutability';
   /** The `dt`. */
   label: string;
   /** How the `dd` is drawn. */
@@ -459,7 +632,7 @@ export function mutability(isSystem: boolean): Mutability {
 /**
  * The metadata aside's rows, in the mockup's order.
  *
- * All eight of them, scope and mutability included, even though those two are *drawn* rather than
+ * All nine of them, scope and mutability included, even though those two are *drawn* rather than
  * printed — a badge and a lock. Order is the reason: the mockup puts Scope second, between the
  * `$id` and the namespace, and a list that held only the printed rows would leave the component
  * to append the other two at the end, which is where they ended up and read wrongly. The `kind`
@@ -476,6 +649,8 @@ export function metadataRows(fields: {
   owner: string;
   source?: string;
   createdAt?: string | null;
+  /** `active`, or the deprecation and its sunset date — see {@link lifecycleLabel}. */
+  lifecycle?: string;
 }): MetadataRow[] {
   return [
     { id: 'id', label: '$id', kind: 'text', value: fields.schemaId || EMPTY_VALUE, mono: true },
@@ -497,6 +672,7 @@ export function metadataRows(fields: {
     { id: 'owner', label: 'Owner', kind: 'text', value: fields.owner, mono: true },
     { id: 'source', label: 'Source', kind: 'text', value: fields.source || 'human' },
     { id: 'created', label: 'Created', kind: 'text', value: formatCreated(fields.createdAt) },
+    { id: 'lifecycle', label: 'Lifecycle', kind: 'text', value: fields.lifecycle || 'active' },
     {
       id: 'mutability',
       label: 'Mutability',

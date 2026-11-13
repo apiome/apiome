@@ -20734,6 +20734,13 @@ html[data-motion='reduce'] .prm-spin {
   color: var(--warn-fg);
 }
 
+/* A version root and, when it is a draft, the marker beside it (#3482). */
+.prm-root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 /* ---- The types table ---------------------------------------------------- */
 .prm-types__toolbar {
   row-gap: var(--space-2);
@@ -22004,6 +22011,25 @@ html[data-motion='reduce'] .prm-spin {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* ---- Deprecation notice (#3482) -----------------------------------------
+   The banner above the schema of a deprecated type: title, message, and the
+   replacement link on a line of its own. */
+.pd-deprecation {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.pd-deprecation__message {
+  overflow-wrap: anywhere;
+}
+
+.pd-deprecation__replacement {
+  margin: 0;
+  font-size: var(--fs-sm);
 }
 
 /* The library glyph beside the type's name. Sized in `em` because it belongs to

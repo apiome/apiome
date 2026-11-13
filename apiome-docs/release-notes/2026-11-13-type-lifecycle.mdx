@@ -1,0 +1,37 @@
+---
+slug: type-lifecycle
+title: Deprecate types and mark draft version roots
+description: "Deprecate a registry type with a sunset date, and keep draft version roots apart from stable ones."
+authors: [apiome]
+---
+
+Types in the type registry now have a lifecycle. A type can be deprecated with a sunset date, a
+message and a replacement, and a namespace says whether its version root is stable or still a
+draft. Both are on the [Primitives](/reference/rest/primitives) and
+[Type registry](/reference/rest/type-registry) REST APIs.
+
+{/* truncate */}
+
+- **Deprecate a type.**
+  [`POST /v1/primitives/{tenant}/{id}/deprecate`](/reference/rest/primitives#deprecate-primitive-v1-primitives-tenant-slug-primitive-id-deprecate-post)
+  marks a type as one to stop using. The body is optional: `sunset_date` (`YYYY-MM-DD`, today or
+  later), `message` and `replacement_id`. Calling it again changes those details.
+- **It is a marker, not a lock.** A deprecated type still resolves and validates, its bindings are
+  unchanged and its JSON Schema is not modified. Nothing breaks on the sunset date.
+- **Restore it.**
+  [`DELETE /v1/primitives/{tenant}/{id}/deprecate`](/reference/rest/primitives#restore-primitive-v1-primitives-tenant-slug-primitive-id-deprecate-delete)
+  clears the deprecation.
+- **Read it anywhere.** Every type carries `deprecated`, `deprecated_at`, `sunset_date`,
+  `deprecation_message` and `replacement_id`; a single type also returns `replacement` with the
+  replacement's name and `$id`.
+- **Draft version roots.** A namespace has a `root_status` of `stable` (the default) or `draft`.
+  Create the next version's namespace as a draft, then set it to `stable` when it is ready.
+  [`GET /v1/types/{tenant}/namespaces?root_status=draft`](/reference/rest/type-registry#list-namespaces-v1-types-tenant-slug-namespaces-get)
+  lists draft roots apart from stable ones.
+- **Audited.** Deprecating and restoring are recorded as `primitive.deprecate` and
+  `primitive.restore` in the [registry audit log](/reference/rest/registry-audit).
+
+Core system types cannot be deprecated, and system namespaces are always stable.
+
+The **Primitives & types** screen that puts **Deprecate**, **Restore** and the **Root status**
+filter on these calls is not yet available.

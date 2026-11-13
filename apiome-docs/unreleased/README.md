@@ -70,7 +70,7 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 
 | Rail item id | Screenshot ids |
 | --- | --- |
-| `primitives` | `primitives`, `primitives-how-resolution-works`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing`, `primitive-detail-used-by-properties` |
+| `primitives` | `primitives`, `primitives-how-resolution-works`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing`, `primitive-detail-used-by-properties`, `primitive-deprecated`, `primitive-deprecate-dialog` |
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-import-dialog`, `style-guides-import-result`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
 | `sdk-settings` | `sdk-settings` |

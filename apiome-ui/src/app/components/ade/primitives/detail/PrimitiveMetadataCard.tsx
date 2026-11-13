@@ -9,10 +9,10 @@
  * ### Three decisions
  *
  * 1. **Label above value, not beside it.** The mockup's `kv--stack`, and for a reason worth
- *    stating: four of these eight values are identifiers with no spaces in them — an `$id` URL,
+ *    stating: four of these nine values are identifiers with no spaces in them — an `$id` URL,
  *    a namespace path — and a two-column row gives such a value half a narrow aside to break
  *    in. Stacked, it has the whole card.
- * 2. **The order lives in {@link metadataRows}, not here.** Two of the eight rows are drawn
+ * 2. **The order lives in {@link metadataRows}, not here.** Two of the nine rows are drawn
  *    rather than printed — a badge and a lock — and a model that held only the printed six would
  *    leave this component to append those two at the end, which is not where the mockup puts
  *    Scope. Each row carries a `kind` instead, and this file only knows how to draw one.
@@ -46,6 +46,8 @@ export interface PrimitiveMetadataCardProps {
   source?: string;
   /** When the row was written. */
   createdAt?: string | null;
+  /** `active`, or the deprecation and its sunset date (#3482). */
+  lifecycle?: string;
 }
 
 /**
@@ -91,7 +93,7 @@ function MetadataValue({ row, isSystem }: { row: MetadataRow; isSystem: boolean 
 /**
  * Render the aside. See {@link PrimitiveMetadataCardProps}.
  *
- * @returns The card: the eight rows, in the mockup's order.
+ * @returns The card: the nine rows, in the mockup's order.
  */
 export default function PrimitiveMetadataCard({
   isSystem,
@@ -101,8 +103,18 @@ export default function PrimitiveMetadataCard({
   owner,
   source,
   createdAt,
+  lifecycle,
 }: PrimitiveMetadataCardProps) {
-  const rows = metadataRows({ isSystem, schemaId, namespace, versionRoot, owner, source, createdAt });
+  const rows = metadataRows({
+    isSystem,
+    schemaId,
+    namespace,
+    versionRoot,
+    owner,
+    source,
+    createdAt,
+    lifecycle,
+  });
 
   return (
     <Card data-testid="primitive-detail-metadata">

@@ -42,8 +42,8 @@ resolver”** to go to the **Resolver** tab, or **“Got it”** to close it.
 
 The page shows the type's **JSON Schema (2020-12)** (**Copy**, **Download**), **Test this type**,
 **Reference resolution**, an **Example instance**, its **Dependents** and **Used by properties**; on
-the right, **Metadata**, **Used in** and **Base chain**. **“Edit”** and **“Export”** are in the
-header.
+the right, **Metadata**, **Used in** and **Base chain**. **“Edit”**, **“Export”** and
+**“Deprecate”** are in the header.
 
 To check a payload against the type, open **Test this type**, choose **Single** or **Array** and
 type the value — it is validated as you type.
@@ -73,6 +73,42 @@ projects uses this type**.
 The **Properties** figure under **Used in** is the type's running binding count, so it can be
 higher than the list: it also counts bindings removed since, and a system type's bindings in other
 workspaces.
+
+### Deprecate a type {#deprecate-a-type}
+
+Deprecate a type when it should no longer be picked up — for example when a newer type replaces it.
+Check [what uses it](#see-what-uses-a-type) first.
+
+1. Open the type's page and **click “Deprecate”**.
+2. Optionally set a **Sunset date** (the date after which the type should no longer be used; today
+   or later), write a **Message** saying why and what to do instead, and choose a **Replacement
+   type**. The list leaves out the type itself and types that are already deprecated.
+3. **Click “Deprecate type”.**
+
+<Screenshot id="primitive-deprecate-dialog" alt="The Deprecate dialog: Sunset date, Message and Replacement type, with Cancel and Deprecate type" />
+
+The type's page now shows a **deprecated** badge, a notice with the sunset date, your message and a
+link to the replacement, and **Lifecycle** under **Metadata** reads `deprecated · sunset <date>`.
+In the **Registry** table the type's name carries a **deprecated** marker. Once the sunset date has
+passed, the notice turns red and reads **Deprecated — sunset passed on *date***.
+
+<Screenshot id="primitive-deprecated" alt="A deprecated type's page: the deprecated badge, the notice with its sunset date, message and replacement, and Edit deprecation and Restore in the header" />
+
+Deprecation is a marker, not a lock:
+
+| A deprecated type | |
+| --- | --- |
+| Still resolves and validates | Every `$ref` to it keeps working, before and after the sunset date. |
+| Keeps its bindings | Properties bound to it are unchanged, and it can still be chosen for new ones. |
+| Is exported unchanged | Its JSON Schema is not modified. |
+| Is recorded | Deprecating, changing and restoring are written to the registry audit log. |
+
+To change the details, **click “Edit deprecation”**, change the fields and **click “Save
+changes”**; a field you clear is removed. To undo it, **click “Restore”**: the badge, the notice and
+the details are removed, and the type is active again.
+
+Core system types cannot be deprecated: for them **“Deprecate”** is disabled. You need permission
+to edit types.
 
 ## Create a type
 
@@ -218,10 +254,29 @@ shows the system root and your tenant namespaces, and the order a `$ref` is reso
 namespace, then imported vendor namespaces, then the core system types.
 
 **Click “New namespace”** and enter a **Namespace path**, **Base URI**, **Version root** and
-**Description**; tick **Default namespace** to make new types land there. System namespaces are
-**Read-only**.
+**Description**, and choose a **Root status**; tick **Default namespace** to make new types land
+there. System namespaces are **Read-only**.
 
-<Screenshot id="primitives-namespaces" alt="Namespaces & scopes: the system root, tenant namespaces, the namespaces table and the resolution order" />
+<Screenshot id="primitives-namespaces" alt="Namespaces & scopes: the system root, tenant namespaces, the namespaces table with a draft root and the All, Stable and Draft filter, and the resolution order" />
+
+### Version roots: stable and draft {#version-roots}
+
+The **version root** is the `vN` part of a namespace path — `v1` in `tenant/acme/v1/types`. Each
+namespace says whether its root is settled:
+
+| Root status | Use it for |
+| --- | --- |
+| **Stable** (the default) | Types that are settled and safe to build on. |
+| **Draft** | The next version while it is still being worked on: its types may still change shape. |
+
+A draft root shows a **draft** marker beside its **Version root** in the table. To see draft roots
+apart from stable ones, use the **All / Stable / Draft** filter above the table; the footer counts
+the draft roots.
+
+To start the next version, create a namespace for it — for example `tenant/acme/v2/types` — with
+**Root status** set to **Draft**. When it is ready, **click “Edit”** on its row, set **Root
+status** to **Stable** and **click “Save changes”**. The status is a label: it does not change how
+a `$ref` resolves. System namespaces are always stable.
 
 ## Resolver
 
@@ -246,6 +301,23 @@ settings”**, or **“Reset to defaults”**.
   `dependents` and `property_dependents`), `GET` / `POST /v1/types/{tenant}/namespaces`,
   `GET` / `PUT /v1/types/{tenant}/settings`, `POST /v1/types/{tenant}/resolve` — see the
   [API reference](../reference/api-reference.md).
+
+### Deprecate types and manage version roots with the API {#type-lifecycle-with-the-api}
+
+| Call | What it does |
+| --- | --- |
+| `POST /v1/primitives/{tenant}/{id}/deprecate` | Deprecates the type, or replaces a deprecated type's details. Body (all optional): `sunset_date` (`YYYY-MM-DD`), `message` (up to 500 characters), `replacement_id`. |
+| `DELETE /v1/primitives/{tenant}/{id}/deprecate` | Restores the type. Does nothing if it is not deprecated. |
+| `GET /v1/primitives/{tenant}/{id}` | Returns `deprecated`, `deprecated_at`, `sunset_date`, `deprecation_message`, `replacement_id` and `replacement` (`id`, `name`, `schema_id`). List and search rows carry all but `replacement`. |
+| `GET /v1/types/{tenant}/namespaces?root_status=draft` | Lists only draft roots; `root_status=stable` lists only stable ones. Every namespace carries `root_status`. |
+| `POST` / `PUT /v1/types/{tenant}/namespaces` | Accept `root_status`: `stable` (the default) or `draft`. |
+
+Deprecating returns **422** when the sunset date is in the past, or when the replacement is not
+found, is the type itself or is deprecated; **403** for a core system type. The calls are on the
+[Primitives](../reference/rest/primitives.md) and
+[Type registry](../reference/rest/type-registry.md) REST references, and the audit entries
+(`primitive.deprecate`, `primitive.restore`) on the
+[Registry audit](../reference/rest/registry-audit.md) reference.
 
 ### Import types with the API {#import-types-with-the-api}
 

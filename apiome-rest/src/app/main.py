@@ -115,6 +115,7 @@ from .ops_routes import health_router, ops_router
 from .ownership_policy_routes import router as ownership_policy_router
 from .paths_routes import router as paths_router
 from .preservation_routes import router as preservation_router
+from .primitives_lifecycle_routes import router as primitives_lifecycle_router
 from .primitives_routes import router as primitives_router
 from .project_repository_sources_routes import router as project_repository_sources_router
 from .pr_back_routes import router as pr_back_router
@@ -219,7 +220,7 @@ app = FastAPI(
         "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, "
         "catalog items, imports, exports, governance, and MCP catalog surfaces."
     ),
-    version="1.550.0",
+    version="1.551.0",
 )
 
 
@@ -375,6 +376,8 @@ app.include_router(data_router)
 # matched ahead of the primitives /{tenant_slug}/{primitive_id} catch-all (#3481).
 app.include_router(registry_audit_router)
 app.include_router(primitives_router)
+# Deprecate / restore a type (#3482): /{tenant_slug}/{primitive_id}/deprecate.
+app.include_router(primitives_lifecycle_router)
 app.include_router(type_namespaces_router)
 app.include_router(classes_router)
 app.include_router(projects_router)

@@ -9,7 +9,8 @@
  *
  * ### What this file is now
  *
- * One read and two writes, and nothing else. Every surface it draws lives in
+ * One read and the page's few writes — export, copy, and the deprecation lifecycle (#3482) — and
+ * nothing else. Every surface it draws lives in
  * `components/ade/primitives/detail`: the schema pane, the test form, the reference and dependent
  * tables, the example, the metadata aside, the usage tiles and the base chain; every rule they
  * share lives in `primitiveDetailView.ts`. What that removed from here was 400 lines of markup —
@@ -37,9 +38,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { Archive, Library, Pencil, Upload } from 'lucide-react';
+import { Archive, ArchiveRestore, Library, Pencil, Upload } from 'lucide-react';
 
 import { Button } from '@/app/components/ui/Button';
+import { Alert } from '@/app/components/ui/Alert';
 import { Badge } from '@/app/components/ui/Badge';
 import { ErrorState } from '@/app/components/ui/ErrorState';
 import { LoadingState } from '@/app/components/ui/LoadingState';
@@ -49,8 +51,9 @@ import { downloadBlob } from '@/app/components/ade/dashboard/export/exportDownlo
 import {
   BaseChainCard,
   COPY_ACK_MS,
-  DEPRECATE_REASON,
   DependentsCard,
+  DeprecateTypeDialog,
+  DeprecationNotice,
   PropertyDependentsCard,
   ExampleInstanceCard,
   LOADING_MESSAGE,
@@ -59,9 +62,12 @@ import {
   PrimitiveTestForm,
   PrimitiveUsageCard,
   ReferenceResolutionCard,
+  deprecateAffordance,
+  deprecationNotice,
   detailBreadcrumb,
   editAffordance,
   headerBadges,
+  lifecycleLabel,
   type PrimitiveDetail,
 } from '@/app/components/ade/primitives/detail';
 import {
@@ -74,6 +80,7 @@ import {
   serializeSchemaExport,
   summarizeUsage,
 } from '../primitiveDetailModel';
+import { todayIsoDate } from '../primitiveLifecycleModel';
 
 /**
  * The type-detail screen.
@@ -89,6 +96,10 @@ export default function PrimitiveDetailClient() {
   /** Transient "Copied" / "Copy failed" acknowledgement on the schema card's Copy button. */
   const [schemaCopied, setSchemaCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  /** The Deprecate dialog (#3482), and the Restore write that needs no dialog. */
+  const [showDeprecate, setShowDeprecate] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [lifecycleError, setLifecycleError] = useState<string | null>(null);
 
   const loadPrimitive = useCallback(async () => {
     setLoading(true);
@@ -146,6 +157,47 @@ export default function PrimitiveDetailClient() {
     }
   }, [primitive]);
 
+  // The lifecycle writes answer with the type's row, which carries no dependents or annotated
+  // refs — those only come from the detail read — so the answer is merged over what is on screen
+  // rather than replacing it.
+  const applyLifecycle = useCallback((updated: PrimitiveDetail) => {
+    setPrimitive((current) =>
+      current
+        ? {
+            ...current,
+            deprecated: updated.deprecated,
+            deprecated_at: updated.deprecated_at ?? null,
+            sunset_date: updated.sunset_date ?? null,
+            deprecation_message: updated.deprecation_message ?? null,
+            replacement_id: updated.replacement_id ?? null,
+            replacement: updated.replacement ?? null,
+          }
+        : current
+    );
+  }, []);
+
+  // Restoring is harmless and undone by deprecating again, so it asks for no confirmation.
+  const handleRestore = useCallback(async () => {
+    if (!primitive || restoring) return;
+    setRestoring(true);
+    setLifecycleError(null);
+    try {
+      const response = await fetch(`/api/primitives/${encodeURIComponent(primitive.id)}/deprecate`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setLifecycleError(data.error || 'The type could not be restored.');
+        return;
+      }
+      applyLifecycle(data.primitive as PrimitiveDetail);
+    } catch (err) {
+      setLifecycleError(err instanceof Error ? err.message : 'The type could not be restored.');
+    } finally {
+      setRestoring(false);
+    }
+  }, [primitive, restoring, applyLifecycle]);
+
   const baseChain = useMemo(
     () => (primitive ? buildBaseChain(primitive.name, primitive.refs) : []),
     [primitive]
@@ -174,6 +226,8 @@ export default function PrimitiveDetailClient() {
   const namespacePath = primitive ? effectiveNamespace(schemaIdentity, primitive.namespace) : null;
   const versionRoot = primitive ? deriveVersionRoot(namespacePath, primitive.base_uri) : null;
   const edit = primitive ? editAffordance(primitive) : null;
+  const lifecycle = primitive ? deprecateAffordance(primitive) : null;
+  const notice = primitive ? deprecationNotice(primitive, todayIsoDate()) : null;
 
   return (
     <Page>
@@ -203,7 +257,7 @@ export default function PrimitiveDetailClient() {
         }
         description={primitive?.description ?? undefined}
         actions={
-          primitive && edit ? (
+          primitive && edit && lifecycle ? (
             <>
               {edit.href ? (
                 <Button variant="outline" asChild title={edit.title}>
@@ -222,15 +276,40 @@ export default function PrimitiveDetailClient() {
                 <Upload aria-hidden />
                 Export
               </Button>
-              <Button
-                variant="danger-soft"
-                disabled
-                title={DEPRECATE_REASON}
-                data-testid="primitive-detail-deprecate"
-              >
-                <Archive aria-hidden />
-                Deprecate
-              </Button>
+              {lifecycle.action === 'restore' ? (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeprecate(true)}
+                    title="Change the sunset date, message or replacement"
+                    data-testid="primitive-detail-edit-deprecation"
+                  >
+                    <Archive aria-hidden />
+                    Edit deprecation
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => void handleRestore()}
+                    disabled={restoring}
+                    title={restoring ? 'Restoring this type…' : lifecycle.title}
+                    data-testid="primitive-detail-restore"
+                  >
+                    <ArchiveRestore aria-hidden />
+                    {restoring ? 'Restoring…' : lifecycle.label}
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="danger-soft"
+                  disabled={lifecycle.disabled}
+                  onClick={() => setShowDeprecate(true)}
+                  title={lifecycle.title}
+                  data-testid="primitive-detail-deprecate"
+                >
+                  <Archive aria-hidden />
+                  {lifecycle.label}
+                </Button>
+              )}
             </>
           ) : undefined
         }
@@ -249,6 +328,14 @@ export default function PrimitiveDetailClient() {
         ) : primitive ? (
           <div className="pd-grid">
             <div className="pd-col">
+              {lifecycleError ? (
+                <Alert variant="error" data-testid="primitive-detail-lifecycle-error">
+                  <span>{lifecycleError}</span>
+                </Alert>
+              ) : null}
+
+              {notice ? <DeprecationNotice notice={notice} /> : null}
+
               <PrimitiveSchemaCard
                 name={primitive.name}
                 draft={primitive.draft}
@@ -287,6 +374,7 @@ export default function PrimitiveDetailClient() {
                 owner={deriveOwner(primitive.is_system, namespacePath)}
                 source={primitive.source}
                 createdAt={primitive.created_at}
+                lifecycle={lifecycleLabel(primitive)}
               />
 
               {usage ? <PrimitiveUsageCard usage={usage} /> : null}
@@ -296,6 +384,18 @@ export default function PrimitiveDetailClient() {
           </div>
         ) : null}
       </PageBody>
+
+      {showDeprecate && primitive ? (
+        <DeprecateTypeDialog
+          primitive={primitive}
+          onClose={() => setShowDeprecate(false)}
+          onSaved={(updated) => {
+            applyLifecycle(updated);
+            setLifecycleError(null);
+            setShowDeprecate(false);
+          }}
+        />
+      ) : null}
     </Page>
   );
 }

@@ -8,12 +8,20 @@ export interface RegistryCoverageStats {
   namespace_count: number;
 }
 
+/** Whether a namespace's version root is the settled one or still being drafted (#3482). */
+export type RootStatus = 'stable' | 'draft';
+
 export interface TypeNamespaceCollection {
   id: string;
   tenant_id: string | null;
   namespace: string;
   base_uri: string;
   version_root: string | null;
+  /**
+   * Lifecycle of the version root (#3482). Optional because an older API build omits it; read
+   * it through `rootStatusOf`, which treats a missing value as stable.
+   */
+  root_status?: RootStatus | null;
   description: string | null;
   scope: 'system' | 'tenant';
   is_system: boolean;

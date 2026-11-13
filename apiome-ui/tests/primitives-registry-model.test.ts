@@ -29,6 +29,7 @@ import {
   namespaceFilterChipLabel,
   namespaceScopeBadge,
   namespaceStatusBadge,
+  deprecatedMarkerTitle,
   primitiveDetailHref,
   primitiveScopeBadge,
   registryFacts,
@@ -404,5 +405,16 @@ describe('resolver and settings copy', () => {
       tone: 'danger',
     });
     expect(registryStorageBadge(null)).toBeNull();
+  });
+});
+
+describe('deprecatedMarkerTitle (#3482)', () => {
+  it('names the sunset date when there is one', () => {
+    expect(deprecatedMarkerTitle('2027-01-31')).toBe('Deprecated — sunset on 2027-01-31');
+  });
+
+  it('is just the word when no sunset date was set', () => {
+    expect(deprecatedMarkerTitle()).toBe('Deprecated');
+    expect(deprecatedMarkerTitle(null)).toBe('Deprecated');
   });
 });

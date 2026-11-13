@@ -151,6 +151,7 @@ _PRIMITIVE_COLUMNS = """
     id, tenant_id, name, description, category, schema, tags,
     created_by, is_system, is_public, usage_count, source,
     schema_id, draft, namespace, base_uri, refs,
+    deprecated_at, sunset_date, deprecation_message, replacement_id,
     created_at, updated_at
 """
 

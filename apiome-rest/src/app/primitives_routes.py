@@ -65,6 +65,7 @@ from .primitives_scope import (
     iter_ref_locations,
     tenant_segment_of,
 )
+from .primitives_lifecycle import replacement_summary
 from .primitives_lookup import find_primitive_by_registry_uri, local_registry_uri
 from .schema_validation import (
     IMPORT_CONTAINER_KEYS,
@@ -890,7 +891,8 @@ async def get_primitive(
         The primitive details, its ``refs`` edges each carrying the target type's
         ``target_id`` / ``target_name`` so the detail view can link through to it, and
         its ``dependents`` — the reverse index of types referencing it — and its
-        ``property_dependents``, the caller's class properties bound to it (#3477).
+        ``property_dependents``, the caller's class properties bound to it (#3477). A
+        deprecated type also carries ``replacement``, the type to use instead (#3482).
     """
     # Get primitive
     primitive = db.get_primitive_by_id(primitive_id, auth_data['tenant_id'])
@@ -901,8 +903,17 @@ async def get_primitive(
             detail=f"Primitive not found: {primitive_id}"
         )
 
+    # The type to use instead of a deprecated one (#3482), resolved so the detail view can link it.
+    replacement_id = primitive.get("replacement_id")
+    replacement = (
+        db.get_primitive_by_id(str(replacement_id), auth_data['tenant_id'])
+        if replacement_id
+        else None
+    )
+
     primitive = {
         **primitive,
+        "replacement": replacement_summary(replacement),
         "refs": annotate_ref_targets(primitive.get("refs"), tenant_id=auth_data['tenant_id']),
         "dependents": build_dependents(
             primitive.get("schema_id"),

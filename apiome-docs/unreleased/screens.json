@@ -73,6 +73,24 @@
       ]
     },
     {
+      "id": "primitive-deprecated",
+      "route": "/ade/dashboard/primitives/[id]",
+      "waitFor": "[data-testid=\"primitive-detail-deprecation\"]",
+      "data": "fixture:hive-primitive-detail/detail-deprecated.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/primitives/detail/DeprecationNotice.tsx"
+      ]
+    },
+    {
+      "id": "primitive-deprecate-dialog",
+      "route": "/ade/dashboard/primitives/[id]",
+      "waitFor": "[data-testid=\"primitive-deprecate-dialog\"]",
+      "data": "fixture:hive-primitive-detail/deprecate-dialog.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/primitives/detail/DeprecateTypeDialog.tsx"
+      ]
+    },
+    {
       "id": "sdk-settings",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",
