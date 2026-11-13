@@ -108,6 +108,9 @@ interface Primitive {
   namespace?: string | null;
   schema_id?: string | null;
   draft?: string;
+  /** Deprecation lifecycle (#3482); absent on an older API build. */
+  deprecated?: boolean;
+  sunset_date?: string | null;
   created_at: string;
   updated_at: string;
 }

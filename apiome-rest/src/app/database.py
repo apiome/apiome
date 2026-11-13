@@ -2230,6 +2230,7 @@ class Database:
                        id, tenant_id, name, description, category, schema, tags,
                        created_by, is_system, is_public, usage_count, source,
                        schema_id, draft, namespace, base_uri, refs,
+                       deprecated_at, sunset_date, deprecation_message, replacement_id,
                        created_at, updated_at
                 FROM apiome.primitives
                 WHERE (tenant_id = %s OR is_system = true)
@@ -2269,6 +2270,7 @@ class Database:
             SELECT id, tenant_id, name, description, category, schema, tags,
                    created_by, is_system, is_public, usage_count, source,
                    schema_id, draft, namespace, base_uri, refs,
+                   deprecated_at, sunset_date, deprecation_message, replacement_id,
                    created_at, updated_at
             FROM apiome.primitives
             WHERE id = %s AND (tenant_id = %s OR is_system = true)
@@ -2298,6 +2300,7 @@ class Database:
             SELECT id, tenant_id, name, description, category, schema, tags,
                    created_by, is_system, is_public, usage_count, source,
                    schema_id, draft, namespace, base_uri, refs,
+                   deprecated_at, sunset_date, deprecation_message, replacement_id,
                    created_at, updated_at
             FROM apiome.primitives
             WHERE schema_id = %s AND (tenant_id = %s OR is_system = true)
@@ -2334,6 +2337,7 @@ class Database:
             SELECT id, tenant_id, name, description, category, schema, tags,
                    created_by, is_system, is_public, usage_count, source,
                    schema_id, draft, namespace, base_uri, refs,
+                   deprecated_at, sunset_date, deprecation_message, replacement_id,
                    created_at, updated_at
             FROM apiome.primitives
             WHERE namespace = %s
@@ -2376,6 +2380,7 @@ class Database:
             SELECT id, tenant_id, name, description, category, schema, tags,
                    created_by, is_system, is_public, usage_count, source,
                    schema_id, draft, namespace, base_uri, refs,
+                   deprecated_at, sunset_date, deprecation_message, replacement_id,
                    created_at, updated_at
             FROM apiome.primitives
             WHERE schema_id = %s AND is_system = true AND is_public = true
@@ -2421,6 +2426,7 @@ class Database:
             RETURNING id, tenant_id, name, description, category, schema, tags,
                       created_by, is_system, is_public, usage_count, source,
                       schema_id, draft, namespace, base_uri, refs,
+                      deprecated_at, sunset_date, deprecation_message, replacement_id,
                       created_at, updated_at
         """
 
@@ -2507,6 +2513,7 @@ class Database:
             RETURNING id, tenant_id, name, description, category, schema, tags,
                       created_by, is_system, is_public, usage_count, source,
                       schema_id, draft, namespace, base_uri, refs,
+                      deprecated_at, sunset_date, deprecation_message, replacement_id,
                       created_at, updated_at
         """
 
@@ -2533,6 +2540,94 @@ class Database:
                 cursor.execute(query, (primitive_id, tenant_id))
                 conn.commit()
                 return cursor.rowcount > 0
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    # Columns a lifecycle write returns — the same projection the primitive reads use.
+    _PRIMITIVE_LIFECYCLE_RETURNING = """
+            RETURNING id, tenant_id, name, description, category, schema, tags,
+                      created_by, is_system, is_public, usage_count, source,
+                      schema_id, draft, namespace, base_uri, refs,
+                      deprecated_at, sunset_date, deprecation_message, replacement_id,
+                      created_at, updated_at
+    """
+
+    def deprecate_primitive(
+        self,
+        primitive_id: str,
+        tenant_id: str,
+        *,
+        sunset_date: Optional[Any] = None,
+        message: Optional[str] = None,
+        replacement_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Mark a tenant-owned primitive deprecated, or replace a deprecated one's details (#3482).
+
+        ``deprecated_at`` is stamped on the first call and kept on later ones, so changing the
+        sunset date of an already-deprecated type does not move the moment it was deprecated.
+        The three details are written as given: passing ``None`` clears that detail.
+
+        Args:
+            primitive_id: The primitive id.
+            tenant_id: The owning tenant id (scopes the write; system rows are never written).
+            sunset_date: Optional date after which the type should no longer be used.
+            message: Optional note shown with the deprecation.
+            replacement_id: Optional id of the type to use instead.
+
+        Returns:
+            The updated primitive row, or None when it is missing, another tenant's, or a
+            system type.
+        """
+        query = f"""
+            UPDATE apiome.primitives
+            SET deprecated_at = COALESCE(deprecated_at, CURRENT_TIMESTAMP),
+                sunset_date = %s,
+                deprecation_message = %s,
+                replacement_id = %s
+            WHERE id = %s AND tenant_id = %s AND is_system = false
+            {self._PRIMITIVE_LIFECYCLE_RETURNING}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    query, (sunset_date, message, replacement_id, primitive_id, tenant_id)
+                )
+                result = cursor.fetchone()
+                conn.commit()
+                return result
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def restore_primitive(self, primitive_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Clear a tenant-owned primitive's deprecation record (#3482).
+
+        Args:
+            primitive_id: The primitive id.
+            tenant_id: The owning tenant id (scopes the write; system rows are never written).
+
+        Returns:
+            The updated primitive row, or None when it is missing, another tenant's, or a
+            system type.
+        """
+        query = f"""
+            UPDATE apiome.primitives
+            SET deprecated_at = NULL,
+                sunset_date = NULL,
+                deprecation_message = NULL,
+                replacement_id = NULL
+            WHERE id = %s AND tenant_id = %s AND is_system = false
+            {self._PRIMITIVE_LIFECYCLE_RETURNING}
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, (primitive_id, tenant_id))
+                result = cursor.fetchone()
+                conn.commit()
+                return result
         except Exception as e:
             conn.rollback()
             raise e
@@ -2943,7 +3038,9 @@ class Database:
     # type registry, stored in apiome.type_namespaces. Their `namespace` column mirrors
     # apiome.primitives.namespace, which is the join key for a namespace's type count.
 
-    def list_type_namespaces(self, tenant_id: str) -> List[Dict[str, Any]]:
+    def list_type_namespaces(
+        self, tenant_id: str, root_status: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """List the namespaces visible to a tenant: system-core ∪ this tenant's own.
 
         Each row carries a ``type_count``: the number of ``apiome.primitives`` rows the caller's
@@ -2952,21 +3049,27 @@ class Database:
 
         Args:
             tenant_id: The caller's tenant id.
+            root_status: When given (``stable`` or ``draft``), only namespaces whose version root
+                has that status (#3482) — draft roots are listed apart from stable ones.
 
         Returns:
             Namespace rows (system-core first, then alphabetical), each with ``type_count``.
         """
         query = """
-            SELECT n.id, n.tenant_id, n.namespace, n.base_uri, n.version_root,
+            SELECT n.id, n.tenant_id, n.namespace, n.base_uri, n.version_root, n.root_status,
                    n.description, n.is_system, n.is_public, n.is_default,
                    n.created_by, n.created_at, n.updated_at,
                    (SELECT COUNT(*) FROM apiome.primitives p
                      WHERE p.namespace = n.namespace AND p.tenant_id = %s::uuid) AS type_count
             FROM apiome.type_namespaces n
-            WHERE n.is_system = true OR n.tenant_id = %s::uuid
-            ORDER BY n.is_system DESC, n.namespace ASC
+            WHERE (n.is_system = true OR n.tenant_id = %s::uuid)
         """
-        return self.execute_query(query, (tenant_id, tenant_id))
+        params: List[Any] = [tenant_id, tenant_id]
+        if root_status:
+            query += " AND n.root_status = %s"
+            params.append(root_status)
+        query += " ORDER BY n.is_system DESC, n.namespace ASC"
+        return self.execute_query(query, tuple(params))
 
     def get_type_namespace_by_id(
         self, namespace_id: str, tenant_id: str
@@ -2981,7 +3084,7 @@ class Database:
             The namespace row with ``type_count``, or None when missing/not visible.
         """
         query = """
-            SELECT n.id, n.tenant_id, n.namespace, n.base_uri, n.version_root,
+            SELECT n.id, n.tenant_id, n.namespace, n.base_uri, n.version_root, n.root_status,
                    n.description, n.is_system, n.is_public, n.is_default,
                    n.created_by, n.created_at, n.updated_at,
                    (SELECT COUNT(*) FROM apiome.primitives p
@@ -3007,7 +3110,7 @@ class Database:
         """
         if is_system:
             query = """
-                SELECT id, tenant_id, namespace, base_uri, version_root, description,
+                SELECT id, tenant_id, namespace, base_uri, version_root, root_status, description,
                        is_system, is_public, is_default, created_by, created_at, updated_at
                 FROM apiome.type_namespaces
                 WHERE is_system = true AND namespace = %s
@@ -3015,7 +3118,7 @@ class Database:
             results = self.execute_query(query, (namespace,))
         else:
             query = """
-                SELECT id, tenant_id, namespace, base_uri, version_root, description,
+                SELECT id, tenant_id, namespace, base_uri, version_root, root_status, description,
                        is_system, is_public, is_default, created_by, created_at, updated_at
                 FROM apiome.type_namespaces
                 WHERE is_system = false AND tenant_id = %s::uuid AND namespace = %s
@@ -3030,6 +3133,7 @@ class Database:
         *,
         tenant_id: Optional[str],
         version_root: Optional[str] = None,
+        root_status: str = "stable",
         description: Optional[str] = None,
         is_system: bool = False,
         is_public: bool = False,
@@ -3046,6 +3150,7 @@ class Database:
             base_uri: Base URL the namespace's relative $ref values resolve against.
             tenant_id: Owning tenant id; None for a system-core namespace.
             version_root: Version segment (e.g. v1); derived by the caller when omitted.
+            root_status: Lifecycle of the version root — ``stable`` (default) or ``draft`` (#3482).
             description: Optional human description.
             is_system: True for a platform-curated system-core namespace.
             is_public: True when visible to all tenants (always True for system-core).
@@ -3063,14 +3168,14 @@ class Database:
                 cursor.execute(
                     """
                     INSERT INTO apiome.type_namespaces
-                    (tenant_id, namespace, base_uri, version_root, description,
+                    (tenant_id, namespace, base_uri, version_root, root_status, description,
                      is_system, is_public, is_default, created_by)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    RETURNING id, tenant_id, namespace, base_uri, version_root, description,
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id, tenant_id, namespace, base_uri, version_root, root_status, description,
                               is_system, is_public, is_default, created_by, created_at, updated_at
                     """,
                     (
-                        tenant_id, namespace, base_uri, version_root, description,
+                        tenant_id, namespace, base_uri, version_root, root_status, description,
                         is_system, is_public, is_default, created_by,
                     ),
                 )
@@ -3085,8 +3190,8 @@ class Database:
     def update_type_namespace(
         self, namespace_id: str, tenant_id: str, updates: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
-        """Update a namespace's mutable fields (base_uri, version_root, description, visibility,
-        default), ensuring it belongs to the tenant. The namespace path itself is immutable — it
+        """Update a namespace's mutable fields (base_uri, version_root, root_status, description,
+        visibility, default), ensuring it belongs to the tenant. The namespace path itself is immutable — it
         links the namespace to its ``apiome.primitives`` rows.
 
         When ``is_default`` is set True, any existing default in the same scope is cleared first.
@@ -3094,12 +3199,15 @@ class Database:
         Args:
             namespace_id: The namespace row id.
             tenant_id: The owning tenant id (scopes the write).
-            updates: Subset of base_uri / version_root / description / is_public / is_default.
+            updates: Subset of base_uri / version_root / root_status / description / is_public /
+                is_default.
 
         Returns:
             The updated namespace row with ``type_count``, or None when not found for the tenant.
         """
-        allowed = ("base_uri", "version_root", "description", "is_public", "is_default")
+        allowed = (
+            "base_uri", "version_root", "root_status", "description", "is_public", "is_default",
+        )
         update_fields = []
         params: List[Any] = []
         for field in allowed:

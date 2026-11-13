@@ -144,6 +144,7 @@ describe('NamespacesPanel', () => {
     expect(JSON.parse(init.body)).toEqual({
       namespace: 'tenant/acme/v2/payments',
       scope: 'tenant',
+      root_status: 'stable',
       is_default: false,
     });
     await waitFor(() => expect(onMessage).toHaveBeenCalledWith('success', 'Namespace created'));
@@ -367,5 +368,116 @@ describe('NamespacesPanel — removing a namespace registration', () => {
     expect(dialog).toHaveTextContent('are not deleted');
     expect(dialog).toHaveTextContent('unregistered');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  describe('version-root status (#3482)', () => {
+    const DRAFT_NS: TypeNamespaceCollection = {
+      id: 'ns-acme-v2',
+      tenant_id: 'tenant-1',
+      namespace: 'tenant/acme/v2/types',
+      base_uri: 'https://api.apiome.dev/types/tenant/acme/v2/',
+      version_root: 'v2',
+      root_status: 'draft',
+      description: null,
+      scope: 'tenant',
+      is_system: false,
+      is_public: false,
+      is_default: false,
+      type_count: 4,
+    };
+    const WITH_DRAFT = [...NAMESPACES, DRAFT_NS];
+
+    /** The namespace paths the table is showing, in order. */
+    const shownPaths = () =>
+      within(screen.getByRole('table', { name: 'Namespaces' }))
+        .getAllByRole('row')
+        .slice(1)
+        .map((row) => row.querySelector('.prm-ns-path')?.textContent);
+
+    it('marks a draft root beside its version root, and only a draft one', () => {
+      renderView(WITH_DRAFT);
+
+      const draftRow = screen.getByText('tenant/acme/v2/types').closest('tr')!;
+      expect(within(draftRow).getByTestId('namespace-draft-tenant/acme/v2/types')).toHaveTextContent(
+        'draft'
+      );
+      expect(screen.queryByTestId('namespace-draft-tenant/acme/v1/types')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('namespace-draft-std/v0/types')).not.toBeInTheDocument();
+    });
+
+    it('lists draft roots apart from stable ones through the filter', () => {
+      renderView(WITH_DRAFT);
+      const filter = screen.getByRole('radiogroup', { name: 'Filter by root status' });
+      expect(shownPaths()).toEqual(['std/v0/types', 'tenant/acme/v1/types', 'tenant/acme/v2/types']);
+
+      fireEvent.click(within(filter).getByRole('radio', { name: 'Draft' }));
+      expect(shownPaths()).toEqual(['tenant/acme/v2/types']);
+      expect(screen.getByText('1 of 3 namespaces · 1 draft root')).toBeInTheDocument();
+
+      fireEvent.click(within(filter).getByRole('radio', { name: 'Stable' }));
+      expect(shownPaths()).toEqual(['std/v0/types', 'tenant/acme/v1/types']);
+
+      fireEvent.click(within(filter).getByRole('radio', { name: 'All' }));
+      expect(shownPaths()).toHaveLength(3);
+      expect(screen.getByText('3 namespaces · 1 draft root')).toBeInTheDocument();
+    });
+
+    it('says the filter, not the registry, is empty when no root is a draft', () => {
+      renderView();
+
+      fireEvent.click(screen.getByRole('radio', { name: 'Draft' }));
+
+      expect(screen.getByText('No Draft Roots')).toBeInTheDocument();
+      expect(screen.queryByText('No Namespaces Yet')).not.toBeInTheDocument();
+    });
+
+    it('creates a namespace as a draft root when Draft is chosen', async () => {
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, namespace: { id: 'ns-new' } }),
+      });
+      global.fetch = fetchMock as unknown as typeof fetch;
+      renderView();
+
+      fireEvent.click(screen.getByTestId('primitives-new-namespace'));
+      const dialog = await screen.findByRole('dialog');
+      fireEvent.change(within(dialog).getByLabelText('Namespace path'), {
+        target: { value: 'tenant/acme/v2/types' },
+      });
+      const status = within(dialog).getByRole('radiogroup', { name: 'Root status' });
+      expect(within(status).getByRole('radio', { name: 'Stable' })).toBeChecked();
+      fireEvent.click(within(status).getByRole('radio', { name: 'Draft' }));
+      expect(dialog).toHaveTextContent('Types here may still change shape.');
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Create namespace' }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+        namespace: 'tenant/acme/v2/types',
+        root_status: 'draft',
+      });
+    });
+
+    it('promotes a draft root to stable from the edit dialog', async () => {
+      const fetchMock = jest.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, namespace: { id: 'ns-acme-v2' } }),
+      });
+      global.fetch = fetchMock as unknown as typeof fetch;
+      renderView(WITH_DRAFT);
+
+      const draftRow = screen.getByText('tenant/acme/v2/types').closest('tr')!;
+      fireEvent.click(within(draftRow).getByText('Edit'));
+      const dialog = await screen.findByRole('dialog');
+      const status = within(dialog).getByRole('radiogroup', { name: 'Root status' });
+      expect(within(status).getByRole('radio', { name: 'Draft' })).toBeChecked();
+      fireEvent.click(within(status).getByRole('radio', { name: 'Stable' }));
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Save changes' }));
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const [url, init] = fetchMock.mock.calls[0];
+      expect(url).toBe('/api/types/namespaces/ns-acme-v2');
+      expect(init.method).toBe('PUT');
+      expect(JSON.parse(init.body).root_status).toBe('stable');
+    });
   });
 });

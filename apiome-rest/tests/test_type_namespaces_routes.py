@@ -89,7 +89,7 @@ def test_list_namespaces_scoped_to_caller_tenant():
     with patch("app.type_namespaces_routes.db") as mdb:
         mdb.list_type_namespaces.return_value = []
         client.get("/v1/types/some-other-slug/namespaces")
-        mdb.list_type_namespaces.assert_called_once_with("t1")
+        mdb.list_type_namespaces.assert_called_once_with("t1", root_status=None)
 
 
 def test_list_namespaces_requires_authentication():
@@ -315,3 +315,104 @@ def test_delete_namespace_vanished_between_read_and_write_404():
         mdb.delete_type_namespace.return_value = False
         r = client.delete("/v1/types/acme/namespaces/ns-acme")
     assert r.status_code == 404
+
+
+# ===========================================================================
+# VERSION-ROOT STATUS (#3482)
+# ===========================================================================
+
+
+def test_list_namespaces_reports_root_status_and_defaults_to_stable():
+    """A row with no status (read before V369) is served as stable; a draft row as draft."""
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.list_type_namespaces.return_value = [
+            _SYSTEM_NS_ROW,
+            {**_TENANT_NS_ROW, "root_status": "draft"},
+        ]
+        r = client.get("/v1/types/acme/namespaces")
+    assert r.status_code == 200
+    assert [i["root_status"] for i in r.json()] == ["stable", "draft"]
+
+
+@pytest.mark.parametrize("status", ["stable", "draft"])
+def test_list_namespaces_filters_by_root_status(status):
+    """Draft roots are listed apart from stable ones: the filter reaches the DB layer."""
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.list_type_namespaces.return_value = []
+        r = client.get(f"/v1/types/acme/namespaces?root_status={status}")
+    assert r.status_code == 200
+    mdb.list_type_namespaces.assert_called_once_with("t1", root_status=status)
+
+
+def test_list_namespaces_rejects_unknown_root_status():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        r = client.get("/v1/types/acme/namespaces?root_status=beta")
+    assert r.status_code == 422
+    mdb.list_type_namespaces.assert_not_called()
+
+
+def test_create_namespace_is_stable_unless_draft_is_asked_for():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        mdb.get_type_namespace_by_path.return_value = None
+        mdb.create_type_namespace.return_value = {**_TENANT_NS_ROW, "root_status": "stable"}
+        r = client.post("/v1/types/acme/namespaces", json={"namespace": "tenant/acme/v1/x"})
+    assert r.status_code == 200
+    assert mdb.create_type_namespace.call_args.kwargs["root_status"] == "stable"
+
+
+def test_create_namespace_as_draft_root():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        mdb.get_type_namespace_by_path.return_value = None
+        mdb.create_type_namespace.return_value = {
+            **_TENANT_NS_ROW, "namespace": "tenant/acme/v2/types", "version_root": "v2",
+            "root_status": "draft",
+        }
+        r = client.post(
+            "/v1/types/acme/namespaces",
+            json={"namespace": "tenant/acme/v2/types", "root_status": "draft"},
+        )
+    assert r.status_code == 200
+    assert r.json()["root_status"] == "draft"
+    assert mdb.create_type_namespace.call_args.kwargs["root_status"] == "draft"
+
+
+def test_create_namespace_rejects_unknown_root_status():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        r = client.post(
+            "/v1/types/acme/namespaces",
+            json={"namespace": "tenant/acme/v2/types", "root_status": "beta"},
+        )
+    assert r.status_code == 422
+    mdb.create_type_namespace.assert_not_called()
+
+
+def test_update_namespace_promotes_a_draft_root_to_stable():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        mdb.get_type_namespace_by_id.return_value = {**_TENANT_NS_ROW, "root_status": "draft"}
+        mdb.update_type_namespace.return_value = {**_TENANT_NS_ROW, "root_status": "stable"}
+        r = client.put("/v1/types/acme/namespaces/ns-acme", json={"root_status": "stable"})
+    assert r.status_code == 200
+    assert r.json()["root_status"] == "stable"
+    assert mdb.update_type_namespace.call_args.args[2] == {"root_status": "stable"}
+
+
+def test_update_namespace_rejects_unknown_root_status():
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        r = client.put("/v1/types/acme/namespaces/ns-acme", json={"root_status": "beta"})
+    assert r.status_code == 422
+    mdb.update_type_namespace.assert_not_called()
+
+
+def test_update_system_namespace_root_status_forbidden():
+    """System-core roots are platform-governed: a tenant admin cannot mark one draft."""
+    with patch("app.type_namespaces_routes.db") as mdb:
+        mdb.is_user_tenant_admin.return_value = True
+        mdb.get_type_namespace_by_id.return_value = _SYSTEM_NS_ROW
+        r = client.put("/v1/types/acme/namespaces/ns-sys", json={"root_status": "draft"})
+    assert r.status_code == 403
+    mdb.update_type_namespace.assert_not_called()

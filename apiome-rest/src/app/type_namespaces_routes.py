@@ -16,7 +16,7 @@ Scope rules (ROADMAP_TYPE_REGISTRY_GOVERNANCE.md §7 Issue 2.2):
 import re
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import get_authenticated_user_id
 from .database import db
@@ -27,6 +27,7 @@ from .models import (
     ResolvedPrimitiveRefs,
     ResolvedRefEdge,
     ResolveResponse,
+    RootStatus,
     TypeNamespaceCreateRequest,
     TypeNamespaceSchema,
     TypeNamespaceUpdateRequest,
@@ -96,6 +97,8 @@ def _to_schema(row: Dict[str, Any]) -> TypeNamespaceSchema:
         namespace=row["namespace"],
         base_uri=row["base_uri"],
         version_root=row.get("version_root"),
+        # Rows read before V369 (or from a stub) carry no status; a root is stable by default.
+        root_status=row.get("root_status") or "stable",
         description=row.get("description"),
         scope="system" if is_system else "tenant",
         is_system=is_system,
@@ -132,18 +135,27 @@ async def get_registry_coverage_stats(
 @router.get("/{tenant_slug}/namespaces")
 async def list_namespaces(
     tenant_slug: str,
+    root_status: Optional[RootStatus] = Query(
+        default=None,
+        description="Only namespaces whose version root has this status: stable or draft.",
+    ),
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> List[TypeNamespaceSchema]:
     """List namespaces visible to the tenant: system-core (``std/*``) plus the tenant's own.
 
+    Each namespace carries the ``root_status`` of its version root (#3482). Pass
+    ``root_status=draft`` to list the draft roots apart from the stable ones, or
+    ``root_status=stable`` for the reverse.
+
     Args:
         tenant_slug: The tenant slug (caller scope comes from the authenticated token).
+        root_status: Optional filter — ``stable`` or ``draft``.
         auth_data: Authentication data (injected by dependency).
 
     Returns:
         Namespaces (system-core first, then alphabetical), each with its tenant-scoped type count.
     """
-    rows = db.list_type_namespaces(auth_data["tenant_id"])
+    rows = db.list_type_namespaces(auth_data["tenant_id"], root_status=root_status)
     return [_to_schema(r) for r in rows]
 
 
@@ -205,6 +217,7 @@ async def create_namespace(
             base_uri=base_uri,
             tenant_id=tenant_id,
             version_root=version_root,
+            root_status=request.root_status,
             description=request.description,
             is_system=False,
             # Tenant namespaces are private to the tenant (scope-isolation rule); never public.
@@ -230,7 +243,8 @@ async def update_namespace(
     request: TypeNamespaceUpdateRequest,
     auth_data: Dict[str, Any] = Depends(require_primitives_registry),
 ) -> TypeNamespaceSchema:
-    """Update a tenant namespace's base URI, version root, description, visibility, or default flag.
+    """Update a tenant namespace's base URI, version root, root status, description, visibility, or
+    default flag.
 
     The namespace path itself is immutable (it links the namespace to its primitives). System-core
     namespaces are read-only and return 403.

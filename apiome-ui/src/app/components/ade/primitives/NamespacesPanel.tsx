@@ -4,8 +4,9 @@
  * The Namespaces & scopes tab (HIVE-6.5, #5316).
  *
  * Authority: `docs/mockups/build/primitives.html` §Namespaces & scopes — the two scope-model
- * explainer cards, the namespaces table (base URI, version root, visibility, ★ default,
- * read-only lock on system rows, Edit / Remove), the scope-precedence ladder and the disabled
+ * explainer cards, the namespaces table (base URI, version root and its stable / draft status
+ * with a filter between the two (#3482), visibility, ★ default, read-only lock on system rows,
+ * Edit / Remove), the scope-precedence ladder and the disabled
  * promote-to-core card.
  *
  * ### What this replaces
@@ -51,9 +52,19 @@ import {
   type DataTableColumn,
 } from '@/app/components/ui/DataTable';
 import { EmptyState } from '@/app/components/ui/EmptyState';
+import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { useDialog } from '@/app/components/providers/DialogProvider';
-import { visibilityLabel } from '@/app/ade/dashboard/primitives/namespaceModel';
-import type { DetectedNamespace } from '@/app/ade/dashboard/primitives/namespaceModel';
+import {
+  ROOT_STATUS_FILTERS,
+  countDraftRoots,
+  filterByRootStatus,
+  rootStatusOf,
+  visibilityLabel,
+} from '@/app/ade/dashboard/primitives/namespaceModel';
+import type {
+  DetectedNamespace,
+  RootStatusFilter,
+} from '@/app/ade/dashboard/primitives/namespaceModel';
 import type { TypeNamespaceCollection } from '@/app/ade/dashboard/primitives/primitivesRegistryTypes';
 
 import NamespaceEditorDialog from './NamespaceEditorDialog';
@@ -108,6 +119,13 @@ export default function NamespacesPanel({
   const [showDialog, setShowDialog] = React.useState(false);
   const [editing, setEditing] = React.useState<TypeNamespaceCollection | null>(null);
   const [removingId, setRemovingId] = React.useState<string | null>(null);
+  // Draft roots are managed apart from stable ones (#3482): the table narrows to either.
+  const [rootFilter, setRootFilter] = React.useState<RootStatusFilter>('all');
+  const visibleNamespaces = React.useMemo(
+    () => filterByRootStatus(namespaces, rootFilter),
+    [namespaces, rootFilter]
+  );
+  const draftCount = React.useMemo(() => countDraftRoots(namespaces), [namespaces]);
 
   const handleCreate = () => {
     setEditing(null);
@@ -198,7 +216,19 @@ export default function NamespacesPanel({
       id: 'version',
       header: 'Version root',
       skeletonWidth: '3rem',
-      cell: (ns) => <span className="prm-num mono">{ns.version_root ?? '—'}</span>,
+      cell: (ns) => (
+        <span className="prm-root">
+          <span className="prm-num mono">{ns.version_root ?? '—'}</span>
+          {rootStatusOf(ns) === 'draft' ? (
+            <span
+              className="prm-micro prm-micro--warn"
+              data-testid={`namespace-draft-${ns.namespace}`}
+            >
+              draft
+            </span>
+          ) : null}
+        </span>
+      ),
     },
     {
       id: 'types',
@@ -297,18 +327,32 @@ export default function NamespacesPanel({
         dense
         scrollX
         columns={columns}
-        rows={namespaces}
+        rows={visibleNamespaces}
         getRowId={(ns) => ns.id}
         getRowLabel={(ns) => ns.namespace}
         loading={loading}
         loadingLabel="Loading namespaces…"
         empty={
-          <EmptyState
-            icon={<FolderTree aria-hidden />}
-            title="No Namespaces Yet"
-            description="Create a tenant namespace to group your types under a scoped base URI."
-            variant="compact"
-          />
+          namespaces.length > 0 ? (
+            // The registry has namespaces; the filter is what left none to show.
+            <EmptyState
+              icon={<FolderTree aria-hidden />}
+              title={rootFilter === 'draft' ? 'No Draft Roots' : 'No Stable Roots'}
+              description={
+                rootFilter === 'draft'
+                  ? 'Set a namespace’s root status to Draft while its types are still changing.'
+                  : 'Every namespace here is a draft root.'
+              }
+              variant="compact"
+            />
+          ) : (
+            <EmptyState
+              icon={<FolderTree aria-hidden />}
+              title="No Namespaces Yet"
+              description="Create a tenant namespace to group your types under a scoped base URI."
+              variant="compact"
+            />
+          )
         }
         toolbar={
           <DataTableToolbar>
@@ -322,6 +366,19 @@ export default function NamespacesPanel({
               </span>
             </span>
             <DataTableToolbarSpacer />
+            <Segmented
+              size="sm"
+              value={rootFilter}
+              onValueChange={(value) => setRootFilter(value as RootStatusFilter)}
+              aria-label="Filter by root status"
+              data-testid="primitives-root-status-filter"
+            >
+              {ROOT_STATUS_FILTERS.map((option) => (
+                <SegmentedItem key={option.value} value={option.value}>
+                  {option.label}
+                </SegmentedItem>
+              ))}
+            </Segmented>
             <Button size="sm" onClick={handleCreate} data-testid="primitives-new-namespace">
               <Plus aria-hidden />
               New namespace
@@ -331,7 +388,10 @@ export default function NamespacesPanel({
         footer={
           <DataTableFoot>
             <span>
-              {namespaces.length} namespace{namespaces.length === 1 ? '' : 's'}
+              {rootFilter === 'all'
+                ? `${namespaces.length} namespace${namespaces.length === 1 ? '' : 's'}`
+                : `${visibleNamespaces.length} of ${namespaces.length} namespaces`}
+              {draftCount > 0 ? ` · ${draftCount} draft root${draftCount === 1 ? '' : 's'}` : ''}
             </span>
           </DataTableFoot>
         }

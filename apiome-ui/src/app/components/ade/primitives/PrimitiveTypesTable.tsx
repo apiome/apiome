@@ -57,6 +57,7 @@ import {
   SYSTEM_DELETE_TOOLTIP,
   SYSTEM_EDIT_TOOLTIP,
   namespaceFilterChipLabel,
+  deprecatedMarkerTitle,
   primitiveDetailHref,
   primitiveScopeBadge,
   typesFootLabel,
@@ -79,6 +80,10 @@ export interface PrimitiveRow {
   usage_count: number;
   /** True for a platform-curated `std/*` type. */
   is_system: boolean;
+  /** True for a deprecated type (#3482); the name carries a `deprecated` marker. */
+  deprecated?: boolean;
+  /** `YYYY-MM-DD` after which a deprecated type should no longer be used, when one was set. */
+  sunset_date?: string | null;
 }
 
 /** The category chosen in the toolbar's select; `all` is the unfiltered state. */
@@ -172,6 +177,15 @@ export default function PrimitiveTypesTable({
           >
             <DataTableCellPrimary>{primitive.name}</DataTableCellPrimary>
           </Link>
+          {primitive.deprecated ? (
+            <span
+              className="prm-micro prm-micro--warn"
+              title={deprecatedMarkerTitle(primitive.sunset_date)}
+              data-testid={`primitive-deprecated-${primitive.id}`}
+            >
+              deprecated
+            </span>
+          ) : null}
         </span>
       ),
     },

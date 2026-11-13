@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.550.0
+  version: 1.551.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -6250,7 +6250,8 @@ paths:
         \ target type's\n    ``target_id`` / ``target_name`` so the detail view can\
         \ link through to it, and\n    its ``dependents`` — the reverse index of types\
         \ referencing it — and its\n    ``property_dependents``, the caller's class\
-        \ properties bound to it (#3477)."
+        \ properties bound to it (#3477). A\n    deprecated type also carries ``replacement``,\
+        \ the type to use instead (#3482)."
       operationId: get_primitive_v1_primitives__tenant_slug___primitive_id__get
       parameters:
       - name: tenant_slug
@@ -6454,6 +6455,158 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for delete primitiveresponse422.
+  /v1/primitives/{tenant_slug}/{primitive_id}/deprecate:
+    post:
+      tags:
+      - primitives
+      summary: Deprecate Primitive
+      description: "Deprecate a type, optionally with a sunset date, a message and\
+        \ a replacement type.\n\nDeprecation is advisory: existing and new bindings\
+        \ and ``$ref``s keep working. Calling this\non an already-deprecated type\
+        \ replaces its sunset date, message and replacement (an omitted\nfield is\
+        \ cleared) and keeps the original ``deprecated_at``.\n\nArgs:\n    tenant_slug:\
+        \ The tenant slug.\n    primitive_id: The primitive id.\n    request: The\
+        \ deprecation details (all optional).\n    auth_data: Authentication data\
+        \ (injected by dependency).\n\nReturns:\n    The deprecated primitive, with\
+        \ ``replacement`` resolved.\n\nRaises:\n    HTTPException: 404 when the type\
+        \ is not found; 403 for a system type; 422 when the\n        sunset date is\
+        \ in the past or the replacement is missing, the type itself, or\n       \
+        \ itself deprecated."
+      operationId: deprecate_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: primitive_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Primitive Id
+          description: Primitive Id schema.
+        description: Primitive type identifier in the registry.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deprecate Primitiveauthorization schema.
+          - type: 'null'
+            description: Deprecate Primitiveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Deprecate Primitive Xapikey schema.
+          - type: 'null'
+            description: Deprecate Primitive Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrimitiveDeprecateRequest'
+              description: Request body for deprecate primitiverequest.
+        description: Request body for deprecate primitive.
+      responses:
+        '200':
+          description: Successful response for deprecate primitive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrimitiveSchema'
+                description: Response payload for deprecate primitiveresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for deprecate primitiveresponse422.
+    delete:
+      tags:
+      - primitives
+      summary: Restore Primitive
+      description: "Restore a deprecated type: clear its deprecation, sunset date,\
+        \ message and replacement.\n\nRestoring a type that is not deprecated is a\
+        \ no-op that returns the type unchanged (and\nwrites no audit row), so the\
+        \ call is safe to repeat.\n\nArgs:\n    tenant_slug: The tenant slug.\n  \
+        \  primitive_id: The primitive id.\n    auth_data: Authentication data (injected\
+        \ by dependency).\n\nReturns:\n    The restored primitive.\n\nRaises:\n  \
+        \  HTTPException: 404 when the type is not found; 403 for a system type."
+      operationId: restore_primitive_v1_primitives__tenant_slug___primitive_id__deprecate_delete
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: primitive_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Primitive Id
+          description: Primitive Id schema.
+        description: Primitive type identifier in the registry.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restore Primitiveauthorization schema.
+          - type: 'null'
+            description: Restore Primitiveauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Restore Primitive Xapikey schema.
+          - type: 'null'
+            description: Restore Primitive Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for restore primitive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrimitiveSchema'
+                description: Response payload for restore primitiveresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for restore primitiveresponse422.
   /v1/primitives/{tenant_slug}/import/review:
     post:
       tags:
@@ -6764,10 +6917,14 @@ paths:
       - type-registry
       summary: List Namespaces
       description: "List namespaces visible to the tenant: system-core (``std/*``)\
-        \ plus the tenant's own.\n\nArgs:\n    tenant_slug: The tenant slug (caller\
-        \ scope comes from the authenticated token).\n    auth_data: Authentication\
-        \ data (injected by dependency).\n\nReturns:\n    Namespaces (system-core\
-        \ first, then alphabetical), each with its tenant-scoped type count."
+        \ plus the tenant's own.\n\nEach namespace carries the ``root_status`` of\
+        \ its version root (#3482). Pass\n``root_status=draft`` to list the draft\
+        \ roots apart from the stable ones, or\n``root_status=stable`` for the reverse.\n\
+        \nArgs:\n    tenant_slug: The tenant slug (caller scope comes from the authenticated\
+        \ token).\n    root_status: Optional filter — ``stable`` or ``draft``.\n \
+        \   auth_data: Authentication data (injected by dependency).\n\nReturns:\n\
+        \    Namespaces (system-core first, then alphabetical), each with its tenant-scoped\
+        \ type count."
       operationId: list_namespaces_v1_types__tenant_slug__namespaces_get
       parameters:
       - name: tenant_slug
@@ -6778,6 +6935,23 @@ paths:
           title: Tenant Slug
           description: Tenant Slug schema.
         description: URL-safe tenant slug that scopes the request.
+      - name: root_status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - stable
+            - draft
+            type: string
+            description: List Namespacesrootstatus schema.
+          - type: 'null'
+            description: List Namespacesrootstatus schema.
+          description: 'Only namespaces whose version root has this status: stable
+            or draft.'
+          title: Root Status
+        description: 'Only namespaces whose version root has this status: stable or
+          draft.'
       - name: authorization
         in: header
         required: false
@@ -6896,13 +7070,13 @@ paths:
       tags:
       - type-registry
       summary: Update Namespace
-      description: "Update a tenant namespace's base URI, version root, description,\
-        \ visibility, or default flag.\n\nThe namespace path itself is immutable (it\
-        \ links the namespace to its primitives). System-core\nnamespaces are read-only\
-        \ and return 403.\n\nArgs:\n    tenant_slug: The tenant slug.\n    namespace_id:\
-        \ The namespace row id.\n    request: Namespace update data.\n    auth_data:\
-        \ Authentication data (injected by dependency).\n\nReturns:\n    The updated\
-        \ namespace."
+      description: "Update a tenant namespace's base URI, version root, root status,\
+        \ description, visibility, or\ndefault flag.\n\nThe namespace path itself\
+        \ is immutable (it links the namespace to its primitives). System-core\nnamespaces\
+        \ are read-only and return 403.\n\nArgs:\n    tenant_slug: The tenant slug.\n\
+        \    namespace_id: The namespace row id.\n    request: Namespace update data.\n\
+        \    auth_data: Authentication data (injected by dependency).\n\nReturns:\n\
+        \    The updated namespace."
       operationId: update_namespace_v1_types__tenant_slug__namespaces__namespace_id__put
       parameters:
       - name: tenant_slug
@@ -139209,6 +139383,44 @@ components:
       title: PrimitiveCreateRequest
       description: Request body for registering a new primitive type in the tenant
         registry.
+    PrimitiveDeprecateRequest:
+      properties:
+        sunset_date:
+          anyOf:
+          - type: string
+            format: date
+            description: Request body for primitive deprecate.
+          - type: 'null'
+            description: Request body for primitive deprecate.
+          title: Sunset Date
+          description: Date after which the type should no longer be used (YYYY-MM-DD).
+            May not be in the past.
+        message:
+          anyOf:
+          - type: string
+            maxLength: 500
+            description: Request body for primitive deprecate.
+          - type: 'null'
+            description: Request body for primitive deprecate.
+          title: Message
+          description: Why the type is deprecated and what to do instead.
+        replacement_id:
+          anyOf:
+          - type: string
+            description: Request body for primitive deprecate.
+          - type: 'null'
+            description: Request body for primitive deprecate.
+          title: Replacement Id
+          description: Id of the type to use instead. Must be visible to the tenant,
+            not this type, and not itself deprecated.
+      type: object
+      title: PrimitiveDeprecateRequest
+      description: 'Request model for deprecating a type, or changing a deprecated
+        type''s details (#3482).
+
+
+        Every field is optional: a type can be deprecated with no retirement date
+        decided yet.'
     PrimitiveImportRecord:
       properties:
         id:
@@ -139670,6 +139882,79 @@ components:
           description: The caller's class properties bound to this type through ``class_properties.primitive_id``,
             one entry per property.
           maxItems: 1000
+        deprecated:
+          type: boolean
+          title: Deprecated
+          default: false
+          description: Deprecated.
+          example: false
+        deprecated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: string
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: 'null'
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          title: Deprecated At
+          description: Deprecated At timestamp (ISO 8601).
+        sunset_date:
+          anyOf:
+          - type: string
+            format: date
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: 'null'
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          title: Sunset Date
+          description: Sunset Date.
+        deprecation_message:
+          anyOf:
+          - type: string
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: 'null'
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          title: Deprecation Message
+          description: Deprecation Message.
+        replacement_id:
+          anyOf:
+          - type: string
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: 'null'
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          title: Replacement Id
+          description: Replacement ID.
+        replacement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          - type: 'null'
+            description: A tenant-scoped primitive type definition in the registry,
+              including its JSON Schema document, namespace placement, and resolved
+              reference edges.
+          title: Replacement
+          description: Replacement.
         created_at:
           anyOf:
           - type: string
@@ -139898,6 +140183,57 @@ components:
           description: The caller's class properties bound to this type through ``class_properties.primitive_id``,
             one entry per property.
           maxItems: 1000
+        deprecated:
+          type: boolean
+          title: Deprecated
+          default: false
+          description: Deprecated.
+          example: false
+        deprecated_at:
+          anyOf:
+          - type: string
+            format: date-time
+            description: Primitive Search schema.
+          - type: string
+            description: Primitive Search schema.
+          - type: 'null'
+            description: Primitive Search schema.
+          title: Deprecated At
+          description: Deprecated At timestamp (ISO 8601).
+        sunset_date:
+          anyOf:
+          - type: string
+            format: date
+            description: Primitive Search schema.
+          - type: 'null'
+            description: Primitive Search schema.
+          title: Sunset Date
+          description: Sunset Date.
+        deprecation_message:
+          anyOf:
+          - type: string
+            description: Primitive Search schema.
+          - type: 'null'
+            description: Primitive Search schema.
+          title: Deprecation Message
+          description: Deprecation Message.
+        replacement_id:
+          anyOf:
+          - type: string
+            description: Primitive Search schema.
+          - type: 'null'
+            description: Primitive Search schema.
+          title: Replacement Id
+          description: Replacement ID.
+        replacement:
+          anyOf:
+          - additionalProperties: true
+            type: object
+            description: Primitive Search schema.
+          - type: 'null'
+            description: Primitive Search schema.
+          title: Replacement
+          description: Replacement.
         created_at:
           anyOf:
           - type: string
@@ -164748,6 +165084,15 @@ components:
             description: Request body for type namespace create.
           title: Version Root
           description: Version Root.
+        root_status:
+          type: string
+          enum:
+          - stable
+          - draft
+          title: Root Status
+          default: stable
+          description: Root Status.
+          example: stable
         description:
           anyOf:
           - type: string
@@ -164783,7 +165128,10 @@ components:
         (currently unavailable via the API, so they are effectively read-only). ``base_uri``
         and
 
-        ``version_root`` are derived from the namespace path when omitted.'
+        ``version_root`` are derived from the namespace path when omitted. ``root_status``
+        marks the
+
+        version root ``stable`` (default) or ``draft`` (#3482).'
     TypeNamespaceSchema:
       properties:
         id:
@@ -164817,6 +165165,12 @@ components:
             description: Type Namespace schema.
           title: Version Root
           description: Version Root.
+        root_status:
+          type: string
+          title: Root Status
+          default: stable
+          description: Root Status.
+          example: active
         description:
           anyOf:
           - type: string
@@ -164917,6 +165271,17 @@ components:
             description: Request body for type namespace update.
           title: Version Root
           description: Version Root.
+        root_status:
+          anyOf:
+          - type: string
+            enum:
+            - stable
+            - draft
+            description: Request body for type namespace update.
+          - type: 'null'
+            description: Request body for type namespace update.
+          title: Root Status
+          description: Root Status.
         description:
           anyOf:
           - type: string
@@ -164946,10 +165311,10 @@ components:
       description: 'Request model for updating a namespace. The namespace path is
         immutable (it links the
 
-        namespace to its primitives); only base URI, version root, description, visibility,
-        and the
+        namespace to its primitives); only base URI, version root, root status (#3482),
+        description,
 
-        default flag may change.'
+        visibility, and the default flag may change.'
     TypeRegistrySettingsSchema:
       properties:
         default_draft:

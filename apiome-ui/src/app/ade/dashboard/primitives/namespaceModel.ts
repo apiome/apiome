@@ -7,7 +7,7 @@
  * ``type_namespaces_routes.py``) and can be unit-tested without React.
  */
 
-import type { TypeNamespaceCollection } from './primitivesRegistryTypes';
+import type { RootStatus, TypeNamespaceCollection } from './primitivesRegistryTypes';
 
 /**
  * Registry root every base URI hangs off. Mirrors ``REGISTRY_BASE_URL`` in
@@ -35,10 +35,67 @@ export interface NamespaceFormData {
   baseUri: string;
   /** Version-root segment (``v0``, ``v1`` …); when blank the API derives it from the path. */
   versionRoot: string;
+  /** Whether the version root is settled (``stable``) or still being drafted (``draft``). */
+  rootStatus: RootStatus;
   /** Optional human description. */
   description: string;
   /** Whether this is the tenant's default namespace for new types. */
   isDefault: boolean;
+}
+
+/** The two version-root statuses, in the order the form and the filter offer them (#3482). */
+export const ROOT_STATUS_OPTIONS: ReadonlyArray<{ value: RootStatus; label: string; hint: string }> = [
+  { value: 'stable', label: 'Stable', hint: 'Types here are settled and safe to build on.' },
+  { value: 'draft', label: 'Draft', hint: 'Types here may still change shape.' },
+];
+
+/** What the namespaces table can be narrowed to: every root, or one status. */
+export type RootStatusFilter = 'all' | RootStatus;
+
+/** The filter's options, in display order. */
+export const ROOT_STATUS_FILTERS: ReadonlyArray<{ value: RootStatusFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'stable', label: 'Stable' },
+  { value: 'draft', label: 'Draft' },
+];
+
+/**
+ * The status of a namespace's version root.
+ *
+ * @param ns A namespace row; an older API build omits ``root_status``.
+ * @returns ``draft`` only when the row says so — anything else is stable, the API's default.
+ */
+export function rootStatusOf(ns: Pick<TypeNamespaceCollection, 'root_status'>): RootStatus {
+  return ns.root_status === 'draft' ? 'draft' : 'stable';
+}
+
+/**
+ * Narrow the namespaces to one version-root status, so draft roots can be managed apart from
+ * stable ones.
+ *
+ * @param namespaces Every namespace on screen.
+ * @param filter ``all`` to keep them all, otherwise the status to keep.
+ * @returns The matching namespaces, in their original order.
+ */
+export function filterByRootStatus<T extends Pick<TypeNamespaceCollection, 'root_status'>>(
+  namespaces: readonly T[],
+  filter: RootStatusFilter
+): T[] {
+  if (filter === 'all') return [...namespaces];
+  return namespaces.filter((ns) => rootStatusOf(ns) === filter);
+}
+
+/**
+ * Count the namespaces whose version root is a draft — the number the filter's Draft option
+ * and the table's footer report.
+ *
+ * @param namespaces Every namespace on screen.
+ * @returns How many are draft roots.
+ */
+export function countDraftRoots(
+  namespaces: readonly Pick<TypeNamespaceCollection, 'root_status'>[]
+): number {
+  return namespaces.filter((ns) => rootStatusOf(ns) === 'draft').length;
 }
 
 /** Field-keyed validation errors for the namespace form (empty object means valid). */
@@ -46,7 +103,14 @@ export type NamespaceFormErrors = Partial<Record<keyof NamespaceFormData, string
 
 /** An empty form for the "New namespace" flow. */
 export function emptyNamespaceForm(): NamespaceFormData {
-  return { namespace: '', baseUri: '', versionRoot: '', description: '', isDefault: false };
+  return {
+    namespace: '',
+    baseUri: '',
+    versionRoot: '',
+    rootStatus: 'stable',
+    description: '',
+    isDefault: false,
+  };
 }
 
 /** Build a form pre-populated from an existing namespace row (for the edit flow). */
@@ -55,6 +119,7 @@ export function formFromNamespace(ns: TypeNamespaceCollection): NamespaceFormDat
     namespace: ns.namespace,
     baseUri: ns.base_uri ?? '',
     versionRoot: ns.version_root ?? '',
+    rootStatus: rootStatusOf(ns),
     description: ns.description ?? '',
     isDefault: ns.is_default,
   };
@@ -137,6 +202,7 @@ export interface NamespaceCreateBody {
   scope: 'tenant';
   base_uri?: string;
   version_root?: string;
+  root_status: RootStatus;
   description?: string;
   is_default: boolean;
 }
@@ -145,6 +211,7 @@ export interface NamespaceCreateBody {
 export interface NamespaceUpdateBody {
   base_uri?: string;
   version_root?: string;
+  root_status: RootStatus;
   description: string | null;
   is_default: boolean;
 }
@@ -157,6 +224,7 @@ export function buildCreateRequestBody(form: NamespaceFormData): NamespaceCreate
   const body: NamespaceCreateBody = {
     namespace: normalizeNamespacePath(form.namespace),
     scope: 'tenant',
+    root_status: form.rootStatus,
     is_default: form.isDefault,
   };
 
@@ -179,6 +247,7 @@ export function buildCreateRequestBody(form: NamespaceFormData): NamespaceCreate
 export function buildUpdateRequestBody(form: NamespaceFormData): NamespaceUpdateBody {
   const body: NamespaceUpdateBody = {
     description: form.description.trim() || null,
+    root_status: form.rootStatus,
     is_default: form.isDefault,
   };
 

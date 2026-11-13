@@ -35,9 +35,11 @@ import {
 } from '@/app/components/ui/Dialog';
 import { FormField } from '@/app/components/ui/FormField';
 import { Input } from '@/app/components/ui/Input';
+import { Segmented, SegmentedItem } from '@/app/components/ui/Segmented';
 import { Switch } from '@/app/components/ui/Switch';
 import { Textarea } from '@/app/components/ui/Textarea';
 import {
+  ROOT_STATUS_OPTIONS,
   buildCreateRequestBody,
   buildUpdateRequestBody,
   defaultBaseUri,
@@ -48,7 +50,10 @@ import {
   type DetectedNamespace,
   type NamespaceFormData,
 } from '@/app/ade/dashboard/primitives/namespaceModel';
-import type { TypeNamespaceCollection } from '@/app/ade/dashboard/primitives/primitivesRegistryTypes';
+import type {
+  RootStatus,
+  TypeNamespaceCollection,
+} from '@/app/ade/dashboard/primitives/primitivesRegistryTypes';
 
 export interface NamespaceEditorDialogProps {
   /** The namespace being edited, or `null` to create a new tenant namespace. */
@@ -222,6 +227,24 @@ export default function NamespaceEditorDialog({
               />
             </FormField>
           </div>
+
+          <FormField
+            label="Root status"
+            helperText={ROOT_STATUS_OPTIONS.find((o) => o.value === form.rootStatus)?.hint}
+          >
+            <Segmented
+              value={form.rootStatus}
+              onValueChange={(value) => update('rootStatus', value as RootStatus)}
+              aria-label="Root status"
+              data-testid="namespace-root-status"
+            >
+              {ROOT_STATUS_OPTIONS.map((option) => (
+                <SegmentedItem key={option.value} value={option.value}>
+                  {option.label}
+                </SegmentedItem>
+              ))}
+            </Segmented>
+          </FormField>
 
           <FormField label="Description">
             <Textarea

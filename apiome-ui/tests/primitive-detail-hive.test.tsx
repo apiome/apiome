@@ -72,6 +72,19 @@ jest.mock('../lib/external-links', () => ({
     projectId === 'no-designer' ? null : `/studio/editor?projectId=${projectId}&versionId=${versionId}`,
 }));
 
+// Radix Dialog (the Deprecate dialog, #3482) needs a few browser APIs jsdom doesn't implement.
+beforeAll(() => {
+  global.ResizeObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
+  if (!Element.prototype.hasPointerCapture) Element.prototype.hasPointerCapture = () => false;
+  if (!Element.prototype.setPointerCapture) Element.prototype.setPointerCapture = () => {};
+  if (!Element.prototype.releasePointerCapture) Element.prototype.releasePointerCapture = () => {};
+  Element.prototype.scrollIntoView = () => {};
+});
+
 import PrimitiveDetailClient from '../src/app/ade/dashboard/primitives/[id]/PrimitiveDetailClient';
 
 const SYSTEM_MONEY = {
@@ -242,12 +255,21 @@ describe('system types stay read-only', () => {
     );
   });
 
-  it('keeps Deprecate inert, with the ticket that will make it work', async () => {
-    await renderDetail(TENANT_MONEY);
+  it('refuses to deprecate a system type, and says why', async () => {
+    await renderDetail();
 
     const deprecate = screen.getByTestId('primitive-detail-deprecate');
     expect(deprecate).toBeDisabled();
-    expect(deprecate).toHaveAttribute('title', expect.stringContaining('#3482'));
+    expect(deprecate).toHaveAttribute('title', expect.stringContaining('cannot be deprecated'));
+  });
+
+  it('offers Deprecate on an active tenant type (#3482)', async () => {
+    await renderDetail(TENANT_MONEY);
+
+    expect(screen.getByTestId('primitive-detail-deprecate')).toBeEnabled();
+    expect(screen.queryByTestId('primitive-detail-restore')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('primitive-detail-deprecation')).not.toBeInTheDocument();
+    expect(screen.getByTestId('primitive-detail-meta-lifecycle')).toHaveTextContent('active');
   });
 });
 
@@ -799,5 +821,39 @@ describe('the browser fixtures', () => {
     await renderDetail(SYSTEM_MONEY);
     await screen.findByTestId('primitive-detail-badge-immutable');
     write('detail-system', page().outerHTML);
+  });
+
+  it('renders a deprecated type: badge, notice, Edit deprecation and Restore (#3482)', async () => {
+    await renderDetail({
+      ...TENANT_MONEY,
+      deprecated: true,
+      deprecated_at: '2026-11-13T12:00:00.000Z',
+      sunset_date: '2027-06-30',
+      deprecation_message: 'Use money-v2, which carries the currency as an ISO 4217 code.',
+      replacement_id: 'prim-9',
+      replacement: { id: 'prim-9', name: 'money-v2', schema_id: null },
+    });
+    await screen.findByTestId('primitive-detail-deprecation');
+    expect(screen.getByTestId('primitive-detail-restore')).toBeInTheDocument();
+    write('detail-deprecated', page().outerHTML);
+  });
+
+  it('renders the Deprecate dialog over an active type (#3482)', async () => {
+    await renderDetail(TENANT_MONEY);
+    fireEvent.click(screen.getByTestId('primitive-detail-deprecate'));
+    const dialog = await screen.findByRole('dialog', { name: 'Deprecate money' });
+
+    fireEvent.change(within(dialog).getByLabelText('Sunset date'), {
+      target: { value: '2027-06-30' },
+    });
+    const message = within(dialog).getByLabelText('Message') as HTMLTextAreaElement;
+    fireEvent.change(message, {
+      target: { value: 'Use money-v2, which carries the currency as an ISO 4217 code.' },
+    });
+    // React sets a textarea's `value` property, which `outerHTML` does not serialize; copy it into
+    // the markup so the fixture shows what the reader typed.
+    message.textContent = message.value;
+
+    write('deprecate-dialog', page().outerHTML + (dialog.parentElement as HTMLElement).outerHTML);
   });
 });

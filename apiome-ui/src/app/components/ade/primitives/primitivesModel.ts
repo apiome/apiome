@@ -33,6 +33,16 @@ export function primitiveDetailHref(id: string): string {
   return `${PRIMITIVES_ROUTE}/${id}`;
 }
 
+/**
+ * The tooltip on a type's `deprecated` marker in the registry table (#3482).
+ *
+ * @param sunsetDate The type's sunset date (`YYYY-MM-DD`), when one was set.
+ * @returns The marker's `title`.
+ */
+export function deprecatedMarkerTitle(sunsetDate?: string | null): string {
+  return sunsetDate ? `Deprecated — sunset on ${sunsetDate}` : 'Deprecated';
+}
+
 /** The four panes of the screen, in the order the mockup's tab row draws them. */
 export type PrimitivesView = 'registry' | 'namespaces' | 'resolver' | 'settings';
 

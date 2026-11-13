@@ -1,9 +1,9 @@
 import ipaddress
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Callable, Dict, List, Literal, Mapping, Optional, Sequence, Union
 from urllib.parse import urlsplit, urlunsplit
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from .config import settings
 from .entity_owners import EntityOwnerRef, owner_ref_from_value
@@ -761,12 +761,59 @@ class PrimitiveSchema(BaseModel):
     # {class_property_id, property, parent_id, primitive_ref, class_id, class_name,
     # version_id, version_label, project_id, project_name}. Single-primitive GET only.
     property_dependents: List[Dict[str, Any]] = []
+    # Deprecation lifecycle (#3482). ``deprecated`` is derived from ``deprecated_at`` so a
+    # client never has to test a timestamp for presence. Deprecation is advisory: a deprecated
+    # type still resolves, validates and can be bound. ``replacement`` — the replacement type's
+    # {id, name, schema_id} — is filled by the single-primitive GET and the lifecycle routes
+    # only; the list endpoints carry ``replacement_id`` alone.
+    deprecated: bool = False
+    deprecated_at: Optional[Union[datetime, str]] = None
+    sunset_date: Optional[date] = None
+    deprecation_message: Optional[str] = None
+    replacement_id: Optional[str] = None
+    replacement: Optional[Dict[str, Any]] = None
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
     enabled: bool = True
 
     class Config:
         from_attributes = True
+
+    @field_validator("replacement_id", mode="before")
+    @classmethod
+    def _replacement_id_as_text(cls, value: Any) -> Optional[str]:
+        """Accept the replacement id as the driver returns it (a UUID) and serve it as text."""
+        return None if value is None else str(value)
+
+    @model_validator(mode="after")
+    def _derive_deprecated(self) -> "PrimitiveSchema":
+        """Set ``deprecated`` from ``deprecated_at`` — the timestamp is the single source."""
+        self.deprecated = self.deprecated_at is not None
+        return self
+
+
+class PrimitiveDeprecateRequest(BaseModel):
+    """Request model for deprecating a type, or changing a deprecated type's details (#3482).
+
+    Every field is optional: a type can be deprecated with no retirement date decided yet.
+    """
+    sunset_date: Optional[date] = Field(
+        default=None,
+        description="Date after which the type should no longer be used (YYYY-MM-DD). "
+                    "May not be in the past.",
+    )
+    message: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Why the type is deprecated and what to do instead.",
+    )
+    replacement_id: Optional[str] = Field(
+        default=None,
+        description="Id of the type to use instead. Must be visible to the tenant, not this "
+                    "type, and not itself deprecated.",
+    )
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PrimitiveSearchItem(PrimitiveSchema):
@@ -1141,6 +1188,11 @@ class RegistryCoverageStatsResponse(BaseModel):
 # ==================== Type-registry namespaces (#3451) ====================
 
 
+# Lifecycle of a namespace's version root (#3482); asserted against the DB CHECK
+# ``type_namespaces_root_status_ck`` in V369.
+RootStatus = Literal["stable", "draft"]
+
+
 class TypeNamespaceSchema(BaseModel):
     """A type-registry namespace: scope, base URI, version root, visibility, and default flag.
 
@@ -1152,6 +1204,8 @@ class TypeNamespaceSchema(BaseModel):
     namespace: str
     base_uri: str
     version_root: Optional[str] = None
+    # Lifecycle of the version root (#3482): 'stable' or 'draft'. System-core is always stable.
+    root_status: str = "stable"
     description: Optional[str] = None
     scope: str  # 'system' | 'tenant'
     is_system: bool = False
@@ -1170,12 +1224,14 @@ class TypeNamespaceCreateRequest(BaseModel):
 
     ``scope`` selects system-core vs tenant ownership; system namespaces require a platform admin
     (currently unavailable via the API, so they are effectively read-only). ``base_uri`` and
-    ``version_root`` are derived from the namespace path when omitted.
+    ``version_root`` are derived from the namespace path when omitted. ``root_status`` marks the
+    version root ``stable`` (default) or ``draft`` (#3482).
     """
     namespace: str
     scope: Literal["system", "tenant"] = "tenant"
     base_uri: Optional[str] = None
     version_root: Optional[str] = None
+    root_status: RootStatus = "stable"
     description: Optional[str] = None
     is_public: Optional[bool] = None
     is_default: bool = False
@@ -1185,10 +1241,11 @@ class TypeNamespaceCreateRequest(BaseModel):
 
 class TypeNamespaceUpdateRequest(BaseModel):
     """Request model for updating a namespace. The namespace path is immutable (it links the
-    namespace to its primitives); only base URI, version root, description, visibility, and the
-    default flag may change."""
+    namespace to its primitives); only base URI, version root, root status (#3482), description,
+    visibility, and the default flag may change."""
     base_uri: Optional[str] = None
     version_root: Optional[str] = None
+    root_status: Optional[RootStatus] = None
     description: Optional[str] = None
     is_public: Optional[bool] = None
     is_default: Optional[bool] = None

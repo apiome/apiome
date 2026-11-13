@@ -1,7 +1,8 @@
 """
 Registry audit log — shared verbs and the write helper (#3481, 7.4).
 
-The type registry records each governed primitive action (create / update / delete / import)
+The type registry records each governed primitive action (create / update / delete / import / deprecate /
+restore)
 as an append-only row in ``apiome.registry_audit`` with the acting user and a timestamp. This
 module centralises the action vocabulary and the single best-effort write helper so every
 mutating primitives route audits consistently; the read side lives in
@@ -22,6 +23,10 @@ ACTION_CREATE = "primitive.create"
 ACTION_UPDATE = "primitive.update"
 ACTION_DELETE = "primitive.delete"
 ACTION_IMPORT = "primitive.import"
+# Deprecation lifecycle (#3482): a type deprecated (or its deprecation details changed), and a
+# deprecated type restored.
+ACTION_DEPRECATE = "primitive.deprecate"
+ACTION_RESTORE = "primitive.restore"
 
 # Schema registry subject verbs (CDG-4.3, #5975): every write through the Confluent-compatible
 # API. ``namespace`` carries the subject name and ``schema_id`` the integer schema id, when one.
@@ -35,6 +40,8 @@ REGISTRY_AUDIT_ACTIONS = (
     ACTION_UPDATE,
     ACTION_DELETE,
     ACTION_IMPORT,
+    ACTION_DEPRECATE,
+    ACTION_RESTORE,
     ACTION_SUBJECT_REGISTER,
     ACTION_SUBJECT_CONFIG,
     ACTION_SUBJECT_DELETE,

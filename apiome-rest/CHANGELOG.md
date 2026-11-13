@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.691.0] - 2026-11-13
+
+### Added
+- **Type deprecation lifecycle (Primitives 7.5, #3482)** — a registry type can be deprecated with a
+  sunset date (`app.primitives_lifecycle`, `app.primitives_lifecycle_routes`):
+  - `POST /v1/primitives/{tenantSlug}/{primitiveId}/deprecate` deprecates a type. The body is
+    optional: `sunset_date` (`YYYY-MM-DD`, today or later), `message` (up to 500 characters) and
+    `replacement_id`. Calling it on a deprecated type replaces those details and keeps
+    `deprecated_at`. Needs the same permission as an update. **403** for a system type; **422** when
+    the sunset date is in the past or the replacement is not found, is the type itself or is
+    deprecated.
+  - `DELETE /v1/primitives/{tenantSlug}/{primitiveId}/deprecate` restores the type; a no-op on a
+    type that is not deprecated.
+  - Deprecation is advisory: bindings, `$ref` resolution, validation and the stored JSON Schema are
+    unchanged.
+  - `PrimitiveSchema` gains `deprecated`, `deprecated_at`, `sunset_date`, `deprecation_message` and
+    `replacement_id` on every read (list, search, single), and `replacement` (`id`, `name`,
+    `schema_id`) on `GET /v1/primitives/{tenantSlug}/{primitiveId}`.
+  - Registry audit actions `primitive.deprecate` and `primitive.restore`.
+- **Version-root status (Primitives 7.5, #3482)** — a namespace's version root is `stable` (the
+  default) or `draft`:
+  - `root_status` on `TypeNamespaceSchema`, and accepted by `POST` and `PUT
+    /v1/types/{tenantSlug}/namespaces`; an unknown value returns **422**.
+  - `GET /v1/types/{tenantSlug}/namespaces?root_status=stable|draft` lists one status apart from
+    the other.
+  - System-core namespaces are always stable and stay read-only.
+- Migration `V369__type_registry_lifecycle_3482.sql` (apiome-db): `type_namespaces.root_status`, and
+  `deprecated_at`, `sunset_date`, `deprecation_message`, `replacement_id` on `primitives`.
+- OpenAPI 1.550.0 → 1.551.0.
+
 ## [1.690.0] - 2026-11-12
 
 ### Added

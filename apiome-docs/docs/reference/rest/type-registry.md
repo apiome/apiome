@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.550.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.551.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `type-registry` · 8 operations
 
@@ -19,8 +19,13 @@ Tag: `type-registry` · 8 operations
 
 List namespaces visible to the tenant: system-core (``std/*``) plus the tenant's own.
 
+Each namespace carries the ``root_status`` of its version root (#3482). Pass
+``root_status=draft`` to list the draft roots apart from the stable ones, or
+``root_status=stable`` for the reverse.
+
 Args:
     tenant_slug: The tenant slug (caller scope comes from the authenticated token).
+    root_status: Optional filter — ``stable`` or ``draft``.
     auth_data: Authentication data (injected by dependency).
 
 Returns:
@@ -33,6 +38,7 @@ Operation id: `list_namespaces_v1_types__tenant_slug__namespaces_get`
 | Name | In | Type | Required | Description |
 | --- | --- | --- | --- | --- |
 | `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `root_status` | query | enum `"stable"`, `"draft"` or null | no | Only namespaces whose version root has this status: stable or draft. |
 | `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
 | `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
 
@@ -88,7 +94,8 @@ Request body for create namespace.
 
 **Update Namespace**
 
-Update a tenant namespace's base URI, version root, description, visibility, or default flag.
+Update a tenant namespace's base URI, version root, root status, description, visibility, or
+default flag.
 
 The namespace path itself is immutable (it links the namespace to its primitives). System-core
 namespaces are read-only and return 403.
@@ -373,7 +380,8 @@ Request model for creating a namespace.
 
 ``scope`` selects system-core vs tenant ownership; system namespaces require a platform admin
 (currently unavailable via the API, so they are effectively read-only). ``base_uri`` and
-``version_root`` are derived from the namespace path when omitted.
+``version_root`` are derived from the namespace path when omitted. ``root_status`` marks the
+version root ``stable`` (default) or ``draft`` (#3482).
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -381,6 +389,7 @@ Request model for creating a namespace.
 | `scope` | enum `"system"`, `"tenant"` | no | Scope. |
 | `base_uri` | string or null | no | Base URI used to resolve relative ``$ref`` values. |
 | `version_root` | string or null | no | Version Root. |
+| `root_status` | enum `"stable"`, `"draft"` | no | Root Status. |
 | `description` | string or null | no | Free-text description. |
 | `is_public` | boolean or null | no | True when the primitive is visible outside the authoring tenant. |
 | `is_default` | boolean | no | Whether default. |
@@ -399,6 +408,7 @@ primitives the caller's tenant has in this namespace.
 | `namespace` | string | yes | Registry namespace segment for the primitive. |
 | `base_uri` | string | yes | Base URI used to resolve relative ``$ref`` values. |
 | `version_root` | string or null | no | Version Root. |
+| `root_status` | string | no | Root Status. |
 | `description` | string or null | no | Free-text description. |
 | `scope` | string | yes | Scope. |
 | `is_system` | boolean | no | True when the primitive is shipped by the platform. |
@@ -412,13 +422,14 @@ primitives the caller's tenant has in this namespace.
 ### `TypeNamespaceUpdateRequest` {#schema-typenamespaceupdaterequest}
 
 Request model for updating a namespace. The namespace path is immutable (it links the
-namespace to its primitives); only base URI, version root, description, visibility, and the
-default flag may change.
+namespace to its primitives); only base URI, version root, root status (#3482), description,
+visibility, and the default flag may change.
 
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `base_uri` | string or null | no | Base URI used to resolve relative ``$ref`` values. |
 | `version_root` | string or null | no | Version Root. |
+| `root_status` | enum `"stable"`, `"draft"` or null | no | Root Status. |
 | `description` | string or null | no | Free-text description. |
 | `is_public` | boolean or null | no | True when the primitive is visible outside the authoring tenant. |
 | `is_default` | boolean or null | no | Whether default. |

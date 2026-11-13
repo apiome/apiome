@@ -26,7 +26,6 @@ do not point any of them at `unreleased/`.
 
 | Page | Feature | Original path | Rail item id |
 | --- | --- | --- | --- |
-| Primitives and types | Primitives & types | `docs/build/primitives-and-types.mdx` | `primitives` |
 | Style guides | Style guides | `docs/govern/style-guides.mdx` | `style-guides` |
 | Style-guide revisions and audit | Style guides | `docs/govern/style-guide-revisions.md` | `style-guides` |
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
@@ -70,7 +69,6 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 
 | Rail item id | Screenshot ids |
 | --- | --- |
-| `primitives` | `primitives`, `primitives-how-resolution-works`, `primitives-namespaces`, `primitives-resolver`, `primitives-settings`, `primitives-import`, `primitives-editor`, `primitive-detail`, `primitive-testing`, `primitive-detail-used-by-properties` |
 | `style-guides` | `style-guides`, `style-guides-readonly`, `style-guides-create-dialog`, `style-guides-assign-dialog`, `style-guides-import-dialog`, `style-guides-import-result`, `style-guides-policies`, `style-guides-verification-policy`, `style-guide-builtin`, `style-guide-rules`, `style-guide-custom-rule`, `style-guide-policy` |
 | `audit` | `audit`, `audit-filtered`, `audit-drawer`, `audit-chain` |
 | `sdk-settings` | `sdk-settings` |
@@ -89,6 +87,10 @@ shape as `../screens.json`) and `unreleased/static/img/screens/` their light and
 returned as `docs_page` by the REST rule endpoints), `getting-started/connect-an-mcp-host.mdx`,
 `reference/mcp-quickstart.md`, `ship/export-fidelity.md` (it explains the Export dialog's fidelity
 step too) and everything under `docs/reference/` — the REST, CLI and MCP surfaces still exist.
+
+**Primitives & types** (`primitives`) is restored in RC8 (#3482): its page, its 12 screenshots and
+its help entry are back on the site, the route gate is gone, and the legacy-docs `PRIMITIVE` rule
+points at `build/primitives-and-types` again.
 
 **MCP servers** (`mcp`, with Agent access) is restored in RC8: its two pages, the import-wizard
 fragment, its 14 screenshots and its help entries are back on the site, the route gate is gone, and
