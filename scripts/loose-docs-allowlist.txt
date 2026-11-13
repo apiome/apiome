@@ -57,6 +57,7 @@ apiome-rest/docs/catalog_parsed_model.md
 apiome-rest/docs/change_taxonomy.md
 apiome-rest/docs/changelog_generator.md
 apiome-rest/docs/comments.md
+apiome-rest/docs/component_library.md
 apiome-rest/docs/consumer_contracts.md
 apiome-rest/docs/consumer_impact.md
 apiome-rest/docs/contract_runner.md
@@ -131,6 +132,7 @@ apiome-rest/docs/snippet_service.md
 apiome-rest/docs/source_change_review.md
 apiome-rest/docs/spec_sync.md
 apiome-rest/docs/swagger-ui-endpoint.md
+apiome-rest/docs/terraform_provider_generator.md
 apiome-rest/docs/toolchain_packaging.md
 apiome-rest/docs/toolchain_runner.md
 apiome-rest/docs/toolchain_sandbox.md
