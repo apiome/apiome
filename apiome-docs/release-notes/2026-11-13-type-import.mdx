@@ -1,0 +1,38 @@
+---
+slug: type-import
+title: Import types into the type registry
+description: "JSON Schema, type-definition bundles and OpenAPI components become registry types, references intact."
+authors: [apiome]
+---
+
+Type import is complete. One call turns a JSON Schema 2020-12 document, an Apiome type-definition
+bundle or the `components/schemas` of an OpenAPI 3.1 description into reusable types in the type
+registry, on the [Primitives REST API](/reference/rest/primitives).
+
+{/* truncate */}
+
+- **Three sources.** `source_kind` is `json-schema` (each `$defs` entry becomes a type, or the
+  whole document when it has none), `type-def-bundle` (each entry under `types`) or `openapi` (each
+  entry under `components/schemas`). Every type is checked as a JSON Schema 2020-12 schema.
+- **References stay intact.** A reference that only works inside the source, such as
+  `#/$defs/Money` or `#/components/schemas/Money`, is rewritten to a relative registry reference
+  (`./money`), so imported types still point at each other. A string that only declares
+  `format: email`, `uuid`, `uri`, `date`, `date-time` or `time` is pointed at the matching core
+  type; set `map_core_formats` to `false` to leave it alone.
+- **Review before you save.**
+  [`POST /v1/primitives/{tenant}/import/review`](/reference/rest/primitives#review-import-primitives-v1-primitives-tenant-slug-import-review-post)
+  is a dry run: each type comes back as new, identical or conflict, with its validation report and
+  the rewrites that would be made. Nothing is saved.
+- **Nothing is replaced silently.**
+  [`POST /v1/primitives/{tenant}/import`](/reference/rest/primitives#import-primitives-v1-primitives-tenant-slug-import-post)
+  skips identical types and keeps an existing type on a conflict, unless `resolutions` says
+  `overwrite` or `rename` for it.
+- **From anywhere.**
+  [`POST /v1/primitives/{tenant}/import/stage`](/reference/rest/primitives#stage-import-v1-primitives-tenant-slug-import-stage-post)
+  fetches and parses pasted text, a URL or a file in a public GitHub repository, as JSON or YAML,
+  and lists the types it found.
+- **A record of every import.**
+  [`GET /v1/primitives/{tenant}/imports`](/reference/rest/primitives#list-primitive-imports-v1-primitives-tenant-slug-imports-get)
+  lists past imports with what each one created, overwrote, renamed and skipped.
+
+The **Primitives & types** screen that puts a dialog on these calls is not yet available.

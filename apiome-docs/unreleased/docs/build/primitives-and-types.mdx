@@ -88,16 +88,112 @@ workspaces.
 
 ## Import types
 
-**Click “Import from schema”** (or press <Kbd keys="I"/>).
+Importing brings types you already have into the registry instead of retyping them. One import can
+create many types, and the types keep pointing at each other afterwards.
 
-1. **Source** — choose **JSON Schema**, **Type-def bundle** or **OpenAPI** (its component schemas),
-   and give it as a **File**, a **URL** or **Paste**. Pick a **Target namespace** if the types should
-   not go to the default one.
-2. **Review** — Apiome lists the types it found. For each one that clashes with an existing type,
-   choose **Keep existing**, **Overwrite** or **Import as new name**.
-3. **Click “Import N selected”**, then read the **Result**.
+### When to import {#when-to-import-types}
+
+- You have a **JSON Schema 2020-12** document — one schema, or one with reusable types under
+  `$defs` (or the older `definitions`).
+- You have an **Apiome type-definition bundle**: one `.json` or `.yaml` file holding many types
+  under `types`.
+- You want the reusable types of an **OpenAPI 3.1** description — its `components/schemas`.
+
+To add a single new type by hand, [create it](#create-a-type) instead.
+
+### Import at a glance {#import-types-at-a-glance}
+
+| Step | Where | Details |
+| --- | --- | --- |
+| Choose what you are importing | **Source** step, **Source type** | [Source types](#import-source-types) |
+| Give the document | **Source** step: **File**, **URL** or **Paste** | [Run an import](#run-an-import) |
+| Choose where the types go | **Target namespace (optional)** | [Namespaces & scopes](#namespaces--scopes) |
+| Keep references working | Done for you when the types are saved | [How references are kept](#how-import-keeps-references) |
+| Settle clashes with existing types | **Review** step | [Review and conflicts](#import-review-and-conflicts) |
+| Read what happened | **Result** step | [The result](#the-import-result) |
+| Do it without the screen | REST API | [Import with the API](#import-types-with-the-api) |
+
+### Source types {#import-source-types}
+
+| Source type | What becomes a type |
+| --- | --- |
+| **JSON Schema** | Each entry under `$defs` or `definitions`. A document with neither is imported as one type. |
+| **Type-def bundle** | Each entry under `types` (or `$defs` / `definitions`). A bundle of 12 types imports 12 types. |
+| **OpenAPI** | Each entry under `components/schemas` — see [From an OpenAPI 3.1 document](#from-an-openapi-31-document). |
+
+Every type is checked as a JSON Schema 2020-12 schema before it is saved.
+
+### Run an import {#run-an-import}
+
+**Click “Import from schema”** (or press <Kbd keys="I"/>). The **Import primitives** dialog has
+three steps: **Source**, **Review** and **Result**.
+
+1. **Source** — under **Source type**, choose **JSON Schema**, **Type-def bundle** or **OpenAPI**.
+   Then give the document as a **File** (`.json`, `.yaml` or `.yml`), a **URL** or **Paste**.
+2. Under **Options**, enter a **Target namespace (optional)** if the types should not go to the
+   default one, or tick **Always extract namespace automatically** to take it from the document.
+   Two more options are ticked to begin with:
+   - **Map recognized formats to core JSON System types** — see
+     [How references are kept](#how-import-keeps-references).
+   - **Skip definitions identical to an existing type** — see
+     [Review and conflicts](#import-review-and-conflicts).
+3. **Review** — Apiome lists the types it found. Untick any you do not want, and for each one that
+   clashes with an existing type choose **Keep existing**, **Overwrite** or **Import as new name**.
+4. **Click “Import N selected”**, then read the **Result** and **click “Done”**.
 
 <Screenshot id="primitives-import" alt="The Import primitives dialog on its Source step: source types, file, URL or paste, and namespace options" />
+
+### How references are kept {#how-import-keeps-references}
+
+Inside a source document, types point at each other with references that only mean something in
+that document, such as `#/$defs/Money`. When the types are saved, Apiome rewrites each of these to a
+relative reference to the saved type:
+
+| In the source | In the registry |
+| --- | --- |
+| `#/$defs/Money` | `./money` |
+| `#/definitions/Money` | `./money` |
+| `#/types/Money` | `./money` |
+| `#/components/schemas/Money` | `./money` |
+| `#/$defs/Money/properties/amount` | `./money#/properties/amount` |
+
+Relative references keep working when a namespace moves to another base URI, and the
+[Resolver](#resolver) follows them like any other `$ref`.
+
+With **Map recognized formats to core JSON System types** ticked, a string that only says
+`"format": "email"` (or `uuid`, `uri`, `date`, `date-time`, `time`) is also pointed at the matching
+core system type, so every imported email is the same type. A `$ref` you wrote yourself is never
+replaced.
+
+### Review and conflicts {#import-review-and-conflicts}
+
+The **Review** step shows what the import would do before anything is saved. Each type has one
+status:
+
+| Status | Meaning | What happens |
+| --- | --- | --- |
+| **New** | No type with this name exists in the target namespace. | It is created. |
+| **Identical** | The same type is already there. | It is skipped, while **Skip definitions identical to an existing type** is ticked. |
+| **Conflict** | A type with this name exists and differs. | You choose — see below. |
+| **Invalid** | It is not a valid JSON Schema 2020-12 schema. | It cannot be imported; the row lists what is wrong. |
+
+For a **Conflict**, choose one:
+
+- **Keep existing** — the type in the registry stays as it is. This is the default, so an import
+  never replaces a type unless you say so.
+- **Overwrite** — the type in the registry is replaced by the imported one.
+- **Import as new name** — the imported type is saved beside the existing one under the name you
+  enter.
+
+A type that points at something Apiome cannot find is marked as having an unresolved reference. It
+still imports; fix the reference later on the **Resolver** tab.
+
+### The result {#the-import-result}
+
+The **Result** step counts the types under **Imported**, **Overwritten**, **Renamed**, **Identical
+(skipped)**, **Skipped** and **Errors**. A conflict you left on **Keep existing** is under
+**Skipped**. Every import is recorded: the last eight are under **Recent activity** on the
+**Registry** tab, and the **imported schemas** count in the facts line goes up.
 
 ### From an OpenAPI 3.1 document
 
@@ -147,9 +243,36 @@ settings”**, or **“Reset to defaults”**.
 
 - CLI: `apiome types list|show|search` — see the [CLI quick-start](../reference/cli-quickstart.md).
 - REST: `GET` / `POST /v1/primitives/{tenant}`, `GET /v1/primitives/{tenant}/{id}` (with
-  `dependents` and `property_dependents`), `POST /v1/primitives/{tenant}/import`,
-  `GET` / `POST /v1/types/{tenant}/namespaces`, `GET` / `PUT /v1/types/{tenant}/settings`,
-  `POST /v1/types/{tenant}/resolve` — see the [API reference](../reference/api-reference.md).
+  `dependents` and `property_dependents`), `GET` / `POST /v1/types/{tenant}/namespaces`,
+  `GET` / `PUT /v1/types/{tenant}/settings`, `POST /v1/types/{tenant}/resolve` — see the
+  [API reference](../reference/api-reference.md).
+
+### Import types with the API {#import-types-with-the-api}
+
+The dialog uses the same endpoints, so an API import gives the same result. All of them are on the
+[Primitives REST reference](../reference/rest/primitives.md).
+
+| Call | What it does |
+| --- | --- |
+| `POST /v1/primitives/{tenant}/import/review` | Dry run: returns each type's status, validation report and reference rewrites. Saves nothing. |
+| `POST /v1/primitives/{tenant}/import` | Saves the types and returns the report with an `import_id`. |
+| `POST /v1/primitives/{tenant}/import/stage` | Fetches and parses a source — pasted text, a file's text, a URL, or a file in a public GitHub repository — and lists the types it found. Saves no types. |
+| `GET /v1/primitives/{tenant}/imports` | Lists past imports. |
+| `GET /v1/primitives/{tenant}/imports/{import_id}` | One past import, with its report. |
+
+In the body of `/import/review` and `/import`:
+
+| Field | Value |
+| --- | --- |
+| `schema` | The document, as JSON. |
+| `source_kind` | `json-schema` (the default), `type-def-bundle` or `openapi`. |
+| `import_all` / `selected_definitions` | Import every type, or only the named ones. |
+| `target_namespace` | The namespace the types go to. |
+| `map_core_formats` | `true` by default — see [How references are kept](#how-import-keeps-references). |
+| `dedupe` | `true` by default: an identical type is skipped. |
+| `resolutions` | For `/import` only. One entry for each conflicting type: `{"action": "keep"}`, `{"action": "overwrite"}` or `{"action": "rename", "new_name": "money-v2"}`. |
+
+Review needs permission to view types; importing and staging need permission to create them.
 
 ## Where next
 
