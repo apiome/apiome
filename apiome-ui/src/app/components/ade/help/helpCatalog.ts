@@ -992,6 +992,14 @@ export const GUIDE_ENTRIES: readonly GuideEntry[] = [
     keywords: ['deprecation', 'end of life', 'eol', 'successor', 'csv'],
   },
   {
+    id: 'contract-testing-and-ci-gates',
+    title: 'Contract testing and CI gates',
+    summary: 'Catch breaking API changes in CI, at publish and against live deployments.',
+    page: 'apiome-docs/docs/ship/contract-testing-and-ci-gates.mdx',
+    section: 'reference',
+    keywords: ['breaking', 'changelog', 'diff', 'fail-on', 'github action', 'pact', 'deploy gate', 'drift'],
+  },
+  {
     id: 'mock-try-out',
     title: 'Mock try-out',
     summary: 'Preview a mock response, call the hosted mock, or test-drive an exported file.',

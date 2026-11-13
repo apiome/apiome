@@ -1,0 +1,22 @@
+---
+slug: contract-testing-and-ci-gates
+title: Contract testing and CI gates, from one map
+description: "Breaking-change gates in CI, at publish and against live deployments, in one place."
+authors: [apiome]
+---
+
+Contract testing and breaking-change gates are complete: Apiome sorts every change between two
+versions as breaking, non-breaking or docs-only, and uses that one sorting everywhere. The new
+[Contract testing and CI gates](/ship/contract-testing-and-ci-gates) page is the map.
+
+{/* truncate */}
+
+- **In pull requests:** `apiome diff openapi.yaml --against payments-api@latest --fail-on breaking`
+  fails the build on a breaking change; `apiome/diff-action` adds a pull-request comment, and a
+  container image covers GitLab and Bitbucket. A `diff:read` key is all a pipeline needs.
+- **At publish:** every publish writes a classified changelog, shown on the **Changes** tab and on
+  the browse app, and sent with the `version.published` webhook.
+- **Semver kept honest:** the breaking-publish guardrail warns about, or blocks, a breaking change
+  published without a major version.
+- **Against live deployments:** consumer contracts (with Pact import), provider verification,
+  scheduled checks with drift webhooks, and a deploy gate that answers "can I promote this?"
