@@ -693,6 +693,7 @@ def test_preview_custom_rules_returns_violations():
             None,
         ),
         ("delete", f"/v1/style-guides/acme/assignments/projects/{PROJECT_ID}", None),
+        ("post", "/v1/style-guides/acme/import", {"content": "{}"}),
     ],
 )
 def test_mutations_require_tenant_admin(method, path, body):
@@ -1290,3 +1291,243 @@ def test_put_policy_rejects_out_of_range_component_values():
     assert too_many.status_code == 422
     assert notice.status_code == 422
     update.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# Import / export (#1747)
+# ---------------------------------------------------------------------------
+
+_BUILTIN_RULE_ID = builtin_rule_descriptors()[0].rule_id
+
+_EXPORT_ROWS = [
+    {"rule_id": _BUILTIN_RULE_ID, "enabled": True, "severity": "error", "custom_def": None},
+    {
+        "rule_id": "servers-use-https",
+        "enabled": True,
+        "severity": "error",
+        "custom_def": {
+            "description": "Every server URL uses https.",
+            "severity": "error",
+            "given": ["$.servers[*].url"],
+            "then": [{"function": "pattern", "functionOptions": {"match": "^https://"}}],
+        },
+    },
+]
+
+
+def _import_doc(**over):
+    """A valid ``apiome.style-guide`` document as JSON text."""
+    import json
+
+    doc = {
+        "format": "apiome.style-guide",
+        "formatVersion": 1,
+        "guide": {"name": "Payments Guide", "description": "House rules"},
+        "builtinRules": [
+            {"ruleId": _BUILTIN_RULE_ID, "enabled": True, "severity": "error"},
+            {"ruleId": "future.rule", "enabled": True, "severity": "warning"},
+        ],
+        "customRules": [
+            {"ruleId": "servers-use-https", "definition": _EXPORT_ROWS[1]["custom_def"]}
+        ],
+    }
+    doc.update(over)
+    return json.dumps(doc)
+
+
+def test_export_returns_the_document_as_a_download():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id",
+        return_value=_custom_row(description="House rules"),
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=_EXPORT_ROWS):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/export")
+    assert r.status_code == 200
+    assert r.headers["content-disposition"] == (
+        'attachment; filename="payments-guide.style-guide.json"'
+    )
+    body = r.json()
+    assert body["format"] == "apiome.style-guide"
+    assert body["formatVersion"] == 1
+    assert body["guide"]["name"] == "Payments Guide"
+    assert body["builtinRules"] == [
+        {"ruleId": _BUILTIN_RULE_ID, "enabled": True, "severity": "error"}
+    ]
+    assert body["customRules"][0]["ruleId"] == "servers-use-https"
+
+
+def test_export_works_for_the_builtin_guide_and_non_admins():
+    with patch("app.style_guide_routes.db.is_user_tenant_admin", return_value=False), patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_builtin_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=[]):
+        r = client.get(f"/v1/style-guides/acme/{BUILTIN_ID}/export")
+    assert r.status_code == 200
+    assert r.json()["guide"]["name"] == "Apiome Recommended"
+
+
+def test_export_missing_guide_404s():
+    with patch("app.style_guide_routes.db.get_style_guide_by_id", return_value=None):
+        r = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/export")
+    assert r.status_code == 404
+
+
+def test_import_creates_a_guide_and_stores_its_rules(governance):
+    with patch(
+        "app.style_guide_routes.db.create_style_guide", return_value=_custom_row()
+    ) as create, patch(
+        "app.style_guide_routes.db.replace_style_guide_builtin_rules", return_value=True
+    ) as builtin, patch(
+        "app.style_guide_routes.db.replace_style_guide_custom_rules", return_value=True
+    ) as custom:
+        r = client.post(
+            "/v1/style-guides/acme/import",
+            json={"content": _import_doc(), "sourceLabel": "payments.style-guide.json"},
+        )
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["guide"]["id"] == GUIDE_ID
+    assert body["sourceLabel"] == "payments.style-guide.json"
+    assert body["builtinRuleCount"] == 1
+    assert body["customRuleCount"] == 1
+    assert body["skipped"] == [
+        {
+            "ruleId": "future.rule",
+            "reason": "unknown_rule",
+            "detail": "'future.rule' is not a built-in rule on this instance",
+        }
+    ]
+    assert create.call_args[0][:4] == ("t1", "Payments Guide", "House rules", None)
+    assert builtin.call_args[0][2] == [
+        {"rule_id": _BUILTIN_RULE_ID, "enabled": True, "severity": "error"}
+    ]
+    assert custom.call_args[0][2][0]["rule_id"] == "servers-use-https"
+    governance.record.assert_called_once()
+    assert governance.record.call_args.kwargs["change_kind"] == "created"
+    assert governance.audit.call_args.kwargs["detail"]["importedFrom"] == (
+        "payments.style-guide.json"
+    )
+
+
+def test_import_name_overrides_the_documents_name():
+    with patch(
+        "app.style_guide_routes.db.create_style_guide", return_value=_custom_row()
+    ) as create, patch("app.style_guide_routes.db.replace_style_guide_builtin_rules"), patch(
+        "app.style_guide_routes.db.replace_style_guide_custom_rules"
+    ):
+        r = client.post(
+            "/v1/style-guides/acme/import",
+            json={"content": _import_doc(), "name": "Payments (imported)"},
+        )
+    assert r.status_code == 201
+    assert create.call_args[0][1] == "Payments (imported)"
+
+
+def test_import_from_url_fetches_through_the_guard():
+    with patch(
+        "app.style_guide_routes.fetch_style_guide_document",
+        return_value=(_import_doc(), "https://example.com/g.json"),
+    ) as fetch, patch(
+        "app.style_guide_routes.db.create_style_guide", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.replace_style_guide_builtin_rules"), patch(
+        "app.style_guide_routes.db.replace_style_guide_custom_rules"
+    ):
+        r = client.post(
+            "/v1/style-guides/acme/import", json={"url": " https://example.com/g.json "}
+        )
+    assert r.status_code == 201
+    fetch.assert_called_once_with("https://example.com/g.json")
+    assert r.json()["sourceLabel"] == "https://example.com/g.json"
+
+
+def test_import_unfetchable_url_400s():
+    from app.style_guide_transfer import StyleGuideTransferError
+
+    with patch(
+        "app.style_guide_routes.fetch_style_guide_document",
+        side_effect=StyleGuideTransferError("blocked address"),
+    ), patch("app.style_guide_routes.db.create_style_guide") as create:
+        r = client.post("/v1/style-guides/acme/import", json={"url": "http://10.0.0.1/"})
+    assert r.status_code == 400
+    assert "blocked" in r.json()["detail"]
+    create.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "body",
+    [{}, {"content": "{}", "url": "https://example.com/g.json"}, {"content": "   "}],
+)
+def test_import_requires_exactly_one_source(body):
+    r = client.post("/v1/style-guides/acme/import", json=body)
+    assert r.status_code == 422
+
+
+def test_import_malformed_document_422s_with_a_pointer_and_creates_nothing():
+    with patch("app.style_guide_routes.db.create_style_guide") as create:
+        r = client.post(
+            "/v1/style-guides/acme/import",
+            json={"content": _import_doc(builtinRules=[{"ruleId": "x", "enabled": 1}])},
+        )
+    assert r.status_code == 422
+    assert r.json()["detail"]["pointer"] == "builtinRules[0].enabled"
+    create.assert_not_called()
+
+
+def test_import_without_any_name_422s():
+    r = client.post("/v1/style-guides/acme/import", json={"content": _import_doc(guide={})})
+    assert r.status_code == 422
+    assert r.json()["detail"]["pointer"] == "guide.name"
+
+
+def test_import_unknown_profile_422s():
+    r = client.post(
+        "/v1/style-guides/acme/import",
+        json={"content": _import_doc(guide={"name": "G", "externalLintProfile": "bogus"})},
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"]["pointer"] == "guide.externalLintProfile"
+
+
+def test_import_name_conflict_409s_with_code():
+    with patch(
+        "app.style_guide_routes.db.create_style_guide",
+        side_effect=psycopg2.IntegrityError("dup"),
+    ):
+        r = client.post("/v1/style-guides/acme/import", json={"content": _import_doc()})
+    assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "STYLE_GUIDE_NAME_CONFLICT"
+
+
+def test_import_removes_the_guide_when_its_rules_cannot_be_stored(governance):
+    test_client = TestClient(app, raise_server_exceptions=False)
+    with patch(
+        "app.style_guide_routes.db.create_style_guide", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.replace_style_guide_builtin_rules",
+        side_effect=RuntimeError("db down"),
+    ), patch("app.style_guide_routes.db.delete_style_guide") as delete:
+        r = test_client.post("/v1/style-guides/acme/import", json={"content": _import_doc()})
+    assert r.status_code == 500
+    delete.assert_called_once_with(GUIDE_ID, "t1")
+    governance.audit.assert_not_called()
+
+
+def test_export_then_import_round_trips_the_rules():
+    with patch(
+        "app.style_guide_routes.db.get_style_guide_by_id", return_value=_custom_row()
+    ), patch("app.style_guide_routes.db.get_style_guide_rules", return_value=_EXPORT_ROWS):
+        exported = client.get(f"/v1/style-guides/acme/{GUIDE_ID}/export").text
+    with patch(
+        "app.style_guide_routes.db.create_style_guide", return_value=_custom_row()
+    ), patch(
+        "app.style_guide_routes.db.replace_style_guide_builtin_rules"
+    ) as builtin, patch(
+        "app.style_guide_routes.db.replace_style_guide_custom_rules"
+    ) as custom:
+        r = client.post(
+            "/v1/style-guides/acme/import", json={"content": exported, "name": "Copy"}
+        )
+    assert r.status_code == 201
+    assert r.json()["skipped"] == []
+    assert builtin.call_args[0][2] == [
+        {k: _EXPORT_ROWS[0][k] for k in ("rule_id", "enabled", "severity")}
+    ]
+    assert custom.call_args[0][2][0]["custom_def"] == _EXPORT_ROWS[1]["custom_def"]

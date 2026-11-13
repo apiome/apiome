@@ -15,6 +15,8 @@
  *   PUT    /api/style-guides/{id}/default                     -> PUT    /v1/style-guides/{slug}/{id}/default
  *   PUT    /api/style-guides/{id}/assignments/projects/{pid}  -> PUT    /v1/style-guides/{slug}/{id}/assignments/projects/{pid}
  *   DELETE /api/style-guides/assignments/projects/{pid}       -> DELETE /v1/style-guides/{slug}/assignments/projects/{pid}
+ *   GET    /api/style-guides/{id}/export                      -> GET    /v1/style-guides/{slug}/{id}/export  (#1747)
+ *   POST   /api/style-guides/import                           -> POST   /v1/style-guides/{slug}/import       (#1747)
  */
 
 import { NextRequest, NextResponse } from 'next/server';

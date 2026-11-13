@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { BookOpenCheck, Plus, Shield, ShieldCheck, Sparkles } from 'lucide-react';
+import { BookOpenCheck, Plus, Shield, ShieldCheck, Sparkles, Upload } from 'lucide-react';
 
 import { Alert } from '@/app/components/ui/Alert';
 import { Button } from '@/app/components/ui/Button';
@@ -18,22 +18,28 @@ import {
   DeleteGuideDialog,
   EditGuideDialog,
   GuideFormDialog,
+  ImportGuideDialog,
   STYLE_GUIDES_READ_ONLY,
   StyleGuidesReadOnlyCallout,
   StyleGuidesReadOnlyLock,
   StyleGuidesTable,
+  describeStyleGuideImportFailure,
   findBuiltinGuide,
   type AssignableProject,
   type GuideDraft,
   type GuideFormMode,
   type StyleGuide,
+  type StyleGuideImportRequest,
+  type StyleGuideImportResult,
 } from '@/app/components/ade/styleGuides';
 
 import QualityPolicyPanel from './QualityPolicyPanel';
 import VerificationPolicyPanel from './VerificationPolicyPanel';
 import {
+  downloadStyleGuideExport,
   fetchMyPermissions,
   fetchProjectOptions,
+  importStyleGuide,
   styleGuidesApi,
   type MyPermissions,
   type StyleGuideList,
@@ -47,8 +53,8 @@ import {
  *
  * ### What this page owns
  *
- * The guides, the five writes, which tab is showing and which overlay is open. How a guide is
- * *drawn* is `StyleGuidesTable`, the four dialogs are their own components, and the two
+ * The guides, the writes (create, edit, delete, assign, import) and the export download, which tab is showing and which overlay is open. How a guide is
+ * *drawn* is `StyleGuidesTable`, the five dialogs are their own components, and the two
  * policy panels load their own data on mount — so an unopened tab still costs nothing, which
  * is the property the screen this replaces had and is worth keeping.
  *
@@ -97,7 +103,7 @@ const SECTIONS: ReadonlyArray<{
 const CREATE_SHORTCUT_ID = 'style-guides-create';
 
 /** Which overlay, if any, is open over the page. */
-type GuideOverlay = 'none' | 'create' | 'edit' | 'assign' | 'delete';
+type GuideOverlay = 'none' | 'create' | 'edit' | 'assign' | 'delete' | 'import';
 
 /**
  * Turn a caught failure into the sentence to show.
@@ -114,7 +120,7 @@ function describeFailure(error: unknown, fallback: string): string {
  * The style guides page.
  *
  * @returns The header with its three tabs, the guides list, the two policy panels and the
- *   four overlays.
+ *   five overlays.
  */
 export default function StyleGuidesClient() {
   const [guides, setGuides] = React.useState<StyleGuide[]>([]);
@@ -289,6 +295,38 @@ export default function StyleGuidesClient() {
     [runWrite]
   );
 
+  /**
+   * Import a guide from a JSON document (#1747).
+   *
+   * Reports to the dialog, which stays open on the result so a skipped rule is seen. The
+   * list reloads on success, so the new guide is already in it when the dialog closes.
+   */
+  const handleImport = React.useCallback(
+    async (
+      request: StyleGuideImportRequest
+    ): Promise<{ result: StyleGuideImportResult } | { error: string }> => {
+      setBusy(true);
+      try {
+        const result = await importStyleGuide(request);
+        await loadGuides();
+        return { result };
+      } catch (error) {
+        return { error: describeStyleGuideImportFailure(error) };
+      } finally {
+        setBusy(false);
+      }
+    },
+    [loadGuides]
+  );
+
+  /** Download a guide's JSON export; a failure lands in the page's error banner. */
+  const handleExport = React.useCallback((guide: StyleGuide) => {
+    setWriteError('');
+    void downloadStyleGuideExport(guide).catch((error: unknown) =>
+      setWriteError(describeFailure(error, 'Failed to export the style guide'))
+    );
+  }, []);
+
   /** The assign dialog's three writes report to the dialog, which stays open. */
   const runAssignWrite = React.useCallback(
     (fallback: string, write: () => Promise<unknown>) => {
@@ -363,6 +401,15 @@ export default function StyleGuidesClient() {
                   Start from Recommended
                 </Button>
               )}
+              <Button
+                variant="outline"
+                data-testid="style-guides-import"
+                disabled={busy}
+                onClick={() => setOverlay('import')}
+              >
+                <Upload aria-hidden />
+                Import guide
+              </Button>
               <Button
                 kbd="N"
                 data-testid="style-guides-create"
@@ -452,6 +499,7 @@ export default function StyleGuidesClient() {
               setOverlayGuideId(guide.id);
               setOverlay('delete');
             }}
+            onExport={handleExport}
             onCreate={() => openCreate('new', null)}
             onStartFromRecommended={() =>
               recommended && openCreate('recommended', recommended.id)
@@ -515,6 +563,12 @@ export default function StyleGuidesClient() {
         onMakeDefault={handleMakeDefault}
         onAssignProject={handleAssignProject}
         onUnassignProject={handleUnassignProject}
+      />
+
+      <ImportGuideDialog
+        open={overlay === 'import'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        onSubmit={handleImport}
       />
 
       <DeleteGuideDialog

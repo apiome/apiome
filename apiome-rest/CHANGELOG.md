@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.690.0] - 2026-11-12
+
+### Added
+- **Style-guide import/export (#1747)** — a guide's rule configuration now travels as one portable
+  `apiome.style-guide` JSON document (`app.style_guide_transfer`):
+  - `GET /v1/style-guides/{tenantSlug}/{guideId}/export` returns the document — the guide's name,
+    description and external lint profile, its built-in rule overrides (`builtinRules`) and its
+    custom rules (`customRules`) — with `Content-Disposition: attachment;
+    filename="<guide-name>.style-guide.json"`. Readable by any tenant member, including for the
+    read-only built-in guide.
+  - `POST /v1/style-guides/{tenantSlug}/import` (tenant admin) creates a new custom guide from
+    `content` (a paste or an uploaded file's text) or `url` (fetched through the SSRF guard, capped
+    at 1 MiB); `name` overrides the document's `guide.name`. The whole document is validated before
+    anything is written — a malformed one returns **422** with `detail.message` and
+    `detail.pointer` and creates nothing; a name collision returns **409**
+    `STYLE_GUIDE_NAME_CONFLICT`. Built-in rule ids this instance does not register come back in
+    `skipped` (`reason: unknown_rule`) instead of failing the import. The import records the guide's
+    first revision and a `style_guide.created` audit event carrying `importedFrom`.
+  - Policy gates, assignments and revision history are not part of the document.
+- OpenAPI 1.549.0 → 1.550.0.
+
 ## [1.689.0] - 2026-11-12
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 title: "Style guides"
-description: "REST endpoints tagged style-guides: 19 operations."
+description: "REST endpoints tagged style-guides: 21 operations."
 sidebar_position: 99
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.549.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.550.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `style-guides` · 19 operations
+Tag: `style-guides` · 21 operations
 
 ## `GET /v1/style-guides/{tenant_slug}` {#list-style-guides-v1-style-guides-tenant-slug-get}
 
@@ -88,6 +88,43 @@ Operation id: `unassign_project_v1_style_guides__tenant_slug__assignments_projec
 | --- | --- | --- |
 | 200 | Successful response for unassign project. | `application/json` map of string |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/style-guides/{tenant_slug}/import` {#import-style-guide-v1-style-guides-tenant-slug-import-post}
+
+**Import Style Guide**
+
+Create a custom guide from an ``apiome.style-guide`` export document (#1747).
+
+The document comes from ``content`` (a paste or an uploaded file's text) or ``url``
+(fetched through the SSRF guard). It is validated in full before anything is written, so
+a malformed document creates nothing. Built-in rule ids this instance does not register
+are reported in ``skipped`` rather than failing the import. ``name`` overrides the
+document's ``guide.name`` — use it to import next to an existing guide of the same name.
+
+Operation id: `import_style_guide_v1_style_guides__tenant_slug__import_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for import style guide.
+
+- `application/json` — [`StyleGuideImportRequest`](#schema-styleguideimportrequest)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 201 | Successful response for import style guide. | `application/json` [`StyleGuideImportResponse`](#schema-styleguideimportresponse) |
+| 400 | The `url` could not be fetched or was blocked by the SSRF guard. | — |
+| 409 | A guide with the resulting name already exists (`detail.code`). | — |
+| 422 | Malformed document: `detail.message` explains the problem and `detail.pointer` points at the offending node. | — |
 
 ## `PATCH /v1/style-guides/{tenant_slug}/{guide_id}` {#update-style-guide-v1-style-guides-tenant-slug-guide-id-patch}
 
@@ -289,6 +326,35 @@ Operation id: `set_tenant_default_v1_style_guides__tenant_slug___guide_id__defau
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for set tenant default. | `application/json` [`StyleGuideOut`](#schema-styleguideout) |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/style-guides/{tenant_slug}/{guide_id}/export` {#export-style-guide-v1-style-guides-tenant-slug-guide-id-export-get}
+
+**Export Style Guide**
+
+Download a guide's rule configuration as an ``apiome.style-guide`` document (#1747).
+
+The document carries the guide's name, description, external lint profile, built-in
+rule overrides and custom rules — exactly what ``POST …/import`` reads back. Readable by
+any tenant member, and works for the read-only built-in guide too. The response sets
+``Content-Disposition`` so browsers save it as ``<guide-name>.style-guide.json``.
+
+Operation id: `export_style_guide_v1_style_guides__tenant_slug___guide_id__export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `guide_id` | path | string | yes | Style guide identifier. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export style guide. | `application/json` [`StyleGuideExportDocument`](#schema-styleguideexportdocument) |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `GET /v1/style-guides/{tenant_slug}/{guide_id}/policy` {#get-style-guide-policy-settings-v1-style-guides-tenant-slug-guide-id-policy-get}
@@ -621,6 +687,49 @@ A guide's custom-rules YAML document (GOV-2.3, #4435).
 | `source` | string | yes | builtin (read-only, seeded) \| custom (tenant-authored). |
 | `yaml` | string | yes | The Spectral-compatible custom-rules YAML document. |
 | `ruleCount` | integer | yes | Number of custom rules in the document (0 for ``rules: {}``). |
+
+### `StyleGuideExportDocument` {#schema-styleguideexportdocument}
+
+A portable style-guide rule configuration (#1747) — the export and import format.
+
+Carries the guide's name, description and external lint profile, its built-in rule
+overrides and its custom rules. Policy gates, assignments and revision history are not
+included: they are tenant-specific rather than rule configuration.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `format` | string | yes | Always `apiome.style-guide`. |
+| `formatVersion` | integer | yes | Document version (currently 1). |
+| `exportedAt` | string | yes | ISO-8601 time the document was written. |
+| `guide` | `StyleGuideExportGuideOut` | yes | Guide. |
+| `builtinRules` | array of `StyleGuideExportBuiltinRuleOut` | yes | Built-in rule overrides, sorted by ruleId (absent rules are disabled). |
+| `customRules` | array of `StyleGuideExportCustomRuleOut` | yes | Custom rules in stored order. |
+
+### `StyleGuideImportRequest` {#schema-styleguideimportrequest}
+
+Create a style guide from an export document (#1747): the JSON, or a URL to fetch it.
+
+Exactly one of ``content`` (a pasted document or an uploaded file's text) and ``url``
+must be supplied.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `content` | string or null | no | The export document's JSON text (paste or uploaded file). |
+| `url` | string or null | no | http/https URL of an export document to fetch (SSRF-guarded). |
+| `name` | string or null | no | Name for the new guide; defaults to the document's `guide.name`. |
+| `sourceLabel` | string or null | no | Human label for the source (e.g. the uploaded filename), echoed back. |
+
+### `StyleGuideImportResponse` {#schema-styleguideimportresponse}
+
+The guide an import created, with what it stored and what it skipped (#1747).
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `guide` | [`StyleGuideOut`](#schema-styleguideout) | yes | The newly created custom guide. |
+| `sourceLabel` | string or null | no | The source label (the request's, or the fetched URL). |
+| `builtinRuleCount` | integer | yes | Built-in rule rows stored. |
+| `customRuleCount` | integer | yes | Custom rules stored. |
+| `skipped` | array of `StyleGuideImportSkippedRuleOut` | no | Entries not stored — e.g. built-in rule ids this instance does not register. |
 
 ### `StyleGuideListResponse` {#schema-styleguidelistresponse}
 
