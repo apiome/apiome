@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.692.0] - 2026-11-13
+
+### Added
+- **Enterprise change reports: approvals, PDF export and audit trail (CR-V2-01, #2705)**
+  - **Approvals** (`app.change_report_approval`, `app.change_report_enterprise_routes`): a change
+    report is `draft`, `pending_review` or `approved`.
+    `POST /v1/versions/{tenantSlug}/{projectId}/{versionRecordId}/change-report/submit` (the
+    version's creator or a tenant admin), `…/approve` (a tenant admin other than the submitter) and
+    `…/reject` (a tenant admin); approve and reject take an optional `note`. The wrong state returns
+    **409**, the wrong person **403**; JWT only. An edit (`PATCH`) or a regeneration returns the
+    report to `draft`.
+  - **PDF export** (`app.change_report_pdf`): `GET …/change-report/pdf` returns an approved report
+    as `application/pdf` (**409** unless approved), rendered from the effective header, body and
+    footnote with `markdown-it-py` and `fpdf2`. The output is deterministic; its SHA-256 is returned
+    in `X-Content-SHA256` and stored. Raw HTML in a report is escaped, not interpreted.
+  - **Audit trail** (`app.change_report_audit`): `report.edit`, `report.regenerate`,
+    `report.submit`, `report.approve`, `report.reject`, `report.export_pdf`, `template.create`,
+    `template.default_tenant`, `template.default_project`. Read with
+    `GET /v1/tenants/{tenantSlug}/change-report-audit` (tenant admin; filters `action`, `actorId`,
+    `projectId`, `versionId`, `since`, `until`; `limit` and `cursor`).
+  - `VersionChangeReportOut` gains `approvalState`, `submittedBy`, `submittedAt`, `approvedBy`,
+    `approvedAt`, `reviewNote`, `lastPdfSha256`, `lastPdfExportedAt`.
+  - **Entitlement:** the new routes sit behind the `change-report-enterprise` feature flag when
+    `APIOME_CHANGE_REPORT_ENTERPRISE_GATING=true` (default off: every tenant reaches them).
+- Migration `V370__change_report_enterprise_2705.sql` (apiome-db): approval and export columns on
+  `change_reports`, the `change_report_audit` table, and the `change-report-enterprise` flag.
+- Dependencies: `fpdf2`, `markdown-it-py`; bundled DejaVu Sans fonts under `app/data/fonts`.
+- OpenAPI 1.551.0 → 1.552.0.
+
 ## [1.691.0] - 2026-11-13
 
 ### Added

@@ -20,6 +20,7 @@ const ALWAYS_BLOCKED_PATTERNS: RegExp[] = [
   /^\/api\/projects\/[^/]+\/versions\/[^/]+\/revision-lock(\/|$)/,
   /^\/api\/change-report-template-versions(\/|$)/,
   /^\/api\/change-report-template-default(\/|$)/,
+  /^\/api\/change-report-audit(\/|$)/,
 ];
 
 /** Method-aware blocks: matcher → set of HTTP methods that are forbidden. */

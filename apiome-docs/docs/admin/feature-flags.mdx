@@ -36,11 +36,15 @@ answer:
 | **AI Assistant** | `ai_assistant` | yes | Paid, Sponsor |
 | **Repositories** | `repositories` | yes | Paid, Sponsor |
 | **Primitives Type Registry** | `primitives-registry` | yes | Paid, Sponsor |
+| **Enterprise change reports** | `change-report-enterprise` | yes | Paid, Sponsor |
 
 `designer` and `paths` belong to the **Designer** suite, a commercial application. They no longer
 decide whether a person sees it: the user's [Suite Access](./users.mdx#give-a-user-suite-access)
 does, and gives them both flags for the suite. The type registry is only enforced when the REST API runs with
 `APIOME_PRIMITIVES_REGISTRY_GATING=true`; by default every tenant reaches it.
+Enterprise change reports — [review, PDF export and the audit log](../build/versions.mdx#review-approve-and-export-a-change-report)
+— are likewise only enforced when the REST API runs with
+`APIOME_CHANGE_REPORT_ENTERPRISE_GATING=true`.
 
 ## Create or edit a flag
 

@@ -9,6 +9,12 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException
 
 from .auth import get_authenticated_user_id, validate_authentication
+from .change_report_approval import STATE_DRAFT, normalize_state
+from .change_report_audit import (
+    ACTION_REPORT_EDIT,
+    ACTION_REPORT_REGENERATE,
+    record_change_report_audit,
+)
 from .change_report_render import render_from_template_row
 from .change_report_template_resolve import resolve_effective_change_report_template
 from .database import db
@@ -79,9 +85,61 @@ def _row_to_out(row: Dict[str, Any]) -> VersionChangeReportOut:
         template_version_id=_str_id(row.get("template_version_id")),
         rendered_at=_iso(row.get("rendered_at")),
         regenerated_at=_iso(row.get("regenerated_at")),
+        approval_state=normalize_state(row.get("approval_state")),
+        submitted_by=_str_id(row.get("submitted_by")),
+        submitted_at=_iso(row.get("submitted_at")),
+        approved_by=_str_id(row.get("approved_by")),
+        approved_at=_iso(row.get("approved_at")),
+        review_note=row.get("review_note"),
+        last_pdf_sha256=row.get("last_pdf_sha256"),
+        last_pdf_exported_at=_iso(row.get("last_pdf_exported_at")),
         created_at=_iso(row.get("created_at")),
         updated_at=_iso(row.get("updated_at")),
     )
+
+
+def _after_content_change(
+    row: Dict[str, Any],
+    previous: Dict[str, Any],
+    *,
+    action: str,
+    auth_data: Dict[str, Any],
+    detail: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return a report to ``draft`` and audit the change, after an edit or a regeneration (#2705).
+
+    An approval covers the content that was reviewed; once the content changes the report needs
+    a new review before it can be exported. The reset only touches a report that had left
+    ``draft``, so a tenant that never uses approvals sees no extra write.
+
+    Args:
+        row: The report row as the content write returned it.
+        previous: The report row before the write (its approval state is what gets reset).
+        action: The audit verb — ``report.edit`` or ``report.regenerate``.
+        auth_data: The request's auth context (tenant and actor).
+        detail: Structured context for the audit row.
+
+    Returns:
+        The report row to answer with — reset to draft when it had been submitted or approved.
+    """
+    was = normalize_state(previous.get("approval_state"))
+    if was != STATE_DRAFT:
+        reset = db.reset_change_report_approval(
+            str(row["published_revision_id"]), str(row["tenant_id"]), str(row["project_id"])
+        )
+        if reset:
+            row = reset
+    record_change_report_audit(
+        db,
+        auth_data,
+        action,
+        project_id=_str_id(row.get("project_id")),
+        change_report_id=_str_id(row.get("id")),
+        published_revision_id=_str_id(row.get("published_revision_id")),
+        template_version_id=_str_id(row.get("template_version_id")),
+        detail={**detail, "approval_state_before": was, "approval_reset": was != STATE_DRAFT},
+    )
+    return row
 
 
 def _can_edit_change_report(version: Dict[str, Any], user_id: Optional[str], tenant_id: str) -> bool:
@@ -151,6 +209,10 @@ async def patch_version_change_report(
 
     **Semantics:** Each optional field is a full snapshot of that slice (not a diff). Sending
     ``null`` for a field clears that user override. ``clearEdits: true`` removes all overrides.
+
+    **Approval (#2705):** an edit returns a submitted or approved report to ``draft`` — the new
+    content needs a new review before it can be exported as PDF — and is written to the audit
+    trail.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
@@ -220,6 +282,20 @@ async def patch_version_change_report(
         )
     if not row:
         raise HTTPException(status_code=404, detail="Change report not found")
+    row = _after_content_change(
+        row,
+        existing,
+        action=ACTION_REPORT_EDIT,
+        auth_data=auth_data,
+        detail={
+            "cleared": clear,
+            "fields": sorted(
+                f
+                for f in fs
+                if f in ("edited_rendered_body", "edited_header_snapshot", "edited_footnote_snapshot")
+            ),
+        },
+    )
     return _row_to_out(row)
 
 
@@ -241,6 +317,9 @@ async def regenerate_version_change_report(
     default, then the system template (**1.0.0**).
 
     **Authorization:** Same as PATCH (creator or tenant admin, JWT required).
+
+    **Approval (#2705):** like an edit, a regeneration returns the report to ``draft`` and is
+    written to the audit trail.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     _ = tenant_slug
@@ -300,6 +379,13 @@ async def regenerate_version_change_report(
     )
     if not row:
         raise HTTPException(status_code=404, detail="Change report not found")
+    row = _after_content_change(
+        row,
+        existing,
+        action=ACTION_REPORT_REGENERATE,
+        auth_data=auth_data,
+        detail={"discarded_user_edits": bool(body.discard_user_edits)},
+    )
     return _row_to_out(row)
 
 

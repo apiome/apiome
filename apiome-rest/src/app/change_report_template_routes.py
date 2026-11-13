@@ -13,6 +13,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from .auth import get_authenticated_user_id, validate_authentication
 from .change_report_render import validate_change_report_templates, validate_template_semver
 from .change_report_template_resolve import template_accessible_to_tenant
+from .change_report_audit import (
+    ACTION_TEMPLATE_CREATE,
+    ACTION_TEMPLATE_DEFAULT_PROJECT,
+    ACTION_TEMPLATE_DEFAULT_TENANT,
+    record_change_report_audit,
+)
 from .database import db
 from .permissions import enforce_permission, Resource, Action
 from .models import (
@@ -128,6 +134,14 @@ async def create_change_report_template_version(
             ) from exc
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
+    record_change_report_audit(
+        db,
+        auth_data,
+        ACTION_TEMPLATE_CREATE,
+        template_version_id=_str_id(row["id"]),
+        detail={"semver": str(row.get("semver") or "")},
+    )
+
     return ChangeReportTemplateVersionOut(
         id=_str_id(row["id"]) or "",
         semver=str(row.get("semver") or ""),
@@ -157,6 +171,13 @@ async def put_tenant_change_report_template_default(
     _assert_tenant_admin(tenant_id, user_id)
     _assert_template_assignable(tenant_id, body.template_version_id)
     db.set_tenant_change_report_template_version(tenant_id, body.template_version_id)
+    record_change_report_audit(
+        db,
+        auth_data,
+        ACTION_TEMPLATE_DEFAULT_TENANT,
+        template_version_id=body.template_version_id,
+        detail={"cleared": body.template_version_id is None},
+    )
     return {"status": "ok"}
 
 
@@ -189,4 +210,12 @@ async def put_project_change_report_template_default(
     )
     if not updated:
         raise HTTPException(status_code=404, detail="project not found")
+    record_change_report_audit(
+        db,
+        auth_data,
+        ACTION_TEMPLATE_DEFAULT_PROJECT,
+        project_id=project_id,
+        template_version_id=body.template_version_id,
+        detail={"cleared": body.template_version_id is None},
+    )
     return {"status": "ok"}

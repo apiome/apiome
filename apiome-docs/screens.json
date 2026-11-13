@@ -197,6 +197,25 @@
       "data": "fixture:hive-versions/tab-changes.html"
     },
     {
+      "id": "change-report-approval",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"change-report-approval-bar\"]",
+      "data": "fixture:hive-change-report/approval.html",
+      "sources": [
+        "apiome-ui/src/app/ade/dashboard/versions/VersionChangeReportPanel.tsx",
+        "apiome-ui/src/app/components/ade/versions/changeReport/ChangeReportApprovalBar.tsx"
+      ]
+    },
+    {
+      "id": "change-report-audit",
+      "route": "/ade/dashboard/versions",
+      "waitFor": "[data-testid=\"change-report-audit-dialog\"]",
+      "data": "fixture:hive-change-report/audit.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/versions/changeReport/ChangeReportAuditDialog.tsx"
+      ]
+    },
+    {
       "id": "versions-test-bench",
       "route": "/ade/dashboard/versions",
       "waitFor": "#a11y-mount > *",

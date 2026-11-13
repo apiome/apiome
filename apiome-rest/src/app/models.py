@@ -10768,8 +10768,66 @@ class VersionChangeReportOut(BaseModel):
     template_version_id: Optional[str] = Field(None, serialization_alias="templateVersionId")
     rendered_at: Optional[str] = Field(None, serialization_alias="renderedAt")
     regenerated_at: Optional[str] = Field(None, serialization_alias="regeneratedAt")
+    # Review and export record (#2705). ``approvalState`` is draft, pending_review or approved;
+    # only an approved report can be exported as PDF, and an edit or a regeneration returns it
+    # to draft.
+    approval_state: str = Field("draft", serialization_alias="approvalState")
+    submitted_by: Optional[str] = Field(None, serialization_alias="submittedBy")
+    submitted_at: Optional[str] = Field(None, serialization_alias="submittedAt")
+    approved_by: Optional[str] = Field(None, serialization_alias="approvedBy")
+    approved_at: Optional[str] = Field(None, serialization_alias="approvedAt")
+    review_note: Optional[str] = Field(None, serialization_alias="reviewNote")
+    last_pdf_sha256: Optional[str] = Field(None, serialization_alias="lastPdfSha256")
+    last_pdf_exported_at: Optional[str] = Field(None, serialization_alias="lastPdfExportedAt")
     created_at: Optional[str] = Field(None, serialization_alias="createdAt")
     updated_at: Optional[str] = Field(None, serialization_alias="updatedAt")
+
+
+class ChangeReportReviewRequest(BaseModel):
+    """Body of an approve / reject call on a change report (#2705). The note is optional."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    note: Optional[str] = Field(
+        default=None,
+        max_length=1000,
+        description="The reviewer's note, kept with the report and written to the audit trail.",
+    )
+
+
+class ChangeReportAuditEntryOut(BaseModel):
+    """One row of the change-report audit trail (#2705)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    tenant_id: str = Field(serialization_alias="tenantId")
+    project_id: Optional[str] = Field(None, serialization_alias="projectId")
+    change_report_id: Optional[str] = Field(None, serialization_alias="changeReportId")
+    published_revision_id: Optional[str] = Field(None, serialization_alias="publishedRevisionId")
+    template_version_id: Optional[str] = Field(None, serialization_alias="templateVersionId")
+    action: str = Field(
+        description="Audit verb: report.edit, report.regenerate, report.submit, report.approve, "
+                    "report.reject, report.export_pdf, template.create, template.default_tenant "
+                    "or template.default_project."
+    )
+    actor_id: Optional[str] = Field(None, serialization_alias="actorId")
+    detail: Optional[Dict[str, Any]] = None
+    created_at: str = Field(serialization_alias="createdAt")
+
+
+class ChangeReportAuditPageOut(BaseModel):
+    """One page of the change-report audit trail, newest first (#2705)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    items: List[ChangeReportAuditEntryOut] = Field(default_factory=list)
+    limit: int = Field(description="The page size that was applied.")
+    next_cursor: Optional[str] = Field(
+        None,
+        serialization_alias="nextCursor",
+        description="Pass as `cursor` for the next (older) page; null on the last page.",
+    )
 
 
 class VersionChangeReportPatch(BaseModel):

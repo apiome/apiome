@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Markdown, MARKDOWN_EMPTY_EM_DASH } from '@/app/components/ui/Markdown';
 import { githubMarkdownComponents } from '@/app/components/ui/markdownGithubComponents';
 import Mustache from 'mustache';
-import { FileText, LayoutTemplate, Loader2, RefreshCw, Settings2 } from 'lucide-react';
+import { FileText, History, LayoutTemplate, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 import { toast } from '../../../components/ui/toast';
 import { Button } from '@/app/components/ui/Button';
 import { Label } from '@/app/components/ui/Label';
@@ -24,6 +24,11 @@ import { buildMustacheContext } from '@lib/change-report-mustache-context';
 import sampleFixture from '@lib/change-report-sample-fixture.json';
 import { VERSION_DIALOG_COPY } from '@/app/components/ade/version-dialogs/versionDialogsModel';
 import { VersionDialogHead } from '@/app/components/ade/versions';
+import {
+  ChangeReportApprovalBar,
+  ChangeReportAuditDialog,
+  type ChangeReportApproval,
+} from '@/app/components/ade/versions/changeReport';
 
 export type VersionChangeReportVersionRow = {
   id: string;
@@ -41,7 +46,7 @@ export type VersionChangeReportPanelProps = {
   effectiveIsAdmin: boolean;
 };
 
-type VersionChangeReportOut = {
+type VersionChangeReportOut = ChangeReportApproval & {
   effectiveHeaderSnapshot?: string | null;
   effectiveRenderedBody?: string | null;
   effectiveFootnoteSnapshot?: string | null;
@@ -105,6 +110,8 @@ export function VersionChangeReportPanel({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<VersionChangeReportOut | null>(null);
+  /** The audit log (#2705): tenant administrators only. */
+  const [auditOpen, setAuditOpen] = useState(false);
 
   const selected = published.find((p) => p.id === revisionId);
   const canEdit =
@@ -446,6 +453,19 @@ export function VersionChangeReportPanel({
           <Settings2 aria-hidden />
           Templates
         </Button>
+        {effectiveIsAdmin ? (
+          <Button
+            type="button"
+            variant="secondary"
+            data-testid="change-report-audit-open"
+            onClick={() => setAuditOpen(true)}
+            disabled={!revisionId}
+            title={revisionId ? 'Who changed, reviewed and exported change reports' : 'Choose a revision first'}
+          >
+            <History aria-hidden />
+            Audit log
+          </Button>
+        ) : null}
       </div>
 
       {loading && !report ? (
@@ -483,6 +503,18 @@ export function VersionChangeReportPanel({
               </div>
             ) : null}
           </div>
+
+          <ChangeReportApprovalBar
+            projectId={projectId}
+            revisionId={revisionId}
+            approval={report}
+            currentUserId={currentUserId}
+            canEdit={Boolean(canEdit)}
+            isAdmin={effectiveIsAdmin}
+            // A transition answers with the whole report, so it replaces the one on screen.
+            onReportChange={(next) => setReport((current) => ({ ...current, ...next }))}
+            onExported={() => void loadReport()}
+          />
 
           {canEdit ? (
             <div
@@ -713,6 +745,13 @@ export function VersionChangeReportPanel({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {auditOpen && revisionId ? (
+        <ChangeReportAuditDialog
+          revisionId={revisionId}
+          revisionLabel={selected ? `v${selected.version_id}` : 'this revision'}
+          onClose={() => setAuditOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

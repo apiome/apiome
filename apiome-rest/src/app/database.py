@@ -17219,6 +17219,8 @@ class Database:
                    change_model_json, rendered_body, header_snapshot, footnote_snapshot,
                    edited_rendered_body, edited_header_snapshot, edited_footnote_snapshot,
                    edited_at, edited_by, template_version_id, rendered_at, regenerated_at,
+                   approval_state, submitted_by, submitted_at, approved_by, approved_at,
+                   review_note, last_pdf_sha256, last_pdf_exported_at,
                    created_at, updated_at
             FROM apiome.change_reports
             WHERE published_revision_id = %s::uuid
@@ -17228,6 +17230,290 @@ class Database:
         """
         rows = self.execute_query(q, (published_revision_id, tenant_id, project_id))
         return dict(rows[0]) if rows else None
+
+    # ==================== Enterprise change reports (#2705, CR-V2-01) ====================
+
+    # Columns an approval / export write returns — the same projection the report read uses.
+    _CHANGE_REPORT_RETURNING = """
+                RETURNING id, tenant_id, project_id, published_revision_id, baseline_revision_id,
+                          change_model_json, rendered_body, header_snapshot, footnote_snapshot,
+                          edited_rendered_body, edited_header_snapshot, edited_footnote_snapshot,
+                          edited_at, edited_by, template_version_id, rendered_at, regenerated_at,
+                          approval_state, submitted_by, submitted_at, approved_by, approved_at,
+                          review_note, last_pdf_sha256, last_pdf_exported_at,
+                          created_at, updated_at
+    """
+
+    def _write_change_report(self, query: str, params: tuple) -> Optional[Dict[str, Any]]:
+        """Run one change-report UPDATE and return the updated row.
+
+        Args:
+            query: The UPDATE statement (ending in ``_CHANGE_REPORT_RETURNING``).
+            params: Its bound parameters.
+
+        Returns:
+            The updated row, or None when no row matched.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(query, params)
+                row = cursor.fetchone()
+                conn.commit()
+                return dict(row) if row else None
+        except Exception as e:
+            conn.rollback()
+            raise e
+
+    def transition_change_report_approval(
+        self,
+        published_revision_id: str,
+        tenant_id: str,
+        project_id: str,
+        *,
+        from_state: str,
+        to_state: str,
+        actor_id: str,
+        review_note: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Move a change report from one approval state to another (#2705).
+
+        The UPDATE is conditional on ``from_state``, so two reviewers acting at once cannot
+        both succeed: the second finds no row and gets None. ``updated_at`` is left alone: it
+        marks the last *content* change, which is what pins the PDF's creation date.
+
+        Args:
+            published_revision_id: The published version the report belongs to.
+            tenant_id: The owning tenant id (scopes the write).
+            project_id: The owning project id.
+            from_state: The state the report must be in.
+            to_state: ``pending_review`` (submit), ``approved`` (approve) or ``draft`` (reject).
+            actor_id: The acting user: recorded as submitter on submit, approver on approve.
+            review_note: The reviewer's note on approve / reject; ignored on submit.
+
+        Returns:
+            The updated report row, or None when it is missing or no longer in ``from_state``.
+        """
+        if to_state == "pending_review":
+            assignments = """
+                    submitted_by = %s::uuid,
+                    submitted_at = CURRENT_TIMESTAMP,
+                    approved_by = NULL,
+                    approved_at = NULL,
+                    review_note = NULL
+            """
+            values: tuple = (actor_id,)
+        elif to_state == "approved":
+            assignments = """
+                    approved_by = %s::uuid,
+                    approved_at = CURRENT_TIMESTAMP,
+                    review_note = %s
+            """
+            values = (actor_id, review_note)
+        else:
+            # Rejected: back to draft, keeping who submitted it and the reviewer's note.
+            assignments = """
+                    approved_by = NULL,
+                    approved_at = NULL,
+                    review_note = %s
+            """
+            values = (review_note,)
+        q = f"""
+                UPDATE apiome.change_reports
+                SET approval_state = %s,
+                    {assignments.strip()}
+                WHERE published_revision_id = %s::uuid
+                  AND tenant_id = %s::uuid
+                  AND project_id = %s::uuid
+                  AND approval_state = %s
+                {self._CHANGE_REPORT_RETURNING}
+        """
+        return self._write_change_report(
+            q,
+            (to_state, *values, published_revision_id, tenant_id, project_id, from_state),
+        )
+
+    def reset_change_report_approval(
+        self,
+        published_revision_id: str,
+        tenant_id: str,
+        project_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Return a change report to ``draft`` after its content changed (#2705).
+
+        Called after an edit or a regeneration: an approval covers the content that was
+        reviewed, so new content needs a new review. Clears the submitter, approver and note.
+        The last PDF's hash is kept — it records a file that was really handed out.
+
+        Args:
+            published_revision_id: The published version the report belongs to.
+            tenant_id: The owning tenant id (scopes the write).
+            project_id: The owning project id.
+
+        Returns:
+            The report row after the reset, or None when it is missing.
+        """
+        q = f"""
+                UPDATE apiome.change_reports
+                SET approval_state = 'draft',
+                    submitted_by = NULL,
+                    submitted_at = NULL,
+                    approved_by = NULL,
+                    approved_at = NULL,
+                    review_note = NULL
+                WHERE published_revision_id = %s::uuid
+                  AND tenant_id = %s::uuid
+                  AND project_id = %s::uuid
+                {self._CHANGE_REPORT_RETURNING}
+        """
+        return self._write_change_report(q, (published_revision_id, tenant_id, project_id))
+
+    def record_change_report_pdf_export(
+        self,
+        published_revision_id: str,
+        tenant_id: str,
+        project_id: str,
+        sha256: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Store the hash and time of a change report's latest PDF export (#2705).
+
+        Args:
+            published_revision_id: The published version the report belongs to.
+            tenant_id: The owning tenant id (scopes the write).
+            project_id: The owning project id.
+            sha256: SHA-256 of the exported PDF, lowercase hex.
+
+        Returns:
+            The updated report row, or None when it is missing.
+        """
+        q = f"""
+                UPDATE apiome.change_reports
+                SET last_pdf_sha256 = %s,
+                    last_pdf_exported_at = CURRENT_TIMESTAMP
+                WHERE published_revision_id = %s::uuid
+                  AND tenant_id = %s::uuid
+                  AND project_id = %s::uuid
+                {self._CHANGE_REPORT_RETURNING}
+        """
+        return self._write_change_report(
+            q, (sha256, published_revision_id, tenant_id, project_id)
+        )
+
+    def insert_change_report_audit(
+        self,
+        tenant_id: str,
+        action: str,
+        *,
+        project_id: Optional[str] = None,
+        change_report_id: Optional[str] = None,
+        published_revision_id: Optional[str] = None,
+        template_version_id: Optional[str] = None,
+        actor_id: Optional[str] = None,
+        detail: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Append one change-report audit row (#2705).
+
+        Best-effort: logs and swallows database errors, so a failed audit write can never
+        fail the report or template action it records.
+
+        Args:
+            tenant_id: Owning tenant (required).
+            action: Audit verb, e.g. ``report.approve`` or ``template.create``.
+            project_id: Project the event belongs to, when it has one.
+            change_report_id: Affected report id; None for template events.
+            published_revision_id: Published version of the affected report, when one.
+            template_version_id: Template version involved, when one.
+            actor_id: User who performed the action (None when not attributable).
+            detail: Structured JSON context.
+        """
+        conn = self.connect()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO apiome.change_report_audit
+                      (tenant_id, project_id, change_report_id, published_revision_id,
+                       template_version_id, action, actor_id, detail)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+                    """,
+                    (
+                        tenant_id,
+                        project_id,
+                        change_report_id,
+                        published_revision_id,
+                        template_version_id,
+                        action,
+                        actor_id,
+                        json.dumps(detail) if detail is not None else None,
+                    ),
+                )
+                conn.commit()
+        except Exception as e:
+            conn.rollback()
+            _logger.warning("insert_change_report_audit(%s) failed: %s", action, e)
+
+    def list_change_report_audit(
+        self,
+        tenant_id: str,
+        *,
+        actions: Optional[List[str]] = None,
+        actor_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        published_revision_id: Optional[str] = None,
+        since: Optional[datetime] = None,
+        until: Optional[datetime] = None,
+        before: Optional[tuple] = None,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """List a tenant's change-report audit rows, newest first (#2705).
+
+        Args:
+            tenant_id: The tenant whose trail is read.
+            actions: Only these audit verbs, when given.
+            actor_id: Only events by this user, when given.
+            project_id: Only events of this project, when given.
+            published_revision_id: Only events of this published version's report, when given.
+            since: Inclusive lower bound on ``created_at``.
+            until: Inclusive upper bound on ``created_at``.
+            before: Keyset cursor ``(created_at, id)``: only rows strictly older than it.
+            limit: Maximum rows to return.
+
+        Returns:
+            Audit rows ordered by ``created_at DESC, id DESC``.
+        """
+        where = ["tenant_id = %s::uuid"]
+        params: List[Any] = [tenant_id]
+        if actions:
+            where.append("action = ANY(%s)")
+            params.append(list(actions))
+        if actor_id:
+            where.append("actor_id = %s::uuid")
+            params.append(actor_id)
+        if project_id:
+            where.append("project_id = %s::uuid")
+            params.append(project_id)
+        if published_revision_id:
+            where.append("published_revision_id = %s::uuid")
+            params.append(published_revision_id)
+        if since is not None:
+            where.append("created_at >= %s")
+            params.append(since)
+        if until is not None:
+            where.append("created_at <= %s")
+            params.append(until)
+        if before is not None:
+            where.append("(created_at, id) < (%s, %s::uuid)")
+            params.extend([before[0], before[1]])
+        params.append(limit)
+        q = f"""
+            SELECT id, tenant_id, project_id, change_report_id, published_revision_id,
+                   template_version_id, action, actor_id, detail, created_at
+            FROM apiome.change_report_audit
+            WHERE {' AND '.join(where)}
+            ORDER BY created_at DESC, id DESC
+            LIMIT %s
+        """
+        return [dict(r) for r in self.execute_query(q, tuple(params))]
 
     def get_version_changelog(
         self,
