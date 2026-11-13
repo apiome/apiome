@@ -756,6 +756,11 @@ class PrimitiveSchema(BaseModel):
     # scope, tenant_label}. Only the single-primitive GET computes it; the list
     # endpoints leave it empty rather than run a reverse scan per row.
     dependents: List[Dict[str, Any]] = []
+    # "Used by properties" (#3477): the caller's class properties bound to this type
+    # through ``class_properties.primitive_id`` (#3475), one entry per property as
+    # {class_property_id, property, parent_id, primitive_ref, class_id, class_name,
+    # version_id, version_label, project_id, project_name}. Single-primitive GET only.
+    property_dependents: List[Dict[str, Any]] = []
     created_at: Optional[Union[datetime, str]] = None
     updated_at: Optional[Union[datetime, str]] = None
     enabled: bool = True

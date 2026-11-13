@@ -33,6 +33,7 @@ import type { StatusTone } from '@/app/components/ui/statusVocabulary';
 import {
   scopeLabel,
   type DependentRef,
+  type PropertyDependentRef,
   type RefEdge,
   type BaseChainNode,
   type UsageSummary,
@@ -71,6 +72,8 @@ export interface PrimitiveDetail {
   source?: string;
   refs?: RefEdge[];
   dependents?: DependentRef[];
+  /** The caller's class properties bound to this type (#3477). */
+  property_dependents?: PropertyDependentRef[];
   usage_count: number;
   tags?: string[];
   created_at?: string | null;
@@ -336,6 +339,45 @@ export const NO_DEPENDENTS_DESCRIPTION = 'A $ref from another type lists it here
  */
 export function dependentsFootLabel(count: number): string {
   return `${count} ${count === 1 ? 'dependent' : 'dependents'}`;
+}
+
+/**
+ * How a bound property is named in its row: `Class.property`.
+ *
+ * @param dep The bound property.
+ * @returns The label, falling back to whichever half is known.
+ */
+export function propertyDependentLabel(dep: PropertyDependentRef): string {
+  const owner = dep.class_name ?? EMPTY_VALUE;
+  return dep.property ? `${owner}.${dep.property}` : owner;
+}
+
+/**
+ * Where a bound property lives: `Project · version`.
+ *
+ * @param dep The bound property.
+ * @returns The project and version, or whichever is known, or {@link EMPTY_VALUE}.
+ */
+export function propertyDependentLocation(dep: PropertyDependentRef): string {
+  const parts = [dep.project_name, dep.version_label].filter(
+    (part): part is string => typeof part === 'string' && part.length > 0
+  );
+  return parts.length > 0 ? parts.join(' · ') : EMPTY_VALUE;
+}
+
+/** What the "Used by properties" table says when no property is bound to this type. */
+export const NO_PROPERTY_DEPENDENTS_TITLE = 'No property in your projects uses this type';
+export const NO_PROPERTY_DEPENDENTS_DESCRIPTION =
+  'Bind a Designer property to this type and it is listed here.';
+
+/**
+ * The "Used by properties" table's foot.
+ *
+ * @param count How many bound properties are listed.
+ * @returns `"3 properties"`, singular when there is one.
+ */
+export function propertyDependentsFootLabel(count: number): string {
+  return `${count} ${count === 1 ? 'property' : 'properties'}`;
 }
 
 /** How the generated example was chosen, stated for the reader who wonders. */

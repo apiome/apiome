@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.688.0] - 2026-11-12
+
+### Added
+- **"Used by properties" reverse index (Primitives 6.4, #3477)** — `GET
+  /v1/primitives/{tenant_slug}/{primitive_id}` now returns `property_dependents`: the class
+  properties bound to the type through `class_properties.primitive_id` (#3475), one entry per
+  property as `{class_property_id, property, parent_id, primitive_ref, class_id, class_name,
+  version_id, version_label, project_id, project_name}`, ordered by project, version, class and
+  property. Scope-aware: only the caller's own (non-deleted) projects are searched, so a shared
+  system type never reveals another tenant's model; a system type (`is_system`) also matches
+  properties bound to its per-tenant system copies with the same `$id`, while a tenant type
+  matches only its own row. List endpoints leave the field empty. OpenAPI 1.547.0 → 1.548.0.
+
 ## [1.687.0] - 2026-11-11
 
 ### Added

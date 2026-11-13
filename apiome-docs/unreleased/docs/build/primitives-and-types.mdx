@@ -41,13 +41,38 @@ resolver”** to go to the **Resolver** tab, or **“Got it”** to close it.
 <Screenshot id="primitive-detail" alt="A type's page: its JSON Schema, metadata, where it is used, and its base chain" />
 
 The page shows the type's **JSON Schema (2020-12)** (**Copy**, **Download**), **Test this type**,
-**Reference resolution**, an **Example instance** and its **Dependents**; on the right, **Metadata**,
-**Used in** and **Base chain**. **“Edit”** and **“Export”** are in the header.
+**Reference resolution**, an **Example instance**, its **Dependents** and **Used by properties**; on
+the right, **Metadata**, **Used in** and **Base chain**. **“Edit”** and **“Export”** are in the
+header.
 
 To check a payload against the type, open **Test this type**, choose **Single** or **Array** and
 type the value — it is validated as you type.
 
 <Screenshot id="primitive-testing" alt="Test this type: a payload validated against the type, with the problems found" />
+
+### See what uses a type
+
+Before you change a type, check what depends on it. **Scroll down** a type's page to two cards:
+
+<Screenshot id="primitive-detail-used-by-properties" alt="The Dependents table with three referencing types, and the Used by properties table with two bound class properties" />
+
+- **Dependents** has one row for each `$ref` from another type to this one: the referencing type
+  (click it to open it), the **Property** the `$ref` sits on (a dash when the whole type is a
+  reference), and its **Scope** — **System · core** or **Tenant · *your workspace***. A type that
+  references this one from two properties has two rows.
+- **Used by properties** has one row for each class property bound to this type — the ones whose
+  **Primitive** you chose in the Designer: the property as `Class.property` (click it to open that
+  version in the Designer; without Designer access it is plain text), its **Project · Version**,
+  and the registry `$ref` it is **Bound as**.
+
+**Used by properties** covers only your workspace's projects: a system type is shared by every
+workspace, but you never see another workspace's properties. Properties in deleted classes,
+versions or projects are left out. When nothing is bound, the card reads **No property in your
+projects uses this type**.
+
+The **Properties** figure under **Used in** is the type's running binding count, so it can be
+higher than the list: it also counts bindings removed since, and a system type's bindings in other
+workspaces.
 
 ## Create a type
 
@@ -121,7 +146,8 @@ settings”**, or **“Reset to defaults”**.
 ## With the CLI or the API
 
 - CLI: `apiome types list|show|search` — see the [CLI quick-start](../reference/cli-quickstart.md).
-- REST: `GET` / `POST /v1/primitives/{tenant}`, `POST /v1/primitives/{tenant}/import`,
+- REST: `GET` / `POST /v1/primitives/{tenant}`, `GET /v1/primitives/{tenant}/{id}` (with
+  `dependents` and `property_dependents`), `POST /v1/primitives/{tenant}/import`,
   `GET` / `POST /v1/types/{tenant}/namespaces`, `GET` / `PUT /v1/types/{tenant}/settings`,
   `POST /v1/types/{tenant}/resolve` — see the [API reference](../reference/api-reference.md).
 

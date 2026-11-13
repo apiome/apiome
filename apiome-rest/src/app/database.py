@@ -2736,6 +2736,66 @@ class Database:
         """
         return self.execute_query(query, (tenant_id, target_schema_id, tenant_id))
 
+    def get_property_bindings_for_primitive(
+        self,
+        primitive_id: str,
+        tenant_id: str,
+        *,
+        is_system: bool = False,
+        schema_id: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """List the class properties bound to a primitive — "Used by properties" (#3477).
+
+        The reverse of the property→type binding (#3475): ``class_properties.primitive_id``
+        is an ordinary FK to ``apiome.primitives``, indexed for exactly this lookup
+        (``idx_class_properties_primitive_id``, V112).
+
+        Scope-aware on both sides of the binding:
+
+        * **Properties** are only ever the caller's own — the class's project must belong to
+          ``tenant_id`` and none of class, version or project may be soft-deleted — so viewing
+          a shared system type never reveals another tenant's model.
+        * **The bound type** matches by row id. A system type (``is_system``) is seeded per
+          tenant, so a property bound to any system copy carrying the same ``$id`` binds the
+          same type and is listed too; a tenant type matches only its own row.
+
+        Args:
+            primitive_id: The id of the primitive being viewed.
+            tenant_id: The caller's tenant id (scopes the properties).
+            is_system: Whether the viewed primitive is a system type.
+            schema_id: The viewed primitive's ``$id``; only consulted for a system type.
+
+        Returns:
+            Rows of ``class_property_id, property_name, parent_id, primitive_ref, class_id,
+            class_name, version_id, version_label, project_id, project_name``, ordered by
+            project, version, class then property. Empty when nothing is bound.
+        """
+        match_system_copies = bool(is_system and schema_id)
+        query = """
+            SELECT cp.id AS class_property_id, cp.name AS property_name, cp.parent_id,
+                   cp.primitive_ref,
+                   c.id AS class_id, c.name AS class_name,
+                   v.id AS version_id, v.version_id AS version_label,
+                   p.id AS project_id, p.name AS project_name
+            FROM apiome.class_properties cp
+            JOIN apiome.primitives bp ON bp.id = cp.primitive_id
+            JOIN apiome.classes c ON c.id = cp.class_id
+            JOIN apiome.versions v ON v.id = c.version_id
+            JOIN apiome.projects p ON p.id = v.project_id
+            WHERE p.tenant_id = %s
+              AND c.deleted_at IS NULL
+              AND v.deleted_at IS NULL
+              AND p.deleted_at IS NULL
+              AND (
+                  cp.primitive_id = %s
+                  OR (%s AND bp.is_system = true AND bp.schema_id = %s)
+              )
+            ORDER BY p.name, v.version_id, c.name, cp.name
+        """
+        return self.execute_query(
+            query, (tenant_id, primitive_id, match_system_copies, schema_id)
+        )
+
     def mark_refs_resolved_to_target(self, tenant_id: str, target_schema_id: str) -> int:
         """Clear the unresolved flag on edges that point at a now-existing target (#3457).
 

@@ -64,6 +64,14 @@ jest.mock('@monaco-editor/react', () => ({
   ),
 }));
 
+// The "Used by properties" rows deep-link into the Designer through the suite's configured
+// editor URL; pin it so the link is assertable without a links config.
+jest.mock('../lib/external-links', () => ({
+  ...jest.requireActual('../lib/external-links'),
+  buildDesignerEditorHref: (projectId: string, versionId: string) =>
+    projectId === 'no-designer' ? null : `/studio/editor?projectId=${projectId}&versionId=${versionId}`,
+}));
+
 import PrimitiveDetailClient from '../src/app/ade/dashboard/primitives/[id]/PrimitiveDetailClient';
 
 const SYSTEM_MONEY = {
@@ -141,6 +149,8 @@ async function renderDetail(primitive: unknown = SYSTEM_MONEY) {
 const refsTable = () => screen.getByRole('table', { name: 'Reference resolution' });
 /** The dependents table, likewise. */
 const dependentsTable = () => screen.getByRole('table', { name: 'Dependents' });
+/** The "Used by properties" table (#3477). */
+const propertyDependentsTable = () => screen.getByRole('table', { name: 'Used by properties' });
 
 describe('the page chrome', () => {
   afterEach(() => {
@@ -500,6 +510,67 @@ describe('dependents and the used-in counts', () => {
   });
 });
 
+describe('used by properties', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  const INVOICE_TOTAL = {
+    class_property_id: 'cp-1',
+    property: 'total',
+    parent_id: null,
+    primitive_ref: 'std/v0/types/money',
+    class_id: 'c-1',
+    class_name: 'Invoice',
+    version_id: 'v-1',
+    version_label: '1.0.0',
+    project_id: 'p-1',
+    project_name: 'Billing',
+  };
+
+  it('lists each bound property with its project, version and stored $ref', async () => {
+    await renderDetail({
+      ...SYSTEM_MONEY,
+      property_dependents: [INVOICE_TOTAL, { ...INVOICE_TOTAL, class_property_id: 'cp-2', property: 'tax' }],
+    });
+
+    const rows = within(propertyDependentsTable()).getAllByRole('row').slice(1);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('Invoice.total');
+    expect(rows[0]).toHaveTextContent('Billing · 1.0.0');
+    expect(rows[0]).toHaveTextContent('std/v0/types/money');
+    expect(rows[1]).toHaveTextContent('Invoice.tax');
+    expect(screen.getByTestId('primitive-detail-property-dependents-foot')).toHaveTextContent(
+      '2 properties'
+    );
+  });
+
+  it('links a bound property into the Designer at its version', async () => {
+    await renderDetail({ ...SYSTEM_MONEY, property_dependents: [INVOICE_TOTAL] });
+
+    const link = screen.getByTestId('property-dependent-link-0');
+    expect(link).toHaveAttribute('href', '/studio/editor?projectId=p-1&versionId=v-1');
+    expect(link).toHaveAccessibleName('Open Invoice.total in the Designer');
+  });
+
+  it('leaves the label as text when there is no Designer to open', async () => {
+    await renderDetail({
+      ...SYSTEM_MONEY,
+      property_dependents: [{ ...INVOICE_TOTAL, project_id: 'no-designer' }],
+    });
+
+    expect(screen.queryByTestId('property-dependent-link-0')).not.toBeInTheDocument();
+    expect(within(propertyDependentsTable()).getByText('Invoice.total')).toBeInTheDocument();
+  });
+
+  it('teaches, in the card, when no property is bound — including an older API build', async () => {
+    await renderDetail(SYSTEM_MONEY);
+
+    expect(screen.getByText('No property in your projects uses this type')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('primitive-detail-property-dependents-foot')
+    ).not.toBeInTheDocument();
+  });
+});
+
 describe('the metadata aside', () => {
   afterEach(() => jest.restoreAllMocks());
 
@@ -673,6 +744,30 @@ describe('the browser fixtures', () => {
           tenant_label: 'acme',
         },
         { id: 'p-decimal', schema_id: 'c', namespace: 'std/v0/types', name: 'decimal', scope: 'system' },
+      ],
+      property_dependents: [
+        {
+          class_property_id: 'cp-invoice-total',
+          property: 'total',
+          primitive_ref: 'tenant/acme/v1/types/money',
+          class_id: 'c-invoice',
+          class_name: 'Invoice',
+          version_id: 'v-billing-1',
+          version_label: '1.0.0',
+          project_id: 'p-billing',
+          project_name: 'Billing',
+        },
+        {
+          class_property_id: 'cp-refund-amount',
+          property: 'amount',
+          primitive_ref: 'tenant/acme/v1/types/money',
+          class_id: 'c-refund',
+          class_name: 'Refund',
+          version_id: 'v-billing-2',
+          version_label: '2.0.0',
+          project_id: 'p-billing',
+          project_name: 'Billing',
+        },
       ],
       refs: [
         {

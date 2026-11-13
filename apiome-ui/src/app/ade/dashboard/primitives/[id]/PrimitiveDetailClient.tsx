@@ -51,6 +51,7 @@ import {
   COPY_ACK_MS,
   DEPRECATE_REASON,
   DependentsCard,
+  PropertyDependentsCard,
   ExampleInstanceCard,
   LOADING_MESSAGE,
   PrimitiveMetadataCard,
@@ -268,6 +269,11 @@ export default function PrimitiveDetailClient() {
 
               <DependentsCard
                 dependents={primitive.dependents ?? []}
+                identity={primitive.schema_id ?? primitive.name}
+              />
+
+              <PropertyDependentsCard
+                dependents={primitive.property_dependents ?? []}
                 identity={primitive.schema_id ?? primitive.name}
               />
             </div>

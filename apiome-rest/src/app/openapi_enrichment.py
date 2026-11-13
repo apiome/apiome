@@ -130,6 +130,7 @@ PROPERTY_DESCRIPTIONS: Dict[str, str] = {
     "base_uri": "Base URI used to resolve relative ``$ref`` values.",
     "refs": "Resolved and unresolved ``$ref`` edges for the primitive schema.",
     "dependents": "Reverse index of ``refs``: the visible types that reference this one, one entry per referencing edge.",
+    "property_dependents": "The caller's class properties bound to this type through ``class_properties.primitive_id``, one entry per property.",
     "pathname": "HTTP path template (for example ``/pets/{petId}``).",
     "operation": "HTTP method name (GET, POST, PUT, PATCH, DELETE, …).",
     "version_path_id": "Identifier of the parent path row for this operation.",

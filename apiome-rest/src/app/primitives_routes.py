@@ -334,6 +334,49 @@ def build_dependents(
     return dependents
 
 
+def build_property_dependents(
+    primitive: Dict[str, Any], *, tenant_id: str
+) -> List[Dict[str, Any]]:
+    """List the class properties bound to ``primitive`` — "Used by properties" (#3477).
+
+    The reverse index of the property→type binding (#3475): every one of the caller's class
+    properties whose ``primitive_id`` points at this type, for the type-detail page's
+    *Used by properties* card. Scope follows :meth:`app.database.Database.get_property_bindings_for_primitive`
+    — only the caller's own properties, and for a system type (``is_system``) any of the
+    per-tenant system copies sharing its ``$id``.
+
+    Args:
+        primitive: The primitive row being viewed (``id``, ``is_system``, ``schema_id``).
+        tenant_id: The caller's tenant id.
+
+    Returns:
+        One entry per bound property as ``{class_property_id, property, parent_id,
+        primitive_ref, class_id, class_name, version_id, version_label, project_id,
+        project_name}``. Empty when nothing is bound.
+    """
+    rows = db.get_property_bindings_for_primitive(
+        str(primitive["id"]),
+        tenant_id,
+        is_system=bool(primitive.get("is_system")),
+        schema_id=primitive.get("schema_id"),
+    )
+    return [
+        {
+            "class_property_id": str(row["class_property_id"]),
+            "property": row.get("property_name"),
+            "parent_id": str(row["parent_id"]) if row.get("parent_id") else None,
+            "primitive_ref": row.get("primitive_ref"),
+            "class_id": str(row["class_id"]),
+            "class_name": row.get("class_name"),
+            "version_id": str(row["version_id"]),
+            "version_label": row.get("version_label"),
+            "project_id": str(row["project_id"]),
+            "project_name": row.get("project_name"),
+        }
+        for row in rows or []
+    ]
+
+
 def reconcile_dependents_for_target(
     schema_id: Optional[str], *, tenant_id: str, local_uri: Optional[str] = None
 ) -> None:
@@ -846,7 +889,8 @@ async def get_primitive(
     Returns:
         The primitive details, its ``refs`` edges each carrying the target type's
         ``target_id`` / ``target_name`` so the detail view can link through to it, and
-        its ``dependents`` — the reverse index of types referencing it (#3477).
+        its ``dependents`` — the reverse index of types referencing it — and its
+        ``property_dependents``, the caller's class properties bound to it (#3477).
     """
     # Get primitive
     primitive = db.get_primitive_by_id(primitive_id, auth_data['tenant_id'])
@@ -864,6 +908,9 @@ async def get_primitive(
             primitive.get("schema_id"),
             tenant_id=auth_data['tenant_id'],
             tenant_slug=tenant_slug,
+        ),
+        "property_dependents": build_property_dependents(
+            primitive, tenant_id=auth_data['tenant_id']
         ),
     }
 

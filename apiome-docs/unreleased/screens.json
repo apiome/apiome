@@ -62,6 +62,17 @@
       "data": "fixture:hive-primitive-detail/detail-testing.html"
     },
     {
+      "id": "primitive-detail-used-by-properties",
+      "route": "/ade/dashboard/primitives/[id]",
+      "waitFor": "[data-testid=\"primitive-detail-property-dependents\"]",
+      "data": "fixture:hive-primitive-detail/detail.html",
+      "scrollTo": "[data-testid=\"primitive-detail-dependents\"]",
+      "sources": [
+        "apiome-ui/src/app/components/ade/primitives/detail/PropertyDependentsCard.tsx",
+        "apiome-ui/src/app/components/ade/primitives/detail/DependentsCard.tsx"
+      ]
+    },
+    {
       "id": "sdk-settings",
       "route": "/ade/dashboard/export/studio",
       "waitFor": "#a11y-mount > *",
