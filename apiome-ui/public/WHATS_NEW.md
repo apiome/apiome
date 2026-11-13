@@ -44,6 +44,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC8`)
+- Contract testing:
+  - Contract testing and CI gates — a new docs page maps every breaking-change gate: `apiome diff --fail-on breaking` and the GitHub Action in pull requests, the classified changelog on **Changes** and in the `version.published` webhook, the breaking-publish guardrail, and checking live deployments, consumers and the deploy gate
 - Import:
   - Import and catalog any format — a new docs page maps all of multi-format import: where to import from, the guide for each format family, and what every catalog item gets (versions, compare, lint, toolchain, search by protocol, convert and export)
   - URL catalog items refresh — a catalog item imported with **URL Import** in **Import to catalog** now follows its **Document URL**: Apiome asks the URL whether the document changed on the connector cadence and adds a revision, with a change report, only when it did. Existing URL items are covered by a new **Catalog URLs** connector, and URL items you import later join it automatically

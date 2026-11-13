@@ -1,0 +1,116 @@
+---
+title: Contract testing and CI gates
+description: Catch breaking API changes in CI, at publish and against live deployments.
+sidebar_position: 5.4
+tags: [ci, contracts, versions, overview]
+---
+
+Apiome sorts every change between two versions of an API as **breaking**, **non-breaking** or
+**docs-only**. That one sorting drives every gate on this page: a pull-request check that fails on
+a breaking change, the changelog written at each publish, the webhook sent with it, a warning
+before a breaking change ships without a major version, and checks that a live deployment still
+matches what it publishes.
+
+## When to use it
+
+- **A pull request must not break a published API.** Run `apiome diff` or the GitHub Action in CI,
+  so the build fails before a removed path or a newly required field is merged.
+- **Consumers need to know what changed.** Every publish writes a classified changelog that shows
+  in the dashboard and on the browse app, and is sent to your webhooks.
+- **A breaking change needs a major version.** The breaking-publish guardrail warns about, or
+  blocks, a breaking change published as `1.4.1` instead of `2.0.0`.
+- **The deployment drifts from the spec.** Provider verification calls the live API and reports
+  every response that does not match the published version.
+
+## What counts as breaking
+
+A change is **breaking** when an existing client of the older version can fail against the newer
+one: a removed path, operation or property, a narrowed type, a new required field or parameter, a
+removed enum value, or tighter authentication. Adding an optional field or a new operation is
+**non-breaking**. A changed description, summary or example is **docs-only**, and never fails a
+gate.
+
+## Gate a pull request
+
+Compare the OpenAPI file in a branch with a published version, and fail the build when it breaks
+it:
+
+```bash
+apiome diff openapi.yaml --against payments-api@latest --fail-on breaking
+```
+
+The exit code is `0` when the gate passes, `1` when it fails, and `2` when the check could not run
+(a bad key, the network, a file that does not parse). `--format md` prints the changelog as
+Markdown, ready for a pull-request comment.
+
+| Where | Use | Details |
+| --- | --- | --- |
+| GitHub | `apiome/diff-action`, with a sticky pull-request comment | [CI contract gate on GitHub](../reference/ci/ci-diff-gate.md), [diff-action](../reference/ci/diff-action.md) |
+| GitLab, Bitbucket and other CI | The container image | [CI contract gate on GitLab and Bitbucket](../reference/ci/ci-gitlab-bitbucket.md) |
+| Any shell | `apiome diff` | [`apiome diff`](../reference/cli/diff.md) |
+| Two versions already in Apiome | `apiome versions compatibility` | [Version compatibility gate in CI](../reference/ci/version-compatibility-gate.md) |
+
+Give the pipeline a key with the **CI: classified diff** preset (`diff:read`) and nothing else —
+see [Scopes](../workspace/api-keys.mdx#scopes).
+
+## See what changed at each publish
+
+When you [publish a version](./publish-a-version.md), Apiome compares it with the previous
+published version and writes its **classified changelog**.
+
+- **In the dashboard:** the **Changes** tab on **Versions** lists every published version with a pill
+  for its worst change — **Breaking**, **Non-breaking** or **Docs-only** — and its changelog. See
+  [Changes](../build/versions.mdx#changes).
+- **On the browse app:** a published version's **Changes** tab shows the same changelog, and the
+  project offers it as an RSS and a JSON feed.
+- **In a webhook:** the `version.published` event carries the changelog, with its counts and worst
+  change, to every [push-webhook subscription](../reference/rest/webhooks.md).
+
+<Screenshot id="versions-changes" alt="The Changes tab: published versions on the left, the selected version's classified changelog on the right" />
+
+## Stop a breaking publish without a major version
+
+The **breaking-publish guardrail** checks a publish before it happens: does this version break the
+previous published one without bumping the major version? Its level is a style-guide setting:
+
+| Level | What happens |
+| --- | --- |
+| `off` | The guardrail does not run. |
+| `warn` (default) | The **Publish** dialog warns and lists the breaking changes; the publish goes ahead. |
+| `block` | The publish is refused unless it is force-published with a reason. |
+
+A version label that is not semver gets a warning but is never blocked. Set the level with
+`breakingPublishPolicy` on the [style-guide policy](../reference/rest/style-guides.md); the Style
+guides screen is not yet available.
+
+## Check a live deployment (v2)
+
+These checks go past the spec to the people and services that use it. They are available over the
+REST API and the CLI; the project **Consumers** screen is not yet available.
+
+| You want to… | Use | Details |
+| --- | --- | --- |
+| Record what each consumer uses, or import its Pact file | Consumer contracts | [Consumer contracts API](../reference/rest/consumer-contracts.md) |
+| Know *whose* build a change breaks ("breaks billing-service") | `apiome diff --consumers` | [`apiome diff`](../reference/cli/diff.md) |
+| Call a live deployment and report every response that does not match the spec | Provider verification, `apiome verify contract` | [`apiome verify`](../reference/cli/verify.md), [Contract assurance API](../reference/rest/contract-assurance.md) |
+| Re-check a deployment on a schedule, and hear when it drifts or recovers | Verification schedules, with `verification.drift.detected` and `verification.drift.resolved` webhooks | [Contract assurance API](../reference/rest/contract-assurance.md) |
+| Ask "can I promote this version?" in one call | The deploy gate | [Deploy gate API](../reference/rest/deploy-gate.md) |
+
+Provider verification sends only `GET`, `HEAD` and `OPTIONS` requests unless the target allows
+changes, the run asks for them, and a fixture names the operation.
+
+The deploy gate combines the lint grade, the breaking-change status, broken consumers and how
+recently the deployment was verified. It always answers `200` with the verdict in the body, so a
+pipeline can tell a failing gate from a network error. A signal that nothing has produced yet is
+reported as `not_configured` and left out of the verdict.
+
+## How the pieces fit
+
+- **One classifier.** The CLI, the GitHub Action, the changelog, the webhook, the guardrail and the
+  deploy gate all use the same rules, so a change graded breaking in CI is graded breaking at
+  publish.
+- **Stored once, read everywhere.** The changelog is written at publish and read back by the
+  dashboard, the browse app, webhooks and the deploy gate, so they all show the same list of
+  changes.
+- **Read-only keys for CI.** A contract gate needs only `diff:read`; it cannot change anything in
+  your workspace.
