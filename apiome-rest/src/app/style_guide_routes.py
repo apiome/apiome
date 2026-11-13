@@ -20,6 +20,9 @@ drives:
   built-in rule set (enable flags + severity overrides) in one transactional replace.
 * **Custom rules** (GOV-2.3, #4435) — the guide editor's custom-rules tab: read/write the
   guide's Spectral-compatible YAML document and dry-run draft rules against a project revision.
+* **Import / export** (#1747) — download a guide's rule configuration as a portable
+  ``apiome.style-guide`` JSON document (:mod:`app.style_guide_transfer`) and create a new
+  custom guide from one, pasted, uploaded or fetched from a URL.
 * **Revisions & audit** (GOV-1.6, #4432) — every create/edit appends an immutable revision
   (:mod:`app.style_guide_revisions`) that lint results pin to, readable at
   ``GET …/{guideId}/revisions`` and ``GET …/{guideId}/revisions/{revisionId}``; create, edit
@@ -36,6 +39,7 @@ from typing import Any, Dict, List, Optional
 
 import psycopg2
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 
 from .auth import get_authenticated_user_id, validate_authentication
 from .approval_policy import (
@@ -65,6 +69,10 @@ from .models import (
     StyleGuideCustomRulesPreviewResponse,
     StyleGuideCustomRulesPutRequest,
     StyleGuideCustomRulesResponse,
+    StyleGuideExportDocument,
+    StyleGuideImportRequest,
+    StyleGuideImportResponse,
+    StyleGuideImportSkippedRuleOut,
     StyleGuideListResponse,
     StyleGuideOut,
     StyleGuidePolicySettingsOut,
@@ -107,6 +115,13 @@ from .style_guide_revisions import (
     audit_style_guide_event,
     ensure_guide_revision,
     record_guide_revision,
+)
+from .style_guide_transfer import (
+    StyleGuideTransferError,
+    build_export_document,
+    export_filename,
+    fetch_style_guide_document,
+    parse_import_document,
 )
 
 router = APIRouter(prefix="/v1/style-guides", tags=["style-guides"])
@@ -322,6 +337,152 @@ async def create_style_guide(
         },
     )
     return _guide_out({**row, "rule_count": rule_count, "enabled_rule_count": rule_count})
+
+
+def _transfer_http_error(exc: StyleGuideTransferError) -> HTTPException:
+    """The 422 for a malformed import document: ``detail.message`` + ``detail.pointer``."""
+    return HTTPException(
+        status_code=422,
+        detail={"message": exc.message, "pointer": exc.pointer},
+    )
+
+
+@router.post(
+    "/{tenant_slug}/import",
+    response_model=StyleGuideImportResponse,
+    status_code=201,
+    responses={
+        400: {"description": "The `url` could not be fetched or was blocked by the SSRF guard."},
+        409: {"description": "A guide with the resulting name already exists (`detail.code`)."},
+        422: {
+            "description": "Malformed document: `detail.message` explains the problem and "
+            "`detail.pointer` points at the offending node."
+        },
+    },
+)
+async def import_style_guide(
+    tenant_slug: str,
+    body: StyleGuideImportRequest,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StyleGuideImportResponse:
+    """Create a custom guide from an ``apiome.style-guide`` export document (#1747).
+
+    The document comes from ``content`` (a paste or an uploaded file's text) or ``url``
+    (fetched through the SSRF guard). It is validated in full before anything is written, so
+    a malformed document creates nothing. Built-in rule ids this instance does not register
+    are reported in ``skipped`` rather than failing the import. ``name`` overrides the
+    document's ``guide.name`` — use it to import next to an existing guide of the same name.
+    """
+    tenant_id = _require_tenant_admin(auth_data)
+    text = body.content or ""
+    source_label = body.source_label
+    if body.url:
+        try:
+            text, resolved = fetch_style_guide_document(body.url.strip())
+        except StyleGuideTransferError as exc:
+            raise HTTPException(status_code=400, detail=exc.message) from exc
+        source_label = source_label or resolved
+
+    try:
+        plan = parse_import_document(text, registered_rule_ids=frozenset(builtin_rule_ids()))
+    except StyleGuideTransferError as exc:
+        raise _transfer_http_error(exc) from exc
+
+    name = (body.name or "").strip() or plan.name
+    if not name:
+        raise _transfer_http_error(
+            StyleGuideTransferError(
+                "the document has no 'guide.name'; supply a name for the new guide", "guide.name"
+            )
+        )
+    profile = None
+    if plan.external_lint_profile:
+        from .openapi_validation_profiles import VALIDATION_PROFILES
+
+        # ``normalize_profile`` maps unknown tokens to baseline; an import must not silently
+        # change a guide's profile, so the token is checked as written.
+        profile = plan.external_lint_profile.lower().replace("-", "_")
+        if profile not in VALIDATION_PROFILES:
+            raise _transfer_http_error(
+                StyleGuideTransferError(
+                    "unknown externalLintProfile", "guide.externalLintProfile"
+                )
+            )
+
+    try:
+        row = db.create_style_guide(
+            tenant_id, name, plan.description, None, external_lint_profile=profile
+        )
+    except psycopg2.IntegrityError:
+        raise _name_conflict()
+    guide_id = str(row["id"])
+    try:
+        db.replace_style_guide_builtin_rules(guide_id, tenant_id, list(plan.builtin_rows))
+        db.replace_style_guide_custom_rules(guide_id, tenant_id, list(plan.custom_rows))
+    except Exception:
+        # The rules could not be stored: remove the half-created guide so a retry starts clean.
+        db.delete_style_guide(guide_id, tenant_id)
+        raise
+
+    _record_edit(guide_id, tenant_id, CHANGE_CREATED, auth_data)
+    _audit(
+        auth_data,
+        tenant_id,
+        AUDIT_CREATED,
+        guide_id,
+        {
+            "name": name,
+            "importedFrom": source_label,
+            "builtinRuleCount": len(plan.builtin_rows),
+            "customRuleCount": len(plan.custom_rows),
+            "skippedRuleCount": len(plan.skipped),
+        },
+    )
+    rule_count = len(plan.builtin_rows) + len(plan.custom_rows)
+    enabled = sum(1 for r in plan.builtin_rows if r["enabled"]) + len(plan.custom_rows)
+    return StyleGuideImportResponse(
+        guide=_guide_out({**row, "rule_count": rule_count, "enabled_rule_count": enabled}),
+        source_label=source_label,
+        builtin_rule_count=len(plan.builtin_rows),
+        custom_rule_count=len(plan.custom_rows),
+        skipped=[
+            StyleGuideImportSkippedRuleOut(rule_id=s.rule_id, reason=s.reason, detail=s.detail)
+            for s in plan.skipped
+        ],
+    )
+
+
+@router.get("/{tenant_slug}/{guide_id}/export", response_model=StyleGuideExportDocument)
+async def export_style_guide(
+    tenant_slug: str,
+    guide_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> JSONResponse:
+    """Download a guide's rule configuration as an ``apiome.style-guide`` document (#1747).
+
+    The document carries the guide's name, description, external lint profile, built-in
+    rule overrides and custom rules — exactly what ``POST …/import`` reads back. Readable by
+    any tenant member, and works for the read-only built-in guide too. The response sets
+    ``Content-Disposition`` so browsers save it as ``<guide-name>.style-guide.json``.
+    """
+    tenant_id = _tenant_id(auth_data)
+    guide = _load_guide_or_404(guide_id, tenant_id)
+    rows = db.get_style_guide_rules(str(guide["id"]), tenant_id)
+    try:
+        document = build_export_document(
+            guide, rows, reserved_rule_ids=frozenset(builtin_rule_ids())
+        )
+    except CustomRuleValidationError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Stored custom rule could not be exported: {exc.message}",
+        ) from exc
+    return JSONResponse(
+        content=document,
+        headers={
+            "Content-Disposition": f'attachment; filename="{export_filename(guide["name"])}"'
+        },
+    )
 
 
 @router.patch("/{tenant_slug}/{guide_id}", response_model=StyleGuideOut)

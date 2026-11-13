@@ -2,7 +2,18 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { BadgeCheck, BookOpenCheck, Copy, Info, Lock, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react';
+import {
+  BadgeCheck,
+  BookOpenCheck,
+  Copy,
+  Download,
+  Info,
+  Lock,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 
 import { Badge } from '@/app/components/ui/Badge';
 import { Button } from '@/app/components/ui/Button';
@@ -89,6 +100,11 @@ export interface StyleGuidesTableProps {
   onEdit: (guide: StyleGuide) => void;
   /** Open the delete confirm. */
   onDelete: (guide: StyleGuide) => void;
+  /**
+   * Download the guide's rule configuration as JSON (#1747). Export is a read, so members
+   * get it too — the only row action they see.
+   */
+  onExport: (guide: StyleGuide) => void;
   /** Create an empty guide, from the empty state. */
   onCreate: () => void;
   /** Create a guide from the built-in one, from the empty state. */
@@ -116,6 +132,7 @@ export default function StyleGuidesTable({
   onDuplicate,
   onEdit,
   onDelete,
+  onExport,
   onCreate,
   onStartFromRecommended,
   hasRecommended,
@@ -219,7 +236,34 @@ export default function StyleGuidesTable({
       },
     ];
 
-    if (!canMutate) return base;
+    /** Export is a read: every viewer gets it, as the row's last action. */
+    const exportButton = (guide: StyleGuide) => (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="px-1.5"
+        disabled={busy}
+        title="Export"
+        aria-label={`Export ${guide.name}`}
+        data-testid={`style-guide-export-${guide.id}`}
+        onClick={() => onExport(guide)}
+      >
+        <Download aria-hidden />
+      </Button>
+    );
+
+    if (!canMutate) {
+      return [
+        ...base,
+        {
+          id: 'actions',
+          headerLabel: 'Actions',
+          actions: true,
+          cell: (guide) => exportButton(guide),
+          skeletonWidth: '2rem',
+        },
+      ];
+    }
 
     return [
       ...base,
@@ -280,13 +324,14 @@ export default function StyleGuidesTable({
                   <Trash2 aria-hidden />
                 </Button>
               )}
+              {exportButton(guide)}
             </>
           );
         },
         skeletonWidth: '5rem',
       },
     ];
-  }, [busy, canMutate, guideHref, onAssign, onDelete, onDuplicate, onEdit]);
+  }, [busy, canMutate, guideHref, onAssign, onDelete, onDuplicate, onEdit, onExport]);
 
   return (
     <DataTable

@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.549.0",
+    "version": "1.550.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -49663,6 +49663,201 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for create style guideresponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/import": {
+      "post": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Import Style Guide",
+        "description": "Create a custom guide from an ``apiome.style-guide`` export document (#1747).\n\nThe document comes from ``content`` (a paste or an uploaded file's text) or ``url``\n(fetched through the SSRF guard). It is validated in full before anything is written, so\na malformed document creates nothing. Built-in rule ids this instance does not register\nare reported in ``skipped`` rather than failing the import. ``name`` overrides the\ndocument's ``guide.name`` \u2014 use it to import next to an existing guide of the same name.",
+        "operationId": "import_style_guide_v1_style_guides__tenant_slug__import_post",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Import Style Guideauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Import Style Guideauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Import Style Guide Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Import Style Guide Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StyleGuideImportRequest",
+                "description": "Request body for import style guiderequest."
+              }
+            }
+          },
+          "description": "Request body for import style guide."
+        },
+        "responses": {
+          "201": {
+            "description": "Successful response for import style guide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideImportResponse",
+                  "description": "Response payload for import style guideresponse201."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The `url` could not be fetched or was blocked by the SSRF guard."
+          },
+          "409": {
+            "description": "A guide with the resulting name already exists (`detail.code`)."
+          },
+          "422": {
+            "description": "Malformed document: `detail.message` explains the problem and `detail.pointer` points at the offending node."
+          }
+        }
+      }
+    },
+    "/v1/style-guides/{tenant_slug}/{guide_id}/export": {
+      "get": {
+        "tags": [
+          "style-guides"
+        ],
+        "summary": "Export Style Guide",
+        "description": "Download a guide's rule configuration as an ``apiome.style-guide`` document (#1747).\n\nThe document carries the guide's name, description, external lint profile, built-in\nrule overrides and custom rules \u2014 exactly what ``POST \u2026/import`` reads back. Readable by\nany tenant member, and works for the read-only built-in guide too. The response sets\n``Content-Disposition`` so browsers save it as ``<guide-name>.style-guide.json``.",
+        "operationId": "export_style_guide_v1_style_guides__tenant_slug___guide_id__export_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "guide_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Guide Id",
+              "description": "Guide Id schema."
+            },
+            "description": "Style guide identifier."
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Export Style Guideauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Style Guideauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "Export Style Guide Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "Export Style Guide Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for export style guide.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StyleGuideExportDocument",
+                  "description": "Response payload for export style guideresponse200."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for export style guideresponse422."
                 }
               }
             }
@@ -210229,6 +210424,299 @@
         ],
         "title": "StyleGuideCustomRulesResponse",
         "description": "A guide's custom-rules YAML document (GOV-2.3, #4435)."
+      },
+      "StyleGuideExportBuiltinRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "A built-in rule id.",
+            "example": "documentation.schema-missing-description"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether the guide enables the rule.",
+            "example": true
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "description": "error | warning | info.",
+            "example": "warning"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "enabled",
+          "severity"
+        ],
+        "title": "StyleGuideExportBuiltinRuleOut",
+        "description": "One built-in rule override in a style-guide export document (#1747)."
+      },
+      "StyleGuideExportCustomRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "The custom rule's id.",
+            "example": "documentation.schema-missing-description"
+          },
+          "definition": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Definition",
+            "description": "The custom-rule DSL body: description, severity, given, then (GOV-1.3)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "definition"
+        ],
+        "title": "StyleGuideExportCustomRuleOut",
+        "description": "One custom rule in a style-guide export document (#1747)."
+      },
+      "StyleGuideExportDocument": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "title": "Format",
+            "description": "Always `apiome.style-guide`.",
+            "example": "openapi"
+          },
+          "formatVersion": {
+            "type": "integer",
+            "title": "Formatversion",
+            "description": "Document version (currently 1).",
+            "example": 1
+          },
+          "exportedAt": {
+            "type": "string",
+            "title": "Exportedat",
+            "description": "ISO-8601 time the document was written.",
+            "example": "example"
+          },
+          "guide": {
+            "$ref": "#/components/schemas/StyleGuideExportGuideOut",
+            "description": "Guide."
+          },
+          "builtinRules": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideExportBuiltinRuleOut"
+            },
+            "type": "array",
+            "title": "Builtinrules",
+            "description": "Built-in rule overrides, sorted by ruleId (absent rules are disabled).",
+            "maxItems": 1000
+          },
+          "customRules": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideExportCustomRuleOut"
+            },
+            "type": "array",
+            "title": "Customrules",
+            "description": "Custom rules in stored order.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "formatVersion",
+          "exportedAt",
+          "guide",
+          "builtinRules",
+          "customRules"
+        ],
+        "title": "StyleGuideExportDocument",
+        "description": "A portable style-guide rule configuration (#1747) \u2014 the export and import format.\n\nCarries the guide's name, description and external lint profile, its built-in rule\noverrides and its custom rules. Policy gates, assignments and revision history are not\nincluded: they are tenant-specific rather than rule configuration."
+      },
+      "StyleGuideExportGuideOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The guide's display name.",
+            "example": "Pet"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide export guide."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide export guide."
+              }
+            ],
+            "title": "Description",
+            "description": "The guide's description."
+          },
+          "externalLintProfile": {
+            "type": "string",
+            "title": "Externallintprofile",
+            "description": "CLX-2.2 profile: baseline | tenant_guide | strict.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "externalLintProfile"
+        ],
+        "title": "StyleGuideExportGuideOut",
+        "description": "The ``guide`` block of a style-guide export document (#1747)."
+      },
+      "StyleGuideImportRequest": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1048576,
+                "description": "Request body for style guide import."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide import."
+              }
+            ],
+            "title": "Content",
+            "description": "The export document's JSON text (paste or uploaded file)."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048,
+                "description": "Request body for style guide import."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide import."
+              }
+            ],
+            "title": "Url",
+            "description": "http/https URL of an export document to fetch (SSRF-guarded)."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Request body for style guide import."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide import."
+              }
+            ],
+            "title": "Name",
+            "description": "Name for the new guide; defaults to the document's `guide.name`."
+          },
+          "sourceLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "description": "Request body for style guide import."
+              },
+              {
+                "type": "null",
+                "description": "Request body for style guide import."
+              }
+            ],
+            "title": "Sourcelabel",
+            "description": "Human label for the source (e.g. the uploaded filename), echoed back."
+          }
+        },
+        "type": "object",
+        "title": "StyleGuideImportRequest",
+        "description": "Create a style guide from an export document (#1747): the JSON, or a URL to fetch it.\n\nExactly one of ``content`` (a pasted document or an uploaded file's text) and ``url``\nmust be supplied."
+      },
+      "StyleGuideImportResponse": {
+        "properties": {
+          "guide": {
+            "$ref": "#/components/schemas/StyleGuideOut",
+            "description": "The newly created custom guide."
+          },
+          "sourceLabel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "description": "Response payload for style guide import."
+              },
+              {
+                "type": "null",
+                "description": "Response payload for style guide import."
+              }
+            ],
+            "title": "Sourcelabel",
+            "description": "The source label (the request's, or the fetched URL)."
+          },
+          "builtinRuleCount": {
+            "type": "integer",
+            "title": "Builtinrulecount",
+            "description": "Built-in rule rows stored.",
+            "example": 1
+          },
+          "customRuleCount": {
+            "type": "integer",
+            "title": "Customrulecount",
+            "description": "Custom rules stored.",
+            "example": 1
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/StyleGuideImportSkippedRuleOut"
+            },
+            "type": "array",
+            "title": "Skipped",
+            "description": "Entries not stored \u2014 e.g. built-in rule ids this instance does not register.",
+            "maxItems": 1000
+          }
+        },
+        "type": "object",
+        "required": [
+          "guide",
+          "builtinRuleCount",
+          "customRuleCount"
+        ],
+        "title": "StyleGuideImportResponse",
+        "description": "The guide an import created, with what it stored and what it skipped (#1747)."
+      },
+      "StyleGuideImportSkippedRuleOut": {
+        "properties": {
+          "ruleId": {
+            "type": "string",
+            "title": "Ruleid",
+            "description": "The entry's ruleId.",
+            "example": "documentation.schema-missing-description"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Machine-readable code: unknown_rule.",
+            "example": "example"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "Human explanation.",
+            "example": "example"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ruleId",
+          "reason",
+          "detail"
+        ],
+        "title": "StyleGuideImportSkippedRuleOut",
+        "description": "A document entry the import reported instead of storing (#1747)."
       },
       "StyleGuideListResponse": {
         "properties": {

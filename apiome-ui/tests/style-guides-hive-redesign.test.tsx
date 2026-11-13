@@ -21,7 +21,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
@@ -745,6 +745,21 @@ describe('the docs fixtures', () => {
     },
   ];
 
+  /** What the docs' import walk-through creates (#1747): one rule the instance lacks. */
+  const IMPORT_RESULT = {
+    guide: { ...DOCS_GUIDES[2], id: 'g-partner-eu', name: 'Partner API strict (EU)' },
+    sourceLabel: 'partner-api-strict.style-guide.json',
+    builtinRuleCount: 41,
+    customRuleCount: 6,
+    skipped: [
+      {
+        ruleId: 'security.oauth-flow-pkce',
+        reason: 'unknown_rule',
+        detail: "'security.oauth-flow-pkce' is not a built-in rule on this instance",
+      },
+    ],
+  };
+
   beforeEach(() => {
     guidesResponse = { ok: true, rows: DOCS_GUIDES };
     const base = global.fetch;
@@ -782,6 +797,9 @@ describe('the docs fixtures', () => {
       }
       if (url.startsWith('/api/verification-policy')) {
         return jsonResponse({ success: true, data: VERIFICATION_POLICY });
+      }
+      if (url === '/api/style-guides/import') {
+        return jsonResponse({ success: true, data: IMPORT_RESULT });
       }
       return (base as typeof fetch)(input, init);
     });
@@ -828,6 +846,34 @@ describe('the docs fixtures', () => {
       'v2 · block · warn'
     );
     writeA11yFixture('style-guides-verification-policy', liveMarkup(page()));
+  });
+
+  it('renders the import dialog, before and after an import', async () => {
+    const user = userEvent.setup();
+    await renderPage();
+    await screen.findByText('Event streams');
+
+    await user.click(screen.getByTestId('style-guides-import'));
+    const dialog = await screen.findByTestId('style-guide-import-dialog');
+    await user.type(within(dialog).getByTestId('style-guide-import-name'), 'Partner API strict (EU)');
+    writeA11yFixture('style-guides-import-dialog', liveMarkup(dialog));
+
+    const text = '{"format":"apiome.style-guide","formatVersion":1}';
+    const file = new File([text], 'partner-api-strict.style-guide.json', {
+      type: 'application/json',
+    });
+    Object.defineProperty(file, 'text', { value: () => Promise.resolve(text) });
+    fireEvent.change(within(dialog).getByTestId('style-guide-import-file'), {
+      target: { files: [file] },
+    });
+    await waitFor(() =>
+      expect(within(dialog).queryByTestId('style-guide-import-error')).not.toBeInTheDocument()
+    );
+    await user.click(within(dialog).getByTestId('style-guide-import-submit'));
+    expect(await within(dialog).findByTestId('style-guide-import-skipped')).toHaveTextContent(
+      'security.oauth-flow-pkce'
+    );
+    writeA11yFixture('style-guides-import-result', liveMarkup(dialog));
   });
 
   it('renders the read-only treatment a member sees', async () => {

@@ -41,6 +41,7 @@ We continue to improve the platform based on your feedback with improvements and
   - Designer's separate **Designer** and **Paths Editor** screens are removed; the **Workspace** is where schemas and paths are edited. Links to `/ade/studio`, `/ade/studio/editor` and `/ade/studio/paths` still open — in the Workspace, with a paths link on its **Paths** lens
 - Style guides:
   - A style guide's **Policy** tab has a **Component library** section: add up to five ordered **approval stages** (a name, how many approvals, and an optional reviewer role) that a shared Designer component revision must pass before it can be published, and a **Deprecation notice (days)** that sets how far ahead a component deprecation must announce its sunset. With no stages, component revisions publish as before
+  - **Export** and **Import guide** — the download icon on a guide's row saves its rules (name, description, built-in rule settings and custom rules) as a `.style-guide.json` file, and **Import guide** creates a new guide from such a file or from a URL. Built-in rules the file names but this instance lacks are listed as skipped instead of failing the import
 - Tools:
   - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:

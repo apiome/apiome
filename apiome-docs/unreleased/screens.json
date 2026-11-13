@@ -107,6 +107,24 @@
       "data": "fixture:hive-a11y/style-guides-assign-dialog.html"
     },
     {
+      "id": "style-guides-import-dialog",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-import-dialog.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/styleGuides/ImportGuideDialog.tsx"
+      ]
+    },
+    {
+      "id": "style-guides-import-result",
+      "route": "/ade/dashboard/style-guides",
+      "waitFor": "#a11y-mount > *",
+      "data": "fixture:hive-a11y/style-guides-import-result.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/styleGuides/ImportGuideDialog.tsx"
+      ]
+    },
+    {
       "id": "style-guide-builtin",
       "route": "/ade/dashboard/style-guides/[guideId]",
       "waitFor": "#a11y-mount > *",

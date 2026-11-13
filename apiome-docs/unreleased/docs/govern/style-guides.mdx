@@ -30,7 +30,8 @@ title carries the same sentence — **hover or focus the lock** to read it.
 | **Updated** | When the guide last changed. |
 
 **Filter guides…** searches by name; the chips **All**, **Custom**, **Assigned** and **Unassigned**
-narrow the list. A row's menu has **Assign…**, **Duplicate**, **Edit** and **Delete**.
+narrow the list. A row's menu has **Assign…**, **Duplicate**, **Edit**, **Delete** and **Export**.
+Members see **Export** only.
 
 The built-in **Apiome Recommended** guide is read-only — **Duplicate** it to customise it.
 
@@ -61,6 +62,42 @@ A project is scored by the guide pinned to it, or else by the workspace's **tena
 4. **Click “Done”.** Each change is saved as you make it and applies from the next lint run.
 
 <Screenshot id="style-guides-assign-dialog" alt="Assign a style guide: tenant default and project assignments" />
+
+## Export and import a guide
+
+A guide's rule configuration — its name, description, built-in rule settings and custom rules —
+can be saved as one JSON file and brought into another workspace or another Apiome instance.
+Policy settings, assignments and revision history stay behind: they belong to the workspace, not
+to the rules.
+
+**To export**, **click the download icon** (**Export**) in the guide's row. The browser saves
+`<guide-name>.style-guide.json` — for example `partner-api-strict.style-guide.json`. Any member can
+export any guide, the built-in one included.
+
+**To import**, as an administrator:
+
+1. **Click “Import guide”** above the list.
+2. Under **Import from**, choose **File** and pick a `.style-guide.json` file (up to 1 MiB), or
+   choose **URL** and enter its address — for example
+   `https://example.com/partner-api-strict.style-guide.json`. The server fetches the URL and refuses
+   private and internal addresses.
+3. Optionally enter a **Name**. Leave it blank to keep the name in the file; set one when a guide
+   with that name already exists — for example `Partner API strict (EU)`.
+4. **Click “Import guide”.**
+
+<Screenshot id="style-guides-import-dialog" alt="Import style guide: File or URL, the file picker, and an optional name for the new guide" />
+
+The import creates a new custom guide, unassigned, and says how many built-in rule settings and
+custom rules it brought in. A built-in rule this instance does not have — the file came from a
+newer or older release — is listed under **Skipped** rather than failing the import. **Click
+“Done”** to close the dialog; the new guide is already in the list.
+
+<Screenshot id="style-guides-import-result" alt="After an import: Created Partner API strict (EU), the rule counts, and one skipped built-in rule" />
+
+The whole file is checked before anything is created. A file that is not a style-guide export, or
+that has a mistake, is refused with a message naming the place — for example
+`'severity' must be one of: error, warning, info (at builtinRules[2].severity)`. To bring in a
+`.spectral.yaml` instead, see [Import a Spectral ruleset](../bring-in/spectral-import.md).
 
 ## A guide's page
 
@@ -139,7 +176,8 @@ suite digests**, a **Max evidence age**, the **Required target network class**, 
 ## With the CLI or the API
 
 - REST: `GET` / `POST /v1/style-guides/{tenant}`, `…/{id}/rules`, `…/{id}/custom-rules`,
-  `…/{id}/policy`, `PUT …/{id}/default`, `PUT …/{id}/assignments/projects/{project}`;
+  `…/{id}/policy`, `PUT …/{id}/default`, `PUT …/{id}/assignments/projects/{project}`,
+  `GET …/{id}/export` and `POST /v1/style-guides/{tenant}/import`;
   `/v1/tenants/{tenant}/governance/quality-policy`, `…/quality-waivers` and
   `…/verification-policy` — see the [API reference](../reference/api-reference.md).
 - CLI: there are no commands to manage guides. `apiome lint gate --project … --version …` reports

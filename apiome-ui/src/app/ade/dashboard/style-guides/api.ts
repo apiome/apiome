@@ -7,6 +7,12 @@
  * serialization aliases.
  */
 
+import {
+  styleGuideExportFilename,
+  type StyleGuideImportRequest,
+  type StyleGuideImportResult,
+} from '@/app/components/ade/styleGuides/styleGuideTransfer';
+
 export interface ProjectAssignment {
   projectId: string;
   projectName: string;
@@ -391,4 +397,53 @@ export async function fetchMyPermissions(): Promise<MyPermissions | null> {
     .then((r) => r.json())
     .then((j) => (j.success ? (j.data as MyPermissions) : null))
     .catch(() => null);
+}
+
+/**
+ * Create a custom guide from an `apiome.style-guide` document (#1747).
+ *
+ * @param request The import body — `content` (an uploaded file's text) or `url`, plus an
+ *   optional `name` and `sourceLabel`.
+ * @returns The new guide, what it stored and what it skipped.
+ * @throws Error carrying `detail: {message, pointer}` when the document is malformed (422).
+ */
+export async function importStyleGuide(
+  request: StyleGuideImportRequest
+): Promise<StyleGuideImportResult> {
+  const result = await styleGuidesApiWithValidation<StyleGuideImportResult>('import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!result) throw new Error('The import returned no result');
+  return result;
+}
+
+/**
+ * Download a guide's rule configuration as `<guide-name>.style-guide.json` (#1747).
+ *
+ * The proxy answers with the document as JSON, so the browser download is assembled here: a
+ * Blob, an object URL, and a transient anchor.
+ *
+ * @param guide The guide to export (its id and its name, for the filename).
+ */
+export async function downloadStyleGuideExport(guide: { id: string; name: string }): Promise<void> {
+  const document_ = await styleGuidesApi<Record<string, unknown>>(
+    `${encodeURIComponent(guide.id)}/export`
+  );
+  if (!document_) throw new Error('The export returned no document');
+  const blob = new Blob([`${JSON.stringify(document_, null, 2)}\n`], {
+    type: 'application/json',
+  });
+  const href = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement('a');
+    anchor.href = href;
+    anchor.download = styleGuideExportFilename(guide.name);
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(href);
+  }
 }

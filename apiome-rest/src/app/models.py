@@ -9885,6 +9885,142 @@ class StyleGuideCustomRulesPreviewResponse(BaseModel):
     )
 
 
+class StyleGuideExportGuideOut(BaseModel):
+    """The ``guide`` block of a style-guide export document (#1747)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    name: str = Field(description="The guide's display name.")
+    description: Optional[str] = Field(default=None, description="The guide's description.")
+    external_lint_profile: str = Field(
+        serialization_alias="externalLintProfile",
+        description="CLX-2.2 profile: baseline | tenant_guide | strict.",
+    )
+
+
+class StyleGuideExportBuiltinRuleOut(BaseModel):
+    """One built-in rule override in a style-guide export document (#1747)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId", description="A built-in rule id.")
+    enabled: bool = Field(description="Whether the guide enables the rule.")
+    severity: str = Field(description="error | warning | info.")
+
+
+class StyleGuideExportCustomRuleOut(BaseModel):
+    """One custom rule in a style-guide export document (#1747)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId", description="The custom rule's id.")
+    definition: Dict[str, Any] = Field(
+        description="The custom-rule DSL body: description, severity, given, then (GOV-1.3)."
+    )
+
+
+class StyleGuideExportDocument(BaseModel):
+    """A portable style-guide rule configuration (#1747) — the export and import format.
+
+    Carries the guide's name, description and external lint profile, its built-in rule
+    overrides and its custom rules. Policy gates, assignments and revision history are not
+    included: they are tenant-specific rather than rule configuration.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    format: str = Field(description="Always `apiome.style-guide`.")
+    format_version: int = Field(
+        serialization_alias="formatVersion", description="Document version (currently 1)."
+    )
+    exported_at: str = Field(
+        serialization_alias="exportedAt", description="ISO-8601 time the document was written."
+    )
+    guide: StyleGuideExportGuideOut
+    builtin_rules: List[StyleGuideExportBuiltinRuleOut] = Field(
+        serialization_alias="builtinRules",
+        description="Built-in rule overrides, sorted by ruleId (absent rules are disabled).",
+    )
+    custom_rules: List[StyleGuideExportCustomRuleOut] = Field(
+        serialization_alias="customRules", description="Custom rules in stored order."
+    )
+
+
+class StyleGuideImportRequest(BaseModel):
+    """Create a style guide from an export document (#1747): the JSON, or a URL to fetch it.
+
+    Exactly one of ``content`` (a pasted document or an uploaded file's text) and ``url``
+    must be supplied.
+    """
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    content: Optional[str] = Field(
+        default=None,
+        max_length=1_048_576,
+        description="The export document's JSON text (paste or uploaded file).",
+    )
+    url: Optional[str] = Field(
+        default=None,
+        max_length=2048,
+        description="http/https URL of an export document to fetch (SSRF-guarded).",
+    )
+    name: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        description="Name for the new guide; defaults to the document's `guide.name`.",
+    )
+    source_label: Optional[str] = Field(
+        default=None,
+        max_length=255,
+        validation_alias=AliasChoices("sourceLabel", "source_label"),
+        serialization_alias="sourceLabel",
+        description="Human label for the source (e.g. the uploaded filename), echoed back.",
+    )
+
+    @model_validator(mode="after")
+    def _exactly_one_source(self) -> "StyleGuideImportRequest":
+        """Require exactly one of ``content`` / ``url``."""
+        has_content = bool(self.content and self.content.strip())
+        has_url = bool(self.url and self.url.strip())
+        if has_content == has_url:
+            raise ValueError("provide exactly one of 'content' or 'url'")
+        return self
+
+
+class StyleGuideImportSkippedRuleOut(BaseModel):
+    """A document entry the import reported instead of storing (#1747)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    rule_id: str = Field(serialization_alias="ruleId", description="The entry's ruleId.")
+    reason: str = Field(description="Machine-readable code: unknown_rule.")
+    detail: str = Field(description="Human explanation.")
+
+
+class StyleGuideImportResponse(BaseModel):
+    """The guide an import created, with what it stored and what it skipped (#1747)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    guide: StyleGuideOut = Field(description="The newly created custom guide.")
+    source_label: Optional[str] = Field(
+        default=None,
+        serialization_alias="sourceLabel",
+        description="The source label (the request's, or the fetched URL).",
+    )
+    builtin_rule_count: int = Field(
+        serialization_alias="builtinRuleCount", description="Built-in rule rows stored."
+    )
+    custom_rule_count: int = Field(
+        serialization_alias="customRuleCount", description="Custom rules stored."
+    )
+    skipped: List[StyleGuideImportSkippedRuleOut] = Field(
+        default_factory=list,
+        description="Entries not stored — e.g. built-in rule ids this instance does not register.",
+    )
+
+
 class VersionTagSchema(BaseModel):
     """Git-like tag pointing at a schema revision (versions.id)."""
 

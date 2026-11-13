@@ -10411,6 +10411,39 @@ button.tfa-reset-notice__close > svg {
   margin-block-start: 0.125em;
 }
 
+/* ---- The import dialog (#1747) ------------------------------------------- */
+/* The File / URL switch keeps its own width; `.sg-field` is a flex column,
+   which would otherwise stretch the well across the dialog. */
+.sg-import-source {
+  align-self: flex-start;
+}
+
+/* A native file input inside the text-field chrome: let it size to its
+   button, the same treatment as `.cid-reupload__file`. */
+.sg-import-file {
+  block-size: auto;
+  padding-block: var(--space-2);
+}
+
+.sg-import-file::file-selector-button {
+  margin-inline-end: var(--space-3);
+}
+
+/* The built-in rules an import skipped: rule ids, so monospace, one per line,
+   capped so a long list scrolls inside the dialog rather than stretching it. */
+.sg-import-skipped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-block-size: 10rem;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
 /* ---- The assign dialog --------------------------------------------------- */
 .sg-assign-body {
   display: flex;
