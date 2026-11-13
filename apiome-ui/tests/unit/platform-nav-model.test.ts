@@ -31,6 +31,8 @@ import {
   platformNavGatedReason,
   platformNavSectionLabel,
   toPlatformNavInjections,
+  toSuiteLinkInjection,
+  PLATFORM_NAV_SUITE_LINK_ID,
   type PlatformNavItem,
 } from '../../lib/platform-nav';
 import { PLATFORM_NAV_ICONS, resolvePlatformNavIcon } from '../../lib/platform-nav-icons';
@@ -397,6 +399,28 @@ describe('platform-nav model — runtime injection', () => {
       icon: DEFAULT_PLATFORM_NAV_ICON,
       disabled: false,
     });
+  });
+
+  it('puts the licensed Suite link under Home, after Home itself', () => {
+    const home = getPlatformNavGroups({
+      currentTenantId: TENANT,
+      injected: [toSuiteLinkInjection('https://suite.apiome.dev/')],
+    }).find((group) => group.id === 'home');
+
+    expect(home?.items.map((navItem) => navItem.id)).toEqual(['home', PLATFORM_NAV_SUITE_LINK_ID]);
+    expect(home?.items[1]).toMatchObject({
+      label: 'Suite',
+      href: 'https://suite.apiome.dev/',
+      external: true,
+      icon: 'layers',
+      disabled: false,
+    });
+    expect(PLATFORM_NAV_ICONS.layers).toBeDefined();
+  });
+
+  it('draws no Suite link unless the host injects one', () => {
+    const home = getPlatformNavGroups({ currentTenantId: TENANT }).find((group) => group.id === 'home');
+    expect(home?.items.map((navItem) => navItem.id)).toEqual(['home']);
   });
 
   it('defaults contributions to Build and honours an explicit icon', () => {
