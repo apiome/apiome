@@ -81,6 +81,7 @@ def test_command_directory_lists_all_top_level_groups() -> None:
         "primitives",
         "data",
         "versions",
+        "migrations",
         "spec",
     ):
         assert name in catalog
@@ -144,6 +145,7 @@ _COMMAND_GROUPS: tuple[tuple[str, str], ...] = (
     ("data", "Create, list and import records in a published class"),
     ("versions", "List, show, create, publish, fork, compare and delete versions"),
     ("tags", "List, inspect, create, move and delete version tags"),
+    ("migrations", "List a project's migration plans"),
     ("browse", "Open published projects and versions in the browse app"),
     ("paths", "List and inspect OpenAPI path templates"),
     ("operations", "Inspect OpenAPI operations"),
@@ -210,6 +212,8 @@ _ALL_COMMAND_PATHS: tuple[list[str], ...] = (
     ["versions", "get"],
     ["versions", "publish"],
     ["versions", "unpublish"],
+    ["migrations"],
+    ["migrations", "list"],
     ["import"],
     ["import", "auto"],
     ["import", "openapi"],

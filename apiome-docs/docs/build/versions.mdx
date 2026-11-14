@@ -303,7 +303,7 @@ the [Version change report](../reference/rest/version-change-report.md) and
 
 ## With the CLI or the API
 
-- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome mock status|enable|disable` — see
+- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome migrations list`, `apiome mock status|enable|disable` — see
   [Manage versions from the CLI](../ship/manage-versions-from-the-cli.md),
   the [`versions` command reference](../reference/cli/versions.md) and the [CLI
   quick-start](../reference/cli-quickstart.md). To take a release back with a recorded reason, see
@@ -428,6 +428,35 @@ apiome tags delete payments-api next-rc
 
 An **immutable** tag can never be deleted — the command exits `6`. A protected tag needs a tenant
 administrator. With `--json` it prints `{ "deleted": true, "tag": "next-rc", "was_pointing_to": "2.2.0" }`.
+
+### List migration plans from the CLI
+
+A **migration plan** holds the rules that move data from one version of a project to another —
+one plan per pair of versions, with rules per class. `apiome migrations list --project <project>`
+shows a project's plans, most recently updated first.
+
+```bash
+apiome migrations list --project payments-api
+# PLAN ID                               FROM   TO     CLASSES  RULES  UPDATED
+# 3a910000-0000-4000-8000-00000000b41c  2.0.0  2.1.0  2        3      2026-05-04
+# 9e000000-0000-4000-8000-000000000001  1.4.0  2.1.0  0        0      2026-03-10
+# 7c3d0000-0000-4000-8000-00000000e22a  1.4.0  2.0.0  1        1      2026-02-18
+
+apiome migrations list --project payments-api --from v2.0.0
+```
+
+- **FROM** and **TO** are the version labels the plan migrates between. **CLASSES** counts the
+  classes it has rules for, and **RULES** counts its rules.
+- `--from <version>` keeps only the plans that start at that version, and `--to <version>` only
+  those that end at it; pass both for one pair. A version can be a label (`2.0.0` or `v2.0.0`), a
+  revision id or a version tag (`stable`). A version the project does not have exits `2`.
+- The command shows the first 50 plans; pass `--limit N` or `--all`.
+- `--json` (or the global `--json`) prints the matching plans as one JSON array. Each plan has its
+  `id`, `from_version_id` / `from_version`, `to_version_id` / `to_version`, `classes`,
+  `rule_count`, `created_at` and `updated_at`. The rule bodies are left out.
+
+Apiome does not record a status, a breaking-change flag or an author for a migration plan, so
+the list cannot show or filter on them.
 
 ### Delete a version from the CLI
 

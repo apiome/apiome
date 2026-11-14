@@ -1,0 +1,4 @@
+PLAN ID                               FROM   TO     CLASSES  RULES  UPDATED
+3a910000-0000-4000-8000-00000000b41c  2.0.0  2.1.0  2        3      2026-05-04
+9e000000-0000-4000-8000-000000000001  1.4.0  2.1.0  0        0      2026-03-10
+Showing 2 of 3 plans; pass --all for every plan or --limit N.
