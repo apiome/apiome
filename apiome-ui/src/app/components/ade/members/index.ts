@@ -25,5 +25,9 @@ export type {
 export { default as MemberDetailDrawer } from './MemberDetailDrawer';
 export type { MemberDetailDrawerProps } from './MemberDetailDrawer';
 
+export { default as ImportMembersDialog } from './ImportMembersDialog';
+export type { ImportMembersDialogProps } from './ImportMembersDialog';
+
 export * from './membersModel';
 export * from './membersApi';
+export * from './memberImport';

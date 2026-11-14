@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.559.0
+  version: 1.560.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -74735,6 +74735,166 @@ paths:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
                 description: Response payload for invite memberresponse422.
+  /v1/access/{tenant_slug}/members/export:
+    get:
+      tags:
+      - access
+      summary: Export Members
+      description: 'Export the tenant''s members as CSV (EID-2.5, #5671).
+
+
+        Columns: ``email``, ``status``, ``role``, ``two_factor`` (``enabled`` | ``disabled``),
+
+        ``provenance`` (``invite`` | ``sso:<id>`` | ``scim``), ``last_sign_in`` (the
+        newest
+
+        successful sign-in in ``auth_events``) and ``created`` (when the membership
+        was made).
+
+        Importing the file back reports every row as ``already-member``.
+
+
+        Needs ``members:view``, the same as reading the roster.'
+      operationId: export_members_v1_access__tenant_slug__members_export_get
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Export Membersauthorization schema.
+          - type: 'null'
+            description: Export Membersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Export Members Xapikey schema.
+          - type: 'null'
+            description: Export Members Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      responses:
+        '200':
+          description: Successful response for export members.
+          content:
+            application/json:
+              schema:
+                description: Response payload for export membersresponse200.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for export membersresponse422.
+  /v1/access/{tenant_slug}/members/import:
+    post:
+      tags:
+      - access
+      summary: Import Members
+      description: "Dry-run a bulk CSV member import and report what each row would\
+        \ do (EID-2.5, #5671).\n\nThe file has a header row with an ``email`` column\
+        \ and optional ``role`` (id, slug or name;\nempty for the default role) and\
+        \ ``display_name`` columns; other columns are ignored. At most\n1,000 data\
+        \ rows. Each row gets an ``outcome``: ``invite``, ``already-member``,\n``invalid-email``,\
+        \ ``unknown-role``, ``no-account`` or ``seat-cap``.\n\nNothing is written\
+        \ — not a membership, not a role, not an audit entry. Applying the report\n\
+        is the caller's job: send each ``invite`` row to ``POST /v1/access/{tenant}/members``\
+        \ with\nits ``email`` and ``role_id``, so the seat guard (``license-seats-exhausted``),\
+        \ the rate\nlimit and the ``member.invited`` audit entry apply per row, as\
+        \ they do to any invitation.\n\nNeeds ``members:create``, the same as inviting.\n\
+        \n:raises HTTPException: 400 when ``dryRun`` is false or the file cannot be\
+        \ read as CSV,\n    413 when it is over 1 MiB."
+      operationId: import_members_v1_access__tenant_slug__members_import_post
+      parameters:
+      - name: tenant_slug
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Tenant Slug
+          description: Tenant Slug schema.
+        description: URL-safe tenant slug that scopes the request.
+      - name: dryRun
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: 'Must be true: the import only reports. Apply each invite row
+            through POST /members.'
+          default: true
+          title: Dryrun
+        description: 'Must be true: the import only reports. Apply each invite row
+          through POST /members.'
+      - name: authorization
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Import Membersauthorization schema.
+          - type: 'null'
+            description: Import Membersauthorization schema.
+          title: Authorization
+          description: Authorization schema.
+        description: 'JWT bearer token for authenticated access (``Authorization:
+          Bearer <token>``).'
+      - name: X-API-Key
+        in: header
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            description: Import Members Xapikey schema.
+          - type: 'null'
+            description: Import Members Xapikey schema.
+          title: X-Api-Key
+          description: X-Api-Key schema.
+        description: Tenant-scoped API key used as an alternative to JWT bearer authentication.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MemberImportUploadBody'
+              description: Request body for import membersrequest.
+        description: Request body for import members.
+      responses:
+        '200':
+          description: Successful response for import members.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Import Members V1 Access  Tenant Slug  Members Import
+                  Post
+                description: Response Import Members V1 Access  Tenant Slug  Members
+                  Import Post schema.
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+                description: Response payload for import membersresponse422.
   /v1/access/{tenant_slug}/members/{user_id}:
     patch:
       tags:
@@ -178727,6 +178887,20 @@ components:
       - policyVersion
       title: WriteRuleResponse
       description: The outcome of a rule write.
+    MemberImportUploadBody:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+          description: CSV with an email,role,display_name header.
+          example: "openapi: 3.1.0\ninfo:\n  title: Example\n  version: 1.0.0\n"
+      type: object
+      required:
+      - file
+      title: Body_import_members_v1_access__tenant_slug__members_import_post
+      description: Body_import_members_v1_access__tenant_slug__members_import_post
+        schema.
   securitySchemes:
     Bearer:
       type: http

@@ -16,6 +16,7 @@
 
 import { accessApi, JSON_HEADERS } from '../access/accessApi';
 import type { AccessAuditRecord, MemberRecord, MemberStatus } from './membersModel';
+import type { MemberImportReport } from './memberImport';
 
 // The roles list and the viewer's own grants are read by both access screens, so they are
 // declared once in the shared module and re-exported here — every members call site imports
@@ -124,4 +125,27 @@ export async function resendMemberInvite(userId: string): Promise<void> {
  */
 export async function offboardMember(userId: string): Promise<void> {
   await accessApi(`members/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+}
+
+/**
+ * Dry-run a CSV member import (EID-2.5).
+ *
+ * Uploads the file and returns what each row would do. Nothing is written: the dialog then
+ * sends each `invite` row through {@link inviteMember}, so the import has no create path of
+ * its own.
+ *
+ * @param file The chosen `email,role,display_name` CSV.
+ * @returns The row-by-row report.
+ * @throws Error with the server's sentence when the file cannot be read (no `email` column,
+ *   over 1,000 rows, not UTF-8, over 1 MiB).
+ */
+export async function previewMemberImport(file: File): Promise<MemberImportReport> {
+  const body = new FormData();
+  body.append('file', file, file.name);
+  const report = await accessApi<MemberImportReport>('members/import?dryRun=true', {
+    method: 'POST',
+    body,
+  });
+  if (!report) throw new Error('The import report was empty.');
+  return report;
 }

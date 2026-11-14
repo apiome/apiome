@@ -1,6 +1,6 @@
 ---
 title: "Access"
-description: "REST endpoints tagged access: 17 operations."
+description: "REST endpoints tagged access: 19 operations."
 sidebar_position: 2
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.559.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.560.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `access` · 17 operations
+Tag: `access` · 19 operations
 
 ## `GET /v1/access/{tenant_slug}/audit` {#list-audit-v1-access-tenant-slug-audit-get}
 
@@ -136,6 +136,81 @@ Request body for invite member.
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for invite member. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/access/{tenant_slug}/members/export` {#export-members-v1-access-tenant-slug-members-export-get}
+
+**Export Members**
+
+Export the tenant's members as CSV (EID-2.5, #5671).
+
+Columns: ``email``, ``status``, ``role``, ``two_factor`` (``enabled`` | ``disabled``),
+``provenance`` (``invite`` | ``sso:<id>`` | ``scim``), ``last_sign_in`` (the newest
+successful sign-in in ``auth_events``) and ``created`` (when the membership was made).
+Importing the file back reports every row as ``already-member``.
+
+Needs ``members:view``, the same as reading the roster.
+
+Operation id: `export_members_v1_access__tenant_slug__members_export_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for export members. | `application/json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `POST /v1/access/{tenant_slug}/members/import` {#import-members-v1-access-tenant-slug-members-import-post}
+
+**Import Members**
+
+Dry-run a bulk CSV member import and report what each row would do (EID-2.5, #5671).
+
+The file has a header row with an ``email`` column and optional ``role`` (id, slug or name;
+empty for the default role) and ``display_name`` columns; other columns are ignored. At most
+1,000 data rows. Each row gets an ``outcome``: ``invite``, ``already-member``,
+``invalid-email``, ``unknown-role``, ``no-account`` or ``seat-cap``.
+
+Nothing is written — not a membership, not a role, not an audit entry. Applying the report
+is the caller's job: send each ``invite`` row to ``POST /v1/access/{tenant}/members`` with
+its ``email`` and ``role_id``, so the seat guard (``license-seats-exhausted``), the rate
+limit and the ``member.invited`` audit entry apply per row, as they do to any invitation.
+
+Needs ``members:create``, the same as inviting.
+
+:raises HTTPException: 400 when ``dryRun`` is false or the file cannot be read as CSV,
+    413 when it is over 1 MiB.
+
+Operation id: `import_members_v1_access__tenant_slug__members_import_post`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `dryRun` | query | boolean | no | Must be true: the import only reports. Apply each invite row through POST /members. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Request body** (required)
+
+Request body for import members.
+
+- `multipart/form-data` — [`MemberImportUploadBody`](#schema-memberimportuploadbody)
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for import members. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `PATCH /v1/access/{tenant_slug}/members/{user_id}` {#update-member-v1-access-tenant-slug-members-user-id-patch}
@@ -533,6 +608,14 @@ Validation error response emitted when request data fails schema checks.
 | Property | Type | Required | Description |
 | --- | --- | --- | --- |
 | `detail` | array of `ValidationError` | no | Detail. |
+
+### `MemberImportUploadBody` {#schema-memberimportuploadbody}
+
+Body_import_members_v1_access__tenant_slug__members_import_post schema.
+
+| Property | Type | Required | Description |
+| --- | --- | --- | --- |
+| `file` | string (binary) | yes | CSV with an email,role,display_name header. |
 
 ### `MemberInviteRequest` {#schema-memberinviterequest}
 

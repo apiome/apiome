@@ -14,6 +14,8 @@
  *   PATCH  /api/access/members/{userId}       -> PATCH  /v1/access/{slug}/members/{userId}
  *   GET    /api/access/audit?filter=role      -> GET    /v1/access/{slug}/audit?filter=role
  *   GET    /api/access/audit/export           -> GET    /v1/access/{slug}/audit/export (CSV)
+ *   GET    /api/access/members/export         -> GET    /v1/access/{slug}/members/export (CSV)
+ *   POST   /api/access/members/import?dryRun=true -> POST /v1/access/{slug}/members/import (multipart)
  *   GET    /api/access/permissions/me         -> GET    /v1/access/{slug}/permissions/me
  */
 
@@ -95,8 +97,16 @@ async function forward(
 
     const init: RequestInit = { method, headers: ctx.headers };
     if (withBody) {
-      const body = await request.text();
-      if (body) init.body = body;
+      const requestType = request.headers.get('content-type') || '';
+      if (requestType.startsWith('multipart/form-data')) {
+        // A file upload (the members CSV import, EID-2.5) is forwarded byte for byte with its
+        // own content type, which carries the multipart boundary the REST side parses by.
+        init.body = await request.arrayBuffer();
+        init.headers = { ...ctx.headers, 'Content-Type': requestType };
+      } else {
+        const body = await request.text();
+        if (body) init.body = body;
+      }
     }
 
     const response = await fetch(url, init);

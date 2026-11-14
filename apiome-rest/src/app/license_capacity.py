@@ -120,6 +120,22 @@ def license_quotas(tenant_id: str) -> Dict[str, int]:
     return {key: _quota_from_seats(seats, key, default) for key, default in _QUOTA_DEFAULTS.items()}
 
 
+def member_seats_free(tenant_id: str) -> int:
+    """Count the member seats the tenant can still fill (EID-2.5, #5671).
+
+    The CSV import's dry run uses this to mark the rows past the license limit as
+    ``seat-cap`` before anything is sent, using the same accounting as
+    :func:`assert_member_seat_available`.
+
+    Args:
+        tenant_id: Canonical UUID string of the tenant.
+
+    Returns:
+        ``member_seat_limit - seats in use``, never below zero.
+    """
+    return max(0, member_seat_limit(tenant_id) - db.count_member_seats_in_use(tenant_id))
+
+
 def assert_member_seat_available(tenant_id: str) -> None:
     """Raise a structured 403 unless the tenant has a free member seat.
 

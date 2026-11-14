@@ -11456,6 +11456,53 @@ class Database:
         )
         return rows[0] if rows else None
 
+    def get_users_by_emails(self, emails: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Resolve many addresses to active users at once (the CSV import's dry run, EID-2.5).
+
+        One query for the whole file rather than one per row. Matching is the same
+        case-insensitive comparison :meth:`get_user_by_email` makes.
+
+        :param emails: Addresses as written; each is canonicalized before the lookup.
+        :returns: Normalized address → user (``id``, ``name``, ``email``) for every address
+            that has a non-deleted account. Addresses with none are absent.
+        """
+        wanted = sorted({normalize_email(email) for email in emails if email and email.strip()})
+        if not wanted:
+            return {}
+        rows = self.execute_query(
+            """
+            SELECT id::text, name, email FROM apiome.users
+            WHERE lower(email) = ANY(%s) AND deleted_at IS NULL
+            """,
+            (wanted,),
+        )
+        return {normalize_email(row["email"]): row for row in rows}
+
+    def list_member_last_sign_ins(self, tenant_id: str) -> Dict[str, Any]:
+        """Return each member's latest successful sign-in from ``auth_events`` (EID-2.5).
+
+        Feeds the members CSV export's ``last_sign_in`` column. Read from the authentication
+        ledger rather than ``users.last_login_at`` because the ledger is the audited record;
+        rows older than its retention window are gone, so a member who has not signed in since
+        then has no entry.
+
+        :param tenant_id: Canonical UUID string of the tenant.
+        :returns: User id → ``created_at`` of their newest ``sign_in`` / ``success`` event,
+            for the tenant's members that have one.
+        """
+        rows = self.execute_query(
+            """
+            SELECT ae.user_id::text AS user_id, MAX(ae.created_at) AS last_sign_in
+            FROM apiome.auth_events ae
+            JOIN apiome.tenant_users tu
+                 ON tu.user_id = ae.user_id AND tu.tenant_id = %s::uuid
+            WHERE ae.event_type = 'sign_in' AND ae.outcome = 'success'
+            GROUP BY ae.user_id
+            """,
+            (tenant_id,),
+        )
+        return {row["user_id"]: row["last_sign_in"] for row in rows}
+
     def list_members(self, tenant_id: str) -> List[Dict[str, Any]]:
         """List tenant members with their role, lifecycle status, and admin flag.
 
