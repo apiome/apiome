@@ -1,6 +1,6 @@
 ---
 title: "apiome data"
-description: "Create records in a published class."
+description: "Create and list records in a published class."
 sidebar_position: 12
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome data {#data}
 
-Create records in a published class.
+Create and list records in a published class.
 
 ```text
 apiome data [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#data-create).
+Subcommands: [`create`](#data-create), [`list`](#data-list).
 
 ## apiome data create {#data-create}
 
@@ -44,3 +44,30 @@ apiome data create [OPTIONS]
 | `--field` | text (repeatable) |  |  | Set one field: key=value, or key=:&lt;json&gt; to parse the value (repeatable). |
 | `--dry-run` | flag |  |  | Validate against the class schema only; send nothing. |
 | `--json` | flag |  |  | Print the created record as JSON (same as the global --json). |
+
+## apiome data list {#data-list}
+
+List a class's records, a page at a time (GET /v1/data/{tenant}/records).
+
+The table shows ID, CREATED and the data fields; the footer says how many records match and the --next cursor for the following page. --all follows every page.
+
+--json prints a JSON array and --ndjson one record per line; the next cursor, if any, goes to stderr. Both stream, so --all works on any number of records.
+
+```text
+apiome data list [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--class` | text |  | yes | The class (e.g. billing/1.0.0/Charge), or its class schema id. |
+| `--filter` | text (repeatable) |  |  | Only records whose data field equals the value: key=value (repeatable). |
+| `--sort` | text | `created_at` |  | created_at, updated_at, deleted_at, record_id or a data field; -field descends. |
+| `--limit` | integer range | `50` |  | Records per page. |
+| `--next` | text |  |  | Show the page after the one that printed this cursor. |
+| `--all` | flag |  |  | Show every remaining record (ignores --limit). |
+| `--columns` | text |  |  | Data fields to show, comma-separated (table only; default: every field). |
+| `--include-deleted` | flag |  |  | Include soft-deleted records, with a DELETED_AT column. |
+| `--json` | flag |  |  | Print the records as one JSON array. |
+| `--ndjson` | flag |  |  | Print one JSON record per line (for ETL tools). |

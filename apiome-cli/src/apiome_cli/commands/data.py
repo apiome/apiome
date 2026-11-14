@@ -4,10 +4,14 @@
 reads the input, resolves ``--class <project>/<version>/<Class>`` with
 ``GET /v1/data/{tenant}/classes``, validates the payload against the class's frozen JSON Schema,
 then ``POST /v1/data/{tenant}/records``.
+
+``data list`` (CLI 10.1, #3253): pages through ``GET /v1/data/{tenant}/records`` with the server's
+cursor; the table rendering lives in :mod:`apiome_cli.data_view`.
 """
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 from typing import Any, Mapping, NoReturn, Optional
@@ -18,25 +22,29 @@ import typer
 from apiome_cli import terminal
 from apiome_cli.cli_input import exit_field_errors, read_object_file, read_object_text
 from apiome_cli.client import api_paths
+from apiome_cli.client.pagination import DEFAULT_PAGE_LIMIT
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.data_record import (
     ClassAddress,
     DataInputError,
     SchemaUnusable,
     build_payload,
+    check_filter,
     find_class,
+    is_class_schema_id,
     parse_class_address,
     render_created,
     render_valid,
     validate_record,
 )
 from apiome_cli.exit_codes import EXIT_RECORD_INVALID, EXIT_USAGE
+from apiome_cli.data_view import data_columns, parse_columns, render_footer, render_table
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.output import emit_json, json_mode_from_context
 
 app = typer.Typer(
     name="data",
-    help="Create records in a published class.",
+    help="Create and list records in a published class.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -46,6 +54,9 @@ STDIN_LABEL = "stdin"
 
 #: What the input object holds, for the "must hold one …" message.
 RECORD_SHAPE = "record object (the class's fields)"
+
+#: The page size ``data list --all`` asks for (the server's maximum).
+MAX_LIST_PAGE = 500
 
 
 @app.callback(invoke_without_command=True)
@@ -163,3 +174,144 @@ def create_record(
         emit_json(_result(address, row, payload, record_id=record_id))
         return
     typer.echo(render_created(record_id, address))
+
+
+def _fetch_page(
+    client: Any,
+    tenant_slug: str,
+    class_schema_id: str,
+    *,
+    filters: list[str],
+    sort: str,
+    include_deleted: bool,
+    limit: int,
+    cursor: Optional[str],
+) -> dict[str, Any]:
+    """One page of ``GET /v1/data/{tenant}/records`` (the client exits on an HTTP error)."""
+    query: list[tuple[str, str]] = [("class_schema_id", class_schema_id), ("limit", str(limit)), ("sort", sort)]
+    query += [("filter", text) for text in filters]
+    if include_deleted:
+        query.append(("include_deleted", "true"))
+    if cursor:
+        query.append(("cursor", cursor))
+    answer = client.get(f"{api_paths.data_records(tenant_slug)}?{urlencode(query)}").json()
+    return answer if isinstance(answer, dict) else {}
+
+
+def _pages(fetch: Any, cursor: Optional[str], follow: bool) -> Any:
+    """Yield pages from ``cursor`` on: just one, or every page when ``follow`` (``--all``)."""
+    while True:
+        page = fetch(cursor)
+        yield page
+        cursor = page.get("next_cursor")
+        if not follow or not cursor:
+            return
+
+
+@app.command("list")
+def list_records(
+    ctx: typer.Context,
+    class_ref: str = typer.Option(
+        ...,
+        "--class",
+        metavar="PROJECT/VERSION/CLASS",
+        help="The class (e.g. billing/1.0.0/Charge), or its class schema id.",
+    ),
+    filter_: Optional[list[str]] = typer.Option(
+        None, "--filter", help="Only records whose data field equals the value: key=value (repeatable)."
+    ),
+    sort: str = typer.Option(
+        "created_at", "--sort", help="created_at, updated_at, deleted_at, record_id or a data field; -field descends."
+    ),
+    limit: int = typer.Option(
+        DEFAULT_PAGE_LIMIT, "--limit", min=1, max=MAX_LIST_PAGE, help="Records per page."
+    ),
+    next_cursor: Optional[str] = typer.Option(
+        None, "--next", metavar="CURSOR", help="Show the page after the one that printed this cursor."
+    ),
+    all_rows: bool = typer.Option(False, "--all", help="Show every remaining record (ignores --limit)."),
+    columns: Optional[str] = typer.Option(
+        None, "--columns", help="Data fields to show, comma-separated (table only; default: every field)."
+    ),
+    include_deleted: bool = typer.Option(
+        False, "--include-deleted", help="Include soft-deleted records, with a DELETED_AT column."
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Print the records as one JSON array."),
+    ndjson: bool = typer.Option(False, "--ndjson", help="Print one JSON record per line (for ETL tools)."),
+) -> None:
+    """List a class's records, a page at a time (GET /v1/data/{tenant}/records).
+
+    The table shows ID, CREATED and the data fields; the footer says how many records match and the --next cursor for the following page. --all follows every page.
+
+    --json prints a JSON array and --ndjson one record per line; the next cursor, if any, goes to stderr. Both stream, so --all works on any number of records.
+    """
+    json_mode = json_output or json_mode_from_context(ctx)
+    if json_mode and ndjson:
+        _usage_error("Use --json or --ndjson, not both.")
+    filters = filter_ or []
+    try:
+        for text in filters:
+            check_filter(text)
+        address = None if is_class_schema_id(class_ref) else parse_class_address(class_ref)
+    except DataInputError as exc:
+        _usage_error(str(exc))
+
+    client, tenant_slug = tenant_scoped_client(ctx)
+    class_schema_id = (
+        str(_resolve_class(client, tenant_slug, address).get("class_schema_id")) if address else class_ref.strip()
+    )
+
+    def fetch(cursor: Optional[str]) -> dict[str, Any]:
+        return _fetch_page(
+            client,
+            tenant_slug,
+            class_schema_id,
+            filters=filters,
+            sort=sort,
+            include_deleted=include_deleted,
+            limit=MAX_LIST_PAGE if all_rows else limit,
+            cursor=cursor,
+        )
+
+    pages = _pages(fetch, next_cursor, all_rows)
+    if json_mode or ndjson:
+        _stream_records(pages, ndjson=ndjson)
+        return
+
+    items: list[dict[str, Any]] = []
+    page: dict[str, Any] = {}
+    for page in pages:
+        items += [item for item in page.get("items") or [] if isinstance(item, dict)]
+    total = int(page.get("total") or 0)
+    if not items:
+        typer.echo(f"No records in {address or class_schema_id}.")
+        return
+    shown = data_columns(items, parse_columns(columns))
+    typer.echo("\n".join(render_table(items, shown, include_deleted=include_deleted)))
+    typer.echo("")
+    typer.echo(render_footer(len(items), total, page.get("next_cursor")))
+
+
+def _stream_records(pages: Any, *, ndjson: bool) -> None:
+    """Write the records as they arrive: one JSON line each (``ndjson``), or one JSON array.
+
+    The next cursor of the last page fetched (when more records remain) goes to stderr, so
+    stdout stays valid JSON / NDJSON.
+    """
+    first = True
+    cursor = None
+    if not ndjson:
+        typer.echo("[", nl=False)
+    for page in pages:
+        for item in page.get("items") or []:
+            line = json.dumps(item, separators=(",", ":"), ensure_ascii=False)
+            if ndjson:
+                typer.echo(line)
+            else:
+                typer.echo(line if first else f",{line}", nl=False)
+            first = False
+        cursor = page.get("next_cursor")
+    if not ndjson:
+        typer.echo("]")
+    if cursor:
+        terminal.echo_notice(f"More records: --next {cursor}")

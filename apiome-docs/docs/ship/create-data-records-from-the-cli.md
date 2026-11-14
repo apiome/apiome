@@ -119,6 +119,7 @@ With `--dry-run`, the object has `"valid": true, "dry_run": true` and no `record
 | `2` | Bad options or input, an unknown project, version or class, an unpublished version, or a rejected request (including authentication) |
 | `7` | The record does not match the class schema; nothing was created |
 
+To see the records you created, use [List data records from the CLI](./list-data-records-from-the-cli.md).
 Every option is listed in the [`apiome data` reference](../reference/cli/data.md). The lookup
 behind `--class` is `GET /v1/data/{tenant_slug}/classes` in the
 [REST reference](../reference/rest/data.md).

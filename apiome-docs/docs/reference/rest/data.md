@@ -1,6 +1,6 @@
 ---
 title: "Data"
-description: "REST endpoints tagged data: 7 operations."
+description: "REST endpoints tagged data: 8 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.553.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.554.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `data` · 7 operations
+Tag: `data` · 8 operations
 
 ## `GET /v1/data/{tenant_slug}` {#data-api-info-v1-data-tenant-slug-get}
 
@@ -69,6 +69,45 @@ Operation id: `list_data_classes_v1_data__tenant_slug__classes_get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list data classes. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/data/{tenant_slug}/records` {#list-data-records-v1-data-tenant-slug-records-get}
+
+**List Data Records**
+
+List a class schema's records, a page at a time (#3253).
+
+``filter`` compares a top-level data field as text (``status=succeeded``,
+``amount=19.99``); several filters must all match. ``sort`` takes a system field or a
+data field (compared as JSON; records without it sort last). A soft-deleted record is
+left out unless ``include_deleted`` — then it carries the data it had and ``deleted_at``.
+
+Pages are cursor-driven: pass the answer's ``next_cursor`` to get the next page
+(``null`` on the last page). A cursor only fits the query it came from; changing the
+class, filters, sort or ``include_deleted`` is a 400. Records added while paging can
+shift later pages. Unknown class schema → 404. Requires ``versions:view``.
+
+Operation id: `list_data_records_v1_data__tenant_slug__records_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `class_schema_id` | query | string | yes | Class schema ID (from GET …/classes) |
+| `limit` | query | integer | no | Records per page |
+| `cursor` | query | string or null | no | The next_cursor of the previous page |
+| `filter` | query | array of string | no | key=value on a top-level data field; repeat to require several |
+| `sort` | query | string | no | created_at, updated_at, deleted_at, record_id or a data field; prefix - for descending |
+| `include_deleted` | query | boolean | no | Include soft-deleted records (they carry deleted_at) |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list data records. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/data/{tenant_slug}/records` {#create-data-record-v1-data-tenant-slug-records-post}

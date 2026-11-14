@@ -6,8 +6,14 @@ Embedding and insertion into data_snapshot are handled here (distributed compute
 All endpoints are tenant-scoped and require authentication via JWT or API key.
 """
 
+import base64
+import binascii
+import hashlib
+import json
 import logging
-from typing import Any, Dict, Optional
+import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
@@ -96,6 +102,149 @@ def _schedule_embedding_update(record_id: str, data: Dict[str, Any]) -> None:
             db.update_data_snapshot_embedding(record_id, vector, EMBEDDING_MODEL)
     except Exception as e:
         logger.warning("[data/records] Vectorization failed for record_id=%s: %s", record_id, e)
+
+
+#: Largest page ``GET …/records`` returns.
+MAX_RECORDS_PAGE = 500
+
+#: Most ``filter`` parameters one list request may carry.
+MAX_RECORD_FILTERS = 20
+
+
+def _parse_record_filters(raw: List[str]) -> List[Tuple[str, str]]:
+    """Split each ``key=value`` filter; 400 when one has no ``=`` or an empty key, or too many are given."""
+    if len(raw) > MAX_RECORD_FILTERS:
+        raise HTTPException(status_code=400, detail=f"At most {MAX_RECORD_FILTERS} filters are allowed")
+    parsed = []
+    for text in raw:
+        key, sep, value = text.partition("=")
+        if not sep or not key.strip():
+            raise HTTPException(status_code=400, detail=f"Filter {text!r} must be key=value")
+        parsed.append((key.strip(), value))
+    return parsed
+
+
+def _parse_record_sort(raw: str) -> Tuple[str, bool]:
+    """``created_at`` / ``-created_at`` / ``+amount`` → ``(field, descending)``; 400 when the field is empty."""
+    text = raw.strip()
+    descending = text.startswith("-")
+    field = text.lstrip("+-").strip()
+    if not field:
+        raise HTTPException(status_code=400, detail=f"Sort {raw!r} must name a field, e.g. created_at or -amount")
+    return field, descending
+
+
+def _records_query_signature(
+    class_schema_id: str, filters: List[Tuple[str, str]], sort: str, include_deleted: bool
+) -> str:
+    """A short hash of what a records cursor was issued for, so it is not reused for another query."""
+    material = json.dumps([class_schema_id, filters, sort, include_deleted], separators=(",", ":"))
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()[:16]
+
+
+def _encode_records_cursor(offset: int, signature: str) -> str:
+    """The opaque ``next_cursor``: base64url of ``{"o": offset, "q": signature}``."""
+    raw = json.dumps({"o": offset, "q": signature}, separators=(",", ":")).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+
+def _decode_records_cursor(cursor: str, signature: str) -> int:
+    """The offset a cursor carries; 400 when it is malformed or was issued for a different query."""
+    try:
+        padded = cursor + "=" * (-len(cursor) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")))
+        offset = int(payload["o"])
+        issued_for = str(payload["q"])
+    except (binascii.Error, ValueError, KeyError, TypeError, UnicodeError):
+        raise HTTPException(status_code=400, detail="Invalid cursor")
+    if offset < 0 or issued_for != signature:
+        raise HTTPException(
+            status_code=400,
+            detail="Cursor does not belong to this query (class, filters, sort or include_deleted changed)",
+        )
+    return offset
+
+
+def _iso(value: Any) -> Optional[str]:
+    """A timestamp as ISO 8601 (``None`` stays ``None``)."""
+    if value is None:
+        return None
+    return value.isoformat() if isinstance(value, datetime) else str(value)
+
+
+@router.get("/{tenant_slug}/records")
+async def list_data_records(
+    tenant_slug: str,
+    class_schema_id: str = Query(..., min_length=1, description="Class schema ID (from GET …/classes)"),
+    limit: int = Query(50, ge=1, le=MAX_RECORDS_PAGE, description="Records per page"),
+    cursor: Optional[str] = Query(None, description="The next_cursor of the previous page"),
+    filter: List[str] = Query(
+        default=[], description="key=value on a top-level data field; repeat to require several"
+    ),
+    sort: str = Query(
+        "created_at",
+        description="created_at, updated_at, deleted_at, record_id or a data field; prefix - for descending",
+    ),
+    include_deleted: bool = Query(False, description="Include soft-deleted records (they carry deleted_at)"),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    List a class schema's records, a page at a time (#3253).
+
+    ``filter`` compares a top-level data field as text (``status=succeeded``,
+    ``amount=19.99``); several filters must all match. ``sort`` takes a system field or a
+    data field (compared as JSON; records without it sort last). A soft-deleted record is
+    left out unless ``include_deleted`` — then it carries the data it had and ``deleted_at``.
+
+    Pages are cursor-driven: pass the answer's ``next_cursor`` to get the next page
+    (``null`` on the last page). A cursor only fits the query it came from; changing the
+    class, filters, sort or ``include_deleted`` is a 400. Records added while paging can
+    shift later pages. Unknown class schema → 404. Requires ``versions:view``.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    tenant_id = auth_data["tenant_id"]
+
+    filters = _parse_record_filters(filter)
+    sort_field, descending = _parse_record_sort(sort)
+    signature = _records_query_signature(class_schema_id, filters, sort.strip(), include_deleted)
+    offset = _decode_records_cursor(cursor, signature) if cursor else 0
+
+    try:
+        uuid.UUID(class_schema_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="Class schema not found")
+    if not db.assert_class_schema_tenant_access(class_schema_id, tenant_id):
+        raise HTTPException(status_code=404, detail="Class schema not found")
+
+    rows, total = db.list_data_records(
+        class_schema_id,
+        tenant_id,
+        filters=filters,
+        sort_field=sort_field,
+        descending=descending,
+        include_deleted=include_deleted,
+        limit=limit,
+        offset=offset,
+    )
+    next_offset = offset + len(rows)
+    return {
+        "success": True,
+        "class_schema_id": class_schema_id,
+        "total": total,
+        "limit": limit,
+        "sort": sort.strip(),
+        "next_cursor": _encode_records_cursor(next_offset, signature) if rows and next_offset < total else None,
+        "items": [
+            {
+                "record_id": str(row["record_id"]),
+                "created_at": _iso(row.get("created_at")),
+                "updated_at": _iso(row.get("updated_at")),
+                "deleted_at": _iso(row.get("deleted_at")),
+                "data": row["data"] if isinstance(row.get("data"), dict) else {},
+            }
+            for row in rows
+        ],
+    }
 
 
 @router.get("/{tenant_slug}/records/{record_id}")
