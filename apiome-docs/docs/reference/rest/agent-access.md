@@ -1,6 +1,6 @@
 ---
 title: "Agent access"
-description: "REST endpoints tagged agent-access: 22 operations."
+description: "REST endpoints tagged agent-access: 24 operations."
 sidebar_position: 6
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,35 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.560.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.561.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `agent-access` · 22 operations
+Tag: `agent-access` · 24 operations
+
+## `GET /v1/tenants/{tenant_slug}/agent-access/server.json` {#export-agent-access-server-json-route-v1-tenants-tenant-slug-agent-access-server-json-get}
+
+**Export the tenant's agent runtime as server.json**
+
+Every enabled agent toolset of the tenant as one `server.json`: one remote (the runtime; an agent key selects the toolset) with one entry per toolset under `_meta["dev.apiome/agent-runtime"].toolsets` — server name, coordinates, tool names and digest, ordered by toolset id. A toolset that cannot be compiled is listed under `unavailable` instead of failing the export. `version` is `1.0.0+<digest prefix>`. `remotes[]` names the agent runtime's public `streamable-http` URL (`/agent/mcp`). The auth hint (`_meta["dev.apiome/agent-runtime"].auth`) is OAuth with the Protected Resource Metadata URL when one is configured, else an agent key sent as `Authorization: Bearer`. `digest` is the catalog surface fingerprint of the served tools: it changes when curation changes and not otherwise. No timestamps are included, so the document is byte-stable.
+
+Requires `api_keys:view`.
+
+Operation id: `export_agent_access_server_json_route_v1_tenants__tenant_slug__agent_access_server_json_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The `server.json` document. | `application/json` any |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+| 503 | The agent runtime's public URL is not configured as an http(s) URL. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/agent-keys` {#list-agent-keys-route-v1-tenants-tenant-slug-agent-keys-get}
 
@@ -470,6 +496,34 @@ Request body for accept or reject a description proposal.
 | 200 | Successful response for accept or reject a description proposal. | `application/json` [`EnrichmentProposalOut`](#schema-enrichmentproposalout) |
 | 404 | No such proposal in this tenant's agent toolset. | — |
 | 422 | A blank or over-long edit, or an edit with `reject`. | — |
+
+## `GET /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/server.json` {#export-agent-toolset-server-json-route-v1-tenants-tenant-slug-agent-toolsets-toolset-id-server-json-get}
+
+**Export an agent toolset as server.json**
+
+The toolset in the MCP Registry `server.json` shape, built from the compiled toolset. The toolset's MCP manifest is embedded under `_meta["dev.apiome/agent-runtime"].manifest`, so importing the document through the MCP manifest importer yields the same tools. `remotes[]` names the agent runtime's public `streamable-http` URL (`/agent/mcp`). The auth hint (`_meta["dev.apiome/agent-runtime"].auth`) is OAuth with the Protected Resource Metadata URL when one is configured, else an agent key sent as `Authorization: Bearer`. `digest` is the catalog surface fingerprint of the served tools: it changes when curation changes and not otherwise. No timestamps are included, so the document is byte-stable.
+
+Requires `api_keys:view`.
+
+Operation id: `export_agent_toolset_server_json_route_v1_tenants__tenant_slug__agent_toolsets__toolset_id__server_json_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `toolset_id` | path | string (uuid) | yes | Path parameter identifying the toolset id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | The `server.json` document. | `application/json` any |
+| 404 | No such agent toolset in this tenant. | — |
+| 422 | The version's operations could not be read or compiled. | — |
+| 503 | The agent runtime's public URL is not configured as an http(s) URL. | — |
 
 ## `GET /v1/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/tools` {#list-agent-toolset-tools-route-v1-tenants-tenant-slug-agent-toolsets-toolset-id-tools-get}
 

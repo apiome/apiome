@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.701.0] - 2026-11-14
+
+### Added
+- **`server.json` export for the agent runtime (AAU-5.1, #5722)** — OpenAPI 1.561.0:
+  - `GET /v1/tenants/{t}/agent-toolsets/{id}/server.json` (`api_keys:view`) returns the toolset in
+    the MCP Registry `server.json` shape (`ServerDetail`, schema `2025-12-11`), built from the
+    compiled toolset: name `apiome.<tenant>/agent-toolset-<id>`, `version` = the published version
+    label, one `streamable-http` remote at `APIOME_AGENT_MCP_PUBLIC_URL` (credentials, query and
+    fragment stripped). `_meta["dev.apiome/agent-runtime"]` carries the toolset coordinates,
+    `toolCount`, the auth hint, the embedded MCP `manifest` and `digest`.
+  - `GET /v1/tenants/{t}/agent-access/server.json` (`api_keys:view`) returns every enabled toolset
+    as one server (`apiome.<tenant>/agent-runtime`, version `1.0.0+<digest prefix>`), one entry per
+    toolset under `_meta["dev.apiome/agent-runtime"].toolsets` ordered by id. A toolset that cannot
+    be compiled is listed under `unavailable` and does not fail the export.
+  - **Auth hint:** `{"scheme": "oauth", "protectedResourceMetadata": <url>}` when
+    `APIOME_AGENT_MCP_PRM_URL` is set (AAU-1.1), else `{"scheme": "agent-key", …}`. In agent-key
+    mode the remote also declares a secret `Authorization: Bearer {agent_key}` header.
+  - **Digest:** the catalog surface fingerprint (`surface_fingerprint` / registry
+    `manifestDigest`) of the embedded manifest. It changes when curation changes (a tool enabled or
+    disabled, an accepted description served) and not otherwise. The tenant-wide digest is the
+    SHA-256 of the sorted `(toolsetId, digest)` pairs. Documents carry no timestamps, so they are
+    byte-stable, and both routes send a content-addressed `ETag`.
+  - **Round trip:** the MCP manifest importer (`app.mcp_manifest_parser`) reads a `server.json`
+    carrying `_meta["dev.apiome/agent-runtime"].manifest` as that manifest
+    (`embedded_server_json_manifest`). Importing a toolset export yields the same tools, with a
+    surface fingerprint equal to the export's `digest`. Every other document is read as before.
+  - **MCP Registry API (closes #5724's remaining criterion):** `GET …/mcp-registry/v0.1/servers`
+    (and `/registry/mcp/{t}/v0.1/servers`) leads the first page with the tenant's
+    `apiome.<tenant>/agent-runtime` entry for callers holding one of the tenant's credentials.
+    `search` and `version` filter it, `updated_since` does not (it has no timestamp), and it is
+    also served by name on the versions routes. It is never served anonymously. A tenant with no
+    enabled toolset has no entry, and a build failure drops the entry, not the page.
+  - New settings: `APIOME_AGENT_MCP_PUBLIC_URL` (default `http://localhost:8765/agent/mcp`; a
+    non-`http(s)` value makes the export a `503` `agent-runtime-url-invalid`) and
+    `APIOME_AGENT_MCP_PRM_URL` (default empty).
+
 ## [1.700.0] - 2026-11-14
 
 ### Added

@@ -68,12 +68,14 @@ from .mcp_client.handshake import InitializeResult, ServerInfo
 from .mcp_client.normalize import DiscoverySurface
 
 __all__ = [
+    "AGENT_RUNTIME_META_KEY",
     "MANIFEST_VERSION_KEYS",
     "MAX_REF_DEPTH",
     "McpManifestDocument",
     "McpManifestParseError",
     "McpManifestTransport",
     "dumps_manifest_for_raw",
+    "embedded_server_json_manifest",
     "is_mcp_manifest",
     "is_mcp_manifest_document",
     "is_unclosed_json",
@@ -87,6 +89,12 @@ __all__ = [
 #: is the document-level spelling the corpus uses; ``protocolVersion`` is the wire
 #: spelling an operator who copied an ``initialize`` result will have.
 MANIFEST_VERSION_KEYS: Tuple[str, ...] = ("mcpVersion", "protocolVersion")
+
+#: The ``server.json`` ``_meta`` key under which Apiome's agent-runtime export (AAU-5.1,
+#: :mod:`app.agent_server_json`) embeds the toolset's manifest. A ``server.json`` carrying
+#: ``_meta[AGENT_RUNTIME_META_KEY].manifest`` is read as that manifest, so importing an export
+#: back yields the same tools.
+AGENT_RUNTIME_META_KEY = "dev.apiome/agent-runtime"
 
 #: How deep ``$ref`` resolution may nest before the manifest is rejected. A shared
 #: definition pointing at another shared definition is ordinary; sixty-four levels of it
@@ -261,6 +269,29 @@ class McpManifestDocument:
 # ===========================================================================
 
 
+def embedded_server_json_manifest(document: Any) -> Optional[Mapping[str, Any]]:
+    """Return the manifest an Apiome agent-runtime ``server.json`` embeds, or ``None``.
+
+    A registry ``server.json`` names a server but not its tools; the AAU-5.1 export
+    (:mod:`app.agent_server_json`) carries the toolset's manifest under
+    ``_meta["dev.apiome/agent-runtime"].manifest``. Any other document — a plain manifest, a
+    third-party ``server.json``, the tenant-wide export (which lists toolsets, not one
+    manifest) — returns ``None`` and is read as it is.
+
+    Args:
+        document: Any already-parsed JSON value.
+
+    Returns:
+        The embedded manifest object, or ``None``.
+    """
+    if not isinstance(document, Mapping):
+        return None
+    meta = document.get("_meta")
+    runtime = meta.get(AGENT_RUNTIME_META_KEY) if isinstance(meta, Mapping) else None
+    manifest = runtime.get("manifest") if isinstance(runtime, Mapping) else None
+    return manifest if isinstance(manifest, Mapping) else None
+
+
 def is_mcp_manifest_document(document: Any) -> bool:
     """Return ``True`` when a parsed value looks like a static MCP server manifest.
 
@@ -275,6 +306,7 @@ def is_mcp_manifest_document(document: Any) -> bool:
     Returns:
         ``True`` when the document carries the marker pair and no foreign-format key.
     """
+    document = embedded_server_json_manifest(document) or document
     if not isinstance(document, Mapping):
         return False
     if any(marker in document for marker in _FOREIGN_FORMAT_MARKERS):
@@ -505,6 +537,7 @@ def _load_manifest(content: str, *, source_label: Optional[str]) -> Mapping[str,
             f"{type(document).__name__}",
             code="FORMAT_MISMATCH",
         )
+    document = embedded_server_json_manifest(document) or document
     if any(marker in document for marker in _FOREIGN_FORMAT_MARKERS):
         raise McpManifestParseError(
             f"Content looks like an API description (OpenAPI/Swagger/AsyncAPI/…){where}, "

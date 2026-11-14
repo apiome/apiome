@@ -18,7 +18,7 @@ MCP catalog endpoints and tenant governance (policy / key capabilities).
 apiome mcp [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`test`](#mcp-test), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
+Subcommands: [`conformance`](#mcp-conformance), [`conformance-rules`](#mcp-conformance-rules), [`discover`](#mcp-discover), [`key`](#mcp-key), [`lint`](#mcp-lint), [`list`](#mcp-list), [`policy`](#mcp-policy), [`probe`](#mcp-probe), [`probe-catalog`](#mcp-probe-catalog), [`probe-runs`](#mcp-probe-runs), [`probe-target-add`](#mcp-probe-target-add), [`probe-target-list`](#mcp-probe-target-list), [`register`](#mcp-register), [`registry`](#mcp-registry), [`server-json`](#mcp-server-json), [`shadowing`](#mcp-shadowing), [`show`](#mcp-show), [`source`](#mcp-source), [`test`](#mcp-test), [`trust-baseline-approve`](#mcp-trust-baseline-approve), [`trust-baseline-show`](#mcp-trust-baseline-show), [`trust-drift`](#mcp-trust-drift), [`trust-posture`](#mcp-trust-posture), [`trust-posture-rules`](#mcp-trust-posture-rules).
 
 ## apiome mcp conformance {#mcp-conformance}
 
@@ -392,6 +392,34 @@ apiome mcp registry list [OPTIONS]
 | --- | --- | --- | --- | --- |
 | `--since` | text |  |  | Only servers updated at or after this ISO 8601 timestamp (updated_since). |
 | `--output` | text |  |  | Output: table (default) or json. |
+
+## apiome mcp server-json {#mcp-server-json}
+
+Export the agent runtime as a registry server.json (AAU-5.1).
+
+```text
+apiome mcp server-json [OPTIONS] COMMAND [ARGS]...
+```
+
+Subcommands: [`export`](#mcp-server-json-export).
+
+## apiome mcp server-json export {#mcp-server-json-export}
+
+Export the agent runtime as a registry server.json (GET .../agent-toolsets/{id}/server.json).
+
+Pass exactly one of --toolset or --tenant-wide. The document names the runtime's public streamable-http URL, an auth hint (OAuth Protected Resource Metadata, or an agent key) and a digest that changes only when the toolset's curation does. Output is byte-stable: sorted keys, two-space indent, one trailing newline.
+
+```text
+apiome mcp server-json export [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--toolset` | uuid |  |  | Agent toolset UUID to export as one server. |
+| `--tenant-wide` | flag |  |  | Export every enabled toolset of the tenant as one server (the runtime) instead. |
+| `--out` | path |  |  | Write the document to this file instead of stdout. |
 
 ## apiome mcp shadowing {#mcp-shadowing}
 

@@ -4,12 +4,14 @@ Catalog subcommands (``register`` / ``list`` / ``show`` / ``discover`` / ``test`
 use Tier 2 API key auth against ``/v1/mcp/{tenant_slug}/endpoints``. Governance
 subcommands (``policy``, ``key capabilities``) use a tenant-admin session bearer
 against ``/v1/tenants/{tenant_slug}/mcp-policy`` and ``…/mcp-keys/…`` (MTG-5.3).
+``server-json export`` (AAU-5.1) reads the agent runtime's registry ``server.json`` with the API key.
 """
 
 from __future__ import annotations
 
 import json
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
 from uuid import UUID
@@ -112,6 +114,14 @@ registry_app = typer.Typer(
     add_completion=False,
 )
 app.add_typer(registry_app, name="registry")
+
+server_json_app = typer.Typer(
+    name="server-json",
+    help="Export the agent runtime as a registry server.json (AAU-5.1).",
+    context_settings={"help_option_names": ["-h", "--help"]},
+    add_completion=False,
+)
+app.add_typer(server_json_app, name="server-json")
 app.add_typer(policy_app, name="policy")
 app.add_typer(key_app, name="key")
 
@@ -1701,3 +1711,57 @@ def registry_list(
         empty_message="No servers in the registry.",
         min_width=_MCP_LIST_MIN_WIDTH,
     )
+
+
+def server_json_text(document: Any) -> str:
+    """Render a ``server.json`` document byte-stably: sorted keys, two-space indent, final newline.
+
+    The REST export carries no timestamps, so the same curation always renders the same bytes —
+    the output can be committed or diffed in CI.
+
+    Args:
+        document: The parsed ``server.json``.
+
+    Returns:
+        The canonical text.
+    """
+    return json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+
+
+@server_json_app.command("export")
+def server_json_export(
+    ctx: typer.Context,
+    toolset: UUID | None = typer.Option(
+        None, "--toolset", help="Agent toolset UUID to export as one server."
+    ),
+    tenant_wide: bool = typer.Option(
+        False,
+        "--tenant-wide",
+        help="Export every enabled toolset of the tenant as one server (the runtime) instead.",
+    ),
+    out: Path | None = typer.Option(
+        None, "--out", help="Write the document to this file instead of stdout."
+    ),
+) -> None:
+    """Export the agent runtime as a registry server.json (GET .../agent-toolsets/{id}/server.json).
+
+    Pass exactly one of --toolset or --tenant-wide. The document names the runtime's public
+    streamable-http URL, an auth hint (OAuth Protected Resource Metadata, or an agent key) and a
+    digest that changes only when the toolset's curation does. Output is byte-stable: sorted
+    keys, two-space indent, one trailing newline.
+    """
+    if (toolset is None) == (not tenant_wide):
+        typer.echo("Pass exactly one of --toolset <id> or --tenant-wide.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    client, tenant_slug = _scoped_client(ctx)
+    path = (
+        api_paths.agent_access_server_json(tenant_slug)
+        if tenant_wide
+        else api_paths.agent_toolset_server_json(tenant_slug, str(toolset))
+    )
+    text = server_json_text(client.get(path).json())
+    if out is None:
+        typer.echo(text, nl=False)
+        return
+    out.write_text(text, encoding="utf-8")
+    typer.echo(f"Wrote {out}", err=True)

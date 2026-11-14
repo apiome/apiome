@@ -1169,6 +1169,25 @@ class Settings(BaseSettings):
         description="Public base URL of apiome-rest (no trailing slash), for links handed to "
         "outside systems such as an export webhook's bundle fetch link.",
     )
+    # Agent runtime ``server.json`` export (AAU-5.1, #5722). ``agent_mcp_public_url`` is the public
+    # streamable-HTTP URL of the apiome-mcp agent runtime (its ``/agent/mcp`` path) every exported
+    # ``remotes[]`` entry names. ``agent_mcp_protected_resource_metadata_url`` is the runtime's
+    # RFC 9728 Protected Resource Metadata URL (AAU-1.1): when set, the export's auth hint is OAuth
+    # with that URL; when empty, OAuth is unavailable and the hint is an agent key.
+    agent_mcp_public_url: str = Field(
+        default="http://localhost:8765/agent/mcp",
+        validation_alias=AliasChoices("APIOME_AGENT_MCP_PUBLIC_URL", "agent_mcp_public_url"),
+        description="Public streamable-HTTP URL of the agent runtime (`/agent/mcp`), named in "
+        "exported server.json remotes.",
+    )
+    agent_mcp_protected_resource_metadata_url: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "APIOME_AGENT_MCP_PRM_URL", "agent_mcp_protected_resource_metadata_url"
+        ),
+        description="The agent runtime's Protected Resource Metadata URL; empty means OAuth is "
+        "unavailable and exported server.json documents hint an agent key.",
+    )
     export_webhook_inline_max_bytes: int = Field(
         default=1_048_576,  # 1 MiB
         validation_alias=AliasChoices(

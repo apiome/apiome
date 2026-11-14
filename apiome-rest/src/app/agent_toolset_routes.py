@@ -1,6 +1,6 @@
 """Agent toolset endpoints — AGX-1.2 (#4530) and the AGX-1.3 (#4531) enrichment pass.
 
-Eleven routes over agent toolsets (:mod:`app.agent_toolsets`): the curated set of a published
+Thirteen routes over agent toolsets (:mod:`app.agent_toolsets`): the curated set of a published
 version's operations that agents may call, and the review of their descriptions
 (:mod:`app.agent_toolset_enrichment`).
 
@@ -16,7 +16,13 @@ GET    /v1/tenants/{t}/agent-toolsets/{id}/enrichment       agent-hostile flags 
 POST   /v1/tenants/{t}/agent-toolsets/{id}/enrichment       run the enrichment pass
 PATCH  /v1/tenants/{t}/agent-toolsets/{id}/enrichment/{pid} accept (or edit) / reject a proposal
 GET    /v1/tenants/{t}/agent-toolsets/{id}/compiled         the toolset as agents are served it
+GET    /v1/tenants/{t}/agent-toolsets/{id}/server.json      registry server.json (AAU-5.1)
+GET    /v1/tenants/{t}/agent-access/server.json             every enabled toolset as one server.json
 ```
+
+The two ``server.json`` routes (AAU-5.1, #5722, :mod:`app.agent_server_json`) describe the agent
+runtime in the MCP Registry ``server.json`` shape, with a ``digest`` that moves only when curation
+does. They read like ``/compiled`` (``api_keys:view``) and are not audited.
 
 **Nothing AI-generated reaches an agent without acceptance.** The enrichment pass stores copilot
 proposals as ``proposed``; only a person's ``accept`` makes ``/compiled`` serve the text, and only
@@ -54,8 +60,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
+from .agent_server_json import (
+    CODE_RUNTIME_URL_INVALID,
+    export_tenant_server_json,
+    export_toolset_server_json,
+)
 from .agent_toolset_enrichment import (
     CODE_ENRICHMENT_NOT_FOUND,
     CompiledToolsetOut,
@@ -94,6 +106,7 @@ from .agent_toolsets import (
 )
 from .auth import validate_authentication
 from .database import db
+from .mcp_registry import body_etag
 from .permissions import Action, Resource, enforce_permission
 
 logger = logging.getLogger(__name__)
@@ -131,6 +144,7 @@ _STATUS_BY_CODE = {
     CODE_ENRICHMENT_NOT_FOUND: 404,
     CODE_VERSION_NOT_FOUND: 404,
     CODE_VERSION_UNPUBLISHED: 409,
+    CODE_RUNTIME_URL_INVALID: 503,
 }
 
 _WHAT_IT_IS = (
@@ -820,3 +834,116 @@ async def compile_agent_toolset_route(
         return compile_agent_toolset(_tenant_id(auth_data), str(toolset_id))
     except AgentToolsetError as exc:
         raise _refusal(exc) from exc
+
+
+def _tenant_slug(tenant_id: str, tenant_slug: str) -> str:
+    """The authenticated tenant's slug (the registry namespace); the URL slug if it cannot be read."""
+    return db.get_tenant_slug_by_id(tenant_id) or tenant_slug
+
+
+def _server_json_response(document: Dict[str, Any]) -> JSONResponse:
+    """Return a ``server.json`` document with a content-addressed ``ETag`` (never cached shared)."""
+    return JSONResponse(
+        content=document,
+        headers={"ETag": body_etag(document), "Cache-Control": "private, no-store"},
+    )
+
+
+_SERVER_JSON_NOTES = (
+    "`remotes[]` names the agent runtime's public `streamable-http` URL (`/agent/mcp`). The auth "
+    "hint (`_meta[\"dev.apiome/agent-runtime\"].auth`) is OAuth with the Protected Resource "
+    "Metadata URL when one is configured, else an agent key sent as `Authorization: Bearer`. "
+    "`digest` is the catalog surface fingerprint of the served tools: it changes when curation "
+    "changes and not otherwise. No timestamps are included, so the document is byte-stable."
+)
+
+
+@router.get(
+    _BASE + "/{toolset_id}/server.json",
+    summary="Export an agent toolset as server.json",
+    description=(
+        "The toolset in the MCP Registry `server.json` shape, built from the compiled toolset. "
+        "The toolset's MCP manifest is embedded under `_meta[\"dev.apiome/agent-runtime\"].manifest`, "
+        "so importing the document through the MCP manifest importer yields the same tools. "
+        + _SERVER_JSON_NOTES
+        + "\n\nRequires `api_keys:view`."
+    ),
+    responses={
+        200: {"description": "The `server.json` document.", "content": {"application/json": {}}},
+        404: {"description": "No such agent toolset in this tenant."},
+        422: {"description": "The version's operations could not be read or compiled."},
+        503: {"description": "The agent runtime's public URL is not configured as an http(s) URL."},
+    },
+)
+async def export_agent_toolset_server_json_route(
+    tenant_slug: str,
+    toolset_id: UUID,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> JSONResponse:
+    """Export one toolset's ``server.json``.
+
+    Args:
+        tenant_slug: The tenant in the URL (informational; the namespace is the caller's tenant).
+        toolset_id: The toolset.
+        auth_data: The authenticated principal.
+
+    Returns:
+        The document, with an ``ETag``.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 404 when the toolset does not exist; 422 when
+            it cannot be compiled; 503 when the runtime URL is misconfigured.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    tenant_id = _tenant_id(auth_data)
+    try:
+        document = await run_in_threadpool(
+            export_toolset_server_json, tenant_id, _tenant_slug(tenant_id, tenant_slug), str(toolset_id)
+        )
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+    return _server_json_response(document)
+
+
+@router.get(
+    "/{tenant_slug}/agent-access/server.json",
+    summary="Export the tenant's agent runtime as server.json",
+    description=(
+        "Every enabled agent toolset of the tenant as one `server.json`: one remote (the runtime; "
+        "an agent key selects the toolset) with one entry per toolset under "
+        "`_meta[\"dev.apiome/agent-runtime\"].toolsets` — server name, coordinates, tool names and "
+        "digest, ordered by toolset id. A toolset that cannot be compiled is listed under "
+        "`unavailable` instead of failing the export. `version` is `1.0.0+<digest prefix>`. "
+        + _SERVER_JSON_NOTES
+        + "\n\nRequires `api_keys:view`."
+    ),
+    responses={
+        200: {"description": "The `server.json` document.", "content": {"application/json": {}}},
+        503: {"description": "The agent runtime's public URL is not configured as an http(s) URL."},
+    },
+)
+async def export_agent_access_server_json_route(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> JSONResponse:
+    """Export the tenant-wide ``server.json``.
+
+    Args:
+        tenant_slug: The tenant in the URL (informational).
+        auth_data: The authenticated principal.
+
+    Returns:
+        The document, with an ``ETag``.
+
+    Raises:
+        HTTPException: 403 without ``api_keys:view``; 503 when the runtime URL is misconfigured.
+    """
+    enforce_permission(db, auth_data, Resource.API_KEYS, Action.VIEW)
+    tenant_id = _tenant_id(auth_data)
+    try:
+        document = await run_in_threadpool(
+            export_tenant_server_json, tenant_id, _tenant_slug(tenant_id, tenant_slug)
+        )
+    except AgentToolsetError as exc:
+        raise _refusal(exc) from exc
+    return _server_json_response(document)

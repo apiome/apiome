@@ -19,7 +19,11 @@ Bad credentials are refused (``401`` / ``403``) rather than silently downgraded 
 
 Each entry is built by :mod:`app.mcp_registry`; its trust posture is recomputed offline from the
 stored snapshot, with the vulnerability lookup off, so an anonymous read never calls out.
-The tenant's own agent-runtime entry is added by AAU-5.1 (#5722) once that builder exists.
+The tenant's own agent-runtime entry (AAU-5.1, #5722; :func:`app.agent_server_json.export_tenant_server_json`)
+is served to credentialed callers only: first on the first page of ``/servers`` (while ``search`` /
+``version`` admit it; it carries no timestamp, so ``updated_since`` never excludes it), and by its
+name ``apiome.<tenant>/agent-runtime`` on the versions routes. A tenant without an enabled toolset
+has no runtime entry, and a build failure drops the entry rather than the page.
 """
 
 from __future__ import annotations
@@ -30,8 +34,15 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import unquote
 
 from fastapi import APIRouter, Header, HTTPException, Query, Response
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
+from .agent_server_json import (
+    AGENT_RUNTIME_META_KEY,
+    export_tenant_server_json,
+    runtime_server_name,
+    runtime_server_response,
+)
 from .auth import decode_jwt, resolve_optional_tenant_member_auth
 from .database import db
 from .mcp_catalog_routes import _build_posture_context
@@ -169,6 +180,50 @@ def _utc(value: Optional[datetime]) -> Optional[datetime]:
     return value.replace(tzinfo=timezone.utc)
 
 
+def _runtime_entry_sync(tenant_slug: str) -> Optional[Dict[str, Any]]:
+    """Build the tenant's agent-runtime ``ServerResponse``, or ``None`` (see :func:`runtime_entry`)."""
+    tenant = db.get_tenant_row_by_slug(tenant_slug)
+    if not tenant:
+        return None
+    document = export_tenant_server_json(str(tenant["id"]), tenant_slug)
+    if not document["_meta"][AGENT_RUNTIME_META_KEY]["toolsetCount"]:
+        return None
+    return runtime_server_response(document)
+
+
+async def runtime_entry(tenant_slug: str, *, private: bool) -> Optional[Dict[str, Any]]:
+    """Return the tenant's agent-runtime registry entry for a credentialed caller, else ``None``.
+
+    Args:
+        tenant_slug: The tenant whose registry is being read.
+        private: Whether the caller presented one of the tenant's credentials.
+
+    Returns:
+        The ``ServerResponse``; ``None`` for an anonymous caller, a tenant with no enabled
+        toolset, or when the entry cannot be built (logged — the catalog page is still served).
+    """
+    if not private:
+        return None
+    try:
+        return await run_in_threadpool(_runtime_entry_sync, tenant_slug)
+    except Exception:  # noqa: BLE001 — the runtime entry degrades, the catalog page does not
+        logger.exception("mcp_registry: agent runtime entry failed for tenant %s", tenant_slug)
+        return None
+
+
+def _is_runtime_name(tenant_slug: str, server_name_param: str) -> bool:
+    """Whether a path's server name addresses the tenant's agent-runtime entry."""
+    return unquote(server_name_param) == runtime_server_name(tenant_slug)
+
+
+async def _runtime_entry_or_404(tenant_slug: str, *, private: bool) -> Dict[str, Any]:
+    """The runtime entry, or ``404`` exactly as an unknown catalog server is refused."""
+    entry = await runtime_entry(tenant_slug, private=private)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return entry
+
+
 def _server_row(tenant_slug: str, server_name_param: str, *, private: bool) -> Dict[str, Any]:
     """Resolve a server name to its registry row, or raise ``404``.
 
@@ -243,7 +298,16 @@ async def list_registry_servers(
     wanted = (version or "").strip()
     if wanted and wanted != "latest":
         page = [row for row in page if entry_version(row) == wanted]
-    body = server_list(await _entries(page), next_cursor)
+    entries = await _entries(page)
+    runtime = await runtime_entry(tenant_slug, private=private) if after_slug is None else None
+    term = (search or "").strip().lower()
+    if runtime is not None:
+        server = runtime["server"]
+        if (not term or term in server["name"].lower()) and (
+            not wanted or wanted in ("latest", server["version"])
+        ):
+            entries.insert(0, runtime)
+    body = server_list(entries, next_cursor)
     return _json(body, private=private, etag=body_etag(body))
 
 
@@ -267,6 +331,9 @@ async def list_registry_server_versions(
         A ``ServerList`` with the server's current version; ``404`` when the caller cannot see it.
     """
     private = caller_sees_private(tenant_slug, authorization=authorization, x_api_key=x_api_key)
+    if _is_runtime_name(tenant_slug, server_name):
+        body = server_list([await _runtime_entry_or_404(tenant_slug, private=private)], None)
+        return _json(body, private=private, etag=body_etag(body))
     row = _server_row(tenant_slug, server_name, private=private)
     body = server_list(await _entries([row]), None)
     return _json(body, private=private, etag=body_etag(body))
@@ -303,11 +370,16 @@ async def get_registry_server_version(
         or a version that is not the one served.
     """
     private = caller_sees_private(tenant_slug, authorization=authorization, x_api_key=x_api_key)
-    row = _server_row(tenant_slug, server_name, private=private)
     wanted = unquote(version)
-    if wanted != "latest" and wanted != entry_version(row):
-        raise HTTPException(status_code=404, detail="Server version not found")
-    entry = (await _entries([row]))[0]
+    if _is_runtime_name(tenant_slug, server_name):
+        entry = await _runtime_entry_or_404(tenant_slug, private=private)
+        if wanted != "latest" and wanted != entry["server"]["version"]:
+            raise HTTPException(status_code=404, detail="Server version not found")
+    else:
+        row = _server_row(tenant_slug, server_name, private=private)
+        if wanted != "latest" and wanted != entry_version(row):
+            raise HTTPException(status_code=404, detail="Server version not found")
+        entry = (await _entries([row]))[0]
     etag = body_etag(entry)
     if _if_none_match_hit(if_none_match, etag):
         return Response(

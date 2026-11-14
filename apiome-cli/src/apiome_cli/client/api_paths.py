@@ -418,6 +418,16 @@ def mcp_registry_servers(tenant_slug: str) -> str:
     return f"{V1}/tenants/{tenant_slug}/mcp-registry/v0.1/servers"
 
 
+def agent_toolset_server_json(tenant_slug: str, toolset_id: str | UUID) -> str:
+    """One agent toolset as a registry ``server.json`` (AAU-5.1, #5722)."""
+    return f"{V1}/tenants/{tenant_slug}/agent-toolsets/{toolset_id}/server.json"
+
+
+def agent_access_server_json(tenant_slug: str) -> str:
+    """Every enabled agent toolset of the tenant as one ``server.json`` (AAU-5.1, #5722)."""
+    return f"{V1}/tenants/{tenant_slug}/agent-access/server.json"
+
+
 def mcp_endpoint_sources(tenant_slug: str, endpoint_id: str | UUID) -> str:
     """An MCP endpoint's linked source associations (CLX-3.2, #4856)."""
     return f"{mcp_endpoint(tenant_slug, endpoint_id)}/sources"
