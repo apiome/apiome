@@ -12,7 +12,8 @@ an exit code.
 * :func:`find_class` — the class in the version's frozen class schemas (exact name, then a
   unique case-insensitive match);
 * :func:`validate_record` — the payload against the class's JSON Schema 2020-12, as
-  ``field: message`` problems.
+  ``field: message`` problems; :func:`record_validator` checks the schema once for many records
+  (``data import``).
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import dataclass
-from typing import Any, Iterable, Mapping, Optional, Sequence
+from typing import Any, Callable, Iterable, Mapping, Optional, Sequence
 
 from jsonschema import Draft202012Validator, FormatChecker
 from jsonschema.exceptions import SchemaError, ValidationError
@@ -190,6 +191,40 @@ def _problems(error: ValidationError) -> list[FieldError]:
     return [FieldError(_field_name(error.absolute_path), error.message)]
 
 
+def record_validator(schema: Mapping[str, Any]) -> Callable[[Mapping[str, Any]], list[FieldError]]:
+    """Check the class's JSON Schema 2020-12 once and return a function that validates records.
+
+    ``data import`` checks thousands of records against one schema, so the schema itself is only
+    checked here, not once per record.
+
+    Args:
+        schema: The frozen class schema (``classes[].schema``).
+
+    Returns:
+        A function taking a record and returning its field-level problems (``format`` is
+        asserted), sorted by field then message and without duplicates; empty when it is valid.
+
+    Raises:
+        SchemaUnusable: The schema is not a valid JSON Schema. A ``$ref`` that cannot be resolved
+            offline raises it from the returned function, on the first record that reaches it.
+    """
+    try:
+        Draft202012Validator.check_schema(dict(schema))
+    except SchemaError as exc:
+        raise SchemaUnusable(f"the class schema is not valid JSON Schema ({exc.message})") from exc
+    validator = Draft202012Validator(dict(schema), format_checker=FormatChecker())
+
+    def validate(payload: Mapping[str, Any]) -> list[FieldError]:
+        try:
+            found = [problem for error in validator.iter_errors(dict(payload)) for problem in _problems(error)]
+        except Unresolvable as exc:
+            raise SchemaUnusable(f"the class schema has a $ref that cannot be resolved locally ({exc})") from exc
+        unique = {(problem.field, problem.message): problem for problem in found}
+        return [unique[key] for key in sorted(unique)]
+
+    return validate
+
+
 def validate_record(schema: Mapping[str, Any], payload: Mapping[str, Any]) -> list[FieldError]:
     """Check ``payload`` against the class's JSON Schema 2020-12 (with ``format`` assertions).
 
@@ -205,16 +240,7 @@ def validate_record(schema: Mapping[str, Any], payload: Mapping[str, Any]) -> li
         SchemaUnusable: The schema is not a valid JSON Schema, or it has a ``$ref`` that cannot be
             resolved offline — the record cannot be checked locally.
     """
-    try:
-        Draft202012Validator.check_schema(dict(schema))
-        validator = Draft202012Validator(dict(schema), format_checker=FormatChecker())
-        found = [problem for error in validator.iter_errors(dict(payload)) for problem in _problems(error)]
-    except SchemaError as exc:
-        raise SchemaUnusable(f"the class schema is not valid JSON Schema ({exc.message})") from exc
-    except Unresolvable as exc:
-        raise SchemaUnusable(f"the class schema has a $ref that cannot be resolved locally ({exc})") from exc
-    unique = {(problem.field, problem.message): problem for problem in found}
-    return [unique[key] for key in sorted(unique)]
+    return record_validator(schema)(payload)
 
 
 def render_created(record_id: str, address: ClassAddress) -> str:

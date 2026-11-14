@@ -10,7 +10,8 @@ through them, filter and sort them, and pipe them into other tools as JSON or ND
 inspect what is stored, to debug a client that writes records, or to export records for an ETL
 job.
 
-To add records, see [Create data records from the CLI](./create-data-records-from-the-cli.md).
+To add records, see [Create data records from the CLI](./create-data-records-from-the-cli.md), or
+[Import data records from the CLI](./import-data-records-from-the-cli.md) to load many at once.
 
 ## Before you start
 

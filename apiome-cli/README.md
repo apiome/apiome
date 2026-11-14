@@ -1758,6 +1758,31 @@ apiome data list --class billing/1.0.0/Charge --include-deleted --columns amount
 - `--json` prints one JSON array, `--ndjson` one record per line; both stream, and the next cursor
   (if any) goes to stderr.
 
+### Import data records
+
+`apiome data import <file> --class <project>/<version>/<Class>` bulk-loads NDJSON, a JSON array or
+CSV into a published class, streaming the file (constant memory) and sending parallel batches of
+`POST /v1/data/{tenant}/records` with a progress bar.
+
+```bash
+apiome data import ./charges.ndjson --class billing/1.0.0/Charge --batch 500
+apiome data import ./customers.csv --class crm/2.0.0/Customer --mapping 'first_name,last_name,email_addr=email'
+apiome data import - --class billing/1.0.0/Charge --ndjson < charges.ndjson
+apiome data import ./charges.json --class billing/1.0.0/Charge --dry-run --continue-on-error --report report.json
+```
+
+- The format is `--ndjson` / `--csv` / `--json` (input format), else the extension (`.ndjson` /
+  `.jsonl`, `.csv`, `.json`); stdin (`-`) needs the flag.
+- CSV: the header names the columns; `--mapping` keeps only the listed columns (`column=field`
+  renames). Cells are typed from the class schema (`number`, `integer`, `boolean`, `null`,
+  `object` / `array` as JSON); empty cells are left out.
+- Every row is validated locally first. `--batch` (default 100) rows per batch, `--concurrency`
+  (default 4, max 16) batches at once; 429 / 5xx are retried 3 times with back-off or `Retry-After`.
+- A failed row exits **7** and stops the import; `--continue-on-error` tries every row and exits
+  **0**. `--report <path>` writes `{"rows":[{row, status, record_id?, error?}], …, "failed_count"}`.
+  `--dry-run` validates only. The global `--json` prints the summary; the bar is hidden under
+  `--quiet`, the global `--json` and off a terminal.
+
 ### List resources
 
 Human-readable tables (default):
