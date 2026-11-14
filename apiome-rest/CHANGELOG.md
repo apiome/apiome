@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.700.0] - 2026-11-14
+
+### Added
+- **Bulk CSV member import and export (EID-2.5, #5671)** — two routes on the access plane:
+  - `POST /v1/access/{tenant_slug}/members/import?dryRun=true` (`members:create`, multipart `file`)
+    reads an `email,role,display_name` CSV (header required, only `email` mandatory, at most 1,000
+    rows and 1 MiB) and returns `{dry_run, total, max_rows, seats_free, counts, rows}`. Each row
+    carries its file `line` and an `outcome`: `invite`, `already-member` (a member, or listed
+    earlier in the file), `invalid-email`, `unknown-role` (the `role` cell matched no role id, slug
+    or name), `no-account` (no Apiome account uses the address, so the invite route would 404) or
+    `seat-cap` (past the free license seats). `invite` rows carry the `role_id` to send. The dry
+    run writes nothing — no membership, role or audit row. It is the only mode: `dryRun=false` is
+    a 400 that points at `POST /v1/access/{tenant_slug}/members`, through which each `invite` row
+    is applied, so the seat guard (`license-seats-exhausted`), rate limit and `member.invited`
+    audit entry apply per row.
+  - `GET /v1/access/{tenant_slug}/members/export` (`members:view`) downloads the roster as CSV:
+    `email,status,role,two_factor,provenance,last_sign_in,created`. `provenance` is `invite`,
+    `sso:<id>` or `scim` (read from the membership's `provisioned_by` when SSO/SCIM provisioning
+    writes it; `invite` until then), `last_sign_in` is the newest successful `sign_in` in
+    `auth_events`, and a cell starting with `=`, `+`, `-` or `@` is prefixed with `'` (the import
+    strips it again). Importing an export reports every row as `already-member`.
+  - `Database.get_users_by_emails` and `Database.list_member_last_sign_ins` back them;
+    `license_capacity.member_seats_free` counts the free seats with the seat guard's accounting.
+  OpenAPI document version 1.560.0.
+
 ## [1.699.0] - 2026-11-14
 
 ### Added

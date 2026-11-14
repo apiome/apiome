@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Shield, UserPlus } from 'lucide-react';
+import { Download, Shield, Upload, UserPlus } from 'lucide-react';
 
 import { useAuthSession } from '@lib/auth/session-client';
 import { isFeatureReleased } from '@lib/feature-release';
@@ -22,11 +22,14 @@ import {
   fetchRoles,
   assignMemberRole,
   inviteMember,
+  previewMemberImport,
   offboardMember,
   resendMemberInvite,
   setMemberStatus,
+  ImportMembersDialog,
   InviteMemberDialog,
   MemberDetailDrawer,
+  MEMBERS_EXPORT_URL,
   MemberFactsLine,
   MEMBERS_COMING_NEXT,
   MembersTable,
@@ -98,7 +101,7 @@ const AUDIT_ROUTE = '/ade/dashboard/audit';
 const memberTwoFactorResetEndpoint = (userId: string) =>
   `/api/access/members/${encodeURIComponent(userId)}/two-factor/reset`;
 
-type MemberOverlay = 'none' | 'invite' | 'suspend' | 'offboard' | 'reset-two-factor';
+type MemberOverlay = 'none' | 'invite' | 'import' | 'suspend' | 'offboard' | 'reset-two-factor';
 
 /**
  * The page's own `N`.
@@ -317,6 +320,18 @@ export default function MembersClient() {
     [loadData]
   );
 
+  /** One import row's invitation — the same call as {@link handleInvite}, without the reload. */
+  const handleImportInvite = React.useCallback(
+    (input: { email: string; roleId?: string }) => inviteMember(input),
+    []
+  );
+
+  /** Read an import refusal the way every other write on the page is read. */
+  const describeImportFailure = React.useCallback(
+    (e: unknown) => describeWriteFailure(e, 'Failed to invite member'),
+    []
+  );
+
   const handleChangeRole = React.useCallback(
     async (member: MemberRecord, roleId: string) => {
       if (!roleId || roleId === member.role_id) return;
@@ -396,6 +411,20 @@ export default function MembersClient() {
                 Roles
               </a>
             </Button>
+            {/* The roster as CSV (EID-2.5): readable by anyone who can read the page. */}
+            <Button variant="outline" asChild>
+              <a href={MEMBERS_EXPORT_URL} download data-testid="members-export">
+                <Download aria-hidden />
+                Export CSV
+              </a>
+            </Button>
+            {/* Bulk invite (EID-2.5): offered on the same terms as Invite member. */}
+            {canInviteNow && (
+              <Button variant="outline" data-testid="members-import" onClick={() => setOverlay('import')}>
+                <Upload aria-hidden />
+                Import CSV
+              </Button>
+            )}
             {/* Offered only when it can work (HIVE-11.9): with every seat taken the facts
                 line's warning says why there is no invite, rather than a disabled button. */}
             {canInviteNow && (
@@ -476,6 +505,15 @@ export default function MembersClient() {
         seats={seats}
         atCapacity={atCapacity}
         onSubmit={handleInvite}
+      />
+
+      <ImportMembersDialog
+        open={overlay === 'import'}
+        onOpenChange={(open) => !open && closeOverlay()}
+        onPreview={previewMemberImport}
+        onInvite={handleImportInvite}
+        describeError={describeImportFailure}
+        onApplied={() => void loadData()}
       />
 
       <SuspendMemberDialog

@@ -4,7 +4,8 @@ Access & IAM API routes (#3611, RC1-1.1).
 Tenant-scoped endpoints backing the Access UI (``docs/planning/mockups/access/``):
 
 * **Roles & permissions** — list/create/update/delete roles and edit the resource x action matrix.
-* **Members** — list members, invite, re-issue an invitation, assign role, suspend/reinstate, offboard.
+* **Members** — list members, invite, re-issue an invitation, assign role, suspend/reinstate, offboard,
+  and the bulk CSV import dry run and export (EID-2.5).
 * **Access audit** — read the append-only, hash-chained access ledger (JSON + CSV export).
 
 Plus a small **platform-admin plane** endpoint (``/v1/platform/access-overrides``) that is separate
@@ -23,14 +24,28 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from .auth import validate_authentication, validate_session_credentials
 from .config import settings
-from .database import db
-from .license_capacity import assert_member_seat_available, require_member_seat
+from .database import db, normalize_email
+from .license_capacity import (
+    assert_member_seat_available,
+    member_seats_free,
+    require_member_seat,
+)
+from .member_csv import (
+    MAX_IMPORT_BYTES,
+    MAX_IMPORT_ROWS,
+    MemberCsvError,
+    classify_import,
+    count_outcomes,
+    export_members_csv,
+    is_valid_email,
+    parse_import_csv,
+)
 from .permissions import (
     ACTIONS,
     RESOURCES,
@@ -358,6 +373,97 @@ async def list_members(
     tenant_id = auth_data["tenant_id"]
     db.ensure_builtin_roles(tenant_id)
     return db.list_members(tenant_id)
+
+
+@router.get("/{tenant_slug}/members/export")
+async def export_members(
+    tenant_slug: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> StreamingResponse:
+    """Export the tenant's members as CSV (EID-2.5, #5671).
+
+    Columns: ``email``, ``status``, ``role``, ``two_factor`` (``enabled`` | ``disabled``),
+    ``provenance`` (``invite`` | ``sso:<id>`` | ``scim``), ``last_sign_in`` (the newest
+    successful sign-in in ``auth_events``) and ``created`` (when the membership was made).
+    Importing the file back reports every row as ``already-member``.
+
+    Needs ``members:view``, the same as reading the roster.
+    """
+    enforce_permission(db, auth_data, Resource.MEMBERS, Action.VIEW)
+    tenant_id = auth_data["tenant_id"]
+    body = export_members_csv(db.list_members(tenant_id), db.list_member_last_sign_ins(tenant_id))
+    return StreamingResponse(
+        iter([body]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{tenant_slug}-members.csv"'},
+    )
+
+
+@router.post("/{tenant_slug}/members/import")
+async def import_members(
+    tenant_slug: str,
+    file: UploadFile = File(..., description="CSV with an email,role,display_name header."),
+    dry_run: bool = Query(
+        True,
+        alias="dryRun",
+        description="Must be true: the import only reports. Apply each invite row through POST /members.",
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """Dry-run a bulk CSV member import and report what each row would do (EID-2.5, #5671).
+
+    The file has a header row with an ``email`` column and optional ``role`` (id, slug or name;
+    empty for the default role) and ``display_name`` columns; other columns are ignored. At most
+    1,000 data rows. Each row gets an ``outcome``: ``invite``, ``already-member``,
+    ``invalid-email``, ``unknown-role``, ``no-account`` or ``seat-cap``.
+
+    Nothing is written — not a membership, not a role, not an audit entry. Applying the report
+    is the caller's job: send each ``invite`` row to ``POST /v1/access/{tenant}/members`` with
+    its ``email`` and ``role_id``, so the seat guard (``license-seats-exhausted``), the rate
+    limit and the ``member.invited`` audit entry apply per row, as they do to any invitation.
+
+    Needs ``members:create``, the same as inviting.
+
+    :raises HTTPException: 400 when ``dryRun`` is false or the file cannot be read as CSV,
+        413 when it is over 1 MiB.
+    """
+    enforce_permission(db, auth_data, Resource.MEMBERS, Action.CREATE)
+    if not dry_run:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "The import only runs as a dry run (dryRun=true). Apply each 'invite' row with "
+                f"POST /v1/access/{tenant_slug}/members."
+            ),
+        )
+    content = await file.read(MAX_IMPORT_BYTES + 1)
+    if len(content) > MAX_IMPORT_BYTES:
+        raise HTTPException(status_code=413, detail="The file is larger than the 1 MiB limit.")
+    try:
+        rows = parse_import_csv(content)
+    except MemberCsvError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+
+    tenant_id = auth_data["tenant_id"]
+    db.ensure_builtin_roles(tenant_id)
+    seats_free: Optional[int] = None
+    if settings.license_enforcement_enabled:
+        seats_free = member_seats_free(tenant_id)
+    report = classify_import(
+        rows,
+        roles=db.list_roles(tenant_id),
+        member_emails={normalize_email(m["email"]) for m in db.list_members(tenant_id) if m.get("email")},
+        accounts=db.get_users_by_emails([r.email for r in rows if is_valid_email(r.email)]),
+        seats_free=seats_free,
+    )
+    return {
+        "dry_run": True,
+        "total": len(report),
+        "max_rows": MAX_IMPORT_ROWS,
+        "seats_free": seats_free,
+        "counts": count_outcomes(report),
+        "rows": report,
+    }
 
 
 @router.post("/{tenant_slug}/members")

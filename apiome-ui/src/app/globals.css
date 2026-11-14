@@ -8735,6 +8735,76 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg-muted);
 }
 
+/* --------------------------------------------------------------------------
+   Import members from CSV (EID-2.5, #5671) — `ImportMembersDialog`.
+   -------------------------------------------------------------------------- */
+
+/* A native file input inside the text-field chrome: let it size to its
+   button, the same treatment as `.sg-import-file`. */
+.mbr-import-file {
+  block-size: auto;
+  padding-block: var(--space-2);
+}
+
+.mbr-import-file::file-selector-button {
+  margin-inline-end: var(--space-3);
+}
+
+/* The report: its table scrolls inside the dialog past this height. */
+.mbr-import-report {
+  --mbr-import-report-block: 20rem;
+}
+
+/* The header the file must start with — an identifier, so monospace. */
+.mbr-import-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--fg);
+}
+
+/* Line numbers line up as figures. */
+.mbr-import-line {
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-muted);
+}
+
+/* An address is read whole, so it never breaks mid-word. */
+.mbr-import-email {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  white-space: nowrap;
+}
+
+.mbr-import-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-muted);
+}
+
+/* The rows the invite route refused, one per line, capped so a long list
+   scrolls inside the dialog rather than stretching it. */
+.mbr-import-failures {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-block-size: 14rem;
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  font-size: var(--fs-xs);
+  color: var(--fg);
+}
+
+.mbr-import-failures > li {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mbr-import-failures__where {
+  font-family: var(--font-mono);
+  color: var(--fg-muted);
+}
+
 /* ==========================================================================
    ROLES (HIVE-5.3, #5306)
 

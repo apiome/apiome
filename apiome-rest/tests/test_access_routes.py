@@ -4,10 +4,12 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from app.auth import validate_authentication, validate_session_credentials
 from app.main import app
+from app.permissions import Action, Resource
 
 client = TestClient(app)
 
@@ -427,3 +429,179 @@ def test_platform_override_records_admin_override():
     kwargs = mdb.write_access_audit.call_args.kwargs
     assert kwargs["action"] == "admin.override"
     assert kwargs["source"] == "admin"
+
+
+# ---------------------------------------------------------------------------
+# Bulk CSV import / export (EID-2.5, #5671)
+# ---------------------------------------------------------------------------
+
+# Every write the access routes can make. The dry run must reach none of them.
+_MEMBER_WRITES = (
+    "add_member",
+    "assign_member_role",
+    "set_member_status",
+    "remove_member",
+    "touch_pending_membership",
+    "write_access_audit",
+)
+
+
+def _csv_upload(text, name="members.csv"):
+    return {"file": (name, text.encode(), "text/csv")}
+
+
+def _import_db(mdb, *, members=(), accounts=None):
+    mdb.list_roles.return_value = [_ROLE_EDITOR, _ROLE_CUSTOM]
+    mdb.list_members.return_value = [{"email": e} for e in members]
+    mdb.get_users_by_emails.side_effect = lambda emails: (
+        accounts if accounts is not None else {e.lower(): {"id": f"u-{e}", "email": e} for e in emails}
+    )
+
+
+def test_import_dry_run_reports_58_invites_and_names_the_two_bad_rows():
+    lines = ["email,role,display_name"]
+    for i in range(60):
+        if i == 3:
+            lines.append("not an email,Editor,Bad")
+        elif i == 50:
+            lines.append("p50@acme.io,Astronaut,Unknown")
+        else:
+            lines.append(f"p{i}@acme.io,editor,Person {i}")
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=2, limit=100)
+        _import_db(mdb)
+        r = client.post("/v1/access/acme/members/import?dryRun=true", files=_csv_upload("\n".join(lines)))
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["dry_run"] is True
+    assert body["total"] == 60
+    assert body["seats_free"] == 98
+    assert body["counts"]["invite"] == 58
+    bad = [(row["line"], row["outcome"]) for row in body["rows"] if row["outcome"] != "invite"]
+    assert bad == [(5, "invalid-email"), (52, "unknown-role")]
+    invite = body["rows"][0]
+    assert invite["role_id"] == "role-editor" and invite["email"] == "p0@acme.io"
+
+
+def test_import_dry_run_changes_nothing():
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb)
+        _import_db(mdb, members=["member@acme.io"])
+        r = client.post(
+            "/v1/access/acme/members/import",
+            files=_csv_upload("email,role\nnew@acme.io,Editor\nmember@acme.io,\n"),
+        )
+    assert r.status_code == 200
+    for write in _MEMBER_WRITES:
+        getattr(mdb, write).assert_not_called()
+    ldb.add_member.assert_not_called()
+    assert [row["outcome"] for row in r.json()["rows"]] == ["invite", "already-member"]
+
+
+def test_import_reports_seat_cap_past_the_free_seats():
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb, used=4, limit=5)
+        _import_db(mdb)
+        r = client.post(
+            "/v1/access/acme/members/import?dryRun=true",
+            files=_csv_upload("email\na@acme.io\nb@acme.io\n"),
+        )
+    assert [row["outcome"] for row in r.json()["rows"]] == ["invite", "seat-cap"]
+
+
+def test_import_skips_the_seat_count_when_enforcement_is_off():
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb, patch(
+        "app.access_routes.settings"
+    ) as msettings:
+        msettings.license_enforcement_enabled = False
+        _seat_available(ldb, used=5, limit=5)
+        _import_db(mdb)
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload("email\na@acme.io\n"))
+    assert r.json()["seats_free"] is None
+    assert r.json()["rows"][0]["outcome"] == "invite"
+
+
+def test_import_reports_no_account_for_an_unknown_address():
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb)
+        _import_db(mdb, accounts={})
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload("email\nghost@acme.io\n"))
+    assert r.json()["rows"][0]["outcome"] == "no-account"
+
+
+def test_import_refuses_to_apply():
+    with patch("app.access_routes.db") as mdb:
+        r = client.post("/v1/access/acme/members/import?dryRun=false", files=_csv_upload("email\na@acme.io\n"))
+    assert r.status_code == 400
+    assert "POST /v1/access/acme/members" in r.json()["detail"]
+    mdb.add_member.assert_not_called()
+
+
+def test_import_refuses_an_unreadable_file():
+    with patch("app.access_routes.db"):
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload("name\nAda\n"))
+    assert r.status_code == 400
+    assert "email column" in r.json()["detail"]
+
+
+def test_import_refuses_more_than_1000_rows():
+    text = "email\n" + "".join(f"p{i}@acme.io\n" for i in range(1001))
+    with patch("app.access_routes.db"):
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload(text))
+    assert r.status_code == 400
+    assert "1000" in r.json()["detail"]
+
+
+def test_import_refuses_a_file_over_1_mib():
+    text = "email\n" + "x" * (1024 * 1024 + 10)
+    with patch("app.access_routes.db"):
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload(text))
+    assert r.status_code == 413
+
+
+def test_import_needs_members_create():
+    with patch("app.access_routes.enforce_permission") as guard, patch("app.access_routes.db"):
+        guard.side_effect = HTTPException(status_code=403, detail="Forbidden")
+        r = client.post("/v1/access/acme/members/import", files=_csv_upload("email\na@acme.io\n"))
+    assert r.status_code == 403
+    assert guard.call_args.args[2:] == (Resource.MEMBERS, Action.CREATE)
+
+
+def test_export_members_csv_and_round_trip_as_already_member():
+    roster = [
+        {
+            "user_id": "u-ada",
+            "email": "ada@acme.io",
+            "status": "active",
+            "role_name": "Editor",
+            "two_factor_enabled": True,
+            "joined_at": "2026-01-02T00:00:00+00:00",
+        },
+        {
+            "user_id": "u-sam",
+            "email": "sam@acme.io",
+            "status": "pending",
+            "role_name": None,
+            "two_factor_enabled": False,
+            "joined_at": "2026-02-02T00:00:00+00:00",
+        },
+    ]
+    with patch("app.access_routes.db") as mdb:
+        mdb.list_members.return_value = roster
+        mdb.list_member_last_sign_ins.return_value = {"u-ada": "2026-06-14T08:00:00+00:00"}
+        r = client.get("/v1/access/acme/members/export")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/csv")
+    assert 'filename="acme-members.csv"' in r.headers["content-disposition"]
+    lines = r.text.strip().splitlines()
+    assert lines[0] == "email,status,role,two_factor,provenance,last_sign_in,created"
+    assert lines[1] == "ada@acme.io,active,Editor,enabled,invite,2026-06-14T08:00:00+00:00,2026-01-02T00:00:00+00:00"
+    assert lines[2] == "sam@acme.io,pending,,disabled,invite,,2026-02-02T00:00:00+00:00"
+
+    with patch("app.access_routes.db") as mdb, patch("app.license_capacity.db") as ldb:
+        _seat_available(ldb)
+        _import_db(mdb, members=["ada@acme.io", "sam@acme.io"])
+        back = client.post("/v1/access/acme/members/import", files=_csv_upload(r.text))
+    assert back.status_code == 200
+    assert back.json()["counts"]["already-member"] == 2
+    assert back.json()["counts"]["invite"] == 0

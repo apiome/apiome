@@ -1051,3 +1051,294 @@ describe('resetting a member’s two-factor', () => {
     ).toBeInTheDocument();
   });
 });
+
+/* -------------------------------------------------------------------------
+   Bulk CSV import and export (EID-2.5, #5671)
+   ------------------------------------------------------------------------- */
+
+/** One dry-run report row. */
+function importRow(line: number, email: string, outcome: string, extra: Record<string, unknown> = {}) {
+  return {
+    line,
+    email,
+    role: 'Editor',
+    display_name: '',
+    outcome,
+    message: outcome === 'invite' ? null : `Reason for line ${line}`,
+    role_id: outcome === 'invite' ? 'role-editor' : null,
+    role_name: outcome === 'invite' ? 'Editor' : null,
+    ...extra,
+  };
+}
+
+/** A dry-run report over `rows`. */
+function importReport(rows: ReturnType<typeof importRow>[]) {
+  const counts: Record<string, number> = {
+    invite: 0,
+    'already-member': 0,
+    'invalid-email': 0,
+    'unknown-role': 0,
+    'no-account': 0,
+    'seat-cap': 0,
+  };
+  rows.forEach((r) => {
+    counts[r.outcome] += 1;
+  });
+  return { dry_run: true, total: rows.length, max_rows: 1000, seats_free: null, counts, rows };
+}
+
+/** The acceptance file: 60 rows, line 5 a bad address and line 40 an unknown role. */
+const SIXTY_ROW_REPORT = importReport(
+  Array.from({ length: 60 }, (_, i) => {
+    const line = i + 2;
+    if (line === 5) return importRow(line, 'not an email', 'invalid-email');
+    if (line === 40) return importRow(line, 'p40@acme.io', 'unknown-role', { role: 'Astronaut' });
+    return importRow(line, `p${line}@acme.io`, 'invite');
+  })
+);
+
+/**
+ * The members screen's transport, plus the import route.
+ *
+ * @param report The dry run's answer.
+ * @param refuse Addresses the invite route refuses, with the refusal.
+ * @returns The recorded calls.
+ */
+function mockImportApi(
+  report: unknown,
+  refuse: Record<string, { status: number; body: Record<string, unknown> }> = {}
+) {
+  const calls = mockApi();
+  const base = global.fetch as unknown as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+  // @ts-expect-error - assigning a test double to the global
+  global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url.startsWith('/api/access/members/import')) {
+      calls.push({ url, method: init?.method ?? 'GET', body: init?.body });
+      return ok(report);
+    }
+    if (url === '/api/access/members' && init?.method === 'POST') {
+      const email = JSON.parse(String(init.body)).email as string;
+      if (refuse[email]) {
+        calls.push({ url, method: 'POST', body: JSON.parse(String(init.body)) });
+        return Promise.resolve({
+          status: refuse[email].status,
+          json: () => Promise.resolve({ success: false, ...refuse[email].body }),
+        } as Response);
+      }
+    }
+    return base(input, init);
+  });
+  return calls;
+}
+
+/** POSTs that reached the invite route. */
+const invitesSent = (calls: RecordedCall[]) =>
+  calls.filter((call) => call.url === '/api/access/members' && call.method === 'POST');
+
+/** Open the import dialog, choose a file and check it. */
+async function checkFile(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByTestId('members-import'));
+  const dialog = await screen.findByTestId('members-import-dialog');
+  const file = new File(['email,role,display_name\nada@acme.io,Editor,Ada\n'], 'team.csv', { type: 'text/csv' });
+  await user.upload(within(dialog).getByLabelText('CSV file'), file);
+  await user.click(within(dialog).getByTestId('members-import-check'));
+  await within(dialog).findByTestId('members-import-report');
+  return dialog;
+}
+
+describe('importing members from CSV', () => {
+  it('offers Import CSV and Export CSV in the header', async () => {
+    await renderMembers();
+    expect(screen.getByTestId('members-import')).toHaveTextContent('Import CSV');
+    const exportLink = screen.getByTestId('members-export');
+    expect(exportLink).toHaveAttribute('href', '/api/access/members/export');
+    expect(exportLink).toHaveAttribute('download');
+  });
+
+  it('offers no import to a viewer without members:create, but still the export', async () => {
+    await renderMembers({ perms: PERMS_VIEWER });
+    expect(screen.queryByTestId('members-import')).not.toBeInTheDocument();
+    expect(screen.getByTestId('members-export')).toBeInTheDocument();
+  });
+
+  it('asks for a file before checking, without calling the API', async () => {
+    const calls = mockImportApi(SIXTY_ROW_REPORT);
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByTestId('members-import'));
+    const dialog = await screen.findByTestId('members-import-dialog');
+    await user.click(within(dialog).getByTestId('members-import-check'));
+    expect(within(dialog).getByText('Choose a CSV file.')).toBeInTheDocument();
+    expect(calls.some((call) => call.url.startsWith('/api/access/members/import'))).toBe(false);
+  });
+
+  it('dry-runs the file, reports every row, and sends nothing until confirmed', async () => {
+    const calls = mockImportApi(SIXTY_ROW_REPORT);
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    const dialog = await checkFile(user);
+
+    const preview = calls.find((call) => call.url.startsWith('/api/access/members/import'));
+    expect(preview?.url).toBe('/api/access/members/import?dryRun=true');
+    expect(preview?.method).toBe('POST');
+    expect(preview?.body).toBeInstanceOf(FormData);
+
+    expect(within(dialog).getByTestId('members-import-summary')).toHaveTextContent(
+      '60 rows: 58 to invite, 2 will be skipped.'
+    );
+    expect(invitesSent(calls)).toHaveLength(0);
+
+    await user.click(within(dialog).getByRole('button', { name: /Invalid email/ }));
+    const rows = within(dialog).getAllByRole('row').filter((r) => r.getAttribute('data-outcome'));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent('not an email');
+    expect(within(dialog).getByTestId('members-import-send')).toHaveTextContent('Send 58 invites');
+  });
+
+  it('sends the 58 invites through the invite route and lists each refusal', async () => {
+    const calls = mockImportApi(SIXTY_ROW_REPORT, {
+      'p12@acme.io': { status: 429, body: { error: 'Rate limit exceeded' } },
+      'p13@acme.io': {
+        status: 403,
+        body: { error: 'All seats are in use.', code: 'license-seats-exhausted' },
+      },
+    });
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    const dialog = await checkFile(user);
+    await user.click(within(dialog).getByTestId('members-import-send'));
+
+    await within(dialog).findByTestId('members-import-result');
+    const sent = invitesSent(calls);
+    expect(sent).toHaveLength(58);
+    expect(sent[0].body).toEqual({ email: 'p2@acme.io', role_id: 'role-editor' });
+    expect(sent.map((call) => (call.body as { email: string }).email)).not.toContain('p40@acme.io');
+
+    // A partial import is never reported as a success.
+    expect(within(dialog).getByTestId('members-import-failed')).toHaveTextContent(
+      '56 of 58 invitations sent. 2 rows were refused'
+    );
+    const failures = within(dialog).getAllByTestId('members-import-failure');
+    expect(failures.map((f) => f.textContent)).toEqual([
+      expect.stringContaining('Line 12 · p12@acme.io'),
+      expect.stringContaining('Line 13 · p13@acme.io'),
+    ]);
+    expect(failures[0]).toHaveTextContent('Rate limit exceeded');
+  });
+
+  it('says so plainly when every invitation went out', async () => {
+    const calls = mockImportApi(importReport([importRow(2, 'p2@acme.io', 'invite')]));
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    const dialog = await checkFile(user);
+    await user.click(within(dialog).getByTestId('members-import-send'));
+    expect(await within(dialog).findByText('1 invitation sent.')).toBeInTheDocument();
+    expect(invitesSent(calls)).toHaveLength(1);
+  });
+
+  it('offers no send when nothing in the file can be invited', async () => {
+    mockImportApi(importReport([importRow(2, 'ada@acme.io', 'already-member')]));
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    const dialog = await checkFile(user);
+    expect(within(dialog).getByTestId('members-import-nothing')).toBeInTheDocument();
+    expect(within(dialog).queryByTestId('members-import-send')).not.toBeInTheDocument();
+  });
+
+  it('shows the server’s reason when the file cannot be read', async () => {
+    mockApi();
+    const base = global.fetch as unknown as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = jest.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.startsWith('/api/access/members/import')) {
+        return Promise.resolve({
+          status: 400,
+          json: () => Promise.resolve({ success: false, error: 'The header has no email column.' }),
+        } as Response);
+      }
+      return base(input, init);
+    });
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByTestId('members-import'));
+    const dialog = await screen.findByTestId('members-import-dialog');
+    await user.upload(within(dialog).getByLabelText('CSV file'), new File(['name\nAda\n'], 'bad.csv'));
+    await user.click(within(dialog).getByTestId('members-import-check'));
+    expect(await within(dialog).findByText('The header has no email column.')).toBeInTheDocument();
+    expect(within(dialog).getByTestId('members-import-form')).toBeInTheDocument();
+  });
+});
+
+/**
+ * The documentation's Import and export section (`members-import-csv`, `members-import-report`)
+ * is captured from these dumps, written with the other members docs fixtures:
+ * `A11Y_FIXTURE_DUMP=1 npx jest tests/members-hive-redesign.test.tsx -t "docs fixtures"`.
+ */
+describe('the docs fixtures for the CSV import', () => {
+  /** A report that shows every outcome once, against the docs workspace's one free seat. */
+  const DOCS_IMPORT_REPORT = importReport([
+    importRow(2, 'lena.fischer@northwind.io', 'invite', { display_name: 'Lena Fischer' }),
+    importRow(3, 'sam.okafor@northwind.io', 'already-member', {
+      role: 'Release manager',
+      message: 'Already a member of this workspace.',
+    }),
+    importRow(4, 'ravi.kumar@northwind', 'invalid-email', { message: 'This is not an email address.' }),
+    importRow(5, 'noor.haddad@northwind.io', 'unknown-role', {
+      role: 'Auditor',
+      message: "No role named 'Auditor' in this workspace.",
+    }),
+    importRow(6, 'felix.wagner@example.org', 'no-account', {
+      role: 'Viewer',
+      message: 'No Apiome account uses this email; ask them to sign up first.',
+    }),
+    importRow(7, 'maya.chen@northwind.io', 'seat-cap', {
+      role: 'Viewer',
+      message: 'No member seat is left on the license for this row.',
+    }),
+  ]);
+
+  it('renders the file step and the report', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(DOCS_NOW);
+    // @ts-expect-error - assigning a test double to the global
+    global.fetch = jest.fn((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/api/tenants/license')) {
+        return ok({
+          plan: { name: 'Team', type: 'paid' },
+          seats: DOCS_SEATS,
+          quotas: { max_projects: 25, max_versions: 250, max_ai_requests: 0 },
+          features: [],
+        });
+      }
+      if (url.includes('/api/access/permissions/me')) return ok(PERMS_ADMIN);
+      if (url.includes('/api/access/roles')) return ok(DOCS_ROLES);
+      if (url.startsWith('/api/access/members/import')) return ok(DOCS_IMPORT_REPORT);
+      if (url.includes('/api/access/members')) return ok(DOCS_MEMBERS);
+      return ok([]);
+    });
+    const user = userEvent.setup();
+    render(<MembersClient />);
+    await screen.findByText('Priya Raman');
+
+    await user.click(screen.getByTestId('members-import'));
+    const dialog = await screen.findByTestId('members-import-dialog');
+    writeA11yFixture('members-import-csv', liveMarkup(dialog));
+
+    await user.upload(
+      within(dialog).getByLabelText('CSV file'),
+      new File(['email,role,display_name\n'], 'northwind-team.csv', { type: 'text/csv' })
+    );
+    await user.click(within(dialog).getByTestId('members-import-check'));
+    await within(dialog).findByTestId('members-import-report');
+    expect(within(dialog).getByTestId('members-import-send')).toHaveTextContent('Send 1 invite');
+    writeA11yFixture('members-import-report', liveMarkup(dialog));
+  });
+});

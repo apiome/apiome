@@ -1,6 +1,6 @@
 ---
 title: Members & seats
-description: Invite people, change their roles, suspend or offboard them, and watch seat usage.
+description: Invite people one by one or from CSV, manage roles, and watch seat usage.
 sidebar_position: 1
 tags: [workspace, members, seats, access]
 ---
@@ -14,7 +14,7 @@ see how many of the plan's **member seats** are taken. **Go to Workspace → Mem
 
 <Screenshot id="members" alt="Members: one summary line — 9 members, active, pending, suspended, 9 of 10 seats used, Team plan — with a thin seat bar, then a roster of nine people with role, status, last active and joined columns" />
 
-Every member can read the page. Inviting needs `members:create`, changing a role or suspending
+Every member can read the page and export it. Inviting and importing need `members:create`, changing a role or suspending
 needs `members:edit`, and offboarding needs `members:delete` — workspace administrators hold all
 three. Without them the page is the same, with fewer controls: roles show as plain badges and the
 row buttons are gone. What each role grants is set on [Roles & permissions](./roles.mdx).
@@ -59,6 +59,74 @@ membership becomes active the next time they sign in. To nudge someone, **click 
 their row — Apiome renews the invitation and records it in the access ledger; it still sends no
 email. To withdraw it, **click the bin** and **“Cancel invite”** (or **“Keep invitation”** to back
 out); the seat is returned to the licence.
+
+## Import members from a CSV file
+
+To invite many people at once, upload a CSV file. Apiome checks the file first and shows what each
+row would do; nothing is sent until you confirm.
+
+1. Prepare the file. The first line is the header, then one person per line:
+
+   ```text
+   email,role,display_name
+   lena.fischer@northwind.io,Editor,Lena Fischer
+   maya.chen@northwind.io,,Maya Chen
+   ```
+
+   | Column | Required | Meaning |
+   | --- | --- | --- |
+   | `email` | yes | The address of their Apiome account |
+   | `role` | no | A role's name (for example `Editor` or `Release manager`); leave it empty for the default role |
+   | `display_name` | no | Shown in the report to help you read it. Their account keeps its own name |
+
+   Columns can be in any order and other columns are ignored, so an [export](#export-the-roster)
+   can be imported back as it is. A file can hold up to **1,000 rows** and **1 MiB**.
+
+2. **Click “Import CSV”**, choose the file under **CSV file**, then **click “Check file”**.
+
+   <Screenshot id="members-import-csv" alt="The Import members dialog: a CSV file picker, the expected header email,role,display_name, and a Check file button" />
+
+3. Read the report. Each row of the file is listed by its **Line** with a **Result**, and a note
+   explains every row that will not be invited. The chips above the table narrow it to one result.
+
+   <Screenshot id="members-import-report" alt="The import report for six rows: one Invite, and one each of Already a member, Invalid email, Unknown role, No account and No seat left, with a note on each" />
+
+   | Result | What it means |
+   | --- | --- |
+   | **Invite** | The row will be invited with its role |
+   | **Already a member** | The address is already in the workspace (any status), or an earlier line of the file lists it |
+   | **Invalid email** | The `email` cell is empty or is not an address |
+   | **Unknown role** | No role in the workspace has that name |
+   | **No account** | No Apiome account uses the address — invitations are not emailed, so ask them to sign up first |
+   | **No seat left** | The row is fine, but earlier rows take the plan's last free seats |
+
+4. **Click “Send N invites”**. Apiome invites the **Invite** rows one at a time, exactly as
+   **Invite member** would — each one takes a seat and is recorded in the access audit. To fix the
+   file first, **click “Choose another file”**.
+
+When it finishes, the dialog says how many invitations were sent. If any row was refused on the way
+— the seats ran out, or too many requests were sent in a short time — the dialog says, for example,
+*56 of 58 invitations sent. 2 rows were refused:* and lists each one by line and email with the
+reason. Invitations that went out stay sent; fix the refused rows and import just those.
+
+**Import CSV** appears only when you can invite and a seat is free, like **Invite member**.
+
+## Export the roster
+
+**Click “Export CSV”** to download every member and invitation as `<workspace>-members.csv`:
+
+| Column | Holds |
+| --- | --- |
+| `email` | Their address |
+| `status` | `active`, `pending` or `suspended` |
+| `role` | Their role's name; empty for none |
+| `two_factor` | `enabled` or `disabled` |
+| `provenance` | How they joined: `invite` today; `sso:<provider>` and `scim` once single sign-on and SCIM provisioning add people |
+| `last_sign_in` | Their latest successful sign-in from the sign-in log; empty when there is none in the log's retention window |
+| `created` | When they were added to the workspace |
+
+A cell that a spreadsheet would read as a formula (starting with `=`, `+`, `-` or `@`) is written
+with a leading `'`. Importing the export back invites no one: every row reads **Already a member**.
 
 ## Change a role
 
@@ -162,6 +230,8 @@ The page calls the access API, scoped to the workspace — see the
 | --- | --- |
 | `GET /v1/access/{tenant}/members` | The roster, with each member's `two_factor_status` (`not_required`, `enabled`, `grace`, `overdue`) and `two_factor_due_at` |
 | `POST /v1/access/{tenant}/members` | Invite (`email`, optional `role_id`) |
+| `POST /v1/access/{tenant}/members/import?dryRun=true` | Check a CSV `file`; returns a `rows` report with each row's `line` and `outcome` and the `counts` per outcome. Writes nothing — send each `invite` row to `POST …/members` to apply it |
+| `GET /v1/access/{tenant}/members/export` | The roster as CSV |
 | `PATCH /v1/access/{tenant}/members/{user_id}` | Change `role_id` or `status` (`active`, `suspended`) |
 | `POST /v1/access/{tenant}/members/{user_id}/resend-invite` | Renew a pending invitation |
 | `DELETE /v1/access/{tenant}/members/{user_id}` | Offboard, or cancel an invitation |

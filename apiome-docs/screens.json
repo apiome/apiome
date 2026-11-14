@@ -1114,6 +1114,24 @@
       "data": "fixture:hive-a11y/members-invite-dialog.html"
     },
     {
+      "id": "members-import-csv",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"members-import-dialog\"]",
+      "data": "fixture:hive-a11y/members-import-csv.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/members/ImportMembersDialog.tsx"
+      ]
+    },
+    {
+      "id": "members-import-report",
+      "route": "/ade/dashboard/members",
+      "waitFor": "[data-testid=\"members-import-report\"]",
+      "data": "fixture:hive-a11y/members-import-report.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/members/ImportMembersDialog.tsx"
+      ]
+    },
+    {
       "id": "members-drawer",
       "route": "/ade/dashboard/members",
       "waitFor": "[data-testid=\"member-drawer\"]",

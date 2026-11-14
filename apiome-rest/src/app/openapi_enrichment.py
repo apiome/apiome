@@ -36,6 +36,7 @@ SCHEMA_RENAMES: Dict[str, str] = {
     "Body_start_spec_import_multipart_v1_tenants__tenant_slug__imports_upload_post": (
         "SpecImportMultipartUploadBody"
     ),
+    "Body_import_members_v1_access__tenant_slug__members_import_post": "MemberImportUploadBody",
     "MockScenarioSpec-Input": "MockScenarioSpecInput",
     "MockScenarioSpec-Output": "MockScenarioSpecOutput",
 }
