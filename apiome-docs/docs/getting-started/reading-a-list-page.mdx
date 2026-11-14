@@ -1,0 +1,114 @@
+---
+title: Reading a list page
+description: Where a list page keeps its status, numbers, notes, filters and actions.
+sidebar_position: 11
+tags: [navigation, list-pages]
+---
+
+Every list page in the Control Panel is built the same way, so the first row of data sits near the
+top of the screen. Nothing was taken away to make room: each status, number, note and control is
+still on the page, one click away at most. This page shows where each one lives, so you know where
+to look on any list.
+
+<Screenshot id="catalog" alt="The Catalog in Table view: the facts line under the header, then one card with the filters, view chips and items" />
+
+From top to bottom, a list page has:
+
+1. **The header** — the page title, its description, and a few buttons for the whole page.
+2. **One status row or one summary line** — what is worth knowing about the page right now.
+3. **A first-visit note**, only until you dismiss it.
+4. **The list** — one toolbar, then the rows.
+
+## The header
+
+The header holds at most one main button (drawn last, for example **“New version”**) and two other
+buttons. Anything else is under **More actions** (`⋯`), between them. An action that you cannot use
+yet stays in its menu, dimmed, and says why when you hover over it or move to it with the keyboard.
+
+Pickers live next to what they pick. On [Versions](../build/versions.mdx), for example, the last
+step of the breadcrumb is the project's name: **click it** and type in **Jump to project** to move to
+another project.
+
+Longer explanations are links in the page description, such as **“How the catalog works”** on the
+[Catalog](../bring-in/catalog.mdx#how-the-catalog-works), **“How resolution works”** on [Primitives &
+types](../build/primitives-and-types.mdx) and **“Where these warnings come from”** on the [Sunset
+timeline](../ship/sunset-timeline.mdx). **Click one** to open the explanation over the page.
+
+## Status: one row of chips
+
+When a page has several things to say about the same object, they are chips in one row instead of
+a stack of banners. On [Versions](../build/versions.mdx#timeline) the chips are **Compatible** (or
+**Breaking changes**), **What’s new** and any **deprecated** version.
+
+<Screenshot id="versions" alt="The Versions page, Timeline tab: the project name as the last breadcrumb, Compare, Import, More actions and New version, the Status strip, the Project facts card, and the versions as a timeline under its one filter toolbar" caption="Captured from a development build, which also draws git-like controls marked gitlike; production builds hide them." />
+
+- The most urgent chip opens its detail on its own: errors first, then warnings, then news, then
+  good news.
+- **Click a chip** to open its detail underneath. Only one detail is open at a time, and it keeps
+  the actions the old banner had, such as **“View report”** or **“Sunset timeline”**.
+- **Click the open chip**, **click “Collapse”** or press <kbd>Esc</kbd> to hide the detail.
+- A chip with nothing to say is not drawn. With nothing to report, the row is not drawn at all.
+
+## Numbers: one summary line
+
+A page's figures are one line under the header, for example *3 items · 3 formats · avg quality
+B · 83*. A figure that needs your attention is a coloured chip, and **clicking it** takes you to what
+it counts.
+
+- **Click “Show stats”** at the end of the line to open the full figures as cards, in place. The
+  button then reads **“Hide stats”**. The page remembers your choice on this device.
+- A figure about something that is not there yet is a **Coming next** line instead of a card with a
+  button that does nothing. **Click “Follow in What’s new”** to read the release notes, where it is
+  announced when it ships.
+
+| Page | The line counts | Chips that open something |
+| --- | --- | --- |
+| [Catalog](../bring-in/catalog.mdx) | Items, formats, average quality, converted to OpenAPI, active and disabled | — |
+| [Repositories](../bring-in/repositories.mdx) | Repositories, files indexed, imports (30d), last scan, needing attention | *1 stale · 1 failed* opens **Refresh activity** |
+| A repository's page | Files, importable, branches, imports (30d), last scan | — |
+| [Primitives & types](../build/primitives-and-types.mdx) | Core system types, tenant types, imported schemas, properties bound, unresolved `$ref` | Unresolved `$ref` opens the **Resolver** tab |
+| [Members](../workspace/members.mdx#the-summary-line-and-member-seats) | Members, active, pending, suspended, seats used and the plan | — (a seat bar appears from 80 %) |
+| [Lint posture](../govern/lint-posture.mdx#the-summary) | Unwaived security errors, missing coverage, new findings, active waivers, then a chip per grade | Each of the four figures filters the queue |
+
+## Notes: shown once
+
+A page that needs explaining shows a note on your first visit. **Click “Learn more”** to read the
+full explanation, or **“Got it”** to hide the note on this device.
+
+Hiding a note never hides what it says. The same text stays one click away, from a link in the page
+description — on the Catalog, **“How the catalog works”** and, in the [Import
+wizard](../bring-in/import-wizard.mdx), **“Which formats can I import?”**.
+
+## The list: one toolbar
+
+Each list has exactly one toolbar, on top of its rows. Everything that narrows or orders the list is
+there: search, the filter menus, the state chips with their counts, the sort, and the view switch
+(such as **Cards** or **Table**). On [Versions](../build/versions.mdx#filter-the-list):
+
+- dates are one **“Any time”** button that opens **Created between**, with **Last 7 days**, **Last
+  30 days** and **This quarter**;
+- people are one **“All authors”** list;
+- **“Clear filters (n)”** appears while any filter is on, and **clicking it** shows every row again.
+
+Filters that do not fit the row sit behind one **“Filters”** button, which counts how many are set,
+for example **Filters (2)**. Filters are kept in the page address, so you can **copy the link** to
+share a filtered list, and a reload keeps them.
+
+## What a page remembers
+
+| Choice | Remembered | Until |
+| --- | --- | --- |
+| Which status chip is open | Per project, in this tab | You close the tab |
+| **Show stats** / **Hide stats** | Per page, on this device | You change it, or clear the site's data |
+| **Got it** on a note | Per note, on this device | You clear the site's data; the note then shows again |
+| Filters and sort | In the page address | You change them or open the page without them |
+| **Cards** / **Table**, **Timeline** / **Table** | Per page, on this device | You change it |
+
+## Where next
+
+- [Keyboard and preferences](./keyboard-and-preferences.mdx) — move through chips, menus and
+  toolbars without the mouse, and pick a **Density**.
+- [Content and voice](../reference/content-voice.md) — the rules behind these pages, for people
+  who build them.
+- [Visual parity and first-row budgets](../reference/visual-parity.md) — how far down the page the
+  first row may start, and the check that keeps it there.
