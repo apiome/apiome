@@ -12,6 +12,8 @@
  * - "Scenarios" opens the SIM-4.2 (#4454) scenario override editor.
  * - "Correlation" opens the MSC-1.3 (#5529) response correlation editor — the per-version
  *   setting that makes the default response path answer with values from the request.
+ * - GraphQL versions (#5729, XPC-1.1) show and copy their `/graphql` endpoint (GraphiQL on a
+ *   browser `GET`), with a note that subscriptions are not served on this deployment yet.
  *
  * Re-skinned in place by HIVE-6.2 (#5313) to `docs/mockups/build/versions.html`'s `.mock-cell`:
  * the switch, the label and the PRIVATE pill on one row, the mono URL with its copy button
@@ -30,6 +32,7 @@ import { Button } from '../../ui/Button';
 import { Switch } from '../../ui/Switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../ui/Tooltip';
 import { Sparkline } from '../../ui/metrics';
+import { buildGraphqlMockUrl } from '@lib/mock/mockUrl';
 import { versionMockLabel } from '../versions/versionsModel';
 import { MockCorrelationEditor } from './MockCorrelationEditor';
 import { MockScenarioEditor } from './MockScenarioEditor';
@@ -59,6 +62,11 @@ export interface VersionMockCellProps {
   /** Stable mock base URL when enabled; `null`/absent otherwise. */
   mockBaseUrl: string | null;
   /**
+   * When true the version is a GraphQL schema (#5729): the cell shows and copies its `/graphql`
+   * endpoint and notes that subscriptions are not served yet.
+   */
+  graphql?: boolean;
+  /**
    * Chronological 30-day request counts for this version. `undefined` while usage is
    * still loading; `[]` when the version has no recorded usage (empty sparkline state).
    */
@@ -81,12 +89,15 @@ export function VersionMockCell({
   mockEnabled,
   mockBaseUrl,
   mockPrivate = false,
+  graphql = false,
   usageSeries,
   onMockChanged,
 }: VersionMockCellProps) {
   const [saving, setSaving] = useState(false);
   const [scenarioEditorOpen, setScenarioEditorOpen] = useState(false);
   const [correlationEditorOpen, setCorrelationEditorOpen] = useState(false);
+  /** What the cell shows and copies: the `/graphql` endpoint for a GraphQL version. */
+  const mockUrl = graphql ? buildGraphqlMockUrl(mockBaseUrl) : mockBaseUrl;
 
   /** Round-trip the toggle through the proxy route and report the persisted state. */
   const handleToggle = async (enabled: boolean) => {
@@ -128,9 +139,9 @@ export function VersionMockCell({
 
   /** Copy the mock base URL and confirm with a toast (AC: "URL copy shows a toast"). */
   const handleCopy = async () => {
-    if (!mockBaseUrl) return;
+    if (!mockUrl) return;
     try {
-      await navigator.clipboard.writeText(mockBaseUrl);
+      await navigator.clipboard.writeText(mockUrl);
       toast.success('Mock URL copied to clipboard.');
     } catch (error) {
       console.error('Failed to copy mock URL:', error);
@@ -172,9 +183,9 @@ export function VersionMockCell({
           )}
         </div>
 
-        {mockEnabled && mockBaseUrl && (
-          <div className="ver-mock__url" title={mockBaseUrl}>
-            <code className="mono">{mockBaseUrl}</code>
+        {mockEnabled && mockUrl && (
+          <div className="ver-mock__url" title={mockUrl}>
+            <code className="mono">{mockUrl}</code>
             <Button
               type="button"
               variant="ghost"
@@ -187,6 +198,12 @@ export function VersionMockCell({
               <Copy aria-hidden />
             </Button>
           </div>
+        )}
+
+        {mockEnabled && graphql && (
+          <p className="ver-mock__note" data-testid={`version-mock-graphql-note-${versionRecordId}`}>
+            GraphQL · queries and mutations. Subscriptions are not served on this deployment yet.
+          </p>
         )}
 
         {mockEnabled && (

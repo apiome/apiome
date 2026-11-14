@@ -9414,8 +9414,9 @@ class Database:
         scenarios: Dict[str, Any],
         chaos: Optional[Dict[str, Any]] = None,
         active_scenario: Optional[str] = None,
+        graphql: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
-        """Replace the ``scenarios``, ``chaos`` and ``activeScenario`` keys of ``versions.mock_settings``.
+        """Replace the ``scenarios``, ``chaos``, ``activeScenario`` and ``graphql`` keys of ``versions.mock_settings``.
 
         Only those three keys (#4454 SIM-4.2 scenarios, #4455 SIM-4.3 chaos,
         #5531 MSC-2.1 active scenario) are rewritten; every other mock knob
@@ -9436,6 +9437,8 @@ class Database:
             chaos: Canonical version-level chaos knobs, or ``None`` to clear.
             active_scenario: The scenario served when a request sends no
                 ``X-Mock-Scenario`` header, or ``None`` to clear it.
+            graphql: The GraphQL mock limits (#5729, XPC-1.1), or ``None`` to clear
+                them. Like ``active_scenario``, the route resolves the value to keep.
 
         Returns:
             The updated version row, or ``None`` when the caller lacks ownership.
@@ -9447,11 +9450,13 @@ class Database:
             replacement["chaos"] = chaos
         if active_scenario:
             replacement["activeScenario"] = active_scenario
+        if graphql:
+            replacement["graphql"] = graphql
         fragment = json.dumps(replacement) if replacement else "{}"
         query = """
             UPDATE apiome.versions v
             SET mock_settings = (
-                  COALESCE(v.mock_settings, '{}'::jsonb) - 'scenarios' - 'chaos' - 'activeScenario'
+                  COALESCE(v.mock_settings, '{}'::jsonb) - 'scenarios' - 'chaos' - 'activeScenario' - 'graphql'
                 ) || %s::jsonb,
                 updated_at = CURRENT_TIMESTAMP
             FROM apiome.projects p

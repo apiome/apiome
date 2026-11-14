@@ -84,6 +84,11 @@ The **Mock** cell serves the version as a mock API — the same cell is on
 Turning the switch off stops serving the mock. On an unpublished draft (on Versions) the switch
 reads **Draft mock off** and turns on a **Private** mock that needs an API key at runtime.
 
+A version imported from **GraphQL SDL** is mocked at one URL ending in `/graphql`. On Published its
+cell shows and copies that URL, with the note *GraphQL · queries and mutations. Subscriptions are not
+served on this deployment yet.* Open it in a browser for GraphiQL, or see
+[Query a GraphQL mock](./mock-try-out.mdx#query-a-graphql-mock).
+
 ### Scenarios
 
 **Click “Scenarios”** to open **Mock scenarios for v…** — named situations a consumer picks per

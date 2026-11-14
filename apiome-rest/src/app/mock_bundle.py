@@ -119,7 +119,9 @@ DIGEST_ALGORITHM = "sha256"
 #: the definitions carry destination allowlists and templates, never a credential.
 #: ``responseCorrelation`` (#5527, MSC-1.1) rides along too, so a bundle answers ``GET /pets/42``
 #: with the same correlated body the hosted mock does, and ``activeScenario`` (#5531, MSC-2.1) so
-#: a bundle defaults to the same scenario the version it was exported from does.
+#: a bundle defaults to the same scenario the version it was exported from does. ``graphql``
+#: (#5729, XPC-1.1) carries the GraphQL mock's depth / complexity caps and list length, so a sandbox
+#: serving ``/graphql`` applies the same limits as the hosted route.
 BUNDLED_SETTINGS_KEYS: Tuple[str, ...] = (
     "scenarios",
     "chaos",
@@ -127,6 +129,7 @@ BUNDLED_SETTINGS_KEYS: Tuple[str, ...] = (
     "callbacks",
     "responseCorrelation",
     "activeScenario",
+    "graphql",
 )
 
 # --- verification problem codes ---------------------------------------------------------------

@@ -51,6 +51,7 @@ from apiome_mock.correlation import (
 )
 from apiome_mock.fixture_data import decode_bundle_fixtures
 from apiome_mock.fixture_packs import FixturePack, merged_template_data, parse_fixture_packs
+from apiome_mock.graphql_schema import GraphQlMockSettings, parse_graphql_settings
 from apiome_mock.scenarios import Scenario, parse_active_scenario, parse_scenarios
 from apiome_mock.spec_loader import CompiledSpec
 
@@ -128,6 +129,9 @@ class LoadedBundle:
         correlation: Request-correlation settings parsed from the bundled settings, so a portable
             mock correlates responses with requests exactly as the hosted one does
             (#5527, MSC-1.1).
+        graphql: GraphQL mock settings (depth / complexity caps, list length) parsed from the
+            bundled settings, so a sandbox serving a GraphQL schema applies the hosted limits
+            (#5729, XPC-1.1).
         signed: Whether the bundle carried a signature block.
         source: Filesystem path the bundle was read from, when it came from a file.
     """
@@ -144,6 +148,7 @@ class LoadedBundle:
     fixture_packs: Mapping[str, FixturePack] = field(default_factory=dict)
     callbacks: Mapping[str, CallbackDefinition] = field(default_factory=dict)
     correlation: CorrelationConfig = EMPTY_CORRELATION
+    graphql: GraphQlMockSettings = field(default_factory=GraphQlMockSettings)
     signed: bool = False
     source: Path | None = None
 
@@ -278,6 +283,7 @@ def load_bundle_document(
         fixture_packs=parse_fixture_packs(settings),
         callbacks=parse_callbacks(settings),
         correlation=parse_response_correlation(settings),
+        graphql=parse_graphql_settings(settings),
         signed=document.get("signature") is not None,
         source=source,
     )

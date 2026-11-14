@@ -32,6 +32,7 @@ _RESOLVE_MOCK_ACCESS = """
       v.mock_enabled,
       v.published,
       v.mock_settings,
+      v.source_format,
       s.id IS NOT NULL AS is_public_spec
     FROM apiome.versions v
     INNER JOIN apiome.projects p ON p.id = v.project_id AND p.deleted_at IS NULL

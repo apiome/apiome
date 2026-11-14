@@ -247,18 +247,21 @@ def emit_mock_toggle_result(record: dict[str, Any], *, json_mode: bool) -> None:
 
 #: The three write routes a configuration document is applied through, in the order ``push``
 #: applies them, each paired with the sections it carries and the request body it takes. The
-#: scenarios route owns three sections because the server stores and validates them together — an
-#: ``activeScenario`` is only meaningful against the scenarios saved with it (#5531, MSC-2.1).
+#: scenarios route owns four sections because the server stores and validates them together — an
+#: ``activeScenario`` is only meaningful against the scenarios saved with it (#5531, MSC-2.1), and
+#: ``graphql`` (#5729, XPC-1.1) is written by the same route.
 _PUSH_ROUTES: tuple[tuple[tuple[str, ...], Callable[..., str], Callable[[Mapping[str, Any]], dict[str, Any]]], ...] = (
     (
-        ("scenarios", "activeScenario", "chaos"),
+        ("scenarios", "activeScenario", "chaos", "graphql"),
         api_paths.version_mock_scenarios,
         lambda document: {
             "scenarios": document.get("scenarios") or {},
             "chaos": document.get("chaos"),
             # Always sent, never omitted: the route keeps the stored value for a caller that omits
-            # the field, and a whole-document push must clear what the file leaves out.
+            # the field, and a whole-document push must clear what the file leaves out. The same
+            # holds for the GraphQL mock settings (#5729, XPC-1.1).
             "activeScenario": document.get("activeScenario"),
+            "graphql": document.get("graphql"),
         },
     ),
     (
@@ -395,6 +398,7 @@ def fetch_mock_config(
         # settings, so they never enter a document that gets pushed back.
         fixture_packs=packs.get("packs") or {},
         active_scenario=scenarios.get("activeScenario"),
+        graphql=scenarios.get("graphql"),
     )
 
 

@@ -14833,6 +14833,14 @@ button.tfa-reset-notice__close > svg {
   color: var(--fg-muted);
 }
 
+/* GraphQL versions (#5729): what the /graphql endpoint serves, under the URL. */
+.ver-mock__note {
+  margin: 0;
+  font-size: var(--fs-2xs);
+  color: var(--fg-muted);
+  max-width: 18rem;
+}
+
 /* ---- The lint chip (VersionLintBadge) ----------------------------------- */
 .ver-lint-badge {
   border: 0;

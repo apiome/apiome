@@ -189,9 +189,14 @@ is diffed against when someone asks whether it still serves the same responses.
   will carry. Past it the caller gets `413`: the engine reads a body only to evaluate predicates
   and templates against it, so a larger one would cross a service boundary to be ignored.
 * Apply V250 and run the backfill script; read the notes it prints.
+* GraphQL versions (#5729, XPC-1.1) are answered on the **same listener**, at
+  `/{tenant}/{project}/{version}/graphql`: nothing new to expose or route. The GraphiQL landing page
+  a browser gets on `GET` loads its scripts from `unpkg.com`, so a browser that cannot reach it sees
+  a blank page there. `POST` and `GET ?query=` work without it. See [GraphQL mocks](./graphql-mock.md).
 
 ## See also
 
 * [Mock response preview](./mock-response-preview.md) — the sibling internal endpoint.
 * [Portable mock bundle format](./mock-bundle-format.md) — the unit that crosses the hop.
 * [Portable mock runtime](./portable-mock-runtime.md) — the same engine, offline.
+* [GraphQL mocks](./graphql-mock.md) — the `/graphql` route on the same engine.

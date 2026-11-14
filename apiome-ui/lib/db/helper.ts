@@ -1330,6 +1330,9 @@ export async function getPublishedVersionsForTenant(tenantId: string, team: stri
         v.published_at,
         v.created_at,
         v.mock_enabled,
+        -- The imported format (#5729, XPC-1.1): a GraphQL version's Mock cell points at its
+        -- /graphql endpoint instead of the REST base URL.
+        v.source_format,
         -- Revision JSON (#507, #748, V076): the Published surface reads lifecycle,
         -- deprecated and sunsetAt out of it to draw the Deprecated pill (HIVE-8.1, #5327).
         v.metadata,

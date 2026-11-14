@@ -17,6 +17,7 @@ from apiome_mock.canonical_spec_cache import CanonicalSpecCache
 from apiome_mock.capture import build_capture_proxy
 from apiome_mock.database_pool import create_async_pool, ping_pool
 from apiome_mock.event_transport import handle_event_sse, handle_event_websocket
+from apiome_mock.graphql_transport import handle_graphql_request
 from apiome_mock.grpc_transport import GrpcMockRuntime
 from apiome_mock.guard import (
     enforce_mock_limits,
@@ -202,21 +203,8 @@ def create_app() -> FastAPI:
             settings=settings,
         )
 
-    @app.api_route(
-        "/{tenant}/{project}/{version}",
-        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
-    )
-    @app.api_route(
-        "/{tenant}/{project}/{version}/{path:path}",
-        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
-    )
-    async def mock_route(
-        request: Request,
-        tenant: str,
-        project: str,
-        version: str,
-        path: str = "",
-    ) -> Response:
+    async def serve_rest(request: Request, tenant: str, project: str, version: str, path: str) -> Response:
+        """Serve one request through the REST (OpenAPI) mock path: limits, resolution, usage."""
         pool: AsyncConnectionPool = app.state.db_pool
         cache: SpecCache = app.state.spec_cache
         session_store = getattr(app.state, "session_store", None)
@@ -269,5 +257,49 @@ def create_app() -> FastAPI:
                 settings=settings,
             )
         return response
+
+    # GraphQL mock route (#5729, XPC-1.1). Declared before the REST catch-all so it wins for
+    # GraphQL versions; any other version falls through to the REST path, so a REST API with its
+    # own ``/graphql`` operation is served exactly as before.
+    @app.api_route("/{tenant}/{project}/{version}/graphql", methods=["GET", "POST"])
+    async def graphql_route(request: Request, tenant: str, project: str, version: str) -> Response:
+        pool: AsyncConnectionPool = app.state.db_pool
+        cache: CanonicalSpecCache = app.state.canonical_spec_cache
+        raw_api_key = request.headers.get("X-Api-Key") or request.headers.get("x-api-key")
+        validated_key = await validate_api_key_for_tenant(
+            pool,
+            api_key=raw_api_key,
+            tenant_slug=tenant,
+        )
+        response = await handle_graphql_request(
+            request,
+            tenant=tenant,
+            project=project,
+            version=version,
+            pool=pool,
+            cache=cache,
+            api_key=validated_key,
+            settings=get_settings(),
+        )
+        if response is not None:
+            return response
+        return await serve_rest(request, tenant, project, version, "graphql")
+
+    @app.api_route(
+        "/{tenant}/{project}/{version}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    )
+    @app.api_route(
+        "/{tenant}/{project}/{version}/{path:path}",
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    )
+    async def mock_route(
+        request: Request,
+        tenant: str,
+        project: str,
+        version: str,
+        path: str = "",
+    ) -> Response:
+        return await serve_rest(request, tenant, project, version, path)
 
     return app

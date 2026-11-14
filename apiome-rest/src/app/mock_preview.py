@@ -36,6 +36,7 @@ from .mock_correlation import correlation_to_storage, validate_mock_correlation
 from .mock_fixture_packs import fixture_packs_to_storage, validate_fixture_packs
 from .mock_scenario_settings import (
     chaos_to_storage,
+    graphql_settings_to_storage,
     scenarios_to_storage,
     validate_mock_chaos,
     validate_mock_scenarios,
@@ -164,6 +165,8 @@ def draft_to_storage(draft: MockPreviewSettingsSpec) -> Dict[str, Any]:
         # A plain string needs no canonicalizer; the runtime trims it and ignores a name it
         # cannot resolve, which is exactly what a preview of an unsaved draft should show.
         projection["activeScenario"] = draft.active_scenario
+    if "graphql" in declared:
+        projection["graphql"] = None if draft.graphql is None else graphql_settings_to_storage(draft.graphql)
     return projection
 
 

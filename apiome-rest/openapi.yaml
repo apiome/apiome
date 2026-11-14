@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.561.0
+  version: 1.562.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -42722,7 +42722,18 @@ paths:
         With ``?dryRun=true`` nothing is written: the same validation runs and the
         response describes
 
-        what *would* be stored (#5530, MSC-1.4).'
+        what *would* be stored (#5530, MSC-1.4).
+
+
+        GraphQL versions (#5729, XPC-1.1): an operation key may be a root-field coordinate
+
+        (``Query.user``), checked against the version''s GraphQL schema. ``graphql``
+        holds the GraphQL
+
+        mock''s depth and complexity caps and list length; like ``activeScenario``
+        it is preserved when
+
+        omitted and cleared only when sent as ``null``.'
       operationId: set_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_put
       parameters:
       - name: tenant_slug
@@ -135489,7 +135500,7 @@ components:
           type: object
           title: Operations
           description: Per-route overrides keyed by "METHOD /path/{template}" operation
-            identifiers.
+            identifiers, or by a GraphQL root-field coordinate such as "Query.user".
       additionalProperties: false
       type: object
       title: MockChaosSpec
@@ -135744,6 +135755,51 @@ components:
       title: MockFixturePackSpec
       description: 'One versioned fixture pack: deterministic seed data for stateful
         mocks (#4745 PMR-2.2).'
+    MockGraphQlSettingsSpec:
+      properties:
+        maxDepth:
+          anyOf:
+          - type: integer
+            maximum: 50.0
+            minimum: 1.0
+            description: Mock Graph Ql Settings Spec schema.
+          - type: 'null'
+            description: Mock Graph Ql Settings Spec schema.
+          title: Maxdepth
+          description: Deepest field nesting an operation may select (1-50; default
+            10).
+        maxComplexity:
+          anyOf:
+          - type: integer
+            maximum: 100000.0
+            minimum: 1.0
+            description: Mock Graph Ql Settings Spec schema.
+          - type: 'null'
+            description: Mock Graph Ql Settings Spec schema.
+          title: Maxcomplexity
+          description: 'Largest complexity an operation may score: each field costs
+            1, multiplied by the list length of every list above it (1-100000; default
+            1000).'
+        listLength:
+          anyOf:
+          - type: integer
+            maximum: 50.0
+            minimum: 0.0
+            description: Mock Graph Ql Settings Spec schema.
+          - type: 'null'
+            description: Mock Graph Ql Settings Spec schema.
+          title: Listlength
+          description: Items in every synthesized list (0-50; default 3).
+      additionalProperties: false
+      type: object
+      title: MockGraphQlSettingsSpec
+      description: 'GraphQL mock limits and list length for one version (#5729 XPC-1.1).
+
+
+        Stored under ``versions.mock_settings.graphql`` and read by apiome-mock''s
+        ``/graphql`` route.
+
+        An unset field takes the runtime default.'
     MockInstanceResponse:
       properties:
         id:
@@ -136089,6 +136145,13 @@ components:
             Rendered exactly as the runtime would: a name that resolves to no scenario
             is ignored, because a draft may legitimately name one that lives in the
             version''s stored scenarios.'
+        graphql:
+          anyOf:
+          - $ref: '#/components/schemas/MockGraphQlSettingsSpec'
+          - type: 'null'
+            description: Mock Preview Settings Spec schema.
+          description: Draft GraphQL mock limits and list length (#5729 XPC-1.1);
+            replaces the stored block.
       additionalProperties: false
       type: object
       title: MockPreviewSettingsSpec
@@ -172967,6 +173030,13 @@ components:
             request. Sending null clears it; omitting the field entirely keeps whatever
             is stored, so an editor that does not know about it cannot silently drop
             a version's active scenario.
+        graphql:
+          anyOf:
+          - $ref: '#/components/schemas/MockGraphQlSettingsSpec'
+          - type: 'null'
+            description: Request body for version mock scenarios.
+          description: GraphQL mock limits and list length (#5729 XPC-1.1). Sending
+            null clears them; omitting the field keeps whatever is stored.
       type: object
       title: VersionMockScenariosRequest
       description: Replace the version's mock scenario definitions (#4454 SIM-4.2).
@@ -172993,6 +173063,13 @@ components:
           title: Activescenario
           description: The scenario served when a request sends no X-Mock-Scenario
             header; null when the version has none (#5531 MSC-2.1).
+        graphql:
+          anyOf:
+          - $ref: '#/components/schemas/MockGraphQlSettingsSpec'
+          - type: 'null'
+            description: Response payload for version mock scenarios.
+          description: GraphQL mock limits and list length; null when none are stored
+            (#5729 XPC-1.1).
       type: object
       title: VersionMockScenariosResponse
       description: The version's persisted mock scenario definitions (#4454 SIM-4.2).
@@ -176562,7 +176639,8 @@ components:
             $ref: '#/components/schemas/MockScenarioOperationSpecInput'
           type: object
           title: Operations
-          description: Overrides keyed by "METHOD /path/{template}" operation identifiers.
+          description: Overrides keyed by "METHOD /path/{template}" operation identifiers,
+            or by a GraphQL root-field coordinate such as "Query.user".
         chaos:
           anyOf:
           - $ref: '#/components/schemas/MockChaosSpec'
@@ -176588,7 +176666,8 @@ components:
             $ref: '#/components/schemas/MockScenarioOperationSpecOutput'
           type: object
           title: Operations
-          description: Overrides keyed by "METHOD /path/{template}" operation identifiers.
+          description: Overrides keyed by "METHOD /path/{template}" operation identifiers,
+            or by a GraphQL root-field coordinate such as "Query.user".
         chaos:
           anyOf:
           - $ref: '#/components/schemas/MockChaosSpec'

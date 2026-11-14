@@ -120,8 +120,15 @@ def test_every_draft_key_is_one_that_travels_in_a_bundle() -> None:
         callbacks={},
         correlation={"mode": "off"},
         activeScenario="quiet",
+        graphql={"maxDepth": 4},
     )
     assert set(draft_to_storage(fully_declared)) == set(BUNDLED_SETTINGS_KEYS)
+
+
+def test_drafted_graphql_settings_overlay_the_stored_ones() -> None:
+    """The GraphQL mock limits preview like any other bundled key (#5729, XPC-1.1)."""
+    merged = effective_mock_settings({**STORED, "graphql": {"maxDepth": 9}}, _draft(graphql={"listLength": 1}))
+    assert merged["graphql"] == {"listLength": 1}
 
 
 def test_a_drafted_active_scenario_overlays_the_stored_one() -> None:

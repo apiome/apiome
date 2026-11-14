@@ -30,13 +30,20 @@ header value may embed the bounded ``{{ ... }}`` templates validated by
 check (their rendered values are request-dependent) but still validate
 status, media type, and template syntax, so a scenario that saves cleanly
 can never contain an unparseable template.
+
+GraphQL mocks (#5729, XPC-1.1): a scenario or chaos entry may name one root field of a GraphQL
+version by its schema coordinate (``Query.user``). Such a key is checked against the version's
+GraphQL root fields rather than the OpenAPI document. Its canned bodies become the field's value,
+so there is no response schema to check them against, but status, headers and templates are still
+validated. The sibling ``"graphql"`` key holds the GraphQL mock's depth and complexity caps and
+synthesized list length, canonicalized by :func:`graphql_settings_to_storage`.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import AbstractSet, Any, Dict, List, Mapping, Optional, Tuple
 
 from .mock_match import validate_when
 from .mock_routing import MockOperation, extract_operations
@@ -45,6 +52,7 @@ from .mock_template import validate_template_text, validate_template_value, valu
 from .models import (
     MockChaosKnobsSpec,
     MockChaosSpec,
+    MockGraphQlSettingsSpec,
     MockScenarioOperationSpec,
     MockScenarioResponseSpec,
     MockScenarioSpec,
@@ -78,16 +86,33 @@ how "the whole API fails" is expressed — the shape the retired in-REST engine 
 """
 
 
+GRAPHQL_COORDINATE_PATTERN = re.compile(r"^[_A-Za-z][_0-9A-Za-z]*\.[_A-Za-z][_0-9A-Za-z]*$")
+"""A GraphQL root-field schema coordinate (``Query.user``) used as an operation key (#5729).
+
+Mirrors ``apiome_mock.scenarios.GRAPHQL_COORDINATE_PATTERN``.
+"""
+
+GRAPHQL_SETTINGS_KEY = "graphql"
+"""``mock_settings`` key holding the GraphQL mock settings (#5729, XPC-1.1)."""
+
+
+def is_graphql_coordinate(key: str) -> bool:
+    """Whether an operation key is a GraphQL ``Type.field`` coordinate (#5729, XPC-1.1)."""
+    return bool(GRAPHQL_COORDINATE_PATTERN.match(key.strip()))
+
+
 def normalize_operation_key(raw: str) -> Optional[str]:
     """Normalize an operation key to canonical ``"METHOD /template"`` form.
 
     Mirrors ``apiome_mock.scenarios.normalize_operation_key`` so author-time
     validation and the runtime agree on the key shape. The wildcard
-    :data:`WILDCARD_OPERATION_KEY` passes through unchanged. Returns ``None`` when
-    ``raw`` is neither the wildcard nor a ``"method path"`` string.
+    :data:`WILDCARD_OPERATION_KEY` and a GraphQL ``Type.field`` coordinate pass
+    through unchanged (trimmed). Returns ``None`` when ``raw`` is none of the three.
     """
     if raw.strip() == WILDCARD_OPERATION_KEY:
         return WILDCARD_OPERATION_KEY
+    if is_graphql_coordinate(raw):
+        return raw.strip()
     parts = raw.strip().split(None, 1)
     if len(parts) != 2:
         return None
@@ -265,6 +290,7 @@ def validate_mock_chaos(
     *,
     context: str = "Chaos",
     operations_by_key: Optional[Mapping[str, MockOperation]] = None,
+    graphql_operations: AbstractSet[str] = frozenset(),
 ) -> List[str]:
     """Validate one chaos block against structural limits and the OpenAPI spec.
 
@@ -274,6 +300,8 @@ def validate_mock_chaos(
         context: Prefix for error messages (e.g. ``"Scenario 'degraded' chaos"``).
         operations_by_key: Pre-extracted operations, to avoid re-extracting
             when validating many blocks against the same spec.
+        graphql_operations: The version's GraphQL root-field coordinates (``Query.user``);
+            empty for a version that is not GraphQL.
 
     Returns:
         A list of human-readable error strings; empty when everything is valid.
@@ -293,7 +321,16 @@ def validate_mock_chaos(
         if op_key is None or op_key == WILDCARD_OPERATION_KEY:
             # Chaos already spells "every operation" as the block's `default`, so the wildcard
             # would be a second way to say the same thing.
-            errors.append(f"{context}, operation '{op_key_raw}': operation keys must look like 'GET /pets/{{petId}}'.")
+            errors.append(
+                f"{context}, operation '{op_key_raw}': operation keys must look like 'GET /pets/{{petId}}' "
+                "(or 'Query.user' for a GraphQL root field)."
+            )
+            continue
+        if is_graphql_coordinate(op_key):
+            if op_key not in graphql_operations:
+                errors.append(
+                    f"{context}, operation '{op_key_raw}': no GraphQL root field {op_key} exists in this version's schema."
+                )
             continue
         if op_key not in operations_by_key:
             errors.append(f"{context}, operation '{op_key_raw}': no operation {op_key} exists in this version's spec.")
@@ -304,12 +341,16 @@ def validate_mock_chaos(
 def validate_mock_scenarios(
     scenarios: Mapping[str, MockScenarioSpec],
     spec: Mapping[str, Any],
+    *,
+    graphql_operations: AbstractSet[str] = frozenset(),
 ) -> List[str]:
     """Validate scenario definitions against structural limits and the OpenAPI spec.
 
     Args:
         scenarios: Parsed scenario definitions keyed by scenario name.
         spec: The version's generated OpenAPI document.
+        graphql_operations: The version's GraphQL root-field coordinates (``Query.user``);
+            empty for a version that is not GraphQL (#5729, XPC-1.1).
 
     Returns:
         A list of human-readable error strings; empty when everything is valid.
@@ -336,7 +377,22 @@ def validate_mock_scenarios(
             op_key = normalize_operation_key(op_key_raw)
             if op_key is None:
                 errors.append(
-                    f"{context}: operation keys must look like 'GET /pets/{{petId}}', or '*' for every operation."
+                    f"{context}: operation keys must look like 'GET /pets/{{petId}}', 'Query.user' for a "
+                    "GraphQL root field, or '*' for every operation."
+                )
+                continue
+            if is_graphql_coordinate(op_key):
+                if op_key not in graphql_operations:
+                    errors.append(f"{context}: no GraphQL root field {op_key} exists in this version's schema.")
+                    continue
+                # A canned body becomes the root field's value (#5729, XPC-1.1); there is no
+                # OpenAPI response schema to check it against, exactly as for the wildcard.
+                _validate_operation_override(
+                    override,
+                    operation=None,
+                    spec=spec,
+                    context=context,
+                    errors=errors,
                 )
                 continue
             if op_key == WILDCARD_OPERATION_KEY:
@@ -369,6 +425,7 @@ def validate_mock_scenarios(
                 spec,
                 context=f"Scenario '{name}' chaos",
                 operations_by_key=operations_by_key,
+                graphql_operations=graphql_operations,
             )
         )
 
@@ -568,3 +625,55 @@ def chaos_from_storage(mock_settings: Any) -> Tuple[Optional[Dict[str, Any]], bo
     if not isinstance(chaos, dict):
         return None, False
     return chaos, True
+
+
+def uses_graphql_coordinates(
+    scenarios: Mapping[str, MockScenarioSpec],
+    chaos: Optional[MockChaosSpec],
+) -> bool:
+    """Whether a scenarios write names any GraphQL ``Type.field`` operation key (#5729, XPC-1.1).
+
+    The route only loads the version's canonical model (to list its GraphQL root fields) when this
+    is true, so a REST version's save does no extra work.
+
+    Args:
+        scenarios: The scenario definitions being saved.
+        chaos: The version-level chaos block being saved.
+
+    Returns:
+        ``True`` when any scenario operation, scenario chaos entry or version chaos entry is keyed
+        by a GraphQL coordinate.
+    """
+    blocks = [chaos] + [scenario.chaos for scenario in scenarios.values()]
+    keys = [key for scenario in scenarios.values() for key in scenario.operations]
+    keys.extend(key for block in blocks if block is not None for key in block.operations)
+    return any(is_graphql_coordinate(key) for key in keys)
+
+
+def graphql_settings_to_storage(graphql: MockGraphQlSettingsSpec) -> Dict[str, Any]:
+    """Canonicalize the GraphQL mock settings into the ``mock_settings.graphql`` shape (#5729).
+
+    Unset fields are omitted so the runtime applies its defaults.
+    """
+    return graphql.model_dump(by_alias=True, exclude_none=True)
+
+
+def graphql_settings_from_storage(mock_settings: Any) -> Optional[Dict[str, Any]]:
+    """Extract the stored ``graphql`` block from a raw ``mock_settings`` value (#5729, XPC-1.1).
+
+    Args:
+        mock_settings: The raw ``versions.mock_settings`` value (dict, JSON text, or ``None``).
+
+    Returns:
+        The stored mapping, or ``None`` when none is stored or the stored value is not a mapping.
+    """
+    settings: Any = mock_settings
+    if isinstance(settings, str):
+        try:
+            settings = json.loads(settings)
+        except json.JSONDecodeError:
+            return None
+    if not isinstance(settings, dict):
+        return None
+    block = settings.get(GRAPHQL_SETTINGS_KEY)
+    return block if isinstance(block, dict) else None

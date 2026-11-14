@@ -63,6 +63,8 @@ We continue to improve the platform based on your feedback with improvements and
   - **Data browser** and **Migrations** are withdrawn from your user menu and ⌘K until they are finished; a bookmark to either opens a **Not available yet** page
 - Version:
   - The version shown on the home page, in the user menu and on **Help & docs** now names its release candidate (`RC8`)
+- Mocks:
+  - GraphQL mocks — a published GraphQL version with its mock on answers queries and mutations at its mock URL plus `/graphql`, which its **Mock** cell on **Published** shows and copies; open it in a browser for **GraphiQL**. Declared examples are returned where they exist and seeded data everywhere else, scenarios and chaos name a root field as `Query.user`, and depth and complexity limits answer with a GraphQL error. Subscriptions are not served yet and say so
 - Contract testing:
   - Contract testing and CI gates — a new docs page maps every breaking-change gate: `apiome diff --fail-on breaking` and the GitHub Action in pull requests, the classified changelog on **Changes** and in the `version.published` webhook, the breaking-publish guardrail, and checking live deployments, consumers and the deploy gate
 - Import:

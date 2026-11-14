@@ -73,6 +73,8 @@ export interface PublishedVersion {
   creator_email: string;
   /** Hosted mock toggle state (#4422, SIM-2.1). */
   mock_enabled: boolean;
+  /** The imported format (`graphql`, `openapi-3.1`, …); `null` for an ADE-authored version (#5729). */
+  source_format?: string | null;
   /** Revision JSON (#507, #748): `lifecycle`, `deprecated`, `sunsetAt`, `successorRevisionId`. */
   metadata?: Record<string, unknown> | null;
   /** The project's owner team, in its wire shape (CDG-2.4); validated where it is drawn. */

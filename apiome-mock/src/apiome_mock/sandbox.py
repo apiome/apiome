@@ -32,6 +32,12 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from typing import Any, Mapping
 
+from graphql import GraphQLError, build_schema
+
+from apiome_mock.bundle import LoadedBundle
+from apiome_mock.canonical_compiler import GraphQlRoute
+from apiome_mock.fixture_packs import merged_template_data
+from apiome_mock.graphql_transport import GRAPHQL_PATH_SEGMENT, graphql_http_request, serve_graphql
 from apiome_mock.handler import ServeTrace, serve_compiled_request
 from apiome_mock.memory_session_store import InMemorySessionStore
 from apiome_mock.session_store import SessionCaps, SessionStore
@@ -47,6 +53,8 @@ __all__ = [
     "SANDBOX_SESSION_CAPS",
     "SandboxResult",
     "SandboxSessionStores",
+    "is_graphql_sandbox_request",
+    "serve_sandbox_graphql",
     "serve_sandbox_request",
 ]
 
@@ -209,4 +217,65 @@ async def serve_sandbox_request(
         operation=trace.operation.key if trace.operation is not None else None,
         scenario=trace.scenario,
         schema_valid=trace.schema_valid,
+    )
+
+
+def is_graphql_sandbox_request(spec: SyntheticRequest) -> bool:
+    """Whether a sandbox request targets the GraphQL route (``/graphql``, #5729 XPC-1.1)."""
+    return spec.relative_path == f"/{GRAPHQL_PATH_SEGMENT}"
+
+
+async def serve_sandbox_graphql(bundle: LoadedBundle, sdl: str, spec: SyntheticRequest) -> SandboxResult:
+    """Serve one ``/graphql`` sandbox request from a GraphQL schema (#5729, XPC-1.1).
+
+    The bundle supplies everything except the schema: scenarios, the active scenario, chaos,
+    fixture packs and the ``graphql`` caps, so a sandbox answers exactly as the hosted
+    ``/graphql`` route would for the same settings. The schema travels beside the bundle as SDL,
+    because a bundle's ``spec`` part is an OpenAPI document.
+
+    Args:
+        bundle: The verified sandbox bundle.
+        sdl: The GraphQL schema to serve.
+        spec: The described request (``GET`` or ``POST`` on ``/graphql``).
+
+    Returns:
+        The served GraphQL document as a JSON sandbox result. An SDL that does not build answers
+        with a GraphQL error document rather than failing the hop.
+    """
+    request = build_synthetic_request(
+        spec,
+        tenant=bundle.tenant_slug,
+        project=bundle.project_slug,
+        version=bundle.version_label,
+        host="sandbox.invalid",
+    )
+    try:
+        schema = build_schema(sdl)
+    except (GraphQLError, TypeError) as exc:
+        return SandboxResult(
+            status=200,
+            headers={"content-type": "application/json"},
+            media_type="application/json",
+            body={"errors": [{"message": f"The GraphQL schema could not be built: {exc}"}]},
+            body_encoding="json",
+            operation=None,
+            scenario=None,
+        )
+    route = GraphQlRoute(
+        schema=schema,
+        settings=bundle.graphql,
+        scenarios=bundle.scenarios,
+        active_scenario=bundle.active_scenario,
+        chaos=bundle.chaos,
+        fixtures={**bundle.fixture_data, **merged_template_data(bundle.fixture_packs)},
+    )
+    result = await serve_graphql(route, await graphql_http_request(request), tenant=bundle.tenant_slug)
+    return SandboxResult(
+        status=result.status,
+        headers={"content-type": "application/json", **result.headers},
+        media_type="application/json",
+        body=result.body,
+        body_encoding="json",
+        operation=result.operation,
+        scenario=result.scenario,
     )

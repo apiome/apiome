@@ -1,6 +1,8 @@
 import {
   applyUiMockBaseUrl,
+  buildGraphqlMockUrl,
   buildMockBaseUrl,
+  isGraphqlSourceFormat,
   getMockPublicBaseUrl,
   rewriteMockUrlHost,
 } from '../lib/mock/mockUrl';
@@ -100,5 +102,21 @@ describe('buildMockBaseUrl', () => {
     expect(buildMockBaseUrl('http://localhost:8775', '', 'petstore', '1.0.0')).toBeNull();
     expect(buildMockBaseUrl('http://localhost:8775', 'acme', '', '1.0.0')).toBeNull();
     expect(buildMockBaseUrl('http://localhost:8775', 'acme', 'petstore', '')).toBeNull();
+  });
+});
+
+describe('GraphQL mock URLs (#5729)', () => {
+  it('recognises GraphQL source formats, federated ones included', () => {
+    expect(isGraphqlSourceFormat('graphql')).toBe(true);
+    expect(isGraphqlSourceFormat(' GraphQL-Federation ')).toBe(true);
+    expect(isGraphqlSourceFormat('openapi-3.1')).toBe(false);
+    expect(isGraphqlSourceFormat(null)).toBe(false);
+    expect(isGraphqlSourceFormat(undefined)).toBe(false);
+  });
+
+  it('appends /graphql to the mock base URL', () => {
+    expect(buildGraphqlMockUrl('https://mock.example/a/b/1.0.0')).toBe('https://mock.example/a/b/1.0.0/graphql');
+    expect(buildGraphqlMockUrl('https://mock.example/a/b/1.0.0/')).toBe('https://mock.example/a/b/1.0.0/graphql');
+    expect(buildGraphqlMockUrl(null)).toBeNull();
   });
 });
