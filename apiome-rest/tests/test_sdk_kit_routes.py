@@ -33,6 +33,7 @@ from app.main import app
 from app.sdk_generation_settings import ResolvedBranding, SdkGenerationSettingsOut
 from app.sdk_kit import KIT_SCHEMA_VERSION
 from app.terraform_provider_runtime import PLUGIN_FRAMEWORK_VERSION
+from app.mcp_server_runtime import MCP_SDK_VERSION
 
 client = TestClient(app)
 
@@ -294,6 +295,21 @@ def test_info_names_the_terraform_provider_the_download_carries() -> None:
         "address": "registry.terraform.io/acme/widgets",
         "module_path": "example.com/acme/terraform-provider-widgets",
         "framework_version": PLUGIN_FRAMEWORK_VERSION,
+    }
+
+
+def test_info_names_the_mcp_server_the_download_carries() -> None:
+    """SDK-4.5 (#4499): the server is named from the coordinates; the manifest lists its tools."""
+    with patch(_LOADER, return_value=_source()):
+        body = client.get(_BASE).json()
+
+    assert body["mcp_server"] == {
+        "directory": "mcp",
+        "package_name": "widgets-mcp-server",
+        "server_name": "widgets-mcp-server",
+        "env_prefix": "WIDGETS",
+        "transport": "stdio",
+        "sdk_version": MCP_SDK_VERSION,
     }
 
 

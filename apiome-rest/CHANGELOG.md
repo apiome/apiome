@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.698.0] - 2026-11-14
+
+### Added
+- **MCP server artifact (SDK-4.5, #4499)** — the public client kit
+  (`GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk/download`) now carries a runnable
+  Model Context Protocol server under `mcp/`: a TypeScript project on `@modelcontextprotocol/sdk`
+  1.32.2 that an MCP client launches over stdio (`app.mcp_server_generator`, fixed TypeScript in
+  `app.mcp_server_runtime`):
+  - **One tool per operation** — names, descriptions and input schemas come from the AGX-1.1
+    compiler (`compile_mcp_tools`), the same toolset the managed MCP proxy and the MCP
+    tool-definition export use.
+  - **Real calls** — each tool's arguments become the request the contract describes (path, query
+    and header serialization styles, flat or nested JSON / form / multipart bodies) through the
+    binding the managed proxy uses, now shared as `app.mcp_operation_binding`.
+  - **Inputs validated first** — arguments that do not fit a tool's input schema are refused with
+    the problems listed, and nothing is sent.
+  - **Auth from environment variables only** — each security scheme reads `<PREFIX>_TOKEN`,
+    `<PREFIX>_API_KEY` or `<PREFIX>_USERNAME` / `<PREFIX>_PASSWORD` (the Terraform provider's
+    mapping, `plan_auth_settings`), plus `<PREFIX>_BASE_URL` and `<PREFIX>_HEADERS`. The artifact
+    holds no credential; `.env.example` lists the variables empty.
+  - A README with install, configuration and an `mcp.json` client-registration snippet.
+    Byte-deterministic; `src/contract.ts` and the kit's `provenance.mcp_server_generator` name the
+    generator schema (`sdk.mcp-server.v1`) and the revision.
+- The kit manifest gains an `mcp_server` block (tools, auth schemes, environment variables,
+  skipped operations), and `GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk` returns an
+  `mcp_server` block (`directory`, `package_name`, `server_name`, `env_prefix`, `transport`,
+  `sdk_version`). OpenAPI 1.557.0 → 1.558.0.
+
 ## [1.697.0] - 2026-11-13
 
 ### Added
