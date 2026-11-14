@@ -131,7 +131,7 @@ graph TD
 
 | Epic | Name | GitHub | Issues | MVP issues | Depends on | Theme |
 | --- | --- | --- | --- | --- | --- | --- |
-| 11 | List-page density — the “quiet pass” | #5594 | 11 | 5 | — | Density & attention on pages |
+| 11 | List-page density — the “quiet pass” ✅ | #5594 | 11 | 5 | — | Density & attention on pages |
 | 12 | Shell & launcher fit | #5595 | 6 | 2 | — | Density & attention in the chrome |
 | 13 | Brand discipline, gates & design docs | #5596 | 4 | 1 | 11, 12 | Release gate |
 | — | **Total** | 3 epics | **21** | **8** | | |
@@ -140,7 +140,7 @@ Milestone: **RC6** (all epics and issues).
 
 ---
 
-## Epic 11 — List-page density — the “quiet pass” — [#5594](https://github.com/apiome/apiome/issues/5594)
+## Epic 11 — List-page density — the “quiet pass” — [#5594](https://github.com/apiome/apiome/issues/5594) ✅
 
 **Goal:** Get the first row of data back above the fold on every list page without removing a single fact or control: status banners become a status strip, stat strips fold into a facts line, explanatory copy shows once and then lives behind a link, and every table owns exactly one toolbar.
 
