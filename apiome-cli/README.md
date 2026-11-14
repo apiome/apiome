@@ -1519,6 +1519,20 @@ apiome tags update payments-api stable --version 2.1.0 --description 'Promoted f
 `apiome tags delete <project> <tag>` deletes a tag after you type its name (`--yes` skips). Only
 the tag goes, never the version; an immutable tag exits **6**.
 
+### Migration plans
+
+`apiome migrations list --project <project>` lists a project's migration plans, newest first: plan
+id, FROM / TO version labels, how many classes and rules each maps, and when it was updated
+(`GET /v1/migration-plans/{tenant}/projects/{project}`). `--from` / `--to` take a version label
+(`2.0.0` or `v2.0.0`), revision id or version tag. The server records no status, breaking flag or
+author for a plan.
+
+```bash
+apiome migrations list --project payments-api               # first 50; --limit N or --all
+apiome migrations list --project payments-api --from v2.0.0 --to v2.1.0
+apiome migrations list --project payments-api --json        # [ {id, from_version, to_version, rule_count, ...} ]
+```
+
 ### List a project's properties
 
 `apiome properties list <project>` lists the project's property library: name, **type** (the JSON

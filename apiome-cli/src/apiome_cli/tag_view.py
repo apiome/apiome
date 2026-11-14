@@ -17,7 +17,7 @@ class TagNotFound(ValueError):
     """No tag with that name or id (exit 2)."""
 
 
-def _when(value: Any, *, with_time: bool = False) -> str:
+def format_when(value: Any, *, with_time: bool = False) -> str:
     """``2026-05-04T12:43:10Z`` → ``2026-05-04`` (or ``2026-05-04 12:43 UTC``); blank if missing."""
     if not isinstance(value, str) or not value.strip():
         return ""
@@ -75,7 +75,7 @@ def render_tag_list(tags: Sequence[Mapping[str, Any]], *, total: Optional[int] =
             str(t.get("name") or ""),
             str(t.get("target_version_string") or t.get("version_id") or ""),
             str(t.get("channel") or ""),
-            _when(t.get("updated_at") or t.get("created_at")),
+            format_when(t.get("updated_at") or t.get("created_at")),
             _creator(t),
         )
         for t in tags
@@ -96,8 +96,8 @@ def render_tag_show(tag: Mapping[str, Any]) -> str:
         ("Channel:", str(tag.get("channel") or "—")),
         ("Message:", str(tag.get("message") or "—")),
         ("Locks:", ", ".join(flags) or "—"),
-        ("Updated:", _when(tag.get("updated_at"), with_time=True) or "—"),
-        ("Created:", " by ".join(p for p in (_when(tag.get("created_at"), with_time=True), _creator(tag)) if p) or "—"),
+        ("Updated:", format_when(tag.get("updated_at"), with_time=True) or "—"),
+        ("Created:", " by ".join(p for p in (format_when(tag.get("created_at"), with_time=True), _creator(tag)) if p) or "—"),
         ("History:", "not recorded by the server (only the current pointer is kept)"),
     ]
     width = max(len(label) for label, _ in rows)
