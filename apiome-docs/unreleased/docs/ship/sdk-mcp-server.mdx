@@ -1,0 +1,87 @@
+---
+title: MCP server
+description: Let AI agents call your API with a generated MCP server.
+sidebar_position: 6.7
+tags: [sdk, mcp, agents]
+---
+
+The **client kit** — the zip behind **“Download SDK”** on a published version
+([SDK settings](./sdk-settings.mdx)) — carries an **MCP server** for the API under `mcp/`. It is a
+[Model Context Protocol](https://modelcontextprotocol.io) server generated from the published
+specification: an agent in Claude Desktop, an IDE or any other MCP client can list your API's
+operations as tools and call them.
+
+Nothing needs switching on: every kit has one.
+
+## What you get
+
+- **One tool per operation.** The tool's name comes from the operation ID, its description from the
+  summary and description, and its inputs from the operation's parameters and request body. These
+  are the same tools the [MCP tool definitions](./export-a-spec.md#mcp-tool-definitions) export
+  describes for the API.
+- **Real calls.** Calling a tool sends the request the specification describes, and the response
+  comes back as the tool's result. An error status (400 or above) comes back as a tool error.
+- **Checked inputs.** Inputs that do not fit the tool — a missing required value, a string where a
+  number belongs, a value out of range — are refused with a list of the problems, and **nothing is
+  sent** to the API.
+- **No secrets in the files.** Credentials come only from environment variables.
+  `mcp/.env.example` lists every variable, with the credentials left empty.
+
+## Build and register it
+
+1. **Download the kit** and unzip it.
+2. **Build the server:** `cd mcp && npm install && npm run build` (Node.js 20 or later).
+3. **Add it to your MCP client's configuration** (`mcp.json`, `.mcp.json` or
+   `claude_desktop_config.json`). `mcp/README.md` has the exact snippet for your API:
+
+   ```json
+   {
+     "mcpServers": {
+       "widgets-mcp-server": {
+         "command": "node",
+         "args": ["/absolute/path/to/mcp/dist/server.js"],
+         "env": {
+           "WIDGETS_BASE_URL": "https://api.example.com",
+           "WIDGETS_TOKEN": "<your credential>"
+         }
+       }
+     }
+   }
+   ```
+
+4. **Restart the client.** The API's tools appear in its tool list.
+
+## Configure it
+
+Every variable starts with the project's name in capitals (`acme-widgets` → `ACME_WIDGETS_`):
+
+| Variable | Holds |
+| --- | --- |
+| `<PREFIX>_BASE_URL` | The API's base URL. Defaults to the specification's first server; you must set it when the specification names none |
+| `<PREFIX>_HEADERS` | Extra headers for every request, as JSON: `{"X-Request-Source": "agent"}` |
+| `<PREFIX>_TOKEN` | Bearer, OAuth 2 or OpenID Connect token |
+| `<PREFIX>_USERNAME`, `<PREFIX>_PASSWORD` | HTTP Basic credentials |
+| `<PREFIX>_API_KEY` | API key, sent in the header, query parameter or cookie the specification names |
+
+There is one credential variable for each security scheme in the specification — the same names
+the [Terraform provider](./sdk-infrastructure-targets.mdx) uses for its settings. A scheme whose
+variables are unset is not sent, so the API treats those calls as anonymous. Mutual TLS has no
+variable; the server's `README.md` lists any scheme it cannot send.
+
+## Try it against the mock
+
+To call your API's [mock](./mock-try-out.mdx) instead of the real API, set `<PREFIX>_BASE_URL` to
+the mock's URL and send a session header so the mock remembers what the agent creates:
+`<PREFIX>_HEADERS={"X-Mock-Session": "agent"}`.
+
+## What it does not cover
+
+An operation with no HTTP method and path, such as a gRPC method or a GraphQL field, has no request
+to send, so it gets no tool. A kit carries at most 250 tools. Anything left out is listed under
+**Not included** in `mcp/README.md`, and in `mcp_server.skipped` in the kit's `manifest.json`.
+
+## Where next
+
+- [SDK settings](./sdk-settings.mdx)
+- [Terraform provider](./sdk-infrastructure-targets.mdx)
+- [Mock try-out](./mock-try-out.mdx)

@@ -34,10 +34,13 @@ from app.canonical_model import (
 from app.go_client_generator import GO_CLIENT_SCHEMA_VERSION
 from app.server_stub_generator import SERVER_STUB_SCHEMA_VERSION
 from app.terraform_provider_generator import TERRAFORM_PROVIDER_SCHEMA_VERSION
+from app.mcp_server_generator import MCP_SERVER_SCHEMA_VERSION
+from app.mcp_server_runtime import MCP_SDK_VERSION
 from app.sdk_generation_settings import ResolvedBranding
 from app.sdk_kit import (
     KIT_SCHEMA_VERSION,
     MAX_KIT_OPERATIONS,
+    MCP_SERVER_DIRECTORY,
     SERVER_STUB_DIRECTORY,
     TERRAFORM_PROVIDER_DIRECTORY,
     KitCoordinates,
@@ -168,6 +171,18 @@ def test_the_kit_carries_a_readme_manifest_spec_and_one_snippet_per_language() -
         "go/go.mod",
         "go/widgets.go",
         "manifest.json",
+        # SDK-4.5 (#4499): the MCP server, under `mcp/` — one tool per operation.
+        "mcp/.env.example",
+        "mcp/README.md",
+        "mcp/package.json",
+        "mcp/src/config.ts",
+        "mcp/src/contract.ts",
+        "mcp/src/handlers.ts",
+        "mcp/src/request.ts",
+        "mcp/src/server.ts",
+        "mcp/src/types.ts",
+        "mcp/src/validate.ts",
+        "mcp/tsconfig.json",
         # SDK-2.5 (#4490): two runnable server skeletons, under `server/`.
         "server/express/README.md",
         "server/express/package.json",
@@ -310,6 +325,7 @@ def test_the_manifest_carries_the_revision_and_settings_provenance() -> None:
         "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
         "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
         "terraform_generator": f"app.terraform_provider_generator/{TERRAFORM_PROVIDER_SCHEMA_VERSION}",
+        "mcp_server_generator": f"app.mcp_server_generator/{MCP_SERVER_SCHEMA_VERSION}",
         "apiome_version": "1.180.0",
         "settings_fingerprint": "sha256:" + "a" * 64,
     }
@@ -607,6 +623,58 @@ def test_a_terraform_generator_failure_degrades_the_kit_rather_than_failing_it()
 
 def test_a_kit_with_a_terraform_provider_is_still_byte_deterministic() -> None:
     assert _build(_crud_api()).content == _build(_crud_api()).content
+
+
+# ===========================================================================
+# The MCP server (SDK-4.5)
+# ===========================================================================
+
+
+def test_the_manifest_describes_the_mcp_server() -> None:
+    manifest = _manifest(_build(_crud_api()).content)["mcp_server"]
+    assert manifest["included"] is True
+    assert manifest["schema_version"] == MCP_SERVER_SCHEMA_VERSION
+    assert manifest["directory"] == MCP_SERVER_DIRECTORY
+    assert manifest["package_name"] == "widgets-mcp-server"
+    assert manifest["server_name"] == "widgets-mcp-server"
+    assert manifest["env_prefix"] == "WIDGETS"
+    assert manifest["sdk_version"] == MCP_SDK_VERSION
+    assert manifest["transport"] == "stdio"
+    assert manifest["base_url"] == "https://api.widgets.dev"
+    assert manifest["tool_count"] == 4
+    assert sorted(tool["name"] for tool in manifest["tools"]) == [
+        "createWidget",
+        "deleteWidget",
+        "getWidget",
+        "replaceWidget",
+    ]
+    assert manifest["env"][:2] == ["WIDGETS_BASE_URL", "WIDGETS_HEADERS"]
+    assert manifest["skipped"] == []
+
+
+def test_the_kit_readme_points_at_the_mcp_server() -> None:
+    readme = _read(_build(_crud_api()).content, "README.md")
+    assert "## MCP server" in readme
+    assert f"cd {MCP_SERVER_DIRECTORY} && npm install && npm run build" in readme
+    assert "`WIDGETS_…`" in readme
+
+
+def test_the_mcp_server_keeps_a_configured_npm_scope_but_not_the_client_name() -> None:
+    branding = ResolvedBranding(package_names={"npm": "@acme/widgets-sdk"})
+    manifest = _manifest(_build(_crud_api(), branding=branding).content)["mcp_server"]
+    assert manifest["package_name"] == "@acme/widgets-sdk-mcp-server"
+    assert manifest["server_name"] == "widgets-sdk-mcp-server"
+
+
+def test_an_mcp_server_failure_degrades_the_kit_rather_than_failing_it() -> None:
+    with patch("app.sdk_kit.generate_mcp_server", side_effect=RuntimeError("boom")):
+        kit = _build(_crud_api())
+    assert not [name for name in _entries(kit.content) if name.startswith(f"{MCP_SERVER_DIRECTORY}/")]
+    block = _manifest(kit.content)["mcp_server"]
+    assert block["included"] is False
+    assert block["error"] == "RuntimeError: boom"
+    assert block["package_name"] == "widgets-mcp-server"
+    assert "No MCP server is included" in _read(kit.content, "README.md")
 
 
 def test_the_manifest_digests_every_entry_but_never_itself() -> None:

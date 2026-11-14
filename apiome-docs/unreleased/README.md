@@ -31,6 +31,7 @@ do not point any of them at `unreleased/`.
 | Access audit | Access audit | `docs/govern/access-audit.mdx` | `audit` |
 | SDK settings | SDK settings | `docs/ship/sdk-settings.mdx` | `sdk-settings` |
 | Terraform provider | SDK settings (the Get SDK kit) | `docs/ship/sdk-infrastructure-targets.mdx` | `sdk-settings` |
+| MCP server | SDK settings (the Get SDK kit) | `docs/ship/sdk-mcp-server.mdx` | `sdk-settings` |
 | Connectors | Connectors (with gateway environments) | `docs/bring-in/connectors.mdx` | `connectors` |
 | Shadow APIs | Shadow APIs | `docs/govern/shadow-apis.mdx` | `shadow-apis` |
 | Dependency graph | Dependency graph (and the Dependencies tabs) | `docs/govern/dependency-graph.mdx` | `dependency-graph` |

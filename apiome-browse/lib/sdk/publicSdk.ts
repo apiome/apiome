@@ -87,6 +87,21 @@ export interface PublicSdkTerraformProvider {
   framework_version: string;
 }
 
+/**
+ * The generated MCP server the download carries — SDK-4.5.
+ *
+ * Named only: its tools are the contract's operations, so the download's `manifest.json` lists
+ * them along with the environment variables the server reads.
+ */
+export interface PublicSdkMcpServer {
+  directory: string;
+  package_name: string;
+  server_name: string;
+  env_prefix: string;
+  transport: string;
+  sdk_version: string;
+}
+
 /** What the download will be, so the button can be labelled before it is fetched. */
 export interface PublicSdkDownload {
   filename: string;
@@ -115,6 +130,8 @@ export interface PublicSdkInfoResponse {
   server_stubs?: PublicSdkServerStubs | null;
   /** Optional so a panel keeps rendering against a REST build older than SDK-4.4. */
   terraform_provider?: PublicSdkTerraformProvider | null;
+  /** Optional so a panel keeps rendering against a REST build older than SDK-4.5. */
+  mcp_server?: PublicSdkMcpServer | null;
   download: PublicSdkDownload;
 }
 

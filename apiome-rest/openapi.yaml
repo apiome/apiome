@@ -4,7 +4,7 @@ info:
   description: REST API for managing tenants, projects, versions, primitives, classes,
     paths, operations, catalog items, imports, exports, governance, and MCP catalog
     surfaces.
-  version: 1.557.0
+  version: 1.558.0
   contact:
     name: Apiome
     url: https://apiome.dev
@@ -143716,6 +143716,9 @@ components:
         terraform_provider:
           $ref: '#/components/schemas/SdkTerraformProviderModel'
           description: The generated Terraform provider the download carries (SDK-4.4).
+        mcp_server:
+          $ref: '#/components/schemas/SdkMcpServerModel'
+          description: The generated MCP server the download carries (SDK-4.5).
         download:
           $ref: '#/components/schemas/SdkDownloadModel'
           description: Download.
@@ -143732,6 +143735,7 @@ components:
       - go_client
       - server_stubs
       - terraform_provider
+      - mcp_server
       - download
       title: PublicSdkInfoResponse
       description: Everything the browse Get SDK panel needs, in one anonymous call.
@@ -153489,6 +153493,56 @@ components:
       - file_extension
       title: SdkLanguageModel
       description: One language the kit and the snippet tabs offer.
+    SdkMcpServerModel:
+      properties:
+        directory:
+          type: string
+          title: Directory
+          description: The directory the server sits in inside the archive.
+          example: example
+        package_name:
+          type: string
+          title: Package Name
+          description: The npm package name the server's `package.json` declares.
+          example: Example
+        server_name:
+          type: string
+          title: Server Name
+          description: The name the server reports to MCP clients and is registered
+            under.
+          example: Example
+        env_prefix:
+          type: string
+          title: Env Prefix
+          description: The prefix of every environment variable the server reads (`<PREFIX>_BASE_URL`,
+            credentials).
+          example: example
+        transport:
+          type: string
+          title: Transport
+          description: The MCP transport the server speaks (`stdio`).
+          example: example
+        sdk_version:
+          type: string
+          title: Sdk Version
+          description: The `@modelcontextprotocol/sdk` release it is built on.
+          example: 1.0.0
+      additionalProperties: false
+      type: object
+      required:
+      - directory
+      - package_name
+      - server_name
+      - env_prefix
+      - transport
+      - sdk_version
+      title: SdkMcpServerModel
+      description: 'The generated MCP server the download carries — SDK-4.5 (#4499).
+
+
+        Named, not described: its tools are the contract''s operations, and the download''s
+
+        ``manifest.json`` lists them with the environment variables the server reads.'
     SdkPackageModel:
       properties:
         ecosystem:
