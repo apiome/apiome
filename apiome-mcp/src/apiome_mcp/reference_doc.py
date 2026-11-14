@@ -3,7 +3,8 @@
 ``scripts/generate_mcp_reference_docs.py`` writes the pages under
 ``apiome-docs/docs/reference/mcp/`` from the registry of the catalog server
 (:data:`apiome_mcp.server.mcp`): one page for the tools, one for the resources, one for the
-prompts, and an index. ``tests/test_mcp_reference_docs.py`` renders them in memory and compares
+prompts, and an index — plus the agent runtime's page, from the pinned protocol-version table
+(:mod:`apiome_mcp.protocol_versions`, AAU-4.1). ``tests/test_mcp_reference_docs.py`` renders them in memory and compares
 them with the committed copies, so adding, renaming or re-describing a tool without regenerating
 the pages fails CI.
 
@@ -26,6 +27,14 @@ from typing import Any
 
 from fastmcp import FastMCP
 
+from apiome_mcp.protocol_version_gate import unsupported_version_body
+from apiome_mcp.protocol_versions import (
+    LATEST_HANDSHAKE_VERSION,
+    LEGACY_DEFAULT_PROTOCOL_VERSION,
+    SERVED_PROTOCOL_VERSIONS,
+    negotiate_handshake_version,
+)
+
 #: Repository-relative folder the pages are written to.
 MCP_REFERENCE_DOCS_DIR = "apiome-docs/docs/reference/mcp"
 
@@ -40,6 +49,9 @@ CATALOG_HTTP_PATH = "/mcp"
 
 #: The streamable-HTTP path of the agent runtime (AGX-2.1), mounted beside the catalog.
 AGENT_HTTP_PATH = "/agent/mcp"
+
+#: The served-version matrix and SDK posture decision the agent-runtime page links to (AAU-4.1).
+PROTOCOL_VERSIONS_DOC_URL = "https://github.com/apiome/apiome/blob/main/apiome-mcp/docs/PROTOCOL_VERSIONS.md"
 
 #: ``Settings.http_port``'s default — the port ``apiome-mcp serve --transport http`` binds.
 DEFAULT_HTTP_PORT = 8765
@@ -561,7 +573,8 @@ def render_index_page(registry: McpRegistry) -> str:
             f"| [Prompts](./prompts.md) | {len(registry.prompts)} |",
             "",
             f"Agent toolsets on `{AGENT_HTTP_PATH}` are compiled per toolset from a project's API, so their "
-            "tools are not listed here — see [Agent access](../../bring-in/agent-access.mdx).",
+            "tools are not listed here — see [Agent access](../../bring-in/agent-access.mdx). The protocol "
+            "versions the agent runtime serves are on [Agent runtime](./agent-runtime.md).",
             "",
             "## Rule catalogs",
             "",
@@ -586,6 +599,71 @@ def render_index_page(registry: McpRegistry) -> str:
     )
 
 
+def _served_status(version: str) -> str:
+    """The status column of the agent-runtime version table for ``version``."""
+    if version in SERVED_PROTOCOL_VERSIONS:
+        return "Served"
+    if version == LEGACY_DEFAULT_PROTOCOL_VERSION:
+        return "Legacy default — assumed when a request has no `MCP-Protocol-Version` header"
+    return "Not served — the HTTP+SSE era; refused"
+
+
+def render_agent_runtime_page() -> str:
+    """The ``agent-runtime.md`` page: the agent runtime's served protocol versions (AAU-4.1).
+
+    Rendered from :mod:`apiome_mcp.protocol_versions`, so the table cannot drift from what the
+    gate enforces.
+
+    Returns:
+        The page.
+    """
+    rows = [*SERVED_PROTOCOL_VERSIONS, LEGACY_DEFAULT_PROTOCOL_VERSION, "2024-11-05"]
+    refusal = json.dumps(unsupported_version_body("1999-01-01"), indent=2)
+    lines = [
+        _front_matter("MCP agent runtime", "The agent runtime endpoint: served protocol versions and refusals.", 5),
+        f"The agent runtime at `{AGENT_HTTP_PATH}` serves each agent key's toolset as callable MCP tools "
+        "(see [Agent access](../../bring-in/agent-access.mdx) to issue a key). It speaks a pinned set of "
+        "MCP protocol versions, over Streamable HTTP only — the deprecated HTTP+SSE transport is never "
+        "served there.",
+        "",
+        "## Protocol versions",
+        "",
+        "| Version | Status | `initialize` offering it settles on |",
+        "| --- | --- | --- |",
+    ]
+    for version in rows:
+        lines.append(f"| `{version}` | {_served_status(version)} | `{negotiate_handshake_version(version)}` |")
+    lines += [
+        "",
+        f"**2026-07-28** has no `initialize` handshake, so an `initialize` that offers it is answered with "
+        f"`{LATEST_HANDSHAKE_VERSION}` — the version a 2026-07-28 client falls back to. Requests that "
+        "carry `MCP-Protocol-Version: 2026-07-28` are accepted and recorded at that version.",
+        "",
+        "## Unsupported versions are refused",
+        "",
+        "A request whose `MCP-Protocol-Version` header names any other version — or two different "
+        "versions — is refused with HTTP `400` before it reaches a tool, and is never served at another "
+        "version. The body lists the versions to retry with:",
+        "",
+        "```json",
+        refusal,
+        "```",
+        "",
+        "## Conformance",
+        "",
+        "Apiome runs its own `mcp-protocol` conformance profile against the agent runtime in CI, once per "
+        "version above, and fails the build on any `error` finding — see "
+        "[MCP conformance rules](../../govern/mcp-conformance-rules.md) for the rules and the specification "
+        "revisions they cite.",
+        "",
+        f"The full matrix and the SDK decision behind it are in [`PROTOCOL_VERSIONS.md`]({PROTOCOL_VERSIONS_DOC_URL}).",
+        "",
+        "*This page is generated from the agent runtime's protocol-version table; regenerate it with "
+        f"`{REGENERATE_COMMAND}`.*\n",
+    ]
+    return "\n".join(lines)
+
+
 def render_category() -> str:
     """The section's ``_category_.json`` (sidebar label and position)."""
     return json.dumps({"label": "MCP", "position": 7, "collapsible": True, "collapsed": True}, indent=2) + "\n"
@@ -599,7 +677,7 @@ def render_pages(registry: McpRegistry) -> dict[str, str]:
 
     Returns:
         ``{file name: content}`` for ``_category_.json``, ``index.mdx``, ``tools.md``,
-        ``resources.md`` and ``prompts.md``.
+        ``resources.md``, ``prompts.md`` and ``agent-runtime.md``.
     """
     return {
         "_category_.json": render_category(),
@@ -607,4 +685,5 @@ def render_pages(registry: McpRegistry) -> dict[str, str]:
         "tools.md": render_tools_page(registry),
         "resources.md": render_resources_page(registry),
         "prompts.md": render_prompts_page(registry),
+        "agent-runtime.md": render_agent_runtime_page(),
     }

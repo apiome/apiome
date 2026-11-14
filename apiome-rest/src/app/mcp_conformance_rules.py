@@ -60,6 +60,11 @@ References (MCP 2025-06-18):
   * transports & envelopes — https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
   * pagination             — https://modelcontextprotocol.io/specification/2025-06-18/server/utilities/pagination
 
+References (MCP 2026-07-28, AAU-4.1 #5714 — the rules that cite this revision):
+  * changelog (deprecations) — https://modelcontextprotocol.io/specification/2026-07-28/changelog
+  * lifecycle (no handshake) — https://modelcontextprotocol.io/specification/2026-07-28/basic/lifecycle
+  * result envelope          — https://modelcontextprotocol.io/specification/2026-07-28/basic
+
 The module self-registers on import from :mod:`app.mcp_conformance`.
 """
 
@@ -71,6 +76,10 @@ from .mcp_client.handshake import SUPPORTED_PROTOCOL_VERSIONS
 from .mcp_conformance import (
     CATEGORY_PROTOCOL,
     MCP_SPEC_VERSION,
+    MCP_SPEC_VERSION_2026,
+    SPEC_2026_BASIC,
+    SPEC_2026_CHANGELOG,
+    SPEC_2026_LIFECYCLE,
     SPEC_LIFECYCLE,
     SPEC_PAGINATION,
     SPEC_TRANSPORTS,
@@ -84,6 +93,24 @@ from .mcp_conformance import (
 from .mcp_protocol_transcript import LIST_METHODS, METHOD_INITIALIZE
 
 # --- Protocol constants -----------------------------------------------------------------------
+
+#: Released revisions reachable through the ``initialize`` handshake, newest first: the
+#: catalog client's own set plus 2025-11-25, which a server may legitimately settle on with a
+#: client that offered it (AAU-4.1's self-gate offers it to the agent runtime). 2024-11-05 is
+#: absent for the reason :data:`~app.mcp_client.handshake.SUPPORTED_PROTOCOL_VERSIONS` gives.
+HANDSHAKE_PROTOCOL_VERSIONS: Tuple[str, ...] = ("2025-11-25", *SUPPORTED_PROTOCOL_VERSIONS)
+
+#: Revisions that use the stateless per-request envelope (2026-07-28). They have no
+#: ``initialize`` handshake, so a server must never *negotiate* one through ``initialize``.
+MODERN_PROTOCOL_VERSIONS: Tuple[str, ...] = (MCP_SPEC_VERSION_2026,)
+
+#: Server capabilities the 2026-07-28 revision deprecates under its 12-month policy. Roots and
+#: Sampling are deprecated too, but they are *client* capabilities a server never declares.
+DEPRECATED_CAPABILITIES: frozenset = frozenset({"logging"})
+
+#: The result member 2026-07-28 makes mandatory on every result (``complete``,
+#: ``input_required``, …); an absent one is only tolerated from pre-2026 servers.
+RESULT_TYPE_KEY = "resultType"
 
 #: Capability keys a server may declare in its ``initialize`` result. Anything outside this set
 #: is not part of the specification's capability vocabulary (``experimental`` is the spec's own
@@ -128,13 +155,14 @@ def _rule(
     rationale: str,
     *,
     requires_transcript: bool = False,
+    spec_version: str = MCP_SPEC_VERSION,
 ) -> ConformanceRule:
-    """Build one protocol-category descriptor against the current spec revision."""
+    """Build one protocol-category descriptor; ``spec_version`` defaults to the current revision."""
     return ConformanceRule(
         rule_id=rule_id,
         category=CATEGORY_PROTOCOL,
         severity=severity,
-        spec_version=MCP_SPEC_VERSION,
+        spec_version=spec_version,
         spec_reference=reference,
         rationale=rationale,
         requires_transcript=requires_transcript,
@@ -153,7 +181,7 @@ PROTOCOL_RULES: Tuple[ConformanceRule, ...] = (
         "protocol.unsupported-protocol-version",
         "error",
         SPEC_LIFECYCLE,
-        "The negotiated protocol version MUST be a revision this client speaks.",
+        "The negotiated protocol version MUST be a released revision a client can speak.",
     ),
     _rule(
         "protocol.missing-server-name",
@@ -221,6 +249,30 @@ PROTOCOL_RULES: Tuple[ConformanceRule, ...] = (
         SPEC_PAGINATION,
         "An empty page that still advertises nextCursor wastes a round trip per page.",
         requires_transcript=True,
+    ),
+    # -- 2026-07-28 revision (AAU-4.1, #5714) ----------------------------------------------------
+    _rule(
+        "protocol.modern-version-via-handshake",
+        "error",
+        SPEC_2026_LIFECYCLE,
+        "2026-07-28 has no initialize handshake; a server MUST NOT negotiate it through initialize.",
+        requires_transcript=True,
+        spec_version=MCP_SPEC_VERSION_2026,
+    ),
+    _rule(
+        "protocol.deprecated-capability-declared",
+        "info",
+        SPEC_2026_CHANGELOG,
+        "A capability 2026-07-28 deprecates stops working for clients once its 12-month window ends.",
+        spec_version=MCP_SPEC_VERSION_2026,
+    ),
+    _rule(
+        "protocol.result-type-missing",
+        "error",
+        SPEC_2026_BASIC,
+        "Under 2026-07-28 every result MUST carry resultType; a client cannot tell complete from pending.",
+        requires_transcript=True,
+        spec_version=MCP_SPEC_VERSION_2026,
     ),
 )
 
@@ -291,11 +343,13 @@ def _transcript_path(method: str) -> str:
 def _rule_protocol_version(
     context: ConformanceContext, findings: List[ConformanceFinding]
 ) -> None:
-    """Check the negotiated protocol version is present and one this client speaks.
+    """Check the negotiated protocol version is present and one a client can speak.
 
     The version is the contract every later message is interpreted under, so an absent or
-    unspeakable one is an ``error``. Both are checked from the persisted surface, so the rule
-    is deterministic and needs no transcript.
+    unspeakable one is an ``error``. A modern (2026-07-28) version is a known revision and is
+    not flagged here: whether it was reached *honestly* depends on how it was reached, which
+    only the transcript shows (:func:`_rule_modern_version_via_handshake`). Both checks read
+    the persisted surface, so the rule is deterministic and needs no transcript.
     """
     version = context.surface.protocol_version
     if _is_blank(version):
@@ -307,13 +361,13 @@ def _rule_protocol_version(
             )
         )
         return
-    if version not in SUPPORTED_PROTOCOL_VERSIONS:
+    if version not in HANDSHAKE_PROTOCOL_VERSIONS + MODERN_PROTOCOL_VERSIONS:
         findings.append(
             make_finding(
                 "surface.protocolVersion",
                 "protocol.unsupported-protocol-version",
                 f"Server negotiated protocol version '{version}', which is not a supported "
-                f"revision ({', '.join(SUPPORTED_PROTOCOL_VERSIONS)}).",
+                f"revision ({', '.join(HANDSHAKE_PROTOCOL_VERSIONS + MODERN_PROTOCOL_VERSIONS)}).",
             )
         )
 
@@ -412,6 +466,30 @@ def _rule_unknown_capability(
                     f"capability; vendor extensions belong under 'experimental'.",
                 )
             )
+
+
+@conformance_rule()
+def _rule_deprecated_capability(
+    context: ConformanceContext, findings: List[ConformanceFinding]
+) -> None:
+    """Note declared capabilities that the 2026-07-28 revision deprecates (``info``).
+
+    Legal on every revision Apiome serves today, so advisory only: the finding exists so a
+    server owner sees the deprecation before the 12-month window closes and clients stop
+    honouring the capability. One finding per key, in sorted order for determinism.
+    """
+    capabilities = context.surface.capabilities
+    if not isinstance(capabilities, Mapping):
+        return
+    for key in sorted(str(k) for k in capabilities if str(k) in DEPRECATED_CAPABILITIES):
+        findings.append(
+            make_finding(
+                f"surface.capabilities.{key}",
+                "protocol.deprecated-capability-declared",
+                f"Server declares the '{key}' capability, which MCP {MCP_SPEC_VERSION_2026} "
+                f"deprecates; plan its removal before the deprecation window ends.",
+            )
+        )
 
 
 # --- Transcript-derived rules ---------------------------------------------------------------------
@@ -517,6 +595,77 @@ def _rule_version_downgrade(
 
 
 @conformance_rule(requires_transcript=True)
+def _rule_modern_version_via_handshake(
+    context: ConformanceContext, findings: List[ConformanceFinding]
+) -> None:
+    """Flag an ``initialize`` answered with a 2026-07-28 version (``error``).
+
+    2026-07-28 drops the handshake: each request carries its own envelope, and the newest
+    revision an ``initialize`` can settle on is 2025-11-25. A server that answers
+    ``initialize`` with a modern version claims a revision it cannot be speaking on that
+    connection, so a client that trusts it reads every later message under the wrong rules.
+
+    Transcript-derived because the surface alone cannot say *how* its version was reached: a
+    surface discovered statelessly (``server/discover``) legitimately carries 2026-07-28.
+    """
+    transcript = context.transcript
+    assert transcript is not None  # guaranteed by requires_transcript
+
+    exchange = transcript.initialize_exchange()
+    negotiated = transcript.negotiated_version
+    if exchange is None or exchange.is_error or negotiated not in MODERN_PROTOCOL_VERSIONS:
+        return
+    findings.append(
+        make_finding(
+            "transcript.initialize",
+            "protocol.modern-version-via-handshake",
+            f"Server answered initialize with protocol version '{negotiated}', which has no "
+            f"initialize handshake; it must negotiate one of "
+            f"{', '.join(HANDSHAKE_PROTOCOL_VERSIONS)} instead.",
+        )
+    )
+
+
+@conformance_rule(requires_transcript=True)
+def _rule_result_type(
+    context: ConformanceContext, findings: List[ConformanceFinding]
+) -> None:
+    """Flag successful results without ``resultType`` on a 2026-07-28 session (``error``).
+
+    2026-07-28 makes ``resultType`` mandatory on every result so a client can tell a complete
+    result from an ``input_required`` pause; "absent means complete" is a bridge for clients of
+    *older* servers only. The rule therefore applies only when the transcript's negotiated
+    version is a modern one, and reads only the redacted result key names. Errors carry no
+    result and are skipped, as is ``initialize``: it is not a 2026-07-28 method at all, and
+    answering it at that version is :func:`_rule_modern_version_via_handshake`'s defect.
+    Reported once per method, like the other transcript rules.
+    """
+    transcript = context.transcript
+    assert transcript is not None  # guaranteed by requires_transcript
+
+    if transcript.negotiated_version not in MODERN_PROTOCOL_VERSIONS:
+        return
+    methods = sorted(
+        {
+            exchange.method
+            for exchange in transcript.exchanges
+            if exchange.method != METHOD_INITIALIZE
+            and not exchange.is_error
+            and RESULT_TYPE_KEY not in exchange.result_keys
+        }
+    )
+    for method in methods:
+        findings.append(
+            make_finding(
+                _transcript_path(method),
+                "protocol.result-type-missing",
+                f"A '{method}' result on a {transcript.negotiated_version} session carried no "
+                f"'{RESULT_TYPE_KEY}', so a client cannot tell whether it is complete.",
+            )
+        )
+
+
+@conformance_rule(requires_transcript=True)
 def _rule_pagination(
     context: ConformanceContext, findings: List[ConformanceFinding]
 ) -> None:
@@ -574,8 +723,12 @@ def _rule_pagination(
 # reaching into the transcript module.
 __all__ = [
     "CAPABILITY_COLLECTIONS",
+    "DEPRECATED_CAPABILITIES",
+    "HANDSHAKE_PROTOCOL_VERSIONS",
     "JSONRPC_PREDEFINED_CODES",
     "KNOWN_CAPABILITIES",
     "METHOD_INITIALIZE",
+    "MODERN_PROTOCOL_VERSIONS",
     "PROTOCOL_RULES",
+    "RESULT_TYPE_KEY",
 ]

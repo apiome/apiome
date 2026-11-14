@@ -14,6 +14,7 @@ apiome-mcp/docs/EFFECTIVE_POLICY.md
 apiome-mcp/docs/LIST_ALWAYS.md
 apiome-mcp/docs/MOCK_TARGET.md
 apiome-mcp/docs/POLICY_FRESHNESS.md
+apiome-mcp/docs/PROTOCOL_VERSIONS.md
 apiome-mcp/docs/TOOLSET_GOLDENS.md
 apiome-mcp/docs/TOOL_COMPILER.md
 apiome-rest/docs/API_KEY_AUTHENTICATION.md

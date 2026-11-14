@@ -176,3 +176,15 @@ def test_cell_and_anchor_helpers() -> None:
     assert table_cell("a |\n b <c>") == "a \\| b &lt;c&gt;"
     assert escape_prose("x <y> `<z>` ``<w>``") == "x &lt;y&gt; `<z>` ``<w>``"
     assert anchor("spec.describe_operation") == "spec-describe-operation"
+
+
+def test_agent_runtime_page_lists_the_pinned_versions() -> None:
+    """AAU-4.1: the runtime page is rendered from the served table and links the matrix doc."""
+    from apiome_mcp.protocol_versions import ACCEPTED_PROTOCOL_VERSIONS
+    from apiome_mcp.reference_doc import PROTOCOL_VERSIONS_DOC_URL, render_agent_runtime_page
+
+    page = render_agent_runtime_page()
+    for version in ACCEPTED_PROTOCOL_VERSIONS:
+        assert f"| `{version}` |" in page
+    assert PROTOCOL_VERSIONS_DOC_URL in page
+    assert '"code": -32022' in page

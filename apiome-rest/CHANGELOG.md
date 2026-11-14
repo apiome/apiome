@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.699.0] - 2026-11-14
+
+### Added
+- **MCP 2026-07-28 conformance rules (AAU-4.1, #5714)** — three protocol rules in
+  `app.mcp_conformance_rules` cite the 2026-07-28 revision (`spec_version: "2026-07-28"`) and are in
+  the `mcp-protocol` and `mcp-conformance` profiles (`GET /v1/mcp/conformance/rules`):
+  - `protocol.modern-version-via-handshake` (error, needs a transcript) — the server answered
+    `initialize` with 2026-07-28, which has no handshake.
+  - `protocol.result-type-missing` (error, needs a transcript) — a result on a 2026-07-28 session
+    carried no `resultType`.
+  - `protocol.deprecated-capability-declared` (info) — the server declares `logging`, which
+    2026-07-28 deprecates.
+  Both error rules have transparency metadata and scanner-evaluation fixtures
+  (`mcp/unsafe/conformance/protocol-modern-version-via-handshake`, `…/protocol-result-type-missing`).
+  Scanner-evaluation fixtures may now set `requested_version` / `negotiated_version` on their
+  transcript.
+
+### Changed
+- `protocol.unsupported-protocol-version` recognises `2025-11-25` and `2026-07-28` as supported
+  revisions; it still flags unknown strings and `2024-11-05` over Streamable HTTP. The report's
+  `specVersion` stays `2025-06-18`, so existing report fingerprints do not move. OpenAPI document
+  version 1.559.0 (no schema change).
+
+
 ## [1.698.0] - 2026-11-14
 
 ### Added

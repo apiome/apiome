@@ -135,6 +135,7 @@ def _meta(
 
 _SCHEMA_REF = site_url(LINT_RULE_DOCS_PAGE)
 _MCP_SPEC = "https://modelcontextprotocol.io/specification/2025-06-18/"
+_MCP_SPEC_2026 = "https://modelcontextprotocol.io/specification/2026-07-28/"
 
 
 #: Every blocking rule. Keyed by rule_id; must stay complete vs live error registries.
@@ -1076,6 +1077,17 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         fixture_id="mcp/unsafe/conformance/protocol-list-result-missing-items",
         docs_page=MCP_CONFORMANCE_RULES_DOCS_PAGE,
     ),
+    "protocol.modern-version-via-handshake": _meta(
+        "protocol.modern-version-via-handshake",
+        ENGINE_MCP_CONFORMANCE,
+        rationale="2026-07-28 has no initialize handshake; a server MUST NOT negotiate it there.",
+        reference=_MCP_SPEC_2026 + "basic/lifecycle",
+        remediation="Answer initialize with the newest handshake revision (2025-11-25); serve 2026-07-28 statelessly.",
+        false_positive_guidance="Skipped when no transcript was captured; a stateless 2026-07-28 surface is exempt.",
+        scan_modes=("protocol", "requires_transcript"),
+        fixture_id="mcp/unsafe/conformance/protocol-modern-version-via-handshake",
+        docs_page=MCP_CONFORMANCE_RULES_DOCS_PAGE,
+    ),
     "protocol.missing-protocol-version": _meta(
         "protocol.missing-protocol-version",
         ENGINE_MCP_CONFORMANCE,
@@ -1107,6 +1119,17 @@ BLOCKING_RULES: Dict[str, BlockingRuleMeta] = {
         false_positive_guidance="Skipped when no transcript was captured; notifications (no id) are exempt.",
         scan_modes=("protocol", "requires_transcript"),
         fixture_id="mcp/unsafe/conformance/protocol-response-id-not-echoed",
+        docs_page=MCP_CONFORMANCE_RULES_DOCS_PAGE,
+    ),
+    "protocol.result-type-missing": _meta(
+        "protocol.result-type-missing",
+        ENGINE_MCP_CONFORMANCE,
+        rationale="Under 2026-07-28 every result MUST carry resultType.",
+        reference=_MCP_SPEC_2026 + "basic",
+        remediation="Set `resultType` (`complete` for an ordinary result) on every 2026-07-28 result.",
+        false_positive_guidance="Only evaluated on 2026-07-28 sessions; skipped when no transcript was captured.",
+        scan_modes=("protocol", "requires_transcript"),
+        fixture_id="mcp/unsafe/conformance/protocol-result-type-missing",
         docs_page=MCP_CONFORMANCE_RULES_DOCS_PAGE,
     ),
     "protocol.undeclared-capability-listed": _meta(

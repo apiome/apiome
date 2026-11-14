@@ -321,3 +321,111 @@ def test_a_defect_repeated_on_every_page_is_reported_once():
     )
     missing = [f for f in report.findings if f.rule == "protocol.list-result-missing-items"]
     assert len(missing) == 1
+
+
+# --- 2026-07-28 revision (AAU-4.1, #5714) ------------------------------------------------------------
+
+
+def test_newest_handshake_revision_is_supported():
+    """2025-11-25 is a released handshake revision, so negotiating it is not a defect."""
+    assert "protocol.unsupported-protocol-version" not in _rules(
+        _surface(protocol_version="2025-11-25")
+    )
+
+
+def test_modern_revision_on_the_surface_is_not_unsupported():
+    """A 2026-07-28 surface (e.g. from server/discover) names a known revision."""
+    assert "protocol.unsupported-protocol-version" not in _rules(
+        _surface(protocol_version="2026-07-28")
+    )
+
+
+def test_initialize_answered_with_a_modern_revision_is_an_error():
+    """2026-07-28 has no handshake: an initialize that settles on it claims the impossible."""
+    recorder = _recorder(requested="2026-07-28", negotiated="2026-07-28")
+    _ok(recorder, "initialize", 1, {"protocolVersion": "2026-07-28"})
+
+    found = _rules(_surface(protocol_version="2026-07-28"), recorder.transcript())
+    assert "protocol.modern-version-via-handshake" in found
+    # initialize is not a 2026-07-28 method, so its result is not held to resultType.
+    assert "protocol.result-type-missing" not in found
+
+
+def test_honest_fallback_from_a_modern_offer_is_only_a_downgrade():
+    """Offered 2026-07-28, answered 2025-11-25: the lifecycle's own negotiation, info only."""
+    recorder = _recorder(requested="2026-07-28", negotiated="2025-11-25")
+    _ok(recorder, "initialize", 1, {"protocolVersion": "2025-11-25"})
+
+    found = _rules(_surface(protocol_version="2025-11-25"), recorder.transcript())
+    assert found == {"protocol.protocol-version-downgraded"}
+
+
+def test_modern_version_rule_is_skipped_without_a_transcript():
+    """How a version was reached is only visible on the wire; unobserved is skipped, not passed."""
+    report = run_conformance(
+        ConformanceContext(surface=_surface(protocol_version="2026-07-28"), transcript=None),
+        profile=PROFILE_PROTOCOL,
+    )
+    assert "protocol.modern-version-via-handshake" in report.skipped_rules
+    assert "protocol.result-type-missing" in report.skipped_rules
+
+
+def test_modern_result_without_result_type_is_an_error_once_per_method():
+    """2026-07-28 makes resultType mandatory; a malformed list is one finding, not one per page."""
+    recorder = _recorder(requested="2026-07-28", negotiated="2026-07-28")
+    _ok(recorder, "tools/list", 1, {"tools": [{"name": "a"}], "nextCursor": "c1"})
+    _ok(recorder, "tools/list", 2, {"tools": [{"name": "b"}]})
+
+    report = run_conformance(
+        ConformanceContext(
+            surface=_surface(protocol_version="2026-07-28"), transcript=recorder.transcript()
+        ),
+        profile=PROFILE_PROTOCOL,
+    )
+    missing = [f for f in report.findings if f.rule == "protocol.result-type-missing"]
+    assert len(missing) == 1
+    assert missing[0].severity == "error"
+    assert missing[0].path == "transcript.tools/list"
+
+
+def test_modern_result_carrying_result_type_is_clean():
+    """A 2026-07-28 result with resultType is the happy path."""
+    recorder = _recorder(requested="2026-07-28", negotiated="2026-07-28")
+    _ok(recorder, "tools/list", 1, {"tools": [{"name": "a"}], "resultType": "complete"})
+
+    found = _rules(_surface(protocol_version="2026-07-28"), recorder.transcript())
+    assert "protocol.result-type-missing" not in found
+
+
+def test_result_type_is_not_required_before_2026():
+    """Pre-2026 servers never send resultType; holding them to it would be a false positive."""
+    recorder = _recorder()
+    _ok(recorder, "tools/list", 1, {"tools": [{"name": "a"}]})
+
+    assert "protocol.result-type-missing" not in _rules(_surface(), recorder.transcript())
+
+
+def test_deprecated_logging_capability_is_info():
+    """2026-07-28 deprecates Logging: still legal, so advisory, but visible before the window ends."""
+    report = run_conformance(
+        ConformanceContext(surface=_surface(capabilities={"tools": {}, "logging": {}})),
+        profile=PROFILE_PROTOCOL,
+    )
+    deprecated = [f for f in report.findings if f.rule == "protocol.deprecated-capability-declared"]
+    assert [(f.path, f.severity) for f in deprecated] == [("surface.capabilities.logging", "info")]
+
+
+def test_new_rules_cite_the_2026_revision():
+    """Every 2026-07-28 rule names its revision and a resolvable page of it (AC: rules cite versions)."""
+    from app.mcp_conformance import RULE_REGISTRY
+
+    for rule_id in (
+        "protocol.modern-version-via-handshake",
+        "protocol.result-type-missing",
+        "protocol.deprecated-capability-declared",
+    ):
+        rule = RULE_REGISTRY[rule_id]
+        assert rule.spec_version == "2026-07-28"
+        assert rule.spec_reference.startswith(
+            "https://modelcontextprotocol.io/specification/2026-07-28/"
+        )

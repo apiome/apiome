@@ -263,6 +263,13 @@
       ]
     },
     {
+      "id": "mcp/unsafe/conformance/protocol-modern-version-via-handshake",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.modern-version-via-handshake"
+      ]
+    },
+    {
       "id": "mcp/unsafe/conformance/protocol-missing-server-name",
       "kind": "mcp_conformance",
       "expected_blocking_rule_ids": [
@@ -274,6 +281,13 @@
       "kind": "mcp_conformance",
       "expected_blocking_rule_ids": [
         "protocol.response-id-not-echoed"
+      ]
+    },
+    {
+      "id": "mcp/unsafe/conformance/protocol-result-type-missing",
+      "kind": "mcp_conformance",
+      "expected_blocking_rule_ids": [
+        "protocol.result-type-missing"
       ]
     },
     {

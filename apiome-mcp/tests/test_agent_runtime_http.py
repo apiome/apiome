@@ -20,9 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-import socket
 import statistics
-import threading
 import time
 from collections.abc import Generator
 from typing import Any
@@ -30,7 +28,6 @@ from typing import Any
 import httpx
 import mcp.types as mt
 import pytest
-import uvicorn
 from fastmcp import Client, Context, FastMCP
 from fastmcp.client.transports import StreamableHttpTransport
 from fastmcp.server.lifespan import lifespan
@@ -52,6 +49,7 @@ from apiome_mcp.agent_server import AGENT_HTTP_CLIENT_KEY, build_agent_server
 from apiome_mcp.agent_upstream_client import UpstreamCallPolicy
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY
 from apiome_mcp.http_app import build_http_app
+from http_server_harness import serve_http_app
 
 SECRET = "ak_" + "a1" * 32
 NARROW_SECRET = "ak_" + "b2" * 32
@@ -114,43 +112,11 @@ def _catalog_app() -> FastMCP:
     return catalog
 
 
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return int(s.getsockname()[1])
-
-
 @pytest.fixture(scope="module")
 def base_url() -> Generator[str, None, None]:
     """Serve catalog + agent runtime on a free port for this module; yield the server root."""
-    port = _free_port()
-    app = build_http_app(_catalog_app(), _agent_app())
-    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning", lifespan="on"))
-    ready = threading.Event()
-    stop = threading.Event()
-
-    def _run() -> None:
-        async def _serve() -> None:
-            task = asyncio.ensure_future(server.serve())
-            while not server.started:
-                await asyncio.sleep(0.05)
-            ready.set()
-            while not stop.is_set():
-                await asyncio.sleep(0.05)
-            server.should_exit = True
-            await task
-
-        asyncio.run(_serve())
-
-    thread = threading.Thread(target=_run, daemon=True)
-    thread.start()
-    if not ready.wait(timeout=15):
-        raise RuntimeError("HTTP app did not start within 15 s")
-    try:
-        yield f"http://127.0.0.1:{port}"
-    finally:
-        stop.set()
-        thread.join(timeout=5)
+    with serve_http_app(build_http_app(_catalog_app(), _agent_app())) as url:
+        yield url
 
 
 @pytest.fixture(autouse=True)

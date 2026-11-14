@@ -123,8 +123,15 @@ def surface_from_fixture(data: Mapping[str, Any]) -> DiscoverySurface:
 
 
 def transcript_from_fixture(data: Mapping[str, Any]):
-    """Build a protocol transcript from fixture ``transcript_records``."""
+    """Build a protocol transcript from fixture ``transcript_records``.
+
+    Optional top-level ``requested_version`` / ``negotiated_version`` keys stand in for what the
+    handshake notes on a live recorder (the version rules read them).
+    """
     recorder = TranscriptRecorder()
+    recorder.note_versions(
+        requested=data.get("requested_version"), negotiated=data.get("negotiated_version")
+    )
     for record in data.get("transcript_records") or []:
         recorder.record(
             str(record["method"]),

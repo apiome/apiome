@@ -12,6 +12,7 @@ from apiome_mcp.agent_invocation_proxy import InvocationConfig
 from apiome_mcp.agent_quotas import AgentQuotaMiddleware
 from apiome_mcp.agent_server import AgentToolsetProvider, build_agent_server
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
+from apiome_mcp.protocol_version_gate import ProtocolVersionNegotiationMiddleware
 from apiome_mcp.settings import Settings, get_settings
 
 
@@ -24,9 +25,10 @@ def env(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
     get_settings.cache_clear()
 
 
-def test_the_middleware_runs_stash_then_access_then_quota(env: None) -> None:
+def test_the_middleware_runs_version_then_stash_then_access_then_quota(env: None) -> None:
     app = build_agent_server()
     assert [type(mw) for mw in app.middleware] == [
+        ProtocolVersionNegotiationMiddleware,
         StashHttpBearerInToolContextMiddleware,
         AgentAccessMiddleware,
         AgentQuotaMiddleware,

@@ -7,11 +7,13 @@
 
 The two never share a ``tools/list`` (``docs/AGX_COORDINATION.md``). This app carries, in run order,
 
-1. :class:`~apiome_mcp.http_credential_middleware.StashHttpBearerInToolContextMiddleware`;
-2. :class:`~apiome_mcp.agent_access.AgentAccessMiddleware` (AGX-3.1) — verifies the agent key and
+1. :class:`~apiome_mcp.protocol_version_gate.ProtocolVersionNegotiationMiddleware` (AAU-4.1) — keeps
+   ``initialize`` inside the served handshake revisions (``docs/PROTOCOL_VERSIONS.md``);
+2. :class:`~apiome_mcp.http_credential_middleware.StashHttpBearerInToolContextMiddleware`;
+3. :class:`~apiome_mcp.agent_access.AgentAccessMiddleware` (AGX-3.1) — verifies the agent key and
    narrows ``tools/list`` / ``tools/call`` to the permitted tools;
-3. :class:`~apiome_mcp.agent_quotas.AgentQuotaMiddleware` (AGX-3.2) — RPS and daily caps;
-4. :class:`AgentToolsetProvider` — serves the key's toolset, compiled per toolset
+4. :class:`~apiome_mcp.agent_quotas.AgentQuotaMiddleware` (AGX-3.2) — RPS and daily caps;
+5. :class:`AgentToolsetProvider` — serves the key's toolset, compiled per toolset
    (:mod:`apiome_mcp.agent_toolset_source`), each tool an :class:`AgentTool` whose ``run`` is the
    AGX-2.1 invocation proxy (:class:`~apiome_mcp.agent_invocation_proxy.InvocationProxy`).
 
@@ -59,6 +61,7 @@ from apiome_mcp.agent_toolset_source import (
 from apiome_mcp.database_pool import MCP_DB_POOL_KEY, create_async_pool, get_db_pool, ping_pool
 from apiome_mcp.http_credential_middleware import StashHttpBearerInToolContextMiddleware
 from apiome_mcp.logging_config import configure_logging
+from apiome_mcp.protocol_version_gate import ProtocolVersionNegotiationMiddleware
 from apiome_mcp.settings import Settings, get_settings
 
 _log = structlog.get_logger(__name__)
@@ -259,6 +262,7 @@ def build_agent_server(
         # Compiled input schemas are already self-contained (AGX-1.1 inlines every ref).
         dereference_schemas=False,
     )
+    app.add_middleware(ProtocolVersionNegotiationMiddleware())
     app.add_middleware(StashHttpBearerInToolContextMiddleware())
     app.add_middleware(access or AgentAccessMiddleware())
     app.add_middleware(quota or AgentQuotaMiddleware(guard=AgentQuotaGuard.from_settings(cast(Settings, settings))))

@@ -85,6 +85,17 @@ SPEC_TOOLS = f"{SPEC_BASE}/server/tools"
 SPEC_RESOURCES = f"{SPEC_BASE}/server/resources"
 SPEC_PROMPTS = f"{SPEC_BASE}/server/prompts"
 
+#: The 2026-07-28 revision (AAU-4.1, #5714): the stateless per-request envelope era. Rules that
+#: encode one of its requirements cite it instead of :data:`MCP_SPEC_VERSION`; the report's own
+#: ``specVersion`` stays :data:`MCP_SPEC_VERSION`, so existing report fingerprints do not move.
+MCP_SPEC_VERSION_2026 = "2026-07-28"
+
+#: Base URL of the 2026-07-28 revision, and the pages its rules cite.
+SPEC_2026_BASE = f"https://modelcontextprotocol.io/specification/{MCP_SPEC_VERSION_2026}"
+SPEC_2026_BASIC = f"{SPEC_2026_BASE}/basic"
+SPEC_2026_LIFECYCLE = f"{SPEC_2026_BASE}/basic/lifecycle"
+SPEC_2026_CHANGELOG = f"{SPEC_2026_BASE}/changelog"
+
 #: Agent-readiness rules encode *published, transparent* tool-definition-quality concepts —
 #: the categories ToolBench and Anthropic's tool-authoring guidance both identify as what makes
 #: a tool usable by a model (substantive descriptions, constrained parameters, declared
