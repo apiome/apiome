@@ -52,9 +52,9 @@ output, and the round-trip ticket (MFX-12.3) automates the full loop.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from .canonical_model import (
     ApiParadigm,
@@ -84,6 +84,7 @@ from .export_test_tools import toolchain_check
 from .export_viz_modes import ExportVizModeKind
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
 from .field_identity_store import FieldNumberAllocator
+from .lossiness import LossinessReport, LossinessSeverity
 from .proto_editions import (
     EDITIONS_PROVENANCE_EXTRA_KEY,
     ENUM_CLOSED_EXTRA_KEY,
@@ -91,6 +92,14 @@ from .proto_editions import (
     FIELD_PRESENCE_EXPLICIT,
     FIELD_PRESENCE_EXTRA_KEY,
     FIELD_PRESENCE_LEGACY_REQUIRED,
+)
+from .proto_http_annotations import (
+    GOOGLE_API_ANNOTATIONS_IMPORT,
+    HttpAnnotation,
+    http_annotation_for,
+    render_http_option,
+    request_field_names,
+    unbound_parameters,
 )
 from .scalar_aliases import PROTO_SCALAR_FOR_KIND, target_scalar
 
@@ -255,6 +264,14 @@ class ProtoEmitOptions(EmitOptions):
         default_factory=dict,
         description="Pre-loaded stable field numbers keyed by canonical field key (MFX-12.2).",
     )
+    http_annotations: bool = Field(
+        default=False,
+        title="HTTP annotations",
+        description="Annotate each ``rpc`` whose source operation has a REST binding (HTTP verb "
+        "and route) with ``option (google.api.http)``, the gRPC-Gateway / Connect transcoding "
+        "rule, and import ``google/api/annotations.proto`` (MFX-12.6). Off, the bindings are "
+        "dropped and reported as a loss.",
+    )
 
 
 # Well-known types the emitter uses when a source construct has no faithful proto shape.
@@ -368,7 +385,59 @@ class ProtoFidelityRulePack(CapabilityRulePack):
 
     Native pub/sub operations are reframed as unary ``rpc`` methods (``APPROX``), not the
     capability default's critical ``DROP``.
+
+    **REST bindings** (MFX-12.6) depend on the ``http_annotations`` option bound through
+    :meth:`apply_options`: off, an operation's HTTP verb and route are a ``DROP``; on, they are
+    carried as ``google.api.http`` — ``OK`` when every route variable and query parameter is a
+    request-message field, otherwise ``APPROX`` naming the inputs the rule cannot bind.
     """
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Bind ``http_annotations`` (MFX-12.6); invalid options fall back to the defaults."""
+        try:
+            self._options = ProtoEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = ProtoEmitOptions()
+
+    def evaluate(self, api: CanonicalApi) -> LossinessReport:
+        """Index the model's types (to read request-message fields), then walk the model."""
+        self._types_by_key: Dict[str, Type] = {t.key: t for t in api.types}
+        return super().evaluate(api)
+
+    def operation_verdicts(self, operation: Operation) -> List[FidelityVerdict]:
+        """The operation's own verdict, plus how its REST binding lands (when it has one)."""
+        verdicts = super().operation_verdicts(operation)
+        annotation = http_annotation_for(operation)
+        if annotation is not None:
+            verdicts.append(self._http_binding_verdict(operation, annotation))
+        return verdicts
+
+    def _http_binding_verdict(
+        self, operation: Operation, annotation: HttpAnnotation
+    ) -> FidelityVerdict:
+        """``DROP`` the REST binding, or carry it as ``google.api.http`` (``OK`` / ``APPROX``)."""
+        options = getattr(self, "_options", None) or ProtoEmitOptions()
+        if not options.http_annotations:
+            return FidelityVerdict.drop(
+                message=f"{self.target_label} has no HTTP binding; {annotation.label} is "
+                "dropped (enable http_annotations to carry it as google.api.http)",
+                severity=LossinessSeverity.WARN,
+            )
+        mapping = f"{annotation.label} → option (google.api.http)"
+        unbound = unbound_parameters(
+            operation,
+            annotation,
+            request_field_names(operation, getattr(self, "_types_by_key", {})),
+        )
+        if unbound:
+            return FidelityVerdict.approx(
+                message=f"{annotation.label} is carried as google.api.http, but the request "
+                f"message has no field for: {', '.join(unbound)}",
+                target_mapping=mapping,
+            )
+        return FidelityVerdict.ok(
+            message=f"{annotation.label} is carried as google.api.http", target_mapping=mapping
+        )
 
     def operation_verdict(self, operation: Operation) -> FidelityVerdict:
         """Reframe pub/sub operations the emitter carries as unary ``rpc`` methods."""
@@ -1230,7 +1299,7 @@ class _ProtoWriter:
             f"returns ({resp_stream}.{response_type})"
         )
 
-        method_options = self._rpc_options(operation)
+        method_options = [*self._http_option(operation, pointer), *self._rpc_options(operation)]
         comment = _comment(operation.description, _INDENT)
         if method_options:
             body = [f"{signature} {{", *method_options, f"{_INDENT}}}"]
@@ -1297,6 +1366,42 @@ class _ProtoWriter:
         if type_name not in self._types_by_key and target_scalar(type_name, PROTO_SCALAR_FOR_KIND):
             return
         self._note_import(type_name)
+
+    def _http_option(self, operation: Operation, pointer: str) -> List[str]:
+        """Render an rpc's ``google.api.http`` rule from its REST binding (MFX-12.6).
+
+        With ``http_annotations`` off, a binding is recorded as a loss and nothing is written.
+        On, the rule is written, the annotations import noted, and any route variable / query
+        parameter / header the rule cannot bind to a request field is recorded as a loss.
+        """
+        annotation = http_annotation_for(operation)
+        if annotation is None:
+            return []
+        if not self._options.http_annotations:
+            self.losses.record(
+                LossKind.NA,
+                "http-binding",
+                f"Protobuf has no HTTP binding; {annotation.label} of {operation.key!r} was "
+                "dropped (enable http_annotations to emit google.api.http).",
+                pointer=operation.key,
+            )
+            return []
+        self._imports.add(GOOGLE_API_ANNOTATIONS_IMPORT)
+        self.tracker.record(
+            f"{pointer}/options/google.api.http", Provenance.SOURCE, f"from {annotation.label}"
+        )
+        unbound = unbound_parameters(
+            operation, annotation, request_field_names(operation, self._types_by_key)
+        )
+        if unbound:
+            self.losses.record(
+                LossKind.INFERRED,
+                "http-annotation-unbound",
+                f"{annotation.label} of {operation.key!r} is annotated, but the request message "
+                f"has no field for: {', '.join(unbound)}.",
+                pointer=operation.key,
+            )
+        return render_http_option(annotation, _INDENT * 2, _INDENT)
 
     def _rpc_options(self, operation: Operation) -> List[str]:
         """Render an rpc's method options (``idempotency_level``, ``deprecated``)."""

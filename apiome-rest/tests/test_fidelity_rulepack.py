@@ -861,7 +861,15 @@ def test_proto_pack_enumerates_rich_openapi_losses():
 
     assert _items_for(report, "Money")[0].kind is LossinessKind.APPROX
     assert _items_for(report, "user/signedup")[0].kind is LossinessKind.DROP
-    assert _items_for(report, "GET /users/{id}")[0].kind is LossinessKind.OK
+    # The rpc is carried; its REST binding is dropped unless http_annotations is on (MFX-12.6).
+    assert {i.kind for i in _items_for(report, "GET /users/{id}")} == {
+        LossinessKind.OK,
+        LossinessKind.DROP,
+    }
+    annotated = compute_lossiness_for_emitter(
+        _protobuf_rich_api(), ProtoEmitter, options={"http_annotations": True}
+    )
+    assert LossinessKind.DROP not in {i.kind for i in _items_for(annotated, "GET /users/{id}")}
 
 
 def test_default_pack_drops_union_the_proto_pack_approximates():

@@ -75,6 +75,31 @@ unit tests without the database.
 | `union-as-oneof` | a `UNION` type, approximated as a message wrapping a `oneof` |
 | `event-operation` / `synthesized-request` / `synthesized-response` | a non-RPC (pub/sub/one-way) operation reframed as a unary `rpc`, using `google.protobuf.Empty` where a message was missing |
 
+## `google.api.http` annotations (MFX-12.6)
+
+`ProtoEmitOptions.http_annotations` (default `false`, inherited by the `connectrpc` target) writes each
+operation's REST binding as the gRPC-Gateway / Connect transcoding rule. The rule is derived by
+`src/app/proto_http_annotations.py`, which both the emitter and `ProtoFidelityRulePack` call, so the
+emit-time losses and the predicted verdicts agree.
+
+| Source | Written |
+|---|---|
+| `Operation.http_method` + `http_path` (a REST source) | `option (google.api.http) = { get: "/pets/{pet_id}" };` |
+| POST/PUT/PATCH with a request payload | adds `body: "*"` |
+| a verb other than GET/PUT/POST/DELETE/PATCH | `custom: { kind: "HEAD" path: "…" }` |
+| `Operation.extras["http"]` (an RPC source's binding) | that verb/path and its recorded `body` |
+
+Route variables are coerced to legal field paths (`{pet-id}` → `{pet_id}`), and the file imports
+`google/api/annotations.proto`. The protos it needs are vendored (`data/proto_vendor`) and supplied
+to `buf build` both by `compile_proto_descriptor_set` and by the toolchain checks in
+`export_tool_checks.py`.
+
+| Loss `subject` / verdict | When |
+|---|---|
+| `http-binding` / `DROP` (warn) | the option is off and the operation has a binding |
+| `http-annotation-unbound` / `APPROX` | the option is on, and a route variable or query parameter has no request-message field, or the operation reads a header or cookie |
+| — / `OK` | the option is on and every input binds |
+
 ## Properties
 
 * **Pure & deterministic.** `emit()` performs no I/O and emits every collection in the model's

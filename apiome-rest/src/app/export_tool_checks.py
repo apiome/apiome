@@ -156,6 +156,40 @@ def _prepare_node_cli(scratch: Path) -> Dict[str, str]:
 #: ``buf``'s documented defaults (the STANDARD lint category), written when the bundle has no ``buf.yaml``.
 _BUF_YAML = "version: v2\nlint:\n  use:\n    - STANDARD\n"
 
+
+def _prepare_buf(scratch: Path) -> Dict[str, str]:
+    """Add the vendored googleapis protos the staged ``.proto`` files import — MFX-12.6 (#4343).
+
+    A bundle exported with ``http_annotations`` imports ``google/api/annotations.proto``, which
+    ``buf`` cannot fetch (the sandbox has no network). The same vendored copies
+    :func:`app.proto_descriptor.compile_proto_descriptor_set` uses are written beside the bundle
+    (never over a file it carries). When the default ``buf.yaml`` is in use, ``lint`` ignores
+    them, so ``buf lint`` reports on the exported files only.
+
+    Args:
+        scratch: The staged artifact directory.
+
+    Returns:
+        No extra environment variables.
+    """
+    from .proto_descriptor import ProtoFile, vendored_proto_imports
+
+    staged = [
+        ProtoFile(path=path.relative_to(scratch).as_posix(), content=path.read_text(encoding="utf-8"))
+        for path in sorted(scratch.rglob("*.proto"))
+    ]
+    vendored = vendored_proto_imports(staged)
+    for proto in vendored:
+        target = scratch / proto.path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(proto.content, encoding="utf-8")
+    buf_yaml = scratch / "buf.yaml"
+    if vendored and buf_yaml.read_text(encoding="utf-8") == _BUF_YAML:
+        ignored = "".join(f"    - {proto.path}\n" for proto in vendored)
+        buf_yaml.write_text(f"{_BUF_YAML}  ignore:\n{ignored}", encoding="utf-8")
+    return {}
+
+
 _OPENAPI_EXTENSIONS = (".json", ".yaml", ".yml")
 
 #: Every check an emitter can declare that this server knows how to run, by ``(tool, check)``.
@@ -163,9 +197,9 @@ _COMMANDS: Dict[Tuple[str, str], ToolCheckCommand] = {
     (command.tool, command.check): command
     for command in (
         ToolCheckCommand("buf", "lint", (".proto",), lambda _paths: ["lint"],
-                         config_files={"buf.yaml": _BUF_YAML}),
+                         config_files={"buf.yaml": _BUF_YAML}, prepare=_prepare_buf),
         ToolCheckCommand("buf", "build", (".proto",), lambda _paths: ["build"],
-                         config_files={"buf.yaml": _BUF_YAML}),
+                         config_files={"buf.yaml": _BUF_YAML}, prepare=_prepare_buf),
         ToolCheckCommand("tsp", "compile", (".tsp",),
                          lambda paths: ["compile", _entry(paths, ("main.tsp",)), "--no-emit"],
                          prepare=_prepare_typespec),
