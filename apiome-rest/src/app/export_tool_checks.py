@@ -190,6 +190,32 @@ def _prepare_buf(scratch: Path) -> Dict[str, str]:
     return {}
 
 
+def _prepare_rover(scratch: Path) -> Dict[str, str]:
+    """Write the ``supergraph.yaml`` that composes every staged ``.graphql`` file — MFX-13.6 (#4344).
+
+    Each schema file is one subgraph, named after its file stem, at a placeholder routing URL
+    (composition never contacts it), pinned to the Federation version
+    :func:`app.graphql_federation.compose_subgraphs` uses. An artifact that carries its own
+    ``supergraph.yaml`` keeps it.
+
+    Args:
+        scratch: The staged artifact directory.
+
+    Returns:
+        Environment variables that keep ``rover`` from phoning home.
+    """
+    from .graphql_federation import supergraph_config_yaml
+
+    config = scratch / "supergraph.yaml"
+    if not config.exists():
+        files = {
+            path.relative_to(scratch).with_suffix("").as_posix(): path.relative_to(scratch).as_posix()
+            for path in sorted(scratch.rglob("*.graphql"))
+        }
+        config.write_text(supergraph_config_yaml(files), encoding="utf-8")
+    return {"APOLLO_TELEMETRY_DISABLED": "1", "APOLLO_ELV2_LICENSE": "accept"}
+
+
 _OPENAPI_EXTENSIONS = (".json", ".yaml", ".yml")
 
 #: Every check an emitter can declare that this server knows how to run, by ``(tool, check)``.
@@ -200,6 +226,11 @@ _COMMANDS: Dict[Tuple[str, str], ToolCheckCommand] = {
                          config_files={"buf.yaml": _BUF_YAML}, prepare=_prepare_buf),
         ToolCheckCommand("buf", "build", (".proto",), lambda _paths: ["build"],
                          config_files={"buf.yaml": _BUF_YAML}, prepare=_prepare_buf),
+        # A GraphQL export composes as a one-subgraph supergraph (MFX-13.6): the federation mode's proof.
+        ToolCheckCommand("rover", "compose", (".graphql",),
+                         lambda _paths: ["supergraph", "compose", "--config", "supergraph.yaml",
+                                         "--elv2-license", "accept"],
+                         prepare=_prepare_rover),
         ToolCheckCommand("tsp", "compile", (".tsp",),
                          lambda paths: ["compile", _entry(paths, ("main.tsp",)), "--no-emit"],
                          prepare=_prepare_typespec),

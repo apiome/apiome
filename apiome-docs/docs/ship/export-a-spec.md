@@ -1209,6 +1209,66 @@ The bundle's **buf lint** and **buf build** checks (on the protobuf and Connect 
 the `google/api` files the import needs, so an annotated export compiles without network access.
 `buf lint` reports on your exported files only, not on those `google/api` files.
 
+### Federation subgraph from a GraphQL export {#graphql-federation}
+
+A plain GraphQL SDL export cannot join a federated supergraph on its own: Apollo Federation needs a
+`@link` header and an `@key` on every entity. Turn on the **Federation subgraph** option
+(`federation`) and the **GraphQL SDL** export is Federation v2 subgraph SDL, ready for an Apollo
+subgraph library, `rover` or GraphOS.
+
+1. **Pick** **GraphQL SDL** in the [Export studio](./export-studio.mdx).
+2. On **3. Options**, **tick “Federation subgraph”**. From the CLI, pass `--federation` to
+   `apiome export graphql`, or `--option federation=true` to `apiome export graphql <item>`.
+3. On **5. Verify**, each entity whose key Apiome chose reads *synthesized*. **Click “Continue to
+   review”**, then **“Generate”**.
+
+The file starts with a `@link` that imports exactly the Federation directives it uses, and each
+entity carries its `@key`:
+
+```graphql
+extend schema @link(url: "https://specs.apollo.dev/federation/v2.9", import: ["@key"])
+
+type Query {
+  getProduct(id: String!): Product!
+}
+
+type Product @key(fields: "id") {
+  id: String!
+  name: String!
+  warehouse: Warehouse
+}
+
+type Warehouse {
+  city: String
+  dock: String
+}
+```
+
+An object type becomes an entity when it has an identity. Apiome looks for one in this order:
+
+| The type has | Its `@key` | Fidelity |
+| --- | --- | --- |
+| Its own `@key`, from a GraphQL subgraph import | Kept as written | Retained |
+| A declared primary key, from a SQL or dbt import | `@key(fields: "order_id line_no")`, every key column | Synthesized |
+| A field named `id` | `@key(fields: "id")` | Synthesized |
+| Exactly one field of the `ID` scalar | `@key(fields: "<that field>")` | Synthesized |
+| None of these | No `@key`: it stays a value type, like `Warehouse` above | — |
+
+A key field must hold one scalar or enum value, so a list or object field is never used. Input
+types, interfaces and the `Query` / `Mutation` / `Subscription` roots never get a key. Every
+synthesized key is listed in the fidelity report and on the export, so you can check each choice
+before a router depends on it. When no type has an identity, the file still links Federation and the
+export says the subgraph declares no entities.
+
+Directives from a subgraph import, such as `@shareable` or `@inaccessible`, are kept and imported in
+the header. A supergraph import loses its `join__` routing machinery, which has no place in a
+subgraph.
+
+To check that the file composes, open **Test drive** and run **rover supergraph compose** under
+[**Toolchain checks**](./export-studio.mdx#toolchain-checks). It composes the export as a one-subgraph
+supergraph with Federation 2.9 and shows `rover`'s output. The check needs `rover` and its
+composition plugin on the server; without them it reads *unavailable*.
+
 ### Thrift from any source
 
 #### When to export to Thrift

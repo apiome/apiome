@@ -97,3 +97,42 @@ claims the `join__Graph` enum block at 0.96); the graphql adapter itself claims
 both shapes at 0.9.
 
 Tests: `tests/test_graphql_federation.py`.
+
+## Subgraph export (MFX-13.6)
+
+The GraphQL emitter's `federation` option (title **Federation subgraph**, default
+off) writes Federation v2 subgraph SDL instead of plain SDL. The logic lives in
+`app/graphql_federation_subgraph.py`:
+
+* **Entity keys** — `entity_keys(api)` picks each object type's key: the
+  source's own `@key` (kept verbatim, not reported); else the declared primary
+  key (`extras["sql_key"]["primary_key"]["columns"]`); else the field named `id`
+  (any case); else the one field of the `ID` scalar. Key fields must be a single
+  scalar or enum (aliases followed). Inputs, interfaces, root types and
+  `federation__` / `link__` / `join__` machinery never get a key.
+* **Emit** — the writer appends the missing prelude definitions
+  (`with_federation_definitions`) so source `@key` / `@shareable` re-attach,
+  then `to_subgraph_sdl` drops the Federation, `link` and `join` machinery
+  (definitions and `@join__*` applications), replaces any schema `@link` to an
+  Apollo spec, applies the synthesized keys, and prepends
+  `extend schema @link(url: "https://specs.apollo.dev/federation/v2.9", import: […])`
+  importing exactly the Federation directives used. The result is rebuilt with
+  `build_graphql_schema` (prelude-aware) before it is returned.
+* **Reporting** — each synthesized key applied to a printed type is an
+  `inferred` loss `federation-key-synthesized` (pointer: the type key) and an
+  inferred provenance note at `/types/<key>/@key`; no entity at all is an `n/a`
+  loss `federation-no-entities`. `GraphQlFidelityRulePack.apply_options` reads
+  the option and adds a `SYNTH` verdict (`identity → @key(fields: "…")`) per
+  synthesized key, so the preview and the export agree.
+* **Composition check** — the `graphql` target declares the toolchain check
+  `rover compose` (label **rover supergraph compose**). `export_tool_checks`
+  stages a `supergraph.yaml` naming each `.graphql` file as a subgraph, pinned
+  to `ROVER_FEDERATION_VERSION` (`=2.9.3`, shared with `compose_subgraphs`), and
+  runs `rover supergraph compose --config supergraph.yaml --elv2-license accept`.
+
+CLI: `apiome export graphql --federation` (dedicated command) or
+`--option federation=true` on the job-based export.
+
+Tests: `tests/test_graphql_federation_subgraph.py` (fixtures in
+`tests/fixtures/graphql_federation_subgraph/`; the real-`rover` composition
+test runs when `rover` is installed).

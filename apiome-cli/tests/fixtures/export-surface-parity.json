@@ -602,10 +602,12 @@
         },
         {
           "default_options": {
+            "federation": false,
             "schema_description": null
           },
           "key": "graphql",
           "options": [
+            "federation",
             "schema_description"
           ],
           "preserved_percent": 33,
@@ -1235,10 +1237,12 @@
         },
         {
           "default_options": {
+            "federation": false,
             "schema_description": null
           },
           "key": "graphql",
           "options": [
+            "federation",
             "schema_description"
           ],
           "preserved_percent": 100,
@@ -1840,10 +1844,12 @@
         },
         {
           "default_options": {
+            "federation": false,
             "schema_description": null
           },
           "key": "graphql",
           "options": [
+            "federation",
             "schema_description"
           ],
           "preserved_percent": 100,

@@ -261,6 +261,7 @@ apiome export graphql [OPTIONS]
 | `--force` | flag |  |  | Write and exit 0 even when the export loses fidelity (lossy/types-only). |
 | `--min-grade` | text |  |  | Fail when the lint grade is worse than this (A best, F worst). Exits 4 when the threshold is missed. |
 | `--fail-on` | text |  |  | Fail when the lint report has any finding at or above this severity (error, warning, info). Exits 4 when the threshold is missed. |
+| `--federation` | flag |  |  | Write Apollo Federation v2 subgraph SDL: an extend schema @link header and an @key on every entity (synthesized from its primary key, id field or one ID field when the source has none, and reported as SYNTH in the fidelity summary). |
 
 ## apiome export grpc {#export-grpc}
 

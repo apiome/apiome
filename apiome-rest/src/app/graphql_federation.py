@@ -78,12 +78,16 @@ from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = [
     "FEDERATION_EXTENSIONS_KEY",
+    "ROVER_FEDERATION_VERSION",
     "ROVER_TOOL_KEY",
     "SubgraphRef",
     "CompositionFinding",
     "FederationInfo",
     "document_federation_role",
+    "federation_prelude_definitions",
     "federation_prelude_document",
+    "parse_directive_applications",
+    "supergraph_config_yaml",
     "supergraph_info",
     "subgraph_set_info",
     "federation_info_of",
@@ -102,6 +106,9 @@ FEDERATION_EXTENSIONS_KEY = "apiome_federation"
 
 #: Bundled-toolchain key of Apollo's ``rover`` CLI (pinned by MFI-5.2).
 ROVER_TOOL_KEY = "rover"
+
+#: The Federation composition version ``rover supergraph compose`` is pinned to.
+ROVER_FEDERATION_VERSION = "=2.9.3"
 
 #: Applied-directive names that mark SDL as a *subgraph* (Apollo Federation v1/v2).
 _SUBGRAPH_DIRECTIVE_NAMES = frozenset(
@@ -370,6 +377,15 @@ def _prelude_definitions() -> Dict[str, Node]:
             for definition in parse(_FEDERATION_PRELUDE_SDL).definitions
         }
     return _PRELUDE_DEFINITIONS
+
+
+def federation_prelude_definitions() -> Dict[str, Node]:
+    """Every Federation v2 prelude definition (directives and support types), by name — MFX-13.6.
+
+    Returns:
+        A fresh name → AST node mapping (the nodes are shared; do not mutate them).
+    """
+    return dict(_prelude_definitions())
 
 
 def federation_prelude_document(
@@ -983,20 +999,16 @@ async def compose_subgraphs(
 
     urls = {ref.name: ref.url for ref in subgraphs}
     with tempfile.TemporaryDirectory(prefix="apiome-rover-") as scratch:
-        config_lines = ["federation_version: =2.9.3", "subgraphs:"]
+        files: Dict[str, str] = {}
         for name in sorted(subgraph_sdls):
             safe = _SAFE_NAME_RE.sub("-", name) or "subgraph"
             file_name = f"{safe}.graphql"
             with open(os.path.join(scratch, file_name), "w", encoding="utf-8") as handle:
                 handle.write(subgraph_sdls[name])
-            routing_url = urls.get(name) or f"http://{safe}.invalid/graphql"
-            config_lines.append(f"  {safe}:")
-            config_lines.append(f"    routing_url: {routing_url}")
-            config_lines.append("    schema:")
-            config_lines.append(f"      file: ./{file_name}")
+            files[name] = file_name
         config_path = os.path.join(scratch, "supergraph.yaml")
         with open(config_path, "w", encoding="utf-8") as handle:
-            handle.write("\n".join(config_lines) + "\n")
+            handle.write(supergraph_config_yaml(files, urls))
 
         try:
             result = await active_runner.run_spec(
@@ -1016,6 +1028,30 @@ async def compose_subgraphs(
             return None
 
     return _rover_findings_from_output(stdout)
+
+
+def supergraph_config_yaml(
+    files: Mapping[str, str], urls: Optional[Mapping[str, Optional[str]]] = None
+) -> str:
+    """The ``supergraph.yaml`` that composes ``files`` with ``rover supergraph compose``.
+
+    Args:
+        files: Subgraph name → schema file path relative to the config.
+        urls: Optional subgraph name → routing URL; a placeholder ``.invalid`` URL otherwise
+            (composition never contacts it).
+
+    Returns:
+        The YAML text, subgraphs in name order, pinned to :data:`ROVER_FEDERATION_VERSION`.
+    """
+    lines = [f"federation_version: {ROVER_FEDERATION_VERSION}", "subgraphs:"]
+    for name in sorted(files):
+        safe = _SAFE_NAME_RE.sub("-", name) or "subgraph"
+        routing_url = (urls or {}).get(name) or f"http://{safe}.invalid/graphql"
+        lines.append(f"  {safe}:")
+        lines.append(f"    routing_url: {routing_url}")
+        lines.append("    schema:")
+        lines.append(f"      file: ./{files[name]}")
+    return "\n".join(lines) + "\n"
 
 
 def _rover_findings_from_output(stdout: str) -> Optional[List[CompositionFinding]]:
@@ -1227,6 +1263,18 @@ def print_schema_with_directives(schema: GraphQLSchema) -> str:
 # ===========================================================================
 # Directive application re-attachment for emitted SDL (extras → SDL)
 # ===========================================================================
+
+
+def parse_directive_applications(rendered: Sequence[str]) -> List[DirectiveNode]:
+    """Parse printed applied directives (``@key(fields: "id")``) to fresh AST nodes — MFX-13.6.
+
+    Args:
+        rendered: Printed directive applications.
+
+    Returns:
+        One node per parseable application; invalid entries are skipped.
+    """
+    return _parse_directive_strings(rendered)
 
 
 def _parse_directive_strings(rendered: Sequence[str]) -> List[DirectiveNode]:
