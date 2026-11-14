@@ -848,6 +848,11 @@ def project_migration_plans(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/migration-plans/{tenant_slug}/projects/{project_id}"
 
 
+def migration_plan(tenant_slug: str, plan_id: str | UUID) -> str:
+    """One migration plan by id, with its project, versions and rules (CLI 11.3)."""
+    return f"{V1}/migration-plans/{tenant_slug}/{plan_id}"
+
+
 def paths(tenant_slug: str, version_record_id: str | UUID) -> str:
     return f"{V1}/paths/{tenant_slug}/{version_record_id}"
 

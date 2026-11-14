@@ -1,0 +1,4 @@
+Mappings:
+  Charge.fee           → (removed)             (simple)
+  Charge.legacy_status → Charge.status         (simple · rename)
+  Customer.zip         → Customer.postal_code  (script)

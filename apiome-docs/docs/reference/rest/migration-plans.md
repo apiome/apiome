@@ -1,6 +1,6 @@
 ---
 title: "Migration plans"
-description: "REST endpoints tagged migration-plans: 4 operations."
+description: "REST endpoints tagged migration-plans: 5 operations."
 sidebar_position: 60
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.554.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.555.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `migration-plans` · 4 operations
+Tag: `migration-plans` · 5 operations
 
 ## `GET /v1/migration-plans/{tenant_slug}` {#get-migration-plan-rules-v1-migration-plans-tenant-slug-get}
 
@@ -129,6 +129,40 @@ Operation id: `list_project_migration_plans_v1_migration_plans__tenant_slug__pro
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for list project migration plans. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/migration-plans/{tenant_slug}/{plan_id}` {#get-migration-plan-v1-migration-plans-tenant-slug-plan-id-get}
+
+**Get Migration Plan**
+
+One migration plan by id, with its project, versions and every rule (CLI 11.3, #3262).
+
+Backs ``apiome migrations show <plan-id>``. Declared after ``/{tenant_slug}/counts`` so that
+path keeps its meaning. Rules are ordered by ``(class_name, source_property)`` and returned as
+stored. Requires ``projects:view``; the tenant comes from the token.
+
+Returns:
+    ``{id, project_id, project_slug, project_name, from_version_id, from_version,
+    to_version_id, to_version, created_at, updated_at, rules: [{class_name, source_property,
+    rule}]}``. **404** when the id is not a UUID or no plan of a live project in the tenant
+    has it.
+
+Operation id: `get_migration_plan_v1_migration_plans__tenant_slug___plan_id__get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `plan_id` | path | string | yes | Path parameter identifying the plan id segment. |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for get migration plan. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## Schemas used {#schemas-used}

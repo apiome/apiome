@@ -1,8 +1,8 @@
 """
 Migration plans API routes.
 
-GET/PUT migration plan rules (per project, from_version, to_version, class_name).
-Used by the migration canvas and by services that run migrations.
+GET/PUT migration plan rules (per project, from_version, to_version, class_name), every plan of a
+project, and one plan by id. Used by the migration canvas, the CLI and services that run migrations.
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -11,6 +11,7 @@ from typing import Dict, Any
 from .database import db
 from .auth import validate_authentication
 from .permissions import enforce_permission, Resource, Action
+from .revision_deprecation import is_uuid_string
 
 router = APIRouter(prefix="/v1/migration-plans", tags=["migration-plans"])
 
@@ -118,3 +119,29 @@ async def list_project_migration_plans(
     if not db.get_project_by_id(project_id, tenant_id):
         raise HTTPException(status_code=404, detail=f"Project not found: {project_id}")
     return {"plans": db.get_migration_plans_for_project(project_id, tenant_id)}
+
+
+@router.get("/{tenant_slug}/{plan_id}")
+async def get_migration_plan(
+    tenant_slug: str,
+    plan_id: str,
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    One migration plan by id, with its project, versions and every rule (CLI 11.3, #3262).
+
+    Backs ``apiome migrations show <plan-id>``. Declared after ``/{tenant_slug}/counts`` so that
+    path keeps its meaning. Rules are ordered by ``(class_name, source_property)`` and returned as
+    stored. Requires ``projects:view``; the tenant comes from the token.
+
+    Returns:
+        ``{id, project_id, project_slug, project_name, from_version_id, from_version,
+        to_version_id, to_version, created_at, updated_at, rules: [{class_name, source_property,
+        rule}]}``. **404** when the id is not a UUID or no plan of a live project in the tenant
+        has it.
+    """
+    enforce_permission(db, auth_data, Resource.PROJECTS, Action.VIEW)
+    plan = db.get_migration_plan(plan_id, auth_data["tenant_id"]) if is_uuid_string(plan_id) else None
+    if plan is None:
+        raise HTTPException(status_code=404, detail=f"Migration plan not found: {plan_id}")
+    return plan

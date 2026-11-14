@@ -1,0 +1,13 @@
+Migration plan 3a910000-0000-4000-8000-00000000b41c
+───────────────────────────────────────────────────
+Project:  payments-api
+From:     2.0.0
+To:       2.1.0
+Rules:    3 across 2 classes
+Created:  2026-04-28 09:00 UTC
+Updated:  2026-05-04 12:43 UTC
+
+Mappings:
+  Charge.fee           → (removed)             (simple)
+  Charge.legacy_status → Charge.status         (simple · rename)
+  Customer.zip         → Customer.postal_code  (script)

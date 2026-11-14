@@ -215,6 +215,7 @@ _ALL_COMMAND_PATHS: tuple[list[str], ...] = (
     ["migrations"],
     ["migrations", "list"],
     ["migrations", "counts"],
+    ["migrations", "show"],
     ["import"],
     ["import", "auto"],
     ["import", "openapi"],
