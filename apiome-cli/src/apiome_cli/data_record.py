@@ -5,6 +5,8 @@ Nothing here talks to the network; :mod:`apiome_cli.commands.data` reads the inp
 an exit code.
 
 * :func:`parse_class_address` — ``--class <project>/<version>/<Class>``;
+* :func:`is_class_schema_id` — ``--class`` given as a class schema id (``data list``);
+* :func:`check_filter` — ``data list --filter key=value``;
 * :func:`parse_field` / :func:`build_payload` — ``--field key=value`` (``key=:<json>``) on top of
   the ``--from-file`` / ``--stdin`` object, so every input mode reaches the same POST body;
 * :func:`find_class` — the class in the version's frozen class schemas (exact name, then a
@@ -16,6 +18,7 @@ an exit code.
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping, Optional, Sequence
 
@@ -70,6 +73,27 @@ def parse_class_address(text: str) -> ClassAddress:
             f"--class {text!r} must be <project>/<version>/<Class>, e.g. billing/1.0.0/Charge."
         )
     return ClassAddress(*parts)
+
+
+def is_class_schema_id(text: str) -> bool:
+    """Whether ``--class`` is a class schema id (a UUID) rather than ``<project>/<version>/<Class>``."""
+    try:
+        uuid.UUID(text.strip())
+    except ValueError:
+        return False
+    return True
+
+
+def check_filter(text: str) -> str:
+    """Check one ``--filter key=value`` and return it as given (the server compares the value as text).
+
+    Raises:
+        DataInputError: No ``=``, or an empty key.
+    """
+    key, sep, _value = text.partition("=")
+    if not sep or not key.strip():
+        raise DataInputError(f"--filter {text!r} must be key=value, e.g. status=succeeded.")
+    return text
 
 
 def parse_field(text: str) -> tuple[str, Any]:

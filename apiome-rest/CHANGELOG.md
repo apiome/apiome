@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.694.0] - 2026-11-13
+
+### Added
+- **Data records: list a class's records (CLI 10.1, #3253)**
+  - `GET /v1/data/{tenant_slug}/records?class_schema_id=` lists one class schema's records:
+    `items[]` of `record_id`, `created_at` (first event), `updated_at` (latest event),
+    `deleted_at` and `data`, plus `total`, `limit`, `sort` and `next_cursor`.
+  - `filter=key=value` (repeatable, at most 20) compares a top-level data field as text;
+    `sort` is `created_at` (default), `updated_at`, `deleted_at`, `record_id` or a data field
+    (compared as JSON; records without it last), `-` for descending; `limit` 1–500 (default 50).
+  - `include_deleted=true` adds soft-deleted records with the data they had and `deleted_at`.
+  - Cursor paging: pass `next_cursor` back as `cursor` (`null` on the last page). A cursor is
+    bound to its class, filters, sort and `include_deleted`; reusing it for another query, or a
+    malformed one, is **400**. Unknown (or non-UUID) class schema **404**; needs `versions:view`.
+  - `Database.list_data_records` builds the list from the `data_record` event log.
+  - OpenAPI 1.553.0 → 1.554.0.
+
 ## [1.693.0] - 2026-11-13
 
 ### Added

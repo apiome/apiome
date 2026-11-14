@@ -1,0 +1,6 @@
+ID                                    CREATED           AMOUNT  CURRENCY  STATUS
+8a2f0000-0000-4000-8000-000000000001  2026-05-04 12:41  19.99   USD       succeeded
+8a2f0000-0000-4000-8000-000000000002  2026-05-04 12:42  100.0   EUR       succeeded
+8a2f0000-0000-4000-8000-000000000003  2026-05-04 12:43  5       USD       failed
+
+3 of 1,234 (use --next eyJvIjozfQ or --all).

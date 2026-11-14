@@ -10037,6 +10037,94 @@ class Database:
         query += " ORDER BY c.name ASC"
         return self.execute_query(query, tuple(params))
 
+    #: Record fields ``list_data_records`` can sort on besides a field of the record's data.
+    DATA_RECORD_SYSTEM_SORTS = ("created_at", "updated_at", "deleted_at", "record_id")
+
+    def list_data_records(
+        self,
+        class_schema_id: str,
+        tenant_id: str,
+        *,
+        filters: Sequence[Tuple[str, str]] = (),
+        sort_field: str = "created_at",
+        descending: bool = False,
+        include_deleted: bool = False,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """List one class schema's records, built from the ``data_record`` event log (#3253).
+
+        Each record's latest event decides whether it is deleted; its data is the live
+        ``data_snapshot`` row, or — for a deleted record — the data its ``deleted`` event kept.
+        ``created_at`` is the record's first event, ``updated_at`` its latest, ``deleted_at`` the
+        latest event's time when that event is a delete.
+
+        Args:
+            class_schema_id: The class schema (the caller has checked tenant access).
+            tenant_id: The caller's tenant.
+            filters: ``(key, value)`` pairs; a record matches when ``data ->> key`` equals
+                ``value`` for every pair (text comparison, so ``19.99`` and ``true`` match too).
+            sort_field: One of :data:`DATA_RECORD_SYSTEM_SORTS`, else a top-level data field
+                (compared as JSON: numbers numerically, strings lexically). Records without the
+                field sort last; ``record_id`` breaks ties.
+            descending: Reverse the sort.
+            include_deleted: Include records whose latest event is a delete.
+            limit: Page size.
+            offset: Records to skip.
+
+        Returns:
+            ``(rows, total)``: the page (``record_id``, ``created_at``, ``updated_at``,
+            ``deleted_at``, ``data``) and the number of records matching the filters.
+        """
+        base = """
+            WITH latest AS (
+                SELECT DISTINCT ON (dr.record_id)
+                       dr.record_id, dr.action, dr.data, dr.created_at AS changed_at
+                FROM apiome.data_record dr
+                WHERE dr.class_schema_id = %s AND dr.tenant_id = %s
+                ORDER BY dr.record_id, dr.record_sequence DESC
+            ), firsts AS (
+                SELECT dr.record_id, MIN(dr.created_at) AS created_at
+                FROM apiome.data_record dr
+                WHERE dr.class_schema_id = %s AND dr.tenant_id = %s
+                GROUP BY dr.record_id
+            ), records AS (
+                SELECT l.record_id, f.created_at, l.changed_at AS updated_at,
+                       CASE WHEN l.action = 'deleted' THEN l.changed_at END AS deleted_at,
+                       COALESCE(s.data, l.data, '{{}}'::jsonb) AS data
+                FROM latest l
+                JOIN firsts f ON f.record_id = l.record_id
+                LEFT JOIN apiome.data_snapshot s ON s.record_id = l.record_id AND s.tenant_id = %s
+                WHERE (%s OR l.action <> 'deleted')
+            )
+            SELECT {columns} FROM records r
+        """
+        params: List[Any] = [class_schema_id, tenant_id, class_schema_id, tenant_id, tenant_id, include_deleted]
+        where = []
+        for key, value in filters:
+            where.append("r.data ->> %s = %s")
+            params.extend([key, value])
+        where_sql = f" WHERE {' AND '.join(where)}" if where else ""
+
+        count_rows = self.execute_query(base.format(columns="COUNT(*) AS total") + where_sql, tuple(params))
+        total = int(count_rows[0]["total"]) if count_rows else 0
+
+        direction = "DESC" if descending else "ASC"
+        if sort_field in self.DATA_RECORD_SYSTEM_SORTS:
+            order_sql = f" ORDER BY r.{sort_field} {direction} NULLS LAST, r.record_id ASC"
+            order_params: List[Any] = []
+        else:
+            order_sql = f" ORDER BY (r.data -> %s) {direction} NULLS LAST, r.record_id ASC"
+            order_params = [sort_field]
+        query = (
+            base.format(columns="r.record_id, r.created_at, r.updated_at, r.deleted_at, r.data")
+            + where_sql
+            + order_sql
+            + " LIMIT %s OFFSET %s"
+        )
+        rows = self.execute_query(query, tuple(params + order_params + [limit, offset]))
+        return rows, total
+
     def insert_data_record(
         self,
         class_schema_id: str,

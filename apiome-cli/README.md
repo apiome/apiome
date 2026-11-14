@@ -1736,6 +1736,28 @@ apiome data create --class billing/1.0.0/Charge --field amount=:19.99 --field cu
 - `--dry-run` validates only. `--json` (global or on the command) prints `record_id`, `project`,
   `version`, `class`, `class_schema_id` and `data`.
 
+### List data records
+
+`apiome data list --class <project>/<version>/<Class>` (or a class schema id) pages through a
+class's records with `GET /v1/data/{tenant}/records`.
+
+```bash
+apiome data list --class billing/1.0.0/Charge --limit 20 --filter status=succeeded --sort -created_at
+apiome data list --class billing/1.0.0/Charge --next <cursor>
+apiome data list --class billing/1.0.0/Charge --all --ndjson > charges.ndjson
+apiome data list --class billing/1.0.0/Charge --include-deleted --columns amount,status
+```
+
+- `--filter key=value` (repeatable) compares a top-level data field as text; `--sort` takes
+  `created_at` (default), `updated_at`, `deleted_at`, `record_id` or a data field, `-field` descends.
+- The table shows `ID`, `CREATED` and each data field (or `--columns`); `--include-deleted` adds
+  soft-deleted records and a `DELETED_AT` column. The footer reads
+  `20 of 1,234 (use --next <cursor> or --all).`
+- `--next <cursor>` shows the following page (a cursor only fits the query it came from);
+  `--all` follows every page.
+- `--json` prints one JSON array, `--ndjson` one record per line; both stream, and the next cursor
+  (if any) goes to stderr.
+
 ### List resources
 
 Human-readable tables (default):
