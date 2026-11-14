@@ -287,12 +287,13 @@ def catalog():
 
     with patch("app.mcp_registry_routes.db") as mdb, patch(
         "app.mcp_registry_routes._trust_posture", _posture
-    ):
+    ), patch("app.mcp_registry_routes._runtime_entry_sync", return_value=None) as runtime:
         mdb.list_mcp_registry_endpoints.side_effect = cat.list
         mdb.validate_api_key.return_value = None
         mdb.resolve_mcp_api_key_tenant_id.return_value = None
         mdb.get_active_tenant_auth_row.return_value = {"tenant_id": _TENANT_ID, "tenant_slug": "acme"}
         cat.db = mdb
+        cat.runtime = runtime
         yield cat
 
 
@@ -713,3 +714,106 @@ def test_listing_updated_since_covers_the_change_feed_timestamp():
         real_db.list_mcp_registry_endpoints("acme", include_private=False, limit=2, updated_since=_T0)
     sql = eq.call_args.args[0]
     assert "GREATEST(e.updated_at, COALESCE(v.discovered_at, v.created_at)) >= %s" in sql
+
+
+# ============================================================================
+# The tenant's agent-runtime entry (AAU-5.1, #5722)
+# ============================================================================
+_RUNTIME_NAME = "apiome.acme/agent-runtime"
+
+
+def _runtime_response() -> Dict[str, Any]:
+    """A runtime ``ServerResponse`` as :func:`app.agent_server_json.runtime_server_response` builds it."""
+    from app.agent_server_json import build_tenant_server_json, runtime_server_response
+
+    document = build_tenant_server_json(
+        tenant_slug="acme", toolsets=[], runtime_url="https://agents.example.com/agent/mcp"
+    )
+    document["_meta"]["dev.apiome/agent-runtime"]["toolsetCount"] = 1
+    return runtime_server_response(document)
+
+
+def _with_key(catalog) -> Dict[str, str]:
+    catalog.db.resolve_mcp_api_key_tenant_id.return_value = _TENANT_ID
+    catalog.runtime.return_value = _runtime_response()
+    return {"X-API-Key": "mcpk_live_secretsecret"}
+
+
+def test_runtime_entry_leads_the_first_page_for_credentialed_callers(catalog):
+    headers = _with_key(catalog)
+    body = client.get(_BASE, headers=headers).json()
+    _validate("ServerList", body)
+    assert body["servers"][0]["server"]["name"] == _RUNTIME_NAME
+    assert body["metadata"]["count"] == 6
+    catalog.runtime.assert_called_once_with("acme")
+
+
+def test_runtime_entry_is_never_served_anonymously(catalog):
+    catalog.runtime.return_value = _runtime_response()
+    body = client.get(_BASE).json()
+    assert all(e["server"]["name"] != _RUNTIME_NAME for e in body["servers"])
+    catalog.runtime.assert_not_called()
+    assert client.get(f"{_BASE}/apiome.acme%2Fagent-runtime/versions").status_code == 404
+
+
+def test_runtime_entry_respects_search_version_and_cursor(catalog):
+    headers = _with_key(catalog)
+    names = lambda params: [  # noqa: E731
+        e["server"]["name"] for e in client.get(_BASE, params=params, headers=headers).json()["servers"]
+    ]
+    assert _RUNTIME_NAME in names({"search": "runtime"})
+    assert _RUNTIME_NAME not in names({"search": "alpha"})
+    assert _RUNTIME_NAME not in names({"version": "1.2.0"})
+    assert _RUNTIME_NAME in names({"version": "latest"})
+    page = client.get(_BASE, params={"limit": 2}, headers=headers).json()
+    second = client.get(
+        _BASE, params={"limit": 2, "cursor": page["metadata"]["nextCursor"]}, headers=headers
+    ).json()
+    assert all(e["server"]["name"] != _RUNTIME_NAME for e in second["servers"])
+
+
+def test_runtime_entry_by_name_on_the_versions_routes(catalog):
+    headers = _with_key(catalog)
+    listed = client.get(f"{_BASE}/apiome.acme%2Fagent-runtime/versions", headers=headers)
+    assert listed.status_code == 200
+    _validate("ServerList", listed.json())
+    version = listed.json()["servers"][0]["server"]["version"]
+    latest = client.get(f"{_BASE}/apiome.acme%2Fagent-runtime/versions/latest", headers=headers)
+    assert latest.status_code == 200 and latest.headers["etag"]
+    _validate("ServerResponse", latest.json())
+    exact = client.get(
+        f"{_BASE}/apiome.acme%2Fagent-runtime/versions/{version.replace('+', '%2B')}", headers=headers
+    )
+    assert exact.json() == latest.json()
+    assert (
+        client.get(f"{_BASE}/apiome.acme%2Fagent-runtime/versions/9.9.9", headers=headers).status_code
+        == 404
+    )
+    catalog.db.list_mcp_registry_endpoints.assert_not_called()
+
+
+def test_runtime_entry_absent_or_failing_degrades_to_the_catalog(catalog):
+    headers = _with_key(catalog)
+    catalog.runtime.return_value = None
+    assert _names(client.get(_BASE, headers=headers).json()) == ["alpha", "bravo", "charlie", "delta", "echo"]
+    assert (
+        client.get(f"{_BASE}/apiome.acme%2Fagent-runtime/versions/latest", headers=headers).status_code
+        == 404
+    )
+    catalog.runtime.return_value = None
+    catalog.runtime.side_effect = RuntimeError("boom")
+    assert len(client.get(_BASE, headers=headers).json()["servers"]) == 5
+
+
+def test_runtime_entry_sync_skips_a_tenant_without_enabled_toolsets():
+    from app import mcp_registry_routes as routes
+
+    document = {"_meta": {"dev.apiome/agent-runtime": {"toolsetCount": 0}}}
+    with patch.object(routes, "db") as mdb, patch.object(
+        routes, "export_tenant_server_json", return_value=document
+    ) as export:
+        mdb.get_tenant_row_by_slug.return_value = {"id": _TENANT_ID}
+        assert routes._runtime_entry_sync("acme") is None
+        export.assert_called_once_with(_TENANT_ID, "acme")
+        mdb.get_tenant_row_by_slug.return_value = None
+        assert routes._runtime_entry_sync("ghost") is None

@@ -146,6 +146,17 @@ To raise the cap, set `APIOME_SERVER_ACTION_BODY_LIMIT` (for example `50mb`) in 
 **before building** apiome-ui. The value is baked into the build, so rebuild the image after
 changing it. **Import to catalog** uploads through the REST API instead and is not affected.
 
+### Agent runtime address in server.json
+
+The [server.json export](../bring-in/agent-access.mdx#export-serverjson) gives hosts the agent
+runtime's public address and tells them how to sign in. Set these in `apiome-rest/.env` (or the
+`rest` service's environment) and restart apiome-rest:
+
+| Variable | Default | What it is |
+| --- | --- | --- |
+| `APIOME_AGENT_MCP_PUBLIC_URL` | `http://localhost:8765/agent/mcp` | The public `http(s)` URL of apiome-mcp's agent runtime (`/agent/mcp`). Anything else makes the export answer `503` |
+| `APIOME_AGENT_MCP_PRM_URL` | empty | The runtime's OAuth Protected Resource Metadata URL. When it is set, the export tells hosts to use OAuth. When it is empty, it tells them to use an agent key |
+
 ### Keys that encrypt stored secrets
 
 Some settings are encryption keys: they seal a secret before it is written to the database, so a

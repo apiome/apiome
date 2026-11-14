@@ -44,6 +44,11 @@ curl https://<your-apiome-host>/registry/mcp/acme/v0.1/servers?limit=10
   key (`X-API-Key`) or a signed-in session — it also lists private and unpublished servers.
 - **A wrong credential**, or one of another tenant, is refused with `401` or `403`. It never falls
   back to the public list.
+- **Your agent runtime** — with a credential of the tenant, the first page also starts with
+  `apiome.<tenant>/agent-runtime`: every enabled agent toolset as one server (see [Export
+  server.json](../bring-in/agent-access.mdx#export-serverjson)). `search` and `version` filter it
+  like any other entry. It has no timestamp, so `updated_since` never leaves it out. It is
+  never listed without a credential, and a tenant with no enabled toolset has none.
 
 To list a server anonymously, publish it and make it public:
 `PATCH /v1/mcp/<tenant>/endpoints/<endpoint-id>` with `{"published": true, "visibility": "public"}`.
