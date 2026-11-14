@@ -148,6 +148,11 @@ EXIT_PRIMITIVE_MISSING = 7
 #: Another per-command use of 7.
 EXIT_PRIMITIVE_IMPORT_FAILED = 7
 
+#: ``apiome data create`` (CLI 10.3): the record does **not satisfy its class schema** — checked
+#: locally against the class's frozen JSON Schema before anything is sent; one ``field: message``
+#: line per problem on stderr, nothing was created. Another per-command use of 7.
+EXIT_RECORD_INVALID = 7
+
 #: ``apiome checks run`` / ``checks show`` (GNC-3.1): the suite has **no verdict yet** — a
 #: required component is waiting on evidence (a contract run of this draft), or the commit is ahead
 #: of the draft the suite judges. Neither a pass nor a failure, so neither ``0`` nor ``7``: a

@@ -1,7 +1,7 @@
 ---
 title: "apiome formats"
 description: "List the formats this deployment supports, in which directions and at which versions."
-sidebar_position: 15
+sidebar_position: 16
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

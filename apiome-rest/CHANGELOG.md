@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.693.0] - 2026-11-13
+
+### Added
+- **Data records: class schema lookup (CLI 10.3, #3255)**
+  - `GET /v1/data/{tenant_slug}/classes?project=&version=[&class=]` resolves a version's classes
+    to the frozen class schemas data records are created against: each class's
+    `class_schema_id`, `class_id`, `class_name` and JSON Schema 2020-12 `schema`, plus the
+    version's `published` flag. The version label may carry a leading `v`. A version never
+    published answers **200** with an empty `classes` list; an unknown project or version is
+    **404**. Requires `versions:view`; the tenant comes from the token.
+  - `Database.find_data_version` and `Database.list_version_class_schemas` back the route.
+  - Used by `apiome data create --class <project>/<version>/<Class>` to find the
+    `class_schema_id` for `POST /v1/data/{tenant_slug}/records` and to validate the record
+    locally first.
+  - OpenAPI 1.552.0 → 1.553.0.
+
 ## [1.692.0] - 2026-11-13
 
 ### Added

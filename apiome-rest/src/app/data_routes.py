@@ -7,7 +7,7 @@ All endpoints are tenant-scoped and require authentication via JWT or API key.
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
@@ -29,6 +29,53 @@ async def data_api_info(
 ) -> Dict[str, Any]:
     """Verify data API is mounted and tenant is authenticated. Returns 200 with tenant_slug."""
     return {"data_api": True, "tenant_slug": tenant_slug}
+
+
+@router.get("/{tenant_slug}/classes")
+async def list_data_classes(
+    tenant_slug: str,
+    project: str = Query(..., min_length=1, description="Project slug"),
+    version: str = Query(..., min_length=1, description="Version label, e.g. 1.0.0 (a leading v is accepted)"),
+    class_name: Optional[str] = Query(
+        None, alias="class", min_length=1, description="Only the class with exactly this name"
+    ),
+    auth_data: Dict[str, Any] = Depends(validate_authentication),
+) -> Dict[str, Any]:
+    """
+    Resolve a version's classes to the frozen class schemas data records attach to (#3255).
+
+    Records are created against a ``class_schema_id`` — the JSON Schema 2020-12 captured for
+    a class when its version was published. This answers each class's ``class_schema_id`` and
+    ``schema``, so a client can address a class as ``<project>/<version>/<Class>`` and
+    validate a payload locally before ``POST …/records``.
+
+    A version that was never published has no class schemas: the answer is ``200`` with an
+    empty ``classes`` list (and ``published: false``), never an error. An unknown project or
+    version is ``404``. Requires ``versions:view``.
+    """
+    enforce_permission(db, auth_data, Resource.VERSIONS, Action.VIEW)
+    tenant_id = auth_data["tenant_id"]
+
+    found = db.find_data_version(tenant_id, project, version)
+    if not found:
+        raise HTTPException(status_code=404, detail=f"Version {project}/{version} not found")
+
+    rows = db.list_version_class_schemas(str(found["version_record_id"]), class_name)
+    return {
+        "success": True,
+        "project": found["project_slug"],
+        "version": found["version"],
+        "published": bool(found.get("published")),
+        "classes": [
+            {
+                "class_schema_id": str(row["class_schema_id"]),
+                "class_id": str(row["class_id"]),
+                "class_name": row["class_name"],
+                "schema": row["schema"] if isinstance(row["schema"], dict) else {},
+            }
+            for row in rows
+        ],
+    }
 
 
 class DataRecordCreateBody(BaseModel):

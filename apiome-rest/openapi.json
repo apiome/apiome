@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.552.0",
+    "version": "1.553.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -7378,6 +7378,140 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError",
                   "description": "Response payload for data api inforesponse422."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/data/{tenant_slug}/classes": {
+      "get": {
+        "tags": [
+          "data"
+        ],
+        "summary": "List Data Classes",
+        "description": "Resolve a version's classes to the frozen class schemas data records attach to (#3255).\n\nRecords are created against a ``class_schema_id`` \u2014 the JSON Schema 2020-12 captured for\na class when its version was published. This answers each class's ``class_schema_id`` and\n``schema``, so a client can address a class as ``<project>/<version>/<Class>`` and\nvalidate a payload locally before ``POST \u2026/records``.\n\nA version that was never published has no class schemas: the answer is ``200`` with an\nempty ``classes`` list (and ``published: false``), never an error. An unknown project or\nversion is ``404``. Requires ``versions:view``.",
+        "operationId": "list_data_classes_v1_data__tenant_slug__classes_get",
+        "parameters": [
+          {
+            "name": "tenant_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Tenant Slug",
+              "description": "Tenant Slug schema."
+            },
+            "description": "URL-safe tenant slug that scopes the request."
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Project slug",
+              "title": "Project"
+            },
+            "description": "Project slug"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Version label, e.g. 1.0.0 (a leading v is accepted)",
+              "title": "Version"
+            },
+            "description": "Version label, e.g. 1.0.0 (a leading v is accepted)"
+          },
+          {
+            "name": "class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "List Data Classesclass schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Data Classesclass schema."
+                }
+              ],
+              "description": "Only the class with exactly this name",
+              "title": "Class"
+            },
+            "description": "Only the class with exactly this name"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Data Classesauthorization schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Data Classesauthorization schema."
+                }
+              ],
+              "title": "Authorization",
+              "description": "Authorization schema."
+            },
+            "description": "JWT bearer token for authenticated access (``Authorization: Bearer <token>``)."
+          },
+          {
+            "name": "X-API-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "description": "List Data Classes Xapikey schema."
+                },
+                {
+                  "type": "null",
+                  "description": "List Data Classes Xapikey schema."
+                }
+              ],
+              "title": "X-Api-Key",
+              "description": "X-Api-Key schema."
+            },
+            "description": "Tenant-scoped API key used as an alternative to JWT bearer authentication."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response for list data classes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Data Classes V1 Data  Tenant Slug  Classes Get",
+                  "description": "Response List Data Classes V1 Data  Tenant Slug  Classes Get schema."
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError",
+                  "description": "Response payload for list data classesresponse422."
                 }
               }
             }
