@@ -1,0 +1,84 @@
+name: apiome-cli release PR
+
+# Changesets release flow for apiome-cli (#3269).
+#
+#   1. While changesets are pending on `main`, keep a `Release: apiome-cli vX.Y.Z` pull request
+#      open on `changeset-release/main`. It runs `release:version` — `changeset version` (bumps
+#      apiome-cli/package.json, writes apiome-cli/CHANGELOG.md, deletes the changesets) and
+#      sync-version.mjs (carries the version to pyproject.toml and uv.lock).
+#   2. Once that pull request merges no changeset is pending, so this workflow pushes the
+#      `cli-vX.Y.Z` tag for the new version, which triggers the publish workflow (12.2, #3268).
+#      An existing tag is left alone, so re-runs are harmless.
+#
+# Pre-releases: `npx changeset pre enter rc` in apiome-cli/ makes the pull request release
+# `X.Y.Z-rc.N` (tag `cli-vX.Y.Z-rc.N`); `npx changeset pre exit` returns to stable releases.
+#
+# Token: a tag or pull request created with the default GITHUB_TOKEN does not start other
+# workflows, so the publish workflow and the pull request's checks would never run. Set the
+# APIOME_RELEASE_TOKEN secret (a fine-grained token or GitHub App token with contents and
+# pull-requests write) to make the hand-off work; without it the workflow still runs on
+# GITHUB_TOKEN.
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - ".changeset/**"
+      - "apiome-cli/package.json"
+      - ".github/workflows/apiome-cli-release-pr.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: apiome-cli-release-pr
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release PR or tag
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.APIOME_RELEASE_TOKEN || github.token }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Enable Corepack and set Yarn to 4.12.0
+        run: npm install -g corepack@0.36.0 && corepack enable && corepack prepare yarn@4.12.0 --activate
+
+      # Only @apiome/cli's dependencies (@changesets/cli) — not the whole monorepo.
+      - name: Install apiome-cli workspace
+        run: yarn workspaces focus @apiome/cli
+
+      - name: Work out the next version
+        id: next
+        run: |
+          yarn workspace @apiome/cli changeset status --output="$RUNNER_TEMP/changeset-status.json"
+          echo "version=$(node apiome-cli/scripts/release/next-version.mjs "$RUNNER_TEMP/changeset-status.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update the release pull request
+        id: changesets
+        uses: changesets/action@v2.1.2
+        with:
+          version-script: yarn workspace @apiome/cli release:version
+          pr-title: "Release: apiome-cli v${{ steps.next.outputs.version }}"
+          commit-message: "Release: apiome-cli v${{ steps.next.outputs.version }}"
+          create-github-releases: false
+          push-git-tags: false
+          github-token: ${{ secrets.APIOME_RELEASE_TOKEN || github.token }}
+
+      - name: Tag the release
+        if: steps.changesets.outputs.has-changesets == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          yarn workspace @apiome/cli release:tag

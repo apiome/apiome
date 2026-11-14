@@ -1,0 +1,23 @@
+---
+slug: cli-release-tooling
+title: CLI releases with changesets
+description: "apiome-cli versions, changelog and cli-v tags now come from changesets."
+authors: [apiome]
+---
+
+The Apiome CLI is now released with changesets. Each pull request that changes `apiome-cli/` adds a
+changeset, a **Release: apiome-cli vX.Y.Z** pull request collects them, and merging it pushes the
+`cli-vX.Y.Z` tag. The new [Release the CLI](/admin/release-the-cli) page walks through it.
+
+{/* truncate */}
+
+- **Describe your change.** `npx changeset` in `apiome-cli/` writes a `.changeset/<name>.md` file
+  with the bump (`patch`, `minor` or `major`) and a note for the changelog.
+- **The check.** Pull requests that change `apiome-cli/` need a changeset releasing `@apiome/cli`,
+  or the `no-cli-release` label for docs-only and test-only changes.
+- **The release pull request.** After merge, a bot pull request bumps the version in
+  `package.json`, `pyproject.toml` and `uv.lock` and adds the notes to `apiome-cli/CHANGELOG.md`.
+- **The tag.** Merging it pushes `cli-vX.Y.Z`, which the installer accepts as
+  `--version cli-vX.Y.Z`.
+- **Release candidates.** `npx changeset pre enter rc` releases `X.Y.Z-rc.N` until
+  `npx changeset pre exit`.

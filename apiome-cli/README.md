@@ -2095,6 +2095,14 @@ uv run ruff check src/ tests/
 yarn cli:lint
 ```
 
+### Releases
+
+Versions come from [changesets](https://github.com/changesets/changesets). With your change, run
+`npx changeset` in this folder, pick `@apiome/cli` and the bump, and commit the
+`.changeset/<name>.md` it writes. After merge a `Release: apiome-cli vX.Y.Z` pull request bumps the
+version and [`CHANGELOG.md`](CHANGELOG.md); merging it pushes the `cli-vX.Y.Z` tag. See *Release the
+CLI* in the docs site (`apiome-docs/docs/admin/release-the-cli.md`).
+
 See [`AGENTS.md`](AGENTS.md) for contributor conventions, layout, and review checklist.
 
 See the [CLI roadmap](../../docs/ROADMAP_APIOME_CLI.md) for planned commands.

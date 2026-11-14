@@ -1,6 +1,6 @@
 {
   "name": "@apiome/cli",
-  "version": "0.131.0",
+  "version": "0.141.0",
   "private": true,
   "description": "Command-line client for the Apiome REST API",
   "scripts": {
@@ -12,6 +12,13 @@
     "lint": "uv run ruff check src/ tests/",
     "cli:lint": "uv run ruff check src/ tests/",
     "run": "bash run.sh",
-    "test:scaffold": "node --test test/scaffold.test.mjs"
+    "test:scaffold": "node --test test/scaffold.test.mjs",
+    "changeset": "changeset",
+    "release:version": "cd .. && changeset version && node apiome-cli/scripts/release/sync-version.mjs",
+    "release:sync-version": "node scripts/release/sync-version.mjs",
+    "release:tag": "node scripts/release/tag-release.mjs"
+  },
+  "devDependencies": {
+    "@changesets/cli": "3.0.3"
   }
 }

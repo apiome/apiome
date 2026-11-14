@@ -274,12 +274,28 @@ Run from monorepo root or package:
 
 Tests must pass with **no warnings, no errors, and no skips** before merge.
 
+## Releasing (changesets, #3269)
+
+The version is managed by [changesets](https://github.com/changesets/changesets) — **do not edit `version` by hand** in `package.json`, `pyproject.toml` or `uv.lock`. Every pull request that changes this package runs `npx changeset` here and commits the `.changeset/<name>.md` it writes (`@apiome/cli`: `patch` / `minor` / `major`); that is this package's version bump under the root `AGENTS.md`. Docs-only or test-only changes use the `no-cli-release` label instead.
+
+| Piece | Where |
+|-------|-------|
+| Config (only `@apiome/cli` is released; other workspaces are `ignore`d) | `../.changeset/config.json` |
+| PR check (changeset or `no-cli-release` label) | `../.github/workflows/apiome-cli-changeset.yml` → `scripts/release/check-changeset.mjs` |
+| Bot PR `Release: apiome-cli vX.Y.Z`, then tag `cli-vX.Y.Z` | `../.github/workflows/apiome-cli-release-pr.yml` |
+| `release:version` — `changeset version` (from the repo root) + `sync-version.mjs` (package.json → pyproject.toml / uv.lock, PEP 440 for `-rc.N`) | `scripts/release/` |
+| `release:tag` — push `cli-v<version>` if missing | `scripts/release/tag-release.mjs` |
+| Notes per release | `CHANGELOG.md` (written by changesets) |
+
+Pure helpers live in `scripts/release/lib.mjs` and are covered by `test/release.test.mjs`. Pre-releases: `npx changeset pre enter rc` / `npx changeset pre exit`. User guide: `apiome-docs/docs/admin/release-the-cli.md`.
+
 ## Review checklist
 
 - [ ] Behaviour matches `apiome-rest/openapi.yaml` (no ad-hoc API shapes)
 - [ ] New env vars in `.env.example`; config precedence documented in `README.md`
 - [ ] `AGENTS.md` and `README.md` updated if commands, layout, or conventions changed
 - [ ] Unit and/or integration tests added; `yarn cli:test` and `yarn cli:lint` pass
+- [ ] A changeset releasing `@apiome/cli` is committed (or the PR has the `no-cli-release` label)
 - [ ] No secrets in logs, commits, or test fixtures
 
 ## Related docs

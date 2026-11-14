@@ -76,6 +76,14 @@ def test_agents_documents_testing_and_yarn_commands(agents: str) -> None:
     assert "tests/integration/" in agents
 
 
+def test_agents_documents_changesets_release(agents: str) -> None:
+    """AGENTS.md documents the changesets release flow (#3269)."""
+    assert "## Releasing" in agents
+    assert "npx changeset" in agents
+    assert "no-cli-release" in agents
+    assert "cli-vX.Y.Z" in agents
+
+
 def test_agents_documents_mock_commands(agents: str) -> None:
     """AGENTS.md documents the mock command group and its REST surfaces."""
     assert "`mock`" in agents
