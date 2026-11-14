@@ -1714,6 +1714,28 @@ apiome --json types list | apiome primitives import --update --yes
 - `--report <path>` writes the per-row JSON report (`rows[].row|name|status|message`, `summary`,
   `importId`, `dryRun`); `--json` prints it on stdout and moves the text to stderr.
 
+### Create a data record
+
+`apiome data create --class <project>/<version>/<Class>` adds one record to a class of a
+**published** version (`POST /v1/data/{tenant}/records`), after checking it against the class's
+frozen JSON Schema.
+
+```bash
+apiome data create --class billing/1.0.0/Charge --from-file charge.json
+echo '{"amount":1.0,"currency":"USD"}' | apiome data create --class billing/1.0.0/Charge --stdin
+apiome data create --class billing/1.0.0/Charge --field amount=:19.99 --field currency=USD --dry-run
+```
+
+- `--class` is resolved with `GET /v1/data/{tenant}/classes?project=&version=` (a leading `v` on
+  the version is fine; an exact class name wins, else a unique case-insensitive one). An unknown
+  project, version or class, or an unpublished version, exits **2**.
+- The record comes from `--from-file` (JSON or YAML), `--stdin`, or `--field key=value`
+  (`key=:<json>` parses the value as JSON); `--field` is applied on top of the file or stdin object.
+- A record that fails the schema exits **7** with one `field: message` line per problem; nothing is
+  sent. A schema with a `$ref` that cannot be resolved offline is not checked locally (a warning).
+- `--dry-run` validates only. `--json` (global or on the command) prints `record_id`, `project`,
+  `version`, `class`, `class_schema_id` and `data`.
+
 ### List resources
 
 Human-readable tables (default):

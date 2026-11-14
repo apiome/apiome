@@ -782,6 +782,20 @@ def primitives_import_review(tenant_slug: str) -> str:
     return f"{V1}/primitives/{tenant_slug}/import/review"
 
 
+def data_classes(tenant_slug: str) -> str:
+    """``GET ?project=&version=[&class=]`` resolves a version's classes to their frozen class schemas.
+
+    Answers each class's ``class_schema_id`` (what a data record is created against) and its JSON
+    Schema 2020-12 ``schema``; an unpublished version answers an empty ``classes`` list (#3255).
+    """
+    return f"{V1}/data/{tenant_slug}/classes"
+
+
+def data_records(tenant_slug: str) -> str:
+    """``POST {class_schema_id, data}`` creates a data record; answers ``{success, record_id}``."""
+    return f"{V1}/data/{tenant_slug}/records"
+
+
 def properties(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/properties/{tenant_slug}/{project_id}"
 

@@ -18,6 +18,7 @@ from apiome_cli.commands import (
     connectors,
     contract,
     convert,
+    data,
     diff,
     doctor,
     export,
@@ -92,6 +93,7 @@ app.add_typer(schema.app, name="schema")
 app.add_typer(schemas.app, name="schemas")
 app.add_typer(types.app, name="types")
 app.add_typer(primitives.app, name="primitives")
+app.add_typer(data.app, name="data")
 app.add_typer(versions.app, name="versions")
 app.add_typer(tags.app, name="tags")
 app.add_typer(paths.app, name="paths")

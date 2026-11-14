@@ -9978,6 +9978,65 @@ class Database:
             "schema": row["schema"] if isinstance(row["schema"], dict) else {},
         }
 
+    def find_data_version(
+        self, tenant_id: str, project_slug: str, version_label: str
+    ) -> Optional[Dict[str, Any]]:
+        """Find the tenant's version a data-records class address names (#3255).
+
+        The label matches ``versions.version_id`` as written, or without a leading ``v``
+        (``v1.0.0`` finds ``1.0.0``); an exact match wins when both exist.
+
+        Args:
+            tenant_id: The caller's tenant (from the token, never the request).
+            project_slug: The project's slug.
+            version_label: The version label, e.g. ``1.0.0`` or ``v1.0.0``.
+
+        Returns:
+            ``{version_record_id, version, published, project_slug}``, or ``None`` when the
+            project or version does not exist in the tenant (or is deleted).
+        """
+        labels = [version_label]
+        if version_label[:1] in ("v", "V") and len(version_label) > 1:
+            labels.append(version_label[1:])
+        query = """
+            SELECT v.id AS version_record_id, v.version_id AS version, v.published,
+                   p.slug AS project_slug
+            FROM apiome.versions v
+            JOIN apiome.projects p ON p.id = v.project_id AND p.tenant_id = %s AND p.deleted_at IS NULL
+            WHERE p.slug = %s AND v.version_id = ANY(%s) AND v.deleted_at IS NULL
+            ORDER BY (v.version_id = %s) DESC
+            LIMIT 1
+        """
+        results = self.execute_query(query, (tenant_id, project_slug, labels, version_label))
+        return results[0] if results else None
+
+    def list_version_class_schemas(
+        self, version_record_id: str, class_name: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """List the frozen class schemas captured when a version was published (#3255).
+
+        Args:
+            version_record_id: The version's record id (from :meth:`find_data_version`, which
+                already scoped it to the tenant).
+            class_name: Only the class with exactly this name, when given.
+
+        Returns:
+            ``{class_schema_id, class_id, class_name, schema}`` rows ordered by class name;
+            empty for a version that was never published.
+        """
+        query = """
+            SELECT cs.id AS class_schema_id, cs.class_id, c.name AS class_name, cs.schema
+            FROM apiome.class_schema cs
+            JOIN apiome.classes c ON c.id = cs.class_id AND c.deleted_at IS NULL
+            WHERE cs.version_id = %s
+        """
+        params: List[Any] = [version_record_id]
+        if class_name is not None:
+            query += " AND c.name = %s"
+            params.append(class_name)
+        query += " ORDER BY c.name ASC"
+        return self.execute_query(query, tuple(params))
+
     def insert_data_record(
         self,
         class_schema_id: str,

@@ -1,6 +1,7 @@
-"""Input helpers shared by the commands that create things (``properties``, ``classes``).
+"""Input helpers shared by the commands that create things (``properties``, ``classes``, ``data``).
 
 * :func:`read_object_file` — ``--from-file``: one JSON or YAML object, or exit 2;
+* :func:`read_object_text` — the same for text already read (e.g. stdin);
 * :func:`exit_field_errors` — print ``field: message`` lines and exit 7;
 * :func:`prompt_primitive` — ask for a primitive, listing matches for part of a name.
 """
@@ -29,13 +30,27 @@ def read_object_file(path: Path, *, shape: str) -> dict[str, Any]:
     except OSError as exc:
         typer.echo(f"Cannot read {path}: {exc.strerror or exc}.", err=True)
         raise typer.Exit(EXIT_USAGE) from exc
+    return read_object_text(text, label=str(path), shape=shape)
+
+
+def read_object_text(text: str, *, label: str, shape: str) -> dict[str, Any]:
+    """Parse one JSON or YAML object (a file's text, or stdin), or exit 2 saying why it cannot be used.
+
+    Args:
+        text: The document.
+        label: Where it came from, for the message (a path, or ``"stdin"``).
+        shape: What the object holds, for the message.
+
+    Returns:
+        The parsed object.
+    """
     try:
         document = safe_load(text)
     except ValueError as exc:
-        typer.echo(f"{path} is not valid JSON or YAML: {exc}", err=True)
+        typer.echo(f"{label} is not valid JSON or YAML: {exc}", err=True)
         raise typer.Exit(EXIT_USAGE) from exc
     if not isinstance(document, dict):
-        typer.echo(f"{path} must hold one {shape}.", err=True)
+        typer.echo(f"{label} must hold one {shape}.", err=True)
         raise typer.Exit(EXIT_USAGE)
     return document
 

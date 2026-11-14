@@ -1,7 +1,7 @@
 ---
 title: "apiome repos"
 description: "List tenant Git repositories and inspect repository files."
-sidebar_position: 31
+sidebar_position: 32
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---

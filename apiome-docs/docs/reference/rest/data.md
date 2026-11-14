@@ -1,6 +1,6 @@
 ---
 title: "Data"
-description: "REST endpoints tagged data: 6 operations."
+description: "REST endpoints tagged data: 7 operations."
 sidebar_position: 29
 tags: [rest, reference]
 generated: apiome-rest/scripts/generate_rest_reference_docs.py
@@ -9,9 +9,9 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.552.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.553.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
-Tag: `data` · 6 operations
+Tag: `data` · 7 operations
 
 ## `GET /v1/data/{tenant_slug}` {#data-api-info-v1-data-tenant-slug-get}
 
@@ -34,6 +34,41 @@ Operation id: `data_api_info_v1_data__tenant_slug__get`
 | Status | Description | Body |
 | --- | --- | --- |
 | 200 | Successful response for data api info. | `application/json` object |
+| 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
+
+## `GET /v1/data/{tenant_slug}/classes` {#list-data-classes-v1-data-tenant-slug-classes-get}
+
+**List Data Classes**
+
+Resolve a version's classes to the frozen class schemas data records attach to (#3255).
+
+Records are created against a ``class_schema_id`` — the JSON Schema 2020-12 captured for
+a class when its version was published. This answers each class's ``class_schema_id`` and
+``schema``, so a client can address a class as ``<project>/<version>/<Class>`` and
+validate a payload locally before ``POST …/records``.
+
+A version that was never published has no class schemas: the answer is ``200`` with an
+empty ``classes`` list (and ``published: false``), never an error. An unknown project or
+version is ``404``. Requires ``versions:view``.
+
+Operation id: `list_data_classes_v1_data__tenant_slug__classes_get`
+
+**Parameters**
+
+| Name | In | Type | Required | Description |
+| --- | --- | --- | --- | --- |
+| `tenant_slug` | path | string | yes | URL-safe tenant slug that scopes the request. |
+| `project` | query | string | yes | Project slug |
+| `version` | query | string | yes | Version label, e.g. 1.0.0 (a leading v is accepted) |
+| `class` | query | string or null | no | Only the class with exactly this name |
+| `authorization` | header | string or null | no | JWT bearer token for authenticated access (``Authorization: Bearer <token>``). |
+| `X-API-Key` | header | string or null | no | Tenant-scoped API key used as an alternative to JWT bearer authentication. |
+
+**Responses**
+
+| Status | Description | Body |
+| --- | --- | --- |
+| 200 | Successful response for list data classes. | `application/json` object |
 | 422 | Validation Error | `application/json` [`HTTPValidationError`](#schema-httpvalidationerror) |
 
 ## `POST /v1/data/{tenant_slug}/records` {#create-data-record-v1-data-tenant-slug-records-post}

@@ -1,7 +1,7 @@
 ---
 title: "apiome graph"
 description: "The dependency graph: declare and list what an API depends on."
-sidebar_position: 16
+sidebar_position: 17
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
 ---
