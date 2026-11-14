@@ -1,6 +1,6 @@
 [project]
 name = "apiome-mock"
-version = "0.16.4"
+version = "0.17.0"
 description = "Objectified mock server runtime for Apiome (FastAPI)."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,7 @@ dependencies = [
     "apiome-mcp>=0.2.0",
     "apiome-rest>=1.0.53",
     "bcrypt==4.2.0",
+    "graphql-core>=3.2.3",
     "grpcio>=1.66.0",
     "grpcio-reflection>=1.66.0",
     "httpx>=0.28.1",

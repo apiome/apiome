@@ -131,7 +131,7 @@ settings **per key**, so previewing a reworked correlation block keeps the versi
 * A key the draft declares replaces the stored one; a key it omits keeps the stored value; an
   explicit `null` clears it.
 * Draft keys are exactly the ones that travel in a bundle: `scenarios`, `activeScenario`, `chaos`, `fixturePacks`,
-  `callbacks`, `correlation`. Access control (the private-mock `mode`) and the proxy-capture grant
+  `callbacks`, `correlation`, `graphql`. Access control (the private-mock `mode`) and the proxy-capture grant
   are hosted concerns with no meaning in a render.
 * The draft is **canonicalized and validated with the same rules its save route applies**, so a
   block that could never be saved is a `422` here rather than a block that silently does nothing.

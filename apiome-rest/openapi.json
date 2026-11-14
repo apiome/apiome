@@ -3,7 +3,7 @@
   "info": {
     "title": "Apiome REST API",
     "description": "REST API for managing tenants, projects, versions, primitives, classes, paths, operations, catalog items, imports, exports, governance, and MCP catalog surfaces.",
-    "version": "1.561.0",
+    "version": "1.562.0",
     "contact": {
       "name": "Apiome",
       "url": "https://apiome.dev"
@@ -58097,7 +58097,7 @@
           "versions"
         ],
         "summary": "Set Version Mock Scenarios",
-        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2).\n\nCanned responses are validated against the version's generated OpenAPI\ndocument (operation exists, status defined, media type declared, body\nmatches the response schema); a response may opt out with ``offSpec``.\nDefinitions persist in ``versions.mock_settings`` alongside other mock\nknobs and survive publish/republish and mock toggles.\n\nThe request also carries the version-level latency/chaos knobs (#4455\nSIM-4.3): ``chaos`` replaces the stored block, and omitting it (or\nsending ``null``) clears the stored block.\n\n``activeScenario`` (#5531, MSC-2.1) names the scenario the hosted mock serves when a request\nsends no ``X-Mock-Scenario`` header; it must name one of the scenarios in this same request.\nUnlike the other two keys it is *preserved* when the field is omitted and cleared only when it\nis sent as ``null`` \u2014 an editor written before the field existed keeps sending\n``{scenarios, chaos}``, and a save from it must not silently switch a version's mock back to\nits default flow.\n\nWith ``?dryRun=true`` nothing is written: the same validation runs and the response describes\nwhat *would* be stored (#5530, MSC-1.4).",
+        "description": "Replace the version's mock scenario definitions (#4454 SIM-4.2).\n\nCanned responses are validated against the version's generated OpenAPI\ndocument (operation exists, status defined, media type declared, body\nmatches the response schema); a response may opt out with ``offSpec``.\nDefinitions persist in ``versions.mock_settings`` alongside other mock\nknobs and survive publish/republish and mock toggles.\n\nThe request also carries the version-level latency/chaos knobs (#4455\nSIM-4.3): ``chaos`` replaces the stored block, and omitting it (or\nsending ``null``) clears the stored block.\n\n``activeScenario`` (#5531, MSC-2.1) names the scenario the hosted mock serves when a request\nsends no ``X-Mock-Scenario`` header; it must name one of the scenarios in this same request.\nUnlike the other two keys it is *preserved* when the field is omitted and cleared only when it\nis sent as ``null`` \u2014 an editor written before the field existed keeps sending\n``{scenarios, chaos}``, and a save from it must not silently switch a version's mock back to\nits default flow.\n\nWith ``?dryRun=true`` nothing is written: the same validation runs and the response describes\nwhat *would* be stored (#5530, MSC-1.4).\n\nGraphQL versions (#5729, XPC-1.1): an operation key may be a root-field coordinate\n(``Query.user``), checked against the version's GraphQL schema. ``graphql`` holds the GraphQL\nmock's depth and complexity caps and list length; like ``activeScenario`` it is preserved when\nomitted and cleared only when sent as ``null``.",
         "operationId": "set_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_put",
         "parameters": [
           {
@@ -180310,7 +180310,7 @@
             },
             "type": "object",
             "title": "Operations",
-            "description": "Per-route overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+            "description": "Per-route overrides keyed by \"METHOD /path/{template}\" operation identifiers, or by a GraphQL root-field coordinate such as \"Query.user\"."
           }
         },
         "additionalProperties": false,
@@ -180659,6 +180659,62 @@
         "type": "object",
         "title": "MockFixturePackSpec",
         "description": "One versioned fixture pack: deterministic seed data for stateful mocks (#4745 PMR-2.2)."
+      },
+      "MockGraphQlSettingsSpec": {
+        "properties": {
+          "maxDepth": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 1.0,
+                "description": "Mock Graph Ql Settings Spec schema."
+              },
+              {
+                "type": "null",
+                "description": "Mock Graph Ql Settings Spec schema."
+              }
+            ],
+            "title": "Maxdepth",
+            "description": "Deepest field nesting an operation may select (1-50; default 10)."
+          },
+          "maxComplexity": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 100000.0,
+                "minimum": 1.0,
+                "description": "Mock Graph Ql Settings Spec schema."
+              },
+              {
+                "type": "null",
+                "description": "Mock Graph Ql Settings Spec schema."
+              }
+            ],
+            "title": "Maxcomplexity",
+            "description": "Largest complexity an operation may score: each field costs 1, multiplied by the list length of every list above it (1-100000; default 1000)."
+          },
+          "listLength": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 0.0,
+                "description": "Mock Graph Ql Settings Spec schema."
+              },
+              {
+                "type": "null",
+                "description": "Mock Graph Ql Settings Spec schema."
+              }
+            ],
+            "title": "Listlength",
+            "description": "Items in every synthesized list (0-50; default 3)."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "MockGraphQlSettingsSpec",
+        "description": "GraphQL mock limits and list length for one version (#5729 XPC-1.1).\n\nStored under ``versions.mock_settings.graphql`` and read by apiome-mock's ``/graphql`` route.\nAn unset field takes the runtime default."
       },
       "MockInstanceResponse": {
         "properties": {
@@ -181103,6 +181159,18 @@
             ],
             "title": "Activescenario",
             "description": "Draft default scenario applied when the previewed request sends no X-Mock-Scenario header (#5531 MSC-2.1); replaces the stored one. Rendered exactly as the runtime would: a name that resolves to no scenario is ignored, because a draft may legitimately name one that lives in the version's stored scenarios."
+          },
+          "graphql": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockGraphQlSettingsSpec"
+              },
+              {
+                "type": "null",
+                "description": "Mock Preview Settings Spec schema."
+              }
+            ],
+            "description": "Draft GraphQL mock limits and list length (#5729 XPC-1.1); replaces the stored block."
           }
         },
         "additionalProperties": false,
@@ -229674,6 +229742,18 @@
             ],
             "title": "Activescenario",
             "description": "The scenario the mock serves when a request sends no X-Mock-Scenario header (#5531 MSC-2.1). It must name one of the scenarios in this same request. Sending null clears it; omitting the field entirely keeps whatever is stored, so an editor that does not know about it cannot silently drop a version's active scenario."
+          },
+          "graphql": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockGraphQlSettingsSpec"
+              },
+              {
+                "type": "null",
+                "description": "Request body for version mock scenarios."
+              }
+            ],
+            "description": "GraphQL mock limits and list length (#5729 XPC-1.1). Sending null clears them; omitting the field keeps whatever is stored."
           }
         },
         "type": "object",
@@ -229715,6 +229795,18 @@
             ],
             "title": "Activescenario",
             "description": "The scenario served when a request sends no X-Mock-Scenario header; null when the version has none (#5531 MSC-2.1)."
+          },
+          "graphql": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MockGraphQlSettingsSpec"
+              },
+              {
+                "type": "null",
+                "description": "Response payload for version mock scenarios."
+              }
+            ],
+            "description": "GraphQL mock limits and list length; null when none are stored (#5729 XPC-1.1)."
           }
         },
         "type": "object",
@@ -234523,7 +234615,7 @@
             },
             "type": "object",
             "title": "Operations",
-            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers, or by a GraphQL root-field coordinate such as \"Query.user\"."
           },
           "chaos": {
             "anyOf": [
@@ -234559,7 +234651,7 @@
             },
             "type": "object",
             "title": "Operations",
-            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers."
+            "description": "Overrides keyed by \"METHOD /path/{template}\" operation identifiers, or by a GraphQL root-field coordinate such as \"Query.user\"."
           },
           "chaos": {
             "anyOf": [

@@ -9,7 +9,7 @@ generated: apiome-rest/scripts/generate_rest_reference_docs.py
 <!-- GENERATED FILE — do not edit by hand.
      Regenerate with: cd apiome-rest && uv run python scripts/generate_rest_reference_docs.py -->
 
-Generated from `apiome-rest/openapi.yaml` (API version **1.561.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
+Generated from `apiome-rest/openapi.yaml` (API version **1.562.0**) — do not edit by hand. How to authenticate is on the [REST API reference](./index.mdx#authentication).
 
 Tag: `versions` · 58 operations
 
@@ -1785,6 +1785,11 @@ its default flow.
 With ``?dryRun=true`` nothing is written: the same validation runs and the response describes
 what *would* be stored (#5530, MSC-1.4).
 
+GraphQL versions (#5729, XPC-1.1): an operation key may be a root-field coordinate
+(``Query.user``), checked against the version's GraphQL schema. ``graphql`` holds the GraphQL
+mock's depth and complexity caps and list length; like ``activeScenario`` it is preserved when
+omitted and cleared only when sent as ``null``.
+
 Operation id: `set_version_mock_scenarios_v1_versions__tenant_slug___project_id___version_record_id__mock_scenarios_put`
 
 **Parameters**
@@ -2574,6 +2579,7 @@ Replace the version's mock scenario definitions (#4454 SIM-4.2).
 | `scenarios` | map of `MockScenarioSpecInput` | no | Scenario definitions keyed by scenario name; an empty map clears them. |
 | `chaos` | `MockChaosSpec` or null | no | Version-level latency/chaos knobs; omit or send null to clear them (#4455 SIM-4.3). |
 | `activeScenario` | string or null | no | The scenario the mock serves when a request sends no X-Mock-Scenario header (#5531 MSC-2.1). It must name one of the scenarios in this same request. Sending null clears it; omitting the field entirely keeps whatever is stored, so an editor that does not know about it cannot silently drop a version's active scenario. |
+| `graphql` | `MockGraphQlSettingsSpec` or null | no | GraphQL mock limits and list length (#5729 XPC-1.1). Sending null clears them; omitting the field keeps whatever is stored. |
 
 ### `VersionMockScenariosResponse` {#schema-versionmockscenariosresponse}
 
@@ -2584,6 +2590,7 @@ The version's persisted mock scenario definitions (#4454 SIM-4.2).
 | `scenarios` | map of `MockScenarioSpecOutput` | no | Scenario definitions keyed by scenario name. |
 | `chaos` | `MockChaosSpec` or null | no | Version-level latency/chaos knobs (#4455 SIM-4.3). |
 | `activeScenario` | string or null | no | The scenario served when a request sends no X-Mock-Scenario header; null when the version has none (#5531 MSC-2.1). |
+| `graphql` | `MockGraphQlSettingsSpec` or null | no | GraphQL mock limits and list length; null when none are stored (#5729 XPC-1.1). |
 
 ### `VersionMockToggleRequest` {#schema-versionmocktogglerequest}
 

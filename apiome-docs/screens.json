@@ -878,6 +878,19 @@
       "data": "fixture:hive-mock-correlation/correlation-dialog.html"
     },
     {
+      "id": "mock-graphql-published-cell",
+      "route": "/ade/dashboard/published",
+      "waitFor": "#a11y-mount > *",
+      "mask": [
+        "time"
+      ],
+      "data": "fixture:hive-published/graphql-mock-cell.html",
+      "sources": [
+        "apiome-ui/src/app/components/ade/dashboard/VersionMockCell.tsx",
+        "apiome-ui/src/app/components/ade/published/PublishedTable.tsx"
+      ]
+    },
+    {
       "id": "lint-posture",
       "route": "/ade/dashboard/lint-workspace",
       "waitFor": "#a11y-mount > *",

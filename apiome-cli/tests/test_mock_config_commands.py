@@ -454,6 +454,8 @@ def test_push_sends_the_document_sections_to_the_routes_that_own_them(
         # Always sent, even as null: a whole-document push clears what the file leaves out
         # (#5531, MSC-2.1).
         "activeScenario": _STORED_SCENARIOS.get("activeScenario"),
+        # The GraphQL mock settings travel the same way (#5729, XPC-1.1).
+        "graphql": _STORED_SCENARIOS.get("graphql"),
     }
     assert bodies["correlation"] == {"correlation": _STORED_CORRELATION["correlation"]}
     assert bodies["fixture-packs"] == {"packs": _STORED_PACKS["packs"]}

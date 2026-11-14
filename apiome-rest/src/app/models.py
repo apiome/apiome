@@ -4937,7 +4937,44 @@ class MockChaosSpec(BaseModel):
     )
     operations: Dict[str, MockChaosKnobsSpec] = Field(
         default_factory=dict,
-        description='Per-route overrides keyed by "METHOD /path/{template}" operation identifiers.',
+        description='Per-route overrides keyed by "METHOD /path/{template}" operation identifiers, or by a '
+        'GraphQL root-field coordinate such as "Query.user".',
+    )
+
+
+class MockGraphQlSettingsSpec(BaseModel):
+    """GraphQL mock limits and list length for one version (#5729 XPC-1.1).
+
+    Stored under ``versions.mock_settings.graphql`` and read by apiome-mock's ``/graphql`` route.
+    An unset field takes the runtime default.
+    """
+
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
+    max_depth: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=50,
+        validation_alias=AliasChoices("maxDepth", "max_depth"),
+        serialization_alias="maxDepth",
+        description="Deepest field nesting an operation may select (1-50; default 10).",
+    )
+    max_complexity: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=100_000,
+        validation_alias=AliasChoices("maxComplexity", "max_complexity"),
+        serialization_alias="maxComplexity",
+        description="Largest complexity an operation may score: each field costs 1, multiplied by "
+        "the list length of every list above it (1-100000; default 1000).",
+    )
+    list_length: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=50,
+        validation_alias=AliasChoices("listLength", "list_length"),
+        serialization_alias="listLength",
+        description="Items in every synthesized list (0-50; default 3).",
     )
 
 
@@ -4949,7 +4986,8 @@ class MockScenarioSpec(BaseModel):
     description: str = Field(default="", max_length=500, description="Human summary of the situation.")
     operations: Dict[str, MockScenarioOperationSpec] = Field(
         default_factory=dict,
-        description='Overrides keyed by "METHOD /path/{template}" operation identifiers.',
+        description='Overrides keyed by "METHOD /path/{template}" operation identifiers, or by a '
+        'GraphQL root-field coordinate such as "Query.user".',
     )
     chaos: Optional[MockChaosSpec] = Field(
         default=None,
@@ -4979,6 +5017,11 @@ class VersionMockScenariosRequest(BaseModel):
         "clears it; omitting the field entirely keeps whatever is stored, so an editor that does "
         "not know about it cannot silently drop a version's active scenario.",
     )
+    graphql: Optional[MockGraphQlSettingsSpec] = Field(
+        default=None,
+        description="GraphQL mock limits and list length (#5729 XPC-1.1). Sending null clears them; "
+        "omitting the field keeps whatever is stored.",
+    )
 
 
 class VersionMockScenariosResponse(BaseModel):
@@ -5000,6 +5043,10 @@ class VersionMockScenariosResponse(BaseModel):
         serialization_alias="activeScenario",
         description="The scenario served when a request sends no X-Mock-Scenario header; "
         "null when the version has none (#5531 MSC-2.1).",
+    )
+    graphql: Optional[MockGraphQlSettingsSpec] = Field(
+        default=None,
+        description="GraphQL mock limits and list length; null when none are stored (#5729 XPC-1.1).",
     )
 
 
@@ -5408,6 +5455,10 @@ class MockPreviewSettingsSpec(BaseModel):
         "X-Mock-Scenario header (#5531 MSC-2.1); replaces the stored one. Rendered exactly as "
         "the runtime would: a name that resolves to no scenario is ignored, because a draft may "
         "legitimately name one that lives in the version's stored scenarios.",
+    )
+    graphql: Optional[MockGraphQlSettingsSpec] = Field(
+        default=None,
+        description="Draft GraphQL mock limits and list length (#5729 XPC-1.1); replaces the stored block.",
     )
 
 

@@ -238,3 +238,30 @@ describe('VersionMockCell — editors (MSC-1.3, #5529)', () => {
     expect(screen.queryByTestId('version-mock-scenarios-button-rev-1')).not.toBeInTheDocument();
   });
 });
+
+describe('VersionMockCell — GraphQL versions (#5729)', () => {
+  it('shows and copies the /graphql endpoint with the subscriptions note', async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, { clipboard: { writeText } });
+    renderCell({ mockEnabled: true, mockBaseUrl: MOCK_URL, graphql: true });
+
+    expect(screen.getByText(`${MOCK_URL}/graphql`)).toBeInTheDocument();
+    expect(screen.getByTestId('version-mock-graphql-note-rev-1')).toHaveTextContent(
+      'Subscriptions are not served on this deployment yet.'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy mock URL for version 1.0.0' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(`${MOCK_URL}/graphql`));
+  });
+
+  it('keeps the REST base URL and no note for other versions', () => {
+    renderCell({ mockEnabled: true, mockBaseUrl: MOCK_URL });
+    expect(screen.getByText(MOCK_URL)).toBeInTheDocument();
+    expect(screen.queryByTestId('version-mock-graphql-note-rev-1')).not.toBeInTheDocument();
+  });
+
+  it('shows no note while the mock is off', () => {
+    renderCell({ mockEnabled: false, graphql: true });
+    expect(screen.queryByTestId('version-mock-graphql-note-rev-1')).not.toBeInTheDocument();
+  });
+});

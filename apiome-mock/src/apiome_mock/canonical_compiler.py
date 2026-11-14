@@ -1,8 +1,14 @@
-"""Compile canonical API models into multi-protocol mock routing tables (SIM-4.4)."""
+"""Compile canonical API models into multi-protocol mock routing tables (SIM-4.4).
+
+GraphQL versions (#5729, XPC-1.1) compile into one :class:`GraphQlRoute`: the executable schema,
+the declared examples, and the version's mock settings, parsed once per cache entry so a request
+only parses and executes its operation.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any, Mapping
 
 from app.canonical_model import (
     ApiParadigm,
@@ -14,8 +20,14 @@ from app.canonical_model import (
     OperationKind,
     StreamingMode,
 )
+from graphql import GraphQLSchema
 
 from apiome_mock.canonical_loader import LoadedCanonicalSpec
+from apiome_mock.chaos import EMPTY_CHAOS, ChaosConfig, parse_chaos
+from apiome_mock.fixture_packs import merged_template_data, parse_fixture_packs
+from apiome_mock.graphql_resolver import DeclaredExamples, collect_declared_examples
+from apiome_mock.graphql_schema import GraphQlMockSettings, build_executable_schema, parse_graphql_settings
+from apiome_mock.scenarios import Scenario, parse_active_scenario, parse_scenarios
 
 _WS_PROTOCOLS = frozenset({"ws", "websocket", "wss"})
 _SSE_PROTOCOLS = frozenset({"sse", "http", "https"})
@@ -48,12 +60,36 @@ class GrpcMethodRoute:
 
 
 @dataclass(frozen=True)
+class GraphQlRoute:
+    """The ``/graphql`` route of one GraphQL version (#5729, XPC-1.1).
+
+    Attributes:
+        schema: The executable ``graphql-core`` schema.
+        examples: Examples declared on the canonical model, by coordinate and by type.
+        settings: The ``mock_settings.graphql`` caps and list length.
+        scenarios: Scenario overrides (built-ins included), keyed by name.
+        active_scenario: The stored active scenario's name, if any.
+        chaos: Version-level chaos knobs.
+        fixtures: Fixture-pack data merged into one mapping (coordinate-keyed values apply).
+    """
+
+    schema: GraphQLSchema = field(compare=False)
+    examples: DeclaredExamples = field(default_factory=DeclaredExamples)
+    settings: GraphQlMockSettings = field(default_factory=GraphQlMockSettings)
+    scenarios: Mapping[str, Scenario] = field(default_factory=dict)
+    active_scenario: str | None = None
+    chaos: ChaosConfig = EMPTY_CHAOS
+    fixtures: Mapping[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
 class CompiledCanonicalSpec:
     """Routing tables compiled from a canonical API model."""
 
     loaded: LoadedCanonicalSpec
     event_channels: tuple[EventChannelRoute, ...]
     grpc_methods: tuple[GrpcMethodRoute, ...]
+    graphql: GraphQlRoute | None = None
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -164,18 +200,46 @@ def _compile_grpc_methods(api: CanonicalApi) -> tuple[GrpcMethodRoute, ...]:
     return tuple(routes)
 
 
+def compile_graphql_route(api: CanonicalApi, mock_settings: Any = None) -> GraphQlRoute:
+    """Compile the ``/graphql`` route for a GraphQL canonical model.
+
+    Args:
+        api: The version's canonical model (paradigm ``GRAPH``).
+        mock_settings: The version's raw ``mock_settings`` (dict, JSON text, or ``None``).
+
+    Returns:
+        The compiled :class:`GraphQlRoute`.
+
+    Raises:
+        ValueError: When no valid executable schema can be built for the model.
+    """
+    return GraphQlRoute(
+        schema=build_executable_schema(api),
+        examples=collect_declared_examples(api),
+        settings=parse_graphql_settings(mock_settings),
+        scenarios=parse_scenarios(mock_settings),
+        active_scenario=parse_active_scenario(mock_settings),
+        chaos=parse_chaos(mock_settings),
+        fixtures=merged_template_data(parse_fixture_packs(mock_settings)),
+    )
+
+
 def compile_canonical_spec(loaded: LoadedCanonicalSpec) -> CompiledCanonicalSpec:
     """Build transport routing tables from a loaded canonical model."""
     event_channels: tuple[EventChannelRoute, ...] = ()
     grpc_methods: tuple[GrpcMethodRoute, ...] = ()
+    graphql: GraphQlRoute | None = None
 
     if loaded.paradigm is ApiParadigm.EVENT:
         event_channels = _compile_event_channels(loaded.api)
     elif loaded.paradigm is ApiParadigm.RPC:
         grpc_methods = _compile_grpc_methods(loaded.api)
+    elif loaded.paradigm is ApiParadigm.GRAPH:
+        graphql = compile_graphql_route(loaded.api, loaded.mock_settings)
 
     return CompiledCanonicalSpec(
         loaded=loaded,
         event_channels=event_channels,
         grpc_methods=grpc_methods,
+        graphql=graphql,
     )

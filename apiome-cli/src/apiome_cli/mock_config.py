@@ -68,9 +68,17 @@ CONFIG_FORMAT = "apiome.mock.config/v1"
 #: breaking every current one.
 CONFIG_FORMAT_VERSION = 1
 
-#: The configuration sections, in the order they are reported. Every document carries all five,
+#: The configuration sections, in the order they are reported. Every document carries all six,
 #: because "absent" and "empty" must be the same thing for a document that replaces wholesale.
-SECTION_KEYS: tuple[str, ...] = ("correlation", "scenarios", "activeScenario", "chaos", "fixturePacks")
+#: ``graphql`` (#5729, XPC-1.1) holds a GraphQL mock's depth and complexity caps and list length.
+SECTION_KEYS: tuple[str, ...] = (
+    "correlation",
+    "scenarios",
+    "activeScenario",
+    "chaos",
+    "graphql",
+    "fixturePacks",
+)
 
 #: Sections that are a map of named entries, so a diff can name what changed inside them.
 _NAMED_SECTIONS: frozenset[str] = frozenset({"scenarios", "fixturePacks"})
@@ -91,6 +99,7 @@ def build_document(
     chaos: Any,
     fixture_packs: Mapping[str, Any],
     active_scenario: Any = None,
+    graphql: Any = None,
 ) -> dict[str, Any]:
     """Assemble a configuration document from the control plane's answers.
 
@@ -100,6 +109,7 @@ def build_document(
         chaos: The stored version-level chaos block, or ``None``.
         fixture_packs: The stored fixture packs keyed by pack name.
         active_scenario: The stored active scenario name, or ``None`` (#5531, MSC-2.1).
+        graphql: The stored GraphQL mock settings, or ``None`` (#5729, XPC-1.1).
 
     Returns:
         The document, ready for :func:`serialize_document`.
@@ -111,6 +121,7 @@ def build_document(
         "scenarios": dict(scenarios),
         "activeScenario": active_scenario,
         "chaos": chaos,
+        "graphql": graphql,
         "fixturePacks": dict(fixture_packs),
     }
 
@@ -188,7 +199,7 @@ def parse_document(text: str, *, source: str) -> dict[str, Any]:
         value = parsed.get(key)
         if value is not None and not isinstance(value, dict):
             raise MockConfigError(f"{source}: '{key}' must be an object keyed by name.")
-    for key in ("correlation", "chaos"):
+    for key in ("correlation", "chaos", "graphql"):
         value = parsed.get(key)
         if value is not None and not isinstance(value, dict):
             raise MockConfigError(f"{source}: '{key}' must be an object, or null.")
@@ -202,6 +213,7 @@ def parse_document(text: str, *, source: str) -> dict[str, Any]:
         chaos=parsed.get("chaos"),
         fixture_packs=parsed.get("fixturePacks") or {},
         active_scenario=active_scenario,
+        graphql=parsed.get("graphql"),
     )
 
 
@@ -231,7 +243,8 @@ def document_sections(document: Mapping[str, Any]) -> dict[str, Any]:
         document: A parsed document.
 
     Returns:
-        ``{"correlation": …, "scenarios": …, "activeScenario": …, "chaos": …, "fixturePacks": …}``.
+        ``{"correlation": …, "scenarios": …, "activeScenario": …, "chaos": …, "graphql": …,
+        "fixturePacks": …}``.
     """
     return {key: document.get(key) for key in SECTION_KEYS}
 

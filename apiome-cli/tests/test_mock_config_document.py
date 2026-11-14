@@ -143,6 +143,31 @@ def test_setting_and_clearing_the_active_scenario_read_as_added_and_removed() ->
 # --------------------------------------------------------------------------- parsing
 
 
+def test_the_graphql_settings_are_a_section_of_their_own() -> None:
+    """The GraphQL mock's caps and list length round-trip through the file (#5729, XPC-1.1)."""
+    assert "graphql" in SECTION_KEYS
+    document = _document(graphql={"maxDepth": 6, "listLength": 2})
+    parsed = parse_document(serialize_document(document), source="mock.json")
+    assert parsed["graphql"] == {"maxDepth": 6, "listLength": 2}
+    assert document_sections(parsed)["graphql"] == {"maxDepth": 6, "listLength": 2}
+
+
+def test_a_document_without_graphql_settings_carries_them_as_null() -> None:
+    text = json.dumps({"configFormat": CONFIG_FORMAT, "configFormatVersion": 1})
+    assert parse_document(text, source="mock.json")["graphql"] is None
+
+
+def test_parsing_rejects_non_object_graphql_settings() -> None:
+    text = json.dumps({"configFormat": CONFIG_FORMAT, "graphql": [1]})
+    with pytest.raises(MockConfigError, match="'graphql' must be an object"):
+        parse_document(text, source="mock.json")
+
+
+def test_changing_the_graphql_settings_is_a_whole_section_change() -> None:
+    changes = diff_documents(_document(graphql={"maxDepth": 3}), _document(graphql={"maxDepth": 4})).changes
+    assert [(change.section, change.name, change.change) for change in changes] == [("graphql", None, "modified")]
+
+
 def test_parsing_requires_the_format_marker() -> None:
     with pytest.raises(MockConfigError, match="configFormat"):
         parse_document(json.dumps({"scenarios": {}}), source="mock.json")

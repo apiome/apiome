@@ -30,7 +30,12 @@ from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from apiome_mock.bundle import MockBundleError, MockBundleIncompatibleError, load_bundle_document
-from apiome_mock.sandbox import SandboxSessionStores, serve_sandbox_request
+from apiome_mock.sandbox import (
+    SandboxSessionStores,
+    is_graphql_sandbox_request,
+    serve_sandbox_graphql,
+    serve_sandbox_request,
+)
 from apiome_mock.settings import Settings, get_settings
 from apiome_mock.synthetic import SyntheticRequest
 
@@ -54,6 +59,9 @@ MAX_QUERY_VALUES = 256
 
 #: Largest sandbox identifier accepted; ids are opaque to this service.
 MAX_SANDBOX_ID_LENGTH = 128
+
+#: Largest GraphQL SDL a sandbox payload may carry (characters).
+MAX_GRAPHQL_SDL_LENGTH = 2_000_000
 
 
 class SandboxRequestModel(BaseModel):
@@ -128,6 +136,12 @@ class SandboxPayload(BaseModel):
         default_factory=SandboxRequestModel,
         description="The request to serve; defaults to GET / when omitted.",
     )
+    graphql_sdl: Optional[str] = Field(
+        default=None,
+        alias="graphqlSdl",
+        max_length=MAX_GRAPHQL_SDL_LENGTH,
+        description="GraphQL schema (SDL) to serve on /graphql (#5729, XPC-1.1); the bundle supplies the settings.",
+    )
 
 
 def _require_internal_token(presented: Optional[str], settings: Settings) -> None:
@@ -199,11 +213,14 @@ def create_sandbox_router(stores: Optional[SandboxSessionStores] = None) -> APIR
         except MockBundleError as exc:
             raise HTTPException(status_code=422, detail=exc.as_dict()) from exc
 
-        result = await serve_sandbox_request(
-            bundle.to_compiled_spec(),
-            request,
-            session_store=session_stores.for_sandbox(payload.sandbox),
-        )
+        if payload.graphql_sdl is not None and is_graphql_sandbox_request(request):
+            result = await serve_sandbox_graphql(bundle, payload.graphql_sdl, request)
+        else:
+            result = await serve_sandbox_request(
+                bundle.to_compiled_spec(),
+                request,
+                session_store=session_stores.for_sandbox(payload.sandbox),
+            )
         _log.info(
             "mock_sandbox_served",
             sandbox=payload.sandbox,

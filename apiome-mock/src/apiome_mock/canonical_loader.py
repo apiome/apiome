@@ -80,6 +80,8 @@ class LoadedCanonicalSpec:
     updated_at: datetime
     api: CanonicalApi
     source_format: str | None
+    mock_settings: Any = None
+    """The version's raw ``mock_settings`` (scenarios, chaos, fixture packs, ``graphql``; #5729)."""
 
     @property
     def cache_key(self) -> tuple[str, str, str]:
@@ -149,6 +151,7 @@ async def load_canonical_spec(
         updated_at=updated_at,
         api=api,
         source_format=row.get("source_format"),
+        mock_settings=access_row.get("mock_settings"),
     )
 
 

@@ -95,3 +95,29 @@ export function buildMockBaseUrl(
   if (!host || !tenantSlug || !projectSlug || !versionId) return null;
   return `${host}/${tenantSlug}/${projectSlug}/${versionId}`;
 }
+
+/** Path segment the GraphQL mock is served at under a version's mock base URL (#5729, XPC-1.1). */
+export const GRAPHQL_MOCK_PATH = 'graphql';
+
+/**
+ * Whether a version's `source_format` is GraphQL SDL (federated variants included), so its hosted
+ * mock answers at `{base}/graphql` rather than at REST paths. Mirrors apiome-mock's
+ * `is_graphql_source_format`.
+ *
+ * @param sourceFormat - the version's `source_format` column, if known
+ * @returns `true` for `graphql`, `graphql-federation`, …
+ */
+export function isGraphqlSourceFormat(sourceFormat: string | null | undefined): boolean {
+  return typeof sourceFormat === 'string' && sourceFormat.trim().toLowerCase().startsWith('graphql');
+}
+
+/**
+ * Build the GraphQL endpoint (`POST` operations, `GET` GraphiQL) of a GraphQL version's mock.
+ *
+ * @param mockBaseUrl - `{mockHost}/{tenant}/{project}/{version}`, or `null`
+ * @returns `{mockBaseUrl}/graphql`, or `null` when there is no base URL
+ */
+export function buildGraphqlMockUrl(mockBaseUrl: string | null | undefined): string | null {
+  if (!mockBaseUrl) return null;
+  return `${mockBaseUrl.replace(/\/+$/, '')}/${GRAPHQL_MOCK_PATH}`;
+}

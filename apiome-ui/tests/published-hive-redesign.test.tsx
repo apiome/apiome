@@ -167,6 +167,20 @@ const ORDERS_140 = {
 
 const ROWS = [ORDERS_192, PAYMENTS_231, PAYMENTS_220, ORDERS_140];
 
+/** A published GraphQL schema with its mock on (#5729, XPC-1.1). */
+const PEOPLE_GRAPH_100 = {
+  ...PAYMENTS_231,
+  id: '0f1a2b30-0000-4000-8000-000000000005',
+  version_id: '1.0.0',
+  description: 'People directory: users, teams and search.',
+  project_id: 'prj-people',
+  project_name: 'People Graph',
+  project_slug: 'people-graph',
+  published_at: '2026-08-14T09:00:00.000Z',
+  mock_enabled: true,
+  source_format: 'graphql',
+};
+
 /** One live key, so the View fly-out is open by default. */
 const LIVE_KEY = [{ id: 'key-1', enabled: true, expires_at: null }];
 
@@ -898,6 +912,18 @@ describe('the browser fixtures', () => {
     });
     await screen.findByTestId('published-visibility-error');
     write('error', page().outerHTML);
+  });
+
+  /* The docs site's GraphQL mock page (#5729) captures a GraphQL version's Mock cell: the
+     /graphql endpoint and the subscriptions note. */
+  it('renders a GraphQL row (and writes its fixture on request)', async () => {
+    await renderPublished({ rows: [PEOPLE_GRAPH_100, PAYMENTS_231] });
+    await screen.findByText(`${MOCK_HOST}/acme/people-graph/1.0.0/graphql`);
+    expect(screen.getByTestId(`version-mock-graphql-note-${PEOPLE_GRAPH_100.id}`)).toBeInTheDocument();
+    // The REST row beside it keeps its base URL and has no note.
+    expect(screen.getByText(`${MOCK_HOST}/acme/payments-api/2.3.1`)).toBeInTheDocument();
+    expect(screen.queryByTestId(`version-mock-graphql-note-${PAYMENTS_231.id}`)).toBeNull();
+    write('graphql-mock-cell', page().outerHTML);
   });
 
   /* The docs site's Published page (DOCS-1.7) captures the dialog a private row's key button

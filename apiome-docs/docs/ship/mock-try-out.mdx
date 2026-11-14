@@ -6,12 +6,13 @@ tags: [mocks, export]
 ---
 
 There are three ways to see what a mock answers before a consumer depends on it, from lightest to
-heaviest:
+heaviest. A GraphQL version's hosted mock is called the same way, at its `/graphql` URL:
 
 | Way | Where | Needs a running mock |
 | --- | --- | --- |
 | **Try it** — render one request without sending it | The **Scenarios** and **Correlation** editors | No |
 | **Hosted mock** — call the version's mock URL | The **Mock** cell on [Published](./published.mdx) or Versions | Yes, turned on |
+| **GraphQL mock** — query a GraphQL version, or open GraphiQL | The `/graphql` URL in the **Mock** cell on [Published](./published.mdx) | Yes, turned on |
 | **Mock server test drive** — a short-lived mock of a file you just exported | [Export studio](./export-studio.mdx), **Review & Generate** | Started for you, for 30 minutes |
 
 ## Preview a response (Try it)
@@ -40,6 +41,31 @@ curl -H 'X-Mock-Scenario: quota-exceeded' https://mock.apiome.dev/acme/payments-
 ```
 
 The **Mock** cell's sparkline counts the requests over 30 days.
+
+## Query a GraphQL mock
+
+<Route path="/ade/dashboard/published" />
+
+A version imported from GraphQL SDL is mocked at one URL, which its **Mock** cell shows and copies
+in place of the base URL.
+
+1. On **Published**, **turn on** the GraphQL version's **Mock** switch.
+2. **Click the copy button** beside the URL ending in `/graphql`.
+3. **Open the URL in a browser** to explore the schema in **GraphiQL**, or send operations to it:
+
+```bash
+curl -X POST https://mock.apiome.dev/acme/people-graph/1.0.0/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query": "{ user(id: \"1\") { id email } }"}'
+```
+
+Fields with declared examples return them; everything else is seeded synthetic data, the same for
+the same `?__seed=`. Scenarios and chaos name a root field as `Query.user`. The note under the URL
+is a reminder that **subscriptions are not served yet**: a subscription returns an error with code
+`UNSUPPORTED_ON_THIS_DEPLOYMENT`. Limits, errors and the resolver order are in
+[GraphQL mocks](../reference/mock-runtime/graphql-mock.md).
+
+<Screenshot id="mock-graphql-published-cell" alt="Published: the People Graph v1.0.0 Mock cell is on, shows its /graphql URL and notes that subscriptions are not served yet" />
 
 ## Test-drive an export
 
@@ -79,4 +105,4 @@ the reason, on a server without mock infrastructure.
 ## Where next
 
 The [Mock runtime](/reference/mock-runtime) guides cover the bundle format, fixture packs, callbacks,
-correlation, proxy capture and attestation.
+correlation, proxy capture, attestation and [GraphQL mocks](../reference/mock-runtime/graphql-mock.md).

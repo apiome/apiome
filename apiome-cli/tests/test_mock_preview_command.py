@@ -214,6 +214,7 @@ def test_a_config_file_is_sent_as_the_draft_settings(httpx_mock: object, tmp_pat
         "scenarios": {},
         "activeScenario": None,
         "chaos": None,
+        "graphql": None,
         "fixturePacks": {},
     }
     assert "unsaved draft" in result.stdout

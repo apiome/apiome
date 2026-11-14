@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.702.0] - 2026-11-14
+
+### Added
+- **GraphQL mocks (XPC-1.1, #5729)** — OpenAPI 1.562.0:
+  - `PUT /v1/versions/{t}/{project_id}/{version_record_id}/mock/scenarios` accepts `graphql`
+    (`MockGraphQlSettingsSpec`: `maxDepth` 1–50, `maxComplexity` 1–100000, `listLength` 0–50),
+    stored as `versions.mock_settings.graphql` and read by apiome-mock's `/graphql` route. Like
+    `activeScenario` it is kept when omitted and cleared when sent as `null`; `GET` and `?dryRun=true`
+    report it.
+  - Scenario and chaos operation keys may be a GraphQL root-field schema coordinate (`Query.user`,
+    `Mutation.createUser`). On save each one is checked against the version's canonical GraphQL
+    model, which is only loaded when the request uses such a key; canned bodies are not
+    schema-checked (they become a field's value), and status, headers and templates still are.
+  - `graphql` travels in portable mock bundles (`BUNDLED_SETTINGS_KEYS`) and is a draft key of
+    `POST …/mock/preview` (`MockPreviewSettingsSpec.graphql`).
+
 ## [1.701.0] - 2026-11-14
 
 ### Added

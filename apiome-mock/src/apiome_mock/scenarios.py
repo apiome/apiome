@@ -62,6 +62,7 @@ when the scenarios are saved.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping
 
@@ -105,6 +106,9 @@ SCENARIO_CALL_HEADER = "X-Mock-Scenario-Call"
 
 SCENARIO_RULE_HEADER = "X-Mock-Scenario-Rule"
 """Response header echoing the 1-based matched rule number (#4744, PMR-2.1)."""
+
+GRAPHQL_COORDINATE_PATTERN = re.compile(r"^[_A-Za-z][_0-9A-Za-z]*\.[_A-Za-z][_0-9A-Za-z]*$")
+"""A GraphQL root-field schema coordinate (``Query.user``) used as an operation key (#5729)."""
 
 _SEQUENCE_NAMESPACE = "__mock_scenario_sequence__"
 _IP_SESSION_PREFIX = "__mock_scenario_ip__"
@@ -195,13 +199,19 @@ def normalize_operation_key(raw: Any) -> str | None:
     The sole non-operation key accepted is :data:`WILDCARD_OPERATION_KEY`, which stands for
     "every operation this scenario does not name" (#5532, MSC-2.2).
 
-    Returns ``None`` when ``raw`` is neither the wildcard nor a ``"method path"`` string (method
-    alphabetic, path starting with ``/``).
+    A GraphQL root-field schema coordinate (``Query.user``, ``Mutation.createUser``) is also an
+    operation key: it is how a scenario or a chaos entry names one root field of a GraphQL mock
+    (#5729, XPC-1.1). It is returned unchanged, because GraphQL names are case-sensitive.
+
+    Returns ``None`` when ``raw`` is neither the wildcard, a ``"method path"`` string (method
+    alphabetic, path starting with ``/``), nor a ``Type.field`` coordinate.
     """
     if not isinstance(raw, str):
         return None
     if raw.strip() == WILDCARD_OPERATION_KEY:
         return WILDCARD_OPERATION_KEY
+    if GRAPHQL_COORDINATE_PATTERN.match(raw.strip()):
+        return raw.strip()
     parts = raw.strip().split(None, 1)
     if len(parts) != 2:
         return None
@@ -564,6 +574,50 @@ def _render_canned(
         body=body,
         has_body=canned.has_body,
         media_type=canned.media_type,
+    )
+
+
+def render_canned_response(
+    canned: ScenarioResponse,
+    *,
+    ctx: MatchContext,
+    seed: int,
+    fixtures: Mapping[str, Any],
+    scenario_name: str,
+    operation_key: str,
+    rule_index: int | None,
+) -> ScenarioResponse:
+    """Render the first canned response of a selection outside the HTTP response path.
+
+    The GraphQL mock (#5729, XPC-1.1) serves a scenario body as the *value of one root field*
+    rather than as a whole HTTP response, so it needs the rendered response, not a
+    :class:`~fastapi.responses.Response`. Rendering is exactly :func:`serve_scenario_response`'s,
+    with the same seeded RNG scope, so a template renders the same text on both paths.
+
+    Args:
+        canned: The canned response to render.
+        ctx: The request's match context (what templates read).
+        seed: The request seed.
+        fixtures: Fixture data templates may read.
+        scenario_name: The active scenario's name (part of the RNG scope).
+        operation_key: The operation key the response belongs to (part of the RNG scope).
+        rule_index: The matching rule's index, or ``None`` for the fallback responses.
+
+    Returns:
+        The rendered response.
+
+    Raises:
+        app.mock_template.TemplateLimitError: When the render budget is exhausted.
+    """
+    return _render_canned(
+        canned,
+        ctx=ctx,
+        seed=seed,
+        fixtures=fixtures,
+        scenario_name=scenario_name,
+        operation_key=operation_key,
+        rule_index=rule_index,
+        response_index=0,
     )
 
 

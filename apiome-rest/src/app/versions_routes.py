@@ -22,6 +22,7 @@ from .branch_push_policy import effective_require_merge_path
 from .api_check_suite_gate import assess_check_suite_gate
 from .approval_publish_gate import assess_approval_gate
 from .breaking_publish_guardrail import assess_breaking_publish
+from .canonical_model import ApiParadigm
 from .compatibility_engine import CompatibilityCheckEngine, compat_audit_detail, openapi_for_revision
 from .config import settings
 from .database import BranchNotFoundError, StaleHeadPushError, db
@@ -74,8 +75,11 @@ from .mock_scenario_settings import (
     active_scenario_from_storage,
     chaos_from_storage,
     chaos_to_storage,
+    graphql_settings_from_storage,
+    graphql_settings_to_storage,
     scenarios_from_storage,
     scenarios_to_storage,
+    uses_graphql_coordinates,
     validate_active_scenario,
     validate_mock_chaos,
     validate_mock_scenarios,
@@ -86,6 +90,7 @@ from .models import (
     MockCaptureSummary,
     MockChaosSpec,
     MockCallbackSpec,
+    MockGraphQlSettingsSpec,
     MockFixturePackProvenanceSpec,
     MockFixturePackSpec,
     MockResponseCorrelationSpec,
@@ -2653,6 +2658,35 @@ _MOCK_DRY_RUN_QUERY = Query(
 )
 
 
+def _parse_stored_graphql_settings(mock_settings: Any, version_record_id: str) -> Optional[MockGraphQlSettingsSpec]:
+    """Parse the stored GraphQL mock settings for a response; a malformed block is omitted (#5729)."""
+    stored = graphql_settings_from_storage(mock_settings)
+    if stored is None:
+        return None
+    try:
+        return MockGraphQlSettingsSpec.model_validate(stored)
+    except ValueError:
+        logger.warning("Skipping malformed mock graphql block on version %s", version_record_id)
+        return None
+
+
+def _graphql_operations_for_version(version: Dict[str, Any], tenant_id: str) -> frozenset[str]:
+    """List a GraphQL version's root-field coordinates (``Query.user``) for key validation (#5729).
+
+    Args:
+        version: The version row.
+        tenant_id: The owning tenant.
+
+    Returns:
+        The coordinates of every root operation in the version's canonical model; empty when the
+        version has no canonical model or is not a GraphQL version.
+    """
+    api = db.load_canonical_api(tenant_id=tenant_id, version_id=str(version["id"]))
+    if api is None or api.paradigm is not ApiParadigm.GRAPH:
+        return frozenset()
+    return frozenset(operation.key for operation in api.operations())
+
+
 def _scenarios_response(mock_settings: Any, version_record_id: str) -> VersionMockScenariosResponse:
     """Build the scenarios response from a raw ``mock_settings`` value (#4454 SIM-4.2).
 
@@ -2678,6 +2712,7 @@ def _scenarios_response(mock_settings: Any, version_record_id: str) -> VersionMo
         scenarios=scenarios,
         chaos=_parse_stored_chaos(mock_settings, version_record_id),
         active_scenario=active_scenario_from_storage(mock_settings),
+        graphql=_parse_stored_graphql_settings(mock_settings, version_record_id),
     )
 
 
@@ -2724,6 +2759,11 @@ async def set_version_mock_scenarios(
 
     With ``?dryRun=true`` nothing is written: the same validation runs and the response describes
     what *would* be stored (#5530, MSC-1.4).
+
+    GraphQL versions (#5729, XPC-1.1): an operation key may be a root-field coordinate
+    (``Query.user``), checked against the version's GraphQL schema. ``graphql`` holds the GraphQL
+    mock's depth and complexity caps and list length; like ``activeScenario`` it is preserved when
+    omitted and cleared only when sent as ``null``.
     """
     enforce_permission(db, auth_data, Resource.VERSIONS, Action.EDIT)
     existing = _get_version_for_mock_scenarios(project_id, version_record_id, auth_data["tenant_id"])
@@ -2741,9 +2781,19 @@ async def set_version_mock_scenarios(
         else active_scenario_from_storage(existing.get("mock_settings"))
     )
 
+    if "graphql" in request.model_fields_set:
+        graphql_storage = graphql_settings_to_storage(request.graphql) if request.graphql is not None else None
+    else:
+        graphql_storage = graphql_settings_from_storage(existing.get("mock_settings"))
+
+    graphql_operations = (
+        _graphql_operations_for_version(existing, auth_data["tenant_id"])
+        if uses_graphql_coordinates(request.scenarios, request.chaos)
+        else frozenset()
+    )
     spec = _generated_spec_for_version(existing, tenant_slug)
-    errors = validate_mock_scenarios(request.scenarios, spec)
-    errors.extend(validate_mock_chaos(request.chaos, spec))
+    errors = validate_mock_scenarios(request.scenarios, spec, graphql_operations=graphql_operations)
+    errors.extend(validate_mock_chaos(request.chaos, spec, graphql_operations=graphql_operations))
     errors.extend(validate_active_scenario(active_scenario, request.scenarios))
     if errors:
         raise HTTPException(
@@ -2761,7 +2811,12 @@ async def set_version_mock_scenarios(
         # Read the proposal back through the very readers the write path reports with, so a
         # dry run cannot describe a different outcome than the write would produce.
         return _scenarios_response(
-            {"scenarios": storage, "chaos": chaos_storage, "activeScenario": active_scenario},
+            {
+                "scenarios": storage,
+                "chaos": chaos_storage,
+                "activeScenario": active_scenario,
+                "graphql": graphql_storage,
+            },
             version_record_id,
         )
     updated = db.set_version_mock_scenarios(
@@ -2771,6 +2826,7 @@ async def set_version_mock_scenarios(
         scenarios=storage,
         chaos=chaos_storage,
         active_scenario=active_scenario,
+        graphql=graphql_storage,
     )
     if not updated:
         raise HTTPException(
