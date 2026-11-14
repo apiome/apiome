@@ -1679,6 +1679,41 @@ apiome properties copy payments-api --all --to billing-api --dry-run
 - More than one write shows `[i/N] name: outcome` progress; a failed write is listed and exits
   **1** after the rest are tried.
 
+### Import primitives in bulk
+
+`apiome primitives import <file>` sends a file of primitives to
+`POST /v1/primitives/{tenant}/import` as one type-definition bundle, after a dry run through
+`POST …/import/review`.
+
+```bash
+apiome primitives import ./acme-primitives.yaml --dry-run
+apiome primitives import ./acme-primitives.yaml --yes
+apiome primitives import ./acme-primitives.yaml --update --yes --report report.json
+apiome --json types list | apiome primitives import --update --yes
+```
+
+```yaml
+- name: acme-loyalty-id
+  base: string                 # a JSON Schema type; every other key is a schema keyword
+  pattern: ^LM-[0-9]{8}$
+  examples: [LM-00000001, LM-12345678]
+```
+
+- The file (JSON or YAML; stdin when omitted or `-`) holds one row, an array of rows, or
+  `{"items": [...]}`. A row is `name` + `base` + schema keywords, or `name` + `schema` (the shape
+  `types list --json` prints; its `description` / `tags` are copied into the schema, and
+  `is_system` rows are skipped).
+- Rows are checked locally first (name, `base`, `pattern`, JSON Schema 2020-12, examples); a file
+  of more than 50 rows shows a progress bar on a terminal.
+- Nothing is written with `--dry-run`, before the confirmation, or — without a terminal — unless
+  `--yes` is passed.
+- Conflicts (same identity, different schema) are kept by default (`--skip-conflicts`); `--update`
+  overwrites them. Identical primitives are always left alone.
+- A failed row (local check, review, or the import itself) exits **7**; nothing is written when it
+  is found before the import. `--continue-on-error` imports the other rows and exits **0**.
+- `--report <path>` writes the per-row JSON report (`rows[].row|name|status|message`, `summary`,
+  `importId`, `dryRun`); `--json` prints it on stdout and moves the text to stderr.
+
 ### List resources
 
 Human-readable tables (default):

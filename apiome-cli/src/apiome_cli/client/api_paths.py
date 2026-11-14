@@ -777,6 +777,11 @@ def primitives_import(tenant_slug: str) -> str:
     return f"{V1}/primitives/{tenant_slug}/import"
 
 
+def primitives_import_review(tenant_slug: str) -> str:
+    """``POST`` classifies an import's types (new / identical / conflict) without writing."""
+    return f"{V1}/primitives/{tenant_slug}/import/review"
+
+
 def properties(tenant_slug: str, project_id: str | UUID) -> str:
     return f"{V1}/properties/{tenant_slug}/{project_id}"
 

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 from rich.status import Status
 
 from apiome_cli.terminal import make_console, quiet_enabled
@@ -50,3 +51,32 @@ def import_progress(
     console = make_console(stderr=True)
     with console.status(initial_message, spinner="dots") as status:
         yield status
+
+
+@contextmanager
+def row_progress(total: int, *, description: str, enabled: bool = True) -> Iterator[Callable[[], None]]:
+    """Show a Rich progress bar on stderr while ``total`` rows are worked through.
+
+    Args:
+        total: How many rows there are.
+        description: The label beside the bar, e.g. "Checking primitives".
+        enabled: When False, no bar is drawn.
+
+    Yields:
+        A function to call once per finished row. It does nothing when the bar is not drawn —
+        ``enabled`` is False, ``--quiet`` was passed, or stderr is not a terminal.
+    """
+    if not progress_allowed(enabled):
+        yield lambda: None
+        return
+
+    console = make_console(stderr=True)
+    with Progress(
+        TextColumn("{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(description, total=total)
+        yield lambda: progress.advance(task)
