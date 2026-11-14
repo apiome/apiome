@@ -1,6 +1,6 @@
 ---
 title: "apiome migrations"
-description: "List a project's migration plans."
+description: "List a project's migration plans and count them per project."
 sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,30 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome migrations {#migrations}
 
-List a project's migration plans (rules that move data from one version to another).
+List a project's migration plans (rules that move data from one version to another) and count them per project.
 
 ```text
 apiome migrations [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`list`](#migrations-list).
+Subcommands: [`counts`](#migrations-counts), [`list`](#migrations-list).
+
+## apiome migrations counts {#migrations-counts}
+
+Count migration plans per project: PLANS, distinct CLASSES mapped, and RULES.
+
+Without --project every project of the tenant is listed (most plans first), one GET /v1/migration-plans/{tenant}/projects/{project} per project. --project rolls up a single project in one plan-list request. The server records no plan status, so no published / draft / deprecated split is shown. --json prints ``{"projects": [...], "total": {plans, rules}}``.
+
+```text
+apiome migrations counts [OPTIONS]
+```
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--project` | text |  |  | Only this project (slug or UUID): one plan-list request. |
+| `--json` | flag |  |  | Print the counts as one JSON object (same as the global --json). |
 
 ## apiome migrations list {#migrations-list}
 

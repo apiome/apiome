@@ -1533,6 +1533,15 @@ apiome migrations list --project payments-api --from v2.0.0 --to v2.1.0
 apiome migrations list --project payments-api --json        # [ {id, from_version, to_version, rule_count, ...} ]
 ```
 
+`apiome migrations counts` counts every project's plans — PLANS, the distinct CLASSES they map, and
+RULES — most plans first, one plan-list request per project. `--project <project>` rolls up a single
+project in one request.
+
+```bash
+apiome migrations counts
+apiome migrations counts --project payments-api --json      # {projects: [...], total: {plans, rules}}
+```
+
 ### List a project's properties
 
 `apiome properties list <project>` lists the project's property library: name, **type** (the JSON

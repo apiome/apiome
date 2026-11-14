@@ -1,4 +1,4 @@
-"""Migration plans: ``apiome migrations list`` (CLI 11.1, #3260)."""
+"""Migration plans: ``apiome migrations list`` (CLI 11.1, #3260) and ``counts`` (CLI 11.2, #3261)."""
 
 from __future__ import annotations
 
@@ -10,17 +10,26 @@ import typer
 from apiome_cli.client import api_paths
 from apiome_cli.client.http import RestClient
 from apiome_cli.client.pagination import DEFAULT_PAGE_LIMIT
-from apiome_cli.client.project_version_resolve import list_versions, resolve_project_uuid
+from apiome_cli.client.project_version_resolve import list_projects, list_versions, resolve_project_uuid
 from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.exit_codes import EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
-from apiome_cli.migration_view import filter_plans, render_plan_list, sort_plans, summarize_plan, version_labels
+from apiome_cli.migration_view import (
+    count_project_plans,
+    filter_plans,
+    render_plan_counts,
+    render_plan_list,
+    sort_counts,
+    sort_plans,
+    summarize_plan,
+    version_labels,
+)
 from apiome_cli.output import emit_json, json_mode_from_context
 from apiome_cli.version_fork import ForkError, find_source_version
 
 app = typer.Typer(
     name="migrations",
-    help="List a project's migration plans (rules that move data from one version to another).",
+    help="List a project's migration plans (rules that move data from one version to another) and count them per project.",
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -56,6 +65,13 @@ def _version_tags(client: RestClient, tenant_slug: str, project_id: UUID) -> lis
     return [tag for tag in payload if isinstance(tag, dict)] if isinstance(payload, list) else []
 
 
+def _project_plans(client: RestClient, tenant_slug: str, project_id: UUID | str) -> list[dict[str, Any]]:
+    """Every raw plan of one project (one GET); ``[]`` if the body holds no ``plans`` list."""
+    payload = client.get(api_paths.project_migration_plans(tenant_slug, project_id)).json()
+    raw = payload.get("plans") if isinstance(payload, dict) else None
+    return [plan for plan in raw or [] if isinstance(plan, dict)]
+
+
 @app.command("list")
 def list_plans(
     ctx: typer.Context,
@@ -87,12 +103,10 @@ def list_plans(
         if to_ref is not None:
             to_id = _resolve_version_id(versions, version_tags, to_ref, "--to")
 
-    payload = client.get(api_paths.project_migration_plans(tenant_slug, project_id)).json()
-    raw = payload.get("plans") if isinstance(payload, dict) else None
     labels = version_labels(versions)
     plans = sort_plans(
         filter_plans(
-            [summarize_plan(plan, labels) for plan in raw or [] if isinstance(plan, dict)],
+            [summarize_plan(plan, labels) for plan in _project_plans(client, tenant_slug, project_id)],
             from_version_id=from_id,
             to_version_id=to_id,
         )
@@ -102,3 +116,34 @@ def list_plans(
         emit_json(list(shown))
         return
     typer.echo(render_plan_list(shown, total=len(plans)))
+
+
+@app.command("counts")
+def count_plans(
+    ctx: typer.Context,
+    project_ref: Optional[str] = typer.Option(
+        None, "--project", metavar="PROJECT", help="Only this project (slug or UUID): one plan-list request."
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Print the counts as one JSON object (same as the global --json)."),
+) -> None:
+    """Count migration plans per project: PLANS, distinct CLASSES mapped, and RULES.
+
+    Without --project every project of the tenant is listed (most plans first), one
+    GET /v1/migration-plans/{tenant}/projects/{project} per project. --project rolls up a single
+    project in one plan-list request. The server records no plan status, so no published / draft /
+    deprecated split is shown. --json prints ``{"projects": [...], "total": {plans, rules}}``.
+    """
+    client, tenant_slug = tenant_scoped_client(ctx)
+    if project_ref is not None:
+        project_id = resolve_project_uuid(client, tenant_slug, project_ref)
+        projects: list[dict[str, Any]] = [{"id": str(project_id), "slug": project_ref.strip()}]
+    else:
+        projects = [p for p in list_projects(client, tenant_slug) if isinstance(p, dict) and p.get("id")]
+    rows = sort_counts(
+        [count_project_plans(project, _project_plans(client, tenant_slug, str(project["id"]))) for project in projects]
+    )
+    if json_output or json_mode_from_context(ctx):
+        total = {key: sum(int(row[key]) for row in rows) for key in ("plans", "rules")}
+        emit_json({"projects": list(rows), "total": total})
+        return
+    typer.echo(render_plan_counts(rows))

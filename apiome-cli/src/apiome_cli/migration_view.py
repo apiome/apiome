@@ -1,4 +1,4 @@
-"""How ``apiome migrations list`` presents a project's migration plans (CLI 11.1, #3260).
+"""How ``apiome migrations list`` / ``counts`` present migration plans (CLI 11.1 #3260, 11.2 #3261).
 
 A migration plan holds the rules that move data from one version of a project to another, one
 plan per ``(from version, to version)`` pair. ``GET /v1/migration-plans/{tenant}/projects/{project}``
@@ -112,3 +112,52 @@ def render_plan_list(plans: Sequence[Mapping[str, Any]], *, total: Optional[int]
     if total is not None and total > len(plans):
         lines.append(f"Showing {len(plans)} of {total} plans; pass --all for every plan or --limit N.")
     return "\n".join(lines)
+
+
+def count_project_plans(project: Mapping[str, Any], plans: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """One ``migrations counts`` row: how many plans, classes and rules ``project`` has (CLI 11.2, #3261).
+
+    Args:
+        project: The project record (``id``, ``slug``, ``name``); ``slug`` names the row, falling back
+            to ``name`` and then ``id``.
+        plans: The project's raw plans (``GET /v1/migration-plans/{tenant}/projects/{project}``).
+
+    Returns:
+        ``{project_id, project, plans, classes, rules}`` — ``classes`` counts the distinct class names
+        mapped across every plan, ``rules`` every rule.
+    """
+    summaries = [summarize_plan(plan, {}) for plan in plans if isinstance(plan, Mapping)]
+    classes = {name for summary in summaries for name in summary["classes"]}
+    project_id = str(project.get("id") or "")
+    return {
+        "project_id": project_id,
+        "project": str(project.get("slug") or project.get("name") or project_id),
+        "plans": len(summaries),
+        "classes": len(classes),
+        "rules": sum(summary["rule_count"] for summary in summaries),
+    }
+
+
+def sort_counts(rows: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    """Projects with the most plans first; ties by project name, so output is stable."""
+    return sorted(rows, key=lambda row: (-int(row.get("plans") or 0), str(row.get("project") or "")))
+
+
+def render_plan_counts(rows: Sequence[Mapping[str, Any]]) -> str:
+    """The ``migrations counts`` table: PROJECT, PLANS, CLASSES, RULES.
+
+    Args:
+        rows: ``count_project_plans`` rows, already sorted.
+
+    Returns:
+        The table, or ``"No projects."`` when the tenant has none.
+    """
+    if not rows:
+        return "No projects."
+    header = ("PROJECT", "PLANS", "CLASSES", "RULES")
+    cells = [
+        (str(r.get("project") or ""), str(r.get("plans") or 0), str(r.get("classes") or 0), str(r.get("rules") or 0))
+        for r in rows
+    ]
+    widths = [max(len(header[i]), *(len(c[i]) for c in cells)) for i in range(len(header))]
+    return "\n".join("  ".join(cell.ljust(widths[i]) for i, cell in enumerate(row)).rstrip() for row in (header, *cells))

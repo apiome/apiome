@@ -303,7 +303,7 @@ the [Version change report](../reference/rest/version-change-report.md) and
 
 ## With the CLI or the API
 
-- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome migrations list`, `apiome mock status|enable|disable` — see
+- CLI: `apiome versions list|show|get|create|publish|unpublish|freeze|fork|compatibility|delete`, `apiome migrations list|counts`, `apiome mock status|enable|disable` — see
   [Manage versions from the CLI](../ship/manage-versions-from-the-cli.md),
   the [`versions` command reference](../reference/cli/versions.md) and the [CLI
   quick-start](../reference/cli-quickstart.md). To take a release back with a recorded reason, see
@@ -457,6 +457,29 @@ apiome migrations list --project payments-api --from v2.0.0
 
 Apiome does not record a status, a breaking-change flag or an author for a migration plan, so
 the list cannot show or filter on them.
+
+### Count migration plans per project
+
+`apiome migrations counts` gives a quick overview of migration plans across your workspace — one
+row per project, most plans first.
+
+```bash
+apiome migrations counts
+# PROJECT       PLANS  CLASSES  RULES
+# payments-api  3      2        4
+# catalog-api   2      1        1
+# webhooks      0      0        0
+
+apiome migrations counts --project payments-api
+```
+
+- **PLANS** counts the project's migration plans. **CLASSES** counts the different classes those
+  plans have rules for, and **RULES** counts all of their rules.
+- `--project <project>` (a slug or UUID) shows just that project.
+- `--json` (or the global `--json`) prints one object: `projects` holds a row per project
+  (`project_id`, `project`, `plans`, `classes`, `rules`) and `total` sums `plans` and `rules`.
+
+Plans have no status, so the counts are not split into published, draft or deprecated.
 
 ### Delete a version from the CLI
 
