@@ -13918,6 +13918,20 @@ class Database:
             """,
             (tenant_id, project_id),
         )
+        return self._group_migration_plan_rows(rows)
+
+    @staticmethod
+    def _group_migration_plan_rows(rows: Sequence[Mapping[str, Any]]) -> List[Dict[str, Any]]:
+        """Fold plan-joined-to-rule rows (one per rule, or one rule-less row) into plans.
+
+        Args:
+            rows: Rows with ``plan_id``, ``from_version_id``, ``to_version_id``, ``created_at``,
+                ``updated_at``, ``class_name``, ``source_property`` and ``rule`` (``class_name`` is
+                ``NULL`` for a plan without rules).
+
+        Returns:
+            Plans in row order, each with its ``rules: [{class_name, source_property, rule}]``.
+        """
         plans: List[Dict[str, Any]] = []
         by_id: Dict[str, Dict[str, Any]] = {}
         for row in rows:
@@ -13942,6 +13956,59 @@ class Database:
                     }
                 )
         return plans
+
+    def get_migration_plan(self, plan_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """One migration plan by id, with its project and every rule (CLI 11.3, #3262).
+
+        Backs ``apiome migrations show <plan-id>``. Only a plan whose project is live and in the
+        tenant is returned; rules come in ``(class_name, source_property)`` order, as stored.
+
+        Args:
+            plan_id: The plan's UUID (callers reject a non-UUID first).
+            tenant_id: The tenant.
+
+        Returns:
+            ``{id, project_id, project_slug, project_name, from_version_id, from_version,
+            to_version_id, to_version, created_at, updated_at, rules: [{class_name,
+            source_property, rule}]}`` — ``from_version`` / ``to_version`` are the version labels
+            (``None`` when the version is gone) — or ``None`` when no such plan is visible.
+        """
+        rows = self.execute_query(
+            """
+            SELECT mp.id::text AS plan_id, mp.project_id::text AS project_id,
+                   p.slug AS project_slug, p.name AS project_name,
+                   mp.from_version_id::text AS from_version_id, fv.version_id AS from_version,
+                   mp.to_version_id::text AS to_version_id, tv.version_id AS to_version,
+                   mp.created_at, mp.updated_at,
+                   mpr.class_name, mpr.source_property, mpr.rule
+            FROM apiome.migration_plans mp
+            JOIN apiome.projects p
+              ON p.id = mp.project_id AND p.tenant_id = %s AND p.deleted_at IS NULL
+            LEFT JOIN apiome.versions fv ON fv.id = mp.from_version_id
+            LEFT JOIN apiome.versions tv ON tv.id = mp.to_version_id
+            LEFT JOIN apiome.migration_plan_rules mpr ON mpr.migration_plan_id = mp.id
+            WHERE mp.id = %s
+            ORDER BY mpr.class_name NULLS FIRST, mpr.source_property NULLS FIRST
+            """,
+            (tenant_id, plan_id),
+        )
+        plans = self._group_migration_plan_rows(rows)
+        if not plans:
+            return None
+        first = rows[0]
+        return {
+            "id": plans[0]["id"],
+            "project_id": first["project_id"],
+            "project_slug": first.get("project_slug"),
+            "project_name": first.get("project_name"),
+            "from_version_id": first["from_version_id"],
+            "from_version": first.get("from_version"),
+            "to_version_id": first["to_version_id"],
+            "to_version": first.get("to_version"),
+            "created_at": first["created_at"],
+            "updated_at": first["updated_at"],
+            "rules": plans[0]["rules"],
+        }
 
     def get_migration_plan_rule_counts(
         self,

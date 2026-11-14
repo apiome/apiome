@@ -1,6 +1,6 @@
 ---
 title: "apiome migrations"
-description: "List a project's migration plans and count them per project."
+description: "List a project's migration plans, count them per project, and show one plan's mappings."
 sidebar_position: 25
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome migrations {#migrations}
 
-List a project's migration plans (rules that move data from one version to another) and count them per project.
+List a project's migration plans (rules that move data from one version to another), count them per project, and show one plan's mappings.
 
 ```text
 apiome migrations [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`counts`](#migrations-counts), [`list`](#migrations-list).
+Subcommands: [`counts`](#migrations-counts), [`list`](#migrations-list), [`show`](#migrations-show).
 
 ## apiome migrations counts {#migrations-counts}
 
@@ -57,3 +57,26 @@ apiome migrations list [OPTIONS]
 | `--limit` | integer range | `50` |  | Show at most this many plans. |
 | `--all` | flag |  |  | Show every plan (ignores --limit). |
 | `--json` | flag |  |  | Print the plans as one JSON array (same as the global --json). |
+
+## apiome migrations show {#migrations-show}
+
+Show one migration plan: its project, FROM / TO versions, dates and every mapping (rule).
+
+Reads GET /v1/migration-plans/{tenant}/{plan_id}. Each mapping reads ``Class.source → Class.target  (rule type · rule name)``; a rule with no output is ``(removed)``. The server records no status, breaking flag, author or notes for a plan, so none is shown. --json prints the plan body exactly as the server returns it (--scope does not apply). An id that is not a UUID, or a plan not found, exits 2.
+
+```text
+apiome migrations show [OPTIONS] PLAN_ID
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `PLAN_ID` | text | yes | The plan's UUID (the PLAN ID column of `migrations list`). |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--scope` | text | `all` |  | all: summary and mappings (default); mappings: only the mappings. |
+| `--json` | flag |  |  | Print the raw plan body as JSON (same as the global --json). |

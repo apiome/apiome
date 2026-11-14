@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.695.0] - 2026-11-13
+
+### Added
+- **Migration plans: get one plan by id (CLI 11.3, #3262)**
+  - `GET /v1/migration-plans/{tenant_slug}/{plan_id}` returns one migration plan: `id`,
+    `project_id`, `project_slug`, `project_name`, `from_version_id` / `from_version` and
+    `to_version_id` / `to_version` (version labels, `null` when the version is gone),
+    `created_at`, `updated_at` and every rule (`class_name`, `source_property`, `rule`) in
+    `(class_name, source_property)` order.
+  - A non-UUID id, or a plan whose project is deleted or in another tenant, is **404**; requires
+    `projects:view`. `/{tenant_slug}/counts` keeps its meaning.
+  - `Database.get_migration_plan` backs the route; the plan-row folding is shared with
+    `get_migration_plans_for_project`.
+  - Used by `apiome migrations show <plan-id>`.
+  - OpenAPI 1.554.0 → 1.555.0.
+
 ## [1.694.0] - 2026-11-13
 
 ### Added

@@ -1542,6 +1542,17 @@ apiome migrations counts
 apiome migrations counts --project payments-api --json      # {projects: [...], total: {plans, rules}}
 ```
 
+`apiome migrations show <plan-id>` prints one plan (`GET /v1/migration-plans/{tenant}/{plan_id}`): its
+project, FROM / TO versions, dates and every mapping (`Charge.legacy_status → Charge.status  (simple · rename)`;
+a rule with no output reads `(removed)`). `--scope mappings` prints only the mappings; `--json` prints the
+raw plan body. Plans store no notes, status, breaking flag or author.
+
+```bash
+apiome migrations show 3a910000-0000-4000-8000-00000000b41c
+apiome migrations show 3a910000-0000-4000-8000-00000000b41c --scope mappings
+apiome migrations show 3a910000-0000-4000-8000-00000000b41c --json
+```
+
 ### List a project's properties
 
 `apiome properties list <project>` lists the project's property library: name, **type** (the JSON

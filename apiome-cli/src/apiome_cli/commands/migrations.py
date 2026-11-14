@@ -1,4 +1,4 @@
-"""Migration plans: ``apiome migrations list`` (CLI 11.1, #3260) and ``counts`` (CLI 11.2, #3261)."""
+"""Migration plans: ``apiome migrations list`` (CLI 11.1, #3260), ``counts`` (11.2, #3261) and ``show`` (11.3, #3262)."""
 
 from __future__ import annotations
 
@@ -15,10 +15,12 @@ from apiome_cli.client.version_scope import tenant_scoped_client
 from apiome_cli.exit_codes import EXIT_USAGE
 from apiome_cli.help_util import group_callback_without_subcommand
 from apiome_cli.migration_view import (
+    SHOW_SCOPES,
     count_project_plans,
     filter_plans,
     render_plan_counts,
     render_plan_list,
+    render_plan_show,
     sort_counts,
     sort_plans,
     summarize_plan,
@@ -29,7 +31,10 @@ from apiome_cli.version_fork import ForkError, find_source_version
 
 app = typer.Typer(
     name="migrations",
-    help="List a project's migration plans (rules that move data from one version to another) and count them per project.",
+    help=(
+        "List a project's migration plans (rules that move data from one version to another), "
+        "count them per project, and show one plan's mappings."
+    ),
     context_settings={"help_option_names": ["-h", "--help"]},
     add_completion=False,
 )
@@ -147,3 +152,36 @@ def count_plans(
         emit_json({"projects": list(rows), "total": total})
         return
     typer.echo(render_plan_counts(rows))
+
+
+@app.command("show")
+def show_plan(
+    ctx: typer.Context,
+    plan_id: str = typer.Argument(..., metavar="PLAN_ID", help="The plan's UUID (the PLAN ID column of `migrations list`)."),
+    scope: str = typer.Option(
+        "all", "--scope", metavar="|".join(SHOW_SCOPES), help="all: summary and mappings (default); mappings: only the mappings."
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Print the raw plan body as JSON (same as the global --json)."),
+) -> None:
+    """Show one migration plan: its project, FROM / TO versions, dates and every mapping (rule).
+
+    Reads GET /v1/migration-plans/{tenant}/{plan_id}. Each mapping reads
+    ``Class.source → Class.target  (rule type · rule name)``; a rule with no output is ``(removed)``.
+    The server records no status, breaking flag, author or notes for a plan, so none is shown.
+    --json prints the plan body exactly as the server returns it (--scope does not apply).
+    An id that is not a UUID, or a plan not found, exits 2.
+    """
+    if scope not in SHOW_SCOPES:
+        typer.echo(f"--scope must be one of: {', '.join(SHOW_SCOPES)}.", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    try:
+        plan_uuid = UUID(plan_id.strip())
+    except ValueError as exc:
+        typer.echo(f"{plan_id!r} is not a migration plan id (a UUID, as `apiome migrations list` shows).", err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    client, tenant_slug = tenant_scoped_client(ctx)
+    plan = client.get(api_paths.migration_plan(tenant_slug, plan_uuid)).json()
+    if json_output or json_mode_from_context(ctx):
+        emit_json(plan)
+        return
+    typer.echo(render_plan_show(plan if isinstance(plan, dict) else {}, scope=scope))
