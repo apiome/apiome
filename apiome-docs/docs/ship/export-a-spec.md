@@ -1154,6 +1154,61 @@ reordered. A field added since gets the next number not used yet. The fidelity r
 number Apiome assigned as *synthesized*. A source that has its own numbers, such as a Protobuf or
 Thrift import, keeps them.
 
+### HTTP routes in a Protobuf or Connect RPC export {#http-routes-in-protobuf}
+
+Protobuf has no place for an operation's HTTP method and route, so by default a REST source exported
+to **Protocol Buffers (proto3)** or **Connect RPC** loses them. The fidelity report lists each one as
+*dropped*. Turn on the **HTTP annotations** option (`http_annotations`) to keep them as `google.api.http` annotations
+instead. gRPC-Gateway, Connect, Envoy and Google Cloud Endpoints all read that annotation to serve
+an `rpc` over HTTP and JSON.
+
+1. **Pick** **Protocol Buffers (proto3)** or **Connect RPC** in the [Export studio](./export-studio.mdx).
+2. On **3. Options**, **tick “HTTP annotations”**. From the CLI, pass `--option http_annotations=true`.
+3. On **5. Verify**, each operation's HTTP route now reads *retained*, or *approximated* when the
+   annotation cannot bind every input (see the second table below). **Click “Continue to review”**, then **“Generate”**.
+
+With the option on, every `rpc` whose operation has an HTTP method and route gets the rule, and the
+file imports `google/api/annotations.proto`:
+
+```proto
+import "google/api/annotations.proto";
+
+service PetService {
+  rpc GetPet (.acme.pets.GetPetRequest) returns (.acme.pets.Pet) {
+    option (google.api.http) = {
+      get: "/pets/{pet_id}"
+    };
+  }
+  rpc CreatePet (.acme.pets.Pet) returns (.acme.pets.Pet) {
+    option (google.api.http) = {
+      post: "/pets"
+      body: "*"
+    };
+  }
+}
+```
+
+| Source operation | Annotation written |
+| --- | --- |
+| `GET`, `PUT`, `POST`, `DELETE` or `PATCH` | That verb with the route, e.g. `get: "/pets/{pet_id}"` |
+| Any other method (`HEAD`, `OPTIONS`, …) | `custom: { kind: "HEAD" path: "…" }` |
+| `POST`, `PUT` or `PATCH` with a request body | Adds `body: "*"`: the whole request message is the HTTP body |
+| A route variable that is not a valid field name (`{pet-id}`) | Renamed to one (`{pet_id}`) |
+| A Protobuf or Smithy source whose methods already carry an HTTP binding | That binding, with its own `body` |
+
+gRPC-Gateway binds a route variable or query parameter to the request-message field with the same
+name, and cannot bind headers or cookies. The fidelity report says how each route survived:
+
+| Fidelity | When |
+| --- | --- |
+| **Dropped** | **HTTP annotations** is off (the default) |
+| **Retained** | Every route variable and query parameter is a field of the request message |
+| **Approximated** | The request message has no field for a route variable or query parameter, or the operation reads a header or cookie. The report names each one, e.g. `header X-Trace, path owner, query limit` |
+
+The bundle's **buf lint** and **buf build** checks (on the protobuf and Connect RPC targets) supply
+the `google/api` files the import needs, so an annotated export compiles without network access.
+`buf lint` reports on your exported files only, not on those `google/api` files.
+
 ### Thrift from any source
 
 #### When to export to Thrift

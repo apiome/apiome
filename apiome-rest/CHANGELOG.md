@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.696.0] - 2026-11-13
+
+### Added
+- **Protobuf / Connect RPC export: `google.api.http` annotations (MFX-12.6, #4343)**
+  - New `http_annotations` option (title **HTTP annotations**, default `false`) on the `protobuf`
+    and `connectrpc` targets. When on, each `rpc` whose source operation has an HTTP method and
+    route gets `option (google.api.http) = { <verb>: "<route>" [body: "*"] };` and the file
+    imports `google/api/annotations.proto`. `GET`/`PUT`/`POST`/`DELETE`/`PATCH` are written as
+    that verb, any other method as `custom { kind path }`. A POST/PUT/PATCH with a request body
+    gets `body: "*"`, and a route variable that is not a field name (`{pet-id}`) is renamed
+    (`{pet_id}`). An RPC source's `extras["http"]` binding is used when the operation has no
+    REST verb, and keeps its recorded `body`.
+  - Emit losses: with the option off, each binding is an `http-binding` loss (the binding is
+    dropped). With it on, an `http-annotation-unbound` loss names any route variable or query
+    parameter the request message has no field for, and any header or cookie.
+  - Fidelity: `ProtoFidelityRulePack` reads the option (`apply_options`). A REST binding is a
+    `DROP` (warn) when the option is off. When it is on, the binding is `OK` if every input binds
+    and `APPROX` otherwise, so the preview and the export job agree.
+  - Toolchain checks: `buf lint` / `buf build` stage the vendored `google/api` protos an
+    annotated bundle imports, so the bundle builds with no network. With the default `buf.yaml`,
+    `buf lint` ignores those vendored files. The `connectrpc` target now declares the same
+    `buf lint` / `buf build` test tools as `protobuf`.
+  - Goldens: export surface parity (with its UI, browse and CLI copies) and the proto3
+    projection-corpus manifest now list the dropped REST binding.
+  - OpenAPI 1.555.0 → 1.556.0.
+
 ## [1.695.0] - 2026-11-13
 
 ### Added

@@ -125,10 +125,30 @@
       "target_mapping": "union/oneOf → message wrapping oneof"
     },
     {
+      "detail": "Protocol Buffers (proto3) has no HTTP binding; GET /users/{id} is dropped (enable http_annotations to carry it as google.api.http)",
+      "documentation": {
+        "anchor": null,
+        "documentation_unavailable": false,
+        "note": null,
+        "specification": "Protocol Buffers Language Guide (proto3)",
+        "url": "https://protobuf.dev/programming-guides/proto3/",
+        "version": null
+      },
+      "explanation": "The destination format cannot represent `GET /users/{id}`; its specification has no equivalent construct.",
+      "id": "projects:GET /users/{id}#0",
+      "reason": "destination_unsupported",
+      "relation": "projects",
+      "severity": "warn",
+      "source": "canonical:GET /users/{id}",
+      "status": "dropped",
+      "target": null,
+      "target_mapping": null
+    },
+    {
       "detail": "operation carried to Protocol Buffers (proto3)",
       "documentation": null,
       "explanation": null,
-      "id": "projects:GET /users/{id}#0",
+      "id": "projects:GET /users/{id}#1",
       "reason": null,
       "relation": "projects",
       "severity": "info",
@@ -524,7 +544,7 @@
     }
   ],
   "reason_counts": {
-    "destination_unsupported": 10,
+    "destination_unsupported": 11,
     "emitter_unsupported": 0,
     "not_applicable": 0,
     "option_excluded": 0,
@@ -535,7 +555,7 @@
   },
   "status_counts": {
     "approximated": 6,
-    "dropped": 1,
+    "dropped": 2,
     "not-applicable": 0,
     "retained": 3,
     "synthesized": 3,

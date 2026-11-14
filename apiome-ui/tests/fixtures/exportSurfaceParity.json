@@ -667,12 +667,14 @@
         {
           "default_options": {
             "emit_services": true,
+            "http_annotations": false,
             "package": null,
             "persisted_field_numbers": {}
           },
           "key": "protobuf",
           "options": [
             "emit_services",
+            "http_annotations",
             "package",
             "persisted_field_numbers"
           ],
@@ -1298,12 +1300,14 @@
         {
           "default_options": {
             "emit_services": true,
+            "http_annotations": false,
             "package": null,
             "persisted_field_numbers": {}
           },
           "key": "protobuf",
           "options": [
             "emit_services",
+            "http_annotations",
             "package",
             "persisted_field_numbers"
           ],
@@ -1901,12 +1905,14 @@
         {
           "default_options": {
             "emit_services": true,
+            "http_annotations": false,
             "package": null,
             "persisted_field_numbers": {}
           },
           "key": "protobuf",
           "options": [
             "emit_services",
+            "http_annotations",
             "package",
             "persisted_field_numbers"
           ],

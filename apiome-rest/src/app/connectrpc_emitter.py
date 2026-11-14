@@ -45,6 +45,9 @@ class ConnectRpcEmitter(Emitter, register=True):
     options_model = ConnectRpcEmitOptions
     #: How the Review step can draw the output besides its text (MFX-45.4).
     viz_modes = (ExportVizModeKind.PROTO_IMPORTS, ExportVizModeKind.SERVICE_MAP)
+    #: MFX-12.6: the same ``buf lint`` / ``buf build`` checks as protobuf, so a Connect bundle
+    #: (with or without ``google.api.http`` annotations) is verified by the toolchain too.
+    test_tools = ProtoEmitter.test_tools
 
     OUTPUT_MEDIA_TYPE = ProtoEmitter.OUTPUT_MEDIA_TYPE
 
