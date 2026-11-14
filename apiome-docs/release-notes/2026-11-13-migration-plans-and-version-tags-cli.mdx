@@ -1,0 +1,30 @@
+---
+slug: migration-plans-and-version-tags-cli
+title: Migration plans and version tags from the CLI
+description: "List, count and show migration plans; create, move and delete version tags."
+authors: [apiome]
+---
+
+Migration plans and version tags are complete in the CLI: `apiome migrations` reads a project's
+migration plans and `apiome tags` manages the named pointers (`stable`, `latest`, `prod`) that
+follow its versions. The new
+[Migration plans and version tags from the CLI](/ship/migration-plans-and-version-tags-from-the-cli)
+page is the map.
+
+{/* truncate */}
+
+- **Read migration plans.** `apiome migrations list --project payments-api --from v2.0.0` lists a
+  project's plans for one version pair, `apiome migrations counts` counts plans, classes and rules
+  per project, and `apiome migrations show <plan-id>` prints every mapping
+  (`Charge.legacy_status → Charge.status  (simple · rename)`).
+- **Look at tags.** `apiome tags list payments-api` shows each tag, the version it points to, its
+  channel and who created it; `apiome tags show payments-api stable` shows one in full.
+- **Promote a release.** `apiome tags update payments-api stable --version v2.2.0` moves a tag after
+  showing who may be affected (mock requests in the last 7 days, frozen-snapshot downloads, other
+  tags on the version); `--dry-run` only shows it and `--yes` skips the question in CI.
+- **Create and delete.** `apiome tags create payments-api stable --version v2.1.0` checks the name
+  before sending it and exits `6` when the tag exists; `apiome tags delete` asks you to type the tag
+  name and never touches the version. Immutable tags can never be moved or deleted.
+
+Every command takes `--json`. The full options are in the
+[`apiome migrations`](/reference/cli/migrations) and [`apiome tags`](/reference/cli/tags) references.
