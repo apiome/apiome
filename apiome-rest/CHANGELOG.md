@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.697.0] - 2026-11-13
+
+### Added
+- **GraphQL export: Federation subgraph output mode (MFX-13.6, #4344)**
+  - New `federation` option (title **Federation subgraph**, default `false`) on the `graphql`
+    target. When on, the SDL is Apollo Federation v2 subgraph SDL: an
+    `extend schema @link(url: "https://specs.apollo.dev/federation/v2.9", import: [...])` header
+    importing exactly the Federation directives used, and an `@key` on every entity. Federation,
+    `link` and supergraph `join` machinery (definitions and `@join__*` applications) are removed.
+  - Entity keys: a source `@key` is kept. Otherwise the key is synthesized from the type's
+    canonical identity — its declared primary key (`extras.sql_key`), its `id` field, or its one
+    `ID` field — when that is a single scalar or enum. A type with none stays a value type.
+  - Reporting: each synthesized key is an `inferred` loss `federation-key-synthesized` and an
+    inferred provenance note (`/types/<key>/@key`); no entity at all is an `n/a` loss
+    `federation-no-entities`. `GraphQlFidelityRulePack` reads the option (`apply_options`) and
+    reports each synthesized key as `SYNTH`, so the preview and the export agree.
+  - Toolchain check: the `graphql` target declares `rover compose` (**rover supergraph
+    compose**). The check stages a `supergraph.yaml` (Federation `=2.9.3`) naming each exported
+    `.graphql` file as a subgraph.
+  - `app.graphql_federation`: new `federation_prelude_definitions`,
+    `parse_directive_applications`, `supergraph_config_yaml` and `ROVER_FEDERATION_VERSION`
+    (shared with `compose_subgraphs`).
+
 ## [1.696.0] - 2026-11-13
 
 ### Added

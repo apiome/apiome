@@ -1,0 +1,21 @@
+---
+slug: graphql-federation-subgraph
+title: Export GraphQL as a Federation subgraph
+description: "GraphQL SDL exports can write Apollo Federation v2 subgraph SDL with synthesized keys."
+authors: [apiome]
+---
+
+A **GraphQL SDL** export can now join a federated supergraph as is. Tick **Federation subgraph**
+on **Options** and the file is Apollo Federation v2 subgraph SDL. See
+[Federation subgraph from a GraphQL export](/ship/export-a-spec#graphql-federation).
+
+{/* truncate */}
+
+- **Ready to compose:** an `extend schema @link` header imports exactly the Federation directives the
+  file uses, and every entity carries an `@key`.
+- **Keys from identity:** a type keeps its own `@key`. Otherwise Apiome keys it by its declared
+  primary key, its `id` field or its one `ID` field, and lists each key it chose as *synthesized*
+  in the fidelity report.
+- **Composition check:** **Test drive** → **Toolchain checks** runs `rover supergraph compose` on the
+  export.
+- **CLI:** `apiome export graphql --federation`, or `--option federation=true` on a job export.

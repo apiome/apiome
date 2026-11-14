@@ -316,7 +316,7 @@ each is on [Test drive an export](./test-drive-an-export.mdx)):
 | **GraphiQL** | Explore the schema (docs and autocomplete) and run queries that answer with mock data | GraphQL |
 | **AsyncAPI viewer** | The file as AsyncAPI documentation: its operations by channel, their messages and payloads, and the schemas, with a sidebar to jump between them | AsyncAPI |
 | **Mock server** | Serves the file as a live API you can send requests to; see [Mock try-out](./mock-try-out.mdx#test-drive-an-export) | OpenAPI |
-| **Toolchain checks** (or the check's name, when there is one) | Runs the format's own checks, such as `buf lint`, on the file and shows their output; see [Toolchain checks](#toolchain-checks) | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), TypeSpec (`tsp compile`), Smithy (`smithy build`), Cap'n Proto (`capnp compile`), Thrift (`thrift compile`), API Blueprint (`drafter parse`) |
+| **Toolchain checks** (or the check's name, when there is one) | Runs the format's own checks, such as `buf lint`, on the file and shows their output; see [Toolchain checks](#toolchain-checks) | OpenAPI (`redocly lint`), AsyncAPI (`asyncapi validate`), Protobuf (`buf lint`, `buf build`), GraphQL (`rover supergraph compose`), TypeSpec (`tsp compile`), Smithy (`smithy build`), Cap'n Proto (`capnp compile`), Thrift (`thrift compile`), API Blueprint (`drafter parse`) |
 
 <Screenshot id="export-studio-test-drive" alt="Test drive with the redocly lint tab open, showing it is installed with a Run button, and the Mock server tab disabled because mocks are disabled on this server" />
 

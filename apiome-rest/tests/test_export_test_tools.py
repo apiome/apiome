@@ -113,7 +113,8 @@ def test_the_built_in_declarations(mock_on) -> None:
         return [t.kind.value for t in get_emitter(fmt).descriptor().test_tools]
 
     assert kinds("openapi-3.1") == ["swagger-ui", "redoc", "toolchain", "mock-server"]
-    assert kinds("graphql") == ["graphiql"]
+    assert kinds("graphql") == ["graphiql", "toolchain"]
+    assert get_emitter("graphql").descriptor().test_tools[1].params == {"tool": "rover", "check": "compose"}
     assert kinds("asyncapi-3") == ["asyncapi-render", "toolchain"]
     proto = get_emitter("proto3").descriptor().test_tools
     assert [t.label for t in proto] == ["buf lint", "buf build"]

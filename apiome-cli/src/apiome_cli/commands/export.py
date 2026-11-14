@@ -865,6 +865,13 @@ def export_graphql(
     ),
     min_grade: str | None = typer.Option(None, "--min-grade", help=MIN_GRADE_HELP),
     fail_on: str | None = typer.Option(None, "--fail-on", help=FAIL_ON_HELP),
+    federation: bool = typer.Option(
+        False,
+        "--federation",
+        help="Write Apollo Federation v2 subgraph SDL: an extend schema @link header and an @key "
+        "on every entity (synthesized from its primary key, id field or one ID field when the "
+        "source has none, and reported as SYNTH in the fidelity summary).",
+    ),
 ) -> None:
     """Export a version as GraphQL SDL and surface the emitter registry's fidelity report.
 
@@ -872,7 +879,8 @@ def export_graphql(
     ``graphql``); the honest fidelity report comes from the dry-run preview
     (``POST /v1/export/{tenant}/preview``). A native GraphQL source round-trips **lossless**
     (exit 0); a REST/OpenAPI source loses HTTP semantics and validation constraints (non-zero
-    exit unless ``--force``).
+    exit unless ``--force``). ``--federation`` sends the ``federation`` emit option to both
+    (MFX-13.6), so the document is subgraph SDL and the report names each synthesized ``@key``.
     """
     output = output.strip()
     if not output:
@@ -885,6 +893,7 @@ def export_graphql(
     tenant_slug = resolve_tenant_slug(settings, client, tenant_override=tenant)
 
     project_id = resolve_project_uuid(client, tenant_slug, project)
+    options = {"federation": True} if federation else None
 
     gate_export_before_job(
         client,
@@ -903,6 +912,7 @@ def export_graphql(
         version=version,
         target=_GRAPHQL_TARGET,
         serialization=None,
+        options=options,
     )
     write_document_bytes(document.body, output)
 
@@ -912,6 +922,7 @@ def export_graphql(
         artifact=str(project_id),
         version=version,
         target=_GRAPHQL_TARGET,
+        options=options,
     )
     fidelity = preview_fidelity(preview)
 

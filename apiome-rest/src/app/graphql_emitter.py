@@ -1,4 +1,4 @@
-"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884), MFX-13.2 (#3885), MFX-13.3 (#3886).
+"""GraphQL SDL emitter: canonical model → SDL — MFX-13.1 (#3884), MFX-13.2 (#3885), MFX-13.3 (#3886), MFX-13.6 (#4344).
 
 The inverse of :class:`app.graphql_normalizer.GraphQlNormalizer` and an implementation of the
 :class:`app.emitter.Emitter` SPI. It walks a :class:`~app.canonical_model.CanonicalApi` and
@@ -19,13 +19,17 @@ with :func:`~graphql.print_schema` so the output is guaranteed valid SDL:
 
 Constructs GraphQL cannot carry (``MAP`` types, event pub/sub, HTTP bindings) are recorded as
 :class:`~app.emitter.Loss`\\es rather than silently dropped.
+
+With the ``federation`` option (MFX-13.6) the output is Federation v2 *subgraph* SDL: an
+``extend schema @link`` header and an ``@key`` on every entity, synthesized from the type's
+canonical identity fields when the source has none (:mod:`app.graphql_federation_subgraph`).
 """
 
 from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 from graphql import (
     DirectiveLocation,
@@ -54,7 +58,7 @@ from graphql import (
     specified_directives,
     validate_schema,
 )
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from .canonical_model import (
     ApiParadigm,
@@ -80,8 +84,15 @@ from .emitter import (
     Provenance,
     ProvenanceTracker,
 )
-from .export_test_tools import ExportTestToolKind, test_tool
+from .export_test_tools import ExportTestToolKind, test_tool, toolchain_check
 from .fidelity_rulepack import CapabilityRulePack, FidelityVerdict, _has_any_constraint
+from .graphql_federation_subgraph import (
+    EntityKey,
+    entity_key_for,
+    entity_keys,
+    to_subgraph_sdl,
+    with_federation_definitions,
+)
 from .lossiness import LossinessReport
 
 __all__ = ["GraphQlEmitOptions", "GraphQlEmitter", "GraphQlFidelityRulePack"]
@@ -181,6 +192,11 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
 
     Native graph operations, nullability/list wrappers, and eligible unions defer to
     the inherited ``OK``.
+
+    **Federation** (MFX-13.6) depends on the ``federation`` option bound through
+    :meth:`apply_options`: on, every entity whose ``@key`` the emitter synthesizes from its
+    identity fields gets a ``SYNTH`` verdict naming the key, matching the
+    ``federation-key-synthesized`` loss the emit records.
     """
 
     def __init__(
@@ -188,6 +204,30 @@ class GraphQlFidelityRulePack(CapabilityRulePack):
     ) -> None:
         super().__init__(profile, target_label)
         self._types_by_key: Dict[str, Type] = {}
+        self._options = GraphQlEmitOptions()
+
+    def apply_options(self, options: Mapping[str, Any]) -> None:
+        """Bind ``federation`` (MFX-13.6); invalid options fall back to the defaults."""
+        try:
+            self._options = GraphQlEmitOptions.model_validate(dict(options))
+        except ValidationError:
+            self._options = GraphQlEmitOptions()
+
+    def type_verdicts(self, type_: Type) -> List[FidelityVerdict]:
+        """The type's own verdict, plus a ``SYNTH`` for a synthesized federation ``@key``."""
+        verdicts = super().type_verdicts(type_)
+        if self._options.federation:
+            key = entity_key_for(type_, self._types_by_key)
+            if key is not None and key.synthesized:
+                selection = " ".join(key.fields)
+                verdicts.append(
+                    FidelityVerdict.synth(
+                        message=f"{self.target_label} subgraph entities need a @key; "
+                        f"one is synthesized from {key.describe()}",
+                        target_mapping=f'identity → @key(fields: "{selection}")',
+                    )
+                )
+        return verdicts
 
     def evaluate(self, api: CanonicalApi) -> LossinessReport:
         """Walk ``api`` with a type lookup for union-eligibility checks."""
@@ -263,6 +303,15 @@ class GraphQlEmitOptions(EmitOptions):
         default=None,
         description="Optional schema-level description override.",
     )
+    federation: bool = Field(
+        default=False,
+        title="Federation subgraph",
+        description="Write Apollo Federation v2 subgraph SDL (MFX-13.6): an ``extend schema "
+        "@link`` header importing the Federation directives used, and an ``@key`` on every "
+        "entity. A type without its own ``@key`` is keyed by its declared primary key, its "
+        "``id`` field or its one ``ID`` field, and the synthesized key is reported. Off, plain "
+        "SDL is written.",
+    )
 
 
 class GraphQlEmitter(Emitter, register=True):
@@ -276,8 +325,11 @@ class GraphQlEmitter(Emitter, register=True):
     paradigm = ApiParadigm.GRAPH
     multi_file = False
     options_model = GraphQlEmitOptions
-    #: MFX-44.1: explore the emitted schema in GraphiQL.
-    test_tools = (test_tool(ExportTestToolKind.GRAPHIQL),)
+    #: MFX-44.1: explore the emitted schema in GraphiQL; MFX-13.6: compose it with rover.
+    test_tools = (
+        test_tool(ExportTestToolKind.GRAPHIQL),
+        toolchain_check("rover", "compose", "rover supergraph compose"),
+    )
 
     OUTPUT_MEDIA_TYPE = "application/graphql"
 
@@ -376,7 +428,59 @@ class _GraphQlWriter:
         if errors:
             messages = "; ".join(error.message for error in errors)
             raise ValueError(f"Emitted GraphQL schema failed validation: {messages}")
-        return self._reattach_applied_directives(print_schema(schema))
+        if not self._options.federation:
+            return self._reattach_applied_directives(print_schema(schema))
+        sdl = self._reattach_applied_directives(with_federation_definitions(print_schema(schema)))
+        return self._federate(sdl)
+
+    # --- federation subgraph (MFX-13.6) ---------------------------------------
+
+    def _federate(self, sdl: str) -> str:
+        """Turn the attached SDL into subgraph SDL, reporting every synthesized ``@key``.
+
+        Args:
+            sdl: The printed SDL with applied directives re-attached.
+
+        Returns:
+            Federation v2 subgraph SDL.
+        """
+        synthesized = {
+            self._gql_names_by_key[key.type_key]: key
+            for key in entity_keys(self._api)
+            if key.synthesized and key.type_key in self._gql_names_by_key
+        }
+        fields = {
+            name: [_graphql_name(field, prefix="field") for field in key.fields]
+            for name, key in synthesized.items()
+        }
+        subgraph = to_subgraph_sdl(sdl, fields)
+        for name in subgraph.keyed:  # only the types the document prints
+            self._record_synthesized_key(synthesized[name], fields[name])
+        if not subgraph.entities:
+            self.losses.record(
+                LossKind.NA,
+                "federation-no-entities",
+                "No object type has an identity field (a declared primary key, an `id` field or "
+                "one ID field), so the subgraph declares no entities.",
+            )
+        return subgraph.sdl
+
+    def _record_synthesized_key(self, key: EntityKey, fields: List[str]) -> None:
+        """Report one synthesized ``@key`` as an inferred loss and an inferred provenance note."""
+        name = self._gql_names_by_key[key.type_key]
+        selection = " ".join(fields)
+        self.losses.record(
+            LossKind.INFERRED,
+            "federation-key-synthesized",
+            f"{name!r} is an entity keyed by {key.describe()}: "
+            f'@key(fields: "{selection}") is synthesized.',
+            pointer=key.type_key,
+        )
+        self.tracker.record(
+            f"/types/{key.type_key}/@key",
+            Provenance.INFERRED,
+            detail=f"synthesized from {key.describe()}",
+        )
 
     # --- directives (definitions + applications) ----------------------------
 
