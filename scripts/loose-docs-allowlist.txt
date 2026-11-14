@@ -92,6 +92,7 @@ apiome-rest/docs/lint_engine_spi.md
 apiome-rest/docs/lint_workspace.md
 apiome-rest/docs/mcp_conformance.md
 apiome-rest/docs/mcp_probes.md
+apiome-rest/docs/mcp_server_generator.md
 apiome-rest/docs/mcp_trust_drift.md
 apiome-rest/docs/mcp_trust_posture.md
 apiome-rest/docs/normalizer_spi.md
