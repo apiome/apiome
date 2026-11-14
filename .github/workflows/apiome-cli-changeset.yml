@@ -1,0 +1,40 @@
+name: apiome-cli changeset
+
+# Every pull request that changes apiome-cli/ carries a changeset releasing @apiome/cli (#3269):
+# `npx changeset` in apiome-cli/ writes `.changeset/<name>.md`. A docs-only or test-only change
+# can skip it with the `no-cli-release` label; the changesets release pull request
+# (`changeset-release/main`) passes on its own. The rules live in
+# apiome-cli/scripts/release/lib.mjs (`checkChangeset`) and are unit tested there.
+#
+# No `paths` filter: the check is cheap and must report on every pull request so it can be a
+# required status. `labeled` / `unlabeled` re-run it when `no-cli-release` is added or removed.
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened, labeled, unlabeled ]
+
+permissions:
+  contents: read
+
+jobs:
+  changeset:
+    name: Changeset present
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+
+      - name: Check for a changeset
+        env:
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR_HEAD_REF: ${{ github.head_ref }}
+        run: |
+          node apiome-cli/scripts/release/check-changeset.mjs \
+            --base "${{ github.event.pull_request.base.sha }}" --head HEAD

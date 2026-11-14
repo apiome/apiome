@@ -82,7 +82,7 @@ curl -fsSL https://get.apiome.dev | APIOME_VERSION=main sh
 
 | Option | Environment variable | What it does |
 | --- | --- | --- |
-| `--version <ref>` | `APIOME_VERSION` | Install a tag, branch or commit of the Apiome repository. Default: `main`. |
+| `--version <ref>` | `APIOME_VERSION` | Install a tag, branch or commit of the Apiome repository — a released CLI is tagged `cli-vX.Y.Z` (see [Release the CLI](../admin/release-the-cli.md)). Default: `main`. |
 | `--repo <url>` | `APIOME_REPO` | Install from another copy of the repository (an `https://` or `ssh://` URL), such as your own fork. |
 | `--user` | `APIOME_USER_INSTALL=1` | Install for your user only, into `~/.local/bin`, without `sudo`. |
 | `--bin-dir <dir>` | `APIOME_BIN_DIR` | Where a system install puts the `apiome` command. Default: `/usr/bin`, or `/usr/local/bin` on macOS. |
