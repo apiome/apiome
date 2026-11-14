@@ -5,8 +5,18 @@ from __future__ import annotations
 import sys
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from typing import Optional
 
-from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
+from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
+    Progress,
+    ProgressColumn,
+    Task,
+    TaskProgressColumn,
+    TextColumn,
+)
+from rich.text import Text
 from rich.status import Status
 
 from apiome_cli.terminal import make_console, quiet_enabled
@@ -80,3 +90,48 @@ def row_progress(total: int, *, description: str, enabled: bool = True) -> Itera
     ) as progress:
         task = progress.add_task(description, total=total)
         yield lambda: progress.advance(task)
+
+
+class _RateColumn(ProgressColumn):
+    """``812 rec/s`` — how many rows a second are being finished."""
+
+    def render(self, task: Task) -> Text:
+        """The rate, or nothing until Rich has measured one."""
+        speed = task.finished_speed or task.speed
+        return Text(f"{speed:,.0f} rec/s" if speed else "")
+
+
+@contextmanager
+def record_progress(
+    total: Optional[int], *, description: str, enabled: bool = True
+) -> Iterator[Callable[[int], None]]:
+    """Show a progress bar with a percentage and a rows-per-second rate on stderr.
+
+    Used by ``apiome data import``: ``████████░░░░  60%  7,407/12,345  812 rec/s``.
+
+    Args:
+        total: How many rows there are, or ``None`` when that is not known (stdin) — the bar
+            then pulses and shows only the count done.
+        description: The label before the bar, e.g. "Importing".
+        enabled: When False, no bar is drawn.
+
+    Yields:
+        A function to call with the number of rows just finished. It does nothing when the bar
+        is not drawn — ``enabled`` is False, ``--quiet`` was passed, or stderr is not a terminal.
+    """
+    if not progress_allowed(enabled):
+        yield lambda _count: None
+        return
+
+    console = make_console(stderr=True)
+    with Progress(
+        TextColumn("{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        MofNCompleteColumn(),
+        _RateColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(description, total=total)
+        yield lambda count: progress.advance(task, count)

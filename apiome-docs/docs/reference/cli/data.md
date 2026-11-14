@@ -1,6 +1,6 @@
 ---
 title: "apiome data"
-description: "Create and list records in a published class."
+description: "Create, list and import records in a published class."
 sidebar_position: 12
 tags: [cli, reference]
 generated: "apiome-cli/scripts/generate_cli_reference_docs.py"
@@ -12,13 +12,13 @@ Global options such as `--base-url`, `--tenant` and `--json` go before the comma
 
 ## apiome data {#data}
 
-Create and list records in a published class.
+Create, list and import records in a published class.
 
 ```text
 apiome data [OPTIONS] COMMAND [ARGS]...
 ```
 
-Subcommands: [`create`](#data-create), [`list`](#data-list).
+Subcommands: [`create`](#data-create), [`import`](#data-import), [`list`](#data-list).
 
 ## apiome data create {#data-create}
 
@@ -44,6 +44,43 @@ apiome data create [OPTIONS]
 | `--field` | text (repeatable) |  |  | Set one field: key=value, or key=:&lt;json&gt; to parse the value (repeatable). |
 | `--dry-run` | flag |  |  | Validate against the class schema only; send nothing. |
 | `--json` | flag |  |  | Print the created record as JSON (same as the global --json). |
+
+## apiome data import {#data-import}
+
+Import many records into a published class from NDJSON, a JSON array or CSV.
+
+The file is streamed, so memory stays flat however large it is. The format comes from --ndjson, --csv or --json, else from the extension (.ndjson / .jsonl, .csv, .json); stdin (FILE -) needs the flag.
+
+Each row is checked against the class's JSON Schema before it is sent; CSV cells are typed from the schema (a number field gets a number). Rows go out in batches of --batch, --concurrency batches at a time, one POST /v1/data/{tenant}/records per row, retried on 429 and 5xx.
+
+A row that fails exits 7 and stops the import (rows already sent stay created). --continue-on-error tries every row and exits 0; --report lists every row's result and the failed_count.
+
+The progress bar is hidden under --quiet, the global --json, or when stderr is not a terminal. The global --json prints the summary as JSON.
+
+```text
+apiome data import [OPTIONS] FILE
+```
+
+**Arguments**
+
+| Argument | Type | Required | Description |
+| --- | --- | --- | --- |
+| `FILE` | text | yes | NDJSON, JSON-array or CSV file; - reads stdin. |
+
+**Options**
+
+| Option | Type | Default | Required | Description |
+| --- | --- | --- | --- | --- |
+| `--class` | text |  | yes | The class, e.g. billing/1.0.0/Charge (published version). |
+| `--ndjson` | flag |  |  | The input is NDJSON: one JSON object per line. |
+| `--csv` | flag |  |  | The input is CSV with a header row. |
+| `--json` | flag |  |  | The input is one JSON array of objects. |
+| `--batch` | integer range | `100` |  | Rows read and sent per batch. |
+| `--concurrency` | integer range | `4` |  | Batches sent at the same time. |
+| `--mapping` | text |  |  | CSV only: the columns to import, comma-separated; column=field renames one. |
+| `--continue-on-error` | flag |  |  | Try every row and exit 0 even when some fail (see failed_count). |
+| `--report` | path |  |  | Write a JSON report with one {row, status, record_id?, error?} per row. |
+| `--dry-run` | flag |  |  | Validate every row against the class schema; send nothing. |
 
 ## apiome data list {#data-list}
 
