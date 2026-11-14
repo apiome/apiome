@@ -178,6 +178,13 @@ jobs:
         run: uv run mypy -p apiome_mcp
         working-directory: apiome-mcp
 
+      # AAU-4.1 (#5714): the catalog's own `mcp-protocol` conformance profile, gated at failOn=error,
+      # against the real /agent/mcp once per served protocol version (docs/PROTOCOL_VERSIONS.md), plus
+      # the 400-on-unsupported-version acceptance. Its own step so a protocol regression is named.
+      - name: MCP protocol self-conformance gate
+        run: uv run pytest -v tests/test_agent_self_conformance.py tests/test_protocol_versions.py
+        working-directory: apiome-mcp
+
       - name: Run pytest
         run: uv run pytest
         working-directory: apiome-mcp

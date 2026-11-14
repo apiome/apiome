@@ -7,6 +7,10 @@ One process, one port, two MCP apps that never share a ``tools/list`` (``docs/AG
 
 Each app keeps its own lifespan (pool, and for the catalog the AGX-3.3 usage sweep); this module only
 mounts them side by side and runs both lifespans.
+
+The agent app alone carries the AAU-4.1 protocol-version gate
+(:class:`~apiome_mcp.protocol_version_gate.ProtocolVersionGateMiddleware`): ``/agent/mcp`` serves the
+pinned table in ``docs/PROTOCOL_VERSIONS.md``, over Streamable HTTP only — never HTTP+SSE.
 """
 
 from __future__ import annotations
@@ -19,6 +23,7 @@ from starlette.routing import Mount
 
 from apiome_mcp.agent_server import AGENT_MCP_MOUNT
 from apiome_mcp.http_credential_middleware import HttpCredentialExtractionMiddleware
+from apiome_mcp.protocol_version_gate import ProtocolVersionGateMiddleware
 
 __all__ = ["MCP_PATH", "build_http_app"]
 
@@ -40,7 +45,8 @@ def build_http_app(catalog: FastMCP, agent: FastMCP | None) -> Starlette:
     catalog_app = catalog.http_app(path=MCP_PATH, transport="streamable-http", middleware=middleware)
     if agent is None:
         return catalog_app
-    agent_app = agent.http_app(path=MCP_PATH, transport="streamable-http", middleware=middleware)
+    agent_middleware = [*middleware, StarletteMiddleware(ProtocolVersionGateMiddleware)]
+    agent_app = agent.http_app(path=MCP_PATH, transport="streamable-http", middleware=agent_middleware)
     return Starlette(
         routes=[Mount(AGENT_MCP_MOUNT, app=agent_app), Mount("", app=catalog_app)],
         lifespan=combine_lifespans(catalog_app.lifespan, agent_app.lifespan),

@@ -1,0 +1,25 @@
+---
+slug: agent-runtime-protocol-versions
+title: The agent runtime pins the MCP protocol versions it serves
+description: "/agent/mcp serves 2026-07-28, 2025-11-25 and 2025-06-18 and refuses any other version."
+authors: [apiome]
+---
+
+The agent runtime at `/agent/mcp` now serves a fixed set of MCP protocol versions, listed on the new
+[MCP agent runtime](/reference/mcp/agent-runtime) page. Before, the installed MCP SDK decided which
+versions it served.
+
+{/* truncate */}
+
+- **Served:** `2026-07-28`, `2025-11-25` and `2025-06-18`. A request without an
+  `MCP-Protocol-Version` header is read as `2025-03-26`, so older clients keep working.
+- **Refused, not downgraded:** a request that names any other version, including `2024-11-05` from
+  the HTTP+SSE era, gets HTTP `400`. The JSON-RPC error `-32022` in the body lists the supported
+  versions to retry with. The deprecated HTTP+SSE transport is never served on the agent runtime.
+- **2026-07-28 clients:** that revision has no `initialize` handshake. A 2026-07-28 client that falls
+  back to `initialize` is answered with `2025-11-25`. Stateless requests and `server/discover` come
+  next.
+- **New conformance rules for 2026-07-28:** `protocol.modern-version-via-handshake`,
+  `protocol.result-type-missing` and `protocol.deprecated-capability-declared` check the MCP servers
+  you import. Apiome runs the same `mcp-protocol` profile against its own agent runtime on every
+  build, once per served version. See [MCP conformance rules](/govern/mcp-conformance-rules).

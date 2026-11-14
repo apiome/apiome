@@ -19,6 +19,15 @@ Catalog for :mod:`app.mcp_conformance`. Every rule cites an MCP specification re
 - **Rationale:** A declared capability that lists nothing gives an agent a dead end.
 - **Requires transcript:** False
 
+### `protocol.deprecated-capability-declared` {#protocol-deprecated-capability-declared}
+
+- **Category:** protocol
+- **Severity:** info
+- **Spec version:** 2026-07-28
+- **Spec reference:** https://modelcontextprotocol.io/specification/2026-07-28/changelog
+- **Rationale:** A capability 2026-07-28 deprecates stops working for clients once its 12-month window ends.
+- **Requires transcript:** False
+
 ### `protocol.empty-page-with-next-cursor` {#protocol-empty-page-with-next-cursor}
 
 - **Category:** protocol
@@ -88,6 +97,20 @@ Catalog for :mod:`app.mcp_conformance`. Every rule cites an MCP specification re
 - **Rationale:** serverInfo.version lets a host pin and audit a server build; it should be declared.
 - **Requires transcript:** False
 
+### `protocol.modern-version-via-handshake` {#protocol-modern-version-via-handshake}
+
+- **Category:** protocol
+- **Severity:** error
+- **Spec version:** 2026-07-28
+- **Spec reference:** https://modelcontextprotocol.io/specification/2026-07-28/basic/lifecycle
+- **Rationale:** 2026-07-28 has no initialize handshake; a server MUST NOT negotiate it through initialize.
+- **Requires transcript:** True
+- **Reference:** https://modelcontextprotocol.io/specification/2026-07-28/basic/lifecycle
+- **Remediation:** Answer initialize with the newest handshake revision (2025-11-25); serve 2026-07-28 statelessly.
+- **False-positive guidance:** Skipped when no transcript was captured; a stateless 2026-07-28 surface is exempt.
+- **Fixture:** `mcp/unsafe/conformance/protocol-modern-version-via-handshake`
+- **Scan modes:** `protocol`, `requires_transcript`
+
 ### `protocol.protocol-version-downgraded` {#protocol-protocol-version-downgraded}
 
 - **Category:** protocol
@@ -109,6 +132,20 @@ Catalog for :mod:`app.mcp_conformance`. Every rule cites an MCP specification re
 - **Remediation:** Echo the JSON-RPC request `id` on every successful or error response.
 - **False-positive guidance:** Skipped when no transcript was captured; notifications (no id) are exempt.
 - **Fixture:** `mcp/unsafe/conformance/protocol-response-id-not-echoed`
+- **Scan modes:** `protocol`, `requires_transcript`
+
+### `protocol.result-type-missing` {#protocol-result-type-missing}
+
+- **Category:** protocol
+- **Severity:** error
+- **Spec version:** 2026-07-28
+- **Spec reference:** https://modelcontextprotocol.io/specification/2026-07-28/basic
+- **Rationale:** Under 2026-07-28 every result MUST carry resultType; a client cannot tell complete from pending.
+- **Requires transcript:** True
+- **Reference:** https://modelcontextprotocol.io/specification/2026-07-28/basic
+- **Remediation:** Set `resultType` (`complete` for an ordinary result) on every 2026-07-28 result.
+- **False-positive guidance:** Only evaluated on 2026-07-28 sessions; skipped when no transcript was captured.
+- **Fixture:** `mcp/unsafe/conformance/protocol-result-type-missing`
 - **Scan modes:** `protocol`, `requires_transcript`
 
 ### `protocol.undeclared-capability-listed` {#protocol-undeclared-capability-listed}
@@ -140,7 +177,7 @@ Catalog for :mod:`app.mcp_conformance`. Every rule cites an MCP specification re
 - **Severity:** error
 - **Spec version:** 2025-06-18
 - **Spec reference:** https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle
-- **Rationale:** The negotiated protocol version MUST be a revision this client speaks.
+- **Rationale:** The negotiated protocol version MUST be a released revision a client can speak.
 - **Requires transcript:** False
 - **Reference:** https://modelcontextprotocol.io/specification/2025-06-18/basic/lifecycle
 - **Remediation:** Negotiate a supported protocolVersion from the client's offered set.

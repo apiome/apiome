@@ -1,0 +1,34 @@
+{
+  "kind": "mcp_conformance",
+  "surface": {
+    "protocol_version": "2026-07-28",
+    "server_info": {
+      "name": "srv",
+      "version": "1.0.0"
+    },
+    "capabilities": {}
+  },
+  "negotiated_version": "2026-07-28",
+  "transcript_records": [
+    {
+      "method": "initialize",
+      "request_id": 1,
+      "params": {
+        "protocolVersion": "2026-07-28"
+      },
+      "http_status": 200,
+      "envelope": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2026-07-28",
+          "capabilities": {},
+          "serverInfo": {
+            "name": "srv",
+            "version": "1.0.0"
+          }
+        }
+      }
+    }
+  ]
+}

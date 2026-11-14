@@ -31,6 +31,7 @@ from app.mcp_conformance import (
     DEFAULT_PROFILE,
     FAIL_ON_NONE,
     MCP_SPEC_VERSION,
+    MCP_SPEC_VERSION_2026,
     PROFILE_FULL,
     PROFILE_PROTOCOL,
     PROFILE_READINESS,
@@ -298,7 +299,9 @@ def test_clean_surface_scores_100_and_passes():
 def test_every_rule_cites_a_spec_version_and_a_resolvable_reference():
     """Acceptance criterion: a finding must trace to a normative statement, not an opinion."""
     for rule in rule_catalog():
-        assert rule["spec_version"] == MCP_SPEC_VERSION
+        # The 2026-07-28 rules (AAU-4.1) cite their own revision, and their reference names it.
+        assert rule["spec_version"] in (MCP_SPEC_VERSION, MCP_SPEC_VERSION_2026), rule["rule_id"]
+        assert rule["spec_version"] in rule["spec_reference"] or rule["category"] == CATEGORY_READINESS
         assert rule["spec_reference"].startswith("https://"), rule["rule_id"]
         assert rule["rationale"].strip(), rule["rule_id"]
         assert rule["severity"] in ("error", "warning", "info")
