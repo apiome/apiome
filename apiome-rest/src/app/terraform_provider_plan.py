@@ -79,6 +79,7 @@ __all__ = [
     "TerraformResource",
     "TerraformWarning",
     "build_terraform_provider_plan",
+    "plan_auth_settings",
     "terraform_provider_name",
 ]
 
@@ -1396,6 +1397,28 @@ def _plan_auth(
             )
         )
     return settings
+
+
+def plan_auth_settings(api: CanonicalApi) -> Tuple[List[TerraformAuthSetting], List[str]]:
+    """Map the contract's security schemes onto credential settings, outside a provider plan.
+
+    The same mapping the provider's settings come from, shared with the SDK-4.5 MCP server
+    generator (:mod:`app.mcp_server_generator`, #4499), which reads each setting from an
+    environment variable instead, so both artifacts agree on what a credential is called.
+
+    Args:
+        api: The canonical model.
+
+    Returns:
+        ``(settings, unsupported)`` — the settings in declaration order, and the names of the
+        schemes that have none (mutual TLS, an API key with no name).
+    """
+    source = _SourceDocument(api.raw)
+    settings = _plan_auth(api, source, lambda code, message: None)
+    covered = {setting.scheme for setting in settings}
+    declared = [name for name, _spec in source.security_schemes()] or declared_security_schemes(api)
+    unsupported = [name for name in declared if name not in covered]
+    return settings, unsupported
 
 
 def build_terraform_provider_plan(

@@ -4,10 +4,10 @@ Two anonymous, slug-addressed routes behind the browse portal's Get SDK panel:
 
 * **``GET /v1/browse/tenants/{t}/projects/{p}/versions/{v}/sdk``** — what the panel needs to draw
   itself: the resolved package names (SDK-3.4), the install line per language, the generated Go
-  client's module path (SDK-2.4), the Terraform provider's registry address (SDK-4.4), how many
-  operations the kit covers, and the download's filename. The Go client and the provider are
-  *named* here, never generated: their names are pure functions of the coordinates and the
-  branding.
+  client's module path (SDK-2.4), the Terraform provider's registry address (SDK-4.4), the MCP
+  server's package name (SDK-4.5), how many operations the kit covers, and the download's filename.
+  The Go client, the provider and the MCP server are *named* here, never generated: their names are
+  pure functions of the coordinates and the branding.
 * **``GET …/sdk/download``** — the kit itself (:mod:`app.sdk_kit`) as ``application/zip``.
 
 **One gate, one answer.** Both routes resolve the revision through
@@ -38,6 +38,7 @@ from .export_source import ExportSource, ExportSourceError, load_public_export_s
 from .go_client_generator import DEFAULT_GO_VERSION, GO_ECOSYSTEM
 from .server_stub_generator import EXPRESS_DIRECTORY, FASTAPI_DIRECTORY
 from .terraform_provider_runtime import PLUGIN_FRAMEWORK_VERSION
+from .mcp_server_runtime import MCP_SDK_VERSION
 from .public_export_guards import (
     enforce_public_export_rate_limit,
     public_export_document_max_bytes,
@@ -48,6 +49,7 @@ from .sdk_kit import (
     GO_CLIENT_DIRECTORY,
     SERVER_STUB_DIRECTORY,
     TERRAFORM_PROVIDER_DIRECTORY,
+    MCP_SERVER_DIRECTORY,
     KIT_MEDIA_TYPE,
     KIT_SCHEMA_VERSION,
     LANGUAGE_FILE_EXTENSIONS,
@@ -58,6 +60,7 @@ from .sdk_kit import (
     go_client_coordinates,
     server_stub_coordinates,
     terraform_provider_coordinates,
+    mcp_server_coordinates,
     kit_filename,
     package_install_command,
     summarize_kit,
@@ -177,6 +180,25 @@ class SdkTerraformProviderModel(BaseModel):
     framework_version: str = Field(description="The Terraform Plugin Framework release it is built on.")
 
 
+class SdkMcpServerModel(BaseModel):
+    """The generated MCP server the download carries — SDK-4.5 (#4499).
+
+    Named, not described: its tools are the contract's operations, and the download's
+    ``manifest.json`` lists them with the environment variables the server reads.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    directory: str = Field(description="The directory the server sits in inside the archive.")
+    package_name: str = Field(description="The npm package name the server's `package.json` declares.")
+    server_name: str = Field(description="The name the server reports to MCP clients and is registered under.")
+    env_prefix: str = Field(
+        description="The prefix of every environment variable the server reads (`<PREFIX>_BASE_URL`, credentials)."
+    )
+    transport: str = Field(description="The MCP transport the server speaks (`stdio`).")
+    sdk_version: str = Field(description="The `@modelcontextprotocol/sdk` release it is built on.")
+
+
 class SdkDownloadModel(BaseModel):
     """What the download will be, so a client can label its button before fetching."""
 
@@ -229,6 +251,9 @@ class PublicSdkInfoResponse(BaseModel):
     )
     terraform_provider: SdkTerraformProviderModel = Field(
         description="The generated Terraform provider the download carries (SDK-4.4)."
+    )
+    mcp_server: SdkMcpServerModel = Field(
+        description="The generated MCP server the download carries (SDK-4.5)."
     )
     download: SdkDownloadModel
 
@@ -420,6 +445,7 @@ async def get_public_sdk_info(
     # Named, not generated: the provider's name, address and module path are pure functions of the
     # coordinates and the branding; which resources it holds is the download manifest's to say.
     terraform = terraform_provider_coordinates(source.api, gated.coordinates, branding)
+    mcp_server = mcp_server_coordinates(source.api, gated.coordinates, branding)
 
     return PublicSdkInfoResponse(
         tenant_slug=tenant_slug,
@@ -471,6 +497,14 @@ async def get_public_sdk_info(
             address=terraform.address,
             module_path=terraform.module_path,
             framework_version=PLUGIN_FRAMEWORK_VERSION,
+        ),
+        mcp_server=SdkMcpServerModel(
+            directory=MCP_SERVER_DIRECTORY,
+            package_name=mcp_server.package_name,
+            server_name=mcp_server.server_name,
+            env_prefix=mcp_server.env_prefix,
+            transport="stdio",
+            sdk_version=MCP_SDK_VERSION,
         ),
         download=SdkDownloadModel(
             filename=kit_filename(gated.coordinates),

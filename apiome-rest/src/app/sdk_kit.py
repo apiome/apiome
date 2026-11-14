@@ -1,10 +1,10 @@
-"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490), SDK-4.4 (#4498).
+"""The public client kit — SDK-3.3 (#4493), SDK-2.4 (#4488), SDK-2.5 (#4490), SDK-4.4 (#4498), SDK-4.5 (#4499).
 
 A consumer who lands on a published spec in the browse portal wants one thing: something they
 can unzip and run. This module builds it — a deterministic ``sdk.client-kit.v1`` archive holding
 the contract, a README, one runnable snippet per operation per language, a complete Go client
-module under ``go/``, two runnable server skeletons under ``server/``, and a buildable Terraform
-provider under ``terraform/``.
+module under ``go/``, two runnable server skeletons under ``server/``, a buildable Terraform
+provider under ``terraform/``, and a runnable MCP server under ``mcp/``.
 
 **Why the kit is built rather than stored.** The original SDK-3.3 scope served "the latest
 generated artifact" from the SDK-1.1 artifact store. That ticket, the generator SPI (SDK-1.2),
@@ -16,11 +16,12 @@ renders runnable per-operation code, and the SDK-2.4 Go client generator
 SDK-2.5 server stub generators (:mod:`app.server_stub_generator`), which emit a FastAPI and an
 Express project from the same contract, and the SDK-4.4 Terraform provider generator
 (:mod:`app.terraform_provider_generator`), which emits a Plugin Framework provider whose resources
-come from the contract's CRUD conventions. This module packages all four, at request time, from
-one revision.
+come from the contract's CRUD conventions, and the SDK-4.5 MCP server generator
+(:mod:`app.mcp_server_generator`), which emits a stdio MCP server whose tools are the contract's
+operations. This module packages all five, at request time, from one revision.
 
 **The generated projects are planned separately** (:func:`plan_go_client`,
-:func:`plan_server_stubs`, :func:`plan_terraform_provider`) for two reasons: a route can report
+:func:`plan_server_stubs`, :func:`plan_terraform_provider`, :func:`plan_mcp_server`) for two reasons: a route can report
 what a consumer would get — the module path they will ``go get``, the package the server stub
 declares — without paying to generate it, and a generator failure degrades the kit to its
 snippets rather than taking the download down.
@@ -62,6 +63,13 @@ from .go_client_generator import (
     go_module_path,
     go_package_name,
 )
+from .mcp_server_generator import (
+    MCP_SERVER_SCHEMA_VERSION,
+    McpServerPackage,
+    generate_mcp_server,
+    mcp_env_prefix,
+    mcp_server_package_name,
+)
 from .sdk_generation_settings import ResolvedBranding
 from .express_stub_generator import express_package_name
 from .fastapi_stub_generator import fastapi_package_name
@@ -99,6 +107,7 @@ __all__ = [
     "LANGUAGE_FILE_EXTENSIONS",
     "LANGUAGE_LABELS",
     "MAX_KIT_OPERATIONS",
+    "MCP_SERVER_DIRECTORY",
     "PACKAGE_INSTALL_COMMANDS",
     "SERVER_STUB_DIRECTORY",
     "TERRAFORM_PROVIDER_DIRECTORY",
@@ -106,15 +115,19 @@ __all__ = [
     "GoClientPlan",
     "KitCoordinates",
     "KitSummary",
+    "McpServerCoordinates",
+    "McpServerPlanResult",
     "RenderedOperation",
     "ServerStubPlanResult",
     "TerraformProviderCoordinates",
     "TerraformProviderPlanResult",
     "build_client_kit",
     "go_client_coordinates",
+    "mcp_server_coordinates",
     "operation_identifier",
     "render_kit_operations",
     "plan_go_client",
+    "plan_mcp_server",
     "plan_server_stubs",
     "plan_terraform_provider",
     "server_stub_coordinates",
@@ -167,6 +180,10 @@ SERVER_STUB_DIRECTORY = "server"
 #: it is its own Go module, built and released on its own (``terraform-provider-<name>``), and a
 #: consumer copies that one directory into the repository the registry publishes from.
 TERRAFORM_PROVIDER_DIRECTORY = "terraform"
+
+#: The archive directory the generated MCP server lives in (SDK-4.5). Its own root because it is
+#: its own npm project, which a consumer builds once and registers with an MCP client by path.
+MCP_SERVER_DIRECTORY = "mcp"
 
 #: How a resolved package name is installed, per ecosystem (SDK-3.4 reports the names).
 PACKAGE_INSTALL_COMMANDS: Dict[str, str] = {
@@ -589,6 +606,92 @@ def plan_terraform_provider(
     return TerraformProviderPlanResult(coordinates=names, package=package)
 
 
+@dataclass(frozen=True)
+class McpServerCoordinates:
+    """What a kit's MCP server is called, without generating it.
+
+    Attributes:
+        package_name: The npm package name (``<name>-mcp-server``).
+        server_name: The name it reports to MCP clients and is registered under.
+        env_prefix: The prefix of every environment variable it reads.
+    """
+
+    package_name: str
+    server_name: str
+    env_prefix: str
+
+
+@dataclass(frozen=True)
+class McpServerPlanResult:
+    """The generated MCP server a kit carries, or the reason it carries none.
+
+    Attributes:
+        coordinates: The server's names.
+        package: The generated server, or ``None`` when generation failed.
+        error: Why there is no server, when there is none.
+    """
+
+    coordinates: McpServerCoordinates
+    package: Optional[McpServerPackage] = None
+    error: Optional[str] = None
+
+
+def mcp_server_coordinates(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> McpServerCoordinates:
+    """Return the names a kit's MCP server would use.
+
+    Named like the server stubs: a configured npm name is the tenant's *client* library, so only its
+    scope is kept (``@acme/widgets`` → ``@acme/widgets-mcp-server``). The environment variables are
+    prefixed with the project slug (``acme-widgets`` → ``ACME_WIDGETS_BASE_URL``).
+
+    Args:
+        api: The revision's canonical model, for the name fallbacks.
+        coordinates: The revision the kit is for.
+        branding: The tenant's resolved SDK-3.4 branding.
+
+    Returns:
+        The :class:`McpServerCoordinates`.
+    """
+    title = api.title or coordinates.project_slug
+    package = mcp_server_package_name(branding.package_names.get("npm"), coordinates.project_slug, title)
+    return McpServerCoordinates(
+        package_name=package,
+        server_name=package.rsplit("/", 1)[-1],
+        env_prefix=mcp_env_prefix(coordinates.project_slug, title),
+    )
+
+
+def plan_mcp_server(
+    api: CanonicalApi, coordinates: KitCoordinates, branding: ResolvedBranding
+) -> McpServerPlanResult:
+    """Generate the kit's MCP server, degrading to a reason rather than failing the kit.
+
+    Args:
+        api: The revision's canonical model.
+        coordinates: The revision the kit is for; its revision id is recorded as provenance.
+        branding: The tenant's resolved SDK-3.4 branding — its npm scope, licence header and
+            user-agent all reach the generated server.
+
+    Returns:
+        The :class:`McpServerPlanResult`.
+    """
+    names = mcp_server_coordinates(api, coordinates, branding)
+    try:
+        package = generate_mcp_server(
+            api,
+            package_name=names.package_name,
+            env_prefix=names.env_prefix,
+            license_header=branding.license_header,
+            user_agent=branding.user_agent,
+            revision=coordinates.version_record_id,
+            max_operations=MAX_KIT_OPERATIONS,
+        )
+    except Exception as exc:  # noqa: BLE001 - a kit ships its snippets even when codegen cannot.
+        return McpServerPlanResult(coordinates=names, error=f"{type(exc).__name__}: {exc}")
+    return McpServerPlanResult(coordinates=names, package=package)
+
+
 def package_install_command(ecosystem: str, name: str) -> Optional[str]:
     """Return the shell command that installs ``name`` from ``ecosystem``.
 
@@ -802,6 +905,7 @@ def _build_readme(
     go_client: GoClientPlan,
     server_stubs: ServerStubPlanResult,
     terraform: TerraformProviderPlanResult,
+    mcp_server: McpServerPlanResult,
 ) -> str:
     """Compose the kit's ``README.md``.
 
@@ -816,6 +920,7 @@ def _build_readme(
         go_client: The generated Go client (SDK-2.4), or the reason there is none.
         server_stubs: The generated server stubs (SDK-2.5), or the reason there are none.
         terraform: The generated Terraform provider (SDK-4.4), or the reason there is none.
+        mcp_server: The generated MCP server (SDK-4.5), or the reason there is none.
 
     Returns:
         The README's Markdown text.
@@ -882,6 +987,11 @@ def _build_readme(
         lines.append(
             f"- `{TERRAFORM_PROVIDER_DIRECTORY}/` — a buildable Terraform provider "
             f"(`{terraform.coordinates.address}`), with its own README, docs and examples.",
+        )
+    if mcp_server.package is not None:
+        lines.append(
+            f"- `{MCP_SERVER_DIRECTORY}/` — a runnable MCP server (`{mcp_server.coordinates.package_name}`) "
+            "whose tools are this API's operations, with its own README.",
         )
     lines.append("")
 
@@ -990,6 +1100,32 @@ def _build_readme(
             "",
             f"No Terraform provider is included for this revision: {terraform.error}. The snippets "
             "below are unaffected.",
+            "",
+        ]
+
+    if mcp_server.package is not None:
+        server = mcp_server.package
+        lines += [
+            "## MCP server",
+            "",
+            f"`{MCP_SERVER_DIRECTORY}/` is a Model Context Protocol server for this revision — "
+            f"{len(server.tools)} " + ("tool" if len(server.tools) == 1 else "tools")
+            + ", one per operation, over stdio. Agents call the API through it; credentials come from "
+            f"environment variables (`{server.env_prefix}_…`), never from the files.",
+            "",
+            "```bash",
+            f"cd {MCP_SERVER_DIRECTORY} && npm install && npm run build",
+            "```",
+            "",
+            f"`{MCP_SERVER_DIRECTORY}/README.md` has the client registration (`mcp.json`) snippet.",
+            "",
+        ]
+    elif mcp_server.error:
+        lines += [
+            "## MCP server",
+            "",
+            f"No MCP server is included for this revision: {mcp_server.error}. The snippets below are "
+            "unaffected.",
             "",
         ]
 
@@ -1225,6 +1361,55 @@ def _terraform_manifest(plan: TerraformProviderPlanResult) -> Dict[str, Any]:
     return block
 
 
+def _mcp_server_manifest(plan: McpServerPlanResult) -> Dict[str, Any]:
+    """Describe the kit's MCP server for ``manifest.json``.
+
+    The block is always present, so a consumer never has to tell "this kit predates the MCP
+    server" apart from "this revision could not produce one" — ``included`` says which. ``env``
+    names every variable the server reads; no value is ever recorded.
+
+    Args:
+        plan: The planned server.
+
+    Returns:
+        The manifest block.
+    """
+    names = plan.coordinates
+    block: Dict[str, Any] = {
+        "schema_version": MCP_SERVER_SCHEMA_VERSION,
+        "directory": MCP_SERVER_DIRECTORY,
+        "package_name": names.package_name,
+        "server_name": names.server_name,
+        "env_prefix": names.env_prefix,
+        "included": plan.package is not None,
+    }
+    if plan.package is None:
+        block["error"] = plan.error
+        return block
+    package = plan.package
+    block.update(
+        {
+            "sdk_version": package.sdk_version,
+            "transport": "stdio",
+            "base_url": package.base_url,
+            "tool_count": len(package.tools),
+            "tools": [
+                {"name": tool.name, "key": tool.operation_key, "http_method": tool.method, "path": tool.path}
+                for tool in package.tools
+            ],
+            "auth": [
+                {"scheme": entry.scheme, "kind": entry.kind, "env": list(entry.env)} for entry in package.auth
+            ],
+            "unsupported_auth": list(package.unsupported_auth),
+            "env": list(package.env_vars),
+            "skipped": [
+                {"name": item.name, "key": item.operation_key, "reason": item.reason} for item in package.skipped
+            ],
+        }
+    )
+    return block
+
+
 def build_client_kit(
     api: CanonicalApi,
     *,
@@ -1257,6 +1442,7 @@ def build_client_kit(
     go_client = plan_go_client(api, coordinates, branding)
     server_stubs = plan_server_stubs(api, coordinates, branding)
     terraform = plan_terraform_provider(api, coordinates, branding)
+    mcp_server = plan_mcp_server(api, coordinates, branding)
 
     entries: List[_Entry] = []
     if go_client.package is not None:
@@ -1286,6 +1472,15 @@ def build_client_kit(
                     subject="terraform-provider",
                 )
             )
+    if mcp_server.package is not None:
+        for server_file in mcp_server.package.files:
+            entries.append(
+                _Entry(
+                    path=f"{MCP_SERVER_DIRECTORY}/{server_file.path}",
+                    text=server_file.text,
+                    subject="mcp-server",
+                )
+            )
     for entry in rendered:
         for lang, (_install, code) in sorted(entry.snippets.items()):
             extension = LANGUAGE_FILE_EXTENSIONS.get(lang, "txt")
@@ -1312,6 +1507,7 @@ def build_client_kit(
         go_client,
         server_stubs,
         terraform,
+        mcp_server,
     )
     entries.append(_Entry(path="README.md", text=readme, subject="readme"))
     entries.sort(key=lambda item: item.path)
@@ -1346,6 +1542,7 @@ def build_client_kit(
         "go_client": _go_client_manifest(go_client),
         "server_stubs": _server_stub_manifest(server_stubs),
         "terraform_provider": _terraform_manifest(terraform),
+        "mcp_server": _mcp_server_manifest(mcp_server),
         "provenance": {
             "version_record_id": coordinates.version_record_id,
             "version_label": coordinates.version_label,
@@ -1354,6 +1551,7 @@ def build_client_kit(
             "go_generator": f"app.go_client_generator/{GO_CLIENT_SCHEMA_VERSION}",
             "server_stub_generator": f"app.server_stub_generator/{SERVER_STUB_SCHEMA_VERSION}",
             "terraform_generator": f"app.terraform_provider_generator/{TERRAFORM_PROVIDER_SCHEMA_VERSION}",
+            "mcp_server_generator": f"app.mcp_server_generator/{MCP_SERVER_SCHEMA_VERSION}",
             "apiome_version": apiome_version,
             "settings_fingerprint": settings_fingerprint,
         },
